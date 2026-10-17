@@ -1,0 +1,34 @@
+# Decisions
+
+Current decisions only. One line each; newest at the bottom of its section. Foundation decisions F1 to F10 are in `blueprints/foundation.md`.
+
+## Product
+
+- P1 Two shop kinds at launch: food and retail. Words differ by vocab (Menu or Products), never by `if` on the type.
+- P2 Members and the stamp card are the main selling point; 1 welcome stamp on join.
+- P3 Payments: cash, COD, GCash, Maya, bank with proof checked by the owner. Only GCash, Maya and bank orders expire unpaid.
+- P4 Storefront is light mode only; dashboard has light and dark.
+- P5 Demo shops: the 5 in `demo-shops.md`.
+- P6 Status colours: amber means "it needs you" (table in `design-tokens.md`).
+- P7 Payment proofs: at most 3 files, uploaded within 7 days, deleted after 30 days.
+- P8 A guest order links to a member only by its order token or the same email, never by phone alone.
+- P9 Screen text is plain English with local words where natural (Suki, Members); a short Filipino summary only on the privacy page.
+
+## Tech
+
+- T1 Supabase project "Smart App PH MVP FINAL" (Singapore) is the dev database and the only one until launch.
+- T2 Sign-up email confirmation is off on the dev project until Resend SMTP is set up; on in production.
+- T3 Demo owner password comes from the `DEMO_PASSWORD` env variable; never in the repo (public repo).
+- T4 `turbo.json` sets `"agentGuidance": false` so Turborepo does not write into `AGENTS.md`.
+- T5 TypeScript stays on 6.0.x until typescript-eslint and NestJS support 7.
+- T6 One Next.js storefront, no separate Vite PWA (one codebase; shares cart, login and member card). Serwist makes it installable, precaches the app shell and caches shop pages (stale-while-revalidate): the installed app opens the saved copy instantly and refreshes menu, stock and open/closed in the background. Stock, prices and open/closed are always fetched fresh before checkout. Show "Add to home screen" after a customer joins or places a first order. Vite is only for the dashboard (behind login, no SEO needs). From general knowledge of both tools, not measured on our app. Never cached: receipts (`/o/*`), checkout, quotes, proof uploads, auth and API answers.
+- T7 Node 24 everywhere. The founder's Mac (macOS 12.7.6) runs v24.14.0 although Node lists macOS 13.5 as the minimum; if a later 24.x stops starting there, stay on 24.14.0 locally or use Node 22.
+- T8 CSS rules are enforced with ESLint's built-in `no-restricted-syntax` (no new package): no inline `style` except `cssVars()`, no arbitrary values, no hex in class names outside `packages/ui`.
+- T9 Only the founder runs `pnpm db:push`, after merging the migration PR. Agents never write to a hosted database.
+- T10 Errors carry a `code` from a closed list in core; screens word them with `errorWords(code)`.
+- T11 Minimum browsers: Chrome 111, Safari 16.4 (Tailwind 4 and OKLCH).
+- T12 `docs/api.md` is the contract for the mock adapters and the NestJS API.
+
+## Open
+
+- Price: ₱599 or ₱799 per month.
