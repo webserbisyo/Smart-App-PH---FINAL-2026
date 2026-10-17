@@ -10,8 +10,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
-      '@smartapp/ui': resolve(__dirname, '../../packages/ui/src'),
+      '@': resolve(import.meta.dirname, './src'),
+      '@smartapp/ui': resolve(import.meta.dirname, '../../packages/ui/src'),
     },
   },
 })

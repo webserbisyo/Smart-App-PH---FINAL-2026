@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "./tokens.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant pointer-coarse (@media (pointer: coarse));
+@custom-variant hover-hover (@media (hover: hover));
+
+@utility pressable {
+  touch-action: manipulation;
+  transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility pb-dock {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}

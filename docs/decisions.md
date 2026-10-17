@@ -34,6 +34,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T16 Prettier with `prettier-plugin-tailwindcss` formats the repo; no git hooks for now.
 - T17 Generated database types are committed in `packages/data`; CI regenerates them from the migrations on a local database and fails on any difference.
 - T18 The PWA uses `@serwist/turbopack` (Next 16 builds with Turbopack; the webpack-based `@serwist/next` does not run there).
+- T19 jsdom pinned to 29.x: 30.x needs Node 24.15+.
 
 ## Open
 
