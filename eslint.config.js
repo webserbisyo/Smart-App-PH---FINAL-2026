@@ -82,7 +82,7 @@ export default tseslint.config(
       ],
     },
   },
-  // Import walls: Apps never import each other
+  // Import walls for apps/dashboard
   {
     files: ['apps/dashboard/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -91,14 +91,19 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@smartapp/storefront', '@smartapp/storefront/*', '@smartapp/api', '@smartapp/api/*', '**/storefront/**', '**/api/**'],
+              group: ['@smartapp/storefront*', '@smartapp/api*', '**/storefront/**', '**/api/**'],
               message: 'Import wall: apps may never import each other.',
+            },
+            {
+              group: ['@supabase/*', '@supabase/**'],
+              message: 'Import wall: only packages/data and apps/api may import @supabase/*.',
             },
           ],
         },
       ],
     },
   },
+  // Import walls for apps/storefront
   {
     files: ['apps/storefront/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -107,14 +112,19 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@smartapp/dashboard', '@smartapp/dashboard/*', '@smartapp/api', '@smartapp/api/*', '**/dashboard/**', '**/api/**'],
+              group: ['@smartapp/dashboard*', '@smartapp/api*', '**/dashboard/**', '**/api/**'],
               message: 'Import wall: apps may never import each other.',
+            },
+            {
+              group: ['@supabase/*', '@supabase/**'],
+              message: 'Import wall: only packages/data and apps/api may import @supabase/*.',
             },
           ],
         },
       ],
     },
   },
+  // Import walls for apps/api
   {
     files: ['apps/api/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -123,30 +133,8 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@smartapp/dashboard', '@smartapp/dashboard/*', '@smartapp/storefront', '@smartapp/storefront/*', '**/dashboard/**', '**/storefront/**'],
+              group: ['@smartapp/dashboard*', '@smartapp/storefront*', '**/dashboard/**', '**/storefront/**'],
               message: 'Import wall: apps may never import each other.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  // Import wall: only packages/data and apps/api may import @supabase/*
-  {
-    files: [
-      'apps/dashboard/**/*.{ts,tsx,js,jsx}',
-      'apps/storefront/**/*.{ts,tsx,js,jsx}',
-      'packages/core/**/*.{ts,tsx,js,jsx}',
-      'packages/ui/**/*.{ts,tsx,js,jsx}',
-    ],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['@supabase/*', '@supabase/**'],
-              message: 'Import wall: only packages/data and apps/api may import @supabase/*.',
             },
           ],
         },
@@ -180,7 +168,7 @@ export default tseslint.config(
       ],
     },
   },
-  // Import wall: packages/ui may not import @smartapp/data
+  // Import wall: packages/ui may not import @smartapp/data or @supabase/*
   {
     files: ['packages/ui/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -191,6 +179,10 @@ export default tseslint.config(
             {
               group: ['@smartapp/data*'],
               message: 'Import wall: packages/ui may not import @smartapp/data.',
+            },
+            {
+              group: ['@supabase/*', '@supabase/**'],
+              message: 'Import wall: only packages/data and apps/api may import @supabase/*.',
             },
           ],
         },
@@ -205,6 +197,14 @@ export default tseslint.config(
         'error',
         {
           patterns: [
+            {
+              group: ['@smartapp/storefront*', '@smartapp/api*', '**/storefront/**', '**/api/**'],
+              message: 'Import wall: apps may never import each other.',
+            },
+            {
+              group: ['@supabase/*', '@supabase/**'],
+              message: 'Import wall: only packages/data and apps/api may import @supabase/*.',
+            },
             {
               group: ['@/features/**', '**/features/**', '../*/**'],
               message: 'Import wall: dashboard features may not cross-import. Shared code goes in apps/dashboard/src/app/.',
