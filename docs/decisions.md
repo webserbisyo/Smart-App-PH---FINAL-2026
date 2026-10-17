@@ -28,6 +28,12 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T10 Errors carry a `code` from a closed list in core; screens word them with `errorWords(code)`.
 - T11 Minimum browsers: Chrome 111, Safari 16.4 (Tailwind 4 and OKLCH).
 - T12 `docs/api.md` is the contract for the mock adapters and the NestJS API.
+- T13 pnpm 12 settings live in `pnpm-workspace.yaml` (no `.npmrc` settings): `minimumReleaseAge` 7 days, `allowBuilds` only for packages that need a build script, shared versions in `catalog:`. Node is pinned `.nvmrc` 24.14.0 and `engines` `>=24.14 <25`.
+- T14 NestJS 12 without the Nest CLI (its generators need a newer Node 24 than 24.14). ESM, Express adapter, code adapter-neutral. Input checked by the built-in `StandardSchemaValidationPipe` with the shared Zod schemas, env by `@nestjs/config` with Zod, `/health` by Terminus, errors by one global filter. Tests on Vitest with `unplugin-swc` (no Jest).
+- T15 Google sign-in is task T01b. T01 is email and password only, with no Google button.
+- T16 Prettier with `prettier-plugin-tailwindcss` formats the repo; no git hooks for now.
+- T17 Generated database types are committed in `packages/data`; CI regenerates them from the migrations on a local database and fails on any difference.
+- T18 The PWA uses `@serwist/turbopack` (Next 16 builds with Turbopack; the webpack-based `@serwist/next` does not run there).
 
 ## Open
 

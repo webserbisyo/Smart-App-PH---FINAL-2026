@@ -7,9 +7,9 @@ Trimmed from the old `api-surface.md` (2026-10-11) to fit the restart: NestJS fr
 ## Rules
 
 - **Types:** input and output are Zod schemas in `packages/core/src/schemas/` (camelCase). The API validates input with the same schema, and the adapter parses every response with it. No casts.
-- **Errors:** every failure is `ApiError { status, code, message, fieldErrors? }`.
+- **Errors:** every failure is `ApiError { status, code, message, fieldErrors? }` (`ApiErrorSchema` in core). In Nest one global filter makes this shape; the adapter parses every non-2xx answer with the schema.
   - `code` comes from the closed list in `packages/core/src/errors.ts`; screens word it with `errorWords(code)`.
-  - Unknown failures become `unknown`.
+  - A failed input check is `invalid_input` with `fieldErrors`. Unknown failures become `unknown`.
   - Mocks throw the same codes.
 - **Money** in integer centavos. **Times** are ISO strings in UTC. Formatting (`formatPeso`, `formatManila`) lives in core.
 - **Hooks:** each method has a TanStack Query hook (`useX`); writes invalidate keys from one `qk` file. Screens own the loading, empty and error states.

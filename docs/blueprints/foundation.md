@@ -23,14 +23,16 @@ Versions are checked with `npm view <pkg> version` at install time and pinned ex
 
 | Part | Choice |
 | --- | --- |
-| Monorepo | pnpm 12.x + Turborepo 2.11.x, Node 24 LTS, TypeScript 6.0.x strict (move to 7 when typescript-eslint and Nest support it) |
+| Monorepo | pnpm 12.x (settings in `pnpm-workspace.yaml`) + Turborepo 2.11.x, Node 24 LTS (`>=24.14 <25`), TypeScript 6.0.x strict (move to 7 when typescript-eslint and Nest support it), ESLint flat config + Prettier |
 | Storefront | Next.js 16.4.x App Router, React 19.3, Tailwind 4.3 (Vercel) |
 | Dashboard | Vite 8.3 + React 19.3, TanStack Router (code routes) + TanStack Query, React Hook Form + Zod (Vercel) |
-| API | NestJS 12.x, Zod validation, `jose` for Supabase JWT checks; later Drizzle ORM (Railway, Singapore) |
+| API | NestJS 12.x by hand (no Nest CLI), ESM, Express adapter with adapter-neutral code; built-in Standard Schema validation with the shared Zod schemas, `@nestjs/config`, Terminus `/health`, helmet, `jose` for Supabase JWT checks, Vitest; later Drizzle ORM (Railway, Singapore) |
 | Shared | `@smartapp/core` (Zod schemas, types, money, words, demo fixtures), `@smartapp/ui` (tokens + installed components), `@smartapp/data` (Supabase auth client, API client, mock adapters, Query hooks) |
 | Backend services | Supabase Singapore: Postgres, Auth, later Storage and Realtime. Resend for email later |
 
 The storefront is one Next.js app and is also the installable PWA (no separate Vite storefront). Serwist precaches the app shell and caches shop pages stale-while-revalidate, so the installed app opens the saved copy instantly and refreshes menu, stock and open/closed in the background. Stock, prices and open/closed are always fetched fresh before checkout. See T6 in `decisions.md`.
+
+Later, named but not installed yet (each needs its task): `@serwist/turbopack` for the PWA, `@nestjs/throttler` before public API routes, pino logs, Playwright with axe checks, knip.
 
 ## 3. Folders
 
@@ -72,11 +74,12 @@ Auth (all phases): app -> @smartapp/data -> Supabase Auth directly
 
 ## 5. Auth
 
-- Owners sign up and log in with email and password (Supabase Auth). Customers (members) come later with a 6-digit email code. Auth emails always send codes, never links.
-- One error message for every failed login. Server code checks the user with `getClaims()`, never `getSession()`.
+- Owners sign up and log in with email and password (Supabase Auth). Google sign-in comes in T01b. Customers (members) come later with a 6-digit email code. Auth emails always send codes, never links.
+- One error message for every failed login. Server code and route guards check the user with `getClaims()`, never `getSession()`. The storefront refreshes the session in `src/proxy.ts` through `@smartapp/data/server`.
 - `public.profiles` is the only table now, created by a trigger on sign up, RLS: a user reads and edits only their own row.
 - Demo owners are created by an idempotent script (`apps/api/scripts/seed-demo-accounts.ts`) with the Supabase Admin API. The password comes from an env variable, never from the repo (the repo is public). Each demo user has `app_metadata.demo_shop = <slug>`.
-- The API checks the Supabase access token with `jose` against the project JWKS (asymmetric signing keys). The secret key lives only in `apps/api` env and scripts.
+- The API checks the Supabase access token with `jose` against the project JWKS (`/auth/v1/.well-known/jwks.json`, asymmetric signing keys).
+- Generated database types live in `packages/data/src/database.types.ts` (`pnpm db:types`); CI fails if they drift from the migrations. The secret key lives only in `apps/api` env and scripts.
 
 ## 6. Environments
 
