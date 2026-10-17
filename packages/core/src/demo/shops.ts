@@ -1,5 +1,15 @@
 import type { DemoShopSummary } from '../schemas/demo-shop.js';
 
+export const DEMO_SHOP_SLUGS = [
+  'kanto-smash',
+  'aqualinis',
+  'tala-apparel',
+  'kape-juan',
+  'lola-remy',
+] as const;
+
+export type DemoShopSlug = (typeof DEMO_SHOP_SLUGS)[number];
+
 export const DEMO_SHOPS: readonly DemoShopSummary[] = [
   {
     slug: 'kanto-smash',

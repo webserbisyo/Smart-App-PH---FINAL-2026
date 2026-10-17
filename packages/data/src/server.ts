@@ -30,8 +30,9 @@ export async function refreshSession(
   request: Request,
   url: string,
   publishableKey: string,
+  baseResponse?: Response,
 ): Promise<Response> {
-  const response = new Response(null);
+  const response = baseResponse ?? new Response(null);
   const supabase = createServerClient<Database>(url, publishableKey, {
     cookies: {
       getAll() {

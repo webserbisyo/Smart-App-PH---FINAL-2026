@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { DEMO_SHOPS, words, type DemoShopSummary } from '@smartapp/core';
+import { words, type DemoShopSummary } from '@smartapp/core';
+import { DEMO_SHOPS } from '@smartapp/core/demo/shops.js';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Card,
