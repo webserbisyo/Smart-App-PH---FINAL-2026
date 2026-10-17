@@ -17,7 +17,7 @@ Frontend first with mock data. The database has only auth (profiles) and demo ow
 
 ## Commands
 
-`pnpm install` · `pnpm dev` (storefront :3000, dashboard :5173, api :4000) · `pnpm check` (typecheck, lint, test) · `pnpm build` · `pnpm db:push` (only the founder runs it) · `pnpm --filter @smartapp/api seed:demo`
+`pnpm install` · `pnpm dev` (storefront :3000, dashboard :5173, api :4000) · `pnpm check` (typecheck, lint, test) · `pnpm format` · `pnpm build` · `pnpm db:push` (only the founder runs it) · `pnpm db:types` · `pnpm --filter @smartapp/api seed:demo`. No Nest CLI (its generators need a newer Node 24 than 24.14).
 
 ## Hard rules
 
@@ -30,7 +30,7 @@ Frontend first with mock data. The database has only auth (profiles) and demo ow
 7. **Words and numbers:** our visible text in `packages/core/src/words.ts` (dynamic text as functions). Plain English with local words where natural (Suki, Members); short verb buttons; an error says what to do next; never "Coming soon". Money in integer centavos; Manila time for display; never compare the shop type in code. Screens word errors from their `code`, never from the message text.
 8. **Database:** only new files in `supabase/migrations/`, with RLS, grants and policies in the same file. Never edit an applied migration. Trusted functions are `security definer` with `set search_path = ''`. Never change the database through a dashboard, SQL editor or MCP. Never run `pnpm db:push`: stop and ask the founder to run it.
 9. **Secrets:** never read, print or commit `.env*` files or keys. Only `.env.example` is committed. Each app checks its env with Zod at start.
-10. **Packages:** exact versions (no `^`), and no release younger than 7 days unless it is a security fix. No new package without the founder's yes, except what the shadcn CLI adds with a planned component.
+10. **Packages:** exact versions (no `^`), and no release younger than 7 days unless it is a security fix. pnpm settings live in `pnpm-workspace.yaml` (`minimumReleaseAge`, `allowBuilds`, `catalog`); `.npmrc` settings are ignored. No new package without the founder's yes, except what the shadcn CLI adds with a planned component.
 11. **Git:** branch `ag/t<nn>-<name>` from the latest `main`. Never push to `main`, never merge, never force-push. Always open the PR yourself (`gh pr create --base main`) and print its link.
 12. **Security:** one login error for every failed login (never say which part was wrong). Another shop's pages show Not found, never "forbidden". Every API route has `@Public()` or `@Can()`; the shop comes from `tenant_members`, never from the URL or body. No customer data in logs.
 

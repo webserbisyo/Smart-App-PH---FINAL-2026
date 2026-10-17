@@ -16,7 +16,7 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 ## Where files go
 
 - Primitives: `packages/ui/src/components/` (shared by both apps).
-- Blocks (login, sign-up, dashboard sections): the app that uses them, `src/components/blocks/`. Run the CLI from that app folder.
+- Blocks (login, sign-up, dashboard sections): the app that uses them, `src/components/blocks/`. Run the CLI from that app folder. Remove parts of a block we have not planned (such as social sign-in buttons); never leave a disabled placeholder.
 - Our compositions (only when 3 or more screens need the same arrangement): `packages/ui/src/compositions/`, with the founder's OK.
 - Registry examples and starters are reference only: never imported, and excluded from Tailwind scanning (`@source not`).
 
