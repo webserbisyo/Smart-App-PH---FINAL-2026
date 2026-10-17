@@ -3,7 +3,7 @@
 Ordering app (storefront) and owner dashboard for small Philippine shops.
 
 - Rules for agents: `AGENTS.md`
-- Plan: `docs/blueprints/` (foundation, A-mvp, B-full)
+- Plan: `docs/blueprints/` (foundation, A-mvp, B-full); UX rules `docs/ux.md`; API contract `docs/api.md`
 - Status: `docs/PROGRESS.md`
 
 ## Run it

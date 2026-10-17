@@ -45,6 +45,7 @@ Each module = one database task, one API task, then one task per screen.
 - Nest guard chain: Throttler, Auth (JWKS), Tenant (shop from `tenant_members`, never from the URL), Permission (`@Can`). A test fails the build if a route has neither `@Public()` nor `@Can()`.
 - Database access through Drizzle with one transaction per request that sets role `authenticated` and the caller's claims, so RLS still applies. The API's database login has no rights of its own.
 - Drizzle never owns the schema; `supabase/migrations` does.
+- Each module adds its methods to `docs/api.md` before any code, and its screens follow `docs/ux.md`.
 - Supabase secret key used only for staff logins and storage clean-up.
 - Jobs: pg_cron for SQL jobs, a Nest worker for the outbox and emails.
 
