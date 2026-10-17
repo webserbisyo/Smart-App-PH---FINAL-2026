@@ -1,0 +1,6 @@
+pnpm-lock.yaml
+dist
+.next
+database.types.ts
+.turbo
+node_modules
