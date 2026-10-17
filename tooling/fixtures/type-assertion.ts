@@ -1,2 +1,2 @@
-const y: unknown = 'hello'
-export const x = y as string
+const y: unknown = 'hello';
+export const x = y as string;

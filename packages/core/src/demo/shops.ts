@@ -1,4 +1,4 @@
-import type { DemoShopSummary } from '../schemas/demo-shop.js'
+import type { DemoShopSummary } from '../schemas/demo-shop.js';
 
 export const DEMO_SHOPS: readonly DemoShopSummary[] = [
   {
@@ -36,4 +36,4 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     ownerName: 'Carla Bautista',
     ownerEmail: 'morales.juanmiguel0729+bakery@gmail.com',
   },
-] as const
+] as const;

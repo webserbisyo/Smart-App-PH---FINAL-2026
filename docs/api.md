@@ -18,57 +18,57 @@ Trimmed from the old `api-surface.md` (2026-10-11) to fit the restart: NestJS fr
 
 ## Auth (Supabase directly, both phases)
 
-| Method | Input | Output / notes |
-| --- | --- | --- |
-| `signUp` | `SignUpSchema` | session (email confirmation off on dev) |
-| `signIn` / `signOut` | `LoginSchema` / none | one error message for every failed login |
-| `getSession` | none | `{ userId, email } \| null` |
-| `sendPasswordCode`, `resetPasswordWithCode` | `{ email }`, `{ email, code, newPassword }` | 6-digit code, no links |
-| `sendCustomerCode`, `verifyCustomerCode` | `{ email }`, `{ email, code }` | storefront members |
+| Method                                      | Input                                       | Output / notes                           |
+| ------------------------------------------- | ------------------------------------------- | ---------------------------------------- |
+| `signUp`                                    | `SignUpSchema`                              | session (email confirmation off on dev)  |
+| `signIn` / `signOut`                        | `LoginSchema` / none                        | one error message for every failed login |
+| `getSession`                                | none                                        | `{ userId, email } \| null`              |
+| `sendPasswordCode`, `resetPasswordWithCode` | `{ email }`, `{ email, code, newPassword }` | 6-digit code, no links                   |
+| `sendCustomerCode`, `verifyCustomerCode`    | `{ email }`, `{ email, code }`              | storefront members                       |
 
 Codes: `invalid_login`, `email_taken`, `weak_password`, `invalid_code`, `code_expired`, `rate_limited`, `not_signed_in`.
 
 ## Shop and settings (owner, `/owner/...`)
 
-| Method | HTTP | Input → Output |
-| --- | --- | --- |
-| `getMyShop` | GET `/owner/shop` | → `Shop \| null` |
-| `createMyShop` | POST `/owner/shop` | `{ kind, name, slug }` → `Shop` (status `pending`) |
-| `isSlugFree` | GET `/slugs/:slug` | → `boolean` |
-| `getSettings` / `saveSettings` | GET/PATCH `/owner/settings` | `ShopSettings` (look, info, order types, stamps) |
-| `getHours` / `saveHours` | GET/PUT `/owner/hours` | `BusinessHours[]` (whole week) and closures |
-| `listPaymentAccounts` / `savePaymentAccount` / `removePaymentAccount` | `/owner/payment-accounts` | `PaymentAccount` |
-| `listZones` / `saveZone` / `removeZone` | `/owner/zones` | `DeliveryZone` |
-| `saveSortOrder` | PUT `/owner/sort` | `{ kind, ids }` |
-| `createUploadUrl` | POST `/owner/uploads` | `{ kind: logo\|banner\|item\|category\|qr }` → signed upload URL + `path` (WebP, compressed on the phone) |
+| Method                                                                | HTTP                        | Input → Output                                                                                            |
+| --------------------------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `getMyShop`                                                           | GET `/owner/shop`           | → `Shop \| null`                                                                                          |
+| `createMyShop`                                                        | POST `/owner/shop`          | `{ kind, name, slug }` → `Shop` (status `pending`)                                                        |
+| `isSlugFree`                                                          | GET `/slugs/:slug`          | → `boolean`                                                                                               |
+| `getSettings` / `saveSettings`                                        | GET/PATCH `/owner/settings` | `ShopSettings` (look, info, order types, stamps)                                                          |
+| `getHours` / `saveHours`                                              | GET/PUT `/owner/hours`      | `BusinessHours[]` (whole week) and closures                                                               |
+| `listPaymentAccounts` / `savePaymentAccount` / `removePaymentAccount` | `/owner/payment-accounts`   | `PaymentAccount`                                                                                          |
+| `listZones` / `saveZone` / `removeZone`                               | `/owner/zones`              | `DeliveryZone`                                                                                            |
+| `saveSortOrder`                                                       | PUT `/owner/sort`           | `{ kind, ids }`                                                                                           |
+| `createUploadUrl`                                                     | POST `/owner/uploads`       | `{ kind: logo\|banner\|item\|category\|qr }` → signed upload URL + `path` (WebP, compressed on the phone) |
 
 Codes: `slug_taken`, `slug_reserved`, `slug_invalid`, `already_has_shop`, `not_allowed`.
 
 ## Catalog (owner)
 
-| Method | HTTP | Input → Output |
-| --- | --- | --- |
-| `listCategories` / `saveCategory` / `removeCategory` | `/owner/categories` | `Category` (with `icon`) |
-| `listItems` | GET `/owner/items` | → `CatalogItem[]` (photos, variants, add-on groups, every status) |
-| `saveItem` | PUT `/owner/items/:id` | `ItemDraft` → `CatalogItem` (one transaction) |
-| `setItemStatus` | PATCH `/owner/items/:id/status` | `active\|hidden\|archived` |
-| `setSoldOut` / `setStock` | PATCH `/owner/variants/:id` | `{ isSoldOut }` / `{ stockOnHand }` (logged) |
-| `listOptionGroups` / `saveOptionGroup` / `removeOptionGroup` | `/owner/option-groups` | `OptionGroup` |
+| Method                                                       | HTTP                            | Input → Output                                                    |
+| ------------------------------------------------------------ | ------------------------------- | ----------------------------------------------------------------- |
+| `listCategories` / `saveCategory` / `removeCategory`         | `/owner/categories`             | `Category` (with `icon`)                                          |
+| `listItems`                                                  | GET `/owner/items`              | → `CatalogItem[]` (photos, variants, add-on groups, every status) |
+| `saveItem`                                                   | PUT `/owner/items/:id`          | `ItemDraft` → `CatalogItem` (one transaction)                     |
+| `setItemStatus`                                              | PATCH `/owner/items/:id/status` | `active\|hidden\|archived`                                        |
+| `setSoldOut` / `setStock`                                    | PATCH `/owner/variants/:id`     | `{ isSoldOut }` / `{ stockOnHand }` (logged)                      |
+| `listOptionGroups` / `saveOptionGroup` / `removeOptionGroup` | `/owner/option-groups`          | `OptionGroup`                                                     |
 
 Codes: `category_not_empty`, `item_has_orders` (archive instead).
 
 ## Storefront (public, `/s/:slug/...`)
 
-| Method | HTTP | Input → Output |
-| --- | --- | --- |
-| `getStorefront` | GET `/s/:slug` | → `Storefront \| null` (pending or suspended shops are null, so the page shows Not found) |
-| `quoteOrder` | POST `/s/:slug/quote` | `OrderPayload` → `Quote` (with `problems[]` per line); always called before Place order |
-| `placeOrder` | POST `/s/:slug/orders` | `OrderPayload + clientKey` → `{ orderId, orderNo, token }`; retry-safe |
-| `getOrder` | GET `/o/:token` | → `OrderReceipt` |
-| `createProofUploadUrl` / `submitProof` | POST `/o/:token/proof` | `{ method, referenceNo, path }` → `Payment` |
-| `joinAsMember` | POST `/s/:slug/members` | `{ name, phone, orderToken? }` → `MemberAccount` (1 welcome stamp when the card is on; joining again returns the same account) |
-| `getMyAccount` | GET `/s/:slug/me` | → `MemberAccount \| null` |
-| `saveAddress` / `removeAddress` | `/s/:slug/me/addresses` | `CustomerAddress` |
+| Method                                 | HTTP                    | Input → Output                                                                                                                 |
+| -------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `getStorefront`                        | GET `/s/:slug`          | → `Storefront \| null` (pending or suspended shops are null, so the page shows Not found)                                      |
+| `quoteOrder`                           | POST `/s/:slug/quote`   | `OrderPayload` → `Quote` (with `problems[]` per line); always called before Place order                                        |
+| `placeOrder`                           | POST `/s/:slug/orders`  | `OrderPayload + clientKey` → `{ orderId, orderNo, token }`; retry-safe                                                         |
+| `getOrder`                             | GET `/o/:token`         | → `OrderReceipt`                                                                                                               |
+| `createProofUploadUrl` / `submitProof` | POST `/o/:token/proof`  | `{ method, referenceNo, path }` → `Payment`                                                                                    |
+| `joinAsMember`                         | POST `/s/:slug/members` | `{ name, phone, orderToken? }` → `MemberAccount` (1 welcome stamp when the card is on; joining again returns the same account) |
+| `getMyAccount`                         | GET `/s/:slug/me`       | → `MemberAccount \| null`                                                                                                      |
+| `saveAddress` / `removeAddress`        | `/s/:slug/me/addresses` | `CustomerAddress`                                                                                                              |
 
 The cart lives on the device (`deviceStorage`, per slug). Pickup slots and open/closed text come from core (`pickupSlots`, `openState`), but the database decides.
 
@@ -76,15 +76,15 @@ Codes: `shop_not_found`, `shop_closed`, `shop_busy`, `fulfillment_unavailable`, 
 
 ## Orders (owner)
 
-| Method | HTTP | Input → Output |
-| --- | --- | --- |
-| `listOrders` | GET `/owner/orders` | `{ open } \| { date }` → `BoardOrder[]` |
-| `getOrderDetail` | GET `/owner/orders/:id` | → `OrderReceipt` |
-| `getProofUrl` | GET `/owner/proofs/:path` | → signed URL, 5 minutes |
-| `reviewPayment` | POST `/owner/payments/:id/review` | `{ approve, rejectReason? }` → `Payment` |
-| `recordPayment` | POST `/owner/orders/:id/payments` | `{ method }` → `Payment` (cash, COD) |
-| `advanceOrder` | POST `/owner/orders/:id/advance` | `{ toStatus, trackingUrl? }` → `Order` (optimistic on screen) |
-| `cancelOrder` | POST `/owner/orders/:id/cancel` | `{ reason }` → `Order` |
+| Method           | HTTP                              | Input → Output                                                |
+| ---------------- | --------------------------------- | ------------------------------------------------------------- |
+| `listOrders`     | GET `/owner/orders`               | `{ open } \| { date }` → `BoardOrder[]`                       |
+| `getOrderDetail` | GET `/owner/orders/:id`           | → `OrderReceipt`                                              |
+| `getProofUrl`    | GET `/owner/proofs/:path`         | → signed URL, 5 minutes                                       |
+| `reviewPayment`  | POST `/owner/payments/:id/review` | `{ approve, rejectReason? }` → `Payment`                      |
+| `recordPayment`  | POST `/owner/orders/:id/payments` | `{ method }` → `Payment` (cash, COD)                          |
+| `advanceOrder`   | POST `/owner/orders/:id/advance`  | `{ toStatus, trackingUrl? }` → `Order` (optimistic on screen) |
+| `cancelOrder`    | POST `/owner/orders/:id/cancel`   | `{ reason }` → `Order`                                        |
 
 Core helpers that screens use instead of comparing statuses: `boardColumn`, `nextActions`, `canCancel`, `timelineSteps`, `isLate`. They share one test table with the SQL.
 
@@ -92,27 +92,28 @@ Codes: `not_found`, `invalid_transition`, `not_paid`, `payment_not_pending`, `al
 
 ## Members, home, reports (owner)
 
-| Method | HTTP | Input → Output |
-| --- | --- | --- |
-| `getStampRule` / `saveStampRule` | `/owner/stamp-rule` | `StampRule` |
-| `getToday` | GET `/owner/today` | → `DashboardToday` (Manila business date) |
-| `listCustomers` | GET `/owner/customers` | `{ search, membersOnly }` → `CustomerRow[]` |
-| `saveCustomerNotes` | PATCH `/owner/customers/:id` | `{ notes, tags }` |
-| `getSalesReport` | GET `/owner/reports/sales` | `{ from, to }` → `SalesReport` |
-| `exportOrdersCsv` | GET `/owner/reports/orders.csv` | `{ from, to }` → CSV (BOM; cells starting with `= + - @` get a leading `'`) |
+| Method                           | HTTP                            | Input → Output                                                              |
+| -------------------------------- | ------------------------------- | --------------------------------------------------------------------------- |
+| `getStampRule` / `saveStampRule` | `/owner/stamp-rule`             | `StampRule`                                                                 |
+| `getToday`                       | GET `/owner/today`              | → `DashboardToday` (Manila business date)                                   |
+| `listCustomers`                  | GET `/owner/customers`          | `{ search, membersOnly }` → `CustomerRow[]`                                 |
+| `saveCustomerNotes`              | PATCH `/owner/customers/:id`    | `{ notes, tags }`                                                           |
+| `getSalesReport`                 | GET `/owner/reports/sales`      | `{ from, to }` → `SalesReport`                                              |
+| `exportOrdersCsv`                | GET `/owner/reports/orders.csv` | `{ from, to }` → CSV (BOM; cells starting with `= + - @` get a leading `'`) |
 
 ## Live updates (Supabase Realtime from `@smartapp/data`)
 
-| Channel | Who | Payload |
-| --- | --- | --- |
-| `order:<token>` (public) | receipt page | `{ status, paymentStatus }` |
-| `shop:<tenantId>` (private, shop members) | dashboard | `{ orderId, op, status, paymentStatus }` |
+| Channel                                   | Who          | Payload                                  |
+| ----------------------------------------- | ------------ | ---------------------------------------- |
+| `order:<token>` (public)                  | receipt page | `{ status, paymentStatus }`              |
+| `shop:<tenantId>` (private, shop members) | dashboard    | `{ orderId, op, status, paymentStatus }` |
 
 A payload only triggers a refetch through the normal methods. If the channel isn't joined, the page polls every 15 s.
 
 ## Mock adapters
 
 `packages/data/src/mocks/<area>.ts` implements every row above:
+
 - It keeps state on the device and has `resetDemoData()`.
 - It adds `MOCK_LATENCY` delay.
 - It throws the same codes and enforces the same order steps.

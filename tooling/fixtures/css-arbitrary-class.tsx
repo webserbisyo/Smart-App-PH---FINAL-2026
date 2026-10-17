@@ -1,3 +1,3 @@
 export function BadArbitraryClass() {
-  return <div className="p-[13px]">test</div>
+  return <div className="p-[13px]">test</div>;
 }

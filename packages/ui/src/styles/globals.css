@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "@fontsource-variable/plus-jakarta-sans";
-@import "./tokens.css";
+@import 'tailwindcss';
+@import '@fontsource-variable/plus-jakarta-sans';
+@import './tokens.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant pointer-coarse (@media (pointer: coarse));
@@ -35,6 +35,14 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+@utility bg-shop {
+  background-color: var(--shop-color, var(--color-primary));
+}
+
+@utility text-shop {
+  color: var(--shop-color, var(--color-primary));
 }
 
 :root {

@@ -73,14 +73,14 @@ Finish with: PR link, what changed, how to test, what I must do by hand.
 
 ## Installs (the whole list, 55 packages)
 
-| Where | Packages |
-| --- | --- |
-| root (dev) | turbo, typescript, @types/node, eslint, @eslint/js, typescript-eslint, eslint-plugin-react-hooks, @next/eslint-plugin-next, prettier, prettier-plugin-tailwindcss, vitest, supabase, shadcn |
-| `packages/core` | zod |
-| `packages/ui` | react, react-dom, @types/react, @types/react-dom, @base-ui/react, class-variance-authority, clsx, tailwind-merge, lucide-react, tw-animate-css, tailwindcss, @fontsource-variable/plus-jakarta-sans, @testing-library/react, @testing-library/jest-dom, jsdom |
-| `packages/data` | @supabase/supabase-js, @supabase/ssr, @tanstack/react-query |
-| `apps/dashboard` | vite, @vitejs/plugin-react, @tailwindcss/vite, @tanstack/react-router, react-hook-form, @hookform/resolvers |
-| `apps/storefront` | next, @tailwindcss/postcss |
-| `apps/api` | @nestjs/core, @nestjs/common, @nestjs/platform-express, @nestjs/config, @nestjs/terminus, @nestjs/testing, reflect-metadata, rxjs, helmet, jose, unplugin-swc, @swc/core, supertest, @types/supertest, @types/express |
+| Where             | Packages                                                                                                                                                                                                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| root (dev)        | turbo, typescript, @types/node, eslint, @eslint/js, typescript-eslint, eslint-plugin-react-hooks, @next/eslint-plugin-next, prettier, prettier-plugin-tailwindcss, vitest, supabase, shadcn                                                                   |
+| `packages/core`   | zod                                                                                                                                                                                                                                                           |
+| `packages/ui`     | react, react-dom, @types/react, @types/react-dom, @base-ui/react, class-variance-authority, clsx, tailwind-merge, lucide-react, tw-animate-css, tailwindcss, @fontsource-variable/plus-jakarta-sans, @testing-library/react, @testing-library/jest-dom, jsdom |
+| `packages/data`   | @supabase/supabase-js, @supabase/ssr, @tanstack/react-query                                                                                                                                                                                                   |
+| `apps/dashboard`  | vite, @vitejs/plugin-react, @tailwindcss/vite, @tanstack/react-router, react-hook-form, @hookform/resolvers                                                                                                                                                   |
+| `apps/storefront` | next, @tailwindcss/postcss                                                                                                                                                                                                                                    |
+| `apps/api`        | @nestjs/core, @nestjs/common, @nestjs/platform-express, @nestjs/config, @nestjs/terminus, @nestjs/testing, reflect-metadata, rxjs, helmet, jose, unplugin-swc, @swc/core, supertest, @types/supertest, @types/express                                         |
 
 A package already listed (react, zod, @supabase/supabase-js for the seed script, @smartapp/*) may be added to other workspaces too; it does not count again.

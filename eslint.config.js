@@ -1,7 +1,7 @@
-import js from '@eslint/js'
-import nextPlugin from '@next/eslint-plugin-next'
-import reactHooks from 'eslint-plugin-react-hooks'
-import tseslint from 'typescript-eslint'
+import js from '@eslint/js';
+import nextPlugin from '@next/eslint-plugin-next';
+import reactHooks from 'eslint-plugin-react-hooks';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
@@ -69,7 +69,11 @@ export default tseslint.config(
   },
   // CSS walls outside packages/ui (one entry)
   {
-    files: ['apps/**/*.{ts,tsx,js,jsx}', 'packages/core/**/*.{ts,tsx}', 'packages/data/**/*.{ts,tsx}'],
+    files: [
+      'apps/**/*.{ts,tsx,js,jsx}',
+      'packages/core/**/*.{ts,tsx}',
+      'packages/data/**/*.{ts,tsx}',
+    ],
     rules: {
       'no-restricted-syntax': [
         'error',
@@ -133,7 +137,12 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ['@smartapp/dashboard*', '@smartapp/storefront*', '**/dashboard/**', '**/storefront/**'],
+              group: [
+                '@smartapp/dashboard*',
+                '@smartapp/storefront*',
+                '**/dashboard/**',
+                '**/storefront/**',
+              ],
               message: 'Import wall: apps may never import each other.',
             },
           ],
@@ -160,8 +169,16 @@ export default tseslint.config(
           ],
           patterns: [
             {
-              group: ['react/*', 'react-dom/*', '@types/react*', '@supabase/*', '@smartapp/ui*', '@smartapp/data*'],
-              message: 'Import wall: packages/core may not import React, Supabase, @smartapp/ui, or @smartapp/data.',
+              group: [
+                'react/*',
+                'react-dom/*',
+                '@types/react*',
+                '@supabase/*',
+                '@smartapp/ui*',
+                '@smartapp/data*',
+              ],
+              message:
+                'Import wall: packages/core may not import React, Supabase, @smartapp/ui, or @smartapp/data.',
             },
           ],
         },
@@ -207,11 +224,12 @@ export default tseslint.config(
             },
             {
               group: ['@/features/**', '**/features/**', '../*/**'],
-              message: 'Import wall: dashboard features may not cross-import. Shared code goes in apps/dashboard/src/app/.',
+              message:
+                'Import wall: dashboard features may not cross-import. Shared code goes in apps/dashboard/src/app/.',
             },
           ],
         },
       ],
     },
   },
-)
+);

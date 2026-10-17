@@ -35,4 +35,4 @@ export const words = {
     invalidInput: 'Please check the information you entered and try again.',
     unknown: 'Something went wrong on our end. Please try again.',
   },
-} as const
+} as const;

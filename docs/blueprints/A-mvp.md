@@ -4,15 +4,15 @@ Goal: the first paying shops, as fast as possible. Base rules: `foundation.md`.
 
 ## 1. What ships
 
-| Area | In the MVP |
-| --- | --- |
-| Storefront | Shop home, menu with search, item sheet, cart, checkout, receipt with live status and payment proof, my orders, member account with stamp card, install as an app |
-| Order types | Walk-in, pickup (now, or a time today or tomorrow), delivery (zones with a fee); each one an owner switch |
-| Payments | Cash, cash on delivery, GCash, Maya, bank with uploaded proof; the owner checks proofs by hand |
-| Members | Guest checkout; join with a 6-digit email code; 1 welcome stamp; stamps on completed paid orders; reward (discount, free item or custom prize) |
-| Dashboard | Home, orders board and detail, products and categories, customers and members, basic reports, settings (look, info, hours, order types, payments, stamps) |
-| Platform | Owner sign-up creates a pending shop; the founder approves |
-| Price | ₱599 or ₱799 per shop per month (open) |
+| Area        | In the MVP                                                                                                                                                        |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storefront  | Shop home, menu with search, item sheet, cart, checkout, receipt with live status and payment proof, my orders, member account with stamp card, install as an app |
+| Order types | Walk-in, pickup (now, or a time today or tomorrow), delivery (zones with a fee); each one an owner switch                                                         |
+| Payments    | Cash, cash on delivery, GCash, Maya, bank with uploaded proof; the owner checks proofs by hand                                                                    |
+| Members     | Guest checkout; join with a 6-digit email code; 1 welcome stamp; stamps on completed paid orders; reward (discount, free item or custom prize)                    |
+| Dashboard   | Home, orders board and detail, products and categories, customers and members, basic reports, settings (look, info, hours, order types, payments, stamps)         |
+| Platform    | Owner sign-up creates a pending shop; the founder approves                                                                                                        |
+| Price       | ₱599 or ₱799 per shop per month (open)                                                                                                                            |
 
 Not in the MVP (Blueprint B): POS, shifts, kitchen screen, staff and roles, promos, dine-in QR, shipping, advance orders, push announcements, full reports, admin screens, custom domains, online payments, native app.
 
@@ -25,14 +25,14 @@ Not in the MVP (Blueprint B): POS, shifts, kitchen screen, staff and roles, prom
 
 ## 3. Phases
 
-| Phase | What | Done when |
-| --- | --- | --- |
-| 0 Foundation | T01: monorepo, docs, auth migration, demo accounts, login and sign up, blank "dashboard" and "storefront" pages | Each demo owner can log in; CI green |
-| 1 Kit and shell | Install planned components, `/kit` page, tokens, app shells for both apps, mock data for the 5 demo shops | Both shells work on phone and desktop with mock data |
-| 2 Storefront screens (mock) | One screen per task, in the order of section 1 | Every screen and state visible with all 5 shops |
-| 3 Dashboard screens (mock) | One screen per task | Owner can do every MVP job on mock data |
-| 4 Backend, area by area | For each area: migration (RLS, grants, SQL functions), Nest module, switch the adapter to `api` | The area works on the dev database; mocks still pass the same tests |
-| 5 Launch | Prod Supabase, Railway, Vercel domains, Resend, privacy page, proof deletion job, audit and fixes | Acceptance list below passes on a real phone |
+| Phase                       | What                                                                                                            | Done when                                                           |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 0 Foundation                | T01: monorepo, docs, auth migration, demo accounts, login and sign up, blank "dashboard" and "storefront" pages | Each demo owner can log in; CI green                                |
+| 1 Kit and shell             | Install planned components, `/kit` page, tokens, app shells for both apps, mock data for the 5 demo shops       | Both shells work on phone and desktop with mock data                |
+| 2 Storefront screens (mock) | One screen per task, in the order of section 1                                                                  | Every screen and state visible with all 5 shops                     |
+| 3 Dashboard screens (mock)  | One screen per task                                                                                             | Owner can do every MVP job on mock data                             |
+| 4 Backend, area by area     | For each area: migration (RLS, grants, SQL functions), Nest module, switch the adapter to `api`                 | The area works on the dev database; mocks still pass the same tests |
+| 5 Launch                    | Prod Supabase, Railway, Vercel domains, Resend, privacy page, proof deletion job, audit and fixes               | Acceptance list below passes on a real phone                        |
 
 Area order in phase 4: shops and settings, catalog, orders and payments, members and stamps, reports.
 

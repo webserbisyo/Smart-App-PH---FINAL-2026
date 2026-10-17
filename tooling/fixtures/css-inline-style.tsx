@@ -1,3 +1,3 @@
 export function BadInlineStyle() {
-  return <div style={{ color: 'red' }}>test</div>
+  return <div style={{ color: 'red' }}>test</div>;
 }

@@ -4,12 +4,12 @@ Read for every screen task. General rules only; each screen's prompt names its c
 
 ## 1. Responsive plan
 
-| Width | Dashboard nav | Storefront nav | Content |
-| --- | --- | --- | --- |
-| Phone < 768 px | Bottom dock: Home · Orders · Products · Customers · More (sheet with Reports, Settings). Top bar: title, Back on sub-pages, bell, avatar | Bottom tabs: Home · Menu/Products · Rewards · Orders (Account opens from the avatar; Rewards hidden when the stamp card is off). Cart bar floats above the tabs | One column, 16 px gutters |
-| Tablet 768 to 1023 px | Icon rail 72 px (sidebar collapsed); the toggle opens it over the page | Bottom tabs stay (still a touch device) | Two columns where it helps (orders board 2 to 3 columns) |
-| Laptop 1024 to 1279 px | Sidebar 248 px, collapsible to the rail, choice remembered | Top navigation; item opens as a dialog, cart as a right drawer | Board 4 columns |
-| Desktop ≥ 1280 px | Same sidebar; optional side panel (order detail next to the board) | Same, plus a sticky 360 px cart column; content max 1120 px | `PageBody` widths: full 1600, wide 1280, settings 880, form 720, narrow 480 |
+| Width                  | Dashboard nav                                                                                                                            | Storefront nav                                                                                                                                                  | Content                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Phone < 768 px         | Bottom dock: Home · Orders · Products · Customers · More (sheet with Reports, Settings). Top bar: title, Back on sub-pages, bell, avatar | Bottom tabs: Home · Menu/Products · Rewards · Orders (Account opens from the avatar; Rewards hidden when the stamp card is off). Cart bar floats above the tabs | One column, 16 px gutters                                                   |
+| Tablet 768 to 1023 px  | Icon rail 72 px (sidebar collapsed); the toggle opens it over the page                                                                   | Bottom tabs stay (still a touch device)                                                                                                                         | Two columns where it helps (orders board 2 to 3 columns)                    |
+| Laptop 1024 to 1279 px | Sidebar 248 px, collapsible to the rail, choice remembered                                                                               | Top navigation; item opens as a dialog, cart as a right drawer                                                                                                  | Board 4 columns                                                             |
+| Desktop ≥ 1280 px      | Same sidebar; optional side panel (order detail next to the board)                                                                       | Same, plus a sticky 360 px cart column; content max 1120 px                                                                                                     | `PageBody` widths: full 1600, wide 1280, settings 880, form 720, narrow 480 |
 
 - One nav per device: never a dock and a sidebar at the same time.
 - Breakpoints by width; input sizes by pointer (`pointer: coarse` gets 44 px targets and 16 px text).
@@ -53,6 +53,7 @@ Loading skeleton · empty with one line and one action · error with Try again �
 ## 6. Screen notes (rules, not components)
 
 **Storefront**
+
 - Home: banners (up to 3), announcement, reward card or "Join and get 1 free stamp", categories, best sellers, About, hours and contact. A closed shop says so and add buttons say why.
 - Menu: sticky search and categories; "+" adds at once when there is one variant and no required add-ons, otherwise opens the item; sold-out items stay, greyed; `?item=<id>` opens an item.
 - Item: required choices first; a missing one scrolls to it and the button says what to choose; note up to 120 characters.
@@ -62,6 +63,7 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - Account: 6-digit code with a 60 s resend timer; stamp card; confetti once when a reward is ready.
 
 **Dashboard**
+
 - Owner auth: narrow card, show/hide password, reset by code (no links), Setup, Pending and Suspended screens. Shop status re-checked every 30 s and on focus.
 - Orders: open-order count in the nav and tab title; "Turn on order sound" until the first tap; order age amber at 10 min, red at 20; one next-step button from core `nextActions()`; Cancel needs a reason.
 - Order detail: proof zoom, reference with Copy, "Check this reference in your own GCash app", Approve or Reject with a reason.

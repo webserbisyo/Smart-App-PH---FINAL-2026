@@ -4,12 +4,12 @@ The single list of UI parts we have. Check here before building anything. Update
 
 ## Libraries (chosen)
 
-| Library | Use for | Install |
-| --- | --- | --- |
-| shadcn/ui on Base UI (style `base-nova`) | Primitives and blocks | `pnpm exec shadcn add <name>` |
-| ReUI | Richer parts (data grid, file upload, timeline...) | `pnpm exec shadcn add @reui/<name>` |
-| DiceUI | Specialised inputs and widgets (cropper, sortable, rating...) | `pnpm exec shadcn add @diceui/<name>` |
-| Magic UI | Small delights only, never on core flows | `pnpm exec shadcn add @magicui/<name>` |
+| Library                                  | Use for                                                       | Install                                |
+| ---------------------------------------- | ------------------------------------------------------------- | -------------------------------------- |
+| shadcn/ui on Base UI (style `base-nova`) | Primitives and blocks                                         | `pnpm exec shadcn add <name>`          |
+| ReUI                                     | Richer parts (data grid, file upload, timeline...)            | `pnpm exec shadcn add @reui/<name>`    |
+| DiceUI                                   | Specialised inputs and widgets (cropper, sortable, rating...) | `pnpm exec shadcn add @diceui/<name>`  |
+| Magic UI                                 | Small delights only, never on core flows                      | `pnpm exec shadcn add @magicui/<name>` |
 
 The shadcn CLI is an exact root devDependency, so every install uses the same pinned version. Icons: lucide. Charts: shadcn chart (Recharts), lazy-loaded. Each task's prompt names the components it needs; nothing is installed ahead of time.
 
@@ -30,9 +30,14 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 
 ## Installed
 
-| Component | Library | Path | Used in | Added |
-| --- | --- | --- | --- | --- |
-| _(empty until T01)_ | | | | |
+| Component   | Library            | Path                                       | Used in                  | Added |
+| ----------- | ------------------ | ------------------------------------------ | ------------------------ | ----- |
+| `button`    | shadcn (base-nova) | `packages/ui/src/components/button.tsx`    | login-01, signup-01, kit | T01   |
+| `card`      | shadcn (base-nova) | `packages/ui/src/components/card.tsx`      | login-01, signup-01, kit | T01   |
+| `field`     | shadcn (base-nova) | `packages/ui/src/components/field.tsx`     | login-01, signup-01, kit | T01   |
+| `input`     | shadcn (base-nova) | `packages/ui/src/components/input.tsx`     | login-01, signup-01, kit | T01   |
+| `label`     | shadcn (base-nova) | `packages/ui/src/components/label.tsx`     | login-01, signup-01, kit | T01   |
+| `separator` | shadcn (base-nova) | `packages/ui/src/components/separator.tsx` | login-01, signup-01, kit | T01   |
 
 ## The `/kit` page
 

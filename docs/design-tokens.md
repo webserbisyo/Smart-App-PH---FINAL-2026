@@ -6,24 +6,25 @@ One file: `packages/ui/src/styles/tokens.css` (Tailwind v4 `@theme`, OKLCH). It 
 
 `background`, `foreground`, `card`, `popover`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `border`, `input`, `ring`, `sidebar-*`, `chart-1..5`. Start from shadcn `neutral`, then set:
 
-| Token | Meaning | Light start | Dark start |
-| --- | --- | --- | --- |
+| Token     | Meaning                                                | Light start            | Dark start             |
+| --------- | ------------------------------------------------------ | ---------------------- | ---------------------- |
 | `primary` | Main action (one filled button per screen), brand blue | `oklch(0.52 0.16 255)` | `oklch(0.70 0.14 255)` |
-| `accent` | Hover and selected surfaces, neutral grey | shadcn default | shadcn default |
-| `ring` | Focus ring | same as `primary` | same as `primary` |
+| `accent`  | Hover and selected surfaces, neutral grey              | shadcn default         | shadcn default         |
+| `ring`    | Focus ring                                             | same as `primary`      | same as `primary`      |
 
 ## Meaning colours (fixed, never follow a shop's brand)
 
-| Token | Use only for | Light start | Dark start |
-| --- | --- | --- | --- |
-| `success` | Paid, done, open now | `oklch(0.53 0.14 150)` | `oklch(0.72 0.17 150)` |
-| `warning` | Needs attention, waiting for proof, low stock | `oklch(0.60 0.15 70)` | `oklch(0.78 0.15 75)` |
-| `destructive` | Cancelled, rejected, delete | `oklch(0.58 0.21 27)` | `oklch(0.65 0.20 25)` |
-| `info` | Neutral notices, in progress | `oklch(0.50 0.12 243)` | `oklch(0.72 0.12 240)` |
-| `member` | Stamps, rewards, member badges (teal green) | `oklch(0.55 0.11 175)` | `oklch(0.78 0.13 172)` |
-| `highlight` | Celebration only (reward ready, order placed); marigold | `oklch(0.78 0.16 72)` | `oklch(0.78 0.16 72)` |
+| Token         | Use only for                                            | Light start            | Dark start             |
+| ------------- | ------------------------------------------------------- | ---------------------- | ---------------------- |
+| `success`     | Paid, done, open now                                    | `oklch(0.53 0.14 150)` | `oklch(0.72 0.17 150)` |
+| `warning`     | Needs attention, waiting for proof, low stock           | `oklch(0.60 0.15 70)`  | `oklch(0.78 0.15 75)`  |
+| `destructive` | Cancelled, rejected, delete                             | `oklch(0.58 0.21 27)`  | `oklch(0.65 0.20 25)`  |
+| `info`        | Neutral notices, in progress                            | `oklch(0.50 0.12 243)` | `oklch(0.72 0.12 240)` |
+| `member`      | Stamps, rewards, member badges (teal green)             | `oklch(0.55 0.11 175)` | `oklch(0.78 0.13 172)` |
+| `highlight`   | Celebration only (reward ready, order placed); marigold | `oklch(0.78 0.16 72)`  | `oklch(0.78 0.16 72)`  |
 
 Each meaning colour also gets:
+
 - `-foreground`: text on the solid colour.
 - `-hover`: the solid colour on hover.
 - `-text`: coloured text on a card or the page (plain `text-success` on white fails contrast).
@@ -35,36 +36,36 @@ Also: `faint-foreground`, `border-strong`, `overlay` (scrim behind sheets), `ske
 
 The owner picks one colour (default `#2456D3`, presets, or "use logo colour"). `shopPalette()` in core makes a 60/30/10 palette, set on the shop layout at runtime through `cssVars()`:
 
-| Variable | Use | Rule |
-| --- | --- | --- |
-| `--shop-60` | Page background | brand hue, L 0.975, C 0.012 |
-| `--shop-30` | Surfaces, top bar, cards | brand hue, L 0.995, C 0.004 |
-| `--shop-10` | Main button, active tab, highlights | brand colour darkened until white text reaches 4.5:1; if it can't, black text |
-| `--shop-10-foreground` | Text on `--shop-10` | white or black, from the check |
-| `--shop-10-soft` | Chips, selected rows | L 0.93 |
-| `--shop-10-hover` | Hover of `--shop-10` | 10 minus 0.06 L |
+| Variable               | Use                                 | Rule                                                                          |
+| ---------------------- | ----------------------------------- | ----------------------------------------------------------------------------- |
+| `--shop-60`            | Page background                     | brand hue, L 0.975, C 0.012                                                   |
+| `--shop-30`            | Surfaces, top bar, cards            | brand hue, L 0.995, C 0.004                                                   |
+| `--shop-10`            | Main button, active tab, highlights | brand colour darkened until white text reaches 4.5:1; if it can't, black text |
+| `--shop-10-foreground` | Text on `--shop-10`                 | white or black, from the check                                                |
+| `--shop-10-soft`       | Chips, selected rows                | L 0.93                                                                        |
+| `--shop-10-hover`      | Hover of `--shop-10`                | 10 minus 0.06 L                                                               |
 
 Prices stay in the text colour, never the brand colour. Status and member colours never follow the brand.
 
 ## Order status tones
 
-| Status | Tone | Icon idea (lucide) |
-| --- | --- | --- |
-Amber means "it needs you".
+| Status                      | Tone | Icon idea (lucide) |
+| --------------------------- | ---- | ------------------ |
+| Amber means "it needs you". |
 
-| Status | Tone | Icon idea (lucide) |
-| --- | --- | --- |
-| Placed (new), out for delivery | `info` | `bell`, `bike` |
-| Preparing | `warning` | `chef-hat` |
-| Ready, completed | `success` | `check` |
-| Cancelled, late | `destructive` | `x-circle`, `alarm-clock` |
-| Expired | `muted` | `clock` |
+| Status                         | Tone          | Icon idea (lucide)        |
+| ------------------------------ | ------------- | ------------------------- |
+| Placed (new), out for delivery | `info`        | `bell`, `bike`            |
+| Preparing                      | `warning`     | `chef-hat`                |
+| Ready, completed               | `success`     | `check`                   |
+| Cancelled, late                | `destructive` | `x-circle`, `alarm-clock` |
+| Expired                        | `muted`       | `clock`                   |
 
-| Payment | Tone | Words |
-| --- | --- | --- |
-| Unpaid | `muted` | "Unpaid" (COD: "Pay on delivery") |
-| Pending | `warning` | "To verify" |
-| Paid | `success` | "Paid" |
+| Payment | Tone      | Words                             |
+| ------- | --------- | --------------------------------- |
+| Unpaid  | `muted`   | "Unpaid" (COD: "Pay on delivery") |
+| Pending | `warning` | "To verify"                       |
+| Paid    | `success` | "Paid"                            |
 
 The mapping lives once in `packages/core` (`STATUS_TONE`) and is used by every badge.
 

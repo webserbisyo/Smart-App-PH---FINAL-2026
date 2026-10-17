@@ -1,3 +1,3 @@
 // Fixture: core importing UI
-import { Button } from '@smartapp/ui'
-console.log(Button)
+import { Button } from '@smartapp/ui';
+console.log(Button);
