@@ -30,14 +30,33 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 
 ## Installed
 
-| Component   | Library            | Path                                       | Used in                  | Added |
-| ----------- | ------------------ | ------------------------------------------ | ------------------------ | ----- |
-| `button`    | shadcn (base-nova) | `packages/ui/src/components/button.tsx`    | login-01, signup-01, kit | T01   |
-| `card`      | shadcn (base-nova) | `packages/ui/src/components/card.tsx`      | login-01, signup-01, kit | T01   |
-| `field`     | shadcn (base-nova) | `packages/ui/src/components/field.tsx`     | login-01, signup-01, kit | T01   |
-| `input`     | shadcn (base-nova) | `packages/ui/src/components/input.tsx`     | login-01, signup-01, kit | T01   |
-| `label`     | shadcn (base-nova) | `packages/ui/src/components/label.tsx`     | login-01, signup-01, kit | T01   |
-| `separator` | shadcn (base-nova) | `packages/ui/src/components/separator.tsx` | login-01, signup-01, kit | T01   |
+| Component           | Library            | Path                                           | Used in                  | Added |
+| ------------------- | ------------------ | ---------------------------------------------- | ------------------------ | ----- |
+| `avatar`            | shadcn (base-nova) | `packages/ui/src/components/avatar.tsx`        | sidebar, kit             | T05   |
+| `badge`             | shadcn (base-nova) | `packages/ui/src/components/badge.tsx`         | dock, sidebar, kit       | T05   |
+| `bottom-dock`       | composition        | `packages/ui/src/compositions/bottom-dock.tsx` | dashboard shell, kit     | T05   |
+| `breadcrumb`        | shadcn (base-nova) | `packages/ui/src/components/breadcrumb.tsx`    | top-bar, kit             | T05   |
+| `button`            | shadcn (base-nova) | `packages/ui/src/components/button.tsx`        | login-01, signup-01, kit | T01   |
+| `card`              | shadcn (base-nova) | `packages/ui/src/components/card.tsx`          | login-01, signup-01, kit | T01   |
+| `collapsible`       | shadcn (base-nova) | `packages/ui/src/components/collapsible.tsx`   | sidebar, kit             | T05   |
+| `drawer`            | shadcn (base-nova) | `packages/ui/src/components/drawer.tsx`        | nav-drawer, kit          | T05   |
+| `dropdown-menu`     | shadcn (base-nova) | `packages/ui/src/components/dropdown-menu.tsx` | account-menu, kit        | T05   |
+| `empty`             | shadcn (base-nova) | `packages/ui/src/components/empty.tsx`         | screens, kit             | T05   |
+| `field`             | shadcn (base-nova) | `packages/ui/src/components/field.tsx`         | login-01, signup-01, kit | T01   |
+| `input`             | shadcn (base-nova) | `packages/ui/src/components/input.tsx`         | login-01, signup-01, kit | T01   |
+| `item`              | shadcn (base-nova) | `packages/ui/src/components/item.tsx`          | settings, kit            | T05   |
+| `label`             | shadcn (base-nova) | `packages/ui/src/components/label.tsx`         | login-01, signup-01, kit | T01   |
+| `nav-drawer`        | composition        | `packages/ui/src/compositions/nav-drawer.tsx`  | dashboard shell, kit     | T05   |
+| `page-header`       | composition        | `packages/ui/src/compositions/page-header.tsx` | area screens, kit        | T05   |
+| `separator`         | shadcn (base-nova) | `packages/ui/src/components/separator.tsx`     | login-01, signup-01, kit | T01   |
+| `sheet`             | shadcn (base-nova) | `packages/ui/src/components/sheet.tsx`         | share-shop, kit          | T05   |
+| `sidebar`           | shadcn (base-nova) | `packages/ui/src/components/sidebar.tsx`       | app-sidebar, kit         | T05   |
+| `skeleton`          | shadcn (base-nova) | `packages/ui/src/components/skeleton.tsx`      | kit                      | T05   |
+| `tabs`              | shadcn (base-nova) | `packages/ui/src/components/tabs.tsx`          | page-header, kit         | T05   |
+| `tooltip`           | shadcn (base-nova) | `packages/ui/src/components/tooltip.tsx`       | sidebar, kit             | T05   |
+| `use-form-factor`   | hook               | `packages/ui/src/hooks/use-form-factor.ts`     | shell, responsive, kit   | T05   |
+| `use-keyboard-open` | hook               | `packages/ui/src/hooks/use-keyboard-open.ts`   | bottom-dock, kit         | T05   |
+| `use-mobile`        | hook               | `packages/ui/src/hooks/use-mobile.ts`          | sidebar, kit             | T05   |
 
 ## The `/kit` page
 

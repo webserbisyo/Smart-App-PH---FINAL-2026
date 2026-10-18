@@ -17,6 +17,8 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     kind: 'food',
     ownerName: 'Paolo Reyes',
     ownerEmail: 'morales.juanmiguel0729+burger@gmail.com',
+    city: 'Marikina',
+    brandColor: '#D7372F',
   },
   {
     slug: 'aqualinis',
@@ -24,6 +26,8 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     kind: 'retail',
     ownerName: 'Ramon Dizon',
     ownerEmail: 'morales.juanmiguel0729+water@gmail.com',
+    city: 'Las Piñas',
+    brandColor: '#0E7AC4',
   },
   {
     slug: 'tala-apparel',
@@ -31,6 +35,8 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     kind: 'retail',
     ownerName: 'Bea Villanueva',
     ownerEmail: 'morales.juanmiguel0729+tala@gmail.com',
+    city: 'Cebu City',
+    brandColor: '#2E3A87',
   },
   {
     slug: 'kape-juan',
@@ -38,6 +44,8 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     kind: 'food',
     ownerName: 'Juan Santos',
     ownerEmail: 'morales.juanmiguel0729+cafe@gmail.com',
+    city: 'Quezon City',
+    brandColor: '#6F4E37',
   },
   {
     slug: 'lola-remy',
@@ -45,5 +53,7 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     kind: 'food',
     ownerName: 'Carla Bautista',
     ownerEmail: 'morales.juanmiguel0729+bakery@gmail.com',
+    city: 'Malolos',
+    brandColor: '#C27C2C',
   },
 ] as const;

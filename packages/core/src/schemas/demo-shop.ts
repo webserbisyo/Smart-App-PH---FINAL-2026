@@ -10,6 +10,9 @@ export const DemoShopSummarySchema = z.object({
   kind: ShopKindEnum,
   ownerName: z.string().min(1),
   ownerEmail: z.string().email(),
+  city: z.string().min(1),
+  // Brand colour as #rrggbb; screens set it through cssVars(), never as a class.
+  brandColor: z.string().regex(/^#[0-9a-f]{6}$/i),
 });
 
 export type DemoShopSummary = z.infer<typeof DemoShopSummarySchema>;
