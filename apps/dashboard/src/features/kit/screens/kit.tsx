@@ -20,6 +20,7 @@ import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import { Separator } from '@smartapp/ui/components/separator';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
+import { ShellKitSections } from '../shell-sections.js';
 
 interface TokenSwatch {
   name: string;
@@ -288,6 +289,8 @@ export default function KitPage() {
             </div>
           </div>
         </section>
+
+        <ShellKitSections />
       </div>
     </div>
   );
