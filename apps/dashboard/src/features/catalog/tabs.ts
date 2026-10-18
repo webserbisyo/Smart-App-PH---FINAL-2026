@@ -1,26 +1,13 @@
 import { words } from '@smartapp/core';
-import type { ShopKind } from '@smartapp/core';
 import type { NavItem } from '@smartapp/ui/lib/nav';
+import { usePathTabs, type PathTab } from '@/app/tabs';
 
-export function getCatalogTabs(kind: ShopKind, activePath: string): NavItem[] {
-  return [
-    {
-      id: 'catalog-items',
-      label: words.screens.catalog.tabItems(kind),
-      href: '/catalog',
-      isActive: activePath === '/catalog',
-    },
-    {
-      id: 'catalog-categories',
-      label: words.screens.catalog.tabCategories,
-      href: '/catalog/categories',
-      isActive: activePath === '/catalog/categories',
-    },
-    {
-      id: 'catalog-addons',
-      label: words.screens.catalog.tabAddOns,
-      href: '/catalog/add-ons',
-      isActive: activePath === '/catalog/add-ons',
-    },
-  ];
+const CATALOG_TABS: readonly PathTab[] = [
+  { id: 'items', label: words.screens.catalog.tabItems, to: '/catalog' },
+  { id: 'categories', label: words.screens.catalog.tabCategories, to: '/catalog/categories' },
+  { id: 'add-ons', label: words.screens.catalog.tabAddOns, to: '/catalog/add-ons' },
+];
+
+export function useCatalogTabs(): NavItem[] {
+  return usePathTabs(CATALOG_TABS);
 }

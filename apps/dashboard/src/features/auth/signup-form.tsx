@@ -21,8 +21,8 @@ import {
 } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { cn } from '@smartapp/ui/lib/utils';
-import { supabase } from '../../../app/supabase.js';
-import { useOnlineStatus } from '../../../app/use-online-status.js';
+import { supabase } from '@/app/supabase';
+import { useOnlineStatus } from '@/app/use-online-status';
 
 export function SignupForm({ className, ...props }: React.ComponentProps<'div'>) {
   const navigate = useNavigate();

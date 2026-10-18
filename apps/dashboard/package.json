@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",
@@ -29,6 +30,7 @@
     "@vitejs/plugin-react": "6.1.2",
     "tailwindcss": "4.3.3",
     "typescript": "catalog:",
-    "vite": "8.3.4"
+    "vite": "8.3.4",
+    "vitest": "catalog:"
   }
 }

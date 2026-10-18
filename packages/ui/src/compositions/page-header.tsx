@@ -17,7 +17,9 @@ export function PageHeader({ title, actions, tabs, tabsLabel }: PageHeaderProps)
   return (
     <header data-slot="page-header" className="flex flex-col gap-3 px-4 pt-4 md:px-6 md:pt-6">
       <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
-        <h1 className="min-w-0 text-2xl font-semibold tracking-tight break-words">{title}</h1>
+        <h1 className="min-w-0 text-2xl font-semibold tracking-tight break-words shell-phone:sr-only">
+          {title}
+        </h1>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
       </div>
       {tabs && tabs.length > 0 ? (
