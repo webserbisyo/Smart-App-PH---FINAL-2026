@@ -44,8 +44,10 @@ insert into auth.users (
 
 -- 1. Test that anon cannot read any profiles
 set local role anon;
-select is_empty(
+select throws_ok(
   'select * from public.profiles',
+  '42501',
+  NULL,
   'anon role cannot read any rows from profiles'
 );
 
