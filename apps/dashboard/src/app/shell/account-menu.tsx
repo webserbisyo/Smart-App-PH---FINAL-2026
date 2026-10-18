@@ -55,7 +55,12 @@ export function AccountMenu({
     <DropdownMenu>
       {placement === 'sidebar' ? (
         <DropdownMenuTrigger
-          render={<SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />}
+          render={
+            <SidebarMenuButton
+              size="lg"
+              className="aria-expanded:bg-muted tablet-rail:size-11! tablet-rail:p-1.5!"
+            />
+          }
         >
           {avatar}
           <UserLines claims={claims} />

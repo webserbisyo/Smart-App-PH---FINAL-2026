@@ -27,7 +27,7 @@ function SidebarLink({ item, withTooltip }: { item: NavItem; withTooltip: boolea
         {...(withTooltip ? { tooltip: item.label } : {})}
         render={item.link}
         aria-current={item.active ? 'page' : undefined}
-        className="h-11"
+        className="h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
       >
         {item.icon}
         <span>{item.label}</span>
@@ -66,6 +66,7 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
+              className="tablet-rail:size-11! tablet-rail:p-1.5!"
               {...(withTooltip ? { tooltip: shop.name } : {})}
               render={<Link to="/" />}
             >

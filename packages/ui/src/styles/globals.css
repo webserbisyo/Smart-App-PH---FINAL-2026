@@ -93,6 +93,9 @@
 @custom-variant shell-phone (&:where([data-shell="phone"], [data-shell="phone"] *));
 @custom-variant shell-tablet (&:where([data-shell="tablet"], [data-shell="tablet"] *));
 @custom-variant shell-desktop (&:where([data-shell="desktop"], [data-shell="desktop"] *));
+/* Items inside the collapsed sidebar on the tablet (touch) rail. Uses :is() so it
+   outranks the installed sidebar's own collapsed sizes. */
+@custom-variant tablet-rail (&:is([data-shell="tablet"] [data-collapsible="icon"] *));
 
 @utility dock-pill {
   height: var(--dock-height);

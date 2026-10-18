@@ -48,7 +48,8 @@ function Shell({ claims }: { claims: UserClaims }) {
         defaultOpen={sidebarStartsOpen()}
         style={cssVars({
           '--sidebar-width': 'var(--shell-sidebar-width)',
-          '--sidebar-width-icon': 'var(--rail-width)',
+          // Desktop keeps shadcn's 3rem icon rail; the touch rail fits 44 px targets.
+          '--sidebar-width-icon': isTablet ? 'var(--rail-width)' : undefined,
         })}
         {...(isTablet ? { open: false, onOpenChange: setMenuOpen } : {})}
       >
