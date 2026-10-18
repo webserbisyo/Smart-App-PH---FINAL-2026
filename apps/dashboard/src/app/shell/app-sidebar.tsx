@@ -27,7 +27,7 @@ function SidebarLink({ item, withTooltip }: { item: NavItem; withTooltip: boolea
         {...(withTooltip ? { tooltip: item.label } : {})}
         render={item.link}
         aria-current={item.active ? 'page' : undefined}
-        className="h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
+        className="pointer-coarse:h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
       >
         {item.icon}
         <span>{item.label}</span>
@@ -61,7 +61,7 @@ export function AppSidebar({
       collapsible={variant === 'rail' ? 'icon' : 'none'}
       className={variant === 'sheet' ? 'h-full w-full' : undefined}
     >
-      <SidebarHeader>
+      <SidebarHeader className="h-shell-header justify-center transition-all ease-linear motion-reduce:transition-none sidebar-collapsed:h-shell-header-collapsed">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

@@ -9,6 +9,7 @@ import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
 import { usePageMeta } from '../page-meta.js';
 import { ShopContext, useShop, type CurrentShop } from '../shop.js';
+import { useCoarsePointer } from '../use-coarse-pointer.js';
 import { usePageTitle } from '../use-page-title.js';
 import { storefrontUrl, useNavItems } from '../use-nav-items.js';
 import { AppSidebar } from './app-sidebar.js';
@@ -23,6 +24,7 @@ function sidebarStartsOpen(): boolean {
 function Shell({ claims }: { claims: UserClaims }) {
   const shop = useShop();
   const formFactor = useFormFactor();
+  const coarsePointer = useCoarsePointer();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const page = usePageMeta();
   const [shareOpen, setShareOpen] = useState(false);
@@ -50,7 +52,7 @@ function Shell({ claims }: { claims: UserClaims }) {
           '--sidebar-width': 'var(--shell-sidebar-width)',
           // Desktop keeps shadcn's own 3rem icon rail (the key must be absent, not
           // undefined, or it clears the sidebar's value); the touch rail fits 44 px targets.
-          ...(isTablet ? { '--sidebar-width-icon': 'var(--rail-width)' } : {}),
+          ...(isTablet && coarsePointer ? { '--sidebar-width-icon': 'var(--rail-width)' } : {}),
         })}
         {...(isTablet ? { open: false, onOpenChange: setMenuOpen } : {})}
       >

@@ -80,6 +80,9 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --spacing-shell-header: var(--shell-header-height);
+  --spacing-shell-header-collapsed: var(--shell-header-height-collapsed);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -93,9 +96,24 @@
 @custom-variant shell-phone (&:where([data-shell="phone"], [data-shell="phone"] *));
 @custom-variant shell-tablet (&:where([data-shell="tablet"], [data-shell="tablet"] *));
 @custom-variant shell-desktop (&:where([data-shell="desktop"], [data-shell="desktop"] *));
-/* Items inside the collapsed sidebar on the tablet (touch) rail. Uses :is() so it
+/* Inside a shell whose sidebar is collapsed to icons (sidebar-07 shrinks its header). */
+@custom-variant sidebar-collapsed (&:is(:where(.group\/sidebar-wrapper):has([data-collapsible="icon"]) *));
+/* Items inside the collapsed sidebar on the tablet rail, touch only. Uses :is() so it
    outranks the installed sidebar's own collapsed sizes. */
-@custom-variant tablet-rail (&:is([data-shell="tablet"] [data-collapsible="icon"] *));
+@custom-variant tablet-rail {
+  @media (pointer: coarse) {
+    &:is([data-shell='tablet'] [data-collapsible='icon'] *) {
+      @slot;
+    }
+  }
+}
+
+/* The touch rail is wider (44 px targets), so the collapsed header matches it. */
+@media (pointer: coarse) {
+  [data-shell='tablet'] {
+    --shell-header-height-collapsed: var(--rail-width);
+  }
+}
 
 @utility dock-pill {
   height: var(--dock-height);

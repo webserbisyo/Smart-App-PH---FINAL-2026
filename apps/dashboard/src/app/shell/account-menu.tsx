@@ -45,11 +45,17 @@ export function AccountMenu({
   placement: 'sidebar' | 'top-bar';
 }) {
   const navigate = useNavigate();
-  const avatar = (
-    <Avatar>
-      <AvatarFallback>{userInitials(claims)}</AvatarFallback>
-    </Avatar>
-  );
+  // Sidebar-07 uses size-8 rounded-lg for the account avatar; the phone top bar is round.
+  const avatar =
+    placement === 'sidebar' ? (
+      <Avatar className="rounded-lg after:rounded-lg">
+        <AvatarFallback className="rounded-lg">{userInitials(claims)}</AvatarFallback>
+      </Avatar>
+    ) : (
+      <Avatar>
+        <AvatarFallback>{userInitials(claims)}</AvatarFallback>
+      </Avatar>
+    );
 
   return (
     <DropdownMenu>

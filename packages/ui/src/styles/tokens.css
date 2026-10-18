@@ -80,6 +80,9 @@
   --dock-max-width: 27.5rem;
   --rail-width: 3.75rem;
   --shell-sidebar-width: 15.5rem;
+  /* Top bar and sidebar header share these (sidebar-07: h-16, h-12 when collapsed). */
+  --shell-header-height: 4rem;
+  --shell-header-height-collapsed: 3rem;
 
   --radius: 0.625rem;
 }

@@ -52,19 +52,22 @@ export function TopBar({
 
   const crumbs = page.parent ? [page.parent] : [];
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b border-border bg-background px-4">
+    <header className="sticky top-0 z-20 box-content flex h-shell-header shrink-0 items-center gap-2 border-b border-border bg-background px-4 transition-all ease-linear motion-reduce:transition-none sidebar-collapsed:h-shell-header-collapsed">
       {formFactor === 'tablet' ? (
         <Button
           variant="ghost"
-          size="icon"
-          className="size-11"
+          size="icon-sm"
+          className="-ml-1 pointer-coarse:size-11"
           aria-label={words.shell.toggleSidebar}
           onClick={onOpenMenu}
         >
           <PanelLeftIcon />
         </Button>
       ) : (
-        <SidebarTrigger className="size-11" aria-label={words.shell.toggleSidebar} />
+        <SidebarTrigger
+          className="-ml-1 pointer-coarse:size-11"
+          aria-label={words.shell.toggleSidebar}
+        />
       )}
       <Separator orientation="vertical" className="mr-2 h-4 self-center" />
       <Breadcrumb className="min-w-0">
