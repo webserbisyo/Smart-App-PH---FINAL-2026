@@ -4,7 +4,7 @@ Tokens are defined as plain CSS variables in `:root` and `.dark` in `packages/ui
 
 ## Base (shadcn names)
 
-`background`, `foreground`, `card`, `popover`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `border`, `input`, `ring`, `sidebar-*`, `chart-1..5`. Start from shadcn `neutral`, then set:
+`background`, `foreground`, `card`, `popover`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `border`, `input`, `ring`, `sidebar-*`, `chart-1..5`. The `sidebar-*` tokens point at existing ones (`card`, `primary`, `accent`, `border`, `ring`) in light and dark, so the sidebar has no colours of its own. Start from shadcn `neutral`, then set:
 
 | Token     | Meaning                                                | Light start            | Dark start             |
 | --------- | ------------------------------------------------------ | ---------------------- | ---------------------- |
@@ -77,13 +77,13 @@ The mapping lives once in `packages/core` (`STATUS_TONE`) and is used by every b
 - Radius: shadcn default scale with `--radius: 0.625rem` in `:root` and mapped in `@theme inline` (`--radius-sm: calc(var(--radius) * 0.6)`, `--radius-md: calc(var(--radius) * 0.8)`, `--radius-lg: var(--radius)`, `--radius-xl: calc(var(--radius) * 1.4)`); chips and pills fully round.
 - Elevation: `--elevation-xs..lg` (shadcn shadow scale). In dark mode a lighter surface plus a 1 px edge instead of a darker shadow.
 - Layers (z-index, lowest first): content, sticky bars, basket bar, dock, sheet and dialog, toast.
-- Shell sizes: top bar 56 px phone / 64 px desktop; dock 64 px, 12 px from the edges, max 440 px wide; rail 72 px; sidebar 248 px.
+- Shell sizes (in `tokens.css`): top bar 56 px phone / 64 px desktop; dock `--dock-height` 4rem (64 px), `--dock-offset` 0.75rem (12 px) above the safe area, 1rem from each side, max `--dock-max-width` 27.5rem (440 px); rail `--rail-width` 4.5rem (72 px); sidebar `--shell-sidebar-width` 15.5rem (248 px). The installed sidebar sets its own `--sidebar-width` and `--sidebar-width-icon` inline, so the dashboard shell passes `--sidebar-width: var(--shell-sidebar-width)` and `--sidebar-width-icon: var(--rail-width)` to `SidebarProvider` through `cssVars()`.
 - Motion: fast 120 ms (buttons), base 200 ms (page enter), slow 300 ms (sheets); exits 0.75 of the entrance; ease `cubic-bezier(0.2, 0, 0, 1)`. Page enter fades and rises 8 px; list stagger 40 ms on the first 6 items only; press scales to 0.98. Nothing over 400 ms. Under `prefers-reduced-motion`: opacity only, no confetti. Confetti only when a reward is ready, once.
 - Light and dark for the dashboard; storefront light only.
 
 ## Variants and utilities (in `globals.css`)
 
-Named variants instead of brackets: `keyboard-open:`, `pointer-coarse:`, `hover-hover:`. Shared utilities: `pressable` (scale 0.98, `touch-action: manipulation`), `tabular`, `pt-safe` / `pb-safe`, `pb-dock`, `scrollbar-none`. A new one-off style becomes a utility here, not an arbitrary value.
+Named variants instead of brackets: `keyboard-open:` (`data-keyboard="open"`), `shell-phone:` / `shell-tablet:` / `shell-desktop:` (`data-shell` on the shell root), `pointer-coarse:`, `hover-hover:`; nav links carry `data-active`, so active styles use `data-active:`. Shared utilities: `pressable` (scale 0.98, `touch-action: manipulation`), `tabular`, `pt-safe` / `pb-safe`, `pb-dock` (room for the dock plus the safe area), `dock-pill` (dock height, max width and bottom offset), `scrollbar-none`. A new one-off style becomes a utility here, not an arbitrary value.
 
 ## Contrast test
 

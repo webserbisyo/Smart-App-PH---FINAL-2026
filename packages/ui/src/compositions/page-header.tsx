@@ -1,110 +1,53 @@
-import * as React from 'react';
-import { cn } from 'cn';
-import type { NavItem } from '../lib/nav';
+import type { ReactNode } from 'react';
+import { Badge } from '@smartapp/ui/components/badge';
+import { Tabs, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
+import { countLabel, type NavItem } from '../lib/nav';
 
 export interface PageHeaderProps {
   title: string;
-  description?: string | undefined;
-  actions?: React.ReactNode | undefined;
+  actions?: ReactNode | undefined;
+  // Tabs are links: the URL decides which one is active.
   tabs?: readonly NavItem[] | undefined;
-  className?: string | undefined;
+  tabsLabel?: string | undefined;
 }
 
-export function PageHeader({ title, description, actions, tabs, className }: PageHeaderProps) {
+export function PageHeader({ title, actions, tabs, tabsLabel }: PageHeaderProps) {
+  const activeTab = tabs?.find((tab) => tab.active)?.id ?? null;
+
   return (
-    <header
-      data-slot="page-header"
-      className={cn('flex flex-col gap-4 border-b border-border bg-background pb-0', className)}
-    >
-      <div className="flex flex-col gap-4 px-4 pt-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-            {title}
-          </h1>
-          {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
-        </div>
-
-        {actions && (
-          <div className="flex shrink-0 items-center gap-2 self-start sm:self-center">
-            {actions}
-          </div>
-        )}
+    <header data-slot="page-header" className="flex flex-col gap-3 px-4 pt-4 md:px-6 md:pt-6">
+      <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
+        <h1 className="min-w-0 text-2xl font-semibold tracking-tight break-words">{title}</h1>
+        {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
       </div>
-
-      {tabs && tabs.length > 0 && (
-        <nav
-          aria-label="Section tabs"
-          data-slot="page-header-tabs"
-          className="scrollbar-none flex gap-2 overflow-x-auto px-4 sm:px-6"
-        >
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = Boolean(tab.isActive);
-            const ariaCurrent = isActive ? 'page' : undefined;
-
-            const tabClassName = cn(
-              'group relative flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-medium transition-colors pressable',
-              isActive
-                ? 'border-primary text-foreground font-semibold'
-                : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
-              tab.disabled && 'pointer-events-none opacity-40',
-            );
-
-            const content = (
-              <>
-                {Icon && <Icon className="size-4 shrink-0" />}
-                <span>{tab.label}</span>
-                {typeof tab.badge === 'number' && tab.badge > 0 && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-semibold text-muted-foreground tabular group-aria-[current=page]:bg-primary/10 group-aria-[current=page]:text-primary">
-                    {tab.badge}
-                  </span>
-                )}
-              </>
-            );
-
-            if (tab.renderLink) {
-              return (
-                <React.Fragment key={tab.id}>
-                  {tab.renderLink({
-                    href: tab.href,
-                    className: tabClassName,
-                    'aria-current': ariaCurrent,
-                    onClick: tab.onClick,
-                    children: content,
-                  })}
-                </React.Fragment>
-              );
-            }
-
-            if (tab.onClick) {
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={tab.onClick}
-                  disabled={tab.disabled}
-                  className={tabClassName}
-                  aria-current={ariaCurrent}
-                >
-                  {content}
-                </button>
-              );
-            }
-
-            return (
-              <a
+      {tabs && tabs.length > 0 ? (
+        <Tabs value={activeTab}>
+          <TabsList
+            variant="line"
+            aria-label={tabsLabel ?? title}
+            className="scrollbar-none w-full justify-start overflow-x-auto group-data-horizontal/tabs:h-11"
+          >
+            {tabs.map((tab) => (
+              <TabsTrigger
                 key={tab.id}
-                href={tab.href}
-                className={tabClassName}
-                aria-current={ariaCurrent}
-                aria-disabled={tab.disabled}
+                value={tab.id}
+                nativeButton={false}
+                render={tab.link}
+                aria-current={tab.active ? 'page' : undefined}
+                className="h-11 flex-none px-3"
               >
-                {content}
-              </a>
-            );
-          })}
-        </nav>
-      )}
+                {tab.icon}
+                {tab.label}
+                {tab.count !== undefined && tab.count > 0 ? (
+                  <Badge variant="secondary" className="tabular">
+                    {countLabel(tab.count)}
+                  </Badge>
+                ) : null}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      ) : null}
     </header>
   );
 }

@@ -1,99 +1,93 @@
-import * as React from 'react';
-import { cn } from 'cn';
+import { useState, type ReactNode } from 'react';
+import { EllipsisIcon } from 'lucide-react';
 import { Badge } from '@smartapp/ui/components/badge';
 import { useKeyboardOpen } from '../hooks/use-keyboard-open';
-import type { NavItem } from '../lib/nav';
+import { countLabel, useNavLink, type NavItem } from '../lib/nav';
+import { NavDrawer } from './nav-drawer';
 
 export interface BottomDockProps {
+  label: string;
+  // Up to 5 items, or 4 when `more` is set.
   items: readonly NavItem[];
-  className?: string;
-  hideOnKeyboard?: boolean;
+  more?: { label: string; items: readonly NavItem[] } | undefined;
 }
 
-export function BottomDock({ items, className, hideOnKeyboard = true }: BottomDockProps) {
-  const isKeyboardOpen = useKeyboardOpen();
+// Shared by every slot and the More button.
+export const dockSlotClass =
+  'group/slot pressable relative flex h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full text-xs font-medium text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring data-active:text-foreground';
 
-  if (hideOnKeyboard && isKeyboardOpen) {
-    return null;
-  }
+function SlotContent({
+  icon,
+  label,
+  count,
+}: {
+  icon: ReactNode;
+  label: string;
+  count?: number | undefined;
+}) {
+  return (
+    <>
+      <span className="relative flex h-7 w-12 items-center justify-center rounded-full transition-colors group-data-active/slot:bg-secondary group-data-active/slot:text-primary">
+        <span aria-hidden="true" className="flex *:size-5">
+          {icon}
+        </span>
+        {count !== undefined && count > 0 ? (
+          <Badge className="absolute -top-1 -right-2 h-4 min-w-4 px-1 tabular">
+            {countLabel(count)}
+          </Badge>
+        ) : null}
+      </span>
+      <span className="max-w-full truncate leading-tight">{label}</span>
+    </>
+  );
+}
+
+function DockSlot({ item }: { item: NavItem }) {
+  return useNavLink(item, {
+    className: dockSlotClass,
+    children: <SlotContent icon={item.icon} label={item.label} count={item.count} />,
+  });
+}
+
+// Floating pill navigation for phones. Hidden while the on-screen keyboard is
+// open; it never hides on scroll.
+export function BottomDock({ label, items, more }: BottomDockProps) {
+  const keyboardOpen = useKeyboardOpen();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreActive = more?.items.some((item) => item.active) ?? false;
 
   return (
-    <nav
-      aria-label="Bottom Navigation"
-      data-slot="bottom-dock"
-      className={cn(
-        'fixed inset-x-3 dock-pill z-30 mx-auto flex items-center justify-around rounded-full border border-border bg-card/95 px-2 shadow-lg backdrop-blur-md',
-        className,
-      )}
-    >
-      {items.map((item) => {
-        const Icon = item.icon;
-        const isActive = Boolean(item.isActive);
-        const ariaCurrent = isActive ? 'page' : undefined;
-
-        const linkClassName = cn(
-          'relative flex h-12 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-center transition-colors pressable',
-          isActive
-            ? 'text-primary font-semibold'
-            : 'text-muted-foreground hover:text-foreground active:text-foreground',
-          item.disabled && 'pointer-events-none opacity-40',
-        );
-
-        const content = (
-          <>
-            <div className="relative flex items-center justify-center">
-              {Icon && <Icon className="size-5 shrink-0" />}
-              {typeof item.badge === 'number' && item.badge > 0 && (
-                <span className="text-2xs absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-bold text-primary-foreground tabular">
-                  {item.badge > 99 ? '99+' : item.badge}
-                </span>
-              )}
-            </div>
-            <span className="text-2xs truncate leading-tight tracking-tight">{item.label}</span>
-          </>
-        );
-
-        if (item.renderLink) {
-          return (
-            <React.Fragment key={item.id}>
-              {item.renderLink({
-                href: item.href,
-                className: linkClassName,
-                'aria-current': ariaCurrent,
-                onClick: item.onClick,
-                children: content,
-              })}
-            </React.Fragment>
-          );
-        }
-
-        if (item.onClick) {
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={item.onClick}
-              disabled={item.disabled}
-              className={linkClassName}
-              aria-current={ariaCurrent}
-            >
-              {content}
-            </button>
-          );
-        }
-
-        return (
-          <a
-            key={item.id}
-            href={item.href}
-            className={linkClassName}
-            aria-current={ariaCurrent}
-            aria-disabled={item.disabled}
+    <>
+      <nav
+        aria-label={label}
+        data-slot="bottom-dock"
+        data-keyboard={keyboardOpen ? 'open' : 'closed'}
+        className="fixed inset-x-4 dock-pill z-30 mx-auto flex items-center gap-1 rounded-full border border-border bg-card px-1 shadow-lg keyboard-open:hidden"
+      >
+        {items.map((item) => (
+          <DockSlot key={item.id} item={item} />
+        ))}
+        {more ? (
+          <button
+            type="button"
+            className={dockSlotClass}
+            data-active={moreActive ? '' : undefined}
+            aria-haspopup="dialog"
+            aria-expanded={moreOpen}
+            onClick={() => setMoreOpen(true)}
           >
-            {content}
-          </a>
-        );
-      })}
-    </nav>
+            <SlotContent icon={<EllipsisIcon />} label={more.label} />
+          </button>
+        ) : null}
+      </nav>
+      {more ? (
+        <NavDrawer
+          title={more.label}
+          items={more.items}
+          open={moreOpen}
+          onOpenChange={setMoreOpen}
+        />
+      ) : null}
+    </>
   );
 }

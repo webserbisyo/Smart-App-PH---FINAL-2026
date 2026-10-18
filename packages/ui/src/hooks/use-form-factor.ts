@@ -2,23 +2,13 @@ import { useSyncExternalStore } from 'react';
 
 export type FormFactor = 'phone' | 'tablet' | 'desktop';
 
+// phone < 768 px, tablet 768 to 1023 px, desktop 1024 px and up.
 const PHONE_QUERY = '(max-width: 767px)';
 const TABLET_QUERY = '(min-width: 768px) and (max-width: 1023px)';
 
 function getSnapshot(): FormFactor {
-  if (typeof window === 'undefined') return 'desktop';
-  if (typeof window.matchMedia === 'function') {
-    try {
-      if (window.matchMedia(PHONE_QUERY).matches) return 'phone';
-      if (window.matchMedia(TABLET_QUERY).matches) return 'tablet';
-      return 'desktop';
-    } catch {
-      // Fallback to innerWidth if matchMedia fails
-    }
-  }
-  const width = window.innerWidth;
-  if (width < 768) return 'phone';
-  if (width < 1024) return 'tablet';
+  if (window.matchMedia(PHONE_QUERY).matches) return 'phone';
+  if (window.matchMedia(TABLET_QUERY).matches) return 'tablet';
   return 'desktop';
 }
 
@@ -27,32 +17,10 @@ function getServerSnapshot(): FormFactor {
 }
 
 function subscribe(callback: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
-
-  window.addEventListener('resize', callback);
-
-  let phoneMedia: MediaQueryList | null = null;
-  let tabletMedia: MediaQueryList | null = null;
-
-  if (typeof window.matchMedia === 'function') {
-    try {
-      phoneMedia = window.matchMedia(PHONE_QUERY);
-      tabletMedia = window.matchMedia(TABLET_QUERY);
-      phoneMedia.addEventListener('change', callback);
-      tabletMedia.addEventListener('change', callback);
-    } catch {
-      // Ignore if matchMedia event listeners unsupported
-    }
-  }
-
+  const queries = [window.matchMedia(PHONE_QUERY), window.matchMedia(TABLET_QUERY)];
+  for (const query of queries) query.addEventListener('change', callback);
   return () => {
-    window.removeEventListener('resize', callback);
-    if (phoneMedia) {
-      phoneMedia.removeEventListener('change', callback);
-    }
-    if (tabletMedia) {
-      tabletMedia.removeEventListener('change', callback);
-    }
+    for (const query of queries) query.removeEventListener('change', callback);
   };
 }
 

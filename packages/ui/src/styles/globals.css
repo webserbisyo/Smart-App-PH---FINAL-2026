@@ -121,7 +121,9 @@
 }
 
 @utility pb-dock {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+  padding-bottom: calc(
+    env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2
+  );
 }
 
 @utility scrollbar-none {
