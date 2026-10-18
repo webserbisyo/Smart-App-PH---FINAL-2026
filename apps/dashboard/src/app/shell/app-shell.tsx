@@ -48,8 +48,9 @@ function Shell({ claims }: { claims: UserClaims }) {
         defaultOpen={sidebarStartsOpen()}
         style={cssVars({
           '--sidebar-width': 'var(--shell-sidebar-width)',
-          // Desktop keeps shadcn's 3rem icon rail; the touch rail fits 44 px targets.
-          '--sidebar-width-icon': isTablet ? 'var(--rail-width)' : undefined,
+          // Desktop keeps shadcn's own 3rem icon rail (the key must be absent, not
+          // undefined, or it clears the sidebar's value); the touch rail fits 44 px targets.
+          ...(isTablet ? { '--sidebar-width-icon': 'var(--rail-width)' } : {}),
         })}
         {...(isTablet ? { open: false, onOpenChange: setMenuOpen } : {})}
       >
