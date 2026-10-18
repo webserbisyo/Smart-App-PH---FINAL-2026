@@ -6,9 +6,7 @@ export const LoginSchema = z.object({
     .string(words.validation.emailRequired)
     .min(1, words.validation.emailRequired)
     .email(words.validation.emailInvalid),
-  password: z
-    .string(words.validation.passwordRequired)
-    .min(1, words.validation.passwordRequired),
+  password: z.string(words.validation.passwordRequired).min(1, words.validation.passwordRequired),
 });
 
 export type LoginInput = z.infer<typeof LoginSchema>;
@@ -22,10 +20,7 @@ export const SignUpSchema = z.object({
     .string(words.validation.emailRequired)
     .min(1, words.validation.emailRequired)
     .email(words.validation.emailInvalid),
-  password: z
-    .string(words.validation.passwordMinLength)
-    .min(8, words.validation.passwordMinLength),
+  password: z.string(words.validation.passwordMinLength).min(8, words.validation.passwordMinLength),
 });
 
 export type SignUpInput = z.infer<typeof SignUpSchema>;
-

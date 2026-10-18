@@ -59,32 +59,37 @@ Codes: `category_not_empty`, `item_has_orders` (archive instead).
 
 ## Storefront (public, `/s/:slug/...`)
 
-| Method                                 | HTTP                    | Input → Output                                                                                                                 |
-| -------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `getStorefront`                        | GET `/s/:slug`          | → `Storefront \| null` (pending or suspended shops are null, so the page shows Not found)                                      |
-| `quoteOrder`                           | POST `/s/:slug/quote`   | `OrderPayload` → `Quote` (with `problems[]` per line); always called before Place order                                        |
-| `placeOrder`                           | POST `/s/:slug/orders`  | `OrderPayload + clientKey` → `{ orderId, orderNo, token }`; retry-safe                                                         |
-| `getOrder`                             | GET `/o/:token`         | → `OrderReceipt`                                                                                                               |
-| `createProofUploadUrl` / `submitProof` | POST `/o/:token/proof`  | `{ method, referenceNo, path }` → `Payment`                                                                                    |
-| `joinAsMember`                         | POST `/s/:slug/members` | `{ name, phone, orderToken? }` → `MemberAccount` (1 welcome stamp when the card is on; joining again returns the same account) |
-| `getMyAccount`                         | GET `/s/:slug/me`       | → `MemberAccount \| null`                                                                                                      |
-| `saveAddress` / `removeAddress`        | `/s/:slug/me/addresses` | `CustomerAddress`                                                                                                              |
+| Method                                 | HTTP                      | Input → Output                                                                                                                        |
+| -------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `getStorefront`                        | GET `/s/:slug`            | → `Storefront \| null` (pending or suspended shops are null, so the page shows Not found)                                             |
+| `quoteOrder`                           | POST `/s/:slug/quote`     | `OrderPayload` (with `scheduledAt?`) → `Quote` (with `problems[]` per line, `slots[]`, `openState`); always called before Place order |
+| `placeOrder`                           | POST `/s/:slug/orders`    | `OrderPayload + clientKey` → `{ orderId, orderNo, token }`; retry-safe                                                                |
+| `getOrder`                             | GET `/o/:token`           | → `OrderReceipt`                                                                                                                      |
+| `createProofUploadUrl` / `submitProof` | POST `/o/:token/proof`    | `{ method, referenceNo, path }` → `Payment`                                                                                           |
+| `joinAsMember`                         | POST `/s/:slug/members`   | `{ name, phone, orderToken? }` → `MemberAccount` (1 welcome stamp when the card is on; joining again returns the same account)        |
+| `getMyAccount`                         | GET `/s/:slug/me`         | → `MemberAccount \| null`                                                                                                             |
+| `saveAddress` / `removeAddress`        | `/s/:slug/me/addresses`   | `CustomerAddress`                                                                                                                     |
+| `claimReward`                          | POST `/s/:slug/me/claims` | → `RewardClaim` (custom prize)                                                                                                        |
+| `rateOrder`                            | POST `/o/:token/rating`   | `{ stars, comment? }` → `OrderRating`                                                                                                 |
+| `subscribePush`                        | POST `/o/:token/push`     | `PushSubscription` → `{ ok }`                                                                                                         |
+| `getStorefrontPreview`                 | GET `/s/:slug/preview`    | preview token → `Storefront` built from the draft                                                                                     |
 
 The cart lives on the device (`deviceStorage`, per slug). Pickup slots and open/closed text come from core (`pickupSlots`, `openState`), but the database decides.
 
-Codes: `shop_not_found`, `shop_closed`, `shop_busy`, `fulfillment_unavailable`, `payment_unavailable`, `cod_not_allowed`, `pickup_time_invalid`, `zone_required`, `item_unavailable`, `out_of_stock`, `invalid_options`, `reward_unavailable`, `order_not_payable`, `duplicate_reference`, `too_many_proofs`, `phone_in_use`, `rate_limited`.
+Codes: `shop_not_found`, `shop_closed`, `shop_busy`, `fulfillment_unavailable`, `payment_unavailable`, `cod_not_allowed`, `pickup_time_invalid`, `zone_required`, `item_unavailable`, `out_of_stock`, `invalid_options`, `reward_unavailable`, `order_not_payable`, `duplicate_reference`, `too_many_proofs`, `phone_in_use`, `rate_limited`, `slot_unavailable`, `stamps_insufficient`, `preview_expired`.
 
 ## Orders (owner)
 
-| Method           | HTTP                              | Input → Output                                                |
-| ---------------- | --------------------------------- | ------------------------------------------------------------- |
-| `listOrders`     | GET `/owner/orders`               | `{ open } \| { date }` → `BoardOrder[]`                       |
-| `getOrderDetail` | GET `/owner/orders/:id`           | → `OrderReceipt`                                              |
-| `getProofUrl`    | GET `/owner/proofs/:path`         | → signed URL, 5 minutes                                       |
-| `reviewPayment`  | POST `/owner/payments/:id/review` | `{ approve, rejectReason? }` → `Payment`                      |
-| `recordPayment`  | POST `/owner/orders/:id/payments` | `{ method }` → `Payment` (cash, COD)                          |
-| `advanceOrder`   | POST `/owner/orders/:id/advance`  | `{ toStatus, trackingUrl? }` → `Order` (optimistic on screen) |
-| `cancelOrder`    | POST `/owner/orders/:id/cancel`   | `{ reason }` → `Order`                                        |
+| Method             | HTTP                               | Input → Output                                                                                        |
+| ------------------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `listOrders`       | GET `/owner/orders`                | `{ open } \| { date }` → `BoardOrder[]` (with `scheduledAt`, `isFirstOrder`, `isMember`, `hasReward`) |
+| `getOrderDetail`   | GET `/owner/orders/:id`            | → `OrderReceipt`                                                                                      |
+| `getProofUrl`      | GET `/owner/proofs/:path`          | → signed URL, 5 minutes                                                                               |
+| `reviewPayment`    | POST `/owner/payments/:id/review`  | `{ approve, rejectReason? }` → `Payment`                                                              |
+| `recordPayment`    | POST `/owner/orders/:id/payments`  | `{ method }` → `Payment` (cash, COD)                                                                  |
+| `advanceOrder`     | POST `/owner/orders/:id/advance`   | `{ toStatus, trackingUrl? }` → `Order` (optimistic on screen)                                         |
+| `cancelOrder`      | POST `/owner/orders/:id/cancel`    | `{ reason }` → `Order`                                                                                |
+| `saveDeliveryInfo` | PATCH `/owner/orders/:id/delivery` | `{ provider?, trackingUrl?, riderName?, riderPhone? }` → `Order`                                      |
 
 Core helpers that screens use instead of comparing statuses: `boardColumn`, `nextActions`, `canCancel`, `timelineSteps`, `isLate`. They share one test table with the SQL.
 
@@ -92,14 +97,33 @@ Codes: `not_found`, `invalid_transition`, `not_paid`, `payment_not_pending`, `al
 
 ## Members, home, reports (owner)
 
-| Method                           | HTTP                            | Input → Output                                                              |
-| -------------------------------- | ------------------------------- | --------------------------------------------------------------------------- |
-| `getStampRule` / `saveStampRule` | `/owner/stamp-rule`             | `StampRule`                                                                 |
-| `getToday`                       | GET `/owner/today`              | → `DashboardToday` (Manila business date)                                   |
-| `listCustomers`                  | GET `/owner/customers`          | `{ search, membersOnly }` → `CustomerRow[]`                                 |
-| `saveCustomerNotes`              | PATCH `/owner/customers/:id`    | `{ notes, tags }`                                                           |
-| `getSalesReport`                 | GET `/owner/reports/sales`      | `{ from, to }` → `SalesReport`                                              |
-| `exportOrdersCsv`                | GET `/owner/reports/orders.csv` | `{ from, to }` → CSV (BOM; cells starting with `= + - @` get a leading `'`) |
+| Method                           | HTTP                                        | Input → Output                                                              |
+| -------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------- |
+| `getStampRule` / `saveStampRule` | `/owner/stamp-rule`                         | `StampRule`                                                                 |
+| `getToday`                       | GET `/owner/today`                          | → `DashboardToday` (Manila business date)                                   |
+| `previewStampRuleChange`         | POST `/owner/stamp-rule/preview`            | `StampRule` → `{ readyNow, pendingClaims }`                                 |
+| `listCustomers`                  | GET `/owner/customers`                      | `{ search, membersOnly, segment }` → `CustomerRow[]`                        |
+| `getMember`                      | GET `/owner/customers/:id`                  | → `MemberDetail` (ledger, orders, claims)                                   |
+| `findMemberByCode`               | GET `/owner/members/code/:code`             | → `{ customerId }`                                                          |
+| `adjustStamps`                   | POST `/owner/customers/:id/stamps`          | `{ delta: 1 \| -1, reason, note? }` → `MemberDetail`                        |
+| `listRewardClaims`               | GET `/owner/claims`                         | `{ status }` → `RewardClaim[]`                                              |
+| `giveClaim` / `cancelClaim`      | POST `/owner/claims/:id/give` and `/cancel` | `{ reason? }` → `RewardClaim`                                               |
+| `getInsights`                    | GET `/owner/insights`                       | `{ range: '7d' \| '30d' }` → `Insights`                                     |
+| `saveCustomerNotes`              | PATCH `/owner/customers/:id`                | `{ notes, tags }`                                                           |
+| `getSalesReport`                 | GET `/owner/reports/sales`                  | `{ from, to }` → `SalesReport`                                              |
+| `exportOrdersCsv`                | GET `/owner/reports/orders.csv`             | `{ from, to }` → CSV (BOM; cells starting with `= + - @` get a leading `'`) |
+
+Codes: `stamp_cap_reached`, `stamps_insufficient`, `claim_not_pending`.
+
+## Editor (owner)
+
+| Method                                         | HTTP                                   | Input → Output                         |
+| ---------------------------------------------- | -------------------------------------- | -------------------------------------- |
+| `getStorefrontDraft` / `saveStorefrontDraft`   | GET/PUT `/owner/storefront/draft`      | `StorefrontContent` with `baseVersion` |
+| `publishStorefront` / `discardStorefrontDraft` | POST/DELETE `/owner/storefront/draft`  | → `{ contentVersion }`                 |
+| `createPreviewToken`                           | POST `/owner/storefront/preview-token` | → `{ token, expiresAt }`               |
+
+Codes: `draft_conflict`.
 
 ## Live updates (Supabase Realtime from `@smartapp/data`)
 
