@@ -23,7 +23,7 @@ export function PageHeader({ title, actions, tabs, tabsLabel }: PageHeaderProps)
   }
 
   return (
-    <header data-slot="page-header" className="flex flex-col gap-3 px-4 pt-4 md:px-6 md:pt-6">
+    <header data-slot="page-header" className="flex flex-col gap-3 px-4 pt-2 md:px-6 md:pt-4">
       <h1 className="sr-only">{title}</h1>
       {actions ? (
         <div className="flex min-h-11 flex-wrap items-center justify-end gap-2">{actions}</div>
@@ -33,7 +33,7 @@ export function PageHeader({ title, actions, tabs, tabsLabel }: PageHeaderProps)
           <TabsList
             variant="line"
             aria-label={tabsLabel ?? title}
-            className="scrollbar-none w-full justify-start overflow-x-auto group-data-horizontal/tabs:h-11"
+            className="scrollbar-none w-full justify-start overflow-x-auto py-2 group-data-horizontal/tabs:h-auto"
           >
             {tabs.map((tab) => (
               <TabsTrigger

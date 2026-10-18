@@ -17,7 +17,7 @@ export function SettingsLayout() {
     <div className="flex flex-1">
       <nav
         aria-label={words.screens.settings.sections}
-        className="w-60 shrink-0 border-r border-border p-3"
+        className="w-60 shrink-0 border-r border-border p-4 md:p-6"
       >
         <ItemGroup className="gap-1">
           {SETTINGS_SECTIONS.map((section) => {
