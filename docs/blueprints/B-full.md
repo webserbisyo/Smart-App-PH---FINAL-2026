@@ -33,15 +33,15 @@ Each module = one database task, one API task, then one task per screen.
 | M10 | Kitchen and packing | prep board |
 | M11 | Advance orders | schedule, lead days, deposits |
 | M12 | Marketing | vouchers, promotions, announcements |
-| M13 | Customers extended | notes, block, export, anonymize |
+| M13 | Customers extended | notes, block, export, anonymize, synced favourites and carts, customer Google sign-in |
 | M14 | Full reports | breakdowns, CSV |
 | M15 | Shipping | by region |
 | M16 | Platform | `/admin`, approvals, support mode, billing states |
 | M17 | Integrations | PayMongo, Meta Conversions API, Google Sheets |
 | M18 | Native app | Capacitor build of the dashboard, Bluetooth printers |
-| M19 | Loyalty extras | more than one reward, tiers, stamp expiry, synced favourites and baskets |
-| M20 | AI | brand assistant from the logo, menu text help |
-| M21 | Editor extras | reorder sections, fonts, custom blocks |
+| M19 | Loyalty extras | reward tiers, stamps per peso spent, stamp expiry, double-stamp days |
+| M20 | AI | brand assistant from the logo, plain-language insight summaries |
+| M21 | Editor extras | section reorder, more templates, scheduled publishing, custom domains |
 
 ## 3. Architecture additions
 

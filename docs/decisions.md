@@ -39,7 +39,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 
 - N1 A closed or paused shop keeps the cart; "Take orders while closed" (default on) offers next-opening slots today or tomorrow for pickup and delivery only; no new order status.
 - N2 Offline: the cart and checkout details are kept; Place order waits for the connection and re-quotes. No background order sending (Safari and iOS have no Background Sync).
-- N3 Favourites are stored on the phone only; synced favourites and carts are B (M19).
+- N3 Favourites are stored on the phone only; synced favourites and carts are B (M13).
 - N4 Up to 2 variant choices per item and 30 variants; add-on groups are a shared library with min and max picks (min 1 = required); "Goes well with" up to 4 items per item.
 - N5 One stamp card per shop with one active reward: discount, free item or custom prize. Manual stamps ±1 need a reason, owner only, at most 3 per member per Manila day.
 - N6 The member QR opens the member's page in the dashboard when scanned with the phone camera; no scanner in the app.
