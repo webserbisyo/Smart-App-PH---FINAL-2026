@@ -25,6 +25,14 @@ import {
   CollapsibleTrigger,
 } from '@smartapp/ui/components/collapsible';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@smartapp/ui/components/dialog';
+import {
   Drawer,
   DrawerContent,
   DrawerDescription,
@@ -73,6 +81,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@smartapp/ui/components
 import { BottomDock } from '@smartapp/ui/compositions/bottom-dock';
 import { NavDrawer } from '@smartapp/ui/compositions/nav-drawer';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
+import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { useKeyboardOpen } from '@smartapp/ui/hooks/use-keyboard-open';
 import { useIsMobile } from '@smartapp/ui/hooks/use-mobile';
@@ -136,6 +145,7 @@ const shadcn = 'shadcn (base-nova)';
 // T05: shell components, compositions and hooks.
 export function ShellKitSections() {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [responsiveOpen, setResponsiveOpen] = useState(false);
   const formFactor = useFormFactor();
   const keyboardOpen = useKeyboardOpen();
   const isMobile = useIsMobile();
@@ -209,6 +219,23 @@ export function ShellKitSections() {
             Hidden content shows here.
           </CollapsibleContent>
         </Collapsible>
+      </KitSection>
+
+      <KitSection
+        title="Dialog"
+        library={shadcn}
+        path="packages/ui/src/components/dialog.tsx"
+        usedIn="responsive-dialog, kit"
+      >
+        <Dialog>
+          <DialogTrigger render={<Button variant="outline" />}>Open dialog</DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Dialog</DialogTitle>
+              <DialogDescription>A centred dialog for tablet and desktop.</DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
       </KitSection>
 
       <KitSection
@@ -392,6 +419,27 @@ export function ShellKitSections() {
           Open nav drawer
         </Button>
         <NavDrawer title="More" items={MORE_ITEMS} open={drawerOpen} onOpenChange={setDrawerOpen} />
+      </KitSection>
+
+      <KitSection
+        title="Responsive dialog"
+        library="composition"
+        path="packages/ui/src/compositions/responsive-dialog.tsx"
+        usedIn="share-shop-sheet, kit"
+      >
+        <Button variant="outline" onClick={() => setResponsiveOpen(true)}>
+          Open responsive dialog
+        </Button>
+        <ResponsiveDialog
+          open={responsiveOpen}
+          onOpenChange={setResponsiveOpen}
+          title="Responsive dialog"
+          description="Dialog on tablet and desktop, bottom drawer on phone."
+        >
+          <Button className="h-11 w-full" onClick={() => setResponsiveOpen(false)}>
+            Done
+          </Button>
+        </ResponsiveDialog>
       </KitSection>
 
       <KitSection

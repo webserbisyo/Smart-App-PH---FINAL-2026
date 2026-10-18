@@ -55,6 +55,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N14 No bell in the MVP A top bar; Home's needs-you list does that job.
 - N15 Phone dock: floating pill with 4 places and More; More opens a bottom drawer with tiles.
 - N16 The dashboard shell starts from the shadcn sidebar-07 block; bottom-dock, nav-drawer and page-header are shared compositions in packages/ui, router-agnostic, reused by the storefront shell.
+- N17 Overlays: Dialog on tablet and desktop, bottom Drawer on phone, through the responsive-dialog composition.
 
 ## Open
 
