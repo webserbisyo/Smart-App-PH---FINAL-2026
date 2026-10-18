@@ -174,28 +174,28 @@ Priority: **M** must, **S** should (may slip to just after launch). IDs are stab
 
 **Storefront (SF)**
 
-| ID    | Feature                                                                                              | MVP | Pri | Spec     |
-| ----- | ---------------------------------------------------------------------------------------------------- | --- | --- | -------- |
-| SF-01 | Shop home (banners, announcement, reward card, categories, best sellers, About, hours, contact)      | A   | M   | 7.2      |
-| SF-02 | Phone shell (top bar, area pill, floating 4-tab dock, basket bar); desktop top nav and sticky basket | A   | M   | 5.1      |
-| SF-03 | Menu or Products: search, sticky category chips, sold-out greyed, `?item=` links                     | A   | M   | 7.3      |
-| SF-04 | Item sheet: photos, variants (2 choices max), add-on groups with min and max, qty, note              | A   | M   | 7.5, 8.1 |
-| SF-05 | "Goes well with" suggestions on item and basket                                                      | A   | S   | 8.1      |
-| SF-06 | Favourites on the phone, Favourites chip                                                             | A   | S   | 8.3      |
-| SF-07 | Basket on the phone per shop, flagged lines                                                          | A   | M   | 7.6, 8.2 |
-| SF-08 | Closed or paused shop: basket kept, next-opening slots (N1)                                          | A   | M   | 8.2, 6.2 |
-| SF-09 | Offline: basket and details kept, Place order waits (N2)                                             | A   | M   | 8.2, 6.3 |
-| SF-10 | One-page checkout with quote before Place order                                                      | A   | M   | 7.7      |
-| SF-11 | Delivery zone, nearest zone from location, map pin, Maps link                                        | A   | M   | 7.7      |
-| SF-12 | Receipt: number, QR, live status, proof upload, order thread, tracking, Messenger hand-off           | A   | M   | 7.8      |
-| SF-13 | My orders and "Order again"                                                                          | A   | S   | 7.9, 8.3 |
-| SF-14 | Private rating and Google review link                                                                | A   | S   | 7.8      |
-| SF-15 | Web push for order status ("Notify me")                                                              | A   | S   | 8.8      |
-| SF-16 | PWA install, offline page, install card                                                              | A   | M   | 7.12     |
-| SF-17 | Privacy page, consent line, opt-ins                                                                  | A   | M   | 7.11     |
-| SF-18 | Brand palette 60/30/10 from one colour and the logo                                                  | A   | M   | 9        |
-| SF-19 | Synced basket and favourites for members                                                             | B   |     | 17 M13   |
-| SF-20 | Dine-in table ordering                                                                               | B   |     | 17 M6    |
+| ID    | Feature                                                                                                                | MVP | Pri | Spec     |
+| ----- | ---------------------------------------------------------------------------------------------------------------------- | --- | --- | -------- |
+| SF-01 | Shop home (banners, announcement, reward card, categories, best sellers, About, hours, contact)                        | A   | M   | 7.2      |
+| SF-02 | Phone shell (top bar, area pill, floating 4-tab dock, basket bar); desktop top nav and sticky basket                   | A   | M   | 5.1      |
+| SF-03 | Menu or Products: search, sticky category chips, sold-out greyed, `?item=` links                                       | A   | M   | 7.3      |
+| SF-04 | Item sheet: photos, variants (2 choices max), add-on groups with min and max, qty, note                                | A   | M   | 7.5, 8.1 |
+| SF-05 | "Goes well with" suggestions on item and basket                                                                        | A   | S   | 8.1      |
+| SF-06 | Favourites on the phone, Favourites chip                                                                               | A   | S   | 8.3      |
+| SF-07 | Basket on the phone per shop, flagged lines                                                                            | A   | M   | 7.6, 8.2 |
+| SF-08 | Closed or paused shop: basket kept, next-opening slots (N1)                                                            | A   | M   | 8.2, 6.2 |
+| SF-09 | Offline: basket and details kept, Place order waits (N2)                                                               | A   | M   | 8.2, 6.3 |
+| SF-10 | One-page checkout with quote before Place order                                                                        | A   | M   | 7.7      |
+| SF-11 | Delivery zone, nearest zone from location, map pin, Maps link                                                          | A   | M   | 7.7      |
+| SF-12 | Receipt: number, QR, live status, proof upload, order thread, tracking, Messenger hand-off, save as image or PDF (N11) | A   | M   | 7.8      |
+| SF-13 | My orders and "Order again"                                                                                            | A   | S   | 7.9, 8.3 |
+| SF-14 | Private rating and Google review link                                                                                  | A   | S   | 7.8      |
+| SF-15 | Web push for order status ("Notify me")                                                                                | A   | S   | 8.8      |
+| SF-16 | PWA install, offline page, install card                                                                                | A   | M   | 7.12     |
+| SF-17 | Privacy page, consent line, opt-ins                                                                                    | A   | M   | 7.11     |
+| SF-18 | Brand palette 60/30/10 from one colour and the logo                                                                    | A   | M   | 9        |
+| SF-19 | Synced basket and favourites for members                                                                               | B   |     | 17 M13   |
+| SF-20 | Dine-in table ordering                                                                                                 | B   |     | 17 M6    |
 
 **Members and stamps (MB)**
 
@@ -286,7 +286,7 @@ flowchart TD
 | `/[shop]/orders`                      | My orders (device tokens, member history)             | Public                         | Dynamic, never cached                                              | T11      |
 | `/[shop]/checkout`                    | Checkout                                              | Public                         | Dynamic, never cached                                              | T09      |
 | `/[shop]/o/[token]`                   | Receipt                                               | Anyone with the link           | Dynamic, never cached, `noindex`                                   | T10      |
-| `/[shop]/o/[token]/image`             | Receipt as a PNG for Save receipt (N11)               | Anyone with the link           | Dynamic, never cached, `noindex`                                   |
+| `/[shop]/o/[token]/image`             | Receipt as a PNG for Save receipt (N11)               | Anyone with the link           | Dynamic, never cached, `noindex`                                   | T10      |
 | `/[shop]/account`                     | Profile, addresses, notifications, privacy, sign out  | Member                         | Dynamic                                                            | T12      |
 | `/[shop]/account/addresses`           | Saved addresses with optional pin                     | Member                         | Dynamic                                                            | T12      |
 | `/[shop]/privacy`                     | Privacy notice (English + short Filipino)             | Public                         | Static per shop                                                    | T14      |
@@ -577,17 +577,17 @@ Edge cases:
 
 ```mermaid
 flowchart TD
-    A[Customer opens shop at 4:30 AM, opens 5:00 AM] --> B[Home: Closed now · Opens 5:00 AM]
-    B --> C[Adds items; basket saved]
-    C --> D{Owner setting: Take orders while closed}
-    D -- on --> E[Checkout: Walk-in hidden; Pickup or Delivery with slots from opening + lead time]
-    D -- off --> F[Basket bar: Opens at 5:00 AM; Place order off]
-    E --> G{Next opening within today or tomorrow?}
-    G -- yes --> H[Customer picks 5:20 AM; quote; place]
+    A["Customer opens shop at 4:30 AM, opens 5:00 AM"] --> B["Home: Closed now · Opens 5:00 AM"]
+    B --> C["Adds items; basket saved"]
+    C --> D{"Owner setting: Take orders while closed"}
+    D -- on --> E["Checkout: Walk-in hidden; Pickup or Delivery with slots from opening + lead time"]
+    D -- off --> F["Basket bar: Opens at 5:00 AM; Place order off"]
+    E --> G{"Next opening within today or tomorrow?"}
+    G -- yes --> H["Customer picks 5:20 AM; quote; place"]
     G -- no --> F
-    H --> I[Order placed with scheduled time]
-    I --> J[Owner email: Scheduled order for 5:20 AM]
-    I --> K[Board: Scheduled group until 30 min before the time, then New]
+    H --> I["Order placed with scheduled time"]
+    I --> J["Owner email: Scheduled order for 5:20 AM"]
+    I --> K["Board: Scheduled group until 30 min before the time, then New"]
 ```
 
 Rules:
@@ -640,14 +640,14 @@ As in [`SYSTEM.md`](SYSTEM.md) 6.4, plus:
 
 ```mermaid
 flowchart LR
-    N[New order: chime, tab count, email] --> V{Transfer with proof?}
-    V -- yes --> P[Verify payment: approve or reject]
+    N["New order: chime, tab count, email"] --> V{"Transfer with proof?"}
+    V -- yes --> P["Verify payment: approve or reject"]
     V -- cash or COD --> S
-    P --> S[Start]
-    S --> R[Mark ready]
-    R --> T{Delivery?}
-    T -- no --> C[Complete: needs paid; Mark paid first if cash]
-    T -- yes --> O[Out for delivery: provider, tracking link, rider]
+    P --> S["Start"]
+    S --> R["Mark ready"]
+    R --> T{"Delivery?"}
+    T -- no --> C["Complete: needs paid; Mark paid first if cash"]
+    T -- yes --> O["Out for delivery: provider, tracking link, rider"]
     O --> C
 ```
 
@@ -689,7 +689,7 @@ sequenceDiagram
     M->>SF: Rewards: Claim "Free tote bag"
     SF->>API: claimReward
     API->>DB: claim_reward(): stamps -goal, claim pending, 6-char code
-    SF-->>M: Show QR and code; "Show this at the shop"
+    SF-->>M: Show QR and code, "Show this at the shop"
     M->>O: Shows QR at the counter
     O->>O: Scans with phone camera, opens /m/code or Members > Claims
     O->>API: giveClaim
@@ -1127,7 +1127,7 @@ The folder map and import walls are in [`blueprints/foundation.md`](blueprints/f
 
 Dashboard features never import each other; shared dashboard code goes in `apps/dashboard/src/app/`.
 
-Nest modules in `apps/api/src/modules/`: `health`, `shops` (shop and settings), `catalog`, `storefront` (public shop, quote, place, receipt, proof, join), `orders` (owner order routes), `members` (stamp rule, members, claims, manual stamps), `editor` (draft, preview token, publish), `insights` (today, insights, reports), `notifications` (outbox worker, push).
+Nest modules in `apps/api/src/modules/` (guards, pipes and the error filter stay in `src/common/`): `health`, `me` (`GET /me`, from T01), `shops` (shop and settings), `catalog`, `storefront` (public shop, quote, place, receipt, proof, join), `orders` (owner order routes), `members` (stamp rule, members, claims, manual stamps), `editor` (draft, preview token, publish), `insights` (today, insights, reports), `notifications` (outbox worker, push), `jobs` (daily deletion of old proofs).
 
 ---
 

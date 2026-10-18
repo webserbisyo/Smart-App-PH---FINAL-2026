@@ -62,7 +62,7 @@ All **assumed** from public pricing pages as remembered; check before the first 
 | ------------------------ | ----------------------- | -------------- | ---------------------------------------------------------------------- |
 | Supabase (dev DB)        | Free project, Singapore | ₱0             | Live DB needs the paid plan (about US$25) before the first paying shop |
 | Vercel                   | Hobby while testing     | ₱0             | Commercial use needs Pro (about US$20 per member)                      |
-| Railway (NestJS API)     | Starter credit          | about US$5     | Grows with traffic; one small service is enough for the pilot          |
+| Railway (NestJS API)     | Hobby plan              | about US$5     | Grows with traffic; one small service is enough for the pilot          |
 | Resend                   | Free tier               | ₱0             | Paid plan once daily email volume passes the free limit                |
 | Domain `webserbisyo.com` | Already owned           | Yearly renewal | Subdomains only, no new domains per shop                               |
 
@@ -96,21 +96,21 @@ the basket beyond React state plus `idb-keyval`; heavy animation libraries on th
 
 ### 2.2 Dashboard and API
 
-| Need                                 | Package                                | Version | Status in plan | Note                                                                             |
-| ------------------------------------ | -------------------------------------- | ------- | -------------- | -------------------------------------------------------------------------------- |
-| Member QR on the storefront          | `qrcode`                               | 1.5.4   | Candidate      | Generates the QR that opens the member page in the dashboard (N6)                |
-| Image compression before upload      | `browser-image-compression`            | 2.0.2   | Candidate      | Last release 2023; a canvas-based helper in `packages/api` is the fallback       |
-| One-time code input                  | `input-otp`                            | 1.5.0   | Candidate      | Used by the shadcn input-otp component                                           |
-| Tables (orders, members, catalog)    | `@tanstack/react-table`                | 9.3.1   | Candidate      | Comes with data-table components; v9 is new, check the installed block's version |
-| Charts (Insights)                    | `recharts`                             | 3.10.1  | Candidate      | Used by the shadcn chart component                                               |
-| Reorder categories and items         | `@dnd-kit/react`                       | 0.5.1   | Candidate      | Still 0.x; up and down buttons are enough for A                                  |
-| Keep queries across reloads          | `@tanstack/react-query-persist-client` | 5.104.4 | Candidate (B)  | Helps the dashboard on weak data; not needed for A                               |
-| URL state                            | `nuqs`                                 | 2.10.2  | Candidate      | Same package as the storefront (filters, tabs)                                   |
-| Rate limits (place order, codes)     | `@nestjs/throttler`                    | 6.7.1   | Candidate      | Major version lags Nest 12; confirm peer range before adding                     |
-| Jobs (expire unpaid orders, cleanup) | `@nestjs/schedule`                     | 12.0.2  | Candidate      | Or a Supabase cron; one place only (blueprint section 13.5)                      |
-| Structured logs                      | `nestjs-pino`                          | 5.3.1   | Candidate      | Needs Node 22.12 or newer (fine on 24.14)                                        |
-| Global client state                  | `zustand`                              | 5.0.15  | Not needed     | TanStack Query plus URL state cover A                                            |
-| ORM                                  | `drizzle-orm`                          | 0.45.4  | Not needed     | Supabase client plus SQL functions; revisit only if the API grows big queries    |
+| Need                                 | Package                                | Version | Status in plan | Note                                                                                                                     |
+| ------------------------------------ | -------------------------------------- | ------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Member QR on the storefront          | `qrcode`                               | 1.5.4   | Candidate      | Generates the QR that opens the member page in the dashboard (N6)                                                        |
+| Image compression before upload      | `browser-image-compression`            | 2.0.2   | Candidate      | Last release 2023; the plan is a canvas WebP helper in `packages/data`; this library only if that fails on target phones |
+| One-time code input                  | `input-otp`                            | 1.5.0   | Candidate      | Used by the shadcn input-otp component                                                                                   |
+| Tables (orders, members, catalog)    | `@tanstack/react-table`                | 9.3.1   | Candidate      | Comes with data-table components; v9 is new, check the installed block's version                                         |
+| Charts (Insights)                    | `recharts`                             | 3.10.1  | Candidate      | Used by the shadcn chart component                                                                                       |
+| Reorder categories and items         | `@dnd-kit/react`                       | 0.5.1   | Candidate      | Still 0.x; up and down buttons are enough for A                                                                          |
+| Keep queries across reloads          | `@tanstack/react-query-persist-client` | 5.104.4 | Candidate (B)  | Helps the dashboard on weak data; not needed for A                                                                       |
+| URL state                            | `nuqs`                                 | 2.10.2  | Candidate      | Same package as the storefront (filters, tabs)                                                                           |
+| Rate limits (place order, codes)     | `@nestjs/throttler`                    | 6.7.1   | Planned        | Named in `foundation.md` before public routes; peer range includes Nest 12 (verified)                                    |
+| Jobs (expire unpaid orders, cleanup) | `@nestjs/schedule`                     | 12.0.2  | Candidate      | Or a Supabase cron; one place only (blueprint section 13.5)                                                              |
+| Structured logs                      | `nestjs-pino`                          | 5.3.1   | Planned        | "pino logs" in `foundation.md`; peers Nest 12.0.2+, pino 10, pino-http 11; Node 22.12+ (fine on 24.14)                   |
+| Global client state                  | `zustand`                              | 5.0.15  | Not needed     | TanStack Query plus URL state cover A                                                                                    |
+| ORM                                  | `drizzle-orm`                          | 0.45.4  | Planned (B)    | Not in A (Supabase client plus SQL functions); B uses it with RLS per request (`B-full.md`)                              |
 
 ### 2.3 Logo colour helper (N8)
 

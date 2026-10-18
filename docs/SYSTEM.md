@@ -284,24 +284,24 @@ End states for every type: Cancelled (with a reason) and Expired (unpaid transfe
 
 ```mermaid
 flowchart TD
-    L[Shop link or QR] --> H[Shop home]
-    H --> M[Menu or Products]
-    M --> I[Item sheet: variant, add-ons, qty, note]
-    I --> B[Basket on the phone]
-    I -.-> P[Goes well with] -.-> B
-    B --> S{Shop open?}
-    S -- yes --> C[Checkout: how, who, pay]
-    S -- closed, scheduling on --> C2[Checkout with next opening slots only]
-    S -- closed, no slot until after tomorrow --> K[Basket kept: opens on day and time]
-    C --> Q[Re-check prices, stock, fees, reward]
+    L["Shop link or QR"] --> H["Shop home"]
+    H --> M["Menu or Products"]
+    M --> I["Item sheet: variant, add-ons, qty, note"]
+    I --> B["Basket on the phone"]
+    I -.-> P["Goes well with"] -.-> B
+    B --> S{"Shop open?"}
+    S -- yes --> C["Checkout: how, who, pay"]
+    S -- closed, scheduling on --> C2["Checkout with next opening slots only"]
+    S -- closed, no slot until after tomorrow --> K["Basket kept: opens on day and time"]
+    C --> Q["Re-check prices, stock, fees, reward"]
     C2 --> Q
     Q -- problems --> B
-    Q -- ok --> N{Online?}
-    N -- no --> W[Basket kept: Place order waits for connection]
+    Q -- ok --> N{"Online?"}
+    N -- no --> W["Basket kept: Place order waits for connection"]
     W --> Q
-    N -- yes --> R[Receipt: number, QR, live status]
-    R --> U[Upload proof if transfer]
-    R --> J[Join to earn stamps: this order counts]
+    N -- yes --> R["Receipt: number, QR, live status"]
+    R --> U["Upload proof if transfer"]
+    R --> J["Join to earn stamps: this order counts"]
 ```
 
 ### 6.4 Payment verification
@@ -358,18 +358,18 @@ Payment status runs beside it: `unpaid`, `pending` (proof uploaded), `paid`; a r
 
 ```mermaid
 flowchart LR
-    G[Guest order] --> R[Receipt: Join to earn stamps]
-    R --> E[Email + 6-digit code]
-    E --> M[Member: 1 welcome stamp]
-    M --> L[Linked: this order and past orders with the same email or order link]
-    O[Order completed and paid, over minimum] --> P[+1 stamp]
-    X[Completed order reversed] --> Y[-1 stamp]
-    P --> Q{Stamps >= goal?}
-    Q -- yes --> Z[Reward ready]
-    Z --> D[Discount: applied at checkout]
-    Z --> F[Free item: added at P0 at checkout]
-    Z --> C[Custom prize: Claim, show QR, owner marks given]
-    H[Owner: give or remove by hand with reason] --> P
+    G["Guest order"] --> R["Receipt: Join to earn stamps"]
+    R --> E["Email + 6-digit code"]
+    E --> M["Member: 1 welcome stamp"]
+    M --> L["Linked: this order and past orders with the same email or order link"]
+    O["Order completed and paid, over minimum"] --> P["+1 stamp"]
+    X["Completed order reversed"] --> Y["-1 stamp"]
+    P --> Q{"Stamps >= goal?"}
+    Q -- yes --> Z["Reward ready"]
+    Z --> D["Discount: applied at checkout"]
+    Z --> F["Free item: added at P0 at checkout"]
+    Z --> C["Custom prize: Claim, show QR, owner marks given"]
+    H["Owner: give or remove by hand with reason"] --> P
 ```
 
 Every stamp change is a row in an append-only history with who, why and when. Balance = sum of the history.
@@ -426,28 +426,28 @@ Images are compressed to WebP on the phone before upload.
 ```mermaid
 flowchart TB
     subgraph Phones and laptops
-      C[Customer phone<br/>installed PWA]
-      O[Owner phone, tablet or laptop]
+      C["Customer phone<br/>installed PWA"]
+      O["Owner phone, tablet or laptop"]
     end
     subgraph Vercel
-      SF[apps/storefront<br/>Next.js, Serwist PWA<br/>shop.webserbisyo.com/slug]
-      DB[apps/dashboard<br/>Vite React SPA<br/>app.webserbisyo.com]
+      SF["apps/storefront<br/>Next.js, Serwist PWA<br/>shop.webserbisyo.com/slug"]
+      DB["apps/dashboard<br/>Vite React SPA<br/>app.webserbisyo.com"]
     end
     subgraph Shared packages
-      CORE[@smartapp/core<br/>Zod schemas, rules, words]
-      UI[@smartapp/ui<br/>tokens, components]
-      DATA[@smartapp/data<br/>auth client, API client,<br/>mock adapters, Query hooks]
+      CORE["@smartapp/core<br/>Zod schemas, rules, words"]
+      UI["@smartapp/ui<br/>tokens, components"]
+      DATA["@smartapp/data<br/>auth client, API client,<br/>mock adapters, Query hooks"]
     end
     subgraph Railway Singapore
-      API[apps/api NestJS<br/>guards, validation,<br/>calls SQL functions<br/>api.webserbisyo.com]
+      API["apps/api NestJS<br/>guards, validation,<br/>calls SQL functions<br/>api.webserbisyo.com"]
     end
     subgraph Supabase Singapore
-      PG[(Postgres<br/>RLS + SQL functions<br/>pg_cron)]
-      AU[Auth]
-      ST[Storage]
-      RT[Realtime]
+      PG[("Postgres<br/>RLS + SQL functions<br/>pg_cron")]
+      AU["Auth"]
+      ST["Storage"]
+      RT["Realtime"]
     end
-    RS[Resend<br/>codes@mail.webserbisyo.com]
+    RS["Resend<br/>codes@mail.webserbisyo.com"]
     C --> SF
     O --> DB
     SF --> DATA
@@ -629,8 +629,6 @@ Each module is a database task, an API task, then one task per screen, switched 
 | M19 | Loyalty extras      | Reward tiers, stamps per peso, expiry, double-stamp days                                |
 | M20 | AI                  | Brand assistant, insight summaries                                                      |
 | M21 | Editor extras       | Section reorder, more templates, custom domains                                         |
-
-M19 to M21 are new in this paper and are not yet in `blueprints/B-full.md`.
 
 ## Appendix A: Founder operations by SQL
 
