@@ -1,7 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { words } from '@smartapp/core';
 import type { UserClaims } from '@smartapp/data';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +25,6 @@ function SidebarLink({ item, withTooltip }: { item: NavItem; withTooltip: boolea
         isActive={item.active}
         {...(withTooltip ? { tooltip: item.label } : {})}
         render={item.link}
-        aria-current={item.active ? 'page' : undefined}
         className="pointer-coarse:h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
       >
         {item.icon}
@@ -61,7 +59,7 @@ export function AppSidebar({
       collapsible={variant === 'rail' ? 'icon' : 'none'}
       className={variant === 'sheet' ? 'h-full w-full' : undefined}
     >
-      <SidebarHeader className="h-shell-header justify-center transition-all ease-linear motion-reduce:transition-none sidebar-collapsed:h-shell-header-collapsed">
+      <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -70,15 +68,13 @@ export function AppSidebar({
               {...(withTooltip ? { tooltip: shop.name } : {})}
               render={<Link to="/" />}
             >
-              <Avatar className="rounded-lg after:rounded-lg">
-                <AvatarFallback className="rounded-lg bg-primary text-xs font-semibold text-primary-foreground">
-                  {shop.initials}
-                </AvatarFallback>
-              </Avatar>
-              <span className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{shop.name}</span>
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                {shop.initials}
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">{shop.name}</span>
                 <span className="truncate text-xs text-success-text">{words.shell.open}</span>
-              </span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

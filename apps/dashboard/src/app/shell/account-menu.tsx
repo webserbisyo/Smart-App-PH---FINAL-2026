@@ -27,12 +27,10 @@ function userInitials(claims: UserClaims): string {
 
 function UserLines({ claims }: { claims: UserClaims }) {
   return (
-    <span className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-      <span className="truncate font-semibold">{claims.fullName ?? claims.email}</span>
-      {claims.fullName ? (
-        <span className="truncate text-xs text-muted-foreground">{claims.email}</span>
-      ) : null}
-    </span>
+    <div className="grid flex-1 text-left text-sm leading-tight">
+      <span className="truncate font-medium">{claims.fullName ?? claims.email}</span>
+      {claims.fullName ? <span className="truncate text-xs">{claims.email}</span> : null}
+    </div>
   );
 }
 
@@ -45,17 +43,11 @@ export function AccountMenu({
   placement: 'sidebar' | 'top-bar';
 }) {
   const navigate = useNavigate();
-  // Sidebar-07 uses size-8 rounded-lg for the account avatar; the phone top bar is round.
-  const avatar =
-    placement === 'sidebar' ? (
-      <Avatar className="rounded-lg after:rounded-lg">
-        <AvatarFallback className="rounded-lg">{userInitials(claims)}</AvatarFallback>
-      </Avatar>
-    ) : (
-      <Avatar>
-        <AvatarFallback>{userInitials(claims)}</AvatarFallback>
-      </Avatar>
-    );
+  const avatar = (
+    <Avatar>
+      <AvatarFallback>{userInitials(claims)}</AvatarFallback>
+    </Avatar>
+  );
 
   return (
     <DropdownMenu>
@@ -70,7 +62,7 @@ export function AccountMenu({
         >
           {avatar}
           <UserLines claims={claims} />
-          <ChevronsUpDownIcon className="ml-auto" />
+          <ChevronsUpDownIcon className="ml-auto size-4" />
         </DropdownMenuTrigger>
       ) : (
         <DropdownMenuTrigger
@@ -90,12 +82,14 @@ export function AccountMenu({
         side={placement === 'sidebar' ? 'right' : 'bottom'}
         align="end"
         sideOffset={4}
-        className="min-w-56"
+        className={placement === 'sidebar' ? 'w-fit' : 'min-w-56'}
       >
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="flex items-center gap-2 font-normal text-foreground">
-            {avatar}
-            <UserLines claims={claims} />
+          <DropdownMenuLabel className="p-0 font-normal">
+            <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+              {avatar}
+              <UserLines claims={claims} />
+            </div>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

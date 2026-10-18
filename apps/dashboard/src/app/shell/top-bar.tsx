@@ -69,7 +69,10 @@ export function TopBar({
           aria-label={words.shell.toggleSidebar}
         />
       )}
-      <Separator orientation="vertical" className="mr-2 h-4 self-center" />
+      <Separator
+        orientation="vertical"
+        className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+      />
       <Breadcrumb className="min-w-0">
         <BreadcrumbList>
           {crumbs.map((crumb) => (
