@@ -20,12 +20,12 @@ One file: `packages/ui/src/styles/tokens.css` (Tailwind v4 `@theme`, OKLCH). It 
 | `warning`     | Needs attention, waiting for proof, low stock           | `oklch(0.60 0.15 70)`  | `oklch(0.78 0.15 75)`  |
 | `destructive` | Cancelled, rejected, delete                             | `oklch(0.58 0.21 27)`  | `oklch(0.65 0.20 25)`  |
 | `info`        | Neutral notices, in progress                            | `oklch(0.50 0.12 243)` | `oklch(0.72 0.12 240)` |
-| `member`      | Stamps, rewards, member badges (teal green)             | `oklch(0.55 0.11 175)` | `oklch(0.78 0.13 172)` |
+| `member`      | Stamps, rewards, member badges (teal green)             | `oklch(0.54 0.11 175)` | `oklch(0.78 0.13 172)` |
 | `highlight`   | Celebration only (reward ready, order placed); marigold | `oklch(0.78 0.16 72)`  | `oklch(0.78 0.16 72)`  |
 
 Each meaning colour also gets:
 
-- `-foreground`: text on the solid colour.
+- `-foreground`: text on the solid colour (ensures >= 4.5:1 contrast; e.g. dark destructive-foreground is `oklch(0.145 0 0)` against `oklch(0.65 0.20 25)`).
 - `-hover`: the solid colour on hover.
 - `-text`: coloured text on a card or the page (plain `text-success` on white fails contrast).
 - `-soft` and `-soft-foreground`: tinted background and its text, for badges and alerts. Library badge and alert variants are mapped to these once.

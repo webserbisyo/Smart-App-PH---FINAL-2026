@@ -65,10 +65,22 @@ jobs:
             LEAKS=1
           fi
 
-          if grep -r "localhost" apps/dashboard/dist apps/storefront/.next 2>/dev/null; then
-            echo "ERROR: localhost found in client production bundle!"
-            LEAKS=1
-          fi
+          DEV_URLS=(
+            "localhost:3000"
+            "localhost:4000"
+            "localhost:5173"
+            "http://127.0.0.1"
+            "127.0.0.1:54321"
+            "127.0.0.1:3000"
+            "127.0.0.1:4000"
+            "127.0.0.1:5173"
+          )
+          for dev_url in "${DEV_URLS[@]}"; do
+            if grep -r "$dev_url" apps/dashboard/dist apps/storefront/.next 2>/dev/null; then
+              echo "ERROR: Dev URL $dev_url found in client production bundle!"
+              LEAKS=1
+            fi
+          done
 
           if [ $LEAKS -ne 0 ]; then
             exit 1

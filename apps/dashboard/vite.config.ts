@@ -1,23 +1,10 @@
 import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig, type Plugin } from 'vite';
-
-function stripLocalhost(): Plugin {
-  return {
-    name: 'strip-localhost',
-    enforce: 'post',
-    renderChunk(code) {
-      return {
-        code: code.replaceAll('localhost', '127.0.0.1'),
-        map: null,
-      };
-    },
-  };
-}
+import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [tailwindcss(), react(), stripLocalhost()],
+  plugins: [tailwindcss(), react()],
   server: {
     port: 5173,
   },
