@@ -1,139 +1,106 @@
-import * as React from 'react';
 import { Link } from '@tanstack/react-router';
-import { cn } from 'cn';
+import { words } from '@smartapp/core';
+import type { UserClaims } from '@smartapp/data';
+import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuBadge,
   SidebarRail,
-  SidebarSeparator,
-  useSidebar,
 } from '@smartapp/ui/components/sidebar';
-import { ExternalLinkIcon } from 'lucide-react';
-import { words } from '@smartapp/core';
-import type { UserClaims } from '@smartapp/data';
-import type { CurrentShop } from '../shop.js';
 import type { NavItem } from '@smartapp/ui/lib/nav';
+import { useShop } from '../shop.js';
+import type { NavItems } from '../use-nav-items.js';
 import { AccountMenu } from './account-menu.js';
-import { ShareShopSheet } from './share-shop-sheet.js';
 
-interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  claims: UserClaims;
-  shop: CurrentShop;
-  navItems: readonly NavItem[];
-  footItems: readonly NavItem[];
-  initials: string;
-  onLogout: () => void;
+function SidebarLink({ item, withTooltip }: { item: NavItem; withTooltip: boolean }) {
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        isActive={item.active}
+        {...(withTooltip ? { tooltip: item.label } : {})}
+        render={item.link}
+        aria-current={item.active ? 'page' : undefined}
+        className="h-11"
+      >
+        {item.icon}
+        <span>{item.label}</span>
+      </SidebarMenuButton>
+      {item.count !== undefined && item.count > 0 ? (
+        <SidebarMenuBadge>{item.count}</SidebarMenuBadge>
+      ) : null}
+    </SidebarMenuItem>
+  );
 }
 
+// Started from the shadcn sidebar-07 block: shop header instead of the team
+// switcher, flat links instead of nav-main/nav-projects, account menu instead
+// of nav-user.
 export function AppSidebar({
   claims,
-  shop,
-  navItems,
-  footItems,
-  initials,
-  onLogout,
-  ...props
-}: AppSidebarProps) {
-  const { setOpenMobile } = useSidebar();
-
-  const handleNavClick = () => {
-    // On tablet the sidebar opens over the page; close it on route change.
-    setOpenMobile(false);
-  };
+  nav,
+  variant,
+}: {
+  claims: UserClaims;
+  nav: NavItems;
+  // 'rail': the collapsible sidebar (tablet and desktop). 'sheet': the same
+  // content opened over the page from the tablet rail.
+  variant: 'rail' | 'sheet';
+}) {
+  const shop = useShop();
+  const withTooltip = variant === 'rail';
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      {/* Shop header */}
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
-            {initials}
-          </div>
-          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-sm font-semibold text-foreground">{shop.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{words.nav.openState}</p>
-          </div>
-        </div>
+    <Sidebar
+      collapsible={variant === 'rail' ? 'icon' : 'none'}
+      className={variant === 'sheet' ? 'h-full w-full' : undefined}
+    >
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              {...(withTooltip ? { tooltip: shop.name } : {})}
+              render={<Link to="/" />}
+            >
+              <Avatar className="rounded-lg after:rounded-lg">
+                <AvatarFallback className="rounded-lg bg-primary text-xs font-semibold text-primary-foreground">
+                  {shop.initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">{shop.name}</span>
+                <span className="truncate text-xs text-success-text">{words.shell.open}</span>
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
-
-      {/* Main navigation */}
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={Boolean(item.isActive)}
-                      tooltip={item.label}
-                      render={
-                        <Link
-                          to={item.href}
-                          onClick={handleNavClick}
-                          aria-current={item.isActive ? 'page' : undefined}
-                        />
-                      }
-                    >
-                      {Icon && <Icon />}
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                    {typeof item.badge === 'number' && item.badge > 0 && (
-                      <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                    )}
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
+          <SidebarMenu aria-label={words.shell.mainNav}>
+            {nav.all.map((item) => (
+              <SidebarLink key={item.id} item={item} withTooltip={withTooltip} />
+            ))}
+          </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-
-      {/* Footer: view shop, share, account */}
-      <SidebarFooter className="border-t border-sidebar-border">
-        <SidebarSeparator className="group-data-[collapsible=icon]:hidden" />
+      <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
-            <ShareShopSheet shopName={shop.name} shopSlug={shop.slug} />
+          <SidebarLink item={nav.viewMyShop} withTooltip={withTooltip} />
+          <SidebarLink item={nav.shareMyShop} withTooltip={withTooltip} />
+          <SidebarMenuItem>
+            <AccountMenu claims={claims} placement="sidebar" />
           </SidebarMenuItem>
-          {footItems
-            .filter((f) => f.id === 'view-shop')
-            .map((item) => {
-              const Icon = item.icon;
-              return (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    tooltip={item.label}
-                    render={
-                      <a
-                        href={`${item.href}${shop.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    }
-                  >
-                    {Icon ? <Icon /> : <ExternalLinkIcon />}
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              );
-            })}
         </SidebarMenu>
-        <div className="px-1 py-0.5">
-          <AccountMenu claims={claims} initials={initials} onLogout={onLogout} />
-        </div>
       </SidebarFooter>
-
-      <SidebarRail />
+      {variant === 'rail' ? <SidebarRail /> : null}
     </Sidebar>
   );
 }

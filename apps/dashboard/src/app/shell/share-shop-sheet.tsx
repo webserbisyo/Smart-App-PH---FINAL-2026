@@ -1,55 +1,68 @@
-import { cn } from 'cn';
+import { useState } from 'react';
+import { CheckIcon, CopyIcon } from 'lucide-react';
+import { words } from '@smartapp/core';
+import { Button } from '@smartapp/ui/components/button';
+import { Input } from '@smartapp/ui/components/input';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@smartapp/ui/components/sheet';
-import { Button } from '@smartapp/ui/components/button';
-import { QrCodeIcon, ExternalLinkIcon } from 'lucide-react';
-import { words } from '@smartapp/core';
-import { env } from '../env.js';
 
-interface ShareShopSheetProps {
-  shopName: string;
-  shopSlug: string;
-  className?: string | undefined;
-}
+type CopyState = 'idle' | 'copied' | 'failed';
 
-export function ShareShopSheet({ shopName, shopSlug, className }: ShareShopSheetProps) {
-  const storefrontUrl = `${env.VITE_STOREFRONT_URL}/${shopSlug}`;
+export function ShareShopSheet({
+  url,
+  open,
+  onOpenChange,
+}: {
+  url: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [copyState, setCopyState] = useState<CopyState>('idle');
+
+  async function copy(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyState('copied');
+    } catch {
+      setCopyState('failed');
+    }
+  }
 
   return (
-    <Sheet>
-      <SheetTrigger
-        render={<Button variant="ghost" size="sm" className={cn('gap-2', className)} />}
-      >
-        <QrCodeIcon />
-        <span>{words.nav.shareMyShop}</span>
-      </SheetTrigger>
-      <SheetContent side="bottom" className="pb-safe">
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        onOpenChange(next);
+        if (!next) setCopyState('idle');
+      }}
+    >
+      <SheetContent side="bottom" className="mx-auto w-full max-w-lg rounded-t-xl pb-safe">
         <SheetHeader>
           <SheetTitle>{words.nav.shareMyShop}</SheetTitle>
-          <SheetDescription>
-            Share your storefront link so customers can discover and order from{' '}
-            <strong>{shopName}</strong>.
-          </SheetDescription>
+          <SheetDescription>{words.share.description}</SheetDescription>
         </SheetHeader>
-
-        <div className="mt-4 flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted px-3 py-2">
-            <span className="truncate text-sm text-muted-foreground">{storefrontUrl}</span>
-          </div>
-
-          <Button
-            nativeButton={false}
-            render={<a href={storefrontUrl} target="_blank" rel="noopener noreferrer" />}
-          >
-            <ExternalLinkIcon />
-            {words.nav.viewMyShop}
+        <div className="flex flex-col gap-3 px-4 pb-4">
+          <Input
+            readOnly
+            value={url}
+            aria-label={words.nav.shareMyShop}
+            className="h-11 text-base"
+            onFocus={(event) => event.currentTarget.select()}
+          />
+          <Button className="h-11" onClick={() => void copy()}>
+            {copyState === 'copied' ? <CheckIcon /> : <CopyIcon />}
+            {copyState === 'copied' ? words.share.copied : words.share.copy}
           </Button>
+          {copyState === 'failed' ? (
+            <p role="alert" className="text-sm text-destructive">
+              {words.share.copyFailed}
+            </p>
+          ) : null}
         </div>
       </SheetContent>
     </Sheet>

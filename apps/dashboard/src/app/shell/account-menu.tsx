@@ -1,75 +1,99 @@
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { ChevronsUpDownIcon, LogOutIcon, UserIcon } from 'lucide-react';
+import { words } from '@smartapp/core';
+import type { UserClaims } from '@smartapp/data';
+import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
+import { Button } from '@smartapp/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
-import { LogOutIcon, UserIcon } from 'lucide-react';
-import { words } from '@smartapp/core';
-import type { UserClaims } from '@smartapp/data';
-import { cn } from 'cn';
+import { SidebarMenuButton } from '@smartapp/ui/components/sidebar';
 
-export interface AccountMenuProps {
-  claims: UserClaims;
-  initials: string;
-  onLogout: () => void;
-  /** When true renders a compact trigger suitable for a top bar */
-  compact?: boolean | undefined;
-  className?: string | undefined;
+function userInitials(claims: UserClaims): string {
+  const source = claims.fullName ?? claims.email;
+  return source
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
 }
 
+function UserLines({ claims }: { claims: UserClaims }) {
+  return (
+    <span className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+      <span className="truncate font-semibold">{claims.fullName ?? claims.email}</span>
+      {claims.fullName ? (
+        <span className="truncate text-xs text-muted-foreground">{claims.email}</span>
+      ) : null}
+    </span>
+  );
+}
+
+// The one account menu: in the sidebar footer and in the phone top bar.
 export function AccountMenu({
   claims,
-  initials,
-  onLogout,
-  compact = false,
-  className,
-}: AccountMenuProps) {
+  placement,
+}: {
+  claims: UserClaims;
+  placement: 'sidebar' | 'top-bar';
+}) {
+  const navigate = useNavigate();
+  const avatar = (
+    <Avatar>
+      <AvatarFallback>{userInitials(claims)}</AvatarFallback>
+    </Avatar>
+  );
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        className={cn(
-          'flex shrink-0 pressable items-center gap-2 rounded-lg ring-ring transition-colors outline-none hover:bg-accent focus-visible:ring-2',
-          compact ? 'size-10 justify-center' : 'w-full px-2 py-1.5',
-          className,
-        )}
-        aria-label={words.nav.account}
+      {placement === 'sidebar' ? (
+        <DropdownMenuTrigger
+          render={<SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />}
+        >
+          {avatar}
+          <UserLines claims={claims} />
+          <ChevronsUpDownIcon className="ml-auto" />
+        </DropdownMenuTrigger>
+      ) : (
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11 rounded-full"
+              aria-label={words.shell.accountMenu}
+            />
+          }
+        >
+          {avatar}
+        </DropdownMenuTrigger>
+      )}
+      <DropdownMenuContent
+        side={placement === 'sidebar' ? 'right' : 'bottom'}
+        align="end"
+        sideOffset={4}
+        className="min-w-56"
       >
-        <Avatar className="size-8 shrink-0">
-          <AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        {!compact && (
-          <div className="min-w-0 flex-1 text-left">
-            <p className="truncate text-sm font-medium text-foreground">
-              {claims.fullName ?? claims.email}
-            </p>
-            {claims.fullName && (
-              <p className="truncate text-xs text-muted-foreground">{claims.email}</p>
-            )}
-          </div>
-        )}
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="end" sideOffset={4} className="w-56">
-        <div className="px-2 py-1.5">
-          <p className="truncate text-sm font-medium">{claims.fullName ?? claims.email}</p>
-          {claims.fullName && (
-            <p className="truncate text-xs text-muted-foreground">{claims.email}</p>
-          )}
-        </div>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="flex items-center gap-2 font-normal text-foreground">
+            {avatar}
+            <UserLines claims={claims} />
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem render={<Link to="/settings/account" />}>
           <UserIcon />
-          {words.screens.settings.accountTitle}
+          {words.nav.account}
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={onLogout}>
-          <LogOutIcon className="mr-2 size-4" />
+        <DropdownMenuItem onClick={() => void navigate({ to: '/logout' })}>
+          <LogOutIcon />
           {words.auth.logout}
         </DropdownMenuItem>
       </DropdownMenuContent>

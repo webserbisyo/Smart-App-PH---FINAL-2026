@@ -1,175 +1,104 @@
-import * as React from 'react';
-import { Outlet, useRouter } from '@tanstack/react-router';
-import { Link } from '@tanstack/react-router';
-import { SidebarProvider, SidebarInset } from '@smartapp/ui/components/sidebar';
-import { BottomDock } from '@smartapp/ui/compositions/bottom-dock';
-import { NavDrawer } from '@smartapp/ui/compositions/nav-drawer';
-import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
-import { cn } from 'cn';
-import { MoreHorizontalIcon } from 'lucide-react';
+import { useState } from 'react';
+import { Outlet, useRouterState } from '@tanstack/react-router';
 import { words } from '@smartapp/core';
 import type { UserClaims } from '@smartapp/data';
-import { ShopContext, type CurrentShop } from '../shop.js';
-import { useNavItems } from '../use-nav-items.js';
+import { BottomDock } from '@smartapp/ui/compositions/bottom-dock';
+import { Sheet, SheetContent, SheetTitle } from '@smartapp/ui/components/sheet';
+import { SidebarInset, SidebarProvider } from '@smartapp/ui/components/sidebar';
+import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
+import { cssVars } from '@smartapp/ui/lib/css-vars';
+import { usePageMeta } from '../page-meta.js';
+import { ShopContext, useShop, type CurrentShop } from '../shop.js';
+import { usePageTitle } from '../use-page-title.js';
+import { storefrontUrl, useNavItems } from '../use-nav-items.js';
 import { AppSidebar } from './app-sidebar.js';
+import { ShareShopSheet } from './share-shop-sheet.js';
 import { TopBar } from './top-bar.js';
 
-interface AppShellProps {
-  claims: UserClaims;
-  shop: CurrentShop;
+// The installed sidebar keeps its open/collapsed choice in this cookie.
+function sidebarStartsOpen(): boolean {
+  return !document.cookie.split('; ').includes('sidebar_state=false');
 }
 
-export function AppShell({ claims, shop }: AppShellProps) {
-  const pageTitle = words.appName;
-  const onLogout = () => {
-    void router.navigate({ to: '/logout' });
-  };
+function Shell({ claims }: { claims: UserClaims }) {
+  const shop = useShop();
   const formFactor = useFormFactor();
-  const router = useRouter();
-  const [moreOpen, setMoreOpen] = React.useState(false);
-  const { dockItems, moreItems, footItems, allSidebarItems } = useNavItems(shop.kind);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const page = usePageMeta();
+  const [shareOpen, setShareOpen] = useState(false);
+  // The tablet menu sheet is open only on the route it was opened from, so it
+  // closes when the route changes.
+  const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null);
+  const menuOpen = menuOpenOn === pathname;
+  const setMenuOpen = (open: boolean) => setMenuOpenOn(open ? pathname : null);
+  const nav = useNavItems({ onShare: () => setShareOpen(true) });
+  usePageTitle(page.title);
 
-  const initials = shop.initials;
-
-  // On tablet the sidebar opens as a sheet overlay, closes on route change.
-  const [sidebarOpen, setSidebarOpen] = React.useState(formFactor === 'desktop');
-
-  // Remember sidebar open/collapsed for desktop between visits.
-  const [sidebarDefaultOpen] = React.useState(() => {
-    try {
-      return localStorage.getItem('sidebar_state') !== 'collapsed';
-    } catch {
-      return true;
-    }
-  });
-
-  // Close more drawer on navigation
-  React.useEffect(() => {
-    return router.subscribe('onResolved', () => setMoreOpen(false));
-  }, [router]);
-
-  // Build dock items: 4 dock slots + "More" button that opens the drawer.
-  const dockNavItems = [
-    ...dockItems.map((item) => ({
-      ...item,
-      renderLink: ({
-        href,
-        className,
-        children,
-        'aria-current': ariaCurrent,
-      }: {
-        href: string;
-        className: string;
-        children: React.ReactNode;
-        'aria-current'?: 'page' | undefined;
-        onClick?: (() => void) | undefined;
-      }) => (
-        <Link to={href} className={className} aria-current={ariaCurrent} preload="intent">
-          {children}
-        </Link>
-      ),
-    })),
-    {
-      id: 'more',
-      label: words.nav.more,
-      href: '#',
-      icon: MoreHorizontalIcon,
-      isActive: moreOpen,
-      onClick: () => setMoreOpen(true),
-    },
-  ];
-
-  // Build sidebar nav items with TanStack Link
-  const sidebarNavItems = allSidebarItems.map((item) => ({
-    ...item,
-    renderLink: ({
-      href,
-      className,
-      children,
-      'aria-current': ariaCurrent,
-    }: {
-      href: string;
-      className: string;
-      children: React.ReactNode;
-      'aria-current'?: 'page' | undefined;
-      onClick?: (() => void) | undefined;
-    }) => (
-      <Link to={href} className={className} aria-current={ariaCurrent} preload="intent">
-        {children}
-      </Link>
-    ),
-  }));
-
-  const moreNavItems = moreItems.map((item) => ({
-    ...item,
-    renderLink: ({
-      href,
-      className,
-      children,
-      'aria-current': ariaCurrent,
-    }: {
-      href: string;
-      className: string;
-      children: React.ReactNode;
-      'aria-current'?: 'page' | undefined;
-      onClick?: (() => void) | undefined;
-    }) => (
-      <Link to={href} className={className} aria-current={ariaCurrent} preload="intent">
-        {children}
-      </Link>
-    ),
-  }));
-
-  const isPhone = formFactor === 'phone';
   const isTablet = formFactor === 'tablet';
 
   return (
-    <ShopContext value={shop}>
-      <div
-        data-shell={formFactor}
-        className={cn('flex min-h-dvh bg-background', isPhone && 'pb-dock')}
+    <div data-shell={formFactor} className="min-h-dvh bg-background">
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-md bg-background px-4 py-3 font-medium focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
       >
-        <SidebarProvider
-          defaultOpen={sidebarDefaultOpen}
-          {...(isTablet ? { open: sidebarOpen, onOpenChange: setSidebarOpen } : {})}
-        >
-          {/* Sidebar — hidden on phone, icon rail on tablet, full on desktop */}
-          {!isPhone && (
-            <AppSidebar
-              claims={claims}
-              shop={shop}
-              navItems={sidebarNavItems}
-              footItems={footItems}
-              initials={initials}
-              onLogout={onLogout}
-            />
-          )}
+        {words.shell.skipToContent}
+      </a>
+      <SidebarProvider
+        defaultOpen={sidebarStartsOpen()}
+        style={cssVars({
+          '--sidebar-width': 'var(--shell-sidebar-width)',
+          '--sidebar-width-icon': 'var(--rail-width)',
+        })}
+        {...(isTablet ? { open: false, onOpenChange: setMenuOpen } : {})}
+      >
+        {formFactor !== 'phone' ? <AppSidebar claims={claims} nav={nav} variant="rail" /> : null}
+        <SidebarInset className="min-w-0">
+          <TopBar
+            formFactor={formFactor}
+            page={page}
+            claims={claims}
+            onOpenMenu={() => setMenuOpen(true)}
+          />
+          <div
+            id="main"
+            tabIndex={-1}
+            className="flex flex-1 flex-col outline-none shell-phone:pb-dock"
+          >
+            <Outlet />
+          </div>
+        </SidebarInset>
+        {isTablet ? (
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetContent side="left" className="gap-0 p-0" showCloseButton={false}>
+              <SheetTitle className="sr-only">{words.shell.mainNav}</SheetTitle>
+              <AppSidebar claims={claims} nav={nav} variant="sheet" />
+            </SheetContent>
+          </Sheet>
+        ) : null}
+      </SidebarProvider>
 
-          <SidebarInset className="flex min-w-0 flex-1 flex-col">
-            {/* Top bar — always shown (phone needs it for title + avatar) */}
-            <TopBar title={pageTitle} claims={claims} initials={initials} onLogout={onLogout} />
+      {formFactor === 'phone' ? (
+        <BottomDock
+          label={words.shell.mainNav}
+          items={nav.dock}
+          more={{
+            label: words.nav.more,
+            items: [...nav.more, nav.viewMyShop, nav.shareMyShop, nav.account],
+          }}
+        />
+      ) : null}
 
-            {/* Page content */}
-            <main className="flex flex-1 flex-col">
-              <Outlet />
-            </main>
-          </SidebarInset>
-        </SidebarProvider>
+      <ShareShopSheet url={storefrontUrl(shop.slug)} open={shareOpen} onOpenChange={setShareOpen} />
+    </div>
+  );
+}
 
-        {/* Phone bottom dock */}
-        {isPhone && (
-          <>
-            <BottomDock items={dockNavItems} />
-            <NavDrawer
-              open={moreOpen}
-              onOpenChange={setMoreOpen}
-              items={moreNavItems}
-              footerItems={footItems}
-              title={words.nav.more}
-            />
-          </>
-        )}
-      </div>
+// One tree for every size; the layout follows useFormFactor() through data-shell.
+export function AppShell({ claims, shop }: { claims: UserClaims; shop: CurrentShop }) {
+  return (
+    <ShopContext value={shop}>
+      <Shell claims={claims} />
     </ShopContext>
   );
 }
