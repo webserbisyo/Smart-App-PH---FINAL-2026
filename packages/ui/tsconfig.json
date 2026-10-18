@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "moduleResolution": "Bundler",
+    "module": "ESNext",
+    "types": ["node"],
+    "paths": {
+      "@smartapp/ui/components/*": ["./src/components/*"],
+      "@smartapp/ui/lib/*": ["./src/lib/*"],
+      "@smartapp/ui/hooks/*": ["./src/hooks/*"],
+      "@smartapp/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*"]
+}

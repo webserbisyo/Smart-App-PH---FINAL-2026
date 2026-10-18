@@ -4,12 +4,12 @@ Starts after the MVP has paying shops. Same repo, same NestJS app, same rules (`
 
 ## 1. Who uses it
 
-| Person | Where | Login |
-| --- | --- | --- |
-| Customer | Storefront | Guest, or member with a 6-digit email code |
-| Owner | Dashboard | Email and password; two-factor later |
+| Person                | Where                        | Login                                                   |
+| --------------------- | ---------------------------- | ------------------------------------------------------- |
+| Customer              | Storefront                   | Guest, or member with a 6-digit email code              |
+| Owner                 | Dashboard                    | Email and password; two-factor later                    |
 | Staff (cashier, prep) | Dashboard on a shared device | Username plus shop code; change password on first login |
-| Platform admin | Dashboard `/admin` | The founder |
+| Platform admin        | Dashboard `/admin`           | The founder                                             |
 
 Roles: `owner`, `cashier`, `prep` (shown as Kitchen or Packer). Permissions are named (`orders.manage`, `sell.use`, `catalog.manage`...) and checked in Nest (`@Can`) and again in SQL.
 
@@ -19,29 +19,29 @@ Anti-fraud, never cut: nothing is deleted (cancel and void keep a reason); voids
 
 Each module = one database task, one API task, then one task per screen.
 
-| # | Module | Adds |
-| --- | --- | --- |
-| M1 | Staff and roles | seats, staff logins, permissions |
-| M2 | Account and audit | profile, security, activity log |
-| M3 | Notifications | alerts bell, more email and push events (the outbox and new-order email ship in A, N10) |
-| M4 | Inventory | stock movements with reasons, low stock |
-| M5 | Settings extras | tables and QR, tax, approval PIN |
-| M6 | Dine-in | table ordering on the storefront |
-| M7 | Shifts | open, cash in and out, blind close |
-| M8 | POS | sell screen, senior and PWD discount, slip |
-| M9 | Voids and approvals | void with PIN |
-| M10 | Kitchen and packing | prep board |
-| M11 | Advance orders | schedule, lead days, deposits |
-| M12 | Marketing | vouchers, promotions, announcements |
-| M13 | Customers extended | notes, block, export, anonymize, synced favourites and carts, customer Google sign-in |
-| M14 | Full reports | breakdowns, CSV |
-| M15 | Shipping | by region |
-| M16 | Platform | `/admin`, approvals, support mode, billing states |
-| M17 | Integrations | PayMongo, Meta Conversions API, Google Sheets |
-| M18 | Native app | Capacitor build of the dashboard, Bluetooth printers |
-| M19 | Loyalty extras | reward tiers, stamps per peso spent, stamp expiry, double-stamp days |
-| M20 | AI | brand assistant from the logo, plain-language insight summaries |
-| M21 | Editor extras | section reorder, more templates, scheduled publishing, custom domains |
+| #   | Module              | Adds                                                                                    |
+| --- | ------------------- | --------------------------------------------------------------------------------------- |
+| M1  | Staff and roles     | seats, staff logins, permissions                                                        |
+| M2  | Account and audit   | profile, security, activity log                                                         |
+| M3  | Notifications       | alerts bell, more email and push events (the outbox and new-order email ship in A, N10) |
+| M4  | Inventory           | stock movements with reasons, low stock                                                 |
+| M5  | Settings extras     | tables and QR, tax, approval PIN                                                        |
+| M6  | Dine-in             | table ordering on the storefront                                                        |
+| M7  | Shifts              | open, cash in and out, blind close                                                      |
+| M8  | POS                 | sell screen, senior and PWD discount, slip                                              |
+| M9  | Voids and approvals | void with PIN                                                                           |
+| M10 | Kitchen and packing | prep board                                                                              |
+| M11 | Advance orders      | schedule, lead days, deposits                                                           |
+| M12 | Marketing           | vouchers, promotions, announcements                                                     |
+| M13 | Customers extended  | notes, block, export, anonymize, synced favourites and carts, customer Google sign-in   |
+| M14 | Full reports        | breakdowns, CSV                                                                         |
+| M15 | Shipping            | by region                                                                               |
+| M16 | Platform            | `/admin`, approvals, support mode, billing states                                       |
+| M17 | Integrations        | PayMongo, Meta Conversions API, Google Sheets                                           |
+| M18 | Native app          | Capacitor build of the dashboard, Bluetooth printers                                    |
+| M19 | Loyalty extras      | reward tiers, stamps per peso spent, stamp expiry, double-stamp days                    |
+| M20 | AI                  | brand assistant from the logo, plain-language insight summaries                         |
+| M21 | Editor extras       | section reorder, more templates, scheduled publishing, custom domains                   |
 
 ## 3. Architecture additions
 

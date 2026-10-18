@@ -1,0 +1,18 @@
+# Environment
+.env*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Outputs
+dist/
+.next/
+.turbo/
+build/
+coverage/
+.playwright-mcp/
+
+# OS
+.DS_Store
+*.pem

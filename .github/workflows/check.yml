@@ -1,0 +1,117 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, Check, Build & Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Turbo check (typecheck, lint, test)
+        run: pnpm check
+
+      - name: Build
+        run: pnpm build
+
+      - name: Scan build outputs for leaks and forbidden strings
+        run: |
+          echo "Scanning dist/ and .next/ for demo emails, /kit, and localhost..."
+          LEAKS=0
+          EMAILS=(
+            "morales.juanmiguel0729+burger@gmail.com"
+            "morales.juanmiguel0729+water@gmail.com"
+            "morales.juanmiguel0729+tala@gmail.com"
+            "morales.juanmiguel0729+cafe@gmail.com"
+            "morales.juanmiguel0729+bakery@gmail.com"
+          )
+          for email in "${EMAILS[@]}"; do
+            if grep -r "$email" apps/*/dist apps/*/.next 2>/dev/null; then
+              echo "ERROR: Demo email $email found in production bundle!"
+              LEAKS=1
+            fi
+          done
+
+          if grep -r "/kit" apps/dashboard/dist apps/storefront/.next 2>/dev/null; then
+            echo "ERROR: /kit found in client production bundle!"
+            LEAKS=1
+          fi
+
+          DEV_URLS=(
+            "localhost:3000"
+            "localhost:4000"
+            "localhost:5173"
+            "http://127.0.0.1"
+            "127.0.0.1:54321"
+            "127.0.0.1:3000"
+            "127.0.0.1:4000"
+            "127.0.0.1:5173"
+          )
+          for dev_url in "${DEV_URLS[@]}"; do
+            if grep -r "$dev_url" apps/dashboard/dist apps/storefront/.next 2>/dev/null; then
+              echo "ERROR: Dev URL $dev_url found in client production bundle!"
+              LEAKS=1
+            fi
+          done
+
+          if [ $LEAKS -ne 0 ]; then
+            exit 1
+          fi
+
+  db:
+    name: Supabase Migrations & Types Drift
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start Supabase Stack
+        run: pnpm exec supabase db start
+
+      - name: Test Database (pgTAP)
+        run: pnpm exec supabase test db
+
+      - name: Verify Types Drift
+        run: |
+          pnpm exec supabase gen types typescript --local > packages/data/src/database.types.ts
+          git diff --exit-code packages/data/src/database.types.ts
