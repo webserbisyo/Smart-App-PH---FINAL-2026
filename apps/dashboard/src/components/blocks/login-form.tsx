@@ -80,9 +80,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                   placeholder={words.auth.emailPlaceholder}
                   disabled={isSubmitting}
                   aria-invalid={Boolean(errors.email)}
+                  aria-describedby={errors.email ? 'email-error' : undefined}
                   {...register('email')}
                 />
-                {errors.email?.message ? <FieldError>{errors.email.message}</FieldError> : null}
+                {errors.email?.message ? (
+                  <FieldError id="email-error">{errors.email.message}</FieldError>
+                ) : null}
               </Field>
               <Field data-invalid={Boolean(errors.password)}>
                 <FieldLabel htmlFor="password">{words.auth.passwordLabel}</FieldLabel>
@@ -93,10 +96,11 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                   placeholder={words.auth.passwordPlaceholder}
                   disabled={isSubmitting}
                   aria-invalid={Boolean(errors.password)}
+                  aria-describedby={errors.password ? 'password-error' : undefined}
                   {...register('password')}
                 />
                 {errors.password?.message ? (
-                  <FieldError>{errors.password.message}</FieldError>
+                  <FieldError id="password-error">{errors.password.message}</FieldError>
                 ) : null}
               </Field>
               <Field>

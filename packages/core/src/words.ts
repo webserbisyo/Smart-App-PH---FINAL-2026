@@ -24,6 +24,14 @@ export const words = {
     logout: 'Log out',
     offline: "You're offline",
   },
+  validation: {
+    fullNameRequired: 'Please enter your full name.',
+    fullNameTooLong: 'Full name must be 80 characters or fewer.',
+    emailRequired: 'Please enter your email address.',
+    emailInvalid: 'Please enter a valid email address.',
+    passwordRequired: 'Please enter your password.',
+    passwordMinLength: 'Password must be at least 8 characters long.',
+  },
   errors: {
     invalidLogin: 'Incorrect email or password. Please check your credentials and try again.',
     emailTaken: 'An account with this email already exists. Try logging in instead.',

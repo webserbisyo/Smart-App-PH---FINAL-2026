@@ -48,7 +48,7 @@ describe('App API (e2e)', () => {
   it('POST /test-validation with a bad body is 400 invalid_input with fieldErrors', async () => {
     const res = await request(app.getHttpServer())
       .post('/test-validation')
-      .send({ email: 'not-an-email', password: 'short' })
+      .send({ email: 'not-an-email', password: '' })
       .expect(400);
 
     expect(res.body.status).toBe(400);

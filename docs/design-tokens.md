@@ -1,6 +1,6 @@
 # Design tokens
 
-One file: `packages/ui/src/styles/tokens.css` (Tailwind v4 `@theme`, OKLCH). It is imported by the one `globals.css`. Components use token classes (`bg-primary`, `text-success-text`), never hex, raw palette classes or arbitrary values: if a value is missing, add a token here first. Each colour has a `-foreground` partner with at least 4.5:1 contrast. Dark mode is a `.dark` class (custom variant), so the dashboard can have a switch. OKLCH needs Chrome 111 / Safari 16.4 or newer, the same minimum as Tailwind 4.
+Tokens are defined as plain CSS variables in `:root` and `.dark` in `packages/ui/src/styles/tokens.css` (OKLCH) and mapped into Tailwind v4 with `@theme inline` in `packages/ui/src/styles/globals.css`. Components use token classes (`bg-primary`, `text-success-text`), never hex, raw palette classes or arbitrary values: if a value is missing, add a token here first. Each colour has a `-foreground` partner with at least 4.5:1 contrast. Dark mode is a `.dark` class (custom variant), so the dashboard can have a switch. OKLCH needs Chrome 111 / Safari 16.4 or newer, the same minimum as Tailwind 4.
 
 ## Base (shadcn names)
 
@@ -74,7 +74,7 @@ The mapping lives once in `packages/core` (`STATUS_TONE`) and is used by every b
 - Font: Plus Jakarta Sans (variable, self-hosted); numbers with `tabular-nums`. Money as `₱1,234` (no `.00` for whole pesos); prices never wrap.
 - Type scale: 12, 14, 16, 18, 22, 28 px (in rem, so the phone's text size setting scales the app). Weights 400 and 600; 700 only for prices and order numbers.
 - Space: 4 px grid. Page gutter 16 px on phone, 24 px on desktop. Card padding 16 px phone, 20 px desktop.
-- Radius: badges 6 px, small controls 8, buttons and inputs 12 (`--radius`), cards 16 to 20, sheet tops 24, chips and pills fully round.
+- Radius: shadcn default scale with `--radius: 0.625rem` in `:root` and mapped in `@theme inline` (`--radius-sm: calc(var(--radius) * 0.6)`, `--radius-md: calc(var(--radius) * 0.8)`, `--radius-lg: var(--radius)`, `--radius-xl: calc(var(--radius) * 1.4)`); chips and pills fully round.
 - Elevation: `--elevation-xs..lg` (shadcn shadow scale). In dark mode a lighter surface plus a 1 px edge instead of a darker shadow.
 - Layers (z-index, lowest first): content, sticky bars, basket bar, dock, sheet and dialog, toast.
 - Shell sizes: top bar 56 px phone / 64 px desktop; dock 64 px, 12 px from the edges, max 440 px wide; rail 72 px; sidebar 248 px.

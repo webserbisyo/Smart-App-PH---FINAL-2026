@@ -58,10 +58,10 @@ describe('Design Tokens Contrast', () => {
   const css = readFileSync(cssPath, 'utf-8');
 
   function extractToken(block: string, token: string): string {
-    const regex = new RegExp(`--color-${token}:\\s*([^;]+);`);
+    const regex = new RegExp(`--${token}:\\s*([^;]+);`);
     const match = block.match(regex);
     if (!match || !match[1]) {
-      throw new Error(`Token --color-${token} not found`);
+      throw new Error(`Token --${token} not found`);
     }
     return match[1].trim();
   }
