@@ -4,7 +4,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 
 ## Phase 0: Foundation
 
-- [x] T01 Monorepo, docs, auth migration, demo accounts, login and sign up (PR #<n>)
+- [x] T01 Monorepo, docs, auth migration, demo accounts, login and sign up (PR #5)
 - [ ] T01b Google sign-in
 
 ## Phase 1: Kit and shell
