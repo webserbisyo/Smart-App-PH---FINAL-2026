@@ -6,7 +6,7 @@ Read for every screen task. General rules only; each screen's prompt names its c
 
 | Width | Dashboard nav | Storefront nav | Content |
 | --- | --- | --- | --- |
-| Phone < 768 px | Bottom dock: Home · Orders · Products · Customers · More (sheet with Reports, Settings). Top bar: title, Back on sub-pages, bell, avatar | Bottom tabs: Home · Menu/Products · Rewards · Orders (Account opens from the avatar; Rewards hidden when the stamp card is off). Cart bar floats above the tabs | One column, 16 px gutters |
+| Phone < 768 px | Bottom dock: Home · Orders · Menu/Products · Members · More (sheet with Editor, Insights, Settings). Sidebar from 1024 px: Home · Orders · Menu/Products · Members · Editor · Insights · Settings (decision N9). Top bar: title, Back on sub-pages, bell, avatar | Bottom tabs: Home · Menu/Products · Rewards · Orders (Account opens from the avatar; Rewards hidden when the stamp card is off). Cart bar floats above the tabs | One column, 16 px gutters |
 | Tablet 768 to 1023 px | Icon rail 72 px (sidebar collapsed); the toggle opens it over the page | Bottom tabs stay (still a touch device) | Two columns where it helps (orders board 2 to 3 columns) |
 | Laptop 1024 to 1279 px | Sidebar 248 px, collapsible to the rail, choice remembered | Top navigation; item opens as a dialog, cart as a right drawer | Board 4 columns |
 | Desktop ≥ 1280 px | Same sidebar; optional side panel (order detail next to the board) | Same, plus a sticky 360 px cart column; content max 1120 px | `PageBody` widths: full 1600, wide 1280, settings 880, form 720, narrow 480 |
@@ -57,8 +57,8 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - Menu: sticky search and categories; "+" adds at once when there is one variant and no required add-ons, otherwise opens the item; sold-out items stay, greyed; `?item=<id>` opens an item.
 - Item: required choices first; a missing one scrolls to it and the button says what to choose; note up to 120 characters.
 - Cart: saved on the device per shop; missing or sold-out lines are flagged and left out of the total.
-- Checkout: one page (how, who, pay); re-quoted before Place order; pickup slots start 20 min out, today or tomorrow, inside hours; transfers show "Send exactly ₱345" with Copy.
-- Receipt: big order number, live status (15 s poll fallback), upload proof → "Checking your payment" → rejected reason with Upload again; "ORDER SLIP · NOT AN OFFICIAL RECEIPT" on slips; install card after the first order.
+- Checkout: one page (how, who, pay); re-quoted before Place order; pickup slots start 20 min out, today or tomorrow, inside hours; a closed shop with "Take orders while closed" on offers next-opening slots for pickup and delivery (N1); offline keeps the cart and details and Place order waits for the connection (N2); transfers show "Send exactly ₱345" with Copy.
+- Receipt: big order number, live status (15 s poll fallback), upload proof → "Checking your payment" → rejected reason with Upload again; Save receipt (image) and Print or Save as PDF (N11); "ORDER SLIP · NOT AN OFFICIAL RECEIPT" on slips; install card after the first order.
 - Account: 6-digit code with a 60 s resend timer; stamp card; confetti once when a reward is ready.
 
 **Dashboard**
@@ -66,5 +66,8 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - Orders: open-order count in the nav and tab title; "Turn on order sound" until the first tap; order age amber at 10 min, red at 20; one next-step button from core `nextActions()`; Cancel needs a reason.
 - Order detail: proof zoom, reference with Copy, "Check this reference in your own GCash app", Approve or Reject with a reason.
 - Home: setup checklist until done; attention items hidden at 0; today's numbers; no % comparisons or date pickers (an empty new day looks calm).
-- Products: Visible and Sold out switches inline; up to 5 photos; an item with orders is archived, not deleted; leave guard on unsaved edits.
-- Settings: sections with their own Save; a live phone preview for the shop look with a contrast warning.
+- Menu or Products: Visible and Sold out switches inline; variants up to 2 choices, shared add-on groups with min and max, "Goes well with" up to 4 items (N4); up to 5 photos; an item with orders is archived, not deleted; leave guard on unsaved edits.
+- Members: list with segments, member detail with stamp history, manual stamp ±1 with a reason (at most 3 per member per day), stamp card, claims (N5).
+- Editor: the shop look and content edited on a live preview of the real storefront, Draft and Publish, contrast warning, logo colour helper (N7, N8).
+- Insights: simple blocks for 7 or 30 days, no % comparisons.
+- Settings: operations only (info, hours, order types, payments, delivery), each section with its own Save.

@@ -35,6 +35,20 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T17 Generated database types are committed in `packages/data`; CI regenerates them from the migrations on a local database and fails on any difference.
 - T18 The PWA uses `@serwist/turbopack` (Next 16 builds with Turbopack; the webpack-based `@serwist/next` does not run there).
 
+## MVP A scope (accepted 2026-10-18; details in `SYSTEM.md` section 4.2 and `SMART_APP_PH_BLUEPRINT.md`)
+
+- N1 A closed or paused shop keeps the cart; "Take orders while closed" (default on) offers next-opening slots today or tomorrow for pickup and delivery only; no new order status.
+- N2 Offline: the cart and checkout details are kept; Place order waits for the connection and re-quotes. No background order sending (Safari and iOS have no Background Sync).
+- N3 Favourites are stored on the phone only; synced favourites and carts are B (M19).
+- N4 Up to 2 variant choices per item and 30 variants; add-on groups are a shared library with min and max picks (min 1 = required); "Goes well with" up to 4 items per item.
+- N5 One stamp card per shop with one active reward: discount, free item or custom prize. Manual stamps ±1 need a reason, owner only, at most 3 per member per Manila day.
+- N6 The member QR opens the member's page in the dashboard when scanned with the phone camera; no scanner in the app.
+- N7 Editor: fixed sections edited in place on a live preview, Draft and Publish, sections on or off; no reorder, fonts or custom blocks in A.
+- N8 Logo colour helper builds the 60/30/10 palette without an AI model; the AI brand assistant is B (M20).
+- N9 Dashboard navigation: Home, Orders, Menu or Products, Members, Editor, Insights, Settings.
+- N10 The owner gets a new-order email in A.
+- N11 The receipt can be saved as an image (made on the server from the order with the Next.js built-in image response) or printed and saved as PDF; no new package.
+
 ## Open
 
 - Price: ₱599 or ₱799 per month.

@@ -7,20 +7,20 @@ Goal: the first paying shops, as fast as possible. Base rules: `foundation.md`.
 | Area | In the MVP |
 | --- | --- |
 | Storefront | Shop home, menu with search, item sheet, cart, checkout, receipt with live status and payment proof, my orders, member account with stamp card, install as an app |
-| Order types | Walk-in, pickup (now, or a time today or tomorrow), delivery (zones with a fee); each one an owner switch |
+| Order types | Walk-in, pickup (now, or a time today or tomorrow), delivery (zones with a fee); each one an owner switch. A closed shop can take pickup and delivery orders for its next opening (N1) |
 | Payments | Cash, cash on delivery, GCash, Maya, bank with uploaded proof; the owner checks proofs by hand |
-| Members | Guest checkout; join with a 6-digit email code; 1 welcome stamp; stamps on completed paid orders; reward (discount, free item or custom prize) |
-| Dashboard | Home, orders board and detail, products and categories, customers and members, basic reports, settings (look, info, hours, order types, payments, stamps) |
+| Members | Guest checkout; join with a 6-digit email code; 1 welcome stamp; stamps on completed paid orders; one reward (discount, free item or custom prize); manual stamps with a reason, at most 3 per member per day (N5) |
+| Dashboard | Home, Orders (board and detail), Menu or Products, Members (stamp card, claims), Editor (look and content, draft and publish), Insights, Settings (info, hours, order types, payments, delivery); new-order email to the owner (N9, N10) |
 | Platform | Owner sign-up creates a pending shop; the founder approves |
 | Price | ₱599 or ₱799 per shop per month (open) |
 
-Not in the MVP (Blueprint B): POS, shifts, kitchen screen, staff and roles, promos, dine-in QR, shipping, advance orders, push announcements, full reports, admin screens, custom domains, online payments, native app.
+Not in the MVP (Blueprint B): POS, shifts, kitchen screen, staff and roles, promos, dine-in QR, shipping, advance orders beyond tomorrow, push announcements, full reports, admin screens, custom domains, online payments, native app.
 
 ## 2. Look and feel (from storefront v2, still valid)
 
 - Storefront: phone app shell (top bar 56 px with logo, name, open state, area pill, bell for order updates, avatar; floating tab dock Home, Menu, Rewards, Orders, 64 px tall, 12 px from the edges; basket bar "3 items · ₱345 View" above it, hidden at 0 items and on checkout and receipt). Top navigation from 1024 px; sticky cart column from 1280 px (a right drawer from 1024 to 1279). Widths and phone behaviour: `docs/ux.md`. Light mode only.
 - Owner picks one brand colour and a logo; the 60/30/10 palette is generated with a contrast check (`docs/design-tokens.md`); status colours never change.
-- Owner content: logo, brand colour, up to 3 banners, announcement, About, contact.
+- Owner content: logo, brand colour, up to 3 banners, announcement, About, contact, all edited in the Editor (N7).
 - Dashboard: bottom dock on phone, 72 px rail on tablet, 248 px sidebar on laptop and up (one nav per device), light and dark. Products list with table and grid toggle.
 
 ## 3. Phases
