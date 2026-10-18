@@ -13,16 +13,22 @@ export interface PageHeaderProps {
 
 export function PageHeader({ title, actions, tabs, tabsLabel }: PageHeaderProps) {
   const activeTab = tabs?.find((tab) => tab.active)?.id ?? null;
+  const hasTabs = tabs !== undefined && tabs.length > 0;
+
+  // The visible page name lives in the shell (breadcrumb or phone top bar); the
+  // h1 stays for screen readers. With nothing else to show, the page content
+  // starts right away.
+  if (!hasTabs && !actions) {
+    return <h1 className="sr-only">{title}</h1>;
+  }
 
   return (
     <header data-slot="page-header" className="flex flex-col gap-3 px-4 pt-4 md:px-6 md:pt-6">
-      <div className="flex min-h-11 flex-wrap items-center justify-between gap-3">
-        <h1 className="min-w-0 text-2xl font-semibold tracking-tight break-words shell-phone:sr-only">
-          {title}
-        </h1>
-        {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
-      </div>
-      {tabs && tabs.length > 0 ? (
+      <h1 className="sr-only">{title}</h1>
+      {actions ? (
+        <div className="flex min-h-11 flex-wrap items-center justify-end gap-2">{actions}</div>
+      ) : null}
+      {hasTabs ? (
         <Tabs value={activeTab}>
           <TabsList
             variant="line"
