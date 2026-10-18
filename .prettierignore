@@ -4,3 +4,4 @@ dist
 database.types.ts
 .turbo
 node_modules
+supabase/.temp

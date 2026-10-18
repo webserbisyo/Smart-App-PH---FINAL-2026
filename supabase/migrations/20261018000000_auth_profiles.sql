@@ -48,16 +48,16 @@ as $$
 declare
   v_full_name text;
 begin
-  v_full_name := pg_catalog.coalesce(
-    pg_catalog.nullif(pg_catalog.trim(new.raw_user_meta_data->>'full_name'), ''),
-    pg_catalog.nullif(pg_catalog.split_part(new.email, '@', 1), ''),
+  v_full_name := coalesce(
+    nullif(btrim(new.raw_user_meta_data->>'full_name'), ''),
+    nullif(split_part(new.email, '@', 1), ''),
     'User'
   );
 
-  v_full_name := pg_catalog.substring(v_full_name from 1 for 80);
+  v_full_name := left(v_full_name, 80);
 
   insert into public.profiles (id, full_name, created_at)
-  values (new.id, v_full_name, pg_catalog.now())
+  values (new.id, v_full_name, now())
   on conflict (id) do nothing;
 
   return new;
