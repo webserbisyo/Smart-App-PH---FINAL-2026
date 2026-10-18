@@ -3,7 +3,7 @@ import { basename, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('Components Registry', () => {
-  const currentDir = import.meta.dirname ?? __dirname;
+  const currentDir = import.meta.dirname;
   const docsPath = resolve(currentDir, '../../../docs/components.md');
 
   const checkDirectoryAgainstDocs = (dirPath: string, dirLabel: string) => {

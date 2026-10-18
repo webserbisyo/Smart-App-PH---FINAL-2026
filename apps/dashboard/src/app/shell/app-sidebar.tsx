@@ -81,7 +81,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarMenu aria-label={words.shell.mainNav}>
+          <SidebarMenu aria-label={words.shell.mainNav} className="gap-1">
             {nav.all.map((item) => (
               <SidebarLink key={item.id} item={item} withTooltip={withTooltip} />
             ))}
@@ -89,7 +89,7 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <SidebarMenu>
+        <SidebarMenu className="gap-1">
           <SidebarLink item={nav.viewMyShop} withTooltip={withTooltip} />
           <SidebarLink item={nav.shareMyShop} withTooltip={withTooltip} />
           <SidebarMenuItem>
