@@ -23,7 +23,7 @@ Each module = one database task, one API task, then one task per screen.
 | --- | --- | --- |
 | M1 | Staff and roles | seats, staff logins, permissions |
 | M2 | Account and audit | profile, security, activity log |
-| M3 | Notifications | outbox, new-order email, alerts bell |
+| M3 | Notifications | alerts bell, more email and push events (the outbox and new-order email ship in A, N10) |
 | M4 | Inventory | stock movements with reasons, low stock |
 | M5 | Settings extras | tables and QR, tax, approval PIN |
 | M6 | Dine-in | table ordering on the storefront |
@@ -39,6 +39,9 @@ Each module = one database task, one API task, then one task per screen.
 | M16 | Platform | `/admin`, approvals, support mode, billing states |
 | M17 | Integrations | PayMongo, Meta Conversions API, Google Sheets |
 | M18 | Native app | Capacitor build of the dashboard, Bluetooth printers |
+| M19 | Loyalty extras | more than one reward, tiers, stamp expiry, synced favourites and baskets |
+| M20 | AI | brand assistant from the logo, menu text help |
+| M21 | Editor extras | reorder sections, fonts, custom blocks |
 
 ## 3. Architecture additions
 

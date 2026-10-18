@@ -15,7 +15,7 @@ How this paper fits with the other docs:
 | [`RESEARCH.md`](RESEARCH.md)                                       | Ecosystem findings, library research, pilot metrics and test protocol                            |
 | [`blueprints/`](blueprints/), [`ux.md`](ux.md), [`api.md`](api.md) | The short rule docs agents read. They and [`decisions.md`](decisions.md) are the source of truth |
 
-If this paper disagrees with `decisions.md`, `AGENTS.md` or `blueprints/`, those win and this paper gets fixed in the next docs PR. New ideas go to section 15 (roadmap) or the "Proposed" list in section 14, never straight into the current task.
+If this paper disagrees with `decisions.md`, `AGENTS.md` or `blueprints/`, those win and this paper gets fixed in the next docs PR. New ideas go to section 15 (roadmap) never straight into the current task.
 
 ## Contents
 
@@ -179,7 +179,7 @@ Full feature catalog with IDs: [`SMART_APP_PH_BLUEPRINT.md`](SMART_APP_PH_BLUEPR
 
 ### 4.2 Scope calls on the founder's new asks
 
-These were raised on October 18, 2026. Each is a proposal until the founder says yes; then it goes into `decisions.md`.
+These were raised on October 18, 2026. The founder accepted them on October 18, 2026; they are N1 to N11 in [`decisions.md`](decisions.md).
 
 | Ask                                                          | Call                               | Behaviour at launch and why                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ------------------------------------------------------------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -516,7 +516,7 @@ Phone first for Filipino users on mid-range phones and slow data. One filled but
 | Storefront | Floating dock: Home · Menu or Products · Rewards · Orders; basket bar above it; Account from the avatar     | Top navigation, two columns, sticky basket column from 1280 px (right drawer from 1024 to 1279 px)                                     |
 | Dashboard  | Bottom dock: Home · Orders · Menu or Products · Members · More (Editor, Insights, Settings, Share, Account) | Sidebar: Home · Orders · Menu or Products · Members · Editor · Insights · Settings; View my shop and Share at the bottom; account menu |
 
-The dashboard labels above are a proposal that changes [`ux.md`](ux.md) section 1 (which says Products, Customers, Reports). It needs the founder's yes before `ux.md` is edited.
+These labels are decision N9; [`ux.md`](ux.md) section 1 uses them.
 
 ## 10. Security, privacy and reliability
 
@@ -569,7 +569,7 @@ The QA matrix per screen is in [`SMART_APP_PH_BLUEPRINT.md`](SMART_APP_PH_BLUEPR
 
 | Risk                                         | Handling                                                                                                |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Scope grows again                            | Section 4 is the launch list. New ideas go to section 15 or the Proposed list until after launch        |
+| Scope grows again                            | Section 4 is the launch list. New ideas go to section 15 until after launch                             |
 | Owner misses orders                          | Chime, tab count and realtime on the dashboard; new-order email; the customer's Messenger hand-off      |
 | Fake payment screenshots                     | Unique reference per shop; the owner checks their own wallet app; every approval logged                 |
 | Stamp abuse by staff or owner friends        | Manual stamps need a reason, are capped per member per day, and show in the history and audit log       |
@@ -586,9 +586,9 @@ The QA matrix per screen is in [`SMART_APP_PH_BLUEPRINT.md`](SMART_APP_PH_BLUEPR
 
 Approved decisions live in [`decisions.md`](decisions.md) (P1 to P9 product, T1 to T19 tech) and [`blueprints/foundation.md`](blueprints/foundation.md) (F1 to F10). They are not repeated here.
 
-**Proposed in this paper (need the founder's yes, then they go to `decisions.md`):**
+**Accepted on October 18, 2026 (also in `decisions.md`):**
 
-| #   | Proposal                                                                                                                                                                      |
+| #   | Decision                                                                                                                                                                      |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | N1  | Closed or paused shop: keep the basket; "Take orders while closed" (default on) offers next-opening slots today or tomorrow for pickup and delivery only; no new order status |
 | N2  | Offline: keep basket and checkout details; Place order waits for the connection and re-quotes; no background order sending                                                    |
@@ -600,6 +600,7 @@ Approved decisions live in [`decisions.md`](decisions.md) (P1 to P9 product, T1 
 | N8  | Logo colour helper without an AI model in A; AI brand assistant in B                                                                                                          |
 | N9  | Dashboard navigation: Home, Orders, Menu or Products, Members, Editor, Insights, Settings (changes `ux.md` section 1)                                                         |
 | N10 | New-order email to the owner is part of MVP A                                                                                                                                 |
+| N11 | Receipt can be saved as an image (made on the server from the order) or printed and saved as PDF; no new package                                                              |
 
 ## 15. Roadmap: Launch MVP B
 

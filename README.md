@@ -38,7 +38,8 @@ How to read this list:
 - [ ] **A** Offline: the basket and checkout details stay; Place order waits until the phone is back online and re-checks prices
 - [ ] **A** One-page checkout: how (walk-in, pickup now or at a time, delivery), who (name, mobile, remembered), pay; prices re-checked before placing
 - [ ] **A** Delivery area: pick a zone with its fee, "Use my location" suggests the nearest zone, address with landmark and an optional map pin
-- [ ] **A** Receipt page: big order number, QR, live status, payment proof upload, "Track your delivery", Messenger hand-off, save or share
+- [ ] **A** Receipt page: big order number, QR, live status, payment proof upload, "Track your delivery", Messenger hand-off, save or share the link
+- [ ] **A** Save the receipt as an image, or print it and save as PDF
 - [ ] **A** Order thread on the receipt (payment proof first, then system updates)
 - [ ] **A** My orders and "Order again"
 - [ ] **A** Private rating after a completed order, plus the shop's Google review link

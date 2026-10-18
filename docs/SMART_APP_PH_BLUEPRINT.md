@@ -40,7 +40,7 @@ This is the build blueprint: what every screen does, how the flows run, where th
 
 1. **Planning a task:** Claude reads the relevant sections here, writes one prompt in `docs/prompts/T<nn>-<name>.md`, and the prompt names the short docs the agent must read (`AGENTS.md`, `ux.md`, `api.md`...). Agents do not read this file unless a prompt names a section.
 2. **Source of truth:** `AGENTS.md`, [`decisions.md`](decisions.md) and [`blueprints/`](blueprints/) win over this file. When they disagree, stop, list the conflict and fix one of them in a docs PR.
-3. **Proposals:** anything marked **(proposed N#)** is a scope call from October 18, 2026 waiting for the founder's yes ([`SYSTEM.md`](SYSTEM.md) section 14). After the yes it moves into `decisions.md` and the marker is removed.
+3. **Scope calls:** a marker **(N#)** points to a scope call the founder accepted on October 18, 2026 ([`decisions.md`](decisions.md), MVP A scope; [`SYSTEM.md`](SYSTEM.md) section 14).
 4. **Adding to MVP A:** add the feature to section 3.4 with an ID, then its page spec (7), flow (6) if it has one, tables (13) and a line in the [`README.md`](../README.md) tracker. New tables or API methods also go to `api.md` first.
 5. **Growing MVP B:** each module in section 17 is a stub with the same headings. Fill the stub in a docs PR before its first task; when a module is built, its tables and pages move into sections 4, 7 and 13 and the stub links to them.
 
@@ -65,7 +65,7 @@ The full table with versions and sources is [`RESEARCH.md`](RESEARCH.md) section
 
 ### 1.2 Architecture Decision Records (ADR)
 
-"Ref" points to the approved decision; **N#** rows are proposals waiting for the founder.
+"Ref" points to the approved decision; **N#** rows are the MVP A scope calls in `decisions.md`.
 
 | #      | Decision                                                                                                                                                   | Why                                                                             | Trade-off                                                      | Ref               |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------- | ----------------- |
@@ -286,6 +286,7 @@ flowchart TD
 | `/[shop]/orders`                      | My orders (device tokens, member history)             | Public                         | Dynamic, never cached                                              | T11      |
 | `/[shop]/checkout`                    | Checkout                                              | Public                         | Dynamic, never cached                                              | T09      |
 | `/[shop]/o/[token]`                   | Receipt                                               | Anyone with the link           | Dynamic, never cached, `noindex`                                   | T10      |
+| `/[shop]/o/[token]/image`             | Receipt as a PNG for Save receipt (N11)               | Anyone with the link           | Dynamic, never cached, `noindex`                                   |
 | `/[shop]/account`                     | Profile, addresses, notifications, privacy, sign out  | Member                         | Dynamic                                                            | T12      |
 | `/[shop]/account/addresses`           | Saved addresses with optional pin                     | Member                         | Dynamic                                                            | T12      |
 | `/[shop]/privacy`                     | Privacy notice (English + short Filipino)             | Public                         | Static per shop                                                    | T14      |
@@ -353,7 +354,7 @@ flowchart TD
 
 Every signed-in route re-checks the shop status every 30 seconds and on focus ([`ux.md`](ux.md) section 6).
 
-### 4.5 Navigation model (final MVP A sidebar, proposed N9)
+### 4.5 Navigation model (final MVP A sidebar, N9)
 
 One list in `apps/dashboard/src/app/nav.ts`, read by the sidebar, the rail and the dock. Labels come from `words.ts` and vocab.
 
@@ -572,7 +573,7 @@ Edge cases:
 - Too many unpaid orders from this phone: `rate_limited` with "Finish or cancel your other order first".
 - Unpaid transfer order not paid within the time limit: Expired, stock returned (6.17).
 
-### 6.2 Closed shop with scheduling on (proposed N1)
+### 6.2 Closed shop with scheduling on (N1)
 
 ```mermaid
 flowchart TD
@@ -597,7 +598,7 @@ Rules:
 - If the owner changes hours after the order, the order keeps its time; the owner can cancel with a reason.
 - A closed day (closure) is skipped when finding the next opening.
 
-### 6.3 Customer offline (proposed N2)
+### 6.3 Customer offline (N2)
 
 1. The service worker serves the saved shop page; the top shows "You're offline. Showing your saved menu."
 2. Adding to the basket works (saved on the phone). Prices show as last seen.
@@ -630,7 +631,10 @@ As in [`SYSTEM.md`](SYSTEM.md) 6.4, plus:
 - The proof appears as the first message in the order thread with the reference number.
 - At most 3 proofs per order; upload only while unpaid and within 7 days.
 - A rejected proof shows the reason in the thread and on the receipt with Upload again.
-- A duplicate reference (per shop, among proofs not rejected) is refused before saving: `duplicate_reference`.
+- A duplicate reference (per shop, among proofs not rejected) is refused before saving: `duplicate_reference`. References are compared without spaces or dashes, in capitals.
+- Rejecting a proof sets the payment back to unpaid and restarts the unpaid timer, and the reference can be used again.
+- A transfer order paid in cash at the counter is recorded as cash (`recordPayment`). An order with a ₱0 total is paid at once.
+- Approve, reject, record cash, cancel and stock changes each write an `audit_log` row.
 
 ### 6.7 Owner handles an order
 
@@ -647,7 +651,9 @@ flowchart LR
     O --> C
 ```
 
-One next-step button from core `nextActions()`. Cancel is in the More menu and needs a reason; cancelling returns stock and any redeemed stamps.
+One next-step button from core `nextActions()`. Cancel is in the More menu and needs a reason; cancelling returns stock and any redeemed stamps, sets pending proofs to rejected, and a paid order notes that the refund is by hand.
+
+The screens call the owner order methods in [`api.md`](api.md) (Orders, owner): `listOrders`, `getOrderDetail`, `getProofUrl`, `reviewPayment`, `recordPayment`, `advanceOrder`, `cancelOrder` and `saveDeliveryInfo`. In Nest they live in `modules/orders`: each route checks the owner with `@Can()`, takes the shop from `tenant_members`, and calls the SQL function that does the work.
 
 ### 6.8 Join as a member and link past orders
 
@@ -797,7 +803,7 @@ Totals (subtotal, discount, delivery fee, total), consent line with the privacy 
 
 #### 7.8 Receipt `/[shop]/o/[token]`
 
-Big order number and type, QR of this page ("Show this at pickup"), scheduled time if any, live status timeline (Realtime with a 15-second poll fallback), items and totals, payment status. Transfer unpaid: Upload proof (camera or gallery, compressed) and reference. Order thread: proof first, then system lines. Delivery: Track your delivery, rider. After completion: rating (1 to 5 stars, optional comment up to 300), "Review us on Google" if set. Messenger hand-off with the order text, Copy order details, Save or Share link, Notify me (push), Join to earn stamps, install card after the first order. Footer: "ORDER SLIP · NOT AN OFFICIAL RECEIPT".
+Big order number and type, QR of this page ("Show this at pickup"), scheduled time if any, live status timeline (Realtime with a 15-second poll fallback), items and totals, payment status. Transfer unpaid: Upload proof (camera or gallery, compressed) and reference. Order thread: proof first, then system lines. Delivery: Track your delivery, rider. After completion: rating (1 to 5 stars, optional comment up to 300), "Review us on Google" if set. Messenger hand-off with the order text, Copy order details, Save receipt (a PNG made on the server from the order at `/[shop]/o/[token]/image` with the Next.js built-in image response, no new package), Print or Save as PDF (print layout), Save or Share link, Notify me (push), Join to earn stamps, install card after the first order. Footer: "ORDER SLIP · NOT AN OFFICIAL RECEIPT".
 
 #### 7.9 My orders `/[shop]/orders`
 
@@ -878,7 +884,7 @@ Sheet with the link, Copy, Share, and a printable counter QR card (logo, name, "
 
 ## 8. Feature deep dives
 
-### 8.1 Catalog model: variants, add-ons, side dishes and combos (proposed N4)
+### 8.1 Catalog model: variants, add-ons, side dishes and combos (N4)
 
 | Concept               | What it is                                                | Data                                            | Rules                                                                                                                    |
 | --------------------- | --------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -896,7 +902,7 @@ Retail example (Tala Basic Tee): axes Size (S, M, L, XL) and Colour (Black, Whit
 
 Food example (Kapé Juan Spanish Latte): axis Size (12 oz, 16 oz); groups "Sugar level" (required, choose 1, default 100%), "Milk" (optional, choose 1: Oat milk +₱40), "Extra shot" (optional, up to 2 options).
 
-### 8.2 Basket, closed shop and offline (proposed N1, N2)
+### 8.2 Basket, closed shop and offline (N1, N2)
 
 | Situation                                            | Basket                    | Checkout                                                     | Owner sees                           |
 | ---------------------------------------------------- | ------------------------- | ------------------------------------------------------------ | ------------------------------------ |
@@ -912,12 +918,12 @@ Storage: one `deviceStorage` in `packages/data` (versioned keys per shop: basket
 
 Synced baskets for members across devices are MVP B (M13).
 
-### 8.3 Favourites and Order again (proposed N3)
+### 8.3 Favourites and Order again (N3)
 
 - **Favourites:** a heart on cards and the item sheet; saved on the phone per shop as item ids; the Favourites chip filters the menu; a favourites row on Home when there are any; archived or hidden items drop out silently. No login needed. Synced favourites for members: MVP B.
 - **Order again:** from My orders and the receipt; rebuilds lines from the order snapshot using today's items, variants and options; anything missing is listed before the basket opens.
 
-### 8.4 Stamps engine (proposed N5, N6)
+### 8.4 Stamps engine (N5, N6)
 
 **Owner configuration (`loyalty_rules`, one row per shop):**
 
@@ -952,7 +958,7 @@ Synced baskets for members across devices are MVP B (M13).
 
 **Not in A (MVP B M19):** several reward tiers, stamps per peso spent, stamp expiry, double-stamp days, birthday stamps.
 
-### 8.5 Editor (proposed N7)
+### 8.5 Editor (N7)
 
 **What can be edited (draft content, `StorefrontContentSchema` in core):**
 
@@ -976,7 +982,7 @@ Synced baskets for members across devices are MVP B (M13).
 
 **Not in A (MVP B M21):** section reorder, more templates, custom blocks, fonts, custom CSS, scheduled publishing, version history beyond the last published.
 
-### 8.6 Logo colour helper (proposed N8)
+### 8.6 Logo colour helper (N8)
 
 - Runs on the owner's device: the logo image is drawn small, its pixels grouped, and up to 5 main colours found (transparent, near-white and near-black ignored).
 - Each candidate goes through `shopPalette()` (core) to make 60/30/10 and the contrast check; up to 3 passing palettes are shown with a "Brand from your logo" label.
@@ -1108,17 +1114,20 @@ Image compression on the phone uses the browser's canvas and WebP encoder; a lib
 
 The folder map and import walls are in [`blueprints/foundation.md`](blueprints/foundation.md) section 3. Where the new MVP A features go:
 
-| Feature                     | Rules and schemas (`packages/core`)                                 | Data (`packages/data`)                        | Screens                                                      | API and SQL                                        |
-| --------------------------- | ------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------- |
-| Variants, add-ons, pairings | `schemas/item.ts`, `rules/options.ts` (validate picks, line price)  | catalog adapter                               | storefront `features/menu`, dashboard `features/catalog`     | `modules/catalog`, `quote_order`                   |
-| Closed shop and slots       | `rules/hours.ts` (`openState`, `pickupSlots`, `nextOpening`)        | storefront adapter                            | storefront `features/checkout`                               | `quote_order`, `place_order`                       |
-| Basket, favourites, drafts  | `schemas/basket.ts`                                                 | `deviceStorage`, `useBasket`, `useFavourites` | storefront `features/basket`                                 | none                                               |
-| Stamps                      | `rules/stamps.ts` (progress, segments), `schemas/loyalty.ts`        | members adapter                               | storefront `features/rewards`, dashboard `features/members`  | `modules/members`, `adjust_stamps`, `claim_reward` |
-| Editor                      | `schemas/storefront-content.ts`, `rules/palette.ts` (`shopPalette`) | editor adapter                                | dashboard `features/editor`, storefront `app/[shop]/preview` | `modules/storefront`, `publish_storefront`         |
-| Insights                    | `schemas/insights.ts`                                               | insights adapter                              | dashboard `features/insights`                                | `modules/insights`, `get_insights`                 |
-| Notifications               | `schemas/outbox.ts`                                                 | push subscribe                                | storefront receipt                                           | `modules/notifications` worker                     |
+| Feature                     | Rules and schemas (`packages/core`)                                                                                                 | Data (`packages/data`)                              | Screens                                                                            | API and SQL                                                                                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Variants, add-ons, pairings | `schemas/item.ts`, `rules/options.ts` (validate picks, line price)                                                                  | catalog adapter                                     | storefront `features/menu`, dashboard `features/catalog`                           | `modules/catalog`, `quote_order`                                                                                                                 |
+| Closed shop and slots       | `rules/hours.ts` (`openState`, `pickupSlots`, `nextOpening`)                                                                        | storefront adapter                                  | storefront `features/checkout`                                                     | `quote_order`, `place_order`                                                                                                                     |
+| Orders and payments         | `rules/order-rules.ts` (`boardColumn`, `nextActions`, `canCancel`, `timelineSteps`, `isLate`), one shared table of transition cases | orders adapter, `useOrderLive`, `useShopOrdersLive` | storefront `features/checkout` and `features/receipt`, dashboard `features/orders` | `modules/storefront` (quote, place, proof), `modules/orders` (owner routes), `review_payment`, `record_payment`, `advance_order`, `cancel_order` |
+| Basket, favourites, drafts  | `schemas/basket.ts`                                                                                                                 | `deviceStorage`, `useBasket`, `useFavourites`       | storefront `features/basket`                                                       | none                                                                                                                                             |
+| Stamps                      | `rules/stamps.ts` (progress, segments), `schemas/loyalty.ts`                                                                        | members adapter                                     | storefront `features/rewards`, dashboard `features/members`                        | `modules/members`, `adjust_stamps`, `claim_reward`                                                                                               |
+| Editor                      | `schemas/storefront-content.ts`, `rules/palette.ts` (`shopPalette`)                                                                 | editor adapter                                      | dashboard `features/editor`, storefront `app/[shop]/preview`                       | `modules/editor`, `publish_storefront`                                                                                                           |
+| Insights                    | `schemas/insights.ts`                                                                                                               | insights adapter                                    | dashboard `features/insights`                                                      | `modules/insights`, `get_insights`                                                                                                               |
+| Notifications               | `schemas/outbox.ts`                                                                                                                 | push subscribe                                      | storefront receipt                                                                 | `modules/notifications` worker                                                                                                                   |
 
 Dashboard features never import each other; shared dashboard code goes in `apps/dashboard/src/app/`.
+
+Nest modules in `apps/api/src/modules/`: `health`, `shops` (shop and settings), `catalog`, `storefront` (public shop, quote, place, receipt, proof, join), `orders` (owner order routes), `members` (stamp rule, members, claims, manual stamps), `editor` (draft, preview token, publish), `insights` (today, insights, reports), `notifications` (outbox worker, push).
 
 ---
 
@@ -1215,15 +1224,15 @@ erDiagram
 
 **Orders and payments**
 
-| Table            | Main columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Notes                                                                                                                       |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `orders`         | id, tenant_id, order_no, business_date, token (secret link), client_key, fulfillment (`walk_in`, `pickup`, `delivery`), status, payment_status, payment_method, customer_id, customer_name, customer_phone, customer_email, scheduled_at (null = as soon as possible), placed_while_closed, is_first_order, address_line, landmark, delivery_zone_id, delivery_fee, delivery_lat, delivery_lng, distance_km, delivery_provider, rider_name, rider_phone, tracking_url, notes, subtotal, discount_total, total, reward_snapshot, cancel_reason, placed_at, paid_at, ready_at, completed_at, cancelled_at, expired_at | `total = subtotal - discount_total + delivery_fee`; unique (tenant_id, business_date, order_no) and (tenant_id, client_key) |
-| `order_items`    | id, tenant_id, order_id, item_id, variant_id, item_name, variant_label, unit_price, options (snapshot of chosen options with prices), options_total, qty, line_total, note, is_reward_line                                                                                                                                                                                                                                                                                                                                                                                                                          | Snapshots at order time                                                                                                     |
-| `order_events`   | id, tenant_id, order_id, from_status, to_status, actor (`customer`, `owner`, `system`), note, created_at                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Timeline                                                                                                                    |
-| `order_counters` | tenant_id, business_date, last_no                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Gap-free numbers; no direct access                                                                                          |
-| `payments`       | id, tenant_id, order_id, method, amount, status (`pending`, `confirmed`, `rejected`), reference_no, reference_norm, proof_path, reviewed_by, reviewed_at, reject_reason, created_at                                                                                                                                                                                                                                                                                                                                                                                                                                 | Reference unique per shop among non-rejected; up to 3 proofs per order                                                      |
-| `order_messages` | id, tenant_id, order_id, sender (`customer`, `owner`, `system`), kind (`text`, `image`, `payment_proof`, `status`), body, attachment_path, payment_id, created_at                                                                                                                                                                                                                                                                                                                                                                                                                                                   | In A only proof and system lines are written                                                                                |
-| `order_ratings`  | order_id (pk), tenant_id, stars (1 to 5), comment (up to 300), created_at                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Private to the shop                                                                                                         |
+| Table            | Main columns                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Notes                                                                                                                       |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `orders`         | id, tenant_id, order_no, business_date, token (secret link), client_key, fulfillment (`walk_in`, `pickup`, `delivery`), status, payment_status, payment_method, customer_id, customer_name, customer_phone, customer_email, scheduled_at (null = as soon as possible), placed_while_closed, is_first_order, address_line, landmark, delivery_zone_id, delivery_fee, delivery_lat, delivery_lng, distance_km, delivery_provider, rider_name, rider_phone, tracking_url, notes, subtotal, discount_total, total, reward_snapshot, cancel_reason, placed_at, paid_at, ready_at, completed_at, cancelled_at, expires_at (unpaid transfer deadline), expired_at | `total = subtotal - discount_total + delivery_fee`; unique (tenant_id, business_date, order_no) and (tenant_id, client_key) |
+| `order_items`    | id, tenant_id, order_id, item_id, variant_id, item_name, variant_label, unit_price, options (snapshot of chosen options with prices), options_total, qty, line_total, note, is_reward_line                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Snapshots at order time                                                                                                     |
+| `order_events`   | id, tenant_id, order_id, kind (`status`, `payment_submitted`, `payment_confirmed`, `payment_rejected`), from_status, to_status (null for payment events), actor (`customer`, `owner`, `system`), note, created_at                                                                                                                                                                                                                                                                                                                                                                                                                                          | Timeline                                                                                                                    |
+| `order_counters` | tenant_id, business_date, last_no                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Gap-free numbers; no direct access                                                                                          |
+| `payments`       | id, tenant_id, order_id, method, amount, status (`pending`, `confirmed`, `rejected`), reference_no, reference_norm, proof_path, reviewed_by, reviewed_at, reject_reason, created_at                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Reference unique per shop among non-rejected; up to 3 proofs per order                                                      |
+| `order_messages` | id, tenant_id, order_id, sender (`customer`, `owner`, `system`), kind (`text`, `image`, `payment_proof`, `status`), body, attachment_path, payment_id, created_at                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | In A only proof and system lines are written                                                                                |
+| `order_ratings`  | order_id (pk), tenant_id, stars (1 to 5), comment (up to 300), created_at                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Private to the shop                                                                                                         |
 
 **Loyalty**
 
@@ -1252,7 +1261,7 @@ erDiagram
 | `place_order(payload, client_key)`                 | API (public)          | Validates, takes stock, number and token, upserts the customer and counters, writes events and reward redemption; retry-safe; abuse limits |
 | `get_order(token)`                                 | API (public)          | Receipt, timeline, thread                                                                                                                  |
 | `submit_payment_proof(token, ...)`                 | API (public)          | Saves proof and reference, blocks duplicates and limits, sets payment pending, writes a thread message                                     |
-| `review_payment`, `record_payment`                 | Owner                 | Approve or reject a proof; record cash                                                                                                     |
+| `review_payment`, `record_payment`                 | Owner                 | Approve or reject a proof (reject restarts the unpaid timer); record cash or COD; audit row                                                |
 | `advance_order`, `cancel_order`                    | Owner                 | Allowed transitions only; completion gives the stamp; cancel returns stock and redeemed stamps                                             |
 | `rate_order(token, stars, comment)`                | API (public)          | One rating per completed order                                                                                                             |
 | `join_as_member`, `get_my_account`                 | Signed-in customer    | Member row, welcome stamp, linking by token or email; account with stamps, claims and orders                                               |
@@ -1278,28 +1287,30 @@ erDiagram
 
 As in [`api.md`](api.md): `order:<token>` (public, receipt) and `shop:<tenantId>` (private, authorized by RLS on `realtime.messages` for members of the shop). A payload only triggers a refetch; without a channel the page polls every 15 seconds.
 
-### 13.7 Proposed additions to `api.md`
+### 13.7 Additions to `api.md`
 
-Not added to `api.md` yet; each row goes in with its task after the founder's yes. Existing rows that change are marked "changed".
+These rows are in [`api.md`](api.md) now; this table only shows what the blueprint added. Rows marked "changed" extend an existing method.
 
-| Method                                         | HTTP                                        | Input → Output                                           |
-| ---------------------------------------------- | ------------------------------------------- | -------------------------------------------------------- |
-| `quoteOrder` (changed)                         | POST `/s/:slug/quote`                       | adds `scheduledAt`; Quote adds `slots[]` and `openState` |
-| `claimReward`                                  | POST `/s/:slug/me/claims`                   | → `RewardClaim`                                          |
-| `rateOrder`                                    | POST `/o/:token/rating`                     | `{ stars, comment? }` → `OrderRating`                    |
-| `subscribePush`                                | POST `/o/:token/push`                       | `PushSubscription` → `{ ok }`                            |
-| `getStorefrontPreview`                         | GET `/s/:slug/preview`                      | preview token → `Storefront` built from the draft        |
-| `getStorefrontDraft` / `saveStorefrontDraft`   | GET/PUT `/owner/storefront/draft`           | `StorefrontContent` with `baseVersion`                   |
-| `publishStorefront` / `discardStorefrontDraft` | POST/DELETE `/owner/storefront/draft`       | → `{ contentVersion }`                                   |
-| `createPreviewToken`                           | POST `/owner/storefront/preview-token`      | → `{ token, expiresAt }`                                 |
-| `listCustomers` (changed)                      | GET `/owner/customers`                      | adds `segment`                                           |
-| `getMember`                                    | GET `/owner/customers/:id`                  | → `MemberDetail` (ledger, orders, claims)                |
-| `findMemberByCode`                             | GET `/owner/members/code/:code`             | → `{ customerId }`                                       |
-| `adjustStamps`                                 | POST `/owner/customers/:id/stamps`          | `{ delta: 1 \| -1, reason, note? }` → `MemberDetail`     |
-| `previewStampRuleChange`                       | POST `/owner/stamp-rule/preview`            | `StampRule` → `{ readyNow, pendingClaims }`              |
-| `listRewardClaims`                             | GET `/owner/claims`                         | `{ status }` → `RewardClaim[]`                           |
-| `giveClaim` / `cancelClaim`                    | POST `/owner/claims/:id/give` and `/cancel` | `{ reason? }` → `RewardClaim`                            |
-| `getInsights`                                  | GET `/owner/insights`                       | `{ range: '7d' \| '30d' }` → `Insights`                  |
+| Method                                         | HTTP                                        | Input → Output                                                           |
+| ---------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------ |
+| `quoteOrder` (changed)                         | POST `/s/:slug/quote`                       | adds `scheduledAt`; Quote adds `slots[]` and `openState`                 |
+| `claimReward`                                  | POST `/s/:slug/me/claims`                   | → `RewardClaim`                                                          |
+| `rateOrder`                                    | POST `/o/:token/rating`                     | `{ stars, comment? }` → `OrderRating`                                    |
+| `subscribePush`                                | POST `/o/:token/push`                       | `PushSubscription` → `{ ok }`                                            |
+| `getStorefrontPreview`                         | GET `/s/:slug/preview`                      | preview token → `Storefront` built from the draft                        |
+| `getStorefrontDraft` / `saveStorefrontDraft`   | GET/PUT `/owner/storefront/draft`           | `StorefrontContent` with `baseVersion`                                   |
+| `publishStorefront` / `discardStorefrontDraft` | POST/DELETE `/owner/storefront/draft`       | → `{ contentVersion }`                                                   |
+| `createPreviewToken`                           | POST `/owner/storefront/preview-token`      | → `{ token, expiresAt }`                                                 |
+| `listCustomers` (changed)                      | GET `/owner/customers`                      | adds `segment`                                                           |
+| `getMember`                                    | GET `/owner/customers/:id`                  | → `MemberDetail` (ledger, orders, claims)                                |
+| `findMemberByCode`                             | GET `/owner/members/code/:code`             | → `{ customerId }`                                                       |
+| `adjustStamps`                                 | POST `/owner/customers/:id/stamps`          | `{ delta: 1 \| -1, reason, note? }` → `MemberDetail`                     |
+| `previewStampRuleChange`                       | POST `/owner/stamp-rule/preview`            | `StampRule` → `{ readyNow, pendingClaims }`                              |
+| `listRewardClaims`                             | GET `/owner/claims`                         | `{ status }` → `RewardClaim[]`                                           |
+| `giveClaim` / `cancelClaim`                    | POST `/owner/claims/:id/give` and `/cancel` | `{ reason? }` → `RewardClaim`                                            |
+| `getInsights`                                  | GET `/owner/insights`                       | `{ range: '7d' \| '30d' }` → `Insights`                                  |
+| `listOrders` (changed)                         | GET `/owner/orders`                         | `BoardOrder` adds `scheduledAt`, `isFirstOrder`, `isMember`, `hasReward` |
+| `saveDeliveryInfo`                             | PATCH `/owner/orders/:id/delivery`          | `{ provider?, trackingUrl?, riderName?, riderPhone? }` → `Order`         |
 
 New error codes: `slot_unavailable`, `stamp_cap_reached`, `stamps_insufficient`, `claim_not_pending`, `draft_conflict`, `preview_expired`.
 
@@ -1559,23 +1570,17 @@ Screens, Data, API rows, Rules, Edge cases, Done when: _to fill_.
 
 **Open questions for the founder**
 
-1. Approve the proposals N1 to N10 ([`SYSTEM.md`](SYSTEM.md) section 14)?
-2. Price: ₱599 or ₱799 per month.
-3. Default for "Take orders while closed": on (proposed) or off?
-4. Manual stamp cap: 3 per member per day (proposed), or another number?
-5. Should the storefront show the members count by default (social proof) or only when the owner turns it on (proposed)?
+1. Price: ₱599 or ₱799 per month.
 
-**Overlaps and contradictions with existing docs** (to fix in a follow-up docs PR after the yes, not here):
+Settled on October 18, 2026: N1 to N11 accepted with the defaults written here (take orders while closed on, manual stamp cap 3 per member per day, members count shown only when the owner turns it on).
 
-| Existing doc                      | What it says                                                                                                                              | This blueprint                                                                                |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `ux.md` section 1                 | Dashboard dock: Home · Orders · Products · Customers · More (Reports, Settings)                                                           | Home · Orders · Menu or Products · Members · More (Editor, Insights, Settings) (N9)           |
-| `ux.md` section 6, Settings       | "A live phone preview for the shop look" inside Settings                                                                                  | The look moves to the Editor; Settings keeps operations                                       |
-| `blueprints/A-mvp.md` section 1   | Dashboard list: Home, orders, products, customers and members, basic reports, settings (look, info, hours, order types, payments, stamps) | Adds Editor and Insights; stamps under Members                                                |
-| `blueprints/A-mvp.md` section 1   | "Not in the MVP: advance orders"                                                                                                          | Scheduled orders for the next opening only (today or tomorrow) are in A; the calendar stays B |
-| `api.md`                          | No methods for drafts, claims, manual stamps, insights, ratings, push                                                                     | Section 13.7 lists them                                                                       |
-| `blueprints/B-full.md`            | Modules M1 to M18                                                                                                                         | Adds M19 Loyalty extras, M20 AI, M21 Editor extras                                            |
-| Old system paper (abandoned repo) | `pickup_at`, Tabler icons, `packages/api`, Cloudflare Turnstile                                                                           | `scheduled_at`, lucide, `packages/data`, no Turnstile (throttling and abuse limits instead)   |
+**Older docs that this blueprint replaces**
+
+| Old source                        | Said                                                            | Now                                                                                         |
+| --------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Old system paper (abandoned repo) | `pickup_at`, Tabler icons, `packages/api`, Cloudflare Turnstile | `scheduled_at`, lucide, `packages/data`, no Turnstile (throttling and abuse limits instead) |
+
+`ux.md`, `api.md`, `blueprints/A-mvp.md`, `blueprints/B-full.md` and `decisions.md` were brought in line with this blueprint in the same PR.
 
 ---
 
