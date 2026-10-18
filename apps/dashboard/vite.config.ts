@@ -8,6 +8,9 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  define: {
+    'import.meta.env.VITE_SHOW_KIT': JSON.stringify(process.env.VITE_SHOW_KIT ?? 'false'),
+  },
   resolve: {
     alias: {
       '@': resolve(import.meta.dirname, './src'),
