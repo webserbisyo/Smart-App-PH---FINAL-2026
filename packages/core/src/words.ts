@@ -1,41 +1,34 @@
 import type { ShopKind } from './schemas/demo-shop.js';
 
+// Icon keys for the catalog nav item; apps map each key to a lucide icon.
+export const CATALOG_ICONS = ['utensils', 'package'] as const;
+export type CatalogIcon = (typeof CATALOG_ICONS)[number];
+
 export interface ShopVocab {
   catalog: string;
-  catalogItems: string;
+  catalogIcon: CatalogIcon;
   item: string;
-  items: string;
-  categories: string;
-  addItem: string;
-  addCategory: string;
-  emptyCatalogTitle: string;
-  emptyCatalogDescription: string;
+  newItem: string;
+  emptyItems: string;
 }
 
 const FOOD_VOCAB: ShopVocab = {
   catalog: 'Menu',
-  catalogItems: 'Menu items',
-  item: 'Dish',
-  items: 'Dishes',
-  categories: 'Categories',
-  addItem: 'Add dish',
-  addCategory: 'Add category',
-  emptyCatalogTitle: 'No menu items yet',
-  emptyCatalogDescription: 'Add your first dishes and drinks so customers can start ordering.',
+  catalogIcon: 'utensils',
+  item: 'Menu item',
+  newItem: 'New menu item',
+  emptyItems: 'No menu items yet. Add your first dish so customers can order.',
 };
 
 const RETAIL_VOCAB: ShopVocab = {
   catalog: 'Products',
-  catalogItems: 'Products',
+  catalogIcon: 'package',
   item: 'Product',
-  items: 'Products',
-  categories: 'Categories',
-  addItem: 'Add product',
-  addCategory: 'Add category',
-  emptyCatalogTitle: 'No products yet',
-  emptyCatalogDescription: 'Add your first products so customers can start shopping.',
+  newItem: 'New product',
+  emptyItems: 'No products yet. Add your first product so customers can order.',
 };
 
+// The only place that looks at the shop kind.
 export function vocab(kind: ShopKind): ShopVocab {
   return kind === 'retail' ? RETAIL_VOCAB : FOOD_VOCAB;
 }
@@ -78,95 +71,89 @@ export const words = {
     shareMyShop: 'Share my shop',
     account: 'Account',
     more: 'More',
-    pauseShop: 'Pause shop',
-    resumeShop: 'Resume shop',
-    openState: 'Open now',
-    busyState: 'Busy',
-    closedState: 'Closed',
   },
   shell: {
     myShop: 'My shop',
+    open: 'Open',
+    mainNav: 'Main',
+    skipToContent: 'Skip to content',
+    back: 'Back',
+    toggleSidebar: 'Show or hide the menu',
+    accountMenu: 'Account menu',
+    pageTitle: (page: string) => `${page} · Smart App PH`,
+  },
+  share: {
+    description: 'Customers open this link to see your shop and order.',
+    copy: 'Copy link',
+    copied: 'Link copied',
+    copyFailed: 'Copy did not work. Press and hold the link to copy it.',
   },
   screens: {
     home: {
       title: 'Home',
-      description: 'Your shop snapshot for today.',
+      empty: 'New orders and members who need you will show here.',
     },
     orders: {
       title: 'Orders',
-      description: 'Track incoming and open customer orders.',
-      emptyTitle: 'No orders yet',
-      emptyDescription: 'When customers place orders on your storefront, they will appear here.',
       tabBoard: 'Board',
-      tabHistory: 'Order history',
+      tabList: 'List',
+      empty: 'No orders yet. New orders show here as soon as customers place them.',
+      detailTitle: 'Order',
+      detailEmpty: 'The order details will show here.',
     },
     catalog: {
       title: (kind: ShopKind) => vocab(kind).catalog,
-      description: (kind: ShopKind) =>
-        `Manage your ${vocab(kind).catalog.toLowerCase()} items, categories, and add-on options.`,
-      tabItems: (kind: ShopKind) => vocab(kind).catalogItems,
+      tabItems: 'Items',
       tabCategories: 'Categories',
       tabAddOns: 'Add-ons',
-      emptyItemsTitle: (kind: ShopKind) => vocab(kind).emptyCatalogTitle,
-      emptyItemsDescription: (kind: ShopKind) => vocab(kind).emptyCatalogDescription,
-      emptyCategoriesTitle: 'No categories yet',
-      emptyCategoriesDescription:
-        'Group your items into categories to help customers find what they want.',
-      emptyAddOnsTitle: 'No add-on groups yet',
-      emptyAddOnsDescription: 'Create shared options like sizes, toppings, and choices.',
-      addItem: (kind: ShopKind) => vocab(kind).addItem,
-      addCategory: 'Add category',
-      addGroup: 'Add group',
+      emptyItems: (kind: ShopKind) => vocab(kind).emptyItems,
+      emptyCategories: 'No categories yet. Group your items so customers find them fast.',
+      emptyAddOns: 'No add-ons yet. Add extras like sizes, sauces or gift wrap.',
+      newTitle: (kind: ShopKind) => vocab(kind).newItem,
+      newEmpty: 'The form for a new item will show here.',
+      itemTitle: (kind: ShopKind) => vocab(kind).item,
+      itemEmpty: 'The item details will show here.',
     },
     members: {
       title: 'Members',
-      description: 'Your suki list, stamp history, and loyalty rewards.',
-      tabAll: 'All members',
+      tabMembers: 'Members',
       tabStampCard: 'Stamp card',
       tabClaims: 'Prize claims',
-      emptyMembersTitle: 'No members yet',
-      emptyMembersDescription:
-        'Customers become members when they join your loyalty program on the storefront.',
-      emptyClaimsTitle: 'No prize claims yet',
-      emptyClaimsDescription:
-        'When members complete stamp cards, their prize claims will show up here.',
-      stampCardTitle: 'Loyalty stamp card',
-      stampCardDescription:
-        'Configure stamps required and the reward suki earn when they fill their card.',
+      emptyMembers: 'No members yet. Customers join when they sign up on your shop page.',
+      emptyStampCard: 'Your stamp card settings will show here.',
+      emptyClaims: 'No prize claims yet. Members claim a prize when their card is full.',
+      detailTitle: 'Member',
+      detailEmpty: 'The member’s stamps and orders will show here.',
     },
     editor: {
-      title: 'Storefront Editor',
-      description: 'Customise your shop banner, brand colour, and storefront sections.',
-      emptyTitle: 'Storefront live editor',
-      emptyDescription:
-        'Preview and edit your storefront in real time. Customize your colors, banners, and sections.',
-      saveDraft: 'Save draft',
-      publish: 'Publish changes',
+      title: 'Editor',
+      empty: 'Change how your shop page looks here: colours, banner and sections.',
     },
     insights: {
       title: 'Insights',
-      description: 'Sales numbers, order volume, and top items.',
-      emptyTitle: 'No sales data yet',
-      emptyDescription:
-        'Insights will appear here once your shop starts receiving and completing orders.',
-      range7d: 'Last 7 days',
-      range30d: 'Last 30 days',
+      tab7d: '7 days',
+      tab30d: '30 days',
+      empty: 'No sales yet. Sales and top items show here once orders come in.',
     },
     settings: {
       title: 'Settings',
-      description: 'Shop operations, hours, payments, and ordering options.',
-      shopTitle: 'Shop details',
-      shopDescription: 'Update your shop name, contact number, and address.',
-      hoursTitle: 'Operating hours',
-      hoursDescription: 'Set your regular schedule for orders, pickup, and delivery.',
-      orderingTitle: 'Ordering rules',
-      orderingDescription: 'Set preparation times, minimum orders, and ordering when closed.',
-      deliveryTitle: 'Delivery options',
-      deliveryDescription: 'Configure your delivery coverage, rates, and rider notes.',
-      paymentsTitle: 'Payment methods',
-      paymentsDescription: 'Set up GCash, Maya, Bank Transfer, and Cash on Delivery.',
-      accountTitle: 'Account settings',
-      accountDescription: 'Manage your owner profile, password, and sign-in credentials.',
+      sections: 'Settings sections',
+      shop: 'Shop',
+      shopEmpty: 'Your shop name, contact number and address will show here.',
+      hours: 'Hours',
+      hoursEmpty: 'Your opening hours will show here.',
+      ordering: 'Ordering',
+      orderingEmpty: 'Your pickup, prep time and minimum order rules will show here.',
+      delivery: 'Delivery',
+      deliveryEmpty: 'Your delivery areas and fees will show here.',
+      payments: 'Payments',
+      paymentsEmpty: 'Your GCash, Maya, bank and cash options will show here.',
+      notifications: 'Notifications',
+      notificationsEmpty: 'Choose how you hear about new orders here.',
+      plan: 'Plan',
+      planEmpty: 'Your plan and billing will show here.',
+      account: 'Account',
+      accountEmpty: 'Your name, email and password will show here.',
     },
   },
   validation: {
