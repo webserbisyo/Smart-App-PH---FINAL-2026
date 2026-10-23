@@ -66,6 +66,24 @@
   --overlay: oklch(0 0 0 / 0.5);
   --skeleton: oklch(0.92 0 0);
 
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--card-foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  --dock-height: 4rem;
+  --dock-offset: 0.75rem;
+  --dock-max-width: 27.5rem;
+  --rail-width: 3.75rem;
+  --shell-sidebar-width: 15.5rem;
+  /* Top bar and sidebar header share these (sidebar-07: h-16, h-12 when collapsed). */
+  --shell-header-height: 4rem;
+  --shell-header-height-collapsed: 3rem;
+
   --radius: 0.625rem;
 }
 
@@ -134,4 +152,13 @@
   --faint-foreground: oklch(0.5 0 0);
   --overlay: oklch(0 0 0 / 0.7);
   --skeleton: oklch(0.25 0 0);
+
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--card-foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }

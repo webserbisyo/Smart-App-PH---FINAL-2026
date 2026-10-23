@@ -71,6 +71,18 @@
   --color-overlay: var(--overlay);
   --color-skeleton: var(--skeleton);
 
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --spacing-shell-header: var(--shell-header-height);
+  --spacing-shell-header-collapsed: var(--shell-header-height-collapsed);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -80,6 +92,34 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant pointer-coarse (@media (pointer: coarse));
 @custom-variant hover-hover (@media (hover: hover));
+@custom-variant keyboard-open (&:where([data-keyboard="open"], [data-keyboard="open"] *));
+@custom-variant shell-phone (&:where([data-shell="phone"], [data-shell="phone"] *));
+@custom-variant shell-tablet (&:where([data-shell="tablet"], [data-shell="tablet"] *));
+@custom-variant shell-desktop (&:where([data-shell="desktop"], [data-shell="desktop"] *));
+/* Inside a shell whose sidebar is collapsed to icons (sidebar-07 shrinks its header). */
+@custom-variant sidebar-collapsed (&:is(:where(.group\/sidebar-wrapper):has([data-collapsible="icon"]) *));
+/* Items inside the collapsed sidebar on the tablet rail, touch only. Uses :is() so it
+   outranks the installed sidebar's own collapsed sizes. */
+@custom-variant tablet-rail {
+  @media (pointer: coarse) {
+    &:is([data-shell='tablet'] [data-collapsible='icon'] *) {
+      @slot;
+    }
+  }
+}
+
+/* The touch rail is wider (44 px targets), so the collapsed header matches it. */
+@media (pointer: coarse) {
+  [data-shell='tablet'] {
+    --shell-header-height-collapsed: var(--rail-width);
+  }
+}
+
+@utility dock-pill {
+  height: var(--dock-height);
+  max-width: var(--dock-max-width);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dock-offset));
+}
 
 @utility pressable {
   touch-action: manipulation;
@@ -102,7 +142,9 @@
 }
 
 @utility pb-dock {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+  padding-bottom: calc(
+    env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2
+  );
 }
 
 @utility scrollbar-none {

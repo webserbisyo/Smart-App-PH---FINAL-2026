@@ -16,6 +16,7 @@ export interface UserClaims {
   userId: string;
   email: string;
   fullName?: string | undefined;
+  demoShop?: string | undefined;
 }
 
 export async function getClaims(client: SupabaseClient<Database>): Promise<UserClaims | null> {
@@ -29,6 +30,10 @@ export async function getClaims(client: SupabaseClient<Database>): Promise<UserC
     fullName:
       typeof data.user.user_metadata['full_name'] === 'string'
         ? data.user.user_metadata['full_name']
+        : undefined,
+    demoShop:
+      typeof data.user.app_metadata['demo_shop'] === 'string'
+        ? data.user.app_metadata['demo_shop']
         : undefined,
   };
 }

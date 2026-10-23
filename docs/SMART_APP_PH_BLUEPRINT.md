@@ -367,11 +367,11 @@ One list in `apps/dashboard/src/app/nav.ts`, read by the sidebar, the rail and t
 | 5     | Editor                   | `paintbrush`                         | Dot when a draft is unpublished        | More sheet     |
 | 6     | Insights                 | `chart-column`                       | none                                   | More sheet     |
 | 7     | Settings                 | `settings`                           | Dot when setup is incomplete           | More sheet     |
-| foot  | View my shop             | `external-link`                      |                                        | More sheet     |
-| foot  | Share my shop            | `qr-code`                            |                                        | More sheet     |
+| foot  | View my shop             | `external-link`                      |                                        | More drawer    |
+| foot  | Share my shop            | `qr-code`                            |                                        | More drawer    |
 | foot  | Account menu (avatar)    |                                      |                                        | Top bar avatar |
 
-Desktop sidebar: shop logo and name on top (with the open, busy or closed state and a quick Pause), the 7 items, then View my shop and Share, account at the bottom. Phone: bottom dock Home · Orders · Menu or Products · Members · More. Tablet: 72 px rail.
+Desktop sidebar: shop logo and name on top (with the open, busy or closed state and a quick Pause), the 7 items, then View my shop and Share, account at the bottom. Phone: bottom dock Home · Orders · Menu or Products · Members · More (More opens a drawer; N15). Tablet: 60 px rail. No bell in the top bar (N14).
 
 MVP B adds items in fixed spots so the order never reshuffles: Sell (POS) after Orders, Kitchen after Sell, Stock after Menu or Products, Staff and Promotions before Settings.
 
@@ -386,7 +386,7 @@ Breakpoints, shells, phone feel, states and accessibility are in [`ux.md`](ux.md
 - **Storefront phone:** top bar (logo, name, open state, area pill, bell, avatar), content, basket bar, floating dock. Bars hide while the keyboard is open.
 - **Storefront desktop (1024 px+):** top navigation, content max 1120 px, basket drawer (1024 to 1279) or sticky 360 px column (1280+). Checkout and receipt are one column, max 640 px, at every width.
 - **Dashboard:** dock on phone, rail on tablet, 248 px sidebar on laptop and up; light and dark.
-- **Editor:** its own full-width layout inside the shell (sidebar collapses to the rail).
+- **Editor:** full screen outside the shell (N13).
 
 ### 5.2 Item sheet with add-on rules (phone)
 

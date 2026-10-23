@@ -35,6 +35,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T17 Generated database types are committed in `packages/data`; CI regenerates them from the migrations on a local database and fails on any difference.
 - T18 The PWA uses `@serwist/turbopack` (Next 16 builds with Turbopack; the webpack-based `@serwist/next` does not run there).
 - T19 jsdom pinned to 29.x: 30.x needs Node 24.15+.
+- T20 cn comes from the official cn package (catalog); lib/utils.ts re-exports it so ReUI and older items keep working.
 
 ## MVP A scope (accepted 2026-10-18; details in `SYSTEM.md` section 4.2 and `SMART_APP_PH_BLUEPRINT.md`)
 
@@ -49,6 +50,14 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N9 Dashboard navigation: Home, Orders, Menu or Products, Members, Editor, Insights, Settings.
 - N10 The owner gets a new-order email in A.
 - N11 The receipt can be saved as an image (made on the server from the order with the Next.js built-in image response) or printed and saved as PDF; no new package.
+- N12 Settings has Notifications and Plan sections.
+- N13 The Editor opens full screen, outside the shell.
+- N14 No bell in the MVP A top bar; Home's needs-you list does that job.
+- N15 Phone dock: floating pill with 4 places and More; More opens a bottom drawer with tiles.
+- N16 The dashboard shell starts from the shadcn sidebar-07 block; bottom-dock, nav-drawer and page-header are shared compositions in packages/ui, router-agnostic, reused by the storefront shell.
+- N17 Overlays: Dialog on tablet and desktop, bottom Drawer on phone, through the responsive-dialog composition.
+- N18 Sidebar menus use gap-1 between items (base-nova default is gap-0).
+- N19 Dashboard rail is 60px (as built in T05).
 
 ## Open
 
