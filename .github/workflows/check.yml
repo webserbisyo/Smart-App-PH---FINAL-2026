@@ -114,4 +114,5 @@ jobs:
       - name: Verify Types Drift
         run: |
           pnpm exec supabase gen types typescript --local > packages/data/src/database.types.ts
+          pnpm exec prettier --write packages/data/src/database.types.ts
           git diff --exit-code packages/data/src/database.types.ts
