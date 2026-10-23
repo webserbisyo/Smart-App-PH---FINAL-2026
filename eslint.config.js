@@ -46,6 +46,13 @@ export default tseslint.config(
       ],
     },
   },
+  // Installed shadcn components in packages/ui
+  {
+    files: ['packages/ui/src/components/**'],
+    rules: {
+      '@typescript-eslint/consistent-type-assertions': 'off',
+    },
+  },
   // React Hooks
   {
     files: ['**/*.{tsx,jsx}'],

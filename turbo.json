@@ -15,6 +15,7 @@
     "lint": {
       "dependsOn": ["^build"]
     },
+    "//#lint": {},
     "test": {
       "dependsOn": ["^build"]
     },

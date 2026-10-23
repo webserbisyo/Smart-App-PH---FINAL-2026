@@ -57,6 +57,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N16 The dashboard shell starts from the shadcn sidebar-07 block; bottom-dock, nav-drawer and page-header are shared compositions in packages/ui, router-agnostic, reused by the storefront shell.
 - N17 Overlays: Dialog on tablet and desktop, bottom Drawer on phone, through the responsive-dialog composition.
 - N18 Sidebar menus use gap-1 between items (base-nova default is gap-0).
+- N19 Dashboard rail is 60px (as built in T05).
 
 ## Open
 

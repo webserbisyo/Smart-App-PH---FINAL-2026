@@ -21,7 +21,7 @@ Not in the MVP (Blueprint B): POS, shifts, kitchen screen, staff and roles, prom
 - Storefront: phone app shell (top bar 56 px with logo, name, open state, area pill, bell for order updates, avatar; floating tab dock Home, Menu, Rewards, Orders, 64 px tall, 12 px from the edges; basket bar "3 items · ₱345 View" above it, hidden at 0 items and on checkout and receipt). Top navigation from 1024 px; sticky cart column from 1280 px (a right drawer from 1024 to 1279). Widths and phone behaviour: `docs/ux.md`. Light mode only.
 - Owner picks one brand colour and a logo; the 60/30/10 palette is generated with a contrast check (`docs/design-tokens.md`); status colours never change.
 - Owner content: logo, brand colour, up to 3 banners, announcement, About, contact, all edited in the Editor (N7).
-- Dashboard: bottom dock on phone, 72 px rail on tablet, 248 px sidebar on laptop and up (one nav per device), light and dark. Products list with table and grid toggle.
+- Dashboard: bottom dock on phone, 60 px rail on tablet, 248 px sidebar on laptop and up (one nav per device), light and dark. Products list with table and grid toggle.
 
 ## 3. Phases
 
