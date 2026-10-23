@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEMO_OWNER_EMAILS } from '../src/demo/owners.js';
 import { DEMO_SHOPS } from '../src/demo/shops.js';
 import { DemoShopSummarySchema } from '../src/schemas/demo-shop.js';
 
@@ -18,7 +19,8 @@ describe('Demo Shops', () => {
   });
 
   it('has unique owner emails', () => {
-    const emails = DEMO_SHOPS.map((s) => s.ownerEmail);
+    const emails = DEMO_SHOPS.map((s) => DEMO_OWNER_EMAILS[s.slug]);
+    expect(emails.every((email) => typeof email === 'string')).toBe(true);
     const uniqueEmails = new Set(emails);
     expect(uniqueEmails.size).toBe(emails.length);
   });

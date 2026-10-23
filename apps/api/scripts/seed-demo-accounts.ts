@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { DEMO_OWNER_EMAILS } from '@smartapp/core/demo/owners.js';
 import { DEMO_SHOPS } from '@smartapp/core/demo/shops.js';
 
 async function seedDemoAccounts(): Promise<void> {
@@ -33,7 +34,12 @@ async function seedDemoAccounts(): Promise<void> {
   const existingUsers = usersData?.users ?? [];
 
   for (const shop of DEMO_SHOPS) {
-    const existing = existingUsers.find((u) => u.email === shop.ownerEmail);
+    const ownerEmail = DEMO_OWNER_EMAILS[shop.slug];
+    if (!ownerEmail) {
+      console.error(`No owner email for ${shop.slug}`);
+      process.exit(1);
+    }
+    const existing = existingUsers.find((u) => u.email === ownerEmail);
 
     if (existing) {
       const { error: updateError } = await supabase.auth.admin.updateUserById(existing.id, {
@@ -48,14 +54,14 @@ async function seedDemoAccounts(): Promise<void> {
       });
 
       if (updateError) {
-        console.error(`Failed to update ${shop.ownerEmail}:`, updateError.message);
+        console.error(`Failed to update ${ownerEmail}:`, updateError.message);
         process.exit(1);
       }
 
-      console.log(`${shop.ownerEmail}: updated`);
+      console.log(`${ownerEmail}: updated`);
     } else {
       const { error: createError } = await supabase.auth.admin.createUser({
-        email: shop.ownerEmail,
+        email: ownerEmail,
         password: demoPassword,
         email_confirm: true,
         user_metadata: {
@@ -67,11 +73,11 @@ async function seedDemoAccounts(): Promise<void> {
       });
 
       if (createError) {
-        console.error(`Failed to create ${shop.ownerEmail}:`, createError.message);
+        console.error(`Failed to create ${ownerEmail}:`, createError.message);
         process.exit(1);
       }
 
-      console.log(`${shop.ownerEmail}: created`);
+      console.log(`${ownerEmail}: created`);
     }
   }
 }
