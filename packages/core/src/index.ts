@@ -4,3 +4,6 @@ export * from './demo/slugs.js';
 export { DEMO_SHOPS } from './demo/shops.js';
 export * from './words.js';
 export * from './errors.js';
+export * from './icons.js';
+export * from './media.js';
+export * from './demo/media.js';
