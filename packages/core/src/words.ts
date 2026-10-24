@@ -171,6 +171,21 @@ export const words = {
     phoneInvalid: 'Enter a mobile number like 0917 123 4567.',
     mapsShortLink: 'Paste the full link from Google Maps.',
     orderSlip: 'ORDER SLIP · NOT AN OFFICIAL RECEIPT',
+    // Dev build in mock mode only: shown in a toast so testers can type the code.
+    devCode: (code: string) => `Demo code: ${code}`,
+    storageReset: 'Some saved items on this phone were out of date and were cleared.',
+    finishOtherOrder: 'Finish or cancel your other order first.',
+    thread: {
+      proofSent: (reference: string) => `Proof sent · Ref ${reference}`,
+      paymentApproved: 'Payment approved',
+      paymentRejected: (reason: string) => `Payment not approved: ${reason}`,
+      refunded: (amount: string, reason: string) =>
+        `Cancelled · Refunded ${amount} · Reason: ${reason}`,
+      cancelled: (reason: string) => `Cancelled · Reason: ${reason}`,
+      rider: (name: string) => `Your rider is ${name}`,
+      tracking: 'Tracking link added',
+      expired: 'This order expired because it was not paid in time.',
+    },
   },
   screens: {
     home: {

@@ -1,0 +1,173 @@
+// Hooks for data kept on the phone. Every component and tab sees the same basket (useSyncExternalStore).
+import { useSyncExternalStore } from 'react';
+import {
+  isFinal,
+  lineIdentity,
+  QTY_MAX,
+  type BasketLine,
+  type CheckoutDraft,
+  type LastAddress,
+  type OrderReceipt,
+  type OrderType,
+} from '@smartapp/core';
+import {
+  getDeviceStorage,
+  pruneOrderTokens,
+  pruneSavedReceipts,
+  type DeviceEntry,
+  type ReadResult,
+  type SavedReceipt,
+} from '../../device-storage';
+import { getMockScenario, subscribeMockScenario } from '../../mocks/scenario';
+
+// Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
+declare const process: { env: { NODE_ENV?: string | undefined } };
+
+const EMPTY = { value: null, notice: null } as const;
+
+export function useDeviceEntry<T>(entry: DeviceEntry<T>, scope: string): ReadResult<T> {
+  return useSyncExternalStore(
+    getDeviceStorage().subscribe,
+    () => entry.snapshot(scope),
+    () => EMPTY,
+  );
+}
+
+/** Adds merge by line identity (item, variant, sorted options, note); quantity stays 1 to 99. */
+export function mergeLine(lines: readonly BasketLine[], line: BasketLine): BasketLine[] {
+  const normal = { ...line, optionIds: [...line.optionIds].sort(), note: line.note.trim() };
+  const id = lineIdentity(normal);
+  const existing = lines.find((l) => lineIdentity(l) === id);
+  if (!existing) return [...lines, normal];
+  return lines.map((l) =>
+    l === existing ? { ...l, qty: Math.min(QTY_MAX, l.qty + normal.qty) } : l,
+  );
+}
+
+export interface BasketApi {
+  lines: BasketLine[];
+  // 'storage_reset' when an old saved basket was dropped (show one line).
+  notice: 'storage_reset' | null;
+  count: number;
+  add(line: BasketLine): void;
+  setQty(identity: string, qty: number): void;
+  remove(identity: string): void;
+  replace(lines: BasketLine[]): void;
+  clear(): void;
+}
+
+export function useBasket(slug: string): BasketApi {
+  const storage = getDeviceStorage();
+  const { value, notice } = useDeviceEntry(storage.basket, slug);
+  const lines = value ?? [];
+  const current = () => storage.basket.read(slug).value ?? [];
+  const write = (next: BasketLine[]) => storage.basket.write(slug, next);
+  return {
+    lines,
+    notice,
+    count: lines.reduce((n, l) => n + l.qty, 0),
+    add: (line) => write(mergeLine(current(), line)),
+    setQty: (identity, qty) =>
+      write(
+        current().map((l) =>
+          lineIdentity(l) === identity
+            ? { ...l, qty: Math.max(1, Math.min(QTY_MAX, Math.round(qty))) }
+            : l,
+        ),
+      ),
+    remove: (identity) => write(current().filter((l) => lineIdentity(l) !== identity)),
+    replace: (next) => write(next),
+    clear: () => storage.basket.remove(slug),
+  };
+}
+
+export function useFavourites(slug: string) {
+  const storage = getDeviceStorage();
+  const ids = useDeviceEntry(storage.favourites, slug).value ?? [];
+  return {
+    ids,
+    has: (itemId: string) => ids.includes(itemId),
+    toggle: (itemId: string) => {
+      const saved = storage.favourites.read(slug).value ?? [];
+      storage.favourites.write(
+        slug,
+        saved.includes(itemId) ? saved.filter((i) => i !== itemId) : [...saved, itemId],
+      );
+    },
+  };
+}
+
+export function useCheckoutDraft(slug: string) {
+  const storage = getDeviceStorage();
+  const draft = useDeviceEntry(storage.checkoutDraft, slug).value;
+  return {
+    draft,
+    save: (next: CheckoutDraft) => storage.checkoutDraft.write(slug, next),
+    clear: () => storage.checkoutDraft.remove(slug),
+  };
+}
+
+export function useLastAddress(slug: string) {
+  const storage = getDeviceStorage();
+  const address = useDeviceEntry(storage.lastAddress, slug).value;
+  return { address, save: (next: LastAddress) => storage.lastAddress.write(slug, next) };
+}
+
+export function useOrderType(slug: string) {
+  const storage = getDeviceStorage();
+  const type = useDeviceEntry(storage.orderType, slug).value;
+  return { type, save: (next: OrderType) => storage.orderType.write(slug, next) };
+}
+
+export function useGuestOrderTokens(slug: string): string[] {
+  const storage = getDeviceStorage();
+  return (useDeviceEntry(storage.guestOrderTokens, slug).value ?? []).map((t) => t.token);
+}
+
+/** Guest order tokens let My orders find this phone's orders (kept 90 days). */
+export function rememberOrderToken(slug: string, token: string, now: Date): void {
+  const storage = getDeviceStorage();
+  const tokens = pruneOrderTokens(storage.guestOrderTokens.read(slug).value ?? [], now);
+  if (tokens.some((t) => t.token === token)) return;
+  storage.guestOrderTokens.write(slug, [...tokens, { token, addedAt: now.toISOString() }]);
+}
+
+/** The receipt kept on the phone for offline viewing (S30). */
+export function useSavedReceipt(slug: string, token: string): SavedReceipt | null {
+  const storage = getDeviceStorage();
+  const saved = useDeviceEntry(storage.savedReceipts, slug).value ?? [];
+  return saved.find((r) => r.receipt.token === token) ?? null;
+}
+
+/** Keeps the latest receipt on the phone, until 7 days after the order ends. */
+export function saveReceipt(slug: string, receipt: OrderReceipt, now: Date): void {
+  const storage = getDeviceStorage();
+  const list = pruneSavedReceipts(storage.savedReceipts.read(slug).value ?? [], now).filter(
+    (r) => r.receipt.token !== receipt.token,
+  );
+  const endedAt = isFinal(receipt.status)
+    ? (receipt.events[receipt.events.length - 1]?.at ?? now.toISOString())
+    : null;
+  storage.savedReceipts.write(slug, [...list, { receipt, savedAt: now.toISOString(), endedAt }]);
+}
+
+function subscribeOnline(listener: () => void): () => void {
+  window.addEventListener('online', listener);
+  window.addEventListener('offline', listener);
+  const unsubscribe = subscribeMockScenario(listener);
+  return () => {
+    window.removeEventListener('online', listener);
+    window.removeEventListener('offline', listener);
+    unsubscribe();
+  };
+}
+
+function onlineNow(): boolean {
+  const devOffline = process.env.NODE_ENV !== 'production' && getMockScenario().offline;
+  return navigator.onLine && !devOffline;
+}
+
+/** False when the phone is offline (or the dev ?mock=offline scenario is on). */
+export function useOnline(): boolean {
+  return useSyncExternalStore(subscribeOnline, onlineNow, () => true);
+}

@@ -76,7 +76,7 @@ Codes: `category_not_empty`, `item_has_orders` (archive instead).
 | `listMyOrders`                         | GET `/s/:slug/orders`     | `{ tokens }` (guest order tokens kept on the phone) → `OrderRow[]`                                                                    |
 | `resolveMapsLink`                      | POST `/maps/resolve`      | `{ url }` → `{ lat, lng }`; the server follows short links (maps.app.goo.gl); the mock reads full links only (`parseMapsLink`)        |
 
-The cart lives on the device (`deviceStorage`, per slug). Pickup slots and open/closed text come from core (`pickupSlots`, `openState`), but the database decides.
+Every storefront method also takes the `slug` from the route (`getOrder` and the receipt methods too: the storefront route is `/[shop]/o/[token]`; a real token alone identifies the order). The cart lives on the device (`deviceStorage`, per slug). Pickup slots and open/closed text come from core (`pickupSlots`, `openState`), but the database decides.
 
 Codes: `shop_not_found`, `shop_closed`, `shop_busy`, `fulfillment_unavailable`, `payment_unavailable`, `cod_not_allowed`, `cod_limit`, `pickup_time_invalid`, `zone_required`, `out_of_range`, `item_unavailable`, `out_of_stock`, `invalid_options`, `reward_unavailable`, `reward_all_claimed`, `reward_paused`, `order_not_payable`, `duplicate_reference`, `too_many_proofs`, `phone_in_use`, `rate_limited`, `slot_unavailable`, `stamps_insufficient`, `preview_expired`, `thread_rate_limited`, `code_expired`, `stamp_daily_cap`.
 
@@ -98,6 +98,13 @@ Closed lists used by these rows (core `schemas/enums.ts`): payment status `unpai
 Core helpers that screens use instead of comparing statuses: `boardColumn`, `nextActions`, `canCancel`, `timelineSteps`, `isLate`. They share one test table with the SQL.
 
 Codes: `not_found`, `invalid_transition`, `not_paid`, `payment_not_pending`, `already_paid`.
+
+## Samples (owner)
+
+| Method            | HTTP                    | Input → Output                                                                                      |
+| ----------------- | ----------------------- | --------------------------------------------------------------------------------------------------- |
+| `applySamplePack` | POST `/owner/samples`   | `{ packSlug }` → `PublicShop` ("Start with samples": copies a shop pack's catalog, look and card)   |
+| `clearSamples`    | DELETE `/owner/samples` | → `PublicShop` (removes every `sample` item, banners and logo; the shop then looks like test-blank) |
 
 ## Members, home, reports (owner)
 

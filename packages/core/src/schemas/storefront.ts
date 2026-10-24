@@ -16,6 +16,7 @@ import {
   StampCardStatusEnum,
   WeekdaySchema,
 } from './enums.js';
+import { CatalogSchema } from './catalog.js';
 import { RewardSchema, StampRuleSchema } from './loyalty.js';
 
 export const ShopContactSchema = z.object({
@@ -158,3 +159,10 @@ export const StorefrontSchema = z.object({
   membersCount: z.number().int().min(0),
 });
 export type Storefront = z.infer<typeof StorefrontSchema>;
+
+// What the storefront reads for one shop: the public shop and what it sells.
+export const PublicShopSchema = z.object({
+  storefront: StorefrontSchema,
+  catalog: CatalogSchema,
+});
+export type PublicShop = z.infer<typeof PublicShopSchema>;

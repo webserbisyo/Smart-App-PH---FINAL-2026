@@ -87,10 +87,12 @@ function combinations(axes: readonly AxisSpec[]): string[][] {
   );
 }
 
+// `sample` marks pack items; test shops pass false so their items show like a real shop's own.
 export function makeItems(
   slug: DemoShopSlug | null,
   prefix: string,
   specs: readonly ItemSpec[],
+  sample = true,
 ): Item[] {
   const media = slug ? DEMO_MEDIA[slug] : null;
   const ref = (name: string): string => {
@@ -126,7 +128,7 @@ export function makeItems(
       featured: spec.featured ?? false,
       isNew: spec.isNew ?? false,
       status: 'active',
-      sample: true,
+      sample,
     };
   });
 }

@@ -34,3 +34,17 @@ Night run started 2026-10-25 (Manila). Order: T02, T02b, T03a, T03b, T04, T06, T
   - Midnight reads "12 MN" and noon "12 NN" (demo-shops.md uses "12:00 MN").
   - `words.storefront` was already a string, so the new storefront words live under `words.shop`.
 - Tests: core 114 passing (packs parse, item counts 18/8/14/18/19, photo refs, groups, limits, blueprint section 14 states, every rule table); `pnpm format:check`, `pnpm check` and `pnpm build` green; storefront JS unchanged.
+
+## T03b Mock store, adapters and hooks (branch `ag/t03b-mock-store`)
+
+- Built: `deviceStorage` (versioned keys per shop, Zod on read, memory fallback, subscribe plus a stable snapshot per key); the mock store (`createMockStore({ seed, now })`) with mulberry32 activity per demo shop: today's board in every status, 3 past days, members in every segment with welcome, earned, redeemed, reversed and manual rows, and 11 `DEMO_RECEIPTS` tokens per shop; the demo customer Juan dela Cruz with `?as=` states; every Storefront, Orders (owner), Samples (owner) and customer code row of api.md; TanStack Query hooks and device hooks; `getStorefrontForServer`; the dev scenario switch; `DATA_SOURCE` checked by Zod in both apps (default `mock`); CI scan strings.
+- Decisions from the box: customer-created mock state lives on the phone (`mockState` key); fixed demo receipt tokens; `?mock=` scenarios never in a production build; mock email code 123456 (returned as `devCode` only outside production; the toast comes with the screen).
+- Choices made where the docs left room:
+  - `getOrder` and the receipt methods take the slug from the route, because the demo tokens repeat per shop. api.md says so.
+  - Small core shapes added for the rows the mock must return: `PublicShop`, `BoardOrder`, `OwnerOrder`, `Payment`, `CustomerAddress`, `SendCodeResult`, `CheckoutDraft`, `LastAddress`.
+  - Juan's demo receipts use the number +63 917 000 9999, so the 3-unpaid-orders limit never blocks a tester typing his phone (0917 000 1234).
+  - Test-shop items are not `sample`, so they show on a non-demo shop like real items.
+  - `packages/data` uses extensionless relative imports (as `packages/ui` does): Next's Turbopack could not resolve `.js` imports of source files. Each file that checks `NODE_ENV` declares `process` locally, because the dashboard's tsconfig has no Node types (Vite replaces `process.env.NODE_ENV`, so the check still drops out of builds).
+  - Decision numbers: the prompt's T24 is recorded as **T26** (T24 and T25 belong to the open T02 PR); N29 as planned.
+  - I did not edit `.env.example` (autopilot hard stop on .env files). `NEXT_PUBLIC_DATA_SOURCE` and `VITE_DATA_SOURCE` default to `mock`; you may want to add them to the examples.
+- Tests: data 27 passing (contract against api.md, every output parsed, idempotent placeOrder, gap-free numbers with a daily reset, a proof never marks paid, the 4th proof refused, duplicate reference, COD limit, out of range, sold out today back after the next opening, steps forward only and completing needs paid, unpaid limit, reward race, paused card, daily stamp cap, clearSamples equals test-blank, scenario switch, deviceStorage reset/fallback/snapshot, basket merge); core 114 passing; `pnpm format:check`, `pnpm check` (15/15) and `pnpm build` green; the leak scan finds no scenario strings; storefront JS unchanged.

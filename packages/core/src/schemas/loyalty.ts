@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { CentavosSchema, IdSchema, IsoDateTimeSchema, MediaRefSchema } from './common.js';
+import {
+  CentavosSchema,
+  IdSchema,
+  IsoDateTimeSchema,
+  LatLngSchema,
+  MediaRefSchema,
+} from './common.js';
 import {
   ClaimStatusEnum,
   LedgerKindEnum,
@@ -84,3 +90,29 @@ export const RewardClaimSchema = z.object({
   createdAt: IsoDateTimeSchema,
 });
 export type RewardClaim = z.infer<typeof RewardClaimSchema>;
+
+export const CustomerAddressSchema = z.object({
+  id: IdSchema,
+  label: z.string().min(1).max(30),
+  addressLine: z.string().min(1).max(160),
+  houseNo: z.string().max(40).nullable(),
+  floor: z.string().max(40).nullable(),
+  landmark: z.string().max(120).nullable(),
+  spot: LatLngSchema.nullable(),
+  zoneId: IdSchema.nullable(),
+});
+export type CustomerAddress = z.infer<typeof CustomerAddressSchema>;
+
+export const SendCodeResultSchema = z.object({
+  sentAt: IsoDateTimeSchema,
+  resendAt: IsoDateTimeSchema,
+  // Mock mode in a dev build only: the code to type (always 123456). Never set in production.
+  devCode: z.string().nullable(),
+});
+export type SendCodeResult = z.infer<typeof SendCodeResultSchema>;
+
+export const CustomerSessionSchema = z.object({
+  email: z.email(),
+  verifiedAt: IsoDateTimeSchema,
+});
+export type CustomerSession = z.infer<typeof CustomerSessionSchema>;

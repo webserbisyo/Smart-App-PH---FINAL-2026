@@ -152,7 +152,7 @@ function stressSpecs(): ItemSpec[] {
   return specs;
 }
 
-const stressItems: Item[] = makeItems(null, S, stressSpecs());
+const stressItems: Item[] = makeItems(null, S, stressSpecs(), false);
 
 const STRESS_STOREFRONT: Storefront = {
   ...BLANK_STOREFRONT,

@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from './database.types.js';
+import type { Database } from './database.types';
 
 export interface CookieStoreLike {
   getAll(): Array<{ name: string; value: string }>;
@@ -58,3 +58,5 @@ export async function refreshSession(
   await supabase.auth.getUser();
   return response;
 }
+
+export { getStorefrontForServer } from './mocks/server';
