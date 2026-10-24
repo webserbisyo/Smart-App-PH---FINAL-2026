@@ -1,0 +1,882 @@
+[
+  {
+    "source": ".github/assets/aquawebp/sivpdpu7e4ptm0bsi6sq.webp",
+    "shop": "aqualinis",
+    "kind": "logo",
+    "key": "logo",
+    "confidence": "high",
+    "note": "App icon: white water droplet with wave on blue"
+  },
+  {
+    "source": ".github/assets/aquawebp/f8kptlthzsilxnop6glc.webp",
+    "shop": "aqualinis",
+    "kind": "banner",
+    "key": "banner-1",
+    "confidence": "high",
+    "note": "Banner 1: Round blue container with dramatic water splash"
+  },
+  {
+    "source": ".github/assets/aquawebp/fzbjyhfdifz14dxiossl.webp",
+    "shop": "aqualinis",
+    "kind": "banner",
+    "key": "banner-2",
+    "confidence": "high",
+    "note": "Banner 2: Las Piñas street, delivery rider with sidecar holding four 5-gal containers"
+  },
+  {
+    "source": ".github/assets/aquawebp/scwdn9vy3vivvmq4ehns.webp",
+    "shop": "aqualinis",
+    "kind": "banner",
+    "key": "banner-3",
+    "confidence": "high",
+    "note": "Banner 3: Three 5-gal containers (blue, green, white caps) on white pedestal"
+  },
+  {
+    "source": ".github/assets/aquawebp/m7vhuc4uqqy1sgdwm80q.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "refill-purified",
+    "confidence": "high",
+    "note": "Round container with bright blue cap and shrink seal"
+  },
+  {
+    "source": ".github/assets/aquawebp/kma8ncft9lws8togmkqa.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "refill-alkaline",
+    "confidence": "high",
+    "note": "Round container with green cap and mint leaves"
+  },
+  {
+    "source": ".github/assets/aquawebp/fgc9zggbglnavnslabku.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "refill-mineral",
+    "confidence": "high",
+    "note": "Round container with white cap and white river stones"
+  },
+  {
+    "source": ".github/assets/aquawebp/lkmqzog2lp9qwrkn3e4c.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "refill-slim",
+    "confidence": "high",
+    "note": "Slim container with faucet filled with water"
+  },
+  {
+    "source": ".github/assets/aquawebp/pgv4cc2mm5gc1pd4wi2k.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "family-week-pack",
+    "confidence": "high",
+    "note": "Four blue containers in diamond formation"
+  },
+  {
+    "source": ".github/assets/aquawebp/g47dy0uc8limvrhknkxh.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "round-container",
+    "confidence": "high",
+    "note": "Empty round container with blue cap beside it"
+  },
+  {
+    "source": ".github/assets/aquawebp/yam8mfydrkh4abdzjvgq.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "slim-container",
+    "confidence": "high",
+    "note": "Empty slim container with white faucet"
+  },
+  {
+    "source": ".github/assets/aquawebp/u1p4uu1rlnff3wha6shb.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "replacement-faucet",
+    "confidence": "high",
+    "note": "White faucet with blue lever at 3/4 angle"
+  },
+  {
+    "source": ".github/assets/aquawebp/gxdq2at0u5p49o3tbj1b.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "manual-water-pump",
+    "confidence": "high",
+    "note": "White hand pump on blue container dispensing into glass"
+  },
+  {
+    "source": ".github/assets/aquawebp/fw28eeobphwkxdsqm2qb.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "bottled-water-case",
+    "confidence": "high",
+    "note": "Shrink-wrapped 24-case 500 mL bottles"
+  },
+  {
+    "source": ".github/assets/aquawebp/jwtvqzv5kscx0k1lbend.webp",
+    "shop": "aqualinis",
+    "kind": "item",
+    "key": "tube-ice",
+    "confidence": "high",
+    "note": "Clear bag of tube ice with loose ice tubes"
+  },
+  {
+    "source": ".github/assets/aquawebp/t3mrkymxo5x9wpl0mun3.webp",
+    "shop": "aqualinis",
+    "kind": "wordmark",
+    "key": "wordmark",
+    "confidence": "high",
+    "note": "Wordmark: AquaLinis WATER REFILLING STATION (out of scope, skip)"
+  },
+  {
+    "source": ".github/assets/kanto smash/uf53skta63dfthqo5xkv.webp",
+    "shop": "kanto-smash",
+    "kind": "logo",
+    "key": "logo",
+    "confidence": "high",
+    "note": "App icon: white burger with speed lines and cheese drip on red"
+  },
+  {
+    "source": ".github/assets/kanto smash/mjjdh6xfg4kucywe8irt.webp",
+    "shop": "kanto-smash",
+    "kind": "banner",
+    "key": "banner-1",
+    "confidence": "high",
+    "note": "Banner 1: Towering burger on black counter at night, street on left"
+  },
+  {
+    "source": ".github/assets/kanto smash/b2yfcovrfkwctdebaax4.webp",
+    "shop": "kanto-smash",
+    "kind": "banner",
+    "key": "banner-2",
+    "confidence": "high",
+    "note": "Banner 2: Overhead flat-lay of Barkada feast on wooden table"
+  },
+  {
+    "source": ".github/assets/kanto smash/cozqkttfpsvy5et2st4b.webp",
+    "shop": "kanto-smash",
+    "kind": "banner",
+    "key": "banner-3",
+    "confidence": "high",
+    "note": "Banner 3: Classic Smash on gingham wax paper + loyalty card with 8 stamps"
+  },
+  {
+    "source": ".github/assets/kanto smash/mfoszb3e6bolyo9exeil.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "classic-smash",
+    "confidence": "high",
+    "note": "Single smash burger with crispy edges, American cheese, pickles"
+  },
+  {
+    "source": ".github/assets/kanto smash/qalyxdkoi9iz8wy1jomv.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "cheesy-bacon-smash",
+    "confidence": "high",
+    "note": "Double smash burger with 2 patties, melted cheddar, crispy bacon"
+  },
+  {
+    "source": ".github/assets/kanto smash/sweimbgiog8cwhw0e7uj.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "kanto-spicy-smash",
+    "confidence": "high",
+    "note": "Smash burger with pepper jack, sliced jalapeños, sriracha mayo"
+  },
+  {
+    "source": ".github/assets/kanto smash/angfjvhrglyhfbyv561h.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "mushroom-swiss-smash",
+    "confidence": "high",
+    "note": "Smash burger with sautéed mushrooms, Swiss cheese, thyme sprig"
+  },
+  {
+    "source": ".github/assets/kanto smash/hzfefyaw8v4dagucbsuq.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "kanto-overload",
+    "confidence": "high",
+    "note": "Triple smash burger with egg, bacon, skewer"
+  },
+  {
+    "source": ".github/assets/kanto smash/u0wokk5yktwoe2usssfv.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "crispy-chicken-sandwich",
+    "confidence": "high",
+    "note": "Craggy fried chicken thigh fillet in potato bun with mayo"
+  },
+  {
+    "source": ".github/assets/kanto smash/wupsw14acu64m9ybwwq7.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "chicken-nuggets",
+    "confidence": "high",
+    "note": "Ten chicken nuggets in tray with 3 dips, 1 broken open"
+  },
+  {
+    "source": ".github/assets/kanto smash/qkw72sk6neqbgh4ya40f.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "burger-steak-rice",
+    "confidence": "high",
+    "note": "Two beef patties in mushroom gravy with rice dome on enamel plate"
+  },
+  {
+    "source": ".github/assets/kanto smash/ho0crwvrxtxtpiek6sez.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "kanto-fries",
+    "confidence": "high",
+    "note": "Shoestring fries in kraft cone with ketchup cup"
+  },
+  {
+    "source": ".github/assets/kanto smash/mlqzvvka3f4ahzyolzak.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "cheese-fries",
+    "confidence": "high",
+    "note": "Fries in boat drenched in cheese sauce with cheese pull"
+  },
+  {
+    "source": ".github/assets/kanto smash/e8qxgok5pg1u0nxaptsk.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "onion-rings",
+    "confidence": "high",
+    "note": "Stack of thick beer-battered onion rings with aioli"
+  },
+  {
+    "source": ".github/assets/kanto smash/rxkyrpbl1tt513xg8jlw.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "loaded-bacon-fries",
+    "confidence": "high",
+    "note": "Fries with cheese, bacon bits, jalapeños, sriracha mayo"
+  },
+  {
+    "source": ".github/assets/kanto smash/igxenc95fosvoapeqdbm.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "smash-combo",
+    "confidence": "high",
+    "note": "Classic smash, cone of fries, and tall iced tea meal set"
+  },
+  {
+    "source": ".github/assets/kanto smash/rnjm81sfaaxmoedgvu4n.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "barkada-bucket",
+    "confidence": "high",
+    "note": "Bucket of nuggets with 4 burgers, 2 fries, 4 teas (45 deg angle)"
+  },
+  {
+    "source": ".github/assets/kanto smash/f1uyamjypoz20g6timeq.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "house-iced-tea",
+    "confidence": "high",
+    "note": "Tall glass of iced tea with lemon wheel and ice cubes"
+  },
+  {
+    "source": ".github/assets/kanto smash/xjxxrfxwty76tzflztos.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "calamansi-juice",
+    "confidence": "high",
+    "note": "Tall glass of calamansi juice with cut calamansi on rim/counter"
+  },
+  {
+    "source": ".github/assets/kanto smash/mnwisrfx0qndve6odcvq.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "soda-in-can",
+    "confidence": "high",
+    "note": "Three unlabelled aluminium soda cans on crushed ice"
+  },
+  {
+    "source": ".github/assets/kanto smash/kqmlghmnklax7aalf2q3.webp",
+    "shop": "kanto-smash",
+    "kind": "item",
+    "key": "thick-shake",
+    "confidence": "high",
+    "note": "Three milkshakes (vanilla, chocolate, ube) with whipped cream"
+  },
+  {
+    "source": ".github/assets/kanto smash/rmcugxzyeostvyqs0hw7.webp",
+    "shop": "kanto-smash",
+    "kind": "wordmark",
+    "key": "wordmark",
+    "confidence": "high",
+    "note": "Wordmark: KANTO SMASH BURGERS (out of scope, skip)"
+  },
+  {
+    "source": ".github/assets/tala webp/acnavvbfmjzbjvg0sbl6.webp",
+    "shop": "tala-apparel",
+    "kind": "logo",
+    "key": "logo",
+    "confidence": "high",
+    "note": "App icon: eight-pointed star in gold woven pattern on indigo"
+  },
+  {
+    "source": ".github/assets/tala webp/o4ekp2c0b7pccvqjmfph.webp",
+    "shop": "tala-apparel",
+    "kind": "banner",
+    "key": "banner-1",
+    "confidence": "high",
+    "note": "Banner 1: Filipina woman in Habi dress by Cebu stone wall"
+  },
+  {
+    "source": ".github/assets/tala webp/qppkas9dudxacwwudxnj.webp",
+    "shop": "tala-apparel",
+    "kind": "banner",
+    "key": "banner-2",
+    "confidence": "high",
+    "note": "Banner 2: Weekend Set flat-lay with earrings, hat, strap, tote"
+  },
+  {
+    "source": ".github/assets/tala webp/zlmq9t4yp0y7qppgaziy.webp",
+    "shop": "tala-apparel",
+    "kind": "banner",
+    "key": "banner-3",
+    "confidence": "high",
+    "note": "Banner 3: Folded indigo tee with gold embroidered star on velvet"
+  },
+  {
+    "source": ".github/assets/tala webp/k3ddwfclqhed7djqar4e.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "tala-basic-tee-black",
+    "confidence": "high",
+    "note": "Black crew-neck t-shirt on ghost mannequin with indigo label"
+  },
+  {
+    "source": ".github/assets/tala webp/juqf7qkdf9oz2s5wheop.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "tala-basic-tee-white",
+    "confidence": "high",
+    "note": "White crew-neck t-shirt on ghost mannequin"
+  },
+  {
+    "source": ".github/assets/tala webp/aveqledoyqaldhozfqrh.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "tala-basic-tee-sand",
+    "confidence": "high",
+    "note": "Sand beige crew-neck t-shirt on ghost mannequin"
+  },
+  {
+    "source": ".github/assets/tala webp/umkqvx86lnzx4diwpckb.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "linen-button-down-natural",
+    "confidence": "high",
+    "note": "Natural oatmeal linen shirt with coconut buttons on mannequin"
+  },
+  {
+    "source": ".github/assets/tala webp/pvrgtgfrpckbrng5mo6x.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "linen-button-down-indigo",
+    "confidence": "high",
+    "note": "Deep indigo linen shirt with coconut buttons on mannequin"
+  },
+  {
+    "source": ".github/assets/tala webp/b7n4ebcunwsfxkxqieaz.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "cropped-knit-top",
+    "confidence": "high",
+    "note": "Cream cropped knit top flat with terracotta version folded"
+  },
+  {
+    "source": ".github/assets/tala webp/rqcio4cdzu5ilqzunt5w.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "terno-sleeve-blouse",
+    "confidence": "high",
+    "note": "White blouse with butterfly terno sleeves on mannequin"
+  },
+  {
+    "source": ".github/assets/tala webp/thq3fh3gzi4ixsymbdeq.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "wide-leg-trousers",
+    "confidence": "high",
+    "note": "High-waisted black wide-leg trousers on mannequin"
+  },
+  {
+    "source": ".github/assets/tala webp/axlauahsjg67tj7dvmjq.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "pleated-midi-skirt",
+    "confidence": "high",
+    "note": "Sand pleated midi skirt with knife pleats"
+  },
+  {
+    "source": ".github/assets/tala webp/ughsky7ug1g7h3x6rspy.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "denim-shorts",
+    "confidence": "high",
+    "note": "Mid-wash denim shorts with frayed hem laid flat"
+  },
+  {
+    "source": ".github/assets/tala webp/xrnlllqr306ecm98yfzm.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "habi-print-midi-dress",
+    "confidence": "high",
+    "note": "Midi dress with geometric habi print on mannequin"
+  },
+  {
+    "source": ".github/assets/tala webp/vvjue5cjcocszaou00at.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "weekend-set",
+    "confidence": "high",
+    "note": "Natural linen shirt and black trousers full outfit on mannequin"
+  },
+  {
+    "source": ".github/assets/tala webp/t3z287iswqt1lqu0szw8.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "abaca-tote-bag",
+    "confidence": "high",
+    "note": "Handwoven natural abaca tote with leather handles upright"
+  },
+  {
+    "source": ".github/assets/tala webp/qir8ynse9cvsk1a3qc5k.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "capiz-shell-earrings",
+    "confidence": "high",
+    "note": "Round translucent capiz shell drop earrings on linen"
+  },
+  {
+    "source": ".github/assets/tala webp/jex1ke5vzgj6cscsrfc2.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "woven-bucket-hat",
+    "confidence": "high",
+    "note": "Woven bucket hat with indigo band on linen"
+  },
+  {
+    "source": ".github/assets/tala webp/nr1oqn4mt0jflthmywyz.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "beaded-phone-strap",
+    "confidence": "high",
+    "note": "Beaded phone strap with capiz charm on linen"
+  },
+  {
+    "source": ".github/assets/tala webp/iurqqhekq2ynnjfomtmo.webp",
+    "shop": "tala-apparel",
+    "kind": "item",
+    "key": "pina-blend-scarf",
+    "confidence": "high",
+    "note": "Sheer delicate ivory piña-blend scarf with woven border"
+  },
+  {
+    "source": ".github/assets/tala webp/lhxrbtpvpmmqtchuwpzw.webp",
+    "shop": "tala-apparel",
+    "kind": "prize",
+    "key": "prize",
+    "confidence": "high",
+    "note": "Kislap Limited Edition Tee on mannequin with gold tag"
+  },
+  {
+    "source": ".github/assets/tala webp/ohrlvmkne2q2v6x1ngw8.webp",
+    "shop": "tala-apparel",
+    "kind": "wordmark",
+    "key": "wordmark",
+    "confidence": "high",
+    "note": "Wordmark: TALA APPAREL (out of scope, skip)"
+  },
+  {
+    "source": ".github/assets/kape juan/okmhfqpquxeae6vmnfre.webp",
+    "shop": "kape-juan",
+    "kind": "logo",
+    "key": "logo",
+    "confidence": "high",
+    "note": "App icon: coffee cup with 3 steam lines forming rising sun rays on brown"
+  },
+  {
+    "source": ".github/assets/kape juan/wzso5jg6ywlwpnl6fzhz.webp",
+    "shop": "kape-juan",
+    "kind": "banner",
+    "key": "banner-1",
+    "confidence": "high",
+    "note": "Banner 1: Iced Spanish latte on walnut window ledge, jeepneys outside"
+  },
+  {
+    "source": ".github/assets/kape juan/voui0hfl6ycfoicass8x.webp",
+    "shop": "kape-juan",
+    "kind": "banner",
+    "key": "banner-2",
+    "confidence": "high",
+    "note": "Banner 2: Evening café table with laptop, notebook, ube latte, banana bread"
+  },
+  {
+    "source": ".github/assets/kape juan/lbq9skxhrocbu1youh8q.webp",
+    "shop": "kape-juan",
+    "kind": "banner",
+    "key": "banner-3",
+    "confidence": "high",
+    "note": "Banner 3: Barako beans cascading from sack into wooden scoop, clay cup"
+  },
+  {
+    "source": ".github/assets/kape juan/jgdiqsfca8rkrynoeriu.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "spanish-latte",
+    "confidence": "high",
+    "note": "Iced Spanish latte in tall glass with milk and espresso swirls"
+  },
+  {
+    "source": ".github/assets/kape juan/vylsb880cgtinupbmipc.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "americano",
+    "confidence": "high",
+    "note": "Hot Americano in cream stoneware cup on saucer with crema"
+  },
+  {
+    "source": ".github/assets/kape juan/xbcphiqnonfrsd0pi1nh.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "cafe-latte",
+    "confidence": "high",
+    "note": "Hot café latte with rosetta latte art on saucer with spoon"
+  },
+  {
+    "source": ".github/assets/kape juan/yqa0xl1creqkanee9rdq.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "caramel-macchiato",
+    "confidence": "high",
+    "note": "Iced caramel macchiato with crisscross caramel drizzle"
+  },
+  {
+    "source": ".github/assets/kape juan/eumt8zmlqkdmsyjdvfjt.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "barako-brew",
+    "confidence": "high",
+    "note": "Clay cup of black barako beside cloth coffee sock filter"
+  },
+  {
+    "source": ".github/assets/kape juan/xoqb10dsuxzqdxj8ydwp.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "iced-barako-muscovado",
+    "confidence": "high",
+    "note": "Iced black barako with dark muscovado syrup layer at bottom"
+  },
+  {
+    "source": ".github/assets/kape juan/ev7vb8hob6n5mmx7hpge.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "tablea-mocha",
+    "confidence": "high",
+    "note": "Hot tablea mocha with cocoa dusting, 2 tablea discs beside saucer"
+  },
+  {
+    "source": ".github/assets/kape juan/ywpiio4bgpok6jpdlrtj.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "sea-salt-barako-cream",
+    "confidence": "high",
+    "note": "Iced barako topped with thick white sea salt cream"
+  },
+  {
+    "source": ".github/assets/kape juan/yhqcxzqhaxsbgvxx7unb.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "matcha-latte",
+    "confidence": "high",
+    "note": "Iced matcha latte with green swirl over ice, bamboo whisk"
+  },
+  {
+    "source": ".github/assets/kape juan/o197gd5l3vosabmayzcb.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "ube-latte",
+    "confidence": "high",
+    "note": "Iced ube latte with pastel-purple swirl and grated ube"
+  },
+  {
+    "source": ".github/assets/kape juan/mypoum9yeyba1iciyfxd.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "tablea-hot-chocolate",
+    "confidence": "high",
+    "note": "Frothy tablea hot chocolate in cream cup with batirol whisk"
+  },
+  {
+    "source": ".github/assets/kape juan/jsqrx3qkjnwthjys9fmx.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "calamansi-honey-fizz",
+    "confidence": "high",
+    "note": "Sparkling calamansi drink with bubbles, calamansi, honey dipper"
+  },
+  {
+    "source": ".github/assets/kape juan/wzybi320iujcetvgyhyh.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "ensaymada",
+    "confidence": "high",
+    "note": "Coiled ensaymada with whipped butter, sugar, grated cheese"
+  },
+  {
+    "source": ".github/assets/kape juan/tmkrafqhjicwwkgbdrov.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "banana-bread",
+    "confidence": "high",
+    "note": "Slice of banana bread with walnuts, caramelised crust, butter"
+  },
+  {
+    "source": ".github/assets/kape juan/ukrcbabiseopw86ivowm.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "chicken-pesto-sandwich",
+    "confidence": "high",
+    "note": "Toasted ciabatta sandwich cut diagonally with chicken, pesto, tomato"
+  },
+  {
+    "source": ".github/assets/kape juan/aayhwowgj8lsiftqthw1.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "longganisa-pandesal",
+    "confidence": "high",
+    "note": "Pandesal with sweet longganisa, egg, pickled papaya"
+  },
+  {
+    "source": ".github/assets/kape juan/xbkat75qdv2qoqcb3vsb.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "ube-cheesecake",
+    "confidence": "high",
+    "note": "Slice of purple ube cheesecake with cream swirl, plate, fork"
+  },
+  {
+    "source": ".github/assets/kape juan/mbjzehou9phsqnrcqb3f.webp",
+    "shop": "kape-juan",
+    "kind": "item",
+    "key": "barako-beans-250g",
+    "confidence": "high",
+    "note": "Kraft pouch with window showing dark roasted beans, scoop spilling"
+  },
+  {
+    "source": ".github/assets/kape juan/mrnuez8ojcjqdylc4kro.webp",
+    "shop": "kape-juan",
+    "kind": "prize",
+    "key": "prize",
+    "confidence": "high",
+    "note": "Kapé Juan Suki Tumbler in matte coffee-brown with cream lid"
+  },
+  {
+    "source": ".github/assets/kape juan/selqsabtmgy3kuqd2elc.webp",
+    "shop": "kape-juan",
+    "kind": "wordmark",
+    "key": "wordmark",
+    "confidence": "high",
+    "note": "Wordmark: Kapé Juan COFFEE (out of scope, skip)"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/knfqv9jv5rrgnhuzv2fc.webp",
+    "shop": "lola-remy",
+    "kind": "logo",
+    "key": "logo",
+    "confidence": "high",
+    "note": "App icon: pandesal bun with wheat sprig and steam on golden crust"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/cyxr45cnujnm44k1vcnk.webp",
+    "shop": "lola-remy",
+    "kind": "banner",
+    "key": "banner-1",
+    "confidence": "high",
+    "note": "Banner 1: Heaping bamboo bilao of hot pandesal at 5 AM"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/leyngrcvvlhg0zb25kt0.webp",
+    "shop": "lola-remy",
+    "kind": "banner",
+    "key": "banner-2",
+    "confidence": "high",
+    "note": "Banner 2: Three white pastry boxes with Ensaymada Malolos, Barasoain Church"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/gki5pdpz4kv48fsedkjd.webp",
+    "shop": "lola-remy",
+    "kind": "banner",
+    "key": "banner-3",
+    "confidence": "high",
+    "note": "Banner 3: Ube cheese pandesal torn open with cheese pull + loyalty card"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/reuhannbtspovtw0eppi.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "classic-pandesal",
+    "confidence": "high",
+    "note": "Pile of soft golden pandesal, one torn showing fluffy crumb"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/iaqtksgysfwxozvvfjxc.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "ube-cheese-pandesal",
+    "confidence": "high",
+    "note": "Purple rolls, one torn with melted cheese stretch"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/nevxai6hqmluluezc6xt.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "spanish-bread",
+    "confidence": "high",
+    "note": "Rolled Spanish bread logs, one broken open with sweet filling"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/oelskgkhb6otccvyqwzm.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "pan-de-coco",
+    "confidence": "high",
+    "note": "Round buns with shiny golden top, one cut open showing coconut"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/dvpaduivrtcjpo0k9gfs.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "monay",
+    "confidence": "high",
+    "note": "Round monay bread rolls with crease down the middle"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/paekpuh8qqy61qmv3qal.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "kababayan",
+    "confidence": "high",
+    "note": "Golden-brown kababayan muffins shaped like little hats"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/eb3nsqa1ofud6qfmyswu.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "classic-ensaymada",
+    "confidence": "high",
+    "note": "Coiled classic ensaymada with buttercream, sugar, cheese"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/rpeheto7dlxzittrp6n2.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "ube-ensaymada",
+    "confidence": "high",
+    "note": "Coiled purple ube ensaymada with ube halaya swirls, sugar, cheese"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/uuzaemyedkj4g687peyc.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "cheese-roll",
+    "confidence": "high",
+    "note": "Spiral cheese rolls with butter and sugar, one cut open"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/f1xwboudsmltwbrdipja.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "hopia-ube",
+    "confidence": "high",
+    "note": "Six round flaky hopia pastries, one broken showing purple filling"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/gv2odywz0csd3qw2xmxk.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "chocolate-moist-cake",
+    "confidence": "high",
+    "note": "8-inch chocolate cake with fudge frosting, one slice cut out"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/gscbcqpa6wmdmtxscc0x.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "ube-macapuno-cake",
+    "confidence": "high",
+    "note": "8-inch purple ube macapuno chiffon cake, one slice cut out"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/mzbwdwwblxpoard2on3c.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "mamon",
+    "confidence": "high",
+    "note": "Six mamon sponge cakes in liners in open white box"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/pyvunxhbxdu0ay0zyq2e.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "ensaymada-malolos-box",
+    "confidence": "high",
+    "note": "White box with six Ensaymada Malolos in 3x2 grid with twine"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/ogy4lmrf7lj5xegj4t8q.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "inipit",
+    "confidence": "high",
+    "note": "Inipit sponge cake bars with custard in open box"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/wgbssup9kjmonnpy3dfj.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "pasalubong-box",
+    "confidence": "high",
+    "note": "Kraft box with ensaymada, inipit, hopia, mamon"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/umnl9xmid9vuiwjcqh2d.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "brewed-coffee",
+    "confidence": "high",
+    "note": "White enamel tin mug with brewed coffee next to a pandesal"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/filqgthejlvcnhlzjmbh.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "sagot-gulaman",
+    "confidence": "high",
+    "note": "Tall glass of sago gulaman with brown sugar syrup, sago, green cubes"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/en0f4nccskz6jaxkhl6o.webp",
+    "shop": "lola-remy",
+    "kind": "item",
+    "key": "tsokolate",
+    "confidence": "high",
+    "note": "Frothy tsokolate in clay cup with batirol, tablea, pandesal"
+  },
+  {
+    "source": ".github/assets/panaderya ni lols webp/mlbcifmu4xbc6fgld5v8.webp",
+    "shop": "lola-remy",
+    "kind": "wordmark",
+    "key": "wordmark",
+    "confidence": "high",
+    "note": "Wordmark: Panaderya ni Lola Remy SINCE 1987 (out of scope, skip)"
+  }
+]
