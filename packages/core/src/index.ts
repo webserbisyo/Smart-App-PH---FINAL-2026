@@ -7,3 +7,26 @@ export * from './errors.js';
 export * from './icons.js';
 export * from './media.js';
 export * from './demo/media.js';
+export * from './schemas/common.js';
+export * from './schemas/enums.js';
+export * from './schemas/storefront.js';
+export * from './schemas/catalog.js';
+export * from './schemas/basket.js';
+export * from './schemas/order.js';
+export * from './schemas/loyalty.js';
+export * from './schemas/shop-pack.js';
+export * from './rules/money.js';
+export * from './rules/time.js';
+export * from './rules/hours.js';
+export * from './rules/options.js';
+export * from './rules/delivery.js';
+export * from './rules/order-rules.js';
+export * from './rules/stamps.js';
+export * from './rules/phone.js';
+export { SHOP_PACKS } from './demo/packs/index.js';
+export {
+  TEST_SHOP_PACKS,
+  TEST_SHOP_SLUGS,
+  isTestShopSlug,
+  type TestShopSlug,
+} from './demo/test-shops.js';
