@@ -3,6 +3,8 @@
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
 - 2026-10-25 T02 storefront kit: 36 library parts (19 shadcn, 14 DiceUI, 3 Magic UI) and 3 vendored Opensource UI copies in packages/ui, shopPalette() and ShopTheme, motion and layer tokens, ShopImage/ShopLogo/BrandPanel placeholders, banner carousel, count-up, celebrate, /kit Storefront group
+- 2026-10-25 T03b mock store, storefront adapters, deviceStorage and data hooks: activity and demo receipts from the packs, every storefront and owner-orders row of api.md, dev scenario switch (?mock, ?as, ?now), DATA_SOURCE per app
+- 2026-10-25 T03a shop packs and rules: storefront, catalog, basket, order and loyalty schemas, rules for money, Manila time, hours and slots, options, delivery and maps links, order steps, stamps and phone numbers, the 5 demo shop packs plus test-blank and test-stress
 - 2026-10-24 CI fix: patched fast-uri, body-parser, multer overrides and zod 4.6.6 catalog; aligned local database types with CI verification and unparked db check
 - 2026-10-24 T02a demo shop images and Fluent category icons: 105 photos processed in AVIF/WebP, 52 Fluent icons, core media and icon helpers, DEMO_MEDIA manifest (#9)
 - 2026-10-23 T05 dashboard shell: sidebar from sidebar-07, tablet rail, phone dock with More drawer, shared bottom-dock/nav-drawer/page-header, every MVP A page empty (#6)

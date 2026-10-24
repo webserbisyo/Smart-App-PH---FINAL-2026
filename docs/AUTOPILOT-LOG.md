@@ -4,14 +4,73 @@ Night run started 2026-10-25 (Manila). Order: T02, T02b, T03a, T03b, T04, T06, T
 
 ## Morning summary
 
-(Written at the end of the run.)
+**Stopped after T03b. 2 tasks merged, 1 PR open and blocked, 11 tasks not started.**
+
+| Task                             | Result                                                                                                             | PR                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| T02 Storefront kit               | **Open, blocked**: done except 8 CLI-written files that fail our strict lint/typecheck; needs your decision        | [#11](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/11) |
+| T02b /kit examples               | Not started: needs T02 merged                                                                                      | –                                                                       |
+| T03a Shop packs and rules        | **Merged**, all checks green                                                                                       | [#12](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/12) |
+| T03b Mock store, adapters, hooks | **Merged**, all checks green                                                                                       | [#13](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/13) |
+| T04, T06 to T14                  | Not started: each needs T02's parts (ShopTheme, ShopImage, toast, hitbox, banner…) and T02b's patterns, in a chain | –                                                                       |
+
+**Why I stopped.** The shadcn/DiceUI CLI wrote 8 files that break `exactOptionalPropertyTypes` (banner, checkbox-group, mask-input, pending) or the React Compiler lint rules (banner, carousel, mask-input, rating, visually-hidden-input). The T02 prompt says: never edit CLI files; use the scoped ESLint override only if the pattern is already covered (it only covers type assertions); otherwise stop and show the error. The autopilot rules also forbid eslint-disable, casts and weakening config. Every later task builds on T02, so nothing else could run in order.
+
+**What you decide (details in PR #11, section "Blocker"):**
+
+1. Extend the scoped override for `packages/ui/src/components/**` to the React Compiler rules, and handle the 4 type errors (small typed patches, or a components-only tsconfig without `exactOptionalPropertyTypes`).
+2. Allow small typed fixes inside those 8 files, recorded as "patched" in components.md.
+3. Replace those parts. Later prompts need them: offline banner, phone mask, pending Place order, rating, add-on groups.
+
+Once you pick, T02 is about 15 minutes of work. Then rerun the autopilot from T02b. The T02 branch is already up to date with main (main was merged in, conflicts resolved, only the 8 known errors left).
+
+**By hand:** nothing for the database or env. Optional: add `NEXT_PUBLIC_DATA_SOURCE=mock` and `VITE_DATA_SOURCE=mock` to the two `.env.example` files (both default to `mock` without them).
+
+**Notes:**
+
+- Decision numbers shifted: the T02 prompt's T22/T23 are T24/T25, and the T03b prompt's T24 is T26.
+- The Supabase CI job took 16 minutes once (it passed).
+- Your local `apps/dashboard/.env.local` fails its Zod check (I did not read it), so for /kit screenshots I started Vite with placeholder env values in the shell.
 
 ## T02 Storefront kit (branch `ag/t02-storefront-kit`)
 
-- PR: see the PR link in the morning summary. Status: **open, blocked** (not merged).
+- PR: https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/11. Status: **open, blocked** (not merged).
 - Built: 19 new shadcn primitives, 14 DiceUI files (12 planned plus `direction` and `visually-hidden-input` that the CLI pulled in), 3 Magic UI parts, 3 vendored Opensource UI copies, `shopPalette()` + `contrastRatio()` in core, `ShopTheme`, shop/motion/layer/paper tokens, reduced-motion rule, `press-stamp` / `draw-check` / `reveal-clip`, `ShopImage`, `ShopLogo`, `BrandPanel`, `BannerCarousel` (lazy slides), `CountUp`, `celebrate`, `useReducedMotion`, /kit Storefront group with the shop switcher.
 - Extra rules applied: installed only missing items, no `--overwrite`, answered No to every overwrite prompt (button.tsx and input.tsx were offered and skipped; `git diff` on the 17 existing component files is empty). popover, scroll-area and bubble skipped. `@diceui/circular-progress` added only `--animate-spin-around` and its `spin-around` keyframes to `globals.css`; the component already uses `motion-safe:` / `motion-reduce:animate-none`, and the global reduced-motion rule also stops it. `@types/canvas-confetti` moved to devDependencies. Counts fixed to 39 primitives / 17 installed in the T02 prompt, `ref/storefront-components.md` and `prompts/README.md`.
 - Decisions from the box: D1/D2 (no c-\* here), D3/D8/D13 packages (all via the CLI except `embla-carousel-autoplay` 8.6.0 by hand), D4 vendored copies, D6 compositions, shop palette tokens (not the brand ramp). Decision numbers: the prompt's T22/T23 were taken on main, so they are **T24/T25**; N22 to N24 as planned. Later prompts' tech numbers shift by 2 (T03b T24 → T26, T04 T25 → T27, T13 T26 → T28).
 - Hand-built: nothing outside the prompt. The compositions named in the T02 prompt (shop-theme, shop-image, shop-logo, brand-panel, banner-carousel + its lazy slides file, count-up, celebrate) are built only from installed parts. `useReducedMotion` (hook) and `startReveal` (lib) are small helpers that the prompt's reduced-motion and `reveal-clip` rules need.
 - **Why it is blocked:** 8 files the CLI wrote fail our strict settings. Typecheck (`exactOptionalPropertyTypes`): `banner.tsx`, `checkbox-group.tsx`, `mask-input.tsx`, `pending.tsx`. Lint (React Compiler rules in `eslint-plugin-react-hooks` 7: `refs`, `set-state-in-effect`, plus one `no-useless-assignment`): `banner.tsx`, `carousel.tsx` (the official shadcn carousel), `mask-input.tsx`, `rating.tsx`, `visually-hidden-input.tsx`. The T02 prompt says: never edit the files the CLI wrote; use the scoped ESLint override only if the same pattern is already covered (it only covers type assertions); otherwise stop and show the error. The autopilot rules also forbid eslint-disable, casts and weakening config. So I did not change those files or the config.
 - Tests: core palette tests (28) and ui tests (50) pass; `pnpm format:check` green; `pnpm check` fails only on the 8 files above (ui typecheck, dashboard typecheck, root lint); storefront build green and its JS is unchanged (171.0 KB gzip before and after); /kit at 390 and 1280 px (and with reduced motion): 0 console errors, 0 React warnings, no sideways scroll.
+
+## T02b /kit library examples
+
+- Skipped for now: it needs T02 merged (branch "after T02"; the ReUI examples reuse T02's primitives and /kit page). It will likely hit the same strict-lint issue in any ReUI primitive it pulls into `packages/ui`.
+
+## T03a Shop packs and rules (branch `ag/t03a-shop-packs`)
+
+- Runs from main without T02: it is core-only and does not use T02 code.
+- Built: schemas (`common`, `enums`, `storefront`, `catalog`, `basket`, `order`, `loyalty`, `shop-pack`), rules (`money`, `time`, `hours`, `options`, `delivery`, `order-rules` with `STATUS_TONE`, `stamps`, `phone`), 5 shop packs plus a small builder, `test-blank` and `test-stress`, error codes from api.md plus the 7 new ones (each with words), `words.shop`.
+- Decisions from the box: one TypeScript source for packs; test shops only in mock/test (the data layer gates them in T03b); km rows plus zones; no stock counts; QR Ph; one prep time; COD limit (Kanto ₱3,000); limited prizes and the pause switch; Kapé Juan prize 50 pieces (mock value); every pack item `sample: true`.
+- Choices made where the docs left room (all logged here and in code comments):
+  - Payment accounts follow the prompt (it says to replace the lines in demo-shops.md). Tala keeps COD and drops Maya; Kapé Juan drops the BDO bank account.
+  - Kanto's Dip group differs for nuggets (choose 1) and the bucket (up to 4), so they are two groups: "Dip" and "Dips".
+  - The Kapé Juan closure "next week" is a fixed date, 2026-11-01 (All Saints' Day), so the pack stays plain data.
+  - "Sold out today" items have `soldOutUntil: null` in the pack; the mock store sets the next opening.
+  - The Tala prize shows "18 left": with the 20% rule, 23 would still read "Only 100 pieces".
+  - Midnight reads "12 MN" and noon "12 NN" (demo-shops.md uses "12:00 MN").
+  - `words.storefront` was already a string, so the new storefront words live under `words.shop`.
+- Tests: core 114 passing (packs parse, item counts 18/8/14/18/19, photo refs, groups, limits, blueprint section 14 states, every rule table); `pnpm format:check`, `pnpm check` and `pnpm build` green; storefront JS unchanged.
+
+## T03b Mock store, adapters and hooks (branch `ag/t03b-mock-store`)
+
+- Built: `deviceStorage` (versioned keys per shop, Zod on read, memory fallback, subscribe plus a stable snapshot per key); the mock store (`createMockStore({ seed, now })`) with mulberry32 activity per demo shop: today's board in every status, 3 past days, members in every segment with welcome, earned, redeemed, reversed and manual rows, and 11 `DEMO_RECEIPTS` tokens per shop; the demo customer Juan dela Cruz with `?as=` states; every Storefront, Orders (owner), Samples (owner) and customer code row of api.md; TanStack Query hooks and device hooks; `getStorefrontForServer`; the dev scenario switch; `DATA_SOURCE` checked by Zod in both apps (default `mock`); CI scan strings.
+- Decisions from the box: customer-created mock state lives on the phone (`mockState` key); fixed demo receipt tokens; `?mock=` scenarios never in a production build; mock email code 123456 (returned as `devCode` only outside production; the toast comes with the screen).
+- Choices made where the docs left room:
+  - `getOrder` and the receipt methods take the slug from the route, because the demo tokens repeat per shop. api.md says so.
+  - Small core shapes added for the rows the mock must return: `PublicShop`, `BoardOrder`, `OwnerOrder`, `Payment`, `CustomerAddress`, `SendCodeResult`, `CheckoutDraft`, `LastAddress`.
+  - Juan's demo receipts use the number +63 917 000 9999, so the 3-unpaid-orders limit never blocks a tester typing his phone (0917 000 1234).
+  - Test-shop items are not `sample`, so they show on a non-demo shop like real items.
+  - `packages/data` uses extensionless relative imports (as `packages/ui` does): Next's Turbopack could not resolve `.js` imports of source files. Each file that checks `NODE_ENV` declares `process` locally, because the dashboard's tsconfig has no Node types (Vite replaces `process.env.NODE_ENV`, so the check still drops out of builds).
+  - Decision numbers: the prompt's T24 is recorded as **T26** (T24 and T25 belong to the open T02 PR); N29 as planned.
+  - I did not edit `.env.example` (autopilot hard stop on .env files). `NEXT_PUBLIC_DATA_SOURCE` and `VITE_DATA_SOURCE` default to `mock`; you may want to add them to the examples.
+- Tests: data 27 passing (contract against api.md, every output parsed, idempotent placeOrder, gap-free numbers with a daily reset, a proof never marks paid, the 4th proof refused, duplicate reference, COD limit, out of range, sold out today back after the next opening, steps forward only and completing needs paid, unpaid limit, reward race, paused card, daily stamp cap, clearSamples equals test-blank, scenario switch, deviceStorage reset/fallback/snapshot, basket merge); core 114 passing; `pnpm format:check`, `pnpm check` (15/15) and `pnpm build` green; the leak scan finds no scenario strings; storefront JS unchanged.

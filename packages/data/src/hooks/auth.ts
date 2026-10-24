@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { LoginInput, SignUpInput } from '@smartapp/core';
-import { getClaims, mapAuthError, type UserClaims } from '../auth.js';
-import type { Database } from '../database.types.js';
+import { getClaims, mapAuthError, type UserClaims } from '../auth';
+import type { Database } from '../database.types';
 
 export const authKeys = {
   session: ['auth', 'session'] as const,

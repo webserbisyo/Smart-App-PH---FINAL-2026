@@ -3,7 +3,8 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "moduleResolution": "Bundler",
-    "module": "ESNext"
+    "module": "ESNext",
+    "types": ["node"]
   },
   "include": ["src/**/*"]
 }

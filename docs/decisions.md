@@ -41,6 +41,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T23 Database types: db:types uses --local so committed types match CI verification against migrations. Types are regenerated on a machine with Docker, or copied from the CI diff when a migration changes.
 - T24 Storefront library parts install into packages/ui; registry examples (c-*) live only in the dashboard /kit (dev only) and are never imported by an app screen. (Planned as T22 in the T02 prompt; T22 and T23 were already used.)
 - T25 Approved packages for the storefront kit: embla-carousel-react, embla-carousel-autoplay, input-otp, qrcode, canvas-confetti, motion (Rewards only), @base-ui/utils, @diceui/checkbox-group; type packages @types/qrcode and @types/canvas-confetti are devDependencies. (Planned as T23.)
+- T26 Dev-only mock scenario switch (?mock, ?as, ?now) never ships in a production build; the CI scan fails on "setMockScenario" or "mock-scenario" in the storefront build. (Planned as T24; T24 and T25 are taken by the open T02 PR.)
 
 ## MVP A scope (accepted 2026-10-18; details in `SYSTEM.md` section 4.2 and `SMART_APP_PH_BLUEPRINT.md`)
 
@@ -68,6 +69,21 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N22 Every image spot uses ShopImage: photo, else a shop-coloured tile with a Fluent icon, else initials.
 - N23 Banner carousel: first slide static, carousel code after it, owner sets seconds (default 5), pauses on touch, hover, focus and off-screen, no autoplay under reduced motion, no carousel code for one banner.
 - N24 Opensource UI Add to Cart, Thermal Receipt and Like Toggle (kit only) are vendored copies in packages/ui/src/vendor.
+- N25 Delivery fees by straight-line km rows plus named zones; no map, no Maps API in A (S27, S28).
+- N26 Availability is Available, Sold out today or Sold out; no stock counts in A (S18, S19).
+- N27 Stamp card status Off, On or Paused; limited prizes stop at 0; max earned stamps per day/week/month, default 1 per day (S23, S24, S26).
+- N28 Shop packs are the one source for mocks, tests, the dev seed and "Start with samples"; test-blank and test-stress exist only in mock and test runs.
+- N29 Mock state for customer-created data (orders, proofs, member account) lives on the device; DEMO_RECEIPTS give fixed tokens for every receipt state (/<slug>/o/demo-…).
+- S7 The order thread shows the proof and system lines (status, payment, rider, tracking); no chat posts in A.
+- S8 Continue in Messenger copies the order text first, then opens m.me in the same tap; the text has no address or phone.
+- S15 QR Ph is a payment method (the shop's QR), text only, no brand logos.
+- S16 One prep time per shop (default 20 min) drives ASAP and the first pickup slot.
+- S29 A cancelled paid order shows "Cancelled · Refunded ₱x · Reason"; payment status refunded.
+- S30 The receipt is kept on the phone for offline viewing ("Last updated 3:42 PM").
+- S31 Proof upload is compressed on the phone and retries by itself on slow data; the pay countdown keeps running.
+- S32 COD has a per-shop limit; above it the order needs payment first (cod_limit).
+- S33 Code problems: "Wrong code, try again", expired code sends a new one, resend after 60 s, check Spam or Promotions.
+- S34 A stamp is pending until the order is completed ("Pending · Order #042").
 
 ## Open
 
