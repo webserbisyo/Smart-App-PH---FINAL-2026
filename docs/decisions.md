@@ -37,6 +37,8 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T19 jsdom pinned to 29.x: 30.x needs Node 24.15+.
 - T20 cn comes from the official cn package (catalog); lib/utils.ts re-exports it so ReUI and older items keep working.
 - T21 sharp is a tooling-only dev dependency for the demo image script.
+- T22 Security overrides in pnpm-workspace.yaml: fast-uri pinned to 3.1.9 (GHSA-xhq7-xmqj-769h, GHSA-333x-w4r6-6crp), body-parser to 2.4.0 (GHSA-27r3-jxmh-p828), multer to 2.5.0 (GHSA-q7qp-rjg7-q26m), and zod bumped to 4.6.6 in catalog (GHSA-mrhx-c7xc-m3w5). fast-uri@3.1.9 is temporarily in minimumReleaseAgeExclude as a security exception (remove after 2026-10-26).
+- T23 Database types: db:types uses --local so committed types match CI verification against migrations. Types are regenerated on a machine with Docker, or copied from the CI diff when a migration changes.
 
 ## MVP A scope (accepted 2026-10-18; details in `SYSTEM.md` section 4.2 and `SMART_APP_PH_BLUEPRINT.md`)
 

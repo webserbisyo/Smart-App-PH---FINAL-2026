@@ -2,6 +2,7 @@ pnpm-lock.yaml
 dist
 .next
 database.types.ts
+next-env.d.ts
 .turbo
 node_modules
 supabase/.temp
