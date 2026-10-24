@@ -13,7 +13,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] T02a Demo images and icons
 - [ ] T02b /kit library examples
 - [x] T03a Shop packs and rules
-- [ ] T03b Mock store, adapters and hooks
+- [x] T03b Mock store, adapters and hooks
 - [ ] T04 Storefront shell
 - [x] T05 Dashboard shell (PR #6)
 

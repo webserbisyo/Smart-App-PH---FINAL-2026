@@ -15,6 +15,7 @@ export * from './schemas/basket.js';
 export * from './schemas/order.js';
 export * from './schemas/loyalty.js';
 export * from './schemas/shop-pack.js';
+export * from './schemas/owner-orders.js';
 export * from './rules/money.js';
 export * from './rules/time.js';
 export * from './rules/hours.js';

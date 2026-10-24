@@ -39,6 +39,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T21 sharp is a tooling-only dev dependency for the demo image script.
 - T22 Security overrides in pnpm-workspace.yaml: fast-uri pinned to 3.1.9 (GHSA-xhq7-xmqj-769h, GHSA-333x-w4r6-6crp), body-parser to 2.4.0 (GHSA-27r3-jxmh-p828), multer to 2.5.0 (GHSA-q7qp-rjg7-q26m), and zod bumped to 4.6.6 in catalog (GHSA-mrhx-c7xc-m3w5). fast-uri@3.1.9 is temporarily in minimumReleaseAgeExclude as a security exception (remove after 2026-10-26).
 - T23 Database types: db:types uses --local so committed types match CI verification against migrations. Types are regenerated on a machine with Docker, or copied from the CI diff when a migration changes.
+- T26 Dev-only mock scenario switch (?mock, ?as, ?now) never ships in a production build; the CI scan fails on "setMockScenario" or "mock-scenario" in the storefront build. (Planned as T24; T24 and T25 are taken by the open T02 PR.)
 
 ## MVP A scope (accepted 2026-10-18; details in `SYSTEM.md` section 4.2 and `SMART_APP_PH_BLUEPRINT.md`)
 
@@ -67,6 +68,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N26 Availability is Available, Sold out today or Sold out; no stock counts in A (S18, S19).
 - N27 Stamp card status Off, On or Paused; limited prizes stop at 0; max earned stamps per day/week/month, default 1 per day (S23, S24, S26).
 - N28 Shop packs are the one source for mocks, tests, the dev seed and "Start with samples"; test-blank and test-stress exist only in mock and test runs.
+- N29 Mock state for customer-created data (orders, proofs, member account) lives on the device; DEMO_RECEIPTS give fixed tokens for every receipt state (/<slug>/o/demo-…).
 - S7 The order thread shows the proof and system lines (status, payment, rider, tracking); no chat posts in A.
 - S8 Continue in Messenger copies the order text first, then opens m.me in the same tap; the text has no address or phone.
 - S15 QR Ph is a payment method (the shop's QR), text only, no brand logos.

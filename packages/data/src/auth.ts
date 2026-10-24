@@ -1,7 +1,7 @@
 import { createBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { errorWords, type ApiError } from '@smartapp/core';
-import type { Database } from './database.types.js';
+import type { Database } from './database.types';
 
 let browserClient: SupabaseClient<Database> | null = null;
 
