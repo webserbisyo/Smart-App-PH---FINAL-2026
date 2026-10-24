@@ -88,8 +88,6 @@ jobs:
 
   db:
     name: Supabase Migrations & Types Drift
-    # TEMP: types-drift parked, fix in own task (local vs linked gen differ)
-    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -17,7 +17,7 @@
     "format:check": "prettier --check .",
     "db:push": "supabase db push",
     "db:new": "supabase migration new",
-    "db:types": "supabase gen types typescript --linked > packages/data/src/database.types.ts"
+    "db:types": "supabase gen types typescript --local > packages/data/src/database.types.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
