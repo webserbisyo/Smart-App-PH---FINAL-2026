@@ -27,7 +27,7 @@ Every library part the storefront needs is installed once in packages/ui and sho
  - Check: files land in packages/ui/src/components (or hooks/lib), imports use @smartapp/ui/..., `cn` comes from 'cn', no "IconPlaceholder", "@/registry/" or "app/(create)". If the Magic UI registry URL in components.json fails, check https://magicui.design/docs/installation for the current one and tell me before changing it.
 
 2. INSTALL (exact commands in ref/storefront-components.md section 2)
- - shadcn primitives (34 in the list; the CLI skips the ones already installed): `pnpm exec shadcn add ... -c packages/ui`. Answer No to every overwrite.
+ - shadcn primitives (39 in the list, 17 already installed; skip popover, scroll-area and bubble, so 19 are new): `pnpm exec shadcn add ... -c packages/ui`. Answer No to every overwrite.
  - DiceUI 12, Magic UI 3: same file, same target.
  - Add embla-carousel-autoplay 8.6.0 (exact) to packages/ui dependencies.
  - Run `pnpm view <pkg> engines license` for every new package and paste the result in the PR. Any engines range that excludes Node 24.14: stop.

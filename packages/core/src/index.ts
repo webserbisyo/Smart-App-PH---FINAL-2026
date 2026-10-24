@@ -7,3 +7,4 @@ export * from './errors.js';
 export * from './icons.js';
 export * from './media.js';
 export * from './demo/media.js';
+export * from './rules/palette.js';

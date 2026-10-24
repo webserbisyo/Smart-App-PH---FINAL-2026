@@ -56,7 +56,6 @@ import {
   ItemGroup,
   ItemTitle,
 } from '@smartapp/ui/components/item';
-import { Separator } from '@smartapp/ui/components/separator';
 import {
   Sheet,
   SheetContent,
@@ -86,35 +85,7 @@ import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { useKeyboardOpen } from '@smartapp/ui/hooks/use-keyboard-open';
 import { useIsMobile } from '@smartapp/ui/hooks/use-mobile';
 import type { NavItem } from '@smartapp/ui/lib/nav';
-
-function KitSection({
-  title,
-  library,
-  path,
-  usedIn,
-  children,
-}: {
-  title: string;
-  library: string;
-  path: string;
-  usedIn: string;
-  children: ReactNode;
-}) {
-  return (
-    <>
-      <Separator />
-      <section className="space-y-4">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <p className="text-sm text-muted-foreground">
-            Library: {library} · Path: {path} · Used in: {usedIn}
-          </p>
-        </div>
-        {children}
-      </section>
-    </>
-  );
-}
+import { KitSection } from './kit-section.js';
 
 // Demo items; links point at # so the kit never leaves the page.
 function demoItem(id: string, label: string, icon: ReactNode, active = false, count?: number) {

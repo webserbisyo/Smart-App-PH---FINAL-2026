@@ -20,7 +20,10 @@ import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import { Separator } from '@smartapp/ui/components/separator';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
+import { Toaster } from '@smartapp/ui/components/toast';
 import { ShellKitSections } from '../shell-sections.js';
+import { StorefrontPrimitiveSections } from '../storefront-primitives.js';
+import { StorefrontSections } from '../storefront-sections.js';
 
 interface TokenSwatch {
   name: string;
@@ -64,7 +67,7 @@ export default function KitPage() {
     DEMO_SHOPS.find((s: DemoShopSummary) => s.slug === selectedShopSlug) ?? DEMO_SHOPS[0];
 
   return (
-    <div className="min-h-dvh bg-background p-6 text-foreground md:p-10">
+    <div className="min-h-dvh overflow-x-clip bg-background p-4 text-foreground md:p-10">
       <div className="mx-auto max-w-5xl space-y-12">
         {/* Header */}
         <header className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
@@ -291,6 +294,14 @@ export default function KitPage() {
         </section>
 
         <ShellKitSections />
+
+        <Toaster>
+          <StorefrontPrimitiveSections />
+        </Toaster>
+
+        <Separator />
+
+        <StorefrontSections />
       </div>
     </div>
   );

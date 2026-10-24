@@ -36,7 +36,7 @@ One prompt = one task = one branch `ag/t<nn>-<name>` = one PR into main. Paste t
 - `storefront-components.md`: all 179 parts with install commands, which screen uses which part, our compositions and the 52 icon keys.
 
 ## Components: 179 parts
-34 shadcn primitives + 8 ReUI primitives + 119 ReUI examples + 12 DiceUI + 3 Magic UI + 3 Opensource UI, plus 50 Fluent Emoji Flat icon files (52 keys). Every prompt carries this line word for word: "Use the planned library components. Install anything missing with the shadcn CLI. If you hand-write a component instead, stop and tell me why before continuing."
+39 shadcn primitives (3 skipped) + 8 ReUI primitives + 119 ReUI examples + 12 DiceUI + 3 Magic UI + 3 Opensource UI, plus 50 Fluent Emoji Flat icon files (52 keys). Every prompt carries this line word for word: "Use the planned library components. Install anything missing with the shadcn CLI. If you hand-write a component instead, stop and tell me why before continuing."
 
 ## Decisions the prompts use (my picks; change in the boxes)
 - D1 ReUI examples live on the dashboard /kit page, not in packages/ui (keeps storefront CSS small; CI already blocks /kit from builds).
