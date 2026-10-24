@@ -63,6 +63,20 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N19 Dashboard rail is 60px (as built in T05).
 - N20 Demo images live in apps/storefront/public/demo/<slug>/{items,banners,brand}, named <name>-<width>.<ext>, AVIF and WebP (products 640/320, banners 1600/800), read through imageUrl() in core; Halo Dessert Bar is MVP B only.
 - N21 Category icons are Fluent Emoji Flat SVGs (MIT) in apps/storefront/public/icons/fluent, keys in core.
+- N25 Delivery fees by straight-line km rows plus named zones; no map, no Maps API in A (S27, S28).
+- N26 Availability is Available, Sold out today or Sold out; no stock counts in A (S18, S19).
+- N27 Stamp card status Off, On or Paused; limited prizes stop at 0; max earned stamps per day/week/month, default 1 per day (S23, S24, S26).
+- N28 Shop packs are the one source for mocks, tests, the dev seed and "Start with samples"; test-blank and test-stress exist only in mock and test runs.
+- S7 The order thread shows the proof and system lines (status, payment, rider, tracking); no chat posts in A.
+- S8 Continue in Messenger copies the order text first, then opens m.me in the same tap; the text has no address or phone.
+- S15 QR Ph is a payment method (the shop's QR), text only, no brand logos.
+- S16 One prep time per shop (default 20 min) drives ASAP and the first pickup slot.
+- S29 A cancelled paid order shows "Cancelled · Refunded ₱x · Reason"; payment status refunded.
+- S30 The receipt is kept on the phone for offline viewing ("Last updated 3:42 PM").
+- S31 Proof upload is compressed on the phone and retries by itself on slow data; the pay countdown keeps running.
+- S32 COD has a per-shop limit; above it the order needs payment first (cod_limit).
+- S33 Code problems: "Wrong code, try again", expired code sends a new one, resend after 60 s, check Spam or Promotions.
+- S34 A stamp is pending until the order is completed ("Pending · Order #042").
 
 ## Open
 

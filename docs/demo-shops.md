@@ -1,6 +1,6 @@
 # Demo shops (seed input)
 
-Five demo shops for mocks, screenshots, demos and later the database seed. All people, phone numbers and handles are fictional: never call, text or message them. Streets and landmarks are real places; house numbers are made up. Check each pin in Google Maps before it goes into the database.
+Five demo shops for mocks, screenshots, demos and later the database seed. The data lives in `packages/core/src/demo/packs/` (one shop pack per slug, decision N28); menus, rewards and stamp rules follow Demo Shop Assets v1.2 (`docs/prompts/ref/demo-menus.md`). All people, phone numbers and handles are fictional: never call, text or message them. Streets and landmarks are real places; house numbers are made up. Check each pin in Google Maps before it goes into the database.
 
 Prices here are in pesos for reading. Store them as centavos (₱149 = `14900`). The owner password is never written here; the seed script reads `DEMO_PASSWORD`.
 
@@ -29,18 +29,46 @@ Gmail "+" addresses all land in the founder's inbox, so codes and resets can be 
 - Owner: Paolo Reyes · Phone: 0917 801 2201
 - Address: 28 Bayan-Bayanan Ave., Brgy. Concepcion Uno, Marikina City, Metro Manila 1807 · Landmark: near the Concepcion Uno barangay hall · Pin: 14.6430, 121.1010
 - Hours: Mon to Thu 11:00 AM to 10:00 PM; Fri to Sun 11:00 AM to 12:00 MN
-- Order types: walk-in, pickup, delivery · Payments: cash, COD, GCash, Maya
-- Delivery zones: Concepcion Uno and Dos ₱40 · Marikina Heights, Parang ₱60 · rest of Marikina ₱80
-- Brand colour: `#D7372F` (ketchup red) · Stamps: 1 per order of ₱250 or more; 8 stamps = free Classic Smash (single)
+- Order types: walk-in, pickup, delivery
+- Payments: cash, COD (limit ₱3,000), GCash, Maya. Sample accounts: GCash 0917 000 0001, Maya 0917 000 0002 (fake, labelled "Sample").
+- Delivery: distance 0–3 km ₱49, 3–5 km ₱79; zones Concepcion Uno and Dos ₱40 · Marikina Heights and Parang ₱60 · Rest of Marikina ₱80.
+- Brand colour: `#D7372F` (ketchup red)
+- Stamps: 1 per order of ₱250 or more (max 1 a day); 8 stamps = free Classic Smash (Single).
 
-| Category         | Items                                                                                                                                               |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Smash Burgers    | Classic Smash (single ₱149, double ₱209) · Cheesy Bacon Smash ₱229 · Kanto Spicy Smash, sriracha mayo and jalapeño ₱199 · Mushroom Swiss Smash ₱219 |
-| Chicken and Rice | Crispy Chicken Sandwich ₱179 · Burger Steak with Rice ₱129                                                                                          |
-| Sides            | Kanto Fries (regular ₱69, large ₱99) · Cheese Fries ₱119 · Onion Rings ₱99                                                                          |
-| Combos           | Smash Combo: Classic Smash, regular fries, iced tea ₱219                                                                                            |
-| Drinks           | House Iced Tea (16 oz ₱45, 22 oz ₱65) · Calamansi Juice ₱55 · Soda in can ₱55                                                                       |
-| Add-ons          | Extra patty ₱60 · Cheese slice ₱20 · Bacon ₱40 · Egg ₱20                                                                                            |
+Menu:
+
+| Category         | Item                    | Choices and price                                             | Add-on groups                        | Note            |
+| ---------------- | ----------------------- | ------------------------------------------------------------- | ------------------------------------ | --------------- |
+| Smash Burgers    | Classic Smash           | Patty: Single ₱149, Double ₱209, Triple ₱269                  | Extras, Sauce, Make it a meal        | Triple is new   |
+| Smash Burgers    | Cheesy Bacon Smash      | Patty: Single ₱229, Double ₱289                               | Extras, Sauce, Make it a meal        | Double is new   |
+| Smash Burgers    | Kanto Spicy Smash       | ₱199                                                          | Extras, Sauce, Make it a meal        |                 |
+| Smash Burgers    | Mushroom Swiss Smash    | ₱219                                                          | Extras, Sauce, Make it a meal        |                 |
+| Smash Burgers    | Kanto Overload          | ₱329 (three patties, bacon, egg, double cheese)               | Extras, Sauce                        | New, hero item  |
+| Chicken and Rice | Crispy Chicken Sandwich | ₱179                                                          | Extras, Sauce, Make it a meal        |                 |
+| Chicken and Rice | Chicken Nuggets         | Pieces: 6 pcs ₱119, 10 pcs ₱179                               | Dip (required)                       | New             |
+| Chicken and Rice | Burger Steak with Rice  | ₱129                                                          | Extra rice                           |                 |
+| Sides            | Kanto Fries             | Size: Regular ₱69, Large ₱99                                  | Sauce                                |                 |
+| Sides            | Cheese Fries            | ₱119                                                          |                                      |                 |
+| Sides            | Onion Rings             | ₱99                                                           | Sauce                                |                 |
+| Sides            | Loaded Bacon Fries      | ₱149                                                          |                                      | New             |
+| Combos           | Smash Combo             | ₱219: Classic Smash, regular fries, iced tea                  | Upgrade your side, Choose your drink |                 |
+| Combos           | Barkada Bucket          | ₱899: 4 Classic Smash, 2 large fries, 10 nuggets, 4 iced teas | Dip (required)                       | New, for groups |
+| Drinks           | House Iced Tea          | Size: 16 oz ₱45, 22 oz ₱65                                    |                                      |                 |
+| Drinks           | Calamansi Juice         | ₱55                                                           |                                      |                 |
+| Drinks           | Soda in Can             | ₱55                                                           |                                      |                 |
+| Drinks           | Thick Shake             | Flavour: Vanilla, Chocolate, Ube, all ₱129                    |                                      | New             |
+
+Add-on groups (shared library):
+
+| Group             | Rule                                             | Options                                                                                                 |
+| ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Extras            | Optional, up to 6                                | Extra patty +₱60 · Cheese slice +₱20 · Bacon +₱40 · Egg +₱20 · Caramelised onions +₱15 · Jalapeños +₱15 |
+| Sauce             | Optional, up to 2                                | Kanto sauce (default) · Sriracha mayo +₱10 · Garlic aioli +₱10 · Cheese sauce dip +₱25                  |
+| Make it a meal    | Optional, choose 1                               | Regular fries and iced tea +₱70                                                                         |
+| Upgrade your side | Optional, choose 1                               | Cheese fries +₱40 · Onion rings +₱25                                                                    |
+| Choose your drink | Required, choose 1                               | House iced tea (default) · Calamansi juice +₱10 · Soda in can +₱10                                      |
+| Dip               | Required, choose 1 (nuggets) or up to 4 (bucket) | BBQ · Honey mustard · Sweet chili · Garlic aioli                                                        |
+| Extra rice        | Optional, up to 2                                | Extra rice +₱20                                                                                         |
 
 ## 2. AquaLinis Water Refilling Station (`aqualinis`, retail)
 
@@ -49,16 +77,30 @@ Gmail "+" addresses all land in the founder's inbox, so codes and resets can be 
 - Owner: Ramon Dizon · Phone: 0928 455 3302
 - Address: Unit 3, 145 Alabang–Zapote Road, Brgy. Pamplona Dos, Las Piñas City, Metro Manila 1740 · Landmark: 5 minutes from Las Piñas City Hall · Pin: 14.4510, 120.9840
 - Hours: Mon to Sat 6:00 AM to 8:00 PM; Sun 7:00 AM to 5:00 PM
-- Order types: walk-in, pickup, delivery · Payments: cash, COD, GCash
-- Delivery zones: Pamplona Uno, Dos, Tres ₱0 (owner note: 2 gallons minimum) · Talon, Almanza ₱20 · rest of Las Piñas ₱40
-- Brand colour: `#0E7AC4` (water blue) · Stamps: 1 per order; 10 stamps = 1 free round 5-gallon refill
+- Order types: walk-in, pickup, delivery
+- Payments: cash, COD, GCash. Sample account: GCash 0928 000 0001 (fake, labelled "Sample").
+- Delivery: zones only. Pamplona Uno, Dos and Tres ₱0 (owner note: 2 gallons minimum) · Talon and Almanza ₱20 · Rest of Las Piñas ₱40.
+- Brand colour: `#0E7AC4` (water blue)
+- Stamps: 1 per order (max 1 a day); 10 stamps = ₱100 off.
 
-| Category            | Items                                                                                           |
-| ------------------- | ----------------------------------------------------------------------------------------------- |
-| Refills (5 gallons) | Purified, round ₱30 · Purified, slim with faucet ₱30 · Alkaline, round ₱45 · Mineral, round ₱40 |
-| New containers      | Round 5-gallon with cap ₱250 · Slim 5-gallon with faucet ₱280 · Replacement faucet ₱60          |
-| Bottled water       | 500 mL × 24 case ₱180 · 1 L × 12 case ₱180                                                      |
-| Ice                 | Tube ice 2 kg ₱50                                                                               |
+Menu:
+
+| Category       | Item                      | Choices and price                                                                                                | Add-on groups | Note                                |
+| -------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------- |
+| Refills        | 5-Gallon Refill           | Water: Purified, Alkaline, Mineral × Container: Round, Slim with faucet. Purified ₱30, Mineral ₱40, Alkaline ₱45 | Refill care   | Merged into one item with 2 choices |
+| Refills        | Family Week Pack          | ₱110: 4 purified round refills                                                                                   | Refill care   | New bundle                          |
+| New Containers | Round 5-Gallon with Cap   | ₱250                                                                                                             |               |                                     |
+| New Containers | Slim 5-Gallon with Faucet | ₱280                                                                                                             |               |                                     |
+| New Containers | Replacement Faucet        | ₱60                                                                                                              |               |                                     |
+| New Containers | Manual Water Pump         | ₱180                                                                                                             |               | New                                 |
+| Bottled Water  | Bottled Water Case        | Size: 350 mL × 24 ₱160, 500 mL × 24 ₱180, 1 L × 12 ₱180                                                          |               | Merged into one item; 350 mL is new |
+| Ice            | Tube Ice                  | Weight: 2 kg ₱50, 5 kg ₱110                                                                                      |               | 5 kg is new                         |
+
+Add-on groups (shared library):
+
+| Group       | Rule              | Options                                                              |
+| ----------- | ----------------- | -------------------------------------------------------------------- |
+| Refill care | Optional, up to 2 | Sanitise my container (free, default) · New cap seal (free, default) |
 
 ## 3. Tala Apparel (`tala-apparel`, retail)
 
@@ -67,16 +109,37 @@ Gmail "+" addresses all land in the founder's inbox, so codes and resets can be 
 - Owner: Bea Villanueva · Phone: 0995 230 4403
 - Address: 2/F, 88 Salinas Drive, Brgy. Lahug, Cebu City, Cebu 6000 · Landmark: two blocks from JY Square Mall · Pin: 10.3310, 123.8990
 - Hours: Tue to Sun 10:00 AM to 7:00 PM; closed Monday
-- Order types: pickup, delivery · Payments: GCash, Maya, bank (BPI), COD within Cebu City
-- Delivery zones: Cebu City ₱80 · Mandaue ₱120 · Lapu-Lapu, Talisay ₱150
-- Brand colour: `#2E3A87` (midnight indigo) · Stamps: 1 per order of ₱1,000 or more; 5 stamps = ₱300 off
+- Order types: pickup, delivery
+- Payments: COD, GCash, Bank, QR Ph. Sample accounts: GCash 0995 000 0001, BPI 0000 0000 01 (fake, labelled "Sample").
+- Delivery: zones only. Cebu City ₱80 · Mandaue ₱120 · Lapu-Lapu and Talisay ₱150. Shipping is not in A.
+- Brand colour: `#2E3A87` (midnight indigo)
+- Stamps: 1 per order of ₱1,000 or more (max 1 a day); 5 stamps = Kislap Limited Edition Tee, only 100 pieces.
 
-| Category    | Items                                                                                                  |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| Tops        | Tala Basic Tee ₱450 (S, M, L, XL; black, white, sand) · Linen Button-down ₱899 · Cropped Knit Top ₱599 |
-| Bottoms     | Wide-leg Trousers ₱1,099 · Pleated Midi Skirt ₱899 · Denim Shorts ₱699                                 |
-| Dresses     | Habi-print Midi Dress ₱1,299                                                                           |
-| Accessories | Abaca Tote Bag ₱650 · Capiz Shell Earrings ₱350 · Woven Bucket Hat ₱450 · Beaded Phone Strap ₱199      |
+Menu:
+
+| Category    | Item                  | Choices and price                                     | Add-on groups      | Note             |
+| ----------- | --------------------- | ----------------------------------------------------- | ------------------ | ---------------- |
+| Tops        | Tala Basic Tee        | Size: S, M, L, XL × Colour: Black, White, Sand · ₱450 | Gift wrap          | Photo per colour |
+| Tops        | Linen Button-down     | Size: S to XL × Colour: Natural, Indigo · ₱899        | Gift wrap          | Photo per colour |
+| Tops        | Cropped Knit Top      | Size: S to XL × Colour: Cream, Terracotta · ₱599      | Gift wrap          |                  |
+| Tops        | Terno-sleeve Blouse   | Size: S to XL · ₱1,199                                | Gift wrap          | New              |
+| Bottoms     | Wide-leg Trousers     | Size: S to XL × Colour: Black, Olive · ₱1,099         | Hemming, Gift wrap |                  |
+| Bottoms     | Pleated Midi Skirt    | Size: S to XL · ₱899                                  | Gift wrap          |                  |
+| Bottoms     | Denim Shorts          | Size: S to XL · ₱699                                  | Gift wrap          |                  |
+| Dresses     | Habi-print Midi Dress | Size: S to XL · ₱1,299                                | Gift wrap          |                  |
+| Sets        | Weekend Set           | Linen Button-down and Wide-leg Trousers · ₱1,799      | Hemming, Gift wrap | New bundle       |
+| Accessories | Abaca Tote Bag        | ₱650                                                  | Gift wrap          |                  |
+| Accessories | Capiz Shell Earrings  | ₱350                                                  | Gift wrap          |                  |
+| Accessories | Woven Bucket Hat      | ₱450                                                  | Gift wrap          |                  |
+| Accessories | Beaded Phone Strap    | ₱199                                                  | Gift wrap          |                  |
+| Accessories | Piña-blend Scarf      | ₱799                                                  | Gift wrap          | New              |
+
+Add-on groups (shared library):
+
+| Group     | Rule               | Options                                        |
+| --------- | ------------------ | ---------------------------------------------- |
+| Gift wrap | Optional, up to 2  | Abaca gift wrap +₱60 · Handwritten card (free) |
+| Hemming   | Optional, choose 1 | Hem to my length, write it in the note (free)  |
 
 ## 4. Kapé Juan Coffee (`kape-juan`, food)
 
@@ -85,17 +148,45 @@ Gmail "+" addresses all land in the founder's inbox, so codes and resets can be 
 - Owner: Juan Santos · Phone: 0918 672 5504
 - Address: 61 Maginhawa St., Brgy. Teachers Village East, Quezon City, Metro Manila 1101 · Landmark: near the corner of Matatag St. · Pin: 14.6460, 121.0610
 - Hours: daily 7:00 AM to 10:00 PM
-- Order types: walk-in, pickup, delivery · Payments: cash, GCash, Maya, bank (BDO)
-- Delivery zones: Teachers Village, UP Village ₱40 · Diliman ₱60 · Cubao, Kamuning ₱90
-- Brand colour: `#6F4E37` (coffee brown) · Stamps: 1 per drink order; 10 stamps = any 16 oz drink free
+- Order types: walk-in, pickup, delivery
+- Payments: cash, GCash, Maya. Sample accounts: GCash 0918 000 0001, Maya 0918 000 0002 (fake, labelled "Sample").
+- Delivery: distance 0–2 km ₱39, 2–4 km ₱59 (no zones). Closed 1 Nov (All Saints’ Day) as the closure demo.
+- Brand colour: `#6F4E37` (coffee brown)
+- Stamps: 1 per order of ₱150 or more (max 1 a day); 10 stamps = Kapé Juan Suki Tumbler (limited, 50 pieces in the mock).
 
-| Category     | Items                                                                                                                      |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| Espresso     | Americano (12 oz ₱110, 16 oz ₱130) · Café Latte (₱140, ₱160) · Spanish Latte (₱160, ₱180) · Caramel Macchiato (₱170, ₱190) |
-| Kapeng Pinoy | Barako Brew ₱95 · Iced Barako with Muscovado ₱130 · Tablea Mocha ₱165                                                      |
-| Non-coffee   | Matcha Latte ₱170 · Ube Latte ₱170 · Tablea Hot Chocolate ₱140                                                             |
-| Food         | Ensaymada ₱85 · Banana Bread slice ₱75 · Chicken Pesto Sandwich ₱185                                                       |
-| Add-ons      | Oat milk ₱40 · Extra shot ₱40 · Sugar level (0, 25, 50, 100%) free                                                         |
+Menu:
+
+| Category     | Item                       | Choices and price                              | Add-on groups                            | Note               |
+| ------------ | -------------------------- | ---------------------------------------------- | ---------------------------------------- | ------------------ |
+| Espresso     | Americano                  | Size: 12 oz ₱110, 16 oz ₱130 × Temp: Hot, Iced | Sugar level, Milk, Extra shot, Ice level | Temp choice is new |
+| Espresso     | Café Latte                 | Size: 12 oz ₱140, 16 oz ₱160 × Temp: Hot, Iced | Sugar level, Milk, Extra shot, Ice level |                    |
+| Espresso     | Spanish Latte              | Size: 12 oz ₱160, 16 oz ₱180 × Temp: Hot, Iced | Sugar level, Milk, Extra shot, Ice level |                    |
+| Espresso     | Caramel Macchiato          | Size: 12 oz ₱170, 16 oz ₱190 × Temp: Hot, Iced | Sugar level, Milk, Extra shot, Ice level |                    |
+| Kapeng Pinoy | Barako Brew                | ₱95                                            | Sugar level                              |                    |
+| Kapeng Pinoy | Iced Barako with Muscovado | ₱130                                           | Sugar level, Ice level, Toppings         |                    |
+| Kapeng Pinoy | Tablea Mocha               | ₱165                                           | Sugar level, Milk, Toppings              |                    |
+| Kapeng Pinoy | Sea Salt Barako Cream      | ₱150                                           | Sugar level, Ice level                   | New                |
+| Non-coffee   | Matcha Latte               | ₱170                                           | Sugar level, Milk, Ice level             |                    |
+| Non-coffee   | Ube Latte                  | ₱170                                           | Sugar level, Milk, Ice level             |                    |
+| Non-coffee   | Tablea Hot Chocolate       | ₱140                                           | Sugar level, Toppings                    |                    |
+| Non-coffee   | Calamansi Honey Fizz       | ₱120                                           | Sugar level                              | New                |
+| Food         | Ensaymada                  | ₱85                                            | Warm it up                               |                    |
+| Food         | Banana Bread Slice         | ₱75                                            | Warm it up                               |                    |
+| Food         | Chicken Pesto Sandwich     | ₱185                                           | Warm it up                               |                    |
+| Food         | Longganisa Pandesal        | ₱145                                           | Warm it up                               | New                |
+| Food         | Ube Cheesecake Slice       | ₱160                                           |                                          | New                |
+| Beans        | Barako Beans 250 g         | Grind: Whole bean, Drip, Espresso · ₱380       |                                          | New retail item    |
+
+Add-on groups (shared library):
+
+| Group       | Rule               | Options                                    |
+| ----------- | ------------------ | ------------------------------------------ |
+| Sugar level | Required, choose 1 | 0% · 25% · 50% · 100% (default)            |
+| Milk        | Optional, choose 1 | Oat milk +₱40                              |
+| Extra shot  | Optional, up to 2  | Extra shot +₱40                            |
+| Ice level   | Optional, choose 1 | Regular ice (default) · Less ice           |
+| Toppings    | Optional, up to 2  | Sea salt cream +₱30 · Cinnamon dust (free) |
+| Warm it up  | Optional, choose 1 | Warm it up (free)                          |
 
 ## 5. Panaderya ni Lola Remy (`lola-remy`, food)
 
@@ -104,14 +195,39 @@ Gmail "+" addresses all land in the founder's inbox, so codes and resets can be 
 - Owner: Carla Bautista · Phone: 0906 318 6605
 - Address: 214 Paseo del Congreso, City of Malolos, Bulacan 3000 (barangay to confirm on the map) · Landmark: 5 minutes' walk from Barasoain Church · Pin: 14.8470, 120.8120
 - Hours: daily 5:00 AM to 8:00 PM
-- Order types: walk-in, pickup, delivery · Payments: cash, COD, GCash
-- Delivery zones: Malolos proper ₱50 · nearby barangays ₱80
-- Brand colour: `#C27C2C` (golden crust) · Stamps: 1 per order of ₱150 or more; 10 stamps = 10 free Ube Cheese Pandesal
+- Order types: walk-in, pickup, delivery
+- Payments: cash, COD, GCash, QR Ph. Sample account: GCash 0906 000 0001 (fake, labelled "Sample").
+- Delivery: distance 0–3 km ₱40; zones Malolos proper ₱50 · Nearby barangays ₱80.
+- Brand colour: `#C27C2C` (golden crust)
+- Stamps: 1 per order of ₱150 or more (max 1 a day); 10 stamps = free Ube Cheese Pandesal, pack of 10.
 
-| Category               | Items                                                                                                                 |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Pandesal and bread     | Classic Pandesal ₱5 each (pack of 10 ₱50) · Ube Cheese Pandesal ₱15 · Spanish Bread ₱10 · Pan de Coco ₱12 · Monay ₱10 |
-| Ensaymada and pastries | Classic Ensaymada ₱35 · Ube Ensaymada ₱45 · Cheese Roll ₱25 · Hopia Ube (6) ₱90                                       |
-| Cakes                  | Chocolate Moist Cake 8" ₱650 · Ube Macapuno Cake 8" ₱750 · Mamon (box of 6) ₱180                                      |
-| Pasalubong             | Ensaymada Malolos (box of 6) ₱360 · Inipit (box of 10) ₱180                                                           |
-| Drinks                 | Brewed Coffee ₱40 · Sago't Gulaman ₱35                                                                                |
+Menu:
+
+| Category               | Item                         | Choices and price                     | Add-on groups   | Note          |
+| ---------------------- | ---------------------------- | ------------------------------------- | --------------- | ------------- |
+| Pandesal and Bread     | Classic Pandesal             | Pack: 1 pc ₱5, 10 pcs ₱50, 20 pcs ₱95 |                 | 20 pcs is new |
+| Pandesal and Bread     | Ube Cheese Pandesal          | Pack: 1 pc ₱15, 10 pcs ₱140           |                 | Pack is new   |
+| Pandesal and Bread     | Spanish Bread                | ₱10                                   |                 |               |
+| Pandesal and Bread     | Pan de Coco                  | ₱12                                   |                 |               |
+| Pandesal and Bread     | Monay                        | ₱10                                   |                 |               |
+| Pandesal and Bread     | Kababayan                    | ₱12                                   |                 | New           |
+| Ensaymada and Pastries | Classic Ensaymada            | ₱35                                   |                 |               |
+| Ensaymada and Pastries | Ube Ensaymada                | ₱45                                   |                 |               |
+| Ensaymada and Pastries | Cheese Roll                  | ₱25                                   |                 |               |
+| Ensaymada and Pastries | Hopia Ube (6)                | ₱90                                   |                 |               |
+| Cakes                  | Chocolate Moist Cake         | Size: 6" ₱450, 8" ₱650                | Cake extras     | 6" is new     |
+| Cakes                  | Ube Macapuno Cake            | Size: 6" ₱520, 8" ₱750                | Cake extras     | 6" is new     |
+| Cakes                  | Mamon (box of 6)             | ₱180                                  |                 |               |
+| Pasalubong             | Ensaymada Malolos (box of 6) | ₱360                                  | Pasalubong wrap |               |
+| Pasalubong             | Inipit (box of 10)           | ₱180                                  | Pasalubong wrap |               |
+| Pasalubong             | Lola's Pasalubong Box        | ₱499: ensaymada, inipit, hopia, mamon | Pasalubong wrap | New           |
+| Drinks                 | Brewed Coffee                | ₱40                                   |                 |               |
+| Drinks                 | Sago't Gulaman               | ₱35                                   |                 |               |
+| Drinks                 | Tsokolate                    | ₱45                                   |                 | New           |
+
+Add-on groups (shared library):
+
+| Group           | Rule               | Options                                                                                 |
+| --------------- | ------------------ | --------------------------------------------------------------------------------------- |
+| Cake extras     | Optional, up to 3  | "Happy Birthday" topper +₱30 · Candles +₱20 · Write a short greeting in the note (free) |
+| Pasalubong wrap | Optional, choose 1 | Banana-leaf and twine wrap +₱20                                                         |

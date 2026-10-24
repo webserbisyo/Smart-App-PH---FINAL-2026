@@ -18,13 +18,13 @@ Trimmed from the old `api-surface.md` (2026-10-11) to fit the restart: NestJS fr
 
 ## Auth (Supabase directly, both phases)
 
-| Method                                      | Input                                       | Output / notes                           |
-| ------------------------------------------- | ------------------------------------------- | ---------------------------------------- |
-| `signUp`                                    | `SignUpSchema`                              | session (email confirmation off on dev)  |
-| `signIn` / `signOut`                        | `LoginSchema` / none                        | one error message for every failed login |
-| `getSession`                                | none                                        | `{ userId, email } \| null`              |
-| `sendPasswordCode`, `resetPasswordWithCode` | `{ email }`, `{ email, code, newPassword }` | 6-digit code, no links                   |
-| `sendCustomerCode`, `verifyCustomerCode`    | `{ email }`, `{ email, code }`              | storefront members                       |
+| Method                                      | Input                                       | Output / notes                                                                                                               |
+| ------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `signUp`                                    | `SignUpSchema`                              | session (email confirmation off on dev)                                                                                      |
+| `signIn` / `signOut`                        | `LoginSchema` / none                        | one error message for every failed login                                                                                     |
+| `getSession`                                | none                                        | `{ userId, email } \| null`                                                                                                  |
+| `sendPasswordCode`, `resetPasswordWithCode` | `{ email }`, `{ email, code, newPassword }` | 6-digit code, no links                                                                                                       |
+| `sendCustomerCode`, `verifyCustomerCode`    | `{ email }`, `{ email, code }`              | storefront members; resend after 60 s, at most 5 codes per hour (`rate_limited`); a code older than 10 min is `code_expired` |
 
 Codes: `invalid_login`, `email_taken`, `weak_password`, `invalid_code`, `code_expired`, `rate_limited`, `not_signed_in`.
 
@@ -73,10 +73,14 @@ Codes: `category_not_empty`, `item_has_orders` (archive instead).
 | `rateOrder`                            | POST `/o/:token/rating`   | `{ stars, comment? }` → `OrderRating`                                                                                                 |
 | `subscribePush`                        | POST `/o/:token/push`     | `PushSubscription` → `{ ok }`                                                                                                         |
 | `getStorefrontPreview`                 | GET `/s/:slug/preview`    | preview token → `Storefront` built from the draft                                                                                     |
+| `listMyOrders`                         | GET `/s/:slug/orders`     | `{ tokens }` (guest order tokens kept on the phone) → `OrderRow[]`                                                                    |
+| `resolveMapsLink`                      | POST `/maps/resolve`      | `{ url }` → `{ lat, lng }`; the server follows short links (maps.app.goo.gl); the mock reads full links only (`parseMapsLink`)        |
 
 The cart lives on the device (`deviceStorage`, per slug). Pickup slots and open/closed text come from core (`pickupSlots`, `openState`), but the database decides.
 
-Codes: `shop_not_found`, `shop_closed`, `shop_busy`, `fulfillment_unavailable`, `payment_unavailable`, `cod_not_allowed`, `pickup_time_invalid`, `zone_required`, `item_unavailable`, `out_of_stock`, `invalid_options`, `reward_unavailable`, `order_not_payable`, `duplicate_reference`, `too_many_proofs`, `phone_in_use`, `rate_limited`, `slot_unavailable`, `stamps_insufficient`, `preview_expired`.
+Codes: `shop_not_found`, `shop_closed`, `shop_busy`, `fulfillment_unavailable`, `payment_unavailable`, `cod_not_allowed`, `cod_limit`, `pickup_time_invalid`, `zone_required`, `out_of_range`, `item_unavailable`, `out_of_stock`, `invalid_options`, `reward_unavailable`, `reward_all_claimed`, `reward_paused`, `order_not_payable`, `duplicate_reference`, `too_many_proofs`, `phone_in_use`, `rate_limited`, `slot_unavailable`, `stamps_insufficient`, `preview_expired`, `thread_rate_limited`, `code_expired`, `stamp_daily_cap`.
+
+Closed lists used by these rows (core `schemas/enums.ts`): payment status `unpaid`, `pending`, `paid`, `refunded`; payment methods `cash`, `cod`, `gcash`, `maya`, `bank`, `qr_ph`; order thread message kinds `proof`, `status`, `rider`, `tracking`.
 
 ## Orders (owner)
 
