@@ -36,6 +36,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T18 The PWA uses `@serwist/turbopack` (Next 16 builds with Turbopack; the webpack-based `@serwist/next` does not run there).
 - T19 jsdom pinned to 29.x: 30.x needs Node 24.15+.
 - T20 cn comes from the official cn package (catalog); lib/utils.ts re-exports it so ReUI and older items keep working.
+- T21 sharp is a tooling-only dev dependency for the demo image script.
 
 ## MVP A scope (accepted 2026-10-18; details in `SYSTEM.md` section 4.2 and `SMART_APP_PH_BLUEPRINT.md`)
 
@@ -58,6 +59,8 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N17 Overlays: Dialog on tablet and desktop, bottom Drawer on phone, through the responsive-dialog composition.
 - N18 Sidebar menus use gap-1 between items (base-nova default is gap-0).
 - N19 Dashboard rail is 60px (as built in T05).
+- N20 Demo images live in apps/storefront/public/demo/<slug>/{items,banners,brand}, named <name>-<width>.<ext>, AVIF and WebP (products 640/320, banners 1600/800), read through imageUrl() in core; Halo Dessert Bar is MVP B only.
+- N21 Category icons are Fluent Emoji Flat SVGs (MIT) in apps/storefront/public/icons/fluent, keys in core.
 
 ## Open
 

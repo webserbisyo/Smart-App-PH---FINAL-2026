@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "demo:images": "node scripts/demo-images.ts"
   },
   "devDependencies": {
+    "@types/node": "24.19.2",
     "eslint": "10.12.0",
+    "sharp": "0.35.5",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
