@@ -94,6 +94,27 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - S33 Code problems: "Wrong code, try again", expired code sends a new one, resend after 60 s, check Spam or Promotions.
 - S34 A stamp is pending until the order is completed ("Pending · Order #042").
 
+## Storefront redesign (founder, 2026-10-25: "Yes to all" on D1 to D17; built without ReUI Pro)
+
+- R1 No sticky basket column at 1280 px; the basket opens from the cart button on every width (`ux.md` updated).
+- R2 Each shop has a surface, light or dark (`as const` list + Zod, mock data only for now). Kanto Smash is dark: 60 black, 30 white, 10 red.
+- R3 Light shops get a neutral near-white 60, not a tint of the brand colour.
+- R4 Logo status ring: green and animated when open (c-avatar-33 look), plain grey when closed, never red; the word sits on a chip next to it.
+- R5 The cart leaves the dock: its own round button with a count dot; the dock keeps 4 places.
+- R6 The dock takes the Aceternity Floating Dock look on our installed dock, not its code (no `@tabler/icons-react`).
+- R7 About, Hours and Contact leave Home and go into one Shop info sheet.
+- R8 Menu on ReUI Scrollspy: one horizontal rail on phones for any number of categories, a vertical list from 1024 px.
+- R9 Free parts installed for the redesign: ReUI avatars, tabs, icon stacks and shop patterns, shadcn button-group, DiceUI avatar-group and marquee, Magic UI CSS-only parts. ReUI Pro blocks (receipt-2, checkout-6 and the like) are not bought; their look is built from the free parts.
+- R10 Pictures for empty, error and receipt states are Fluent Emoji 3D (MIT) WebP files in `apps/storefront/public/art`, made once by `pnpm --filter tooling art`; keys in core (`ART_KEYS`, `artPath`). No Storyset (needs a credit).
+- R11 Default customer avatars: about 24 DiceBear notionists SVGs made once by `pnpm --filter tooling avatars` (`@dicebear/core` and `@dicebear/notionists` 9.4.3, tooling dev dependencies, never shipped to customers; notionists only instead of the whole collection).
+- R12 New shared compositions for the redesign (empty-state, shop info sheet, cart button, status ring and the others listed in `components.md` with R12) live in `packages/ui/src/compositions` (T24).
+- R13 The one-line announcement slot stays for owner news; no fixed late-night sentence for Kanto.
+- R14 No notification bell (N14 stays).
+- R15 `motion` stays Rewards-only (T25); every new part is CSS-only to stay under the 300 KB budget (T31).
+- R16 Two PRs on branch `claude/project-thread-jornrn`: PR 1 (shell, theme, Home, Menu, basket, checkout, receipt) replaces #16; PR 2 is T11 to T14.
+- R17 Light testing for these two PRs: `pnpm check`, `pnpm build` and CI, with screenshots only of `/kit`. This replaces the "screenshots of every changed page" step in `AGENTS.md` for PR 1 and PR 2 only.
+- R18 ShopTheme maps the shop palette onto `--primary`, `--ring` and the other base tokens, so every installed part follows the shop colour without edits to each example (kit item K10).
+
 ## Open
 
 - Price: ₱599 or ₱799 per month.
