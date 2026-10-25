@@ -18,6 +18,18 @@ const BasketDrawer = dynamic(
   { ssr: false },
 );
 
+const ShopInfoSheet = dynamic(
+  () => import('../../shop-info/components/shop-info-sheet').then((m) => m.ShopInfoSheet),
+  { ssr: false },
+);
+
+function LazyShopInfoSheet() {
+  const { infoOpen } = useShop();
+  const [loaded, setLoaded] = useState(false);
+  if (infoOpen && !loaded) setLoaded(true);
+  return loaded ? <ShopInfoSheet /> : null;
+}
+
 function LazyBasketDrawer() {
   const { basketOpen } = useShop();
   const [loaded, setLoaded] = useState(false);
@@ -78,6 +90,7 @@ export function ShopShell({ children }: { children: ReactNode }) {
         </div>
       )}
       <LazyBasketDrawer />
+      <LazyShopInfoSheet />
     </div>
   );
 }

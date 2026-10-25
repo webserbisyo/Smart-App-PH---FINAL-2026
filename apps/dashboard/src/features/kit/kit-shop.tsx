@@ -1,5 +1,12 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { DEMO_MEDIA, DEMO_SHOPS, imageUrl, type DemoShopSlug } from '@smartapp/core';
+import {
+  DEFAULT_AVATAR_COUNT,
+  DEMO_MEDIA,
+  DEMO_SHOPS,
+  imageUrl,
+  membersPreviewAvatars,
+  type DemoShopSlug,
+} from '@smartapp/core';
 import { env } from '@/app/env';
 
 // The demo photos live in the storefront's public folder; the kit loads them from there.
@@ -27,11 +34,10 @@ export function useKitShop() {
       imageUrl(`demo:${slug}/banners/banner-${n}`, width, ORIGIN) ?? '',
     logo: (width: 128 | 256 = 128): string =>
       imageUrl(`demo:${slug}/brand/logo`, width, ORIGIN) ?? '',
-    /** Logo of another demo shop, standing in for a person's photo (we ship none). */
+    /** A default member face (decision R11), the same set the storefront shows. */
     face: (n: number): string => {
-      const others = DEMO_SHOPS.filter((s) => s.slug !== slug);
-      const other = others[n % others.length]?.slug ?? slug;
-      return imageUrl(`demo:${other}/brand/logo`, 128, ORIGIN) ?? '';
+      const faces = membersPreviewAvatars(slug, DEFAULT_AVATAR_COUNT);
+      return `${ORIGIN}${faces[n % faces.length] ?? ''}`;
     },
   };
 }

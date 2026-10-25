@@ -1,24 +1,19 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { DEMO_SHOP_SLUGS, imageSources } from '@smartapp/core';
+import { DEMO_SHOP_SLUGS, words } from '@smartapp/core';
 import { getStorefrontForServer } from '@smartapp/data/server';
 import { AspectRatio } from '@smartapp/ui/components/aspect-ratio';
-import { Card, CardContent } from '@smartapp/ui/components/card';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { BrandPanel } from '@smartapp/ui/compositions/brand-panel';
-import { AboutSection } from '@/features/home/components/about-section';
-import { AnnouncementBanner } from '@/features/home/components/announcement-banner';
+import { AnnouncementStrip } from '@/features/home/components/announcement-strip';
 import { BestSellersRow } from '@/features/home/components/best-sellers-row';
 import { CategoriesChips } from '@/features/home/components/categories-chips';
-import { ClosedCard } from '@/features/home/components/closed-card';
-import { ContactSection } from '@/features/home/components/contact-section';
-import { DemoRibbon } from '@/features/home/components/demo-ribbon';
 import { FavouritesRow } from '@/features/home/components/favourites-row';
-import { HomeBanners } from '@/features/home/components/home-banners';
-import { HoursTable } from '@/features/home/components/hours-table';
-import { MembersCount } from '@/features/home/components/members-count';
-import { RewardsCard } from '@/features/home/components/rewards-card';
+import { HomeHero } from '@/features/home/components/home-hero';
+import { HomeInfoCard } from '@/features/home/components/home-info-card';
+import { HomeStampCard } from '@/features/home/components/home-stamp-card';
+import { SearchPill } from '@/features/home/components/search-pill';
 import { ShopFooter } from '@/features/home/components/shop-footer';
+import { MembersPill } from '@/features/shop-info/components/members-pill';
 import { resolveHomeSections } from '@/features/home/rules';
 
 interface ShopPageProps {
@@ -29,80 +24,65 @@ export function generateStaticParams() {
   return DEMO_SHOP_SLUGS.map((shop) => ({ shop }));
 }
 
+// Home (redesign plan, Home): hero with status chips, owner news, stamp card, search, categories,
+// best sellers and favourites; shop info and members in a card (a sticky right column from 1024 px).
+// About, the hours table and contact live in the Shop info sheet (R7); no closed card (R2).
 async function CachedShopHome({ slug }: { slug: string }) {
   'use cache';
   const shop = getStorefrontForServer(slug);
   if (!shop) notFound();
 
-  // Static build reference time; dynamic client components (ClosedCard, HoursTable) adapt via useNow()
+  // Static build reference time; client parts (chips, info card) follow the live clock via useNow().
   const referenceTime = '2026-10-25T12:00:00+08:00';
   const { storefront, catalog } = shop;
   const visibility = resolveHomeSections(storefront, catalog, referenceTime);
+  const showInfo = visibility.hours || visibility.contact || visibility.about;
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Demo ribbon at very top */}
-      {visibility.demoRibbon ? <DemoRibbon /> : null}
-
-      {/* 1. Banners / Brand Panel */}
-      {visibility.brandPanel ? (
-        <section aria-label="Brand">
-          <BrandPanel
-            name={storefront.info.name}
-            tagline={storefront.info.tagline ?? undefined}
-            logo={storefront.info.logo ? imageSources(storefront.info.logo) : null}
-            ratio="21:9"
-          />
-        </section>
-      ) : null}
-      {visibility.banners ? (
-        <section aria-label="Banners">
-          <HomeBanners storefront={storefront} />
-        </section>
+      {visibility.banners || visibility.brandPanel ? (
+        <HomeHero storefront={storefront} demo={visibility.demoRibbon} />
       ) : null}
 
-      {/* 2. Announcement banner */}
       {visibility.announcement && storefront.look.announcement ? (
-        <AnnouncementBanner announcement={storefront.look.announcement} />
+        <AnnouncementStrip announcement={storefront.look.announcement} />
       ) : null}
 
-      {/* 3. Closed or busy notice card (client component adapting to current time / scenario) */}
-      <ClosedCard storefront={storefront} />
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3 lg:items-start">
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+          {visibility.rewards ? (
+            <HomeStampCard slug={storefront.slug} stampCard={storefront.stampCard} />
+          ) : null}
+          <SearchPill slug={storefront.slug} kind={storefront.info.kind} />
+          {visibility.categories ? (
+            <CategoriesChips slug={storefront.slug} categories={catalog.categories} />
+          ) : null}
+          {visibility.bestSellers ? (
+            <BestSellersRow slug={storefront.slug} catalog={catalog} />
+          ) : null}
+          {/* Hearts live on the phone, so the row decides on the client (it hides when empty). */}
+          {storefront.look.sections.favourites ? (
+            <FavouritesRow slug={storefront.slug} catalog={catalog} />
+          ) : null}
+        </div>
+        {showInfo || visibility.membersCount ? (
+          <aside
+            aria-label={words.storefrontShell.info.title}
+            className="flex flex-col gap-4 lg:sticky lg:top-24"
+          >
+            {showInfo ? <HomeInfoCard /> : null}
+            {visibility.membersCount ? (
+              <div className="flex justify-center">
+                <MembersPill slug={storefront.slug} count={storefront.membersCount} />
+              </div>
+            ) : null}
+          </aside>
+        ) : null}
+      </div>
 
-      {/* 4. Rewards card */}
-      {visibility.rewards ? (
-        <RewardsCard slug={storefront.slug} stampCard={storefront.stampCard} />
+      {visibility.footer ? (
+        <ShopFooter shopName={storefront.info.name} logo={storefront.info.logo} />
       ) : null}
-
-      {/* 5. Favourites row */}
-      {visibility.favourites ? <FavouritesRow slug={storefront.slug} catalog={catalog} /> : null}
-
-      {/* 6. Categories chips */}
-      {visibility.categories ? (
-        <CategoriesChips slug={storefront.slug} categories={catalog.categories} />
-      ) : null}
-
-      {/* 7. Best sellers */}
-      {visibility.bestSellers ? <BestSellersRow slug={storefront.slug} catalog={catalog} /> : null}
-
-      {/* 8. About section */}
-      {visibility.about && storefront.info.about ? (
-        <AboutSection about={storefront.info.about} />
-      ) : null}
-
-      {/* 9. Hours table */}
-      {visibility.hours ? (
-        <HoursTable hours={storefront.hours} closures={storefront.closures} />
-      ) : null}
-
-      {/* 10. Contact section */}
-      {visibility.contact ? <ContactSection contact={storefront.info.contact} /> : null}
-
-      {/* 11. Members count pill */}
-      {visibility.membersCount ? <MembersCount count={storefront.membersCount} /> : null}
-
-      {/* 12. Footer */}
-      {visibility.footer ? <ShopFooter shopName={storefront.info.name} /> : null}
     </div>
   );
 }
@@ -110,28 +90,16 @@ async function CachedShopHome({ slug }: { slug: string }) {
 function HomeSkeleton() {
   return (
     <div className="flex flex-col gap-6">
-      {/* Banner skeleton */}
-      <AspectRatio ratio={21 / 9} className="w-full overflow-hidden rounded-lg">
+      <AspectRatio ratio={21 / 9} className="w-full overflow-hidden rounded-2xl">
         <Skeleton className="size-full" />
       </AspectRatio>
-
-      {/* Card skeleton (c-skeleton-8 pattern) */}
-      <Card className="w-full">
-        <CardContent className="space-y-3 p-4">
-          <Skeleton className="h-6 w-1/3" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </CardContent>
-      </Card>
-
-      {/* Categories chips skeleton */}
-      <div className="flex gap-2 overflow-hidden">
-        <Skeleton className="h-11 w-28 rounded-full" />
-        <Skeleton className="h-11 w-32 rounded-full" />
-        <Skeleton className="h-11 w-24 rounded-full" />
+      <Skeleton className="h-60 w-full rounded-2xl" />
+      <Skeleton className="h-12 w-full rounded-full" />
+      <div className="flex gap-3 overflow-hidden">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Skeleton key={i} className="size-14 shrink-0 rounded-full" />
+        ))}
       </div>
-
-      {/* Best sellers scroller skeleton */}
       <div className="flex gap-3 overflow-hidden">
         <Skeleton className="h-56 w-48 shrink-0 rounded-xl" />
         <Skeleton className="h-56 w-48 shrink-0 rounded-xl" />

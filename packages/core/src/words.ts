@@ -92,7 +92,8 @@ export const words = {
     myOrders: 'My orders',
     favourites: 'Your favourites',
     rewardReady: 'A reward is ready',
-    shopInfo: (name: string, status: string) => `${name}, ${status}. Shop info`,
+    shopInfo: (name: string, status: string) =>
+      status ? `${name}, ${status}. Shop info` : `${name}. Shop info`,
     basket: 'Basket',
     openBasket: (count: number, total: string) =>
       `Basket, ${count} ${count === 1 ? 'item' : 'items'}, ${total}`,
@@ -141,7 +142,7 @@ export const words = {
       facebook: 'Facebook',
       getDirections: 'Get directions',
       address: 'Address',
-      membersCount: (count: number) => `${count} Suki members`,
+      membersCount: (count: number) => `${count.toLocaleString('en-PH')} Suki members`,
       footerPoweredBy: 'Powered by Smart App PH',
       privacy: 'Privacy',
       quickAdd: 'Add to basket',
@@ -162,6 +163,45 @@ export const words = {
       },
       tryAgain: 'Try again',
       errorLoading: 'Could not load this section.',
+      demoChip: 'Demo shop',
+      searchMenu: (catalog: string) => `Search the ${catalog.toLowerCase()}`,
+      announcement: 'Shop news',
+      stampCard: {
+        guestTitle: (needed: number, reward: string) => `${needed} stamps = ${reward}`,
+        guestBody: (welcome: number) =>
+          welcome > 0
+            ? `Join free and get ${welcome} ${welcome === 1 ? 'stamp' : 'stamps'} now.`
+            : 'Join free and start collecting.',
+        memberTitle: (left: number) =>
+          left === 1 ? '1 more stamp to go' : `${left} more stamps to go`,
+        readyTitle: (reward: string) => `${reward} is ready`,
+        pausedTitle: 'Stamps are paused',
+        pausedBody: 'Your stamps are safe. The shop will turn them back on soon.',
+        pending: (count: number) =>
+          count === 1 ? '1 stamp on the way' : `${count} stamps on the way`,
+        progress: (stamps: number, needed: number) => `${stamps} of ${needed} stamps`,
+        join: 'Join free',
+        claim: 'Claim',
+        view: 'See rewards',
+        prize: 'Prize',
+      },
+    },
+    // The Shop info sheet and the Home info card (redesign R7).
+    info: {
+      title: 'Shop info',
+      open: 'Shop info',
+      about: 'About',
+      hours: 'Hours',
+      contact: 'Contact',
+      today: 'Today',
+      call: 'Call',
+      message: 'Message',
+      directions: 'Directions',
+      facebook: 'Facebook',
+      dayRun: (first: string, last: string) => `${first} to ${last}`,
+      dayPair: (first: string, last: string) => `${first}, ${last}`,
+      more: 'See all shop info',
+      todayHours: (hours: string) => `Today ${hours}`,
     },
     menu: {
       searchPlaceholder: (catalog: string) => `Search ${catalog.toLowerCase()}`,

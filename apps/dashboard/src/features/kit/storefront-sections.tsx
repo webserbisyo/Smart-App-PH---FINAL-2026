@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { GiftIcon, HouseIcon, ReceiptTextIcon, UtensilsIcon } from 'lucide-react';
+import {
+  GiftIcon,
+  HouseIcon,
+  MapPinIcon,
+  PhoneIcon,
+  ReceiptTextIcon,
+  UtensilsIcon,
+} from 'lucide-react';
 import {
   contrastRatio,
   DEMO_SHOPS,
@@ -24,6 +31,8 @@ import { CountUp } from '@smartapp/ui/compositions/count-up';
 import { ShopImage, type ShopImageRatio } from '@smartapp/ui/compositions/shop-image';
 import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
+import { StampCard } from '@smartapp/ui/compositions/stamp-card';
+import { InfoList } from '@smartapp/ui/compositions/info-list';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
@@ -363,6 +372,94 @@ function CartButtons() {
   );
 }
 
+// Guest, member with stamps on the way, reward ready (shine) and paused; a 20-stamp card.
+function StampCards({ prizePhoto }: { prizePhoto: ImageSources | null }) {
+  const prize = { title: 'Free Classic Smash', photo: prizePhoto, label: 'Prize' };
+  const action = (label: string, variant: 'default' | 'outline' = 'default') => (
+    <Button size="lg" variant={variant} className="h-11">
+      {label}
+    </Button>
+  );
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <StampCard
+        needed={8}
+        stamped={0}
+        title="8 stamps = Free Classic Smash"
+        body="Join free and get 1 stamp now."
+        progressLabel="0 of 8 stamps"
+        prize={prize}
+        assetOrigin={ORIGIN}
+        action={action('Join free')}
+      />
+      <StampCard
+        needed={10}
+        stamped={4}
+        pending={2}
+        title="6 more stamps to go"
+        body="2 stamps on the way"
+        progressLabel="4 of 10 stamps"
+        prize={prize}
+        assetOrigin={ORIGIN}
+        action={action('See rewards', 'outline')}
+      />
+      <StampCard
+        needed={8}
+        stamped={8}
+        ready
+        readyLine="Your reward is ready"
+        title="Free Classic Smash is ready"
+        progressLabel="8 of 8 stamps"
+        prize={prize}
+        assetOrigin={ORIGIN}
+        action={action('Claim')}
+      />
+      <StampCard
+        needed={20}
+        stamped={13}
+        title="Stamps are paused"
+        body="Your stamps are safe. The shop will turn them back on soon."
+        progressLabel="13 of 20 stamps"
+        prize={{ ...prize, photo: null }}
+        assetOrigin={ORIGIN}
+        action={action('See rewards', 'outline')}
+      />
+    </div>
+  );
+}
+
+// Grouped hours with today highlighted, and tappable contact rows.
+function InfoLists() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <InfoList
+        rows={[
+          { id: 'mon', label: 'Mon to Thu', value: '11 AM to 10 PM' },
+          { id: 'fri', label: 'Fri to Sun', value: '11 AM to 12 MN', highlight: true },
+        ]}
+      />
+      <InfoList
+        rows={[
+          {
+            id: 'call',
+            icon: <PhoneIcon />,
+            label: 'Call',
+            description: '0917 123 4567',
+            href: 'tel:09171234567',
+          },
+          {
+            id: 'map',
+            icon: <MapPinIcon />,
+            label: 'Directions',
+            description: 'A very long street address that keeps going past the edge, Marikina City',
+            href: '#kit-info-list',
+          },
+        ]}
+      />
+    </div>
+  );
+}
+
 export function StorefrontSections() {
   const [slug, setSlug] = useState<DemoShopSlug>('kanto-smash');
   const summary = DEMO_SHOPS.find((s) => s.slug === slug) ?? DEMO_SHOPS[0];
@@ -456,6 +553,26 @@ export function StorefrontSections() {
             usedIn="storefront top bar (1024 px up), storefront dock, kit"
           >
             <CartButtons />
+          </KitSection>
+
+          <KitSection
+            title="Stamp card"
+            library="composition"
+            path="packages/ui/src/compositions/stamp-card.tsx"
+            usedIn="storefront Home, kit"
+          >
+            <StampCards prizePhoto={imageSources(`demo:${slug}/items/${shop.item}`, ORIGIN)} />
+          </KitSection>
+
+          <KitSection
+            title="Info list"
+            library="composition"
+            path="packages/ui/src/compositions/info-list.tsx"
+            usedIn="storefront Shop info sheet and Home info card, kit"
+          >
+            <div id="kit-info-list">
+              <InfoLists />
+            </div>
           </KitSection>
 
           <KitSection

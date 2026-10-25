@@ -33,7 +33,7 @@ export function HomeBanners({ storefront }: HomeBannersProps) {
     const b = banners[0];
     if (!b) return null;
     return (
-      <div className="overflow-hidden rounded-lg">
+      <div className="overflow-hidden rounded-2xl">
         <ShopImage
           src={imageSources(b.ref)}
           alt={b.alt}
@@ -51,7 +51,7 @@ export function HomeBanners({ storefront }: HomeBannersProps) {
   }));
 
   return (
-    <div className="overflow-hidden rounded-lg">
+    <div className="overflow-hidden rounded-2xl">
       <BannerCarousel
         slides={slides}
         seconds={bannerSeconds}

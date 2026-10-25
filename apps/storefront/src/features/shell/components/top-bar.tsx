@@ -65,7 +65,7 @@ function useOpenKind(): { kind: OpenStateKind; text: string } | null {
 // pill group in the middle, then favourites, cart and account (decision R5: Orders lives in the
 // account menu).
 export function TopBar() {
-  const { slug, shop } = useShop();
+  const { slug, shop, setInfoOpen } = useShop();
   const nav = useShopNav().filter((item) => item.id !== 'orders');
   const scrolled = useScrolled();
   const open = useOpenKind();
@@ -78,8 +78,8 @@ export function TopBar() {
       className="sticky top-0 z-sticky border-b border-transparent bg-shop-60 pt-safe transition-colors duration-base data-scrolled:glass data-scrolled:shadow-sm"
     >
       <div className="mx-auto flex h-16 max-w-280 items-center gap-3 px-4 lg:gap-6">
-        {/* One stretched link over logo and name (the pill sits above it); decision R4's ring and
-            word on the logo, the full state spoken with the name. */}
+        {/* One stretched button over logo and name opens Shop info (redesign R7); the pill sits above
+            it. Decision R4's ring and word on the logo, the full state spoken with the name. */}
         <div className="relative flex min-w-0 flex-1 items-center gap-3 lg:flex-none">
           <StatusLogo
             name={name}
@@ -88,13 +88,15 @@ export function TopBar() {
             stateLabel={open ? words.shop.openStateShort[open.kind] : ''}
           />
           <div className="flex min-w-0 flex-col items-start gap-1">
-            <Link
-              href={`/${slug}`}
-              className="max-w-full truncate rounded-sm text-base leading-tight font-semibold outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-label={words.storefrontShell.shopInfo(name, open?.text ?? '')}
+              onClick={() => setInfoOpen(true)}
+              className="max-w-full truncate rounded-sm text-left text-base leading-tight font-semibold outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
             >
               {name}
-              {open ? <span className="sr-only">, {open.text}</span> : null}
-            </Link>
+            </button>
             <LocationBar className="z-10" />
           </div>
         </div>
