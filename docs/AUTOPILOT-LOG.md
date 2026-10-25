@@ -25,7 +25,7 @@ Run 1 stopped after T03b (T02 blocked). Run 2 resumed on 2026-10-25 after the fo
 
 ## T02b /kit library examples (branch `ag/t02b-kit-examples`)
 
-- PR: (filled in below when opened).
+- PR: https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/14
 - Dry run: `@reui/c-stepper-26` showed the ReUI primitive in the dashboard's `src/components/reui/`, not packages/ui. So the 8 ReUI primitives were installed first with `-c packages/ui` (they land in `packages/ui/src/components/reui/`); the 119 examples then resolved them there. Their imports (`@/components/reui/*`) were rewritten to `@smartapp/ui/components/reui/*`. The CLI hit one registry rate limit (429) at the very end, after writing all 119 files; a file-by-file check found all present.
 - Founder decisions this run (asked, answered 2026-10-25): **T28** map ReUI badge/alert variants to our tokens once and drop the CLI's raw-palette CSS variables (new contrast-tested `focus`, `invert`, `destructive-text/-soft/-soft-foreground` tokens; both files marked patched); **T29** allow `bubble` and `scroll-area` for c-message-5 and c-scrollspy-1/2, keep `popover` skipped (c-input-group-37 without it). The CLI also wrote `popover.tsx`; it was removed.
 - Decisions from the box: D1 examples only in `features/kit/examples` (tooling test); D2 tokens and demo photos (`imageUrl()`, other shops' logos stand in for people's photos, no remote URL left); D10 c-stepper-26 for the receipt, c-stepper-3 and c-timeline-3 shown as alternatives.
