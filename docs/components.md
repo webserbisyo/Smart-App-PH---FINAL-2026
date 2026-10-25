@@ -110,7 +110,7 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 | `table`                  | shadcn (base-nova)   | `packages/ui/src/components/table.tsx`                     | shop home hours table, kit                                                                                   | T02   |
 | `tabs`                   | shadcn (base-nova)   | `packages/ui/src/components/tabs.tsx`                      | page-header, kit                                                                                             | T05   |
 | `textarea`               | shadcn (base-nova)   | `packages/ui/src/components/textarea.tsx`                  | input-group, kit, item sheet special instructions                                                            | T02   |
-| `thermal-receipt`        | Opensource UI (copy) | `packages/ui/src/vendor/opensource-ui/thermal-receipt.tsx` | kit                                                                                                          | T02   |
+| `thermal-receipt`        | Opensource UI (copy) | `packages/ui/src/vendor/opensource-ui/thermal-receipt.tsx` | kit, receipt (T10)                                                                                           | T02   |
 | `toast`                  | shadcn (base-nova)   | `packages/ui/src/components/toast.tsx`                     | storefront toasts (notify), kit                                                                              | T02   |
 | `toggle`                 | shadcn (base-nova)   | `packages/ui/src/components/toggle.tsx`                    | toggle-group, kit, menu favourite button, menu favourites chip                                               | T02   |
 | `toggle-group`           | shadcn (base-nova)   | `packages/ui/src/components/toggle-group.tsx`              | kit, item sheet retail axes                                                                                  | T02   |
@@ -127,127 +127,129 @@ The 119 ReUI patterns (`c-*`, decision D1) live only in `apps/dashboard/src/feat
 
 Changes from the ReUI source (T02b, decision D2): remote photos replaced with demo photos through `imageUrl()` (other shops' logos stand in for people's photos); raw colours mapped to tokens; brackets replaced with the spacing scale, named variants (`state-active:`, `state-completed:`, `state-inactive:`, `orientation-vertical:`, `data-active:`) and utilities (`h-full-less-*`, `max-h-vh-*`, `progress-thin`); 10 px text is `text-xs`; `c-input-group-37` without its popover; `c-carousel-11` reads the slide count from the carousel instead of setting state in an effect; `c-timeline-7` drops a separator override that never applied (no step is completed in it).
 
-| Id                   | ReUI name                | Screen                     | Used for                                                                                                                    |
-| -------------------- | ------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `c-alert-4`          | Payment Failure          | Receipt                    | Rejected c-alert-4, refund c-alert-5                                                                                        |
-| `c-alert-5`          | Info Variant             | Home                       | Announcement c-alert-5 / c-alert-7 / c-alert-6                                                                              |
-| `c-alert-6`          | Success Variant          | Home                       | Announcement c-alert-5 / c-alert-7 / c-alert-6                                                                              |
-| `c-alert-7`          | Warning Variant          | How and where              | Too far / denied c-alert-7 / c-alert-8                                                                                      |
-| `c-alert-8`          | Error Variant            | How and where              | Too far / denied c-alert-7 / c-alert-8                                                                                      |
-| `c-alert-18`         | Feature Discovery        | Receipt                    | Install card c-alert-18 + iPhone steps c-stepper-13                                                                         |
-| `c-alert-dialog-2`   | Small Size               | Basket                     | More c-dropdown-menu-16 + confirm c-alert-dialog-2                                                                          |
-| `c-aspect-ratio-2`   | Standard                 | Item sheet                 | Photos c-carousel-11 (no autoplay) in c-aspect-ratio-2                                                                      |
-| `c-aspect-ratio-3`   | Square                   | Menu                       | Grid photo c-aspect-ratio-3                                                                                                 |
-| `c-aspect-ratio-4`   | Ultrawide                | Home                       | Banners c-carousel-11 + autoplay as in c-carousel-5, frame c-aspect-ratio-4                                                 |
-| `c-attachment-5`     | Upload Queue             | Receipt                    | Proof attachment + c-attachment-6 + c-attachment-5                                                                          |
-| `c-attachment-6`     | File Picker              | Receipt                    | Proof attachment + c-attachment-6 + c-attachment-5                                                                          |
-| `c-avatar-4`         | Border Radius            | Shell                      | Top bar logo c-avatar-4 (square) / c-avatar-14 (initials fallback) / c-avatar-30 (loading) · in use: storefront shell (T04) |
-| `c-avatar-6`         | Status Dots              | Shell                      | Kit only: status dots                                                                                                       |
-| `c-avatar-11`        | Group With Count         | Shell                      | Storefront dock: links like c-button-27, cart segment c-avatar-11 + count c-badge-19 · in use: storefront shell (T04)       |
-| `c-avatar-14`        | Soft Fallbacks           | Shell                      | Top bar logo c-avatar-4 (square) / c-avatar-14 (initials fallback) / c-avatar-30 (loading) · in use: storefront shell (T04) |
-| `c-avatar-16`        | User Details             | Rewards and account        | Member chip c-avatar-16                                                                                                     |
-| `c-avatar-20`        | Social Proof Pill        | Home                       | Members count c-avatar-20                                                                                                   |
-| `c-avatar-30`        | Loading State            | Shell                      | Top bar logo c-avatar-4 (square) / c-avatar-14 (initials fallback) / c-avatar-30 (loading)                                  |
-| `c-avatar-35`        | Dropdown Menu            | Rewards and account        | Member menu c-avatar-35                                                                                                     |
-| `c-badge-7`          | Outline                  | Menu                       | Menu badge: sample (preview only)                                                                                           |
-| `c-badge-13`         | Primary Light            | Menu                       | Menu badge: new, best seller                                                                                                |
-| `c-badge-14`         | Destructive Light        | Menu                       | Menu badge: sold out                                                                                                        |
-| `c-badge-15`         | Success Light            | My orders                  | Status c-badge-22, c-badge-15, c-badge-14, c-badge-17                                                                       |
-| `c-badge-17`         | Warning Light            | My orders                  | Status c-badge-22, c-badge-15, c-badge-14, c-badge-17                                                                       |
-| `c-badge-19`         | Full Radius              | Shell                      | Storefront dock: links like c-button-27, cart segment c-avatar-11 + count c-badge-19 · in use: storefront shell (T04)       |
-| `c-badge-22`         | Status Dot               | My orders                  | Status c-badge-22, c-badge-15, c-badge-14, c-badge-17                                                                       |
-| `c-button-9`         | Large                    | Checkout                   | Place order c-button-9 + c-button-44 states + @diceui/pending                                                               |
-| `c-button-11`        | Icon Button              | Menu                       | "+" c-button-11                                                                                                             |
-| `c-button-19`        | Outline Icon Right       | Shell                      | Location bar c-button-19 (pill, chevron) · in use: storefront shell (T04)                                                   |
-| `c-button-24`        | Extra Small Icon         | Basket                     | Lines c-item-2 + c-number-field-2 + remove c-button-24 (Undo toast) · in use: storefront shell (T04)                        |
-| `c-button-27`        | Next Link                | Shell                      | Storefront dock: links like c-button-27, cart segment c-avatar-11 + count c-badge-19                                        |
-| `c-button-35`        | More Less Toggle         | Home                       | About c-button-35                                                                                                           |
-| `c-button-41`        | Copy Feedback            | Checkout                   | Send exactly + Copy c-button-41                                                                                             |
-| `c-button-44`        | Async Action             | How and where              | Use my location c-button-44                                                                                                 |
-| `c-button-49`        | Go Back                  | Shell                      | Back c-button-49                                                                                                            |
-| `c-card-1`           | Basic                    | Rewards and account        | Member QR @diceui/qr-code in c-card-1                                                                                       |
-| `c-card-7`           | Inset Image              | Home                       | Favourites and best sellers @diceui/scroller + c-card-7                                                                     |
-| `c-card-16`          | Badge & Actions          | Rewards and account        | Reward c-card-16 + Claim c-button-44 + @magicui/confetti                                                                    |
-| `c-card-17`          | Icon & Link              | Home                       | Reward or join card c-card-17 + @diceui/circular-progress                                                                   |
-| `c-carousel-5`       | Autoplay                 | Home                       | Banners c-carousel-11 + autoplay as in c-carousel-5, frame c-aspect-ratio-4                                                 |
-| `c-carousel-11`      | Dots Navigation          | Home                       | Banners c-carousel-11 + autoplay as in c-carousel-5, frame c-aspect-ratio-4                                                 |
-| `c-checkbox-5`       | Label & Description      | Checkout                   | Remember me c-checkbox-5                                                                                                    |
-| `c-checkbox-11`      | Card Rows                | Item sheet                 | Multi add-ons @diceui/checkbox-group with c-checkbox-11 rows                                                                |
-| `c-checkbox-19`      | Badge Group              | Item sheet                 | Group header c-radio-group-6 + c-checkbox-19                                                                                |
-| `c-collapsible-1`    | Basic                    | Checkout                   | Summary c-collapsible-1                                                                                                     |
-| `c-dialog-3`         | Sticky Footer            | Item sheet                 | Phone c-drawer-1, desktop c-dialog-3                                                                                        |
-| `c-drawer-1`         | Scrollable Content       | Item sheet                 | Phone c-drawer-1, desktop c-dialog-3                                                                                        |
-| `c-drawer-2`         | Right Side               | Shell                      | Basket drawer on desktop c-drawer-2 · in use: storefront shell (T04)                                                        |
-| `c-dropdown-menu-13` | Share & Export           | Receipt                    | Actions c-dropdown-menu-13                                                                                                  |
-| `c-dropdown-menu-16` | Quick Actions            | Basket                     | More c-dropdown-menu-16 + confirm c-alert-dialog-2                                                                          |
-| `c-empty-2`          | No Results               | Menu                       | No results c-empty-2                                                                                                        |
-| `c-empty-4`          | Add Button               | My orders                  | Empty c-empty-4                                                                                                             |
-| `c-empty-7`          | Inbox                    | Shell                      | Not found c-empty-7 · in use: storefront shell (T04)                                                                        |
-| `c-empty-9`          | No Notifications         | Shop info and system pages | Offline page c-empty-9                                                                                                      |
-| `c-empty-11`         | Bookmarks                | Basket                     | Empty c-empty-11 · in use: storefront shell (T04)                                                                           |
-| `c-empty-15`         | Stacked Products         | Menu                       | No products c-empty-15                                                                                                      |
-| `c-empty-20`         | Events Calendar          | Home                       | Closed c-empty-20                                                                                                           |
-| `c-field-2`          | Input & Textarea         | How and where              | Rider details c-field-2 + c-input-13 + c-input-18                                                                           |
-| `c-field-10`         | Notification Preferences | Rewards and account        | Opt-ins c-field-10                                                                                                          |
-| `c-frame-1`          | Basic                    | Rewards and account        | Stamp card frame (with grid-pattern)                                                                                        |
-| `c-icon-tile-6`      | Circular                 | Rewards and account        | Stamp tile: empty                                                                                                           |
-| `c-icon-tile-14`     | Status Overlay           | Rewards and account        | Stamp tile: pending                                                                                                         |
-| `c-icon-tile-16`     | Solid Tones              | Rewards and account        | Stamp tile: stamped                                                                                                         |
-| `c-input-2`          | With Label               | Checkout                   | Name c-input-2 + c-input-5                                                                                                  |
-| `c-input-5`          | Error Message            | Checkout                   | Name c-input-2 + c-input-5                                                                                                  |
-| `c-input-13`         | Required Indicator       | How and where              | Rider details c-field-2 + c-input-13 + c-input-18                                                                           |
-| `c-input-18`         | Optional Badge           | How and where              | Rider details c-field-2 + c-input-13 + c-input-18                                                                           |
-| `c-input-group-3`    | Invalid                  | How and where              | Pin link c-input-group-10 + c-input-group-24 (valid) + c-input-group-3 (invalid)                                            |
-| `c-input-group-5`    | Suffix Icon              | Rewards and account        | Join email c-input-group-5                                                                                                  |
-| `c-input-group-10`   | Action Button            | How and where              | Pin link c-input-group-10 + c-input-group-24 (valid) + c-input-group-3 (invalid)                                            |
-| `c-input-group-15`   | Loading Spinner          | Menu                       | Drop its popover) + c-input-group-15 (loading)                                                                              |
-| `c-input-group-24`   | Success Indicator        | How and where              | Pin link c-input-group-10 + c-input-group-24 (valid) + c-input-group-3 (invalid)                                            |
-| `c-input-group-37`   | Order Search             | Menu                       | Search c-input-group-37 (search + clear                                                                                     |
-| `c-input-otp-6`      | Verification Card        | Rewards and account        | Code c-input-otp-6                                                                                                          |
-| `c-item-1`           | Variants                 | How and where              | Fee line c-item-1                                                                                                           |
-| `c-item-2`           | Icon & Actions           | Menu                       | Row c-item-2 · in use: storefront shell (T04)                                                                               |
-| `c-item-4`           | Navigation Links         | Home                       | Contact c-item-4                                                                                                            |
-| `c-item-10`          | Header & Footer          | My orders                  | Active card c-item-10                                                                                                       |
-| `c-marker-2`         | Tool Call Log            | Receipt                    | Thread c-message-5 + c-marker-2                                                                                             |
-| `c-message-5`        | Shared Files             | Receipt                    | Thread c-message-5 + c-marker-2                                                                                             |
-| `c-native-select-2`  | Grouped Options          | How and where              | Slots c-native-select-2 · in use: storefront shell (T04)                                                                    |
-| `c-number-field-2`   | Small Size               | Basket                     | Lines c-item-2 + c-number-field-2 + remove c-button-24 (Undo toast) · in use: storefront shell (T04)                        |
-| `c-number-field-3`   | Large Size               | Item sheet                 | Qty c-number-field-3                                                                                                        |
-| `c-progress-2`       | Small                    | Receipt                    | Pay countdown c-alert-7 + c-progress-2 (→ c-alert-8 at 0)                                                                   |
-| `c-radio-group-3`    | Descriptions             | How and where              | ASAP or later c-radio-group-3 · in use: storefront shell (T04)                                                              |
-| `c-radio-group-4`    | Invalid                  | Item sheet                 | Missing required c-radio-group-4                                                                                            |
-| `c-radio-group-6`    | Legend & Description     | Item sheet                 | Group header c-radio-group-6 + c-checkbox-19                                                                                |
-| `c-radio-group-7`    | Descriptive Cards        | How and where              | Order type c-radio-group-7 · in use: storefront shell (T04)                                                                 |
-| `c-radio-group-8`    | Card Separators          | How and where              | Zones c-radio-group-8 · in use: storefront shell (T04)                                                                      |
-| `c-radio-group-9`    | Card Icons               | Checkout                   | Pay methods c-radio-group-9 + c-radio-group-15                                                                              |
-| `c-radio-group-15`   | Badges                   | Checkout                   | Pay methods c-radio-group-9 + c-radio-group-15                                                                              |
-| `c-radio-group-17`   | Pricing Tiers            | Item sheet                 | Food sizes c-radio-group-17                                                                                                 |
-| `c-scrollspy-1`      | Vertical Nav             | Menu                       | Desktop rail c-scrollspy-1                                                                                                  |
-| `c-scrollspy-2`      | Horizontal Nav           | Menu                       | Chips c-scrollspy-2 in @diceui/scroller                                                                                     |
-| `c-separator-6`      | Order Summary            | Basket                     | Totals c-separator-6 · in use: storefront shell (T04)                                                                       |
-| `c-skeleton-2`       | Card                     | Item sheet                 | Loading c-skeleton-2                                                                                                        |
-| `c-skeleton-3`       | Text Paragraphs          | Receipt                    | Loading c-skeleton-3, thread c-skeleton-10                                                                                  |
-| `c-skeleton-4`       | Form                     | Checkout                   | Loading c-skeleton-4                                                                                                        |
-| `c-skeleton-7`       | List With Actions        | Menu                       | Loading c-skeleton-7                                                                                                        |
-| `c-skeleton-8`       | Card Grid                | Home                       | Loading c-skeleton-8                                                                                                        |
-| `c-skeleton-9`       | Profile Page             | Rewards and account        | Loading c-skeleton-9                                                                                                        |
-| `c-skeleton-10`      | Chat Messages            | Receipt                    | Loading c-skeleton-3, thread c-skeleton-10                                                                                  |
-| `c-spinner-3`        | In Badges                | Rewards and account        | Pending c-spinner-3                                                                                                         |
-| `c-spinner-8`        | Full Page                | Shell                      | First load c-spinner-8                                                                                                      |
-| `c-stepper-3`        | Loading State            | Receipt                    | Kit only: alternative to c-stepper-26 (decision D10)                                                                        |
-| `c-stepper-13`       | Vertical Descriptions    | Receipt                    | Install card c-alert-18 + iPhone steps c-stepper-13                                                                         |
-| `c-stepper-26`       | Timestamped Checkpoints  | Receipt                    | Status c-stepper-26 (timestamped)                                                                                           |
-| `c-switch-2`         | With Description         | Checkout                   | Reward switch c-switch-2                                                                                                    |
-| `c-table-16`         | Employee Profile         | Home                       | Hours c-table-16                                                                                                            |
-| `c-tabs-2`           | Line Variant             | Rewards and account        | Tabs c-tabs-2                                                                                                               |
-| `c-tabs-7`           | Badge Counts             | My orders                  | Active / Past c-tabs-7                                                                                                      |
-| `c-textarea-6`       | Auto-Resize Counter      | Item sheet                 | Note c-textarea-6                                                                                                           |
-| `c-timeline-3`       | Order Status             | Receipt                    | Kit only: alternative to c-stepper-26 (decision D10)                                                                        |
-| `c-timeline-7`       | Roadmap Items            | Rewards and account        | History c-timeline-7                                                                                                        |
-| `c-toggle-6`         | Icon & Label             | Menu                       | Favourites chip c-toggle-6                                                                                                  |
-| `c-toggle-9`         | Icon Swap                | Menu                       | Heart c-toggle-9                                                                                                            |
-| `c-toggle-group-4`   | Custom Spacing           | Item sheet                 | Retail axes c-toggle-group-4                                                                                                |
-| `c-tooltip-12`       | Disabled Button          | Shell                      | Icon tooltips and disabled reasons c-tooltip-12                                                                             |
+| Id                 | ReUI name         | Screen        | Used for                                                                    |
+| ------------------ | ----------------- | ------------- | --------------------------------------------------------------------------- |
+| `c-alert-4`        | Payment Failure   | Receipt       | Rejected c-alert-4, refund c-alert-5 · in use: receipt (T10)                |
+| `c-alert-5`        | Info Variant      | Home          | Announcement c-alert-5 / c-alert-7 / c-alert-6                              |
+| `c-alert-6`        | Success Variant   | Home          | Announcement c-alert-5 / c-alert-7 / c-alert-6                              |
+| `c-alert-7`        | Warning Variant   | How and where | Too far / denied c-alert-7 / c-alert-8                                      |
+| `c-alert-8`        | Error Variant     | How and where | Too far / denied c-alert-7 / c-alert-8                                      |
+| `c-alert-18`       | Feature Discovery | Receipt       | Install card c-alert-18 + iPhone steps c-stepper-13 · in use: receipt (T10) |
+| `c-alert-dialog-2` | Small Size        | Basket        | More c-dropdown-menu-16 + confirm c-alert-dialog-2                          |
+| `c-aspect-ratio-2` | Standard          | Item sheet    | Photos c-carousel-11 (no autoplay) in c-aspect-ratio-2                      |
+| `c-aspect-ratio-3` | Square            | Menu          | Grid photo c-aspect-ratio-3                                                 |
+| `c-aspect-ratio-4` | Ultrawide         | Home          | Banners c-carousel-11 + autoplay as in c-carousel-5, frame c-aspect-ratio-4 |
+| `c-attachment-5`   | Upload Queue      | Receipt       | Proof attachment + c-attachment-6 + c-attachment-5 · in use: receipt (T10)  |
+| `c-attachment-6`   | File Picker       | Receipt       | Proof attachment + c-attachment-6 + c-attachment-5 · in use: receipt (T10)  |
+
+| `c-avatar-4` | Border Radius | Shell | Top bar logo c-avatar-4 (square) / c-avatar-14 (initials fallback) / c-avatar-30 (loading) · in use: storefront shell (T04) |
+| `c-avatar-6` | Status Dots | Shell | Kit only: status dots |
+| `c-avatar-11` | Group With Count | Shell | Storefront dock: links like c-button-27, cart segment c-avatar-11 + count c-badge-19 · in use: storefront shell (T04) |
+| `c-avatar-14` | Soft Fallbacks | Shell | Top bar logo c-avatar-4 (square) / c-avatar-14 (initials fallback) / c-avatar-30 (loading) · in use: storefront shell (T04) |
+| `c-avatar-16` | User Details | Rewards and account | Member chip c-avatar-16 |
+| `c-avatar-20` | Social Proof Pill | Home | Members count c-avatar-20 |
+| `c-avatar-30` | Loading State | Shell | Top bar logo c-avatar-4 (square) / c-avatar-14 (initials fallback) / c-avatar-30 (loading) |
+| `c-avatar-35` | Dropdown Menu | Rewards and account | Member menu c-avatar-35 |
+| `c-badge-7` | Outline | Menu | Menu badge: sample (preview only) |
+| `c-badge-13` | Primary Light | Menu | Menu badge: new, best seller |
+| `c-badge-14` | Destructive Light | Menu | Menu badge: sold out |
+| `c-badge-15` | Success Light | My orders | Status c-badge-22, c-badge-15, c-badge-14, c-badge-17 |
+| `c-badge-17` | Warning Light | My orders | Status c-badge-22, c-badge-15, c-badge-14, c-badge-17 |
+| `c-badge-19` | Full Radius | Shell | Storefront dock: links like c-button-27, cart segment c-avatar-11 + count c-badge-19 · in use: storefront shell (T04) |
+| `c-badge-22` | Status Dot | My orders | Status c-badge-22, c-badge-15, c-badge-14, c-badge-17 |
+| `c-button-9` | Large | Checkout | Place order c-button-9 + c-button-44 states + @diceui/pending |
+| `c-button-11` | Icon Button | Menu | "+" c-button-11 |
+| `c-button-19` | Outline Icon Right | Shell | Location bar c-button-19 (pill, chevron) · in use: storefront shell (T04) |
+| `c-button-24` | Extra Small Icon | Basket | Lines c-item-2 + c-number-field-2 + remove c-button-24 (Undo toast) · in use: storefront shell (T04) |
+| `c-button-27` | Next Link | Shell | Storefront dock: links like c-button-27, cart segment c-avatar-11 + count c-badge-19 |
+| `c-button-35` | More Less Toggle | Home | About c-button-35 |
+| `c-button-41` | Copy Feedback | Checkout | Send exactly + Copy c-button-41 |
+| `c-button-44` | Async Action | How and where | Use my location c-button-44 |
+| `c-button-49` | Go Back | Shell | Back c-button-49 |
+| `c-card-1` | Basic | Rewards and account | Member QR @diceui/qr-code in c-card-1 |
+| `c-card-7` | Inset Image | Home | Favourites and best sellers @diceui/scroller + c-card-7 |
+| `c-card-16` | Badge & Actions | Rewards and account | Reward c-card-16 + Claim c-button-44 + @magicui/confetti |
+| `c-card-17` | Icon & Link | Home | Reward or join card c-card-17 + @diceui/circular-progress |
+| `c-carousel-5` | Autoplay | Home | Banners c-carousel-11 + autoplay as in c-carousel-5, frame c-aspect-ratio-4 |
+| `c-carousel-11` | Dots Navigation | Home | Banners c-carousel-11 + autoplay as in c-carousel-5, frame c-aspect-ratio-4 |
+| `c-checkbox-5` | Label & Description | Checkout | Remember me c-checkbox-5 |
+| `c-checkbox-11` | Card Rows | Item sheet | Multi add-ons @diceui/checkbox-group with c-checkbox-11 rows |
+| `c-checkbox-19` | Badge Group | Item sheet | Group header c-radio-group-6 + c-checkbox-19 |
+| `c-collapsible-1` | Basic | Checkout | Summary c-collapsible-1 |
+| `c-dialog-3` | Sticky Footer | Item sheet | Phone c-drawer-1, desktop c-dialog-3 |
+| `c-drawer-1` | Scrollable Content | Item sheet | Phone c-drawer-1, desktop c-dialog-3 |
+| `c-drawer-2` | Right Side | Shell | Basket drawer on desktop c-drawer-2 · in use: storefront shell (T04) |
+| `c-dropdown-menu-13` | Share & Export | Receipt | Actions c-dropdown-menu-13 |
+| `c-dropdown-menu-16` | Quick Actions | Basket | More c-dropdown-menu-16 + confirm c-alert-dialog-2 |
+| `c-empty-2` | No Results | Menu | No results c-empty-2 |
+| `c-empty-4` | Add Button | My orders | Empty c-empty-4 |
+| `c-empty-7` | Inbox | Shell | Not found c-empty-7 · in use: storefront shell (T04) |
+| `c-empty-9` | No Notifications | Shop info and system pages | Offline page c-empty-9 |
+| `c-empty-11` | Bookmarks | Basket | Empty c-empty-11 · in use: storefront shell (T04) |
+| `c-empty-15` | Stacked Products | Menu | No products c-empty-15 |
+| `c-empty-20` | Events Calendar | Home | Closed c-empty-20 |
+| `c-field-2` | Input & Textarea | How and where | Rider details c-field-2 + c-input-13 + c-input-18 |
+| `c-field-10` | Notification Preferences | Rewards and account | Opt-ins c-field-10 |
+| `c-frame-1` | Basic | Rewards and account | Stamp card frame (with grid-pattern) |
+| `c-icon-tile-6` | Circular | Rewards and account | Stamp tile: empty |
+| `c-icon-tile-14` | Status Overlay | Rewards and account | Stamp tile: pending |
+| `c-icon-tile-16` | Solid Tones | Rewards and account | Stamp tile: stamped |
+| `c-input-2` | With Label | Checkout | Name c-input-2 + c-input-5 |
+| `c-input-5` | Error Message | Checkout | Name c-input-2 + c-input-5 |
+| `c-input-13` | Required Indicator | How and where | Rider details c-field-2 + c-input-13 + c-input-18 |
+| `c-input-18` | Optional Badge | How and where | Rider details c-field-2 + c-input-13 + c-input-18 |
+| `c-input-group-3` | Invalid | How and where | Pin link c-input-group-10 + c-input-group-24 (valid) + c-input-group-3 (invalid) |
+| `c-input-group-5` | Suffix Icon | Rewards and account | Join email c-input-group-5 |
+| `c-input-group-10` | Action Button | How and where | Pin link c-input-group-10 + c-input-group-24 (valid) + c-input-group-3 (invalid) |
+| `c-input-group-15` | Loading Spinner | Menu | Drop its popover) + c-input-group-15 (loading) |
+| `c-input-group-24` | Success Indicator | How and where | Pin link c-input-group-10 + c-input-group-24 (valid) + c-input-group-3 (invalid) |
+| `c-input-group-37` | Order Search | Menu | Search c-input-group-37 (search + clear |
+| `c-input-otp-6` | Verification Card | Rewards and account | Code c-input-otp-6 |
+| `c-item-1` | Variants | How and where | Fee line c-item-1 |
+| `c-item-2` | Icon & Actions | Menu | Row c-item-2 · in use: storefront shell (T04) |
+| `c-item-4` | Navigation Links | Home | Contact c-item-4 |
+| `c-item-10` | Header & Footer | My orders | Active card c-item-10 |
+| `c-marker-2` | Tool Call Log | Receipt | Thread c-message-5 + c-marker-2 · in use: receipt (T10) |
+| `c-message-5` | Shared Files | Receipt | Thread c-message-5 + c-marker-2 · in use: receipt (T10) |
+| `c-native-select-2` | Grouped Options | How and where | Slots c-native-select-2 · in use: storefront shell (T04) |
+| `c-number-field-2` | Small Size | Basket | Lines c-item-2 + c-number-field-2 + remove c-button-24 (Undo toast) · in use: storefront shell (T04) |
+| `c-number-field-3` | Large Size | Item sheet | Qty c-number-field-3 |
+| `c-progress-2` | Small | Receipt | Pay countdown c-alert-7 + c-progress-2 (→ c-alert-8 at 0) · in use: receipt (T10) |
+| `c-radio-group-3` | Descriptions | How and where | ASAP or later c-radio-group-3 · in use: storefront shell (T04) |
+| `c-radio-group-4` | Invalid | Item sheet | Missing required c-radio-group-4 |
+| `c-radio-group-6` | Legend & Description | Item sheet | Group header c-radio-group-6 + c-checkbox-19 |
+| `c-radio-group-7` | Descriptive Cards | How and where | Order type c-radio-group-7 · in use: storefront shell (T04) |
+| `c-radio-group-8` | Card Separators | How and where | Zones c-radio-group-8 · in use: storefront shell (T04) |
+| `c-radio-group-9` | Card Icons | Checkout | Pay methods c-radio-group-9 + c-radio-group-15 |
+| `c-radio-group-15` | Badges | Checkout | Pay methods c-radio-group-9 + c-radio-group-15 |
+| `c-radio-group-17` | Pricing Tiers | Item sheet | Food sizes c-radio-group-17 |
+| `c-scrollspy-1` | Vertical Nav | Menu | Desktop rail c-scrollspy-1 |
+| `c-scrollspy-2` | Horizontal Nav | Menu | Chips c-scrollspy-2 in @diceui/scroller |
+| `c-separator-6` | Order Summary | Basket | Totals c-separator-6 · in use: storefront shell (T04) |
+| `c-skeleton-2` | Card | Item sheet | Loading c-skeleton-2 |
+| `c-skeleton-3` | Text Paragraphs | Receipt | Loading c-skeleton-3, thread c-skeleton-10 · in use: receipt (T10) |
+| `c-skeleton-4` | Form | Checkout | Loading c-skeleton-4 |
+| `c-skeleton-7` | List With Actions | Menu | Loading c-skeleton-7 |
+| `c-skeleton-8` | Card Grid | Home | Loading c-skeleton-8 |
+| `c-skeleton-9` | Profile Page | Rewards and account | Loading c-skeleton-9 |
+| `c-skeleton-10` | Chat Messages | Receipt | Loading c-skeleton-3, thread c-skeleton-10 · in use: receipt (T10) |
+| `c-spinner-3` | In Badges | Rewards and account | Pending c-spinner-3 |
+| `c-spinner-8` | Full Page | Shell | First load c-spinner-8 |
+| `c-stepper-3` | Loading State | Receipt | Kit only: alternative to c-stepper-26 (decision D10) |
+| `c-stepper-13` | Vertical Descriptions | Receipt | Install card c-alert-18 + iPhone steps c-stepper-13 |
+| `c-stepper-26` | Timestamped Checkpoints | Receipt | Status c-stepper-26 (timestamped) · in use: receipt (T10) |
+
+| `c-switch-2` | With Description | Checkout | Reward switch c-switch-2 |
+| `c-table-16` | Employee Profile | Home | Hours c-table-16 |
+| `c-tabs-2` | Line Variant | Rewards and account | Tabs c-tabs-2 |
+| `c-tabs-7` | Badge Counts | My orders | Active / Past c-tabs-7 |
+| `c-textarea-6` | Auto-Resize Counter | Item sheet | Note c-textarea-6 |
+| `c-timeline-3` | Order Status | Receipt | Kit only: alternative to c-stepper-26 (decision D10) |
+| `c-timeline-7` | Roadmap Items | Rewards and account | History c-timeline-7 |
+| `c-toggle-6` | Icon & Label | Menu | Favourites chip c-toggle-6 |
+| `c-toggle-9` | Icon Swap | Menu | Heart c-toggle-9 |
+| `c-toggle-group-4` | Custom Spacing | Item sheet | Retail axes c-toggle-group-4 |
+| `c-tooltip-12` | Disabled Button | Shell | Icon tooltips and disabled reasons c-tooltip-12 |
 
 ## Vendored copies
 

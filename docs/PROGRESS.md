@@ -23,7 +23,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] T07 Menu and item sheet (PR #16)
 - [x] T08 Basket (PR #16)
 - [x] T09 Checkout and location (PR #16)
-- [ ] T10 Receipt
+- [x] T10 Receipt (PR #16)
 - [ ] T11 My orders
 - [ ] T12 Rewards and account
 - [ ] T13 Install as an app

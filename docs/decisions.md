@@ -81,6 +81,8 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N29 Mock state for customer-created data (orders, proofs, member account) lives on the device; DEMO_RECEIPTS give fixed tokens for every receipt state (/<slug>/o/demo-…).
 - N30 Storefront phone nav is one floating pill (Home, Menu or Products, Rewards, Orders) that grows a cart segment; no separate basket bar; no bell.
 - N31 The location bar sits under the shop name on phones and opens the How and where sheet.
+- N32 The receipt PNG is made on the server with next/og; no screenshot package.
+- N33 Proof photos are compressed on the phone by a small canvas helper; no compression package.
 - S7 The order thread shows the proof and system lines (status, payment, rider, tracking); no chat posts in A.
 - S8 Continue in Messenger copies the order text first, then opens m.me in the same tap; the text has no address or phone.
 - S15 QR Ph is a payment method (the shop's QR), text only, no brand logos.

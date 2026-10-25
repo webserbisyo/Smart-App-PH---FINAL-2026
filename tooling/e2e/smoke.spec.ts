@@ -110,7 +110,7 @@ test.describe('remembered on the phone', () => {
     await sheet.getByRole('button', { name: 'Save' }).click();
     const bar = page.getByRole('button', { name: /Delivery · Marikina Heights and Parang · ₱60/ });
     await expect(bar).toBeVisible();
-    await page.goto(urlFor('dev', '/kanto-smash'));
+    await page.reload();
     await expect(bar).toBeVisible();
   });
 
@@ -691,6 +691,73 @@ test.describe('basket (T08)', () => {
     await expect(placeBtn).toBeVisible({ timeout: 15_000 });
     await expect(placeBtn).toBeDisabled();
     await expect(placeBtn).toContainText('offline');
+    expect(problems).toEqual([]);
+  });
+});
+
+test.describe('order receipt and payment proof (T10)', () => {
+  test('receipt shows pay countdown and thermal slip for unpaid transfer', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('dev', '/kanto-smash/o/demo-placed-transfer'));
+    await settle(page);
+
+    await expect(page.locator('#receipt-order-number')).toBeVisible();
+    await expect(page.locator('#receipt-pay-countdown')).toBeVisible();
+    await expect(page.locator('#receipt-thermal-slip')).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
+  test('receipt proof uploader transitions to sent on file selection', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('dev', '/kape-juan/o/demo-placed-transfer'));
+    await settle(page);
+
+    const fileInput = page.locator('input[type="file"]');
+    await expect(fileInput).toBeAttached();
+
+    await fileInput.setInputFiles({
+      name: 'proof.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('fake image payload'),
+    });
+
+    await expect(page.getByText('Proof sent', { exact: true })).toBeVisible({ timeout: 15_000 });
+    expect(problems).toEqual([]);
+  });
+
+  test('receipt rejected alert shows reason and allows reupload', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('dev', '/kanto-smash/o/demo-proof-rejected'));
+    await settle(page);
+
+    await expect(page.getByText('Payment not accepted')).toBeVisible();
+    await expect(page.locator('#receipt-upload-proof-button')).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
+  test('receipt image returns PNG status 200', async ({ request }) => {
+    const response = await request.get(urlFor('dev', '/kanto-smash/o/demo-completed/image'));
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toContain('image/png');
+  });
+
+  test('receipt offline copy shows last updated notice', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('dev', '/kanto-smash/o/demo-ready-pickup?mock=offline'));
+    await settle(page);
+
+    await expect(page.getByText("You're offline")).toBeVisible();
+    await expect(page.getByText('Last updated')).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
+  test('receipt unknown token shows empty not found pattern', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('dev', '/kanto-smash/o/non-existent-order-token'));
+    await settle(page);
+
+    await expect(page.locator('#receipt-not-found')).toBeVisible();
+    await expect(page.getByText("We can't find this order")).toBeVisible();
     expect(problems).toEqual([]);
   });
 });
