@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "outDir": "dist/types",
+    "tsBuildInfoFile": "dist/types/components.tsbuildinfo",
+    "exactOptionalPropertyTypes": false
+  },
+  "include": ["src/components/**/*"],
+  "exclude": [],
+  "references": [{ "path": "./tsconfig.lib.json" }]
+}

@@ -7,7 +7,7 @@ Source: UI research passes 1, 2 and 3 (24 Oct 2026). Every id below was opened o
 
 | Library | Count | Goes to |
 | --- | --- | --- |
-| shadcn/ui primitives (Base UI, base-nova) | 34 (14 new to the repo, 20 already installed) | `packages/ui/src/components` |
+| shadcn/ui primitives (Base UI, base-nova) | 39 in the list (17 already installed, 3 skipped: popover, scroll-area, bubble; 19 new) | `packages/ui/src/components` |
 | ReUI primitives (pulled in by the examples: badge, alert, stepper, timeline, number-field, scrollspy, icon-tile, frame) | 8 | `packages/ui/src/components` |
 | ReUI examples `c-*` (patterns with sample data) | 119 | dashboard `/kit` only: `apps/dashboard/src/features/kit/examples/` (decision D1) |
 | DiceUI (Base UI builds) | 12 | `packages/ui/src/components` |
@@ -20,11 +20,11 @@ New npm packages (all checked on registry.npmjs.org, 24 Oct 2026; none sets a No
 
 ## 2. Install lists
 
-shadcn primitives (34; the CLI skips the 20 already installed):
+shadcn primitives (39 in the list; 17 already installed; popover, scroll-area and bubble skipped by the founder, so 19 are new):
 ```
-pnpm exec shadcn add button avatar badge card drawer dialog sheet toast skeleton empty item field input input-group input-otp textarea radio-group checkbox toggle toggle-group tabs table progress spinner aspect-ratio alert-dialog dropdown-menu attachment separator carousel native-select switch popover scroll-area message bubble marker tooltip collapsible -c packages/ui
+pnpm exec shadcn add button avatar badge card drawer dialog sheet toast skeleton empty item field input input-group input-otp textarea radio-group checkbox toggle toggle-group tabs table progress spinner aspect-ratio alert-dialog dropdown-menu attachment separator carousel native-select switch message marker tooltip collapsible -c packages/ui
 ```
-(`dialog`, `sheet`, `tooltip`, `collapsible` and `badge` are already installed and listed so nothing is missing; the count of 34 is the research list.)
+(The 17 already installed: button, avatar, badge, card, drawer, dialog, sheet, skeleton, empty, item, field, input, tabs, dropdown-menu, separator, tooltip, collapsible. Skipped: popover, scroll-area, bubble.)
 
 DiceUI (12):
 ```

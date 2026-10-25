@@ -7,6 +7,7 @@ export * from './errors.js';
 export * from './icons.js';
 export * from './media.js';
 export * from './demo/media.js';
+export * from './rules/palette.js';
 export * from './schemas/common.js';
 export * from './schemas/enums.js';
 export * from './schemas/storefront.js';

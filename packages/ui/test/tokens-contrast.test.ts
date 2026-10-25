@@ -1,6 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import {
+  BRAND_COLOR_PRESETS,
+  contrastRatio as paletteContrast,
+  DEMO_SHOPS,
+  PALETTE_BLACK,
+  shopPalette,
+} from '@smartapp/core';
 
 // OKLCH to sRGB conversion for WCAG contrast ratio calculation
 function oklchToRgb(l: number, c: number, h: number): [number, number, number] {
@@ -116,4 +123,23 @@ describe('Design Tokens Contrast', () => {
       });
     }
   });
+});
+
+describe('Shop palette contrast (5 demo brands and the presets)', () => {
+  const brands = [...DEMO_SHOPS.map((shop) => shop.brandColor), ...BRAND_COLOR_PRESETS];
+  for (const hex of brands) {
+    it(`${hex}: every text pair passes 4.5:1`, () => {
+      const palette = shopPalette(hex);
+      const pairs: readonly [string, string][] = [
+        [palette.shop10, palette.shop10Foreground],
+        [palette.shop10Hover, palette.shop10Foreground],
+        [palette.shop60, PALETTE_BLACK],
+        [palette.shop30, PALETTE_BLACK],
+        [palette.shop10Soft, PALETTE_BLACK],
+      ];
+      for (const [bg, fg] of pairs) {
+        expect(paletteContrast(bg, fg)).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+  }
 });

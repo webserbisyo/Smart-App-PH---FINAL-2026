@@ -85,6 +85,32 @@
   --shell-header-height-collapsed: 3rem;
 
   --radius: 0.625rem;
+
+  /* Shop brand (storefront): ShopTheme overrides these per shop from shopPalette(); defaults are #2456D3. */
+  --shop-60: oklch(0.975 0.012 263.9);
+  --shop-30: oklch(0.995 0.002 263.9);
+  --shop-10: oklch(0.501 0.2 263.9);
+  --shop-10-foreground: oklch(1 0 0);
+  --shop-10-soft: oklch(0.93 0.033 263.9);
+  --shop-10-hover: oklch(0.441 0.2 263.9);
+
+  /* Receipt paper (thermal receipt body). */
+  --paper: oklch(0.979 0.008 91.5);
+  --paper-foreground: oklch(0.27 0 0);
+
+  /* Motion: exits run at 0.75 of the entrance. Nothing over 400 ms. */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layers, lowest first: content, sticky bars, basket bar, dock, sheet and dialog, toast, confetti. */
+  --z-sticky: 10;
+  --z-basket: 20;
+  --z-dock: 30;
+  --z-sheet: 50;
+  --z-toast: 60;
+  --z-confetti: 70;
 }
 
 .dark {

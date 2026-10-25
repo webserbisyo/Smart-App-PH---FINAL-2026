@@ -5,6 +5,8 @@
     "moduleResolution": "Bundler",
     "module": "ESNext",
     "types": ["node"],
+    "noEmit": true,
+    "tsBuildInfoFile": "dist/types/root.tsbuildinfo",
     "paths": {
       "@smartapp/ui/components/*": ["./src/components/*"],
       "@smartapp/ui/lib/*": ["./src/lib/*"],
@@ -12,5 +14,7 @@
       "@smartapp/ui/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "test/**/*"]
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["src/components", "src/lib", "src/hooks"],
+  "references": [{ "path": "./tsconfig.lib.json" }, { "path": "./tsconfig.components.json" }]
 }

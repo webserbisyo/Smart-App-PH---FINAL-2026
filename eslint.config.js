@@ -46,13 +46,6 @@ export default tseslint.config(
       ],
     },
   },
-  // Installed shadcn components in packages/ui
-  {
-    files: ['packages/ui/src/components/**'],
-    rules: {
-      '@typescript-eslint/consistent-type-assertions': 'off',
-    },
-  },
   // React Hooks
   {
     files: ['**/*.{tsx,jsx}'],
@@ -61,6 +54,16 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+    },
+  },
+  // Installed shadcn components in packages/ui (after React Hooks so it wins; decision T27)
+  {
+    files: ['packages/ui/src/components/**'],
+    rules: {
+      '@typescript-eslint/consistent-type-assertions': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'no-useless-assignment': 'off',
     },
   },
   // Storefront Next.js plugin

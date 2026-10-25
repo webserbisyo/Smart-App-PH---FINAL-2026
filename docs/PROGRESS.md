@@ -9,7 +9,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 
 ## Phase 1: Kit and shell
 
-- [ ] T02 Tokens, fonts, planned components, `/kit` page
+- [x] T02 Tokens, fonts, planned components, `/kit` page
 - [x] T02a Demo images and icons
 - [ ] T02b /kit library examples
 - [x] T03a Shop packs and rules

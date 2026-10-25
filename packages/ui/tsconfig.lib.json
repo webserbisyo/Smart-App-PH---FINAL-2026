@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "outDir": "dist/types",
+    "tsBuildInfoFile": "dist/types/lib.tsbuildinfo"
+  },
+  "include": ["src/lib/**/*", "src/hooks/**/*"],
+  "exclude": [],
+  "references": []
+}

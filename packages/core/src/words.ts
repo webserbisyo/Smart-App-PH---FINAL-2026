@@ -88,6 +88,11 @@ export const words = {
     copied: 'Link copied',
     copyFailed: 'Copy did not work. Press and hold the link to copy it.',
   },
+  media: {
+    banners: 'Shop banners',
+    slideOf: (index: number, total: number) => `${index} of ${total}`,
+    showBanner: (index: number) => `Show banner ${index}`,
+  },
   shop: {
     free: 'Free',
     sample: 'Sample',
