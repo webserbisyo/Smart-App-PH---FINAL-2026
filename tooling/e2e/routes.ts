@@ -25,6 +25,7 @@ export const ROUTES: readonly SmokeRoute[] = [
   { name: 'kape-juan menu', path: '/kape-juan/menu', server: 'prod' },
   { name: 'lola-remy menu', path: '/lola-remy/menu', server: 'prod' },
   { name: 'aqualinis menu', path: '/aqualinis/menu', server: 'prod' },
+  { name: 'kanto-smash checkout', path: '/kanto-smash/checkout', server: 'prod' },
   { name: 'unknown shop', path: '/no-such-shop', server: 'prod', notFound: true },
   { name: 'unknown shop page', path: '/kanto-smash/no-such-page', server: 'prod', notFound: true },
   { name: 'test-blank home', path: '/test-blank', server: 'dev' },

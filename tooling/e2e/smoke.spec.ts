@@ -531,4 +531,166 @@ test.describe('basket (T08)', () => {
 
     expect(problems).toEqual([]);
   });
+
+  test('checkout walk-in cash order placement navigates to receipt', async ({ page }) => {
+    const problems = watch(page);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/kanto-smash/checkout'));
+
+    // Switch to walk-in
+    await page.locator('#checkout-change-location').click();
+    await page.locator('label[for="how-walk_in"]').click();
+    await page.locator('#how-where-save').click();
+    await expect(page.locator('#how-where-save')).not.toBeVisible({ timeout: 10_000 });
+
+    // Fill customer info
+    await page.locator('#checkout-name').fill('Juan dela Cruz');
+    await page.locator('#checkout-phone').fill('09171234567');
+
+    // Place order
+    const placeBtn = page.locator('#checkout-place-order');
+    await expect(placeBtn).toBeEnabled({ timeout: 10_000 });
+    await placeBtn.click();
+
+    // Verify receipt navigation
+    await expect(page).toHaveURL(/\/kanto-smash\/o\//, { timeout: 30_000 });
+    expect(problems).toEqual([]);
+  });
+
+  test('checkout delivery with COD under limit enables place order', async ({ page }) => {
+    const problems = watch(page);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/kanto-smash/checkout'));
+
+    // Switch to delivery
+    await page.locator('#checkout-change-location').click();
+    await page.locator('label[for="how-delivery"]').click();
+    await page.locator('#rider-address').fill('123 Kalayaan Ave');
+    await page.locator('#rider-landmark').fill('Near Barangay Hall');
+    await page.locator('#how-where-save').click();
+    await expect(page.locator('#how-where-save')).not.toBeVisible({ timeout: 10_000 });
+
+    // Fill customer info
+    await page.locator('#checkout-name').fill('Maria Santos');
+    await page.locator('#checkout-phone').fill('09181234567');
+
+    // Select COD
+    await page.locator('label[for="pay-cod"]').click();
+
+    const placeBtn = page.locator('#checkout-place-order');
+    await expect(placeBtn).toBeEnabled({ timeout: 10_000 });
+    await expect(placeBtn).toContainText('Place order');
+    expect(problems).toEqual([]);
+  });
+
+  test('checkout delivery blocks COD over ₱3,000 limit', async ({ page }) => {
+    const problems = watch(page);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 25, // 25 * ₱180 = ₱4,500 > ₱3,000 COD limit
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/kanto-smash/checkout'));
+
+    // Switch to delivery
+    await page.locator('#checkout-change-location').click();
+    await page.locator('label[for="how-delivery"]').click();
+    await page.locator('#rider-address').fill('123 Kalayaan Ave');
+    await page.locator('#rider-landmark').fill('Near Barangay Hall');
+    await page.locator('#how-where-save').click();
+    await expect(page.locator('#how-where-save')).not.toBeVisible({ timeout: 10_000 });
+
+    // Verify COD option is disabled and alert is shown
+    await expect(page.getByText('Orders above ₱3,000 need payment first')).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.locator('#pay-cod')).toBeDisabled();
+    expect(problems).toEqual([]);
+  });
+
+  test('delivery resolves valid Google Maps link', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('dev', '/kanto-smash/checkout'));
+
+    await page.locator('#checkout-change-location').click();
+    await page.locator('label[for="how-delivery"]').click();
+
+    // Input coordinates near Makati within range (14.5547, 121.0244)
+    await page.locator('#maps-link-input').fill('https://maps.google.com/?q=14.5547,121.0244');
+    await expect(page.getByText('Link verified')).toBeVisible({ timeout: 15_000 });
+
+    expect(problems).toEqual([]);
+  });
+
+  test('checkout disabled when offline', async ({ page }) => {
+    const problems = watch(page);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/kanto-smash/checkout?mock=offline'));
+
+    const placeBtn = page.locator('#checkout-place-order');
+    await expect(placeBtn).toBeVisible({ timeout: 15_000 });
+    await expect(placeBtn).toBeDisabled();
+    await expect(placeBtn).toContainText('offline');
+    expect(problems).toEqual([]);
+  });
 });

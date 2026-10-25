@@ -234,3 +234,43 @@ Night run started 2026-10-25 (Manila). Order: T02, T02b, T03a, T03b, T04, T06, T
      - Update `docs/components.md` "Used in".
      - Tick T08 in `docs/PROGRESS.md`.
      - Add T08 entry in `docs/CHANGELOG.md`.
+- Result: Commit `9b2fc7d` pushed to `ag/storefront-screens` (PR #16). All 3 CI checks passed (Lint/Check/Build, Storefront smoke tests, Supabase Migration).
+
+## T09 Checkout and Delivery Location without a Map (branch `ag/storefront-screens`)
+
+- Plan:
+  1. Pure helpers & rules:
+     - `apps/storefront/src/features/checkout/checkout-rules.ts`:
+       - `parsePhoneInput()`: Normalises Philippine phone numbers (0917..., 917..., +63...) using core `normalisePhPhone`.
+       - `resolveAllowedPayments()`: Evaluates payment methods for order type, subtotal, and COD limit (blueprint 6.2 / founder S32). Emits recommended badge on first transfer method.
+       - `placeOrderEligibility()`: Evaluates online status, open/busy/closed state, basket emptiness, flagged lines, quote problems, and returns disabled state and exact customer-facing reason.
+       - `clientKeyGenerator()`: Generates random idempotency key per draft session, reused across retries.
+     - Unit tests in `apps/storefront/src/features/checkout/checkout-rules.test.ts`.
+  2. How and Where Sheet Delivery Extension (`apps/storefront/src/features/location/`):
+     - Geolocation button (`c-button-44` pattern: idle -> locating -> done/denied; permission request only on tap; denied alert `c-alert-8`).
+     - "Fix pin in Google Maps" link + paste field (`c-input-group-10` + `c-input-group-24` valid check / `c-input-group-3` invalid error; resolved via `useResolveMapsLink`).
+     - Zone selector (`c-radio-group-8`) for customers without a spot pin.
+     - Rider details (`c-field-2`): address line (required), house no. / floor (optional badge `c-input-18`), landmark (required mark `c-input-13`).
+     - Result line (`c-item-1`): distance · fee · ETA; "Too far for delivery (X km, this shop delivers up to Y km)" (`c-alert-7`) with "Switch to pickup".
+  3. Checkout Page `apps/storefront/src/app/[shop]/checkout/page.tsx` & `apps/storefront/src/features/checkout/components/`:
+     - Max 640px single column, dynamic, no phone dock.
+     - Back button (`c-button-49`) to menu.
+     - Collapsible order summary (`c-collapsible-1`).
+     - How: Order type + place/time + Change button.
+     - Who: Name (`c-input-2`), Mobile (DiceUI `MaskInput` `####-###-####`), optional email, "Remember me on this phone" (`c-checkbox-5`).
+     - Pay: Allowed payment methods (`c-radio-group-9` cards, `c-radio-group-15` recommended badge). COD limit warning (`c-alert-7`). Transfer details: account name/number + Copy (`c-button-41`), QR picture, "Send exactly ₱X" + Copy, "Upload your proof on the next page".
+     - Reward switch (`c-switch-2`) with sold out notice.
+     - Order note (`c-textarea-6`) 300 chars max.
+     - Totals (`c-separator-6`): Subtotal, Discount, Delivery fee, Total.
+     - Consent notice.
+     - Place order button (`c-button-9` large, DiceUI `Pending`, disabled reason).
+     - Loading skeleton (`c-skeleton-4`).
+     - Basket drawer CTA button update: "Checkout · ₱345" / "Schedule for 5:30 AM".
+  4. Tests:
+     - Unit tests in `apps/storefront/src/features/checkout/checkout-rules.test.ts`.
+     - Smoke e2e tests in `tooling/e2e/smoke.spec.ts`.
+  5. Documentation & verification:
+     - `docs/components.md`, `docs/PROGRESS.md`, `docs/CHANGELOG.md`.
+     - `pnpm format:check && pnpm check`, `pnpm build`, `PLAYWRIGHT_CHANNEL=chrome pnpm e2e`.
+     - Commit `T09: checkout (how, who, pay) and delivery location without a map`, push, verify CI.
+- Result: Completed. All 10 unit tests in `checkout-rules.test.ts` passed. All 82 e2e smoke tests passed (79 passed, 3 skipped across desktop and mobile, 0 errors). Full suite `pnpm format:check`, `pnpm check`, and `pnpm build` passed cleanly.
