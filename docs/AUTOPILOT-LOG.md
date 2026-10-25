@@ -4,15 +4,15 @@ Night run started 2026-10-25 (Manila). Order: T02, T02b, T03a, T03b, T04, T06, T
 
 ## Morning summary
 
-**Run 2 stopped in T04. T02 and T02b are merged (with T03a and T03b from run 1). T04 is built and green, with its PR open and not merged, because one DONE item can't be met without your call. T06 to T14 are not started.**
+**Run 2 stopped in T04. Founder decided on 2026-10-25 (Decision T31): raise the storefront first-load JS budget to 300 KB gzipped (T04 measured ~286.6 KB). Follow-up before launch: core schemas to zod/mini and lazy toast, target about 250 KB. Autopilot continues on branch `ag/storefront-screens` for T06 to T14.**
 
-| Task                    | Result                                                                                                                                                        | PR                                                                      |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| T02 Storefront kit      | **Merged** after your decision T27 (separate strictness for installed files; checkbox-group patched)                                                          | [#11](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/11) |
-| T02b /kit ReUI patterns | **Merged**, 119 patterns on /kit; decisions T28 (ReUI tokens mapped once) and T29 (bubble, scroll-area)                                                       | [#14](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/14) |
-| T03a, T03b              | Merged in run 1                                                                                                                                               | #12, #13                                                                |
-| T04 Storefront shell    | **Open, stopped**: everything built, `pnpm check`, build and the 24 e2e tests green, but Home first-load JS is **286.6 KB gzipped against the 200 KB target** | [#15](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/15) |
-| T06 to T14              | Not started: each builds on T04's shell                                                                                                                       | –                                                                       |
+| Task                    | Result                                                                                                  | PR                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| T02 Storefront kit      | **Merged** after your decision T27 (separate strictness for installed files; checkbox-group patched)    | [#11](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/11) |
+| T02b /kit ReUI patterns | **Merged**, 119 patterns on /kit; decisions T28 (ReUI tokens mapped once) and T29 (bubble, scroll-area) | [#14](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/14) |
+| T03a, T03b              | Merged in run 1                                                                                         | #12, #13                                                                |
+| T04 Storefront shell    | **Completed, unblocked by T31**; included in `ag/storefront-screens` draft PR                           | [#15](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/15) |
+| T06 to T14              | In progress on `ag/storefront-screens`                                                                  | –                                                                       |
 
 **Why T04 stopped.** I made five real reduction attempts (334 → 286.6 KB; details below). The rest is structural:
 
@@ -20,13 +20,10 @@ Night run started 2026-10-25 (Manila). Order: T02, T02b, T03a, T03b, T04, T06, T
 - Zod adds about 28 KB, because the phone's saved data (basket, order type, draft) is checked with the core Zod schemas.
 - Framework plus Zod is about 199 KB before any shell code.
 
-The autopilot rule "the same check failing after 3 real fixes" applies, so I left the PR open.
+**Founder decision (2026-10-25):**
 
-**What you decide (one of):**
-
-1. **Raise the budget** to about 300 KB for the shop shell (today 286.6) and keep tracking it. Then T04 merges as it is and the run goes on.
-2. **Move the core schemas to `zod/mini`**, which is tree-shaken, and lazy-load the toast layer. I estimate about 250 KB. This is a larger change across T03a/T03b code, so I'd do it as its own task.
-3. **Stop validating phone data with Zod in the browser**, using small hand-written guards. This saves about 28 KB but splits validation in two.
+1. **Raise the budget** to 300 KB gzipped for the shop shell (Decision T31).
+2. **Logged follow-up before launch**: move core schemas to `zod/mini` and lazy-load the toast layer, targeting about 250 KB.
 
 **By hand:**
 
