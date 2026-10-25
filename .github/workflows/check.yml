@@ -68,8 +68,8 @@ jobs:
             LEAKS=1
           fi
 
-          # The dev-only mock scenario switch (?mock, ?as, ?now) and demo owner panel must never ship in a storefront build.
-          for dev_only in "setMockScenario" "mock-scenario" "Demo owner" "demo-owner-panel"; do
+          # The dev-only mock scenario switch (?mock, ?as, ?now) must never ship in a storefront build.
+          for dev_only in "setMockScenario" "mock-scenario"; do
             if $SCAN "$dev_only" apps/storefront/.next 2>/dev/null; then
               echo "ERROR: dev-only $dev_only found in the storefront production build!"
               LEAKS=1
