@@ -23,6 +23,8 @@ import { cssVars } from '@smartapp/ui/lib/css-vars';
 import { Toaster } from '@smartapp/ui/components/toast';
 import { ShellKitSections } from '../shell-sections.js';
 import { StorefrontPrimitiveSections } from '../storefront-primitives.js';
+import { ReuiPrimitiveSections } from '../reui-primitives.js';
+import { StorefrontPatterns } from '../storefront-patterns.js';
 import { StorefrontSections } from '../storefront-sections.js';
 
 interface TokenSwatch {
@@ -302,6 +304,14 @@ export default function KitPage() {
         <Separator />
 
         <StorefrontSections />
+
+        <Separator />
+
+        <ReuiPrimitiveSections />
+
+        <Separator />
+
+        <StorefrontPatterns />
       </div>
     </div>
   );

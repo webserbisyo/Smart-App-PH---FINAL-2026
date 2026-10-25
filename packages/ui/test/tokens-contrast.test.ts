@@ -96,6 +96,10 @@ describe('Design Tokens Contrast', () => {
     { bg: 'warning-soft', fg: 'warning-soft-foreground' },
     { bg: 'info-soft', fg: 'info-soft-foreground' },
     { bg: 'member-soft', fg: 'member-soft-foreground' },
+    { bg: 'destructive-soft', fg: 'destructive-soft-foreground' },
+    { bg: 'invert', fg: 'invert-foreground' },
+    { bg: 'focus', fg: 'focus-foreground' },
+    { bg: 'background', fg: 'destructive-text' },
   ];
 
   describe('Light Mode Text Contrast (>= 4.5:1)', () => {

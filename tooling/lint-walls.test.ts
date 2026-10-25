@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ESLint } from 'eslint';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 const rootDir = resolve(__dirname, '..');
 
@@ -16,6 +16,12 @@ describe('ESLint walls', () => {
     const results = await eslint.lintText(code, { filePath: resolve(rootDir, filePath) });
     return results[0]?.messages ?? [];
   }
+
+  // Loading eslint.config.js and its plugins is a one-time cost that grows with the repo and
+  // with whatever else turbo runs in parallel; pay it here, not inside the first test's timeout.
+  beforeAll(async () => {
+    await lintCode('export {};\n', 'apps/dashboard/src/warm-up.tsx');
+  }, 120_000);
 
   it('prohibits apps from cross-importing', async () => {
     const messages = await lintCode(
