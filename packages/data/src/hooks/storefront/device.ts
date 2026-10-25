@@ -18,7 +18,7 @@ import {
   type ReadResult,
   type SavedReceipt,
 } from '../../device-storage';
-import { getMockScenario, subscribeMockScenario } from '../../mocks/scenario';
+import { getMockScenario, subscribeMockScenario } from '../../mocks/scenario-state';
 
 // Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
 declare const process: { env: { NODE_ENV?: string | undefined } };

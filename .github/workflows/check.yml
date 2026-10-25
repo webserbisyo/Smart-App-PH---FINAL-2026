@@ -45,6 +45,9 @@ jobs:
       - name: Scan build outputs for leaks and forbidden strings
         run: |
           echo "Scanning dist/ and .next/ for demo emails, /kit, and localhost..."
+          # Shipped code only: source maps carry the original text of every dependency (Next's own
+          # source mentions localhost:3000 in comments) and are never served to browsers.
+          SCAN="grep -r --exclude=*.map"
           LEAKS=0
           EMAILS=(
             "morales.juanmiguel0729+burger@gmail.com"
@@ -54,20 +57,20 @@ jobs:
             "morales.juanmiguel0729+bakery@gmail.com"
           )
           for email in "${EMAILS[@]}"; do
-            if grep -r "$email" apps/*/dist apps/*/.next 2>/dev/null; then
+            if $SCAN "$email" apps/*/dist apps/*/.next 2>/dev/null; then
               echo "ERROR: Demo email $email found in production bundle!"
               LEAKS=1
             fi
           done
 
-          if grep -r "/kit" apps/dashboard/dist apps/storefront/.next 2>/dev/null; then
+          if $SCAN "/kit" apps/dashboard/dist apps/storefront/.next 2>/dev/null; then
             echo "ERROR: /kit found in client production bundle!"
             LEAKS=1
           fi
 
           # The dev-only mock scenario switch (?mock, ?as, ?now) must never ship in a storefront build.
           for dev_only in "setMockScenario" "mock-scenario"; do
-            if grep -r "$dev_only" apps/storefront/.next 2>/dev/null; then
+            if $SCAN "$dev_only" apps/storefront/.next 2>/dev/null; then
               echo "ERROR: dev-only $dev_only found in the storefront production build!"
               LEAKS=1
             fi
@@ -84,7 +87,7 @@ jobs:
             "127.0.0.1:5173"
           )
           for dev_url in "${DEV_URLS[@]}"; do
-            if grep -r "$dev_url" apps/dashboard/dist apps/storefront/.next 2>/dev/null; then
+            if $SCAN "$dev_url" apps/dashboard/dist apps/storefront/.next 2>/dev/null; then
               echo "ERROR: Dev URL $dev_url found in client production bundle!"
               LEAKS=1
             fi

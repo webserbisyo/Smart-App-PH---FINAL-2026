@@ -47,7 +47,7 @@ import type { DataAdapters } from '../adapters/types';
 import { DEMO_CUSTOMER, generateMembers, generateOrders } from './activity';
 import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
-import { getMockScenario, type DemoCustomerState, type MockScenario } from './scenario';
+import { getMockScenario, type DemoCustomerState, type MockScenario } from './scenario-state';
 import {
   addMinutes,
   buildOrder,

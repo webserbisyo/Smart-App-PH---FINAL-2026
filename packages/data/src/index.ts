@@ -17,10 +17,5 @@ export {
   demoBasketLines,
   type DemoReceiptToken,
 } from './mocks/activity';
-export {
-  isDevMock,
-  loadMockScenario,
-  readMockScenarioFromUrl,
-  type MockScenario,
-  type UrlScenario,
-} from './mocks/scenario';
+export { isDevMock, type MockScenario } from './mocks/scenario-state';
+export { loadMockScenario, readMockScenarioFromUrl, type UrlScenario } from './mocks/scenario';

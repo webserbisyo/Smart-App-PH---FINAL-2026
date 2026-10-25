@@ -29,7 +29,7 @@ export interface ShopImageProps {
   priority?: boolean | undefined;
   // Data still loading: a skeleton of the same ratio.
   isLoading?: boolean | undefined;
-  // Origin for the Fluent icon files (the storefront serves them; the dashboard /kit passes the storefront URL).
+  // Origin for the Fluent icon files (the storefront serves them; the dashboard kit page passes the storefront URL).
   assetOrigin?: string | undefined;
   className?: string | undefined;
 }

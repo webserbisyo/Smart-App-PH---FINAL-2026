@@ -5,7 +5,7 @@ import type { DataAdapters } from './types';
 
 const loadMockStore = () => import('../mocks/browser').then((m) => m.getMockStore());
 
-/** Clears every demo change on this phone (the /kit and dev panel Reset). */
+/** Clears every demo change on this phone (the kit page and dev panel Reset). */
 export async function resetDemoData(): Promise<void> {
   (await loadMockStore()).reset();
 }

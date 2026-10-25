@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/reac
 import type { PublicShop } from '@smartapp/core';
 import { DataProvider, useAdapters } from '../../adapters/index';
 import { getDeviceStorage } from '../../device-storage';
-import { loadMockScenario, readMockScenarioFromUrl } from '../../mocks/scenario';
 import type { DataSource } from '../../env';
 import { qk } from './qk';
 
@@ -17,20 +16,23 @@ function DevScenario({ slug, source }: { slug: string; source: DataSource }) {
   const adapters = useAdapters();
   useEffect(() => {
     if (process.env.NODE_ENV === 'production' || source !== 'mock') return;
-    loadMockScenario();
-    const url = readMockScenarioFromUrl(new URLSearchParams(window.location.search), source);
-    if (!url) return;
-    if (url.fillBasket) {
-      // Dev only: the demo lines module loads on demand, like the mock store.
-      void Promise.all([
-        adapters.storefront.getStorefront({ slug }),
-        import('../../mocks/activity'),
-      ]).then(([shop, { demoBasketLines }]) => {
-        if (shop) getDeviceStorage().basket.write(slug, demoBasketLines(shop, new Date()));
-      });
-    }
-    if (Object.keys(url.scenario).length > 0)
-      void client.invalidateQueries({ queryKey: ['storefront'] });
+    // The scenario writer loads only here, so production builds never contain it (decision T26).
+    void import('../../mocks/scenario').then(({ loadMockScenario, readMockScenarioFromUrl }) => {
+      loadMockScenario();
+      const url = readMockScenarioFromUrl(new URLSearchParams(window.location.search), source);
+      if (!url) return;
+      if (url.fillBasket) {
+        // Dev only: the demo lines module loads on demand, like the mock store.
+        void Promise.all([
+          adapters.storefront.getStorefront({ slug }),
+          import('../../mocks/activity'),
+        ]).then(([shop, { demoBasketLines }]) => {
+          if (shop) getDeviceStorage().basket.write(slug, demoBasketLines(shop, new Date()));
+        });
+      }
+      if (Object.keys(url.scenario).length > 0)
+        void client.invalidateQueries({ queryKey: ['storefront'] });
+    });
   }, [adapters, client, slug, source]);
   return null;
 }
