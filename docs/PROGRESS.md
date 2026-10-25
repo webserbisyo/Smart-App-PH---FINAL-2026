@@ -20,7 +20,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 ## Phase 2: Storefront screens (mock)
 
 - [x] T06 Shop home (PR #16)
-- [ ] T07 Menu and item sheet
+- [x] T07 Menu and item sheet (PR #16)
 - [ ] T08 Basket
 - [ ] T09 Checkout and location
 - [ ] T10 Receipt

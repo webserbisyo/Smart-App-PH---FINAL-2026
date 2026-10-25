@@ -20,10 +20,17 @@ export const ROUTES: readonly SmokeRoute[] = [
   { name: 'kape-juan home', path: '/kape-juan', server: 'prod' },
   { name: 'lola-remy home', path: '/lola-remy', server: 'prod' },
   { name: 'aqualinis home', path: '/aqualinis', server: 'prod' },
+  { name: 'kanto-smash menu', path: '/kanto-smash/menu', server: 'prod' },
+  { name: 'tala-apparel menu', path: '/tala-apparel/menu', server: 'prod' },
+  { name: 'kape-juan menu', path: '/kape-juan/menu', server: 'prod' },
+  { name: 'lola-remy menu', path: '/lola-remy/menu', server: 'prod' },
+  { name: 'aqualinis menu', path: '/aqualinis/menu', server: 'prod' },
   { name: 'unknown shop', path: '/no-such-shop', server: 'prod', notFound: true },
   { name: 'unknown shop page', path: '/kanto-smash/no-such-page', server: 'prod', notFound: true },
   { name: 'test-blank home', path: '/test-blank', server: 'dev' },
+  { name: 'test-blank menu', path: '/test-blank/menu', server: 'dev' },
   { name: 'test-stress home', path: '/test-stress', server: 'dev' },
+  { name: 'test-stress menu', path: '/test-stress/menu', server: 'dev' },
 ];
 
 export const urlFor = (server: SmokeServer, path: string) =>

@@ -168,3 +168,38 @@ Night run started 2026-10-25 (Manila). Order: T02, T02b, T03a, T03b, T04, T06, T
   3. Server Component `ShopHome` in `apps/storefront/src/app/[shop]/page.tsx` assembling sections with cache per shop.
   4. Registry update in `docs/components.md` ("Used in" for all 11 Home patterns).
   5. Playwright e2e additions: cover all 5 demo shops in `routes.ts`, carousel autoplay test on desktop, reduced motion pause test, single-banner no-carousel-chunk test.
+- Result: Commit `da34903` passed all format, check, build, and e2e smoke tests. CI all green.
+
+## T07 Menu, Item Sheet, and Favourites (branch `ag/storefront-screens`)
+
+- Plan:
+  1. URL state & pure helpers:
+     - `apps/storefront/src/features/menu/url-state.ts`: Parse & format `?q=`, `?cat=`, `?fav=1`, `?item=` without external packages.
+     - Rules for disabling unticked rows at max (`isOptionDisabledAtMax`) and missing requirements identification.
+     - Unit tests in `apps/storefront/src/features/menu/menu-rules.test.ts`.
+  2. Menu screen components in `apps/storefront/src/features/menu/components/`:
+     - `menu-search.tsx`: `c-input-group-37` pattern (search icon, clear button) + `c-input-group-15` spinner while typing.
+     - `category-chips.tsx`: Horizontal `Scroller` with `c-scrollspy-2` chips, with Favourites chip (`c-toggle-6`) shown first when customer has favourites.
+     - `category-rail.tsx`: Left rail on desktop 1024+ (`c-scrollspy-1` pattern) with anchor buttons.
+     - `product-card.tsx`: 2-col on mobile, 3-col at 1024/1280 (`c-card-7` pattern, `ShopImage` 1:1, clamp 2 lines, price / "from ₱...", badges `c-badge-14`, `c-badge-13`, `c-badge-7`, heart `c-toggle-9`, quick "+" `c-button-11`).
+     - `menu-empty.tsx`: `c-empty-2` ("No match for '...'") + Clear; `c-empty-15` ("Nothing on the menu yet").
+     - `menu-skeleton.tsx`: `c-skeleton-7` loading skeleton.
+  3. Item sheet in `apps/storefront/src/features/menu/item-sheet/`:
+     - Responsive overlay: `c-drawer-1` (phone bottom drawer with scroll area and sticky footer) and `c-dialog-3` (desktop dialog with sticky footer).
+     - Dock hidden while open via `useDockHidden()`.
+     - Unknown / hidden item id triggers warning toast ("This item isn't available") and cleans URL.
+     - Top: Photos (`c-carousel-11` no autoplay in `c-aspect-ratio-2`, single image if 1, placeholder if none), name, description, price, heart (`c-toggle-9`).
+     - Variants: Single axis -> radio rows (`c-radio-group-17`), retail 2 axes -> chips (`c-toggle-group-4`), greyed "Not available" for impossible/sold-out combinations.
+     - Add-ons: Headers (`c-radio-group-6`) + rule badge (`c-checkbox-19`). Single choice -> radio rows; multiple -> DiceUI `CheckboxGroup` with `c-checkbox-11` rows, disabling unticked rows at max. Sold-out options greyed.
+     - Notes: `c-textarea-6` auto-resize with 120 character counter.
+     - Goes well with: Small cards with quick "+" or sheet opener.
+     - Footer: `c-number-field-3` quantity (1–99) + Opensource UI `AddToCartButton` in DiceUI `Pending`. If missing requirement, displays what to choose (e.g. "Choose a patty") and scrolls/marks invalid (`c-radio-group-4`).
+     - On Add: Adds to basket (`useBasket`), toast "View basket", closes sheet.
+  4. Menu page `apps/storefront/src/app/[shop]/menu/page.tsx`:
+     - Server Component with `<Suspense fallback={<MenuSkeleton />}>` passing params to `MenuContent`.
+  5. E2E tests:
+     - Update `tooling/e2e/routes.ts` with `/kanto-smash/menu`, `/tala-apparel/menu`.
+     - Add smoke tests in `tooling/e2e/smoke.spec.ts` covering menu browsing, search, food item sheet (required patty validation, pick, add to basket, dock badge update, reload persistence), retail item sheet (2 axes), favourites filter, and empty catalog.
+  6. Documentation:
+     - Update `docs/components.md`, `docs/PROGRESS.md`, `docs/CHANGELOG.md`.
+- Result: 16/16 unit tests passed, all 58 Playwright e2e tests passed. All format checks and typechecks passed across all packages. Commit and pushed to `ag/storefront-screens` (PR #16).

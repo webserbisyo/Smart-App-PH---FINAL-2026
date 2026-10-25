@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { GiftIcon, HouseIcon, PackageIcon, ReceiptTextIcon, UtensilsIcon } from 'lucide-react';
 import { vocab, words } from '@smartapp/core';
 import type { NavItem } from '@smartapp/ui/lib/nav';
@@ -32,9 +32,11 @@ export function useShopNav(): NavItem[] {
   ];
 }
 
-/** Checkout and the receipt have their own bottom actions, so the dock steps aside there. */
+/** Checkout, receipt and open item sheet have their own actions, so the dock steps aside. */
 export function useDockHidden(): boolean {
   const { slug } = useShop();
   const pathname = usePathname();
-  return pathname.startsWith(`/${slug}/checkout`) || pathname.startsWith(`/${slug}/o/`);
+  const searchParams = useSearchParams();
+  const hasItem = Boolean(searchParams?.get('item'));
+  return pathname.startsWith(`/${slug}/checkout`) || pathname.startsWith(`/${slug}/o/`) || hasItem;
 }

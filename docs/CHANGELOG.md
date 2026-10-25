@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-10-25 T07 menu and item sheet: category chips with scrollspy and favourites filter, search bar with debounce and clear, desktop category rail, responsive product cards with badges and quick-add, master item sheet (Drawer on phone, Dialog on desktop) with photo carousel, single/multi-axis variant pickers, min/max option groups, 120-char note, companion items, stepper quantity, and opensource-ui AddToCartButton (#16)
 - 2026-10-25 T06 shop home: full 12-section layout with banner carousel and brand-panel fallback, tone-based announcements, closed/busy notices, loyalty rewards card with DiceUI circular progress, favourites and best sellers scrollers with quick-add, categories chips with Fluent icons, More/Less about text, hours table with closures, contact rows, members count pill, and smoke tests (#16)
 - 2026-10-25 T04 storefront shell: shop layout with ShopTheme and per-shop metadata, top bar with open state and location bar, How and where sheet, storefront dock with the cart segment, basket drawer and 1280 px column with Undo, notify(), offline banner, platform and Not found pages, Playwright smoke tests in CI
 - 2026-10-25 T02b /kit storefront patterns: the 119 ReUI c-* examples in the dashboard kit, grouped by screen with a demo-shop switcher and lazy sections, 8 ReUI primitives plus bubble and scroll-area, ReUI badge/alert mapped to our tokens (T28), named state variants and small utilities

@@ -175,3 +175,134 @@ test.describe('banner carousel (T06)', () => {
     expect(hasCarouselChunk).toBe(false);
   });
 });
+
+test.describe('menu and item sheet (T07)', () => {
+  test('menu search and empty search result', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('prod', '/kanto-smash/menu'));
+    await settle(page);
+
+    const searchInput = page.getByRole('textbox', { name: 'Search menu' });
+    await expect(searchInput).toBeVisible();
+
+    // Type search
+    await searchInput.fill('Classic');
+    await expect(page.getByRole('heading', { name: 'Classic Smash' })).toBeVisible();
+
+    // Type no match
+    await searchInput.fill('xyznonexistentquery');
+    await expect(page.getByText('No match for "xyznonexistentquery"')).toBeVisible();
+
+    // Clear search
+    await page.getByRole('button', { name: 'Clear', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Classic Smash' })).toBeVisible();
+
+    expect(problems).toEqual([]);
+  });
+
+  test('favourites filter toggle', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('prod', '/kanto-smash/menu'));
+    await settle(page);
+
+    // Save Classic Smash
+    const heartBtn = page.getByRole('button', { name: 'Save Classic Smash' });
+    await expect(heartBtn).toBeVisible();
+    await heartBtn.click();
+
+    // Favourites chip appears
+    const favChip = page.getByRole('button', { name: 'Filter favourites' });
+    await expect(favChip).toBeVisible();
+    await favChip.click();
+
+    // URL has ?fav=1 and Classic Smash is displayed
+    await expect(page).toHaveURL(/fav=1/);
+    await expect(page.getByRole('heading', { name: 'Classic Smash' })).toBeVisible();
+
+    expect(problems).toEqual([]);
+  });
+
+  test('food item sheet: opens, picks options, adds to basket, updates dock count, persists reload', async ({
+    page,
+    isMobile,
+  }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('prod', '/kanto-smash/menu?item=ks-classic-smash'));
+    await settle(page);
+
+    // Item sheet is open with title
+    await expect(page.getByRole('heading', { name: 'Classic Smash' }).first()).toBeVisible();
+
+    // Dock is hidden while item sheet is open on phone
+    if (isMobile) {
+      await expect(page.locator('[data-slot="storefront-dock"]')).not.toBeVisible();
+    }
+
+    // Add button
+    const addBtn = page.getByRole('button', { name: /^Add · ₱/ });
+    await expect(addBtn).toBeVisible();
+    await addBtn.click();
+
+    // Toast appears
+    await expect(page.getByText('Classic Smash added')).toBeVisible();
+
+    // Dock reappears on mobile and shows 1 item
+    const cartButton = page.getByRole('button', { name: /^Basket, 1 item/ });
+    await expect(cartButton).toBeVisible();
+
+    // Reload page
+    await page.reload();
+    await expect(page.getByRole('button', { name: /^Basket, 1 item/ })).toBeVisible();
+
+    expect(problems).toEqual([]);
+  });
+
+  test('retail item sheet: Tala Basic Tee 2 axes and sold out combinations', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('prod', '/tala-apparel/menu?item=ta-tala-basic-tee'));
+    await settle(page);
+
+    await expect(page.getByRole('heading', { name: 'Tala Basic Tee' }).first()).toBeVisible();
+
+    // Select Size M
+    const mSize = page.getByRole('button', { name: 'M', exact: true });
+    await mSize.click();
+
+    // Sand colour should be disabled/sold out for size M (blueprint section 14)
+    const sandChip = page.getByRole('button', { name: 'Sand', exact: true });
+    await expect(sandChip).toBeDisabled();
+
+    // Select Black colour
+    const blackChip = page.getByRole('button', { name: 'Black', exact: true });
+    await expect(blackChip).not.toBeDisabled();
+    await blackChip.click();
+
+    // Add to cart
+    const addBtn = page.getByRole('button', { name: 'Add · ₱450' });
+    await expect(addBtn).toBeVisible();
+    await addBtn.click();
+
+    await expect(page.getByText('Tala Basic Tee added')).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
+  test('keyboard accessible: open item, pick, and add', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('prod', '/kanto-smash/menu'));
+    await settle(page);
+
+    // Focus a product card button and press Enter
+    const cardOpener = page.getByRole('button', { name: /Classic Smash/ }).first();
+    await cardOpener.focus();
+    await page.keyboard.press('Enter');
+
+    // Item sheet opens
+    await expect(page.getByRole('heading', { name: 'Classic Smash' }).first()).toBeVisible();
+
+    // Press Escape to close
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).not.toBeVisible();
+
+    expect(problems).toEqual([]);
+  });
+});
