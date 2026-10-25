@@ -362,6 +362,38 @@
     drop-shadow(0 2px 4px color-mix(in oklch, var(--shop-10) 20%, transparent));
 }
 
+/* Frosted glass for the storefront top bar (once scrolled) and dock (decision R6, the look of
+   Aceternity's floating dock): the card colour at 72 %, blur, a soft edge. Solid card where blur is
+   missing. */
+@utility glass {
+  background-color: var(--card);
+  border-color: color-mix(in oklch, var(--border) 70%, transparent);
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: color-mix(in oklch, var(--card) 72%, transparent);
+    backdrop-filter: blur(16px) saturate(1.6);
+  }
+}
+
+/* Cart bump: the cart button pops once when something is added. */
+@keyframes cart-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@utility cart-bump {
+  animation: cart-bump var(--duration-slow) var(--ease-spring);
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
 /* Stamp press: lands big and tilted, settles (Rewards). */
 @keyframes press-stamp {
   0% {

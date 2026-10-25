@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cartThumbCount, StorefrontDock, type DockCart } from '../src/compositions/storefront-dock';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { CartButton } from '../src/compositions/cart-button';
+import { StorefrontDock } from '../src/compositions/storefront-dock';
 import type { NavItem } from '../src/lib/nav';
 
 function item(id: string, label: string, active: boolean): NavItem {
@@ -15,67 +16,53 @@ const items: NavItem[] = [
   item('orders', 'Orders', false),
 ];
 
-const cart = (count: number): DockCart => ({
-  count,
-  totalLabel: '₱345',
-  thumbs: [null, null, null],
-  link: <button type="button" />,
-  label: `Basket, ${count} items, ₱345`,
-});
-
-beforeAll(() => {
-  // jsdom has no ResizeObserver; the dock measures itself with one.
-  globalThis.ResizeObserver ??= class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-});
-
 describe('StorefrontDock', () => {
   afterEach(cleanup);
 
-  it('marks only the active tab with aria-current', () => {
-    render(<StorefrontDock label="Shop" items={items} cart={null} />);
-    expect(screen.getByRole('link', { name: /home/i }).getAttribute('aria-current')).toBe('page');
-    expect(screen.getByRole('link', { name: /menu/i }).getAttribute('aria-current')).toBeNull();
+  it('marks only the active tab with aria-current and keeps every label for screen readers', () => {
+    render(<StorefrontDock label="Shop" items={items} />);
+    expect(screen.getByRole('link', { name: 'Home' }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('link', { name: 'Menu' }).getAttribute('aria-current')).toBeNull();
+    expect(screen.getAllByRole('link')).toHaveLength(4);
   });
 
-  it('shows the cart segment only with items in the basket', () => {
-    const { rerender } = render(<StorefrontDock label="Shop" items={items} cart={null} />);
+  it('shows the cart beside the pill only when given one', () => {
+    const cart = <CartButton count={3} label="Basket, 3 items, ₱345" onClick={() => {}} />;
+    const { rerender } = render(<StorefrontDock label="Shop" items={items} />);
     expect(screen.queryByRole('button', { name: /basket/i })).toBeNull();
-    rerender(<StorefrontDock label="Shop" items={items} cart={cart(0)} />);
-    expect(screen.queryByRole('button', { name: /basket/i })).toBeNull();
-    rerender(<StorefrontDock label="Shop" items={items} cart={cart(3)} />);
+    rerender(<StorefrontDock label="Shop" items={items} cart={cart} />);
     expect(screen.getByRole('button', { name: 'Basket, 3 items, ₱345' })).toBeTruthy();
   });
 });
 
-describe('cartThumbCount', () => {
-  // The dock is the screen minus 16 px each side, at most 440 px.
-  const dock = (screen: number) => Math.min(440, screen - 32);
+describe('CartButton', () => {
+  afterEach(cleanup);
 
-  it('fits up to 3 thumbnails on a wide dock with a short total', () => {
-    expect(cartThumbCount({ dockWidth: dock(768), items: 4, totalLabel: '₱345', thumbs: 3 })).toBe(
-      3,
+  it('shows the count dot only with items, capped at 99+', () => {
+    const { rerender, container } = render(
+      <CartButton count={0} label="Basket" onClick={() => {}} />,
     );
+    expect(container.textContent).toBe('');
+    rerender(<CartButton count={120} label="Basket" onClick={() => {}} />);
+    expect(container.textContent).toBe('99+');
   });
 
-  it('drops thumbnails as the total grows or the phone narrows, never below 0', () => {
-    const counts = [440, 400, 380, 340, 328].map((w) =>
-      cartThumbCount({ dockWidth: w, items: 4, totalLabel: '₱12,345.50', thumbs: 3 }),
+  it('pops when the count goes up, not when it goes down', () => {
+    const { rerender, container } = render(
+      <CartButton count={1} label="Basket" onClick={() => {}} />,
     );
-    expect(counts).toEqual([3, 2, 1, 0, 0]);
-    expect(cartThumbCount({ dockWidth: 0, items: 4, totalLabel: '₱12,345.50', thumbs: 3 })).toBe(0);
+    expect(container.querySelector('.cart-bump')).toBeNull();
+    rerender(<CartButton count={2} label="Basket" onClick={() => {}} />);
+    const first = container.querySelector('.cart-bump');
+    expect(first).not.toBeNull();
+    rerender(<CartButton count={1} label="Basket" onClick={() => {}} />);
+    expect(container.querySelector('.cart-bump')).toBe(first);
   });
 
-  it('never shows more thumbnails than lines', () => {
-    expect(cartThumbCount({ dockWidth: 440, items: 3, totalLabel: '₱49', thumbs: 1 })).toBe(1);
-  });
-
-  it('keeps tabs and segment inside a 360 px phone with a ₱12,345.50 total', () => {
-    const width = dock(360);
-    const used = 4 * (44 + 4) + 8 + 24 + 20 + 8 + '₱12,345.50'.length * 7;
-    expect(used).toBeLessThanOrEqual(width);
+  it('opens the basket on tap', () => {
+    const onClick = vi.fn();
+    render(<CartButton count={2} label="Basket, 2 items" onClick={onClick} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Basket, 2 items' }));
+    expect(onClick).toHaveBeenCalledOnce();
   });
 });

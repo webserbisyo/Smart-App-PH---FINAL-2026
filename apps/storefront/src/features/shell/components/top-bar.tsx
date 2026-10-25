@@ -1,89 +1,126 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import { ShoppingBagIcon } from 'lucide-react';
-import { imageSources, words } from '@smartapp/core';
-import { Badge } from '@smartapp/ui/components/reui/badge';
+import { HeartIcon } from 'lucide-react';
+import { imageSources, openState, openStateText, words, type OpenStateKind } from '@smartapp/core';
+import { useNow } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { ClientOnly } from '@smartapp/ui/components/client-only';
-import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
+import { CartButton } from '@smartapp/ui/compositions/cart-button';
+import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
 import { useNavLink, type NavItem } from '@smartapp/ui/lib/nav';
 import { useBasketView } from '../../basket/components/use-basket-view';
 import { LocationBar } from '../../location/components/location-bar';
 import { AccountButton } from './account-button';
 import { OfflineBanner } from './offline-banner';
-import { OpenState } from './open-state';
 import { useShopNav } from './nav';
 import { useShop } from './shop-context';
+
+function subscribeScroll(onChange: () => void) {
+  window.addEventListener('scroll', onChange, { passive: true });
+  return () => window.removeEventListener('scroll', onChange);
+}
+
+// The bar turns to frosted glass once the page moves under it.
+function useScrolled(): boolean {
+  return useSyncExternalStore(
+    subscribeScroll,
+    () => window.scrollY > 4,
+    () => false,
+  );
+}
 
 function DesktopNavLink({ item }: { item: NavItem }) {
   return useNavLink(item, {
     className:
-      'flex min-h-11 items-center rounded-full px-3 text-sm font-medium text-muted-foreground outline-none hover-hover:hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-active:bg-shop-10-soft data-active:text-foreground',
+      'flex h-9 items-center rounded-full px-4 text-sm font-medium text-muted-foreground outline-none transition-colors duration-base hover-hover:hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-active:bg-card data-active:text-foreground data-active:shadow-sm pointer-coarse:h-11',
     children: item.label,
   });
 }
 
-function BasketButton() {
+function BarCart() {
   const { shop, setBasketOpen } = useShop();
   const { count, totalLabel } = useBasketView(shop);
   return (
-    <Button
-      variant="outline"
-      className="relative min-h-11 shrink-0 rounded-full bg-card"
-      aria-label={words.storefrontShell.openBasket(count, totalLabel)}
+    <CartButton
+      count={count}
+      label={words.storefrontShell.openBasket(count, totalLabel)}
       onClick={() => setBasketOpen(true)}
-    >
-      <ShoppingBagIcon aria-hidden="true" />
-      <span className="hidden whitespace-nowrap tabular xl:inline">{totalLabel}</span>
-      {count > 0 ? (
-        <Badge size="sm" radius="full" className="tabular" aria-hidden="true">
-          {count > 99 ? '99+' : count}
-        </Badge>
-      ) : null}
-    </Button>
+    />
   );
 }
 
-// Phone and tablet: logo, name with the open state under it, then Join or the avatar; the location bar
-// below. From 1024 px: one row with the nav links, location bar, basket button and avatar (no dock there).
-// Name and location bar shrink with an ellipsis; links and buttons keep their size.
+// The logo in its open, busy or closed ring (decision R4); the name link says the state in words.
+function useOpenKind(): { kind: OpenStateKind; text: string } | null {
+  const { shop } = useShop();
+  const now = useNow();
+  if (!now) return null;
+  const state = openState(shop.storefront, now);
+  return { kind: state.paused ? 'closed' : state.state, text: openStateText(state, now) };
+}
+
+// Phone: ring logo, the name with the short location pill under it, then favourites and the account
+// menu; the cart sits beside the dock. From 1024 px: the same left side, Home, Menu and Rewards as a
+// pill group in the middle, then favourites, cart and account (decision R5: Orders lives in the
+// account menu).
 export function TopBar() {
   const { slug, shop } = useShop();
-  const nav = useShopNav();
+  const nav = useShopNav().filter((item) => item.id !== 'orders');
+  const scrolled = useScrolled();
+  const open = useOpenKind();
   const name = shop.storefront.info.name;
   const logo = imageSources(shop.storefront.info.logo);
 
   return (
-    <header className="sticky top-0 z-sticky border-b border-border bg-shop-60 pt-safe">
-      <div className="mx-auto flex max-w-280 flex-col gap-2 px-4 py-2 lg:flex-row lg:items-center lg:gap-4">
-        <div className="flex min-w-0 items-center gap-3 lg:max-w-64 lg:flex-1">
-          <Link
-            href={`/${slug}`}
-            className="flex min-w-0 flex-1 items-center gap-3 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <ShopLogo name={name} src={logo} size="sm" />
-            <span className="flex min-w-0 flex-col">
-              <span className="truncate text-base font-semibold">{name}</span>
-              <OpenState />
-            </span>
-          </Link>
-          <span className="lg:hidden">
-            <AccountButton />
-          </span>
+    <header
+      data-scrolled={scrolled ? '' : undefined}
+      className="sticky top-0 z-sticky border-b border-transparent bg-shop-60 pt-safe transition-colors duration-base data-scrolled:glass data-scrolled:shadow-sm"
+    >
+      <div className="mx-auto flex h-16 max-w-280 items-center gap-3 px-4 lg:gap-6">
+        {/* One stretched link over logo and name (the pill sits above it); decision R4's ring and
+            word on the logo, the full state spoken with the name. */}
+        <div className="relative flex min-w-0 flex-1 items-center gap-3 lg:flex-none">
+          <StatusLogo
+            name={name}
+            src={logo}
+            state={open?.kind ?? null}
+            stateLabel={open ? words.shop.openStateShort[open.kind] : ''}
+          />
+          <div className="flex min-w-0 flex-col items-start gap-1">
+            <Link
+              href={`/${slug}`}
+              className="max-w-full truncate rounded-sm text-base leading-tight font-semibold outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
+            >
+              {name}
+              {open ? <span className="sr-only">, {open.text}</span> : null}
+            </Link>
+            <LocationBar className="z-10" />
+          </div>
         </div>
         <nav
           aria-label={words.storefrontShell.mainNav}
-          className="hidden shrink-0 items-center gap-1 lg:flex"
+          className="mx-auto hidden items-center gap-1 rounded-full bg-muted/70 p-1 lg:flex"
         >
           {nav.map((item) => (
             <DesktopNavLink key={item.id} item={item} />
           ))}
         </nav>
-        <LocationBar className="w-full lg:ml-auto lg:w-auto lg:max-w-xs lg:min-w-0 lg:flex-1" />
-        <div className="hidden shrink-0 items-center gap-2 lg:flex">
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-11 rounded-full"
+            aria-label={words.storefrontShell.favourites}
+            nativeButton={false}
+            render={<Link href={`/${slug}/menu?fav=1`} />}
+          >
+            <HeartIcon aria-hidden="true" className="size-5" />
+          </Button>
           <ClientOnly>
-            <BasketButton />
+            <span className="hidden lg:flex">
+              <BarCart />
+            </span>
           </ClientOnly>
           <AccountButton />
         </div>

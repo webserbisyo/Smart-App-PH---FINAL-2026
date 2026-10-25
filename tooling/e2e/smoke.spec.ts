@@ -311,7 +311,7 @@ test.describe('menu and item sheet (T07)', () => {
 });
 
 test.describe('basket (T08)', () => {
-  test('clear basket with confirm dialog', async ({ page, isMobile }) => {
+  test('clear basket with confirm dialog', async ({ page }) => {
     const problems = watch(page);
     await page.addInitScript(() => {
       localStorage.setItem(
@@ -332,15 +332,11 @@ test.describe('basket (T08)', () => {
     });
     await page.goto(urlFor('dev', '/kanto-smash/menu'));
 
-    if (isMobile) {
-      const cartButton = page.getByRole('button', { name: /^Basket/ });
-      await expect(cartButton).toBeVisible({ timeout: 15_000 });
-      await cartButton.click();
-    }
-
-    const basket = isMobile
-      ? page.getByRole('dialog', { name: 'Your basket' })
-      : page.locator('aside[aria-label="Your basket"]');
+    // One basket at every width: the dock's cart on phones, the top bar's from 1024 px (decision R1).
+    const cartButton = page.getByRole('button', { name: /^Basket/ });
+    await expect(cartButton).toBeVisible({ timeout: 15_000 });
+    await cartButton.click();
+    const basket = page.getByRole('dialog', { name: 'Your basket' });
 
     // Basket has lines
     await expect(basket.getByRole('heading', { name: 'Your basket' })).toBeVisible({
@@ -368,7 +364,7 @@ test.describe('basket (T08)', () => {
     expect(problems).toEqual([]);
   });
 
-  test('flagged line excluded from total', async ({ page, isMobile }) => {
+  test('flagged line excluded from total', async ({ page }) => {
     const problems = watch(page);
     await page.addInitScript(() => {
       localStorage.setItem(
@@ -396,15 +392,11 @@ test.describe('basket (T08)', () => {
     });
     await page.goto(urlFor('dev', '/kanto-smash/menu'));
 
-    if (isMobile) {
-      const cartButton = page.getByRole('button', { name: /^Basket/ });
-      await expect(cartButton).toBeVisible({ timeout: 15_000 });
-      await cartButton.click();
-    }
-
-    const basket = isMobile
-      ? page.getByRole('dialog', { name: 'Your basket' })
-      : page.locator('aside[aria-label="Your basket"]');
+    // One basket at every width: the dock's cart on phones, the top bar's from 1024 px (decision R1).
+    const cartButton = page.getByRole('button', { name: /^Basket/ });
+    await expect(cartButton).toBeVisible({ timeout: 15_000 });
+    await cartButton.click();
+    const basket = page.getByRole('dialog', { name: 'Your basket' });
 
     // Verify Onion Rings shows warning banner
     await expect(basket.getByText('Sold out today')).toBeVisible({ timeout: 15_000 });
@@ -417,7 +409,7 @@ test.describe('basket (T08)', () => {
     expect(problems).toEqual([]);
   });
 
-  test('closed shop alert and schedule button at 04:30', async ({ page, isMobile }) => {
+  test('closed shop alert and schedule button at 04:30', async ({ page }) => {
     const problems = watch(page);
     await page.addInitScript(() => {
       localStorage.setItem(
@@ -438,15 +430,11 @@ test.describe('basket (T08)', () => {
     });
     await page.goto(urlFor('dev', '/lola-remy/menu?now=2026-10-25T04:30:00%2B08:00'));
 
-    if (isMobile) {
-      const cartButton = page.getByRole('button', { name: /^Basket/ });
-      await expect(cartButton).toBeVisible({ timeout: 15_000 });
-      await cartButton.click();
-    }
-
-    const basket = isMobile
-      ? page.getByRole('dialog', { name: 'Your basket' })
-      : page.locator('aside[aria-label="Your basket"]');
+    // One basket at every width: the dock's cart on phones, the top bar's from 1024 px (decision R1).
+    const cartButton = page.getByRole('button', { name: /^Basket/ });
+    await expect(cartButton).toBeVisible({ timeout: 15_000 });
+    await cartButton.click();
+    const basket = page.getByRole('dialog', { name: 'Your basket' });
 
     // Verify closed alert
     await expect(basket.getByText('Closed now · Opens 5 AM. Your basket is saved.')).toBeVisible({
@@ -460,7 +448,7 @@ test.describe('basket (T08)', () => {
     expect(problems).toEqual([]);
   });
 
-  test('offline basket notice and prices as last seen', async ({ page, isMobile }) => {
+  test('offline basket notice and prices as last seen', async ({ page }) => {
     const problems = watch(page);
     await page.addInitScript(() => {
       localStorage.setItem(
@@ -481,15 +469,11 @@ test.describe('basket (T08)', () => {
     });
     await page.goto(urlFor('dev', '/kanto-smash/menu?mock=offline'));
 
-    if (isMobile) {
-      const cartButton = page.getByRole('button', { name: /^Basket/ });
-      await expect(cartButton).toBeVisible({ timeout: 15_000 });
-      await cartButton.click();
-    }
-
-    const basket = isMobile
-      ? page.getByRole('dialog', { name: 'Your basket' })
-      : page.locator('aside[aria-label="Your basket"]');
+    // One basket at every width: the dock's cart on phones, the top bar's from 1024 px (decision R1).
+    const cartButton = page.getByRole('button', { name: /^Basket/ });
+    await expect(cartButton).toBeVisible({ timeout: 15_000 });
+    await cartButton.click();
+    const basket = page.getByRole('dialog', { name: 'Your basket' });
 
     // Verify offline alert
     await expect(basket.getByRole('alert')).toContainText("You're offline. Your basket is saved.");
@@ -505,7 +489,10 @@ test.describe('basket (T08)', () => {
     expect(problems).toEqual([]);
   });
 
-  test('desktop 1280 shows sticky basket column', async ({ page, isMobile }) => {
+  test('desktop 1280 has one basket: the top bar cart opens the drawer', async ({
+    page,
+    isMobile,
+  }) => {
     test.skip(isMobile, 'Desktop only check');
     const problems = watch(page);
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -528,9 +515,15 @@ test.describe('basket (T08)', () => {
     });
     await page.goto(urlFor('dev', '/kanto-smash/menu'));
 
-    const stickyAside = page.locator('aside[aria-label="Your basket"]');
-    await expect(stickyAside).toBeVisible({ timeout: 15_000 });
-    await expect(stickyAside.getByRole('heading', { name: 'Your basket' })).toBeVisible();
+    const cartButton = page.getByRole('button', { name: /^Basket, 1 item/ });
+    await expect(cartButton).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('aside[aria-label="Your basket"]')).toHaveCount(0);
+    await cartButton.click();
+    await expect(
+      page
+        .getByRole('dialog', { name: 'Your basket' })
+        .getByRole('heading', { name: 'Your basket' }),
+    ).toBeVisible();
 
     expect(problems).toEqual([]);
   });

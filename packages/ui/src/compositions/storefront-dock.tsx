@@ -1,147 +1,59 @@
-import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
-import { useRender } from '@base-ui/react/use-render';
-import type { ImageSources } from '@smartapp/core/media';
-import { Avatar, AvatarGroup } from '@smartapp/ui/components/avatar';
-import { Badge } from '@smartapp/ui/components/reui/badge';
+import type { ReactNode } from 'react';
 import { useKeyboardOpen } from '../hooks/use-keyboard-open';
-import { countLabel, useNavLink, type NavItem } from '../lib/nav';
-import { dockSlotClass } from './bottom-dock';
-import { ShopImage } from './shop-image';
-
-export interface DockCart {
-  count: number;
-  totalLabel: string;
-  // First lines' photos; null shows the shop-coloured tile.
-  thumbs: readonly (ImageSources | null)[];
-  // The app's button that opens the basket.
-  link: ReactElement;
-  // Spoken label, e.g. "Basket, 3 items, ₱345".
-  label: string;
-}
+import { useNavLink, type NavItem } from '../lib/nav';
 
 export interface StorefrontDockProps {
   label: string;
   // Up to 4: Home, Menu or Products, Rewards (when the stamp card is on), Orders.
   items: readonly NavItem[];
-  cart: DockCart | null;
+  // The round cart button beside the pill (CartButton, dock variant); leave out with an empty basket.
+  cart?: ReactNode;
 }
 
-// Sizes the segment needs, in px (see cartThumbCount).
-const SLOT_MIN = 44;
-const GAP = 4;
-const DOCK_PAD = 4;
-const SEGMENT_PAD = 24;
-const BADGE = 20;
-const SEGMENT_GAP = 8;
-const CHAR = 7;
-const THUMB = 32;
-const THUMB_STEP = 20;
-
-/**
- * How many basket thumbnails (0 to 3) fit next to the tabs without wrapping: a long total
- * (₱12,345.50) or a narrow phone drops them one by one.
- */
-export function cartThumbCount(input: {
-  dockWidth: number;
-  items: number;
-  totalLabel: string;
-  thumbs: number;
-}): number {
-  const slots = input.items * (SLOT_MIN + GAP) + DOCK_PAD * 2;
-  const segment = SEGMENT_PAD + BADGE + SEGMENT_GAP + input.totalLabel.length * CHAR;
-  const room = input.dockWidth - slots - segment;
-  for (let n = Math.min(3, input.thumbs); n > 0; n--) {
-    if (THUMB + (n - 1) * THUMB_STEP + SEGMENT_GAP <= room) return n;
-  }
-  return 0;
-}
-
+// Each tab is an icon in a 44 px round well; the active one grows into an icon and label capsule in
+// the shop colour and takes the free width. Labels stay in the accessibility tree for every tab.
 function StorefrontDockSlot({ item }: { item: NavItem }) {
   return useNavLink(item, {
-    className: dockSlotClass,
+    className:
+      'group/slot pressable flex h-full min-w-0 shrink-0 grow-0 basis-11 items-center justify-center rounded-full outline-none transition-all duration-base ease-standard focus-visible:ring-2 focus-visible:ring-ring data-active:shrink data-active:grow',
     children: (
-      <>
-        <span className="relative flex h-7 w-10 items-center justify-center rounded-full transition-colors group-data-active/slot:bg-shop-10-soft group-data-active/slot:text-foreground">
-          <span aria-hidden="true" className="flex *:size-5">
-            {item.icon}
-          </span>
+      <span className="flex h-11 w-full min-w-11 items-center justify-center gap-1.5 rounded-full bg-muted/70 text-muted-foreground transition-all duration-base ease-standard group-data-active/slot:bg-shop-10 group-data-active/slot:px-3 group-data-active/slot:text-shop-10-foreground">
+        <span aria-hidden="true" className="flex shrink-0 *:size-5">
+          {item.icon}
         </span>
-        <span className="max-w-full truncate leading-tight">{item.label}</span>
-      </>
+        <span className="sr-only truncate text-sm font-semibold group-data-active/slot:not-sr-only">
+          {item.label}
+        </span>
+      </span>
     ),
   });
 }
 
-function CartSegment({ cart, thumbs }: { cart: DockCart; thumbs: number }): ReactNode {
-  return useRender({
-    render: cart.link,
-    props: {
-      'aria-label': cart.label,
-      className:
-        'pressable flex h-14 shrink-0 items-center gap-2 overflow-hidden rounded-full bg-shop-10 px-3 text-shop-10-foreground outline-none transition-[max-width] duration-base ease-standard focus-visible:ring-2 focus-visible:ring-ring max-w-80 starting:max-w-0',
-      children: (
-        <>
-          {thumbs > 0 ? (
-            <AvatarGroup className="-space-x-3" aria-hidden="true">
-              {cart.thumbs.slice(0, thumbs).map((src, i) => (
-                <Avatar key={i} className="size-8 rounded-md bg-card after:rounded-md">
-                  <ShopImage src={src} alt="" ratio="1:1" sizes="32px" className="size-8" />
-                </Avatar>
-              ))}
-            </AvatarGroup>
-          ) : null}
-          <Badge size="sm" radius="full" variant="invert" className="tabular" aria-hidden="true">
-            {countLabel(cart.count)}
-          </Badge>
-          <span className="text-sm font-semibold whitespace-nowrap tabular" aria-hidden="true">
-            {cart.totalLabel}
-          </span>
-        </>
-      ),
-    },
-  });
-}
-
-// Floating pill for the storefront on phones and tablets: tabs, plus a cart segment that grows in
-// when the basket has items (decision N30). Router- and breakpoint-agnostic like BottomDock (the app
-// hides it from 1024 px, where the top bar takes over); hidden while the keyboard is open.
+// Floating glass pill for the storefront on phones and tablets (composition C7, decisions R5 and R6):
+// the tabs, and the cart as its own round button that slides in beside the pill when the basket has
+// items. Router- and breakpoint-agnostic like BottomDock (the app hides it from 1024 px, where the top
+// bar takes over); hidden while the keyboard is open.
 export function StorefrontDock({ label, items, cart }: StorefrontDockProps) {
   const keyboardOpen = useKeyboardOpen();
-  const ref = useRef<HTMLElement>(null);
-  const [width, setWidth] = useState(0);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry) setWidth(entry.contentRect.width);
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  const thumbs = cart
-    ? cartThumbCount({
-        dockWidth: width,
-        items: items.length,
-        totalLabel: cart.totalLabel,
-        thumbs: cart.thumbs.length,
-      })
-    : 0;
-
   return (
-    <nav
-      ref={ref}
-      aria-label={label}
+    <div
       data-slot="storefront-dock"
       data-keyboard={keyboardOpen ? 'open' : 'closed'}
-      className="fixed inset-x-4 dock-pill z-dock mx-auto flex items-center gap-1 rounded-full border border-border bg-card px-1 shadow-lg keyboard-open:hidden"
+      className="fixed inset-x-4 dock-pill z-dock mx-auto flex items-center gap-2 keyboard-open:hidden"
     >
-      {items.map((item) => (
-        <StorefrontDockSlot key={item.id} item={item} />
-      ))}
-      {cart && cart.count > 0 ? <CartSegment cart={cart} thumbs={thumbs} /> : null}
-    </nav>
+      <nav
+        aria-label={label}
+        className="flex h-full min-w-0 flex-1 items-center gap-1 rounded-full border glass px-1.5 shadow-lg"
+      >
+        {items.map((item) => (
+          <StorefrontDockSlot key={item.id} item={item} />
+        ))}
+      </nav>
+      {cart ? (
+        <div className="flex shrink-0 transition-all duration-base ease-spring starting:scale-50 starting:opacity-0">
+          {cart}
+        </div>
+      ) : null}
+    </div>
   );
 }

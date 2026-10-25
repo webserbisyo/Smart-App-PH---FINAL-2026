@@ -3,6 +3,7 @@ import { SHOP_PACKS } from '../src/demo/packs/index.js';
 import {
   chosenOrderType,
   locationLabel,
+  locationShortLabel,
   orderTypeDetail,
   slotGroups,
   slotLabel,
@@ -16,6 +17,24 @@ const kape = SHOP_PACKS['kape-juan'].storefront;
 // Tuesday 28 Oct 2026, 2:00 PM Manila (Kanto opens 11 AM to 10 PM).
 const NOW = '2026-10-28T06:00:00.000Z';
 const none = { type: null, scheduledAt: null, zoneId: null };
+
+describe('short location pill', () => {
+  it('names the type, or the delivery area once chosen', () => {
+    expect(locationShortLabel(kanto, none)).toBe('Order how?');
+    expect(locationShortLabel(kanto, { ...none, type: 'walk_in' })).toBe('Walk-in');
+    expect(
+      locationShortLabel(kanto, {
+        ...none,
+        type: 'pickup',
+        scheduledAt: '2026-10-28T07:30:00.000Z',
+      }),
+    ).toBe('Pickup');
+    expect(
+      locationShortLabel(kanto, { ...none, type: 'delivery', zoneId: 'ks-z-concepcion' }),
+    ).toBe('Concepcion Uno and Dos');
+    expect(locationShortLabel(kanto, { ...none, type: 'delivery' })).toBe('Delivery');
+  });
+});
 
 describe('location bar text', () => {
   it('asks to choose when nothing is set', () => {

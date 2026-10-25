@@ -88,6 +88,11 @@ export const words = {
     rewards: 'Rewards',
     join: 'Join',
     account: 'Account',
+    accountMenu: 'Your account',
+    myOrders: 'My orders',
+    favourites: 'Your favourites',
+    rewardReady: 'A reward is ready',
+    shopInfo: (name: string, status: string) => `${name}, ${status}. Shop info`,
     basket: 'Basket',
     openBasket: (count: number, total: string) =>
       `Basket, ${count} ${count === 1 ? 'item' : 'items'}, ${total}`,
@@ -196,6 +201,7 @@ export const words = {
   },
   location: {
     choose: 'Choose how you’ll order',
+    chooseShort: 'Order how?',
     asap: 'ASAP',
     today: (time: string) => `Today ${time}`,
     tomorrow: (time: string) => `Tomorrow ${time}`,
@@ -343,6 +349,8 @@ export const words = {
     openUntil: (time: string) => `Open until ${time}`,
     closedOpens: (when: string) => `Closed · Opens ${when}`,
     closedNoOpening: 'Closed',
+    // The word on the logo's status ring (top bar).
+    openStateShort: { open: 'Open', busy: 'Busy', closed: 'Closed' },
     busyBack: (time: string) => `Busy · back ${time}`,
     notTakingOrders: 'Not taking orders right now',
     tomorrowAt: (time: string) => `tomorrow ${time}`,

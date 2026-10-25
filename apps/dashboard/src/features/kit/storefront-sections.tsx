@@ -10,6 +10,7 @@ import {
   type IconKey,
   type ShopSurface,
 } from '@smartapp/core';
+import type { ImageSources } from '@smartapp/core/media';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
 import { Confetti } from '@smartapp/ui/components/confetti';
@@ -22,8 +23,10 @@ import { rewardReady, stampBurst } from '@smartapp/ui/compositions/celebrate';
 import { CountUp } from '@smartapp/ui/compositions/count-up';
 import { ShopImage, type ShopImageRatio } from '@smartapp/ui/compositions/shop-image';
 import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
+import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
+import { CartButton } from '@smartapp/ui/compositions/cart-button';
 import type { NavItem } from '@smartapp/ui/lib/nav';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { startReveal } from '@smartapp/ui/lib/reveal-clip';
@@ -273,15 +276,24 @@ const DOCK_TABS: NavItem[] = [
   },
 ];
 
-// 0, 1, 3 and 9 items, and a ₱12,345.50 total at phone widths (decision N30).
-function DockStates({ shop }: { shop: KitShop }) {
-  const photo = imageSources(`demo:${shop.slug}/items/${shop.item}`, ORIGIN);
+// Glass pill with the cart beside it (decisions R5 and R6): empty, 1 item, 9 items and 99+, at
+// 390 and 360 px, with a different active tab each time.
+function DockStates() {
   const states = [
-    { label: 'Empty basket (no cart segment)', count: 0, total: '₱0', width: 'max-w-sm' },
-    { label: '1 item', count: 1, total: '₱189', width: 'max-w-sm' },
-    { label: '3 items', count: 3, total: '₱567', width: 'max-w-sm' },
-    { label: '9 items, ₱12,345.50 at 390 px', count: 9, total: '₱12,345.50', width: 'max-w-97.5' },
-    { label: '9 items, ₱12,345.50 at 360 px', count: 9, total: '₱12,345.50', width: 'max-w-90' },
+    { label: 'Empty basket (no cart)', count: 0, active: 'home', width: 'max-w-sm' },
+    { label: '1 item, Menu active', count: 1, active: 'menu', width: 'max-w-sm' },
+    {
+      label: '9 items at 390 px, Rewards active',
+      count: 9,
+      active: 'rewards',
+      width: 'max-w-97.5',
+    },
+    {
+      label: '120 items at 360 px, Orders active',
+      count: 120,
+      active: 'orders',
+      width: 'max-w-90',
+    },
   ];
   return (
     <div id="kit-dock" className="flex flex-col gap-4">
@@ -289,22 +301,64 @@ function DockStates({ shop }: { shop: KitShop }) {
         <div key={s.label} className="flex flex-col gap-1">
           <span className="text-sm text-muted-foreground">{s.label}</span>
           <div
-            className={`relative h-24 w-full ${s.width} transform-gpu overflow-hidden rounded-xl border border-border bg-muted`}
+            className={`relative h-24 w-full ${s.width} transform-gpu overflow-hidden rounded-xl border border-border bg-background`}
           >
             <StorefrontDock
               label="Demo"
-              items={DOCK_TABS}
-              cart={{
-                count: s.count,
-                totalLabel: s.total,
-                thumbs: Array.from({ length: Math.min(3, s.count) }, () => photo),
-                link: <button type="button" />,
-                label: `Basket, ${s.count} items, ${s.total}`,
-              }}
+              items={DOCK_TABS.map((tab) => ({ ...tab, active: tab.id === s.active }))}
+              cart={
+                s.count > 0 ? (
+                  <CartButton
+                    variant="dock"
+                    count={s.count}
+                    label={`Basket, ${s.count} items`}
+                    onClick={() => {}}
+                  />
+                ) : null
+              }
             />
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// Open (turning green ring), busy (amber), closed (grey, decision R4) and loading (no word yet).
+function StatusLogos({ name, logo }: { name: string; logo: ImageSources | null }) {
+  const states = [
+    { state: 'open', label: 'Open' },
+    { state: 'busy', label: 'Busy' },
+    { state: 'closed', label: 'Closed' },
+  ] as const;
+  return (
+    <div className="flex flex-wrap items-center gap-8">
+      {states.map((s) => (
+        <StatusLogo key={s.state} name={name} src={logo} state={s.state} stateLabel={s.label} />
+      ))}
+      <StatusLogo name={name} src={null} state="open" stateLabel="Open" size="lg" />
+      <StatusLogo name={name} src={logo} state={null} stateLabel="" />
+    </div>
+  );
+}
+
+// The top bar's outline cart and the dock's shop-colour cart: 0, 3 and 99+.
+function CartButtons() {
+  const [count, setCount] = useState(3);
+  return (
+    <div className="flex flex-wrap items-center gap-4">
+      <CartButton count={0} label="Basket, empty" onClick={() => {}} />
+      <CartButton count={count} label={`Basket, ${count} items`} onClick={() => {}} />
+      <CartButton
+        variant="dock"
+        count={count}
+        label={`Basket, ${count} items`}
+        onClick={() => {}}
+      />
+      <CartButton variant="dock" count={120} label="Basket, 120 items" onClick={() => {}} />
+      <Button variant="outline" onClick={() => setCount((c) => c + 1)}>
+        Add one (pops)
+      </Button>
     </div>
   );
 }
@@ -384,6 +438,24 @@ export function StorefrontSections() {
               <ShopLogo name={summary.name} src={null} size="sm" />
               <ShopLogo name={summary.name} src={null} isLoading size="lg" />
             </div>
+          </KitSection>
+
+          <KitSection
+            title="Status logo"
+            library="composition"
+            path="packages/ui/src/compositions/status-logo.tsx"
+            usedIn="storefront top bar, kit"
+          >
+            <StatusLogos name={summary.name} logo={logo} />
+          </KitSection>
+
+          <KitSection
+            title="Cart button"
+            library="composition"
+            path="packages/ui/src/compositions/cart-button.tsx"
+            usedIn="storefront top bar (1024 px up), storefront dock, kit"
+          >
+            <CartButtons />
           </KitSection>
 
           <KitSection
@@ -598,7 +670,7 @@ export function StorefrontSections() {
             path="packages/ui/src/compositions/storefront-dock.tsx"
             usedIn="storefront shell (phone and tablet), kit"
           >
-            <DockStates shop={shop} />
+            <DockStates />
           </KitSection>
 
           <KitSection

@@ -64,6 +64,15 @@ export function locationLabel(
   }
 }
 
+/** The short top bar pill: "Walk-in", "Pickup", the delivery area's name, or "Delivery" or "Order how?" (redesign I5). */
+export function locationShortLabel(sf: LocationInput, choice: LocationChoice): string {
+  const type = chosenOrderType(sf, choice.type);
+  if (type === null) return words.location.chooseShort;
+  if (type === 'delivery')
+    return chosenZone(sf, choice.zoneId)?.name ?? words.shop.orderType.delivery;
+  return words.shop.orderType[type];
+}
+
 /** One line under each order type in the sheet: "Ready in about 20 min", "₱40 to ₱80 · 30 to 45 min". */
 export function orderTypeDetail(
   sf: Pick<Storefront, 'delivery' | 'prepMinutes'>,
