@@ -299,47 +299,63 @@ export function ItemSheet({
   const formFactor = useFormFactor();
   const isPhone = formFactor === 'phone';
 
-  const item = useMemo(() => {
+  const [prevItemId, setPrevItemId] = useState(itemId);
+  const [activeItem, setActiveItem] = useState<Item | null>(() => {
     if (!itemId) return null;
     return catalog.items.find((i) => i.id === itemId && i.status === 'active') ?? null;
-  }, [catalog.items, itemId]);
+  });
+  const [isOpen, setIsOpen] = useState(Boolean(itemId));
+
+  if (prevItemId !== itemId) {
+    setPrevItemId(itemId);
+    if (itemId) {
+      const found = catalog.items.find((i) => i.id === itemId && i.status === 'active') ?? null;
+      if (found) {
+        setActiveItem(found);
+        setIsOpen(true);
+      }
+    } else {
+      setIsOpen(false);
+    }
+  }
 
   // If itemId was provided but item is unknown or inactive, notify and close
   useEffect(() => {
-    if (itemId && !item) {
+    if (itemId && !catalog.items.some((i) => i.id === itemId && i.status === 'active')) {
       notify({
         title: words.storefrontShell.menu.notAvailableToast,
         tone: 'warning',
       });
       onClose();
     }
-  }, [itemId, item, onClose]);
+  }, [catalog.items, itemId, onClose]);
 
-  if (!item) return null;
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsOpen(false);
+      onClose();
+    }
+  };
+
+  if (!activeItem) return null;
 
   if (isPhone) {
     return (
-      <Drawer
-        open={Boolean(itemId)}
-        onOpenChange={(open) => {
-          if (!open) onClose();
-        }}
-        showSwipeHandle
-      >
+      <Drawer open={isOpen} onOpenChange={handleOpenChange} showSwipeHandle>
         <DrawerContent className="flex max-h-vh-85 flex-col overflow-hidden p-0">
           <ItemSheetContent
-            key={item.id}
+            key={activeItem.id}
             slug={slug}
-            item={item}
+            item={activeItem}
             catalog={catalog}
             now={now}
-            onClose={onClose}
+            onClose={() => handleOpenChange(false)}
             onOpenItem={onOpenItem}
           />
 
           <DrawerHeader className="sr-only">
-            <DrawerTitle>{item.name}</DrawerTitle>
-            <DrawerDescription>{item.description ?? item.name}</DrawerDescription>
+            <DrawerTitle>{activeItem.name}</DrawerTitle>
+            <DrawerDescription>{activeItem.description ?? activeItem.name}</DrawerDescription>
           </DrawerHeader>
         </DrawerContent>
       </Drawer>
@@ -347,26 +363,21 @@ export function ItemSheet({
   }
 
   return (
-    <Dialog
-      open={Boolean(itemId)}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="flex max-h-vh-85 max-w-md flex-col overflow-hidden p-0">
         <ItemSheetContent
-          key={item.id}
+          key={activeItem.id}
           slug={slug}
-          item={item}
+          item={activeItem}
           catalog={catalog}
           now={now}
-          onClose={onClose}
+          onClose={() => handleOpenChange(false)}
           onOpenItem={onOpenItem}
         />
 
         <DialogHeader className="sr-only">
-          <DialogTitle>{item.name}</DialogTitle>
-          <DialogDescription>{item.description ?? item.name}</DialogDescription>
+          <DialogTitle>{activeItem.name}</DialogTitle>
+          <DialogDescription>{activeItem.description ?? activeItem.name}</DialogDescription>
         </DialogHeader>
       </DialogContent>
     </Dialog>

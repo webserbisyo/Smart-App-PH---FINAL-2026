@@ -36,15 +36,19 @@ export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
   }, [searchParams]);
 
   // Update URL helper without jumping scroll
-  const updateParams = (updates: Partial<MenuParams>) => {
-    startTransition(() => {
-      const nextSearch = buildMenuSearch(params, updates);
+  const updateParams = (updates: Partial<MenuParams>, transition = false) => {
+    const nextSearch = buildMenuSearch(params, updates);
+    if (transition) {
+      startTransition(() => {
+        router.replace(`${pathname}${nextSearch}`, { scroll: false });
+      });
+    } else {
       router.replace(`${pathname}${nextSearch}`, { scroll: false });
-    });
+    }
   };
 
   const handleSearchChange = (query: string) => {
-    updateParams({ q: query });
+    updateParams({ q: query }, true);
   };
 
   const handleSelectCat = (catId: string | null) => {
