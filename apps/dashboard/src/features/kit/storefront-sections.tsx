@@ -8,6 +8,7 @@ import {
   words,
   type DemoShopSlug,
   type IconKey,
+  type ShopSurface,
 } from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
@@ -110,7 +111,7 @@ function ImageStates({ shop, ratio }: { shop: KitShop; ratio: ShopImageRatio }) 
     },
   ];
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {states.map((state) => (
         <figure key={state.label} className="min-w-0 space-y-1">
           {state.node}
@@ -123,20 +124,20 @@ function ImageStates({ shop, ratio }: { shop: KitShop; ratio: ShopImageRatio }) 
   );
 }
 
-function PaletteSwatches({ brandColor }: { brandColor: string }) {
-  const palette = shopPalette(brandColor);
+function PaletteSwatches({ brandColor, surface }: { brandColor: string; surface: ShopSurface }) {
+  const palette = shopPalette(brandColor, surface);
   const pairs = [
     {
       name: 'shop-60',
       bg: 'bg-shop-60',
       fg: 'text-foreground',
-      ratio: contrastRatio(palette.shop60, 'oklch(0.145 0 0)'),
+      ratio: contrastRatio(palette.shop60, palette.foreground),
     },
     {
       name: 'shop-30',
       bg: 'bg-shop-30',
       fg: 'text-foreground',
-      ratio: contrastRatio(palette.shop30, 'oklch(0.145 0 0)'),
+      ratio: contrastRatio(palette.shop30, palette.foreground),
     },
     {
       name: 'shop-10',
@@ -151,10 +152,16 @@ function PaletteSwatches({ brandColor }: { brandColor: string }) {
       ratio: contrastRatio(palette.shop10Hover, palette.shop10Foreground),
     },
     {
+      name: 'shop-10-text',
+      bg: 'bg-shop-60',
+      fg: 'text-shop-10-text',
+      ratio: contrastRatio(palette.shop60, palette.shop10Text),
+    },
+    {
       name: 'shop-10-soft',
       bg: 'bg-shop-10-soft',
-      fg: 'text-foreground',
-      ratio: contrastRatio(palette.shop10Soft, 'oklch(0.145 0 0)'),
+      fg: 'text-shop-10-soft-foreground',
+      ratio: contrastRatio(palette.shop10Soft, palette.shop10SoftForeground),
     },
   ];
   return (
@@ -335,7 +342,7 @@ export function StorefrontSections() {
         </div>
       </section>
 
-      <ShopTheme brandColor={summary.brandColor}>
+      <ShopTheme brandColor={summary.brandColor} surface={summary.surface}>
         <div className="space-y-12 rounded-xl bg-shop-60 p-4 text-foreground md:p-6">
           <KitSection
             title="Shop palette (ShopTheme)"
@@ -346,7 +353,7 @@ export function StorefrontSections() {
             <p className="text-sm">
               Brand <span className="font-mono">{summary.brandColor}</span> → shopPalette()
             </p>
-            <PaletteSwatches brandColor={summary.brandColor} />
+            <PaletteSwatches brandColor={summary.brandColor} surface={summary.surface} />
           </KitSection>
 
           <KitSection

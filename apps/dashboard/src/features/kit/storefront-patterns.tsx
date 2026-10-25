@@ -80,7 +80,7 @@ export function StorefrontPatterns() {
       </section>
 
       <KitShopProvider slug={slug}>
-        <ShopTheme brandColor={summary.brandColor}>
+        <ShopTheme brandColor={summary.brandColor} surface={summary.surface}>
           <div className="space-y-10">
             {PATTERN_SCREENS.map((screen) => (
               <section key={screen.key} className="min-w-0 space-y-4">

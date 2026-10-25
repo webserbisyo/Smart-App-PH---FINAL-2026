@@ -61,6 +61,7 @@ describe('shop packs', () => {
       expect(storefront.info.name).toBe(summary?.name);
       expect(storefront.info.kind).toBe(summary?.kind);
       expect(storefront.look.brandColor).toBe(summary?.brandColor);
+      expect(storefront.look.surface).toBe(summary?.surface);
       expect(storefront.info.isDemo).toBe(true);
     },
   );

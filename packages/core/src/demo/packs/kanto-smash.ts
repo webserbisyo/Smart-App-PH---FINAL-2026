@@ -252,6 +252,7 @@ export const KANTO_SMASH_PACK: ShopPack = {
     },
     look: {
       brandColor: '#D7372F',
+      surface: 'dark',
       banners: [
         {
           ref: 'demo:kanto-smash/banners/banner-1',

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ShopSurfaceEnum } from './enums.js';
 
 export const ShopKind = ['food', 'retail'] as const;
 export const ShopKindEnum = z.enum(ShopKind);
@@ -12,6 +13,7 @@ export const DemoShopSummarySchema = z.object({
   city: z.string().min(1),
   // Brand colour as #rrggbb; screens set it through cssVars(), never as a class.
   brandColor: z.string().regex(/^#[0-9a-f]{6}$/i),
+  surface: ShopSurfaceEnum,
 });
 
 export type DemoShopSummary = z.infer<typeof DemoShopSummarySchema>;

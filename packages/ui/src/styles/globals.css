@@ -80,8 +80,10 @@
   --color-shop-30: var(--shop-30);
   --color-shop-10: var(--shop-10);
   --color-shop-10-foreground: var(--shop-10-foreground);
-  --color-shop-10-soft: var(--shop-10-soft);
   --color-shop-10-hover: var(--shop-10-hover);
+  --color-shop-10-text: var(--shop-10-text);
+  --color-shop-10-soft: var(--shop-10-soft);
+  --color-shop-10-soft-foreground: var(--shop-10-soft-foreground);
 
   --color-paper: var(--paper);
   --color-paper-foreground: var(--paper-foreground);

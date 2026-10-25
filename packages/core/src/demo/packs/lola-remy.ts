@@ -193,6 +193,7 @@ export const LOLA_REMY_PACK: ShopPack = {
     },
     look: {
       brandColor: '#C27C2C',
+      surface: 'light',
       banners: [
         { ref: 'demo:lola-remy/banners/banner-1', alt: 'Hot pandesal on a bilao at 5 AM' },
         { ref: 'demo:lola-remy/banners/banner-2', alt: 'Ensaymada Malolos in a pasalubong box' },

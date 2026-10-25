@@ -126,6 +126,7 @@ export const AQUALINIS_PACK: ShopPack = {
     },
     look: {
       brandColor: '#0E7AC4',
+      surface: 'light',
       banners: [
         {
           ref: 'demo:aqualinis/banners/banner-1',

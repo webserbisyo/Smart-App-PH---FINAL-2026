@@ -36,18 +36,20 @@ For the ReUI primitives (decision T28): `destructive-text`, `destructive-soft` a
 
 ## Shop brand (storefront only)
 
-The owner picks one colour (default `#2456D3`, presets, or "use logo colour"). `shopPalette()` in core makes a 60/30/10 palette, set on the shop layout at runtime through `cssVars()`:
+The owner picks one colour (default `#2456D3`, presets, or "use logo colour") and a surface, light or dark (`look.surface`, decision R2). `shopPalette(hex, surface)` in core makes a 60/30/10 palette, set on the shop layout at runtime through `cssVars()`:
 
-| Variable               | Use                                 | Rule                                                                          |
-| ---------------------- | ----------------------------------- | ----------------------------------------------------------------------------- |
-| `--shop-60`            | Page background                     | brand hue, L 0.975, C 0.012                                                   |
-| `--shop-30`            | Surfaces, top bar, cards            | brand hue, L 0.995, C 0.004                                                   |
-| `--shop-10`            | Main button, active tab, highlights | brand colour darkened until white text reaches 4.5:1; if it can't, black text |
-| `--shop-10-foreground` | Text on `--shop-10`                 | white or black, from the check                                                |
-| `--shop-10-soft`       | Chips, selected rows                | L 0.93                                                                        |
-| `--shop-10-hover`      | Hover of `--shop-10`                | 10 minus 0.06 L                                                               |
+| Variable                    | Use                                    | Light shop                                                             | Dark shop                         |
+| --------------------------- | -------------------------------------- | ---------------------------------------------------------------------- | --------------------------------- |
+| `--shop-60`                 | Page background                        | near white: L 0.982, C ≤ 0.003 (no tint)                               | near black: L 0.16, C ≤ 0.008     |
+| `--shop-30`                 | Cards, sheets, the glass bars          | white                                                                  | raised grey: L 0.215, C ≤ 0.01    |
+| `--shop-10`                 | Main button, active tab, cart          | brand darkened until white text reaches 4.5:1; if it can't, black text | same                              |
+| `--shop-10-foreground`      | Text on `--shop-10`                    | white or black, from the check                                         | same                              |
+| `--shop-10-hover`           | Hover of `--shop-10`                   | 10 minus 0.06 L                                                        | same                              |
+| `--shop-10-text`            | Brand-coloured text, links, focus ring | brand darkened until 4.5:1 on 60                                       | brand lightened until 4.5:1 on 30 |
+| `--shop-10-soft`            | Chips, selected rows                   | L 0.95, C ≤ 0.035                                                      | L 0.3, C ≤ 0.06                   |
+| `--shop-10-soft-foreground` | Text on `--shop-10-soft`               | brand darkened until 4.5:1                                             | brand lightened until 4.5:1       |
 
-Utilities (Tailwind `@theme inline`): `bg-shop-60`, `bg-shop-30`, `bg-shop-10`, `text-shop-10`, `text-shop-10-foreground`, `bg-shop-10-soft`, `hover:bg-shop-10-hover` (any colour utility works with these names). `ShopTheme` (`packages/ui/src/compositions/shop-theme.tsx`, server-safe) sets the six variables on a `display: contents` wrapper and also `--shop-color`, so the older `bg-shop` / `text-shop` utilities keep the same colour. `tokens.css` holds defaults for `#2456D3`. When darkening would move L more than 0.2, the colour is kept and the text turns black (very light brands such as pale yellow). With black text the hover goes 0.06 lighter instead of darker so the text stays readable. Presets: `BRAND_COLOR_PRESETS` in core (the default blue, green, orange, magenta, a very light yellow and a very dark navy); the contrast test runs all of them and the 5 demo brands.
+Utilities (Tailwind `@theme inline`): `bg-shop-60`, `bg-shop-30`, `bg-shop-10`, `text-shop-10-foreground`, `text-shop-10-text`, `bg-shop-10-soft`, `text-shop-10-soft-foreground`, `hover:bg-shop-10-hover` (any colour utility works with these names). `ShopTheme` (`packages/ui/src/compositions/shop-theme.tsx`, server-safe) sets these on a `display: contents` wrapper and also maps the app tokens to the shop (decision R18): `--background` = 60, `--card` and `--popover` = 30, `--primary` = 10, `--secondary` = 10 soft, `--ring` and `--focus` = 10 text, and `--foreground` for the surface. So every installed part (buttons, rings, inputs, badges) wears the shop's colours, never the app's default blue. A dark shop also gets the `.dark` class, so muted, border and state tokens switch to their dark values. In the storefront `withPortals` copies the same variables onto `<html>` while a shop is open, because sheets, dialogs and toasts render outside the wrapper. `--shop-color` keeps the older `bg-shop` / `text-shop` utilities on the same colour. `tokens.css` holds the light defaults for `#2456D3`. When darkening would move L more than 0.2, the colour is kept and the text turns black (very light brands such as pale yellow). With black text the hover goes 0.06 lighter instead of darker so the text stays readable. Presets: `BRAND_COLOR_PRESETS` in core (the default blue, green, orange, magenta, a very light yellow and a very dark navy); the contrast test runs all of them and the 5 demo brands on both surfaces. `theme-color` is the shop's 60, so the phone's status bar meets the glass top bar.
 
 Prices stay in the text colour, never the brand colour. Status and member colours never follow the brand.
 

@@ -96,12 +96,14 @@
   --radius: 0.625rem;
 
   /* Shop brand (storefront): ShopTheme overrides these per shop from shopPalette(); defaults are #2456D3. */
-  --shop-60: oklch(0.975 0.012 263.9);
-  --shop-30: oklch(0.995 0.002 263.9);
+  --shop-60: oklch(0.982 0.003 263.9);
+  --shop-30: oklch(1 0 0);
   --shop-10: oklch(0.501 0.2 263.9);
   --shop-10-foreground: oklch(1 0 0);
-  --shop-10-soft: oklch(0.93 0.033 263.9);
   --shop-10-hover: oklch(0.441 0.2 263.9);
+  --shop-10-text: oklch(0.501 0.2 263.9);
+  --shop-10-soft: oklch(0.95 0.024 263.9);
+  --shop-10-soft-foreground: oklch(0.501 0.2 263.9);
 
   /* Receipt paper (thermal receipt body). */
   --paper: oklch(0.979 0.008 91.5);

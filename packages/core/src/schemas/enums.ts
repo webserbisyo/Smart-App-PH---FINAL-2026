@@ -18,6 +18,11 @@ export const ORDER_STATUSES = [
 export const OrderStatusEnum = z.enum(ORDER_STATUSES);
 export type OrderStatus = z.infer<typeof OrderStatusEnum>;
 
+// A shop's page surface: light (most shops) or dark (night brands such as a burger stand).
+export const SHOP_SURFACES = ['light', 'dark'] as const;
+export const ShopSurfaceEnum = z.enum(SHOP_SURFACES);
+export type ShopSurface = z.infer<typeof ShopSurfaceEnum>;
+
 export const PAYMENT_STATUSES = ['unpaid', 'pending', 'paid', 'refunded'] as const;
 export const PaymentStatusEnum = z.enum(PAYMENT_STATUSES);
 export type PaymentStatus = z.infer<typeof PaymentStatusEnum>;
