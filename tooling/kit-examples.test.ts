@@ -53,10 +53,20 @@ describe('Kit examples stay on /kit', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('finds the 119 examples it guards', () => {
+  it('finds every example it guards, each listed in patterns.ts', () => {
     const examples = fs
       .readdirSync(path.join(KIT_DIR, 'examples'))
-      .filter((name) => /^c-.+\.tsx$/.test(name));
-    expect(examples).toHaveLength(119);
+      .filter((name) => /^c-.+\.tsx$/.test(name))
+      .map((name) => name.replace(/\.tsx$/, ''))
+      .sort();
+    const listed = [
+      ...fs
+        .readFileSync(path.join(KIT_DIR, 'patterns.ts'), 'utf8')
+        .matchAll(/id: '(c-[a-z0-9-]+)'/g),
+    ]
+      .flatMap((m) => (m[1] ? [m[1]] : []))
+      .sort();
+    expect(examples.length).toBeGreaterThan(100);
+    expect(examples).toEqual(listed);
   });
 });

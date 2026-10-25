@@ -1,7 +1,9 @@
-// Source: https://opensourceui.in/components/like-button · copied 2026-10-25 · MIT, Opensource UI by Bidyut Kundu
-// Changes: our cn, rose → shop-10 tokens, shadows and particles as utilities with cssVars() (no inline style),
-// labels from props, particles skipped under reduced motion. /kit only (the app uses c-toggle-9). Nothing
-// auto-updates.
+// Source: https://opensourceui.in/components/like-button · copied 2026-10-25, re-checked against the source the
+// same day (redesign plan, item I8) · MIT, Opensource UI by Bidyut Kundu
+// Changes: our cn, rose → shop-10 tokens, shadows, the heart's drop shadow and glow, the springy pop curve
+// (ease-spring) and particles as utilities with cssVars() (no inline style), labels from props, particles
+// skipped under reduced motion. Particles run 400 ms, not the source's 500 ms (docs/ux.md: motion under 400 ms).
+// /kit only (the app uses c-toggle-9). Nothing auto-updates.
 'use client';
 
 import {
@@ -94,8 +96,8 @@ export const LikeButton = forwardRef<HTMLButtonElement, LikeButtonProps>(
           // Soft blurred top highlight (not a hard white rim) + lift shadows.
           'shadow-pill active:shadow-pill-pressed',
           liked
-            ? 'bg-shop-10-soft text-shop-10'
-            : 'bg-muted text-muted-foreground hover-hover:hover:text-foreground',
+            ? 'bg-shop-10-soft text-shop-10-soft-foreground active:brightness-95'
+            : 'bg-muted text-muted-foreground active:bg-accent hover-hover:hover:text-foreground',
           className,
         )}
         {...props}
@@ -107,10 +109,10 @@ export const LikeButton = forwardRef<HTMLButtonElement, LikeButtonProps>(
             strokeWidth={2}
             aria-hidden
             className={cn(
-              'relative z-10 transition-[transform,fill,color] duration-slow ease-standard motion-reduce:transition-none',
+              'relative z-10 transition-[transform,fill,color,filter] duration-slow ease-spring motion-reduce:transition-none',
               liked
-                ? 'scale-110 fill-shop-10 text-shop-10'
-                : 'scale-100 fill-transparent text-current',
+                ? 'scale-110 fill-shop-10 text-shop-10 heart-glow'
+                : 'scale-100 fill-transparent text-current heart-shadow',
             )}
           />
         </span>

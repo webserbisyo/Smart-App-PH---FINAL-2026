@@ -1,4 +1,4 @@
-// The 119 ReUI storefront patterns on /kit (T02b), grouped by the screen that uses them.
+// The ReUI storefront patterns on /kit (T02b, plus the redesign set), grouped by the screen that uses them.
 // Source: docs/prompts/ref/storefront-components.md sections 2 and 3.
 
 export const PATTERN_SCREENS = [
@@ -28,6 +28,48 @@ export interface KitPattern {
 }
 
 export const KIT_PATTERNS: readonly KitPattern[] = [
+  {
+    id: 'c-avatar-32',
+    name: 'Pulse Ring',
+    screen: 'shell',
+    usedFor: 'Open-now pulse on the shop logo (off under reduced motion)',
+    url: 'https://reui.io/patterns/avatar',
+  },
+  {
+    id: 'c-avatar-33',
+    name: 'Gradient Animated Ring',
+    screen: 'shell',
+    usedFor: 'StatusLogo: green turning ring when open, plain grey ring when closed (decision R4)',
+    url: 'https://reui.io/patterns/avatar',
+  },
+  {
+    id: 'c-avatar-34',
+    name: 'Multiple Badges',
+    screen: 'shell',
+    usedFor: 'CartButton count dot in the top bar and next to the dock (decision R5)',
+    url: 'https://reui.io/patterns/avatar',
+  },
+  {
+    id: 'c-tabs-9',
+    name: 'Tabs With Icons',
+    screen: 'howWhere',
+    usedFor: 'How you get it: Walk-in, Pickup, Delivery as icon tabs',
+    url: 'https://reui.io/patterns/tabs',
+  },
+  {
+    id: 'c-icon-stack-1',
+    name: 'Icon Stack',
+    screen: 'home',
+    usedFor: 'Brand panel facts (pickup, delivery, stamps)',
+    url: 'https://reui.io/patterns/icon-stack',
+  },
+  {
+    id: 'c-icon-stack-5',
+    name: 'Empty State',
+    screen: 'shopInfo',
+    usedFor: 'Empty basket, no orders, no favourites, no search results',
+    url: 'https://reui.io/patterns/icon-stack',
+  },
   {
     id: 'c-alert-4',
     name: 'Payment Failure',

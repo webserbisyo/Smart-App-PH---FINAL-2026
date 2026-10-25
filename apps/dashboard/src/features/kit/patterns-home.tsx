@@ -1,5 +1,6 @@
 // Home: ReUI patterns, loaded lazily by storefront-patterns.tsx.
 import { PatternGrid } from './pattern-grid.js';
+import { Pattern as IconStackBasic } from './examples/c-icon-stack-1';
 import { Pattern as InfoVariant } from './examples/c-alert-5';
 import { Pattern as SuccessVariant } from './examples/c-alert-6';
 import { Pattern as Ultrawide } from './examples/c-aspect-ratio-4';
@@ -15,6 +16,7 @@ import { Pattern as CardGrid } from './examples/c-skeleton-8';
 import { Pattern as EmployeeProfile } from './examples/c-table-16';
 
 const EXAMPLES = {
+  'c-icon-stack-1': IconStackBasic,
   'c-alert-5': InfoVariant,
   'c-alert-6': SuccessVariant,
   'c-aspect-ratio-4': Ultrawide,

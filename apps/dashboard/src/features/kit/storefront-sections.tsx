@@ -32,6 +32,8 @@ import { LikeButton } from '@smartapp/ui/vendor/opensource-ui/like-toggle';
 import { ThermalReceiptCard } from '@smartapp/ui/vendor/opensource-ui/thermal-receipt';
 import { env } from '@/app/env';
 import { KitSection } from './kit-section.js';
+import { KitShopProvider } from './kit-shop.js';
+import { RedesignPrimitiveSections } from './redesign-primitives.js';
 
 // Demo photos live in the storefront's public folder; the kit loads them from there.
 const ORIGIN = env.VITE_STOREFRONT_URL;
@@ -607,6 +609,10 @@ export function StorefrontSections() {
           >
             <MotionDemos />
           </KitSection>
+
+          <KitShopProvider slug={slug}>
+            <RedesignPrimitiveSections />
+          </KitShopProvider>
         </div>
       </ShopTheme>
     </div>

@@ -3,6 +3,8 @@ import { InfoIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/reui/alert';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Pattern as InfoVariant } from './examples/c-alert-5';
+import { Pattern as IconStackBasic } from './examples/c-icon-stack-1';
+import { Pattern as IconStackEmpty } from './examples/c-icon-stack-5';
 import { Pattern as SoftBadges } from './examples/c-badge-13';
 import { Pattern as StampFrame } from './examples/c-frame-1';
 import { Pattern as StampedTiles } from './examples/c-icon-tile-16';
@@ -92,6 +94,13 @@ const SECTIONS: readonly {
     file: 'reui/icon-tile.tsx',
     usedIn: 'c-icon-tile-6, c-icon-tile-14, c-icon-tile-16 (kit)',
     examples: [StampedTiles, PendingTiles],
+  },
+  {
+    title: 'Icon stack',
+    library: 'ReUI',
+    file: 'reui/icon-stack.tsx',
+    usedIn: 'c-icon-stack-1, c-icon-stack-5 (kit); brand panel facts and empty states (redesign)',
+    examples: [IconStackBasic, IconStackEmpty],
   },
   {
     title: 'Frame',

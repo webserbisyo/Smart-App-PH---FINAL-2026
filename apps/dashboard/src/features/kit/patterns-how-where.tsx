@@ -1,5 +1,6 @@
 // How and where: ReUI patterns, loaded lazily by storefront-patterns.tsx.
 import { PatternGrid } from './pattern-grid.js';
+import { Pattern as TabsWithIcons } from './examples/c-tabs-9';
 import { Pattern as WarningVariant } from './examples/c-alert-7';
 import { Pattern as ErrorVariant } from './examples/c-alert-8';
 import { Pattern as AsyncAction } from './examples/c-button-44';
@@ -16,6 +17,7 @@ import { Pattern as DescriptiveCards } from './examples/c-radio-group-7';
 import { Pattern as CardSeparators } from './examples/c-radio-group-8';
 
 const EXAMPLES = {
+  'c-tabs-9': TabsWithIcons,
   'c-alert-7': WarningVariant,
   'c-alert-8': ErrorVariant,
   'c-button-44': AsyncAction,
