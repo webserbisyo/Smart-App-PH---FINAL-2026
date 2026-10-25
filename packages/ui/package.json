@@ -12,7 +12,8 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "build": "tsc -b tsconfig.components.json",
+    "typecheck": "tsc -b",
     "test": "vitest run"
   },
   "dependencies": {

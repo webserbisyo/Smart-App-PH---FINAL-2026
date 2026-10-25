@@ -27,6 +27,7 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 - Library variants (badge, alert, button) are mapped once to our tokens (`-soft`, `-soft-foreground`, `shop`), never per screen.
 - Toasts go through one `notify()` helper (placement and timing in `docs/ux.md`).
 - If the CLI can't reach a registry, stop and tell the founder; never copy a component by hand.
+- Installed files are checked by their own rules (decision T27): `packages/ui/tsconfig.components.json` without `exactOptionalPropertyTypes`, and a scoped ESLint override. Never edit them; a file marked "patched" in the table had a founder-approved fix.
 
 ## Installed
 
@@ -49,7 +50,7 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 | `carousel`               | shadcn (base-nova)   | `packages/ui/src/components/carousel.tsx`                  | banner-carousel, kit                       | T02   |
 | `celebrate`              | composition          | `packages/ui/src/compositions/celebrate.ts`                | kit                                        | T02   |
 | `checkbox`               | shadcn (base-nova)   | `packages/ui/src/components/checkbox.tsx`                  | kit                                        | T02   |
-| `checkbox-group`         | DiceUI               | `packages/ui/src/components/checkbox-group.tsx`            | kit                                        | T02   |
+| `checkbox-group`         | DiceUI (patched T27) | `packages/ui/src/components/checkbox-group.tsx`            | kit                                        | T02   |
 | `circular-progress`      | DiceUI               | `packages/ui/src/components/circular-progress.tsx`         | kit                                        | T02   |
 | `client-only`            | DiceUI               | `packages/ui/src/components/client-only.tsx`               | kit                                        | T02   |
 | `collapsible`            | shadcn (base-nova)   | `packages/ui/src/components/collapsible.tsx`               | kit (installed for sidebar-07)             | T05   |

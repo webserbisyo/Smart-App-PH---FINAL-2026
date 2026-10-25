@@ -66,8 +66,10 @@ function CheckboxGroupItem({
       >
         <CheckboxGroupPrimitive.Indicator
           className="flex items-center justify-center text-current"
-          render={<Check className="size-3.5" />}
-        ></CheckboxGroupPrimitive.Indicator>
+          asChild
+        >
+          <Check className="size-3.5" />
+        </CheckboxGroupPrimitive.Indicator>
       </CheckboxGroupPrimitive.Item>
       {children}
     </label>
