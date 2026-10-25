@@ -3,8 +3,8 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ShoppingBagIcon } from 'lucide-react';
 import {
+  artPath,
   formatClock,
   formatPeso,
   openState,
@@ -21,14 +21,7 @@ import {
   useQuote,
 } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@smartapp/ui/components/empty';
+import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { useShop } from '../../shell/components/shop-context';
 import { closedStateDecision } from '../basket-rules';
 import { BasketClosedAlert } from './basket-closed-alert';
@@ -127,27 +120,23 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
   };
 
   if (rows.length === 0) {
-    // Pattern c-empty-11
     return (
-      <Empty className="px-4 py-12">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <ShoppingBagIcon />
-          </EmptyMedia>
-          <EmptyTitle>{words.basket.empty}</EmptyTitle>
-          <EmptyDescription>{words.basket.emptyHint}</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
+      <EmptyState
+        art={artPath('basket_empty')}
+        title={words.basket.empty}
+        description={words.basket.emptyHint}
+        variant="plain"
+        className="px-4"
+        action={
           <Button
-            variant="outline"
-            size="sm"
+            className="h-11 rounded-full px-6"
             nativeButton={false}
             render={<Link href={`/${slug}/menu`} {...(onBrowse ? { onClick: onBrowse } : {})} />}
           >
             {words.basket.browse(catalog)}
           </Button>
-        </EmptyContent>
-      </Empty>
+        }
+      />
     );
   }
 

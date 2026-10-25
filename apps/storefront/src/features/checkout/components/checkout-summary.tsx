@@ -1,14 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronLeftIcon, ChevronsUpDownIcon } from 'lucide-react';
-import { formatPeso, words, type QuoteLine } from '@smartapp/core';
+import { ChevronDownIcon, ChevronLeftIcon } from 'lucide-react';
+import { formatPeso, imageSources, words, type QuoteLine } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@smartapp/ui/components/collapsible';
+import { ShopImage } from '@smartapp/ui/compositions/shop-image';
 
 interface CheckoutSummaryProps {
   slug: string;
@@ -18,51 +19,69 @@ interface CheckoutSummaryProps {
 }
 
 /**
- * Top bar for Checkout:
- * - Back button (pattern c-button-49) to Menu
- * - Collapsible order summary (pattern c-collapsible-1)
+ * Checkout top: back to the menu, the page title and the order folded up with its photos
+ * (c-button-49 back, c-collapsible-1 summary).
  */
 export function CheckoutSummary({ slug, lines, count, total }: CheckoutSummaryProps) {
   const summaryLabel = words.checkout.itemsSummary(count, formatPeso(total));
+  const thumbs = lines.slice(0, 3);
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Pattern c-button-49 */}
-      <div>
+      <div className="flex items-center gap-1">
         <Button
-          variant="link"
+          variant="ghost"
           render={<Link href={`/${slug}/menu`} />}
           nativeButton={false}
-          className="h-auto p-0 text-sm font-medium text-muted-foreground hover:text-foreground"
+          className="-ml-2 h-11 gap-1 rounded-full px-3 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
-          <ChevronLeftIcon data-icon="inline-start" aria-hidden="true" />
+          <ChevronLeftIcon aria-hidden="true" className="size-4" />
           {words.checkout.backToMenu}
         </Button>
       </div>
+      <h1 className="text-2xl font-bold tracking-tight">{words.checkout.title}</h1>
 
-      {/* Pattern c-collapsible-1 */}
-      <Collapsible className="flex w-full flex-col gap-2 rounded-xl border border-border bg-card p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">{summaryLabel}</span>
-          <CollapsibleTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8"
-                aria-label="Toggle order summary"
+      <Collapsible className="flex w-full flex-col rounded-3xl bg-card shadow-xs ring-1 ring-foreground/8">
+        <CollapsibleTrigger
+          aria-label={words.checkout.toggleSummary}
+          className="group flex min-h-16 w-full items-center gap-3 rounded-3xl px-4 py-3 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:px-5"
+        >
+          <span className="flex shrink-0 -space-x-3">
+            {thumbs.map((line) => (
+              <ShopImage
+                key={line.identity}
+                src={line.photo ? imageSources(line.photo) : null}
+                alt=""
+                ratio="1:1"
+                sizes="40px"
+                fallbackText={line.name}
+                className="size-10 rounded-xl ring-2 ring-card"
               />
-            }
-          >
-            <ChevronsUpDownIcon aria-hidden="true" className="size-4" />
-          </CollapsibleTrigger>
-        </div>
+            ))}
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-xs text-muted-foreground">{words.checkout.yourOrder}</span>
+            <span className="truncate text-sm font-semibold tabular">{summaryLabel}</span>
+          </span>
+          <ChevronDownIcon
+            aria-hidden="true"
+            className="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-data-panel-open:rotate-180 motion-reduce:transition-none"
+          />
+        </CollapsibleTrigger>
 
-        <CollapsibleContent className="flex flex-col divide-y divide-border/50 pt-2">
+        <CollapsibleContent className="flex flex-col divide-y divide-border/60 px-4 pb-2 sm:px-5">
           {lines.map((line) => (
-            <div key={line.identity} className="flex items-start justify-between py-2 text-sm">
-              <div className="flex flex-col pr-2">
-                <span className="font-medium">
+            <div key={line.identity} className="flex items-start gap-3 py-3 text-sm">
+              <ShopImage
+                src={line.photo ? imageSources(line.photo) : null}
+                alt=""
+                ratio="1:1"
+                sizes="48px"
+                fallbackText={line.name}
+                className="size-12 shrink-0 rounded-xl"
+              />
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="font-medium break-words">
                   {line.qty}× {line.name}
                 </span>
                 {line.variantLabel ? (
@@ -74,12 +93,12 @@ export function CheckoutSummary({ slug, lines, count, total }: CheckoutSummaryPr
                   </span>
                 ) : null}
                 {line.note ? (
-                  <span className="text-xs text-muted-foreground/80 italic">
+                  <span className="text-xs break-words text-muted-foreground italic">
                     &ldquo;{line.note}&rdquo;
                   </span>
                 ) : null}
               </div>
-              <span className="shrink-0 font-medium tabular">{formatPeso(line.lineTotal)}</span>
+              <span className="shrink-0 font-semibold tabular">{formatPeso(line.lineTotal)}</span>
             </div>
           ))}
         </CollapsibleContent>

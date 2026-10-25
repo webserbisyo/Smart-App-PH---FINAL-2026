@@ -11,6 +11,14 @@ export function formatPeso(centavos: number): string {
   return cents === 0 ? `${sign}₱${whole}` : `${sign}₱${whole}.${String(cents).padStart(2, '0')}`;
 }
 
+/** The amount to paste in a payment app: "345" or "345.50" (no peso sign, no commas). */
+export function pesoAmountText(centavos: number): string {
+  const abs = Math.abs(Math.round(centavos));
+  const cents = abs % 100;
+  const pesos = String(Math.floor(abs / 100));
+  return cents === 0 ? pesos : `${pesos}.${String(cents).padStart(2, '0')}`;
+}
+
 /** Add-on price label: "Free" for ₱0, otherwise "+₱25". */
 export function optionPriceLabel(centavos: number, freeWord: string): string {
   return centavos === 0 ? freeWord : `+${formatPeso(centavos)}`;

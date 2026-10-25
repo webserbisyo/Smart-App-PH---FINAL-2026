@@ -1,19 +1,18 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import type { OrderReceipt } from '@smartapp/core';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { artPath, words, type OrderReceipt } from '@smartapp/core';
 import { useOnline, useOrder, useSavedReceipt } from '@smartapp/data';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/reui/alert';
 import { Button } from '@smartapp/ui/components/button';
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@smartapp/ui/components/empty';
-import { ArrowLeft, SearchX, WifiOff } from 'lucide-react';
+import { EmptyState } from '@smartapp/ui/compositions/empty-state';
+import { ArrowLeft, WifiOff } from 'lucide-react';
 import { useShop } from '../../shell/components/shop-context';
 import { ReceiptHeader } from './receipt-header';
-import { PayCountdown } from './pay-countdown';
-import { ProofUploader } from './proof-uploader';
+import { PaymentCard } from './payment-card';
 import { OrderThread } from './order-thread';
 import { ThermalSlip } from './thermal-slip';
 import { MessengerHandoff } from './messenger-handoff';
@@ -39,7 +38,9 @@ const DevControls =
 
 export function ReceiptWrapper({ slug, token, initialOrder }: ReceiptWrapperProps) {
   const searchParams = useSearchParams();
-  const isNewOrder = searchParams.get('new') === '1';
+  const pathname = usePathname();
+  // Checkout opens the receipt with ?new=1: keep "just placed" for this visit, then drop the flag.
+  const [justPlaced] = useState(() => searchParams.get('new') === '1');
 
   const isOnline = useOnline();
   const { shop } = useShop();
@@ -47,6 +48,14 @@ export function ReceiptWrapper({ slug, token, initialOrder }: ReceiptWrapperProp
   const saved = useSavedReceipt(slug, token);
 
   const currentOrder = order ?? saved?.receipt ?? initialOrder;
+  const hasOrder = Boolean(currentOrder);
+
+  useEffect(() => {
+    if (!justPlaced || !hasOrder) return;
+    // Next keeps useSearchParams in step with the History API, without a new navigation.
+    window.history.replaceState(window.history.state, '', pathname);
+    document.getElementById('receipt-order-number')?.focus({ preventScroll: true });
+  }, [justPlaced, hasOrder, pathname]);
 
   const origin = useSyncExternalStore(
     emptySubscribe,
@@ -59,33 +68,26 @@ export function ReceiptWrapper({ slug, token, initialOrder }: ReceiptWrapperProp
     return <ReceiptSkeleton />;
   }
 
-  // Not found or unknown order token (c-empty-7 pattern)
   if (!currentOrder && (error || !orderLoading)) {
     return (
-      <div className="flex min-h-96 flex-col items-center justify-center p-4">
-        <Empty id="receipt-not-found" className="max-w-md text-center">
-          <EmptyHeader>
-            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <SearchX className="size-6" />
-            </div>
-            <EmptyTitle>We can't find this order</EmptyTitle>
-            <EmptyDescription>
-              This order link is incorrect or has expired. Please check your link or contact the
-              shop.
-            </EmptyDescription>
-          </EmptyHeader>
-          <div className="mt-4 flex justify-center">
+      <div className="mx-auto flex w-full max-w-xl flex-col py-6">
+        <EmptyState
+          id="receipt-not-found"
+          art={artPath('not_found')}
+          title={words.receipt.notFoundTitle}
+          description={words.receipt.notFoundDescription}
+          action={
             <Button
               variant="outline"
               nativeButton={false}
               render={<Link href={`/${slug}`} />}
-              className="gap-2"
+              className="h-11 gap-2 rounded-full bg-card px-5"
             >
-              <ArrowLeft className="size-4" />
-              <span>Back to the shop</span>
+              <ArrowLeft aria-hidden="true" className="size-4" />
+              {words.receipt.backToShop}
             </Button>
-          </div>
-        </Empty>
+          }
+        />
       </div>
     );
   }
@@ -95,54 +97,34 @@ export function ReceiptWrapper({ slug, token, initialOrder }: ReceiptWrapperProp
   }
 
   const storefront = shop.storefront;
-
-  const lastUpdatedTime =
-    currentOrder.events.length > 0
-      ? formatManilaTime(
-          currentOrder.events[currentOrder.events.length - 1]?.at ?? currentOrder.placedAt,
-        )
-      : formatManilaTime(currentOrder.placedAt);
+  const lastEvent = currentOrder.events[currentOrder.events.length - 1];
+  const lastUpdatedTime = formatManilaTime(lastEvent?.at ?? currentOrder.placedAt);
 
   return (
-    <div
-      id="receipt-container"
-      className="mx-auto flex w-full max-w-xl flex-col gap-5 px-4 py-6 sm:py-8"
-    >
-      {/* Offline banner */}
+    <div id="receipt-container" className="mx-auto flex w-full max-w-xl flex-col gap-4 pb-6">
       {!isOnline && (
-        <Alert variant="info" className="bg-muted">
-          <WifiOff className="size-4 text-muted-foreground" />
-          <AlertTitle>You're offline</AlertTitle>
-          <AlertDescription>
-            Showing saved copy from your phone. Last updated {lastUpdatedTime}.
-          </AlertDescription>
+        <Alert variant="info" className="print:hidden">
+          <WifiOff />
+          <AlertTitle>{words.receipt.offlineTitle}</AlertTitle>
+          <AlertDescription>{words.receipt.offlineSaved(lastUpdatedTime)}</AlertDescription>
         </Alert>
       )}
 
-      {/* 1. Header with order #, QR, and c-stepper-26 status track */}
       <ReceiptHeader
         order={currentOrder}
         storefront={storefront}
         receiptUrl={receiptUrl}
-        isNewOrder={isNewOrder}
+        justPlaced={justPlaced}
       />
 
-      {/* 2. Pay countdown for unpaid transfer orders */}
-      <PayCountdown order={currentOrder} />
+      <PaymentCard slug={slug} order={currentOrder} shopName={storefront.info.name} />
 
-      {/* 3. Proof uploader */}
-      <ProofUploader slug={slug} order={currentOrder} />
-
-      {/* 4. Order thread (proofs, system lines, rider delivery tracking) */}
       <OrderThread order={currentOrder} />
 
-      {/* 5. Thermal slip */}
       <ThermalSlip order={currentOrder} storefront={storefront} receiptUrl={receiptUrl} />
 
-      {/* 6. Messenger handoff */}
       <MessengerHandoff order={currentOrder} storefront={storefront} receiptUrl={receiptUrl} />
 
-      {/* 7. Receipt actions (more menu, rating, install card, order again) */}
       <ReceiptActions
         slug={slug}
         order={currentOrder}

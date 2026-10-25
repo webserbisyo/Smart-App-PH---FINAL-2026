@@ -1,53 +1,46 @@
+import { words } from '@smartapp/core';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 
-/** Pattern c-skeleton-4: Checkout page loading state. */
+const CARD =
+  'flex flex-col gap-4 rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6';
+
+function StepHead() {
+  return (
+    <div className="flex items-center gap-3">
+      <Skeleton className="size-8 rounded-full" />
+      <Skeleton className="h-5 w-36 rounded-sm" />
+    </div>
+  );
+}
+
+/** Pattern c-skeleton-4: the checkout's own shape while it loads. */
 export function CheckoutSkeleton() {
   return (
-    <div className="mx-auto flex w-full max-w-160 flex-col gap-6 py-4">
-      {/* Back button skeleton */}
-      <Skeleton className="h-4 w-28" />
-
-      {/* Summary card skeleton */}
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="size-8 rounded-md" />
-        </div>
+    <div
+      aria-busy="true"
+      aria-label={words.checkout.title}
+      className="mx-auto flex w-full max-w-160 flex-col gap-4 pt-2 pb-40"
+    >
+      <Skeleton className="h-11 w-32 rounded-full" />
+      <Skeleton className="h-8 w-40 rounded-md" />
+      <div className="flex min-h-16 items-center gap-3 rounded-3xl bg-card px-4 py-3 ring-1 ring-foreground/8">
+        <Skeleton className="size-10 rounded-xl" />
+        <Skeleton className="h-4 w-40 rounded-sm" />
       </div>
-
-      {/* How card skeleton */}
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-8 w-16 rounded-md" />
-        </div>
-        <Skeleton className="h-6 w-44" />
+      <div className={CARD}>
+        <StepHead />
+        <Skeleton className="h-16 w-full rounded-2xl" />
       </div>
-
-      {/* Who card skeleton */}
-      <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-        <Skeleton className="h-4 w-24" />
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-10 w-full rounded-md" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-10 w-full rounded-md" />
-        </div>
+      <div className={CARD}>
+        <StepHead />
+        <Skeleton className="h-11 w-full rounded-xl" />
+        <Skeleton className="h-11 w-full rounded-xl" />
       </div>
-
-      {/* Pay card skeleton */}
-      <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-        <Skeleton className="h-4 w-28" />
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-12 w-full rounded-lg" />
-          <Skeleton className="h-12 w-full rounded-lg" />
-        </div>
+      <div className={CARD}>
+        <StepHead />
+        <Skeleton className="h-14 w-full rounded-2xl" />
+        <Skeleton className="h-14 w-full rounded-2xl" />
       </div>
-
-      {/* Place order button skeleton */}
-      <Skeleton className="h-12 w-full rounded-xl" />
     </div>
   );
 }

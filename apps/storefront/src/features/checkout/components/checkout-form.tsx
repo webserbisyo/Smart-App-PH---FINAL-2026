@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
+  errorWords,
   formatPeso,
   normalisePhPhone,
   rewardState,
@@ -12,6 +13,7 @@ import {
   type PaymentMethod,
 } from '@smartapp/core';
 import {
+  errorCodeOf,
   getDeviceStorage,
   useBasket,
   useCheckoutDraft,
@@ -37,6 +39,30 @@ import { CheckoutHow } from './checkout-how';
 import { CheckoutPay } from './checkout-pay';
 import { CheckoutSummary } from './checkout-summary';
 import { CheckoutWho } from './checkout-who';
+
+// Long enough for the check to draw (400 ms) before the receipt opens.
+const PLACED_PAUSE_MS = 450;
+
+function DrawnCheck() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={3}
+      aria-hidden="true"
+      className="size-5"
+    >
+      <path
+        d="M5 12.5l4.5 4.5L19 7.5"
+        pathLength={1}
+        className="draw-check"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export function CheckoutForm({ now }: { now: string }) {
   const router = useRouter();
@@ -80,6 +106,7 @@ export function CheckoutForm({ now }: { now: string }) {
 
   // Error feedback state
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [placedOk, setPlacedOk] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string }>({});
 
   // Track serialized state to only write when actual values change
@@ -138,13 +165,13 @@ export function CheckoutForm({ now }: { now: string }) {
       const freeItem = catalog.items.find((i) => i.id === reward.itemId);
       const freeVariant = freeItem?.variants.find((v) => v.id === reward.variantId);
       if (freeItem && freeVariant) {
-        title = `free ${freeItem.name}`;
+        title = words.checkout.rewardFree(freeItem.name);
         const avail = variantAvailability(freeVariant, now);
         freeItemAvailable = avail === 'available';
         soldOutToday = avail === 'sold_out_today' || avail === 'sold_out';
       }
     } else if (reward.kind === 'discount') {
-      title = `${formatPeso(reward.amount ?? 0)} off`;
+      title = words.checkout.rewardOff(formatPeso(reward.amount ?? 0));
       freeItemAvailable = true;
     }
 
@@ -254,8 +281,8 @@ export function CheckoutForm({ now }: { now: string }) {
 
     // Field-level checks
     const errors: { name?: string; phone?: string } = {};
-    if (!name.trim()) errors.name = 'Enter your name';
-    if (!normalisePhPhone(phone).ok) errors.phone = 'Enter a valid mobile number';
+    if (!name.trim()) errors.name = words.checkout.enterName;
+    if (!normalisePhPhone(phone).ok) errors.phone = words.shop.phoneInvalid;
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -286,21 +313,15 @@ export function CheckoutForm({ now }: { now: string }) {
         clientKey: clientKeyRef.current,
       });
 
-      basket.clear();
-      if (!rememberMe) getDeviceStorage().checkoutDraft.remove(slug);
-      router.push(`/${slug}/o/${placed.token}`);
+      // The check draws in the button, then the receipt opens.
+      setPlacedOk(true);
+      setTimeout(() => {
+        basket.clear();
+        if (!rememberMe) getDeviceStorage().checkoutDraft.remove(slug);
+        router.push(`/${slug}/o/${placed.token}?new=1`);
+      }, PLACED_PAUSE_MS);
     } catch (err: unknown) {
-      const errCode =
-        typeof err === 'object' && err !== null && 'code' in err && typeof err.code === 'string'
-          ? err.code
-          : null;
-      const errMessage =
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof err.message === 'string'
-          ? err.message
-          : null;
+      const errCode = errorCodeOf(err);
       switch (errCode) {
         case 'rate_limited':
           setSubmitError(words.checkout.rateLimited);
@@ -314,8 +335,11 @@ export function CheckoutForm({ now }: { now: string }) {
         case 'cod_limit':
           setSubmitError(words.checkout.codLimitReached);
           break;
+        case 'unknown':
+          setSubmitError(words.checkout.placeFailed);
+          break;
         default:
-          setSubmitError(errMessage || 'Could not place order. Please try again.');
+          setSubmitError(errorWords(errCode));
           break;
       }
     }
@@ -336,19 +360,25 @@ export function CheckoutForm({ now }: { now: string }) {
       note: l.note,
       unitPrice: 0,
       lineTotal: 0,
-      photo: null,
+      photo: catalog.items.find((i) => i.id === l.itemId)?.photos[0] ?? null,
       problems: [],
     }));
 
+  const busy = placeOrder.isPending || placedOk;
+  const placeLabel = placedOk
+    ? words.checkout.placed
+    : placeOrder.isPending
+      ? words.checkout.placing
+      : eligibility.canPlace
+        ? words.checkout.placeOrder
+        : (eligibility.reason ?? words.checkout.placeOrder);
+
   return (
-    <div className="mx-auto flex w-full max-w-160 flex-col gap-6 py-4">
-      {/* Back button and collapsible order summary */}
+    <div className="mx-auto flex w-full max-w-160 flex-col gap-4 pt-2 pb-40">
       <CheckoutSummary slug={slug} lines={quoteLines} count={basket.count} total={total} />
 
-      {/* How: Order type and time/place */}
       <CheckoutHow sf={sf} choice={choice} now={now} />
 
-      {/* Who: Customer details */}
       <CheckoutWho
         name={name}
         onNameChange={setName}
@@ -361,7 +391,6 @@ export function CheckoutForm({ now }: { now: string }) {
         errors={fieldErrors}
       />
 
-      {/* Pay: Payment methods */}
       <CheckoutPay
         sf={sf}
         options={paymentOptions}
@@ -370,7 +399,6 @@ export function CheckoutForm({ now }: { now: string }) {
         totalCentavos={total}
       />
 
-      {/* Extras: Reward, Note, Totals, Consent */}
       <CheckoutExtras
         sf={sf}
         items={catalog.items}
@@ -386,7 +414,6 @@ export function CheckoutForm({ now }: { now: string }) {
         isDelivery={orderType === 'delivery'}
       />
 
-      {/* Server error alert */}
       {submitError ? (
         <Alert variant="destructive" role="alert">
           <AlertTriangleIcon aria-hidden="true" />
@@ -394,32 +421,34 @@ export function CheckoutForm({ now }: { now: string }) {
         </Alert>
       ) : null}
 
-      {/* Place order button: pattern c-button-9 large + c-button-44 states inside DiceUI Pending */}
-      <div className="pt-2 pb-8">
-        <Pending isPending={placeOrder.isPending}>
-          <Button
-            id="checkout-place-order"
-            type="button"
-            size="lg"
-            className="h-12 w-full text-base font-bold shadow-md"
-            disabled={!eligibility.canPlace || placeOrder.isPending}
-            onClick={handlePlaceOrder}
-            aria-busy={placeOrder.isPending}
-          >
-            {placeOrder.isPending ? (
-              <>
+      {/* Fixed bar: the total and Place order (c-button-9 large + c-button-44 states in DiceUI Pending). */}
+      <div className="fixed inset-x-0 bottom-0 z-basket border-t glass pb-safe">
+        <div className="mx-auto flex w-full max-w-160 items-center gap-4 px-4 py-3">
+          <div className="flex shrink-0 flex-col">
+            <span className="text-xs text-muted-foreground">{words.checkout.totals.total}</span>
+            <span className="text-xl font-extrabold tabular">{formatPeso(total)}</span>
+          </div>
+          <Pending isPending={placeOrder.isPending} className="min-w-0 flex-1">
+            <Button
+              id="checkout-place-order"
+              type="button"
+              size="lg"
+              className="h-auto min-h-12 w-full rounded-full px-5 py-2 text-base font-bold whitespace-normal shadow-md"
+              disabled={!placedOk && (!eligibility.canPlace || placeOrder.isPending)}
+              onClick={busy ? undefined : handlePlaceOrder}
+              aria-busy={placeOrder.isPending}
+            >
+              {placedOk ? (
+                <DrawnCheck />
+              ) : placeOrder.isPending ? (
                 <Spinner aria-hidden="true" />
-                <span>Placing order…</span>
-              </>
-            ) : eligibility.canPlace ? (
-              <span>
-                {words.checkout.placeOrder} · {formatPeso(total)}
+              ) : null}
+              <span className={eligibility.canPlace || busy ? undefined : 'text-sm font-semibold'}>
+                {placeLabel}
               </span>
-            ) : (
-              <span>{eligibility.reason ?? words.checkout.placeOrder}</span>
-            )}
-          </Button>
-        </Pending>
+            </Button>
+          </Pending>
+        </div>
       </div>
     </div>
   );

@@ -89,6 +89,8 @@ export interface DeviceStorage {
   orderType: DeviceEntry<OrderType>;
   guestOrderTokens: DeviceEntry<GuestOrderToken[]>;
   savedReceipts: DeviceEntry<SavedReceipt[]>;
+  // When the customer hid the install card on the receipt.
+  installDismissed: DeviceEntry<string>;
   // Mock mode only: what the customer created on this phone (orders, proofs, member account).
   mockState: DeviceEntry<unknown>;
   subscribe(listener: () => void): () => void;
@@ -177,6 +179,7 @@ export function createDeviceStorage(backend: Backend = pickBackend()): DeviceSto
     orderType: entry('orderType', 1, OrderTypeEnum),
     guestOrderTokens: entry('guestOrderTokens', 1, z.array(GuestOrderTokenSchema)),
     savedReceipts: entry('savedReceipts', 1, z.array(SavedReceiptSchema)),
+    installDismissed: entry('installDismissed', 1, IsoDateTimeSchema),
     mockState: entry('mockState', 1, z.unknown()),
     subscribe(listener) {
       listeners.add(listener);

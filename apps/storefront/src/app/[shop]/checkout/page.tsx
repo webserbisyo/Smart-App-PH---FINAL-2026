@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: CheckoutPageProps): Promise<M
   const shop = getStorefrontForServer(slug);
   if (!shop) return {};
   return {
-    title: `${words.checkout.title} · ${shop.storefront.info.name}`,
-    description: `Complete your order from ${shop.storefront.info.name}`,
+    title: words.checkout.metaTitle(shop.storefront.info.name),
+    description: words.checkout.metaDescription(shop.storefront.info.name),
     robots: { index: false, follow: false },
   };
 }

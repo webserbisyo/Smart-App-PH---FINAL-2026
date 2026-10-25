@@ -111,51 +111,91 @@ describe('buildMessengerUrl', () => {
 });
 
 describe('resolveReceiptSteps', () => {
-  it('generates delivery steps with Kitchen vocabulary for food and tracks progress', () => {
+  it('generates delivery steps with the kitchen word for food and tracks progress', () => {
     const events: readonly OrderEvent[] = [
       { status: 'placed', at: '2026-10-25T04:00:00.000Z' },
       { status: 'preparing', at: '2026-10-25T04:05:00.000Z' },
     ];
 
-    const steps = resolveReceiptSteps('delivery', 'preparing', events, 'food');
-    expect(steps).toHaveLength(5);
-
-    expect(steps[0]?.id).toBe('placed');
+    const steps = resolveReceiptSteps(
+      {
+        type: 'delivery',
+        status: 'preparing',
+        events,
+        paymentMethod: 'cod',
+        paymentStatus: 'unpaid',
+      },
+      'food',
+    );
+    expect(steps.map((s) => s.id)).toEqual([
+      'placed',
+      'preparing',
+      'ready',
+      'out_for_delivery',
+      'completed',
+    ]);
     expect(steps[0]?.state).toBe('completed');
     expect(steps[0]?.timestamp).toBeTruthy();
-
-    expect(steps[1]?.id).toBe('preparing');
-    expect(steps[1]?.label).toBe('Kitchen');
+    expect(steps[1]?.label).toBe('In the kitchen');
     expect(steps[1]?.state).toBe('current');
-
-    expect(steps[2]?.id).toBe('ready');
-    expect(steps[2]?.label).toBe('Ready for rider');
+    expect(steps[2]?.label).toBe('Ready for the rider');
     expect(steps[2]?.state).toBe('upcoming');
-
-    expect(steps[3]?.id).toBe('out_for_delivery');
-    expect(steps[3]?.state).toBe('upcoming');
-
-    expect(steps[4]?.id).toBe('completed');
     expect(steps[4]?.state).toBe('upcoming');
   });
 
-  it('generates pickup steps with Packing vocabulary for retail', () => {
-    const steps = resolveReceiptSteps('pickup', 'ready', [], 'retail');
-    expect(steps).toHaveLength(4);
-
-    expect(steps[0]?.id).toBe('placed');
-    expect(steps[0]?.state).toBe('completed');
-
-    expect(steps[1]?.id).toBe('preparing');
+  it('generates pickup steps with the packing word for retail', () => {
+    const steps = resolveReceiptSteps(
+      {
+        type: 'pickup',
+        status: 'ready',
+        events: [],
+        paymentMethod: 'cash',
+        paymentStatus: 'unpaid',
+      },
+      'retail',
+    );
+    expect(steps.map((s) => [s.id, s.state])).toEqual([
+      ['placed', 'completed'],
+      ['preparing', 'completed'],
+      ['ready', 'current'],
+      ['completed', 'upcoming'],
+    ]);
     expect(steps[1]?.label).toBe('Packing');
-    expect(steps[1]?.state).toBe('completed');
-
-    expect(steps[2]?.id).toBe('ready');
     expect(steps[2]?.label).toBe('Ready for pickup');
-    expect(steps[2]?.state).toBe('current');
+  });
 
-    expect(steps[3]?.id).toBe('completed');
-    expect(steps[3]?.state).toBe('upcoming');
+  it('adds the payment step for transfers and waits on it until the shop checks', () => {
+    const order = {
+      type: 'pickup',
+      status: 'placed',
+      events: [],
+      paymentMethod: 'gcash',
+      paymentStatus: 'pending',
+    } as const;
+    const waiting = resolveReceiptSteps(order, 'food');
+    expect(waiting.map((s) => [s.id, s.state])).toEqual([
+      ['placed', 'completed'],
+      ['paid', 'current'],
+      ['preparing', 'upcoming'],
+      ['ready', 'upcoming'],
+      ['completed', 'upcoming'],
+    ]);
+    const paid = resolveReceiptSteps({ ...order, paymentStatus: 'paid' }, 'food');
+    expect(paid.map((s) => s.state).slice(0, 3)).toEqual(['completed', 'completed', 'current']);
+  });
+
+  it('marks every step done once the order is completed', () => {
+    const steps = resolveReceiptSteps(
+      {
+        type: 'pickup',
+        status: 'completed',
+        events: [],
+        paymentMethod: 'cash',
+        paymentStatus: 'paid',
+      },
+      'food',
+    );
+    expect(steps.every((s) => s.state === 'completed')).toBe(true);
   });
 });
 

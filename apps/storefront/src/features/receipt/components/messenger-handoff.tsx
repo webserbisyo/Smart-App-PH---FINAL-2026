@@ -55,69 +55,78 @@ export function MessengerHandoff({ order, storefront, receiptUrl }: MessengerHan
     window.open(messengerUrl, '_blank', 'noopener,noreferrer');
   }
 
-  return (
-    <div
-      id="receipt-messenger-handoff"
-      className="flex flex-col gap-2 rounded-xl border bg-card p-4 shadow-xs"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <MessageCircle className="size-4 text-primary" />
-          <h3 className="text-sm font-semibold">{words.storefrontShell.home.messenger}</h3>
-        </div>
-        {copied && (
-          <span className="animate-in fade-in-50 flex items-center gap-1 text-xs font-medium text-success">
-            <Check className="size-3" />
-            <span>Copied. Paste it in Messenger.</span>
-          </span>
-        )}
-      </div>
+  const W = words.receipt.messenger;
 
-      <p className="text-xs text-muted-foreground">
-        Send your order details directly to the shop’s Messenger page for fast support.
-      </p>
+  return (
+    <section
+      id="receipt-messenger-handoff"
+      aria-labelledby="receipt-messenger-title"
+      className="flex flex-col gap-3 rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6 print:hidden"
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
+          <MessageCircle aria-hidden="true" className="size-5" />
+        </span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2 id="receipt-messenger-title" className="text-base font-semibold">
+            {words.storefrontShell.home.messenger}
+          </h2>
+          <p className="text-sm text-muted-foreground">{W.text}</p>
+        </div>
+      </div>
 
       <Button
         type="button"
         id="receipt-messenger-button"
         onClick={handleHandoff}
-        className="h-11 w-full gap-2 font-medium"
+        className="h-12 w-full gap-2 rounded-full text-base font-semibold"
       >
-        <MessageCircle className="size-4" />
-        <span>Continue in Messenger</span>
+        <MessageCircle aria-hidden="true" className="size-5" />
+        {W.button}
       </Button>
 
-      {/* Fallback selectable box if clipboard copy fails */}
+      <p role="status" className="min-h-5 text-center text-sm font-medium text-success-text">
+        {copied ? (
+          <span className="motion-safe:animate-in motion-safe:fade-in inline-flex items-center gap-1.5">
+            <Check aria-hidden="true" className="size-4" />
+            {W.copied}
+          </span>
+        ) : null}
+      </p>
+
+      {/* When copying fails, the text shows in a box to copy by hand. */}
       {copyFailed && (
-        <div className="mt-2 flex flex-col gap-1.5 rounded-lg bg-muted/60 p-2.5 text-xs">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-muted-foreground">Order details to paste:</span>
-            <button
+        <div className="flex flex-col gap-2 rounded-2xl bg-muted/60 p-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-medium text-muted-foreground">{W.pasteThis}</span>
+            <Button
               type="button"
+              variant="outline"
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(orderText);
                   setCopied(true);
                   setCopyFailed(false);
                 } catch {
-                  // Keep showing box
+                  // The box stays for copying by hand.
                 }
               }}
-              className="flex items-center gap-1 font-medium text-primary hover:underline"
+              className="h-11 shrink-0 gap-1.5 rounded-full px-4"
             >
-              <Copy className="size-3" />
-              <span>Copy</span>
-            </button>
+              <Copy aria-hidden="true" className="size-4" />
+              {W.copy}
+            </Button>
           </div>
           <textarea
             readOnly
             value={orderText}
-            rows={2}
-            className="w-full resize-none rounded border bg-background p-1.5 font-mono text-xs text-foreground select-all"
+            rows={3}
+            aria-label={W.pasteThis}
+            className="w-full resize-none rounded-xl border bg-background p-2.5 font-mono text-base text-foreground select-all"
             onFocus={(e) => e.target.select()}
           />
         </div>
       )}
-    </div>
+    </section>
   );
 }

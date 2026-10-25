@@ -1,8 +1,8 @@
 'use client';
 
 import { useId, useRef, useState, type ChangeEvent } from 'react';
-import { type OrderReceipt, type Proof } from '@smartapp/core';
-import { compressImage, useOnline, useSubmitProof } from '@smartapp/data';
+import { errorWords, words, type OrderReceipt, type Proof } from '@smartapp/core';
+import { compressImage, errorCodeOf, useOnline, useSubmitProof } from '@smartapp/data';
 import {
   Attachment,
   AttachmentContent,
@@ -24,127 +24,105 @@ export interface ProofUploaderProps {
 
 type UploaderState = 'idle' | 'compressing' | 'uploading' | 'retrying' | 'done' | 'error';
 
+const MAX_PROOFS = 3;
+// Automatic retries after a network failure, while online (T10).
+const RETRY_DELAYS_MS = [2000, 4000, 8000] as const;
+
+const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+function waitUntilOnline(): Promise<void> {
+  if (navigator.onLine) return Promise.resolve();
+  return new Promise((resolve) =>
+    window.addEventListener('online', () => resolve(), { once: true }),
+  );
+}
+
+/** Proof of payment (c-attachment-6 picker, c-attachment-5 progress row), inside the payment card. */
 export function ProofUploader({ slug, order }: ProofUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isOnline = useOnline();
   const [state, setState] = useState<UploaderState>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const [referenceNo, setReferenceNo] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const refInputId = useId();
-  const submitProofMutation = useSubmitProof(slug, order.token);
+  const submitProof = useSubmitProof(slug, order.token);
+  const W = words.receipt.proof;
 
-  // Transfer methods only
-  const isTransfer = order.paymentMethod !== 'cash' && order.paymentMethod !== 'cod';
-  if (
-    !isTransfer ||
-    order.paymentStatus === 'paid' ||
-    order.status === 'cancelled' ||
-    order.status === 'expired'
-  ) {
+  if (order.paymentStatus === 'paid' || order.paymentStatus === 'refunded') {
     return null;
   }
 
-  // Count existing proofs from messages
-  const existingProofs: Proof[] = [];
+  const proofs: Proof[] = [];
   for (const msg of order.messages) {
-    if (msg.proof) {
-      existingProofs.push(msg.proof);
-    }
+    if (msg.proof) proofs.push(msg.proof);
   }
-
-  const proofCount = existingProofs.length;
-  const latestProof =
-    existingProofs.length > 0 ? existingProofs[existingProofs.length - 1] : undefined;
-  const isRejected = latestProof?.status === 'rejected';
-  const isTooMany = proofCount >= 3;
+  const latestProof = proofs[proofs.length - 1];
+  const isRejected = order.paymentStatus === 'unpaid' && latestProof?.status === 'rejected';
+  const isTooMany = proofs.length >= MAX_PROOFS;
+  const busy = state === 'compressing' || state === 'uploading' || state === 'retrying';
 
   async function performUpload(file: File, refNo: string) {
+    setNote(null);
+    setState('compressing');
     try {
-      setState('compressing');
-      setErrorMessage(null);
-
-      // Compress on phone with canvas helper (decision D7)
       await compressImage(file);
+    } catch {
+      setState('error');
+      setNote(W.unreadable);
+      return;
+    }
 
-      setState('uploading');
-      setUploadProgress(40);
+    setState('uploading');
+    setUploadProgress(40);
+    const send = () =>
+      submitProof.mutateAsync({
+        method: order.paymentMethod,
+        referenceNo: refNo.trim() || 'PROOF',
+      });
 
-      const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-      // Attempt 1
+    for (let attempt = 0; ; attempt += 1) {
       try {
         await delay(300);
         setUploadProgress(70);
-        await submitProofMutation.mutateAsync({
-          method: order.paymentMethod,
-          referenceNo: refNo.trim() || 'PROOF',
-        });
+        await send();
         setUploadProgress(100);
         setState('done');
         setSelectedFile(null);
         setReferenceNo('');
         return;
-      } catch {
-        if (!isOnline) {
-          setState('retrying');
-          setErrorMessage("Will retry when you're back online");
+      } catch (err: unknown) {
+        const code = errorCodeOf(err);
+        const wait = RETRY_DELAYS_MS[attempt];
+        // Only a lost connection is worth retrying; a shop rule (duplicate reference, 3 proofs) is not.
+        if (code !== 'unknown' || wait === undefined) {
+          setState('error');
+          setNote(code === 'unknown' ? W.failed : errorWords(code));
           return;
         }
-        // Retry 1: 2s backoff
         setState('retrying');
-        setErrorMessage('Uploading… retrying in 2s');
-        await delay(2000);
-
-        try {
-          await submitProofMutation.mutateAsync({
-            method: order.paymentMethod,
-            referenceNo: refNo.trim() || 'PROOF',
-          });
-          setUploadProgress(100);
-          setState('done');
-          setSelectedFile(null);
-          setReferenceNo('');
-          return;
-        } catch {
-          // Retry 2: 4s backoff
-          setErrorMessage('Uploading… retrying in 4s');
-          await delay(4000);
-
-          try {
-            await submitProofMutation.mutateAsync({
-              method: order.paymentMethod,
-              referenceNo: refNo.trim() || 'PROOF',
-            });
-            setUploadProgress(100);
-            setState('done');
-            setSelectedFile(null);
-            setReferenceNo('');
-            return;
-          } catch (finalErr: unknown) {
-            setState('error');
-            const msg =
-              finalErr instanceof Error ? finalErr.message : 'Upload failed. Please try again.';
-            setErrorMessage(msg);
-          }
+        if (!navigator.onLine) {
+          setNote(W.waitOnline);
+          await waitUntilOnline();
+        } else {
+          setNote(W.retrying(wait / 1000));
+          await delay(wait);
         }
       }
-    } catch (err: unknown) {
-      setState('error');
-      setErrorMessage(err instanceof Error ? err.message : 'Could not process photo');
     }
   }
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
     setSelectedFile(file);
     void performUpload(file, referenceNo);
   }
 
-  function handleManualRetry() {
+  function handleTryAgain() {
     if (selectedFile) {
       void performUpload(selectedFile, referenceNo);
     } else {
@@ -152,134 +130,121 @@ export function ProofUploader({ slug, order }: ProofUploaderProps) {
     }
   }
 
+  const sent = state === 'done' || order.paymentStatus === 'pending';
+
   return (
-    <div
-      id="receipt-proof-uploader"
-      className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs"
-    >
-      <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-          Proof of payment
-        </h3>
-        <span className="text-xs text-muted-foreground">
-          {proofCount > 0 ? `${proofCount}/3 proofs` : 'Unpaid order'}
-        </span>
+    <div id="receipt-proof-uploader" className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold">{W.title}</h2>
+        {proofs.length > 0 ? (
+          <span className="text-xs text-muted-foreground tabular">
+            {W.count(proofs.length, MAX_PROOFS)}
+          </span>
+        ) : null}
       </div>
 
-      {/* Rejected Alert (c-alert-4) */}
-      {isRejected && (
+      {isRejected && !sent ? (
         <Alert variant="destructive">
-          <XCircle className="size-4" />
-          <AlertTitle>Payment not accepted</AlertTitle>
+          <XCircle />
+          <AlertTitle>{W.rejectedTitle}</AlertTitle>
           <AlertDescription>
             {latestProof.rejectReason
-              ? `Reason: ${latestProof.rejectReason}`
-              : 'The shop could not verify your payment. Please upload a clear receipt.'}
+              ? W.rejectedReason(latestProof.rejectReason)
+              : W.rejectedNoReason}
           </AlertDescription>
         </Alert>
-      )}
+      ) : null}
 
-      {/* Done State */}
-      {state === 'done' || (order.paymentStatus === 'pending' && !isRejected) ? (
-        <Alert variant="info" className="bg-info/10">
-          <CheckCircle2 className="size-4 text-info" />
-          <AlertTitle>Proof sent</AlertTitle>
-          <AlertDescription>Waiting for the shop to check your payment.</AlertDescription>
+      {sent ? (
+        <Alert variant="info">
+          <CheckCircle2 />
+          <AlertTitle>{W.sentTitle}</AlertTitle>
+          <AlertDescription>
+            {W.sentText} {W.waiting}.
+          </AlertDescription>
         </Alert>
       ) : isTooMany ? (
         <Alert variant="warning">
-          <AlertCircle className="size-4" />
-          <AlertTitle>Maximum proof attempts reached</AlertTitle>
-          <AlertDescription>
-            You have sent 3 proofs. Please contact the shop via Messenger or phone.
-          </AlertDescription>
+          <AlertCircle />
+          <AlertTitle>{W.tooManyTitle(MAX_PROOFS)}</AlertTitle>
+          <AlertDescription>{W.tooManyText}</AlertDescription>
         </Alert>
       ) : (
         <div className="flex flex-col gap-3">
-          {/* Reference number input */}
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor={refInputId} className="text-xs font-medium text-muted-foreground">
-              Reference number (optional)
+            <Label htmlFor={refInputId} className="text-sm text-muted-foreground">
+              {W.reference}
             </Label>
             <Input
               id={refInputId}
-              placeholder="e.g. 123456789"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder={W.referencePlaceholder}
               value={referenceNo}
               onChange={(e) => setReferenceNo(e.target.value)}
-              disabled={state === 'uploading' || state === 'compressing'}
-              className="h-9 font-mono text-sm"
+              disabled={busy}
+              className="h-11 rounded-xl text-base tabular"
             />
           </div>
 
-          {/* Hidden File Input */}
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             className="hidden"
             onChange={handleFileChange}
           />
 
-          {/* Upload Progress Attachment row (c-attachment-5) */}
-          {state === 'uploading' || state === 'compressing' || state === 'retrying' ? (
+          {busy ? (
             <Attachment state={state === 'retrying' ? 'error' : 'uploading'} className="w-full">
               <AttachmentMedia variant="icon">
-                <RotateCw className="size-4 animate-spin text-primary" />
+                <RotateCw className="size-4 text-primary motion-safe:animate-spin" />
               </AttachmentMedia>
               <AttachmentContent>
                 <AttachmentTitle>
-                  {state === 'compressing'
-                    ? 'Compressing photo…'
-                    : state === 'retrying'
-                      ? 'Retrying upload…'
-                      : 'Uploading proof of payment…'}
+                  {state === 'compressing' ? W.compressing : W.uploading}
                 </AttachmentTitle>
-                <AttachmentDescription>
-                  {errorMessage ?? 'Please keep this window open'}
-                </AttachmentDescription>
-                {state === 'uploading' && (
-                  <Progress value={uploadProgress} className="h-1.5 w-full" />
-                )}
+                <AttachmentDescription>{note ?? W.keepOpen}</AttachmentDescription>
+                {state === 'uploading' ? (
+                  <Progress value={uploadProgress} className="progress-thin w-full" />
+                ) : null}
               </AttachmentContent>
             </Attachment>
           ) : (
-            /* Picker trigger button (c-attachment-6) */
             <div className="flex flex-col gap-2">
               <Button
                 type="button"
                 id="receipt-upload-proof-button"
                 variant="outline"
-                className="h-12 w-full gap-2 border-dashed font-medium"
+                className="h-12 w-full gap-2 rounded-2xl border-dashed text-base font-medium"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!isOnline}
               >
-                <Camera className="size-4 text-primary" />
-                <span>Upload proof of payment</span>
+                <Camera aria-hidden="true" className="size-5 text-primary" />
+                {isRejected ? W.uploadAgain : W.upload}
               </Button>
-              {!isOnline && (
-                <span className="text-center text-xs text-muted-foreground">
-                  Connect to the internet to upload proof
-                </span>
-              )}
+              {!isOnline ? (
+                <p className="text-center text-sm text-muted-foreground">{W.offline}</p>
+              ) : null}
             </div>
           )}
 
-          {/* Error Message with Try again */}
-          {state === 'error' && (
-            <div className="flex items-center justify-between rounded-lg bg-destructive/10 p-2.5 text-xs text-destructive">
-              <span>{errorMessage ?? 'Upload failed'}</span>
+          {state === 'error' ? (
+            <div
+              role="alert"
+              className="flex items-center justify-between gap-3 rounded-2xl bg-destructive-soft p-3 text-sm text-destructive-soft-foreground"
+            >
+              <span className="min-w-0">{note ?? W.failed}</span>
               <Button
                 type="button"
-                size="sm"
-                variant="ghost"
-                className="h-7 text-xs text-destructive hover:bg-destructive/20"
-                onClick={handleManualRetry}
+                variant="outline"
+                className="h-11 shrink-0 rounded-full px-4"
+                onClick={handleTryAgain}
               >
-                Try again
+                {W.tryAgain}
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>

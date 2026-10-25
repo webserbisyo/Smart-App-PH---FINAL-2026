@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
 import { formatPeso, words, type Item, type Storefront } from '@smartapp/core';
 import {
   Field,
@@ -12,6 +11,8 @@ import {
 import { Separator } from '@smartapp/ui/components/separator';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
+import { GiftIcon } from 'lucide-react';
+import { CheckoutStep } from './checkout-step';
 
 const NOTE_MAX_CHARS = 300;
 
@@ -35,8 +36,8 @@ interface CheckoutExtrasProps {
 }
 
 /**
- * Extras: Reward switch (pattern c-switch-2), auto-resize order note (pattern c-textarea-6),
- * totals summary (pattern c-separator-6), and consent disclaimer.
+ * After the steps: the reward switch in a member-coloured card (c-switch-2), then the order note
+ * (c-textarea-6, grows with the text) and the totals (c-separator-6) with the consent line.
  */
 export function CheckoutExtras({
   readyReward,
@@ -50,120 +51,102 @@ export function CheckoutExtras({
   totalCentavos,
   isDelivery,
 }: CheckoutExtrasProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const handleNoteChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const val = e.target.value;
-      if (val.length <= NOTE_MAX_CHARS) {
-        onNoteChange(val);
-      }
-      const textarea = textareaRef.current;
-      if (textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
-    },
-    [onNoteChange],
-  );
-
   const remainingChars = NOTE_MAX_CHARS - note.length;
 
   return (
-    <div className="flex flex-col gap-6 rounded-xl border border-border bg-card p-4">
-      {/* Reward Switch: pattern c-switch-2 */}
+    <>
       {readyReward ? (
-        <div className="flex flex-col gap-2">
-          <FieldLabel htmlFor="checkout-reward-switch" className="cursor-pointer">
-            <Field orientation="horizontal">
-              <FieldContent>
-                <FieldTitle>{words.checkout.rewardUse(readyReward.title)}</FieldTitle>
-                {readyReward.soldOutToday ? (
-                  <FieldDescription className="font-medium text-destructive">
-                    {words.checkout.rewardSoldOutToday}
-                  </FieldDescription>
-                ) : (
-                  <FieldDescription>Apply this reward to your order</FieldDescription>
-                )}
-              </FieldContent>
-              <Switch
-                id="checkout-reward-switch"
-                checked={readyReward.soldOutToday ? false : useReward}
-                disabled={readyReward.soldOutToday}
-                onCheckedChange={onUseRewardChange}
-              />
-            </Field>
-          </FieldLabel>
-          <Separator className="mt-2" />
-        </div>
+        <FieldLabel
+          htmlFor="checkout-reward-switch"
+          className="w-full cursor-pointer rounded-3xl bg-member-soft p-4 text-member-soft-foreground sm:p-5"
+        >
+          <Field orientation="horizontal" className="items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-member text-member-foreground">
+              <GiftIcon aria-hidden="true" className="size-5" />
+            </span>
+            <FieldContent>
+              <FieldTitle className="text-base">
+                {words.checkout.rewardUse(readyReward.title)}
+              </FieldTitle>
+              <FieldDescription className="text-member-soft-foreground">
+                {readyReward.soldOutToday
+                  ? words.checkout.rewardSoldOutToday
+                  : words.checkout.rewardHint}
+              </FieldDescription>
+            </FieldContent>
+            <Switch
+              id="checkout-reward-switch"
+              checked={readyReward.soldOutToday ? false : useReward}
+              disabled={readyReward.soldOutToday}
+              onCheckedChange={onUseRewardChange}
+            />
+          </Field>
+        </FieldLabel>
       ) : null}
 
-      {/* Order note: pattern c-textarea-6 */}
-      <Field className="w-full">
-        <div className="flex items-center justify-between pb-1">
-          <FieldLabel htmlFor="checkout-order-note">{words.checkout.orderNote}</FieldLabel>
-          <span
-            className={`text-xs tabular-nums ${
-              remainingChars === 0
-                ? 'font-semibold text-destructive'
-                : remainingChars <= 20
-                  ? 'text-warning'
-                  : 'text-muted-foreground'
-            }`}
-          >
-            {note.length}/{NOTE_MAX_CHARS}
-          </span>
-        </div>
-        <Textarea
-          ref={textareaRef}
-          id="checkout-order-note"
-          value={note}
-          onChange={handleNoteChange}
-          placeholder={words.checkout.notePlaceholder}
-          rows={2}
-          className="resize-none overflow-hidden"
-        />
-      </Field>
-
-      {/* Totals: pattern c-separator-6 */}
-      <div className="flex flex-col gap-2 pt-2 text-sm">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">{words.checkout.totals.subtotal}</span>
-          <span className="font-medium tabular">{formatPeso(subtotalCentavos)}</span>
-        </div>
-
-        {discountCentavos > 0 ? (
-          <div className="flex justify-between text-success">
-            <span>{words.checkout.totals.discount}</span>
-            <span className="font-medium tabular">−{formatPeso(discountCentavos)}</span>
-          </div>
-        ) : null}
-
-        {isDelivery ? (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{words.checkout.totals.deliveryFee}</span>
-            <span className="font-medium tabular">
-              {deliveryFeeCentavos === null
-                ? words.basket.deliveryFeeAtCheckout
-                : deliveryFeeCentavos === 0
-                  ? words.shop.free
-                  : formatPeso(deliveryFeeCentavos)}
+      <CheckoutStep id="checkout-total" title={words.checkout.noteAndTotal}>
+        <Field className="w-full">
+          <div className="flex items-center justify-between">
+            <FieldLabel htmlFor="checkout-order-note">{words.checkout.orderNote}</FieldLabel>
+            <span
+              className={`text-xs tabular ${
+                remainingChars === 0
+                  ? 'font-semibold text-destructive-text'
+                  : remainingChars <= 20
+                    ? 'text-warning-text'
+                    : 'text-muted-foreground'
+              }`}
+            >
+              {words.checkout.noteCount(note.length, NOTE_MAX_CHARS)}
             </span>
           </div>
-        ) : null}
+          <Textarea
+            id="checkout-order-note"
+            value={note}
+            maxLength={NOTE_MAX_CHARS}
+            onChange={(e) => onNoteChange(e.target.value.slice(0, NOTE_MAX_CHARS))}
+            placeholder={words.checkout.notePlaceholder}
+            rows={2}
+            className="min-h-20 resize-none rounded-xl"
+          />
+        </Field>
 
-        <Separator className="my-1" />
+        <dl className="flex flex-col gap-2 rounded-2xl bg-muted/50 p-4 text-sm">
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">{words.checkout.totals.subtotal}</dt>
+            <dd className="font-medium tabular">{formatPeso(subtotalCentavos)}</dd>
+          </div>
 
-        <div className="flex items-baseline justify-between pt-1">
-          <span className="text-base font-bold">{words.checkout.totals.total}</span>
-          <span className="text-xl font-bold text-foreground tabular">
-            {formatPeso(totalCentavos)}
-          </span>
-        </div>
-      </div>
+          {discountCentavos > 0 ? (
+            <div className="flex justify-between gap-3 text-success-text">
+              <dt>{words.checkout.totals.discount}</dt>
+              <dd className="font-medium tabular">{formatPeso(-discountCentavos)}</dd>
+            </div>
+          ) : null}
 
-      {/* Consent line */}
-      <p className="text-center text-xs text-muted-foreground">{words.checkout.privacyConsent}</p>
-    </div>
+          {isDelivery ? (
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">{words.checkout.totals.deliveryFee}</dt>
+              <dd className="font-medium tabular">
+                {deliveryFeeCentavos === null
+                  ? words.basket.deliveryFeeAtCheckout
+                  : deliveryFeeCentavos === 0
+                    ? words.shop.free
+                    : formatPeso(deliveryFeeCentavos)}
+              </dd>
+            </div>
+          ) : null}
+
+          <Separator className="my-1" />
+
+          <div className="flex items-baseline justify-between gap-3">
+            <dt className="text-base font-bold">{words.checkout.totals.total}</dt>
+            <dd className="text-xl font-extrabold tabular">{formatPeso(totalCentavos)}</dd>
+          </div>
+        </dl>
+
+        <p className="text-center text-xs text-muted-foreground">{words.checkout.privacyConsent}</p>
+      </CheckoutStep>
+    </>
   );
 }

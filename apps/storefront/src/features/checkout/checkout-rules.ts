@@ -3,7 +3,7 @@ import {
   isTransfer,
   normalisePhPhone,
   openState,
-  openStateText,
+  openingWhen,
   type OrderType,
   type PaymentMethod,
   type Quote,
@@ -160,9 +160,7 @@ export function checkPlaceOrderEligibility(
   }
 
   if (state.state === 'closed' && !scheduledAt && orderType !== 'walk_in') {
-    const nextWhen = state.nextOpening
-      ? openStateText(state, now).replace(/^Closed · Opens /, '')
-      : null;
+    const nextWhen = state.nextOpening ? openingWhen(state.nextOpening, now) : null;
     return {
       canPlace: false,
       reason: nextWhen ? words.checkout.closedDisabled(nextWhen) : words.shop.notTakingOrders,
@@ -171,17 +169,17 @@ export function checkPlaceOrderEligibility(
   }
 
   if (!name.trim()) {
-    return { canPlace: false, reason: 'Enter your name', missingField: 'name' };
+    return { canPlace: false, reason: words.checkout.enterName, missingField: 'name' };
   }
 
   const phoneRes = normalisePhPhone(phone);
   if (!phoneRes.ok) {
-    return { canPlace: false, reason: 'Enter a valid mobile number', missingField: 'phone' };
+    return { canPlace: false, reason: words.checkout.enterPhone, missingField: 'phone' };
   }
 
   if (orderType === 'delivery') {
     if (!addressLine.trim()) {
-      return { canPlace: false, reason: 'Enter your street address', missingField: 'address' };
+      return { canPlace: false, reason: words.checkout.enterAddress, missingField: 'address' };
     }
     if (!spot && !zoneId && sf.delivery.zones.length > 0) {
       return { canPlace: false, reason: words.location.chooseArea, missingField: 'zone' };
@@ -189,7 +187,7 @@ export function checkPlaceOrderEligibility(
   }
 
   if (!paymentMethod) {
-    return { canPlace: false, reason: 'Choose a payment method', missingField: 'payment' };
+    return { canPlace: false, reason: words.checkout.choosePayment, missingField: 'payment' };
   }
 
   if (quoteLoading && !quote) {
@@ -211,7 +209,9 @@ export function checkPlaceOrderEligibility(
         case 'below_min_order':
           return {
             canPlace: false,
-            reason: `Spend ${first.amount ? formatPeso(first.amount) : 'more'} for delivery`,
+            reason: first.amount
+              ? words.shop.minOrder(formatPeso(first.amount))
+              : words.checkout.belowMinOrder,
             missingField: 'basket',
           };
         case 'zone_required':

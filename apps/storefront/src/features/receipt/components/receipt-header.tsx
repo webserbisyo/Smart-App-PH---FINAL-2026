@@ -1,171 +1,255 @@
 'use client';
 
-import { useId, useMemo } from 'react';
-import { formatPeso, words, type OrderReceipt, type Storefront } from '@smartapp/core';
-import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/reui/alert';
+import { useMemo } from 'react';
+import { artPath, words, type OrderReceipt, type Storefront } from '@smartapp/core';
+import { Badge } from '@smartapp/ui/components/reui/badge';
 import {
   Stepper,
   StepperDescription,
   StepperIndicator,
   StepperItem,
-  StepperSeparator,
+  StepperNav,
   StepperTitle,
 } from '@smartapp/ui/components/reui/stepper';
 import { QRCode, QRCodeSvg } from '@smartapp/ui/components/qr-code';
-import { Check, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { cn } from '@smartapp/ui/lib/utils';
+import { CheckIcon } from 'lucide-react';
 import { CopyButton } from '@/features/checkout/components/copy-button';
 import {
   formatManilaDateTime,
   formatOrderNumber,
   isOrderCancelled,
   resolveReceiptSteps,
+  type ReceiptStepItem,
 } from '../receipt-rules';
+import { paymentChip, receiptHero, statusChip, type ReceiptChip } from '../receipt-look';
 
 export interface ReceiptHeaderProps {
   readonly order: OrderReceipt;
   readonly storefront: Storefront;
   readonly receiptUrl: string;
-  readonly isNewOrder?: boolean;
+  readonly justPlaced?: boolean;
+}
+
+/** The success check that draws itself (draw-check motion, off under reduced motion). */
+function DrawnCheck({ className }: { className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'flex size-8 items-center justify-center rounded-full bg-success text-success-foreground shadow-md ring-4 ring-card',
+        className,
+      )}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="size-4">
+        <path
+          d="M5 12.5l4.5 4.5L19 7.5"
+          pathLength={1}
+          className="draw-check"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
+}
+
+function Chip({ chip, check = false }: { chip: ReceiptChip; check?: boolean }) {
+  const Icon = chip.icon;
+  return (
+    <Badge variant={chip.tone} size="xl" radius="full" className="gap-1.5 px-2.5">
+      {check ? (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={3}
+          aria-hidden="true"
+          className="size-3.5"
+        >
+          <path
+            d="M5 12.5l4.5 4.5L19 7.5"
+            pathLength={1}
+            className="draw-check"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ) : (
+        <Icon aria-hidden="true" className="size-3.5" />
+      )}
+      {chip.label}
+    </Badge>
+  );
+}
+
+// The c-stepper-26 track, read only: times above, the shop colour fills the steps done.
+const DONE = <CheckIcon strokeWidth={3.36} className="size-2.5" aria-hidden="true" />;
+function DashedRing({ spin = false }: { spin?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+      className={cn('size-4', spin && 'motion-safe:animate-spin')}
+    >
+      <circle
+        cx="8"
+        cy="8"
+        r="4.45"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeDasharray="3 1"
+        pathLength={28}
+      />
+    </svg>
+  );
+}
+const INDICATORS = { completed: DONE, inactive: <DashedRing />, loading: <DashedRing spin /> };
+
+function StatusTrack({ steps }: { steps: readonly ReceiptStepItem[] }) {
+  const currentIndex = steps.findIndex((s) => s.state === 'current');
+  // One past the last step marks every step done.
+  const value = currentIndex === -1 ? steps.length + 1 : currentIndex + 1;
+  const current = steps[currentIndex];
+
+  return (
+    <div
+      id="receipt-status-track"
+      className="flex flex-col gap-3 rounded-3xl bg-card p-4 shadow-xs ring-1 ring-foreground/8 sm:p-5"
+    >
+      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        {words.receipt.progress}
+      </h2>
+      <p role="status" className="sr-only">
+        {current ? current.label : null}
+      </p>
+      <Stepper value={value} indicators={INDICATORS} aria-label={words.receipt.progress}>
+        <StepperNav>
+          {steps.map((step, index) => (
+            <StepperItem key={step.id} step={index + 1} loading className="min-w-0 flex-1">
+              <div className="flex w-full flex-col gap-2">
+                <StepperDescription className="text-center text-xs whitespace-nowrap tabular">
+                  {step.timestamp ?? <span aria-hidden="true">--</span>}
+                </StepperDescription>
+                <span className="flex h-1 w-full items-center gap-0.75">
+                  <span className="flex h-full flex-1 bg-ring/20 group-first/step:rounded-s-full">
+                    <span className="flex-1 group-first/step:rounded-s-full group-state-active/step:bg-primary group-state-completed/step:bg-primary" />
+                  </span>
+                  <StepperIndicator className="size-4 bg-ring/20 text-ring state-active:bg-primary state-active:text-primary-foreground state-completed:bg-primary state-completed:text-primary-foreground" />
+                  <span className="flex h-full flex-1 bg-ring/20 group-last/step:rounded-e-full">
+                    <span className="flex-1 group-last/step:rounded-e-full group-state-completed/step:bg-primary" />
+                  </span>
+                </span>
+                <StepperTitle className="px-0.5 text-center text-xs leading-snug text-balance text-muted-foreground state-active:font-semibold state-active:text-foreground state-completed:text-foreground">
+                  {step.label}
+                  <span className="sr-only">
+                    {step.state === 'completed'
+                      ? `, ${words.receipt.stepDone}`
+                      : step.state === 'current'
+                        ? `, ${words.receipt.stepNow}`
+                        : ''}
+                  </span>
+                </StepperTitle>
+              </div>
+            </StepperItem>
+          ))}
+        </StepperNav>
+      </Stepper>
+    </div>
+  );
 }
 
 export function ReceiptHeader({
   order,
   storefront,
   receiptUrl,
-  isNewOrder = false,
+  justPlaced = false,
 }: ReceiptHeaderProps) {
-  const headingId = useId();
-  const orderNumStr = useMemo(() => formatOrderNumber(order.orderNo), [order.orderNo]);
-
-  const steps = useMemo(
-    () => resolveReceiptSteps(order.type, order.status, order.events, storefront.info.kind),
-    [order.type, order.status, order.events, storefront.info.kind],
-  );
-
-  const activeIndex = useMemo(() => {
-    const idx = steps.findIndex((s) => s.state === 'current');
-    return idx === -1 ? (steps.every((s) => s.state === 'completed') ? steps.length - 1 : 0) : idx;
-  }, [steps]);
-
-  const orderTypeLabel = useMemo(() => {
-    const typeLabel = words.shop.orderType[order.type];
-
-    if (order.scheduledAt) {
-      return `${typeLabel} · Scheduled ${formatManilaDateTime(order.scheduledAt)}`;
-    }
-    return typeLabel;
-  }, [order.type, order.scheduledAt]);
-
+  const kind = storefront.info.kind;
+  const orderNo = formatOrderNumber(order.orderNo);
+  const hero = receiptHero(order, kind, justPlaced);
+  const status = statusChip(order.status);
+  const payment = paymentChip(order);
   const cancelled = isOrderCancelled(order.status);
+  const steps = useMemo(() => resolveReceiptSteps(order, kind), [order, kind]);
+
+  const typeLine = order.scheduledAt
+    ? `${words.shop.orderType[order.type]} · ${words.receipt.scheduled(formatManilaDateTime(order.scheduledAt))}`
+    : words.shop.orderType[order.type];
 
   return (
-    <section aria-labelledby={headingId} className="flex flex-col gap-4">
-      <h2 id={headingId} className="sr-only">
-        {words.checkout.title}
-      </h2>
-
-      {/* Just placed banner */}
-      {isNewOrder && (
-        <Alert variant="success" className="animate-in fade-in-50">
-          <CheckCircle2 className="size-4" />
-          <AlertTitle>Order placed</AlertTitle>
-          <AlertDescription>{words.shop.stamps.pending(orderNumStr)}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Top Card: Big Order Number, Type, Scheduled time, and QR code */}
-      <div className="flex flex-col items-center justify-between gap-4 rounded-xl border bg-card p-5 text-center shadow-xs sm:flex-row sm:text-left">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-            Order
-          </span>
-          <div className="flex items-center justify-center gap-2 sm:justify-start">
-            <span
-              id="receipt-order-number"
-              tabIndex={-1}
-              className="font-mono text-3xl font-extrabold tracking-tight tabular-nums sm:text-4xl"
-            >
-              {orderNumStr}
-            </span>
-            <CopyButton textToCopy={orderNumStr} label={`Copy order number ${orderNumStr}`} />
+    <section aria-labelledby="receipt-title" className="flex flex-col gap-4">
+      <div className="flex flex-col gap-5 rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className="relative shrink-0">
+            <img
+              src={artPath(hero.art)}
+              alt=""
+              width={80}
+              height={80}
+              decoding="async"
+              className="motion-safe:animate-in motion-safe:zoom-in-90 motion-safe:fade-in size-20 object-contain drop-shadow-md"
+            />
+            {justPlaced ? <DrawnCheck className="absolute -right-1 -bottom-1" /> : null}
           </div>
-          <p className="text-sm font-medium text-muted-foreground">{orderTypeLabel}</p>
-          {order.deliveryAddress && (
-            <p className="max-w-xs text-xs text-muted-foreground">{order.deliveryAddress}</p>
-          )}
+          <div className="flex min-w-0 flex-col gap-2">
+            <h1 id="receipt-title" className="text-xl leading-tight font-bold text-balance">
+              {hero.title}
+            </h1>
+            <p className="text-sm text-pretty text-muted-foreground">{hero.hint}</p>
+            <div className="flex flex-wrap gap-1.5">
+              <Chip chip={status} />
+              <Chip chip={payment} check={order.paymentStatus === 'paid'} />
+            </div>
+          </div>
         </div>
 
-        {/* QR Code */}
-        <div className="flex flex-col items-center gap-1.5 rounded-lg border bg-background p-2.5 shadow-2xs">
-          <QRCode value={receiptUrl} size={120}>
-            <QRCodeSvg className="rounded" />
-          </QRCode>
-          <span className="text-xs font-medium text-muted-foreground">
-            {order.type === 'pickup' ? 'Show this at pickup' : 'Scan for live status'}
-          </span>
+        <div className="flex flex-col gap-5 border-t border-dashed pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              {words.receipt.orderLabel}
+            </span>
+            <div className="flex items-center gap-2">
+              <span
+                id="receipt-order-number"
+                tabIndex={-1}
+                className="text-5xl font-extrabold tracking-tight tabular outline-none"
+              >
+                {orderNo}
+              </span>
+              <CopyButton
+                textToCopy={orderNo}
+                label={words.receipt.copyNumber(orderNo)}
+                iconOnly
+                className="size-11 rounded-full"
+              />
+            </div>
+            <p className="text-sm font-medium">{typeLine}</p>
+            {order.deliveryAddress ? (
+              <p className="text-sm text-pretty break-words text-muted-foreground">
+                {order.deliveryAddress}
+              </p>
+            ) : null}
+          </div>
+
+          {/* The QR stays black on white on every shop so any scanner reads it. */}
+          <figure className="flex shrink-0 flex-col items-center gap-2 self-center rounded-2xl bg-paper p-3 text-paper-foreground ring-1 ring-foreground/8">
+            <QRCode value={receiptUrl} size={160}>
+              <QRCodeSvg
+                role="img"
+                aria-label={words.receipt.qrLabel(orderNo)}
+                className="rounded-sm"
+              />
+            </QRCode>
+            <figcaption className="text-xs font-medium">
+              {order.type === 'delivery' ? words.receipt.qrLive : words.receipt.qrCounter}
+            </figcaption>
+          </figure>
         </div>
       </div>
 
-      {/* Status Track: c-stepper-26 or Cancellation Alert */}
-      {cancelled ? (
-        <div id="receipt-cancelled-alert">
-          {order.status === 'expired' ? (
-            <Alert variant="destructive">
-              <Clock className="size-4" />
-              <AlertTitle>Order expired</AlertTitle>
-              <AlertDescription>{words.shop.thread.expired}</AlertDescription>
-            </Alert>
-          ) : order.refund ? (
-            <Alert variant="warning">
-              <XCircle className="size-4" />
-              <AlertTitle>Order cancelled and refunded</AlertTitle>
-              <AlertDescription>
-                {words.shop.thread.refunded(formatPeso(order.refund.amount), order.refund.reason)}
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <Alert variant="destructive">
-              <XCircle className="size-4" />
-              <AlertTitle>Order cancelled</AlertTitle>
-              <AlertDescription>
-                {words.shop.thread.cancelled(order.cancelReason ?? 'Cancelled by shop')}
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      ) : (
-        <div
-          id="receipt-status-track"
-          role="status"
-          aria-live="polite"
-          className="rounded-xl border bg-card p-4 shadow-xs"
-        >
-          <h3 className="mb-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-            Order progress
-          </h3>
-          <Stepper orientation="vertical" value={activeIndex + 1} className="w-full">
-            {steps.map((step, idx) => {
-              const isLast = idx === steps.length - 1;
-              return (
-                <StepperItem key={step.id} step={idx + 1} className="gap-3">
-                  <StepperIndicator className="size-6 text-xs">
-                    {step.state === 'completed' ? <Check className="size-3.5" /> : idx + 1}
-                  </StepperIndicator>
-                  <div className="flex flex-col pb-4">
-                    <StepperTitle className="text-sm font-semibold">{step.label}</StepperTitle>
-                    {step.timestamp && (
-                      <StepperDescription className="text-xs text-muted-foreground tabular-nums">
-                        {step.timestamp}
-                      </StepperDescription>
-                    )}
-                  </div>
-                  {!isLast && <StepperSeparator className="top-6" />}
-                </StepperItem>
-              );
-            })}
-          </Stepper>
-        </div>
-      )}
+      {cancelled ? null : <StatusTrack steps={steps} />}
     </section>
   );
 }

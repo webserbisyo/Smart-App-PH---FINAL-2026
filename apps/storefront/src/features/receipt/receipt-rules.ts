@@ -1,9 +1,14 @@
 // Pure rules for the receipt screen (T10): countdown, Messenger text, timeline steps, formatting.
 import {
+  isTransfer,
   timelineSteps,
+  vocab,
+  words,
   type OrderEvent,
   type OrderStatus,
   type OrderType,
+  type PaymentMethod,
+  type PaymentStatus,
   type ShopKind,
 } from '@smartapp/core';
 
@@ -84,9 +89,8 @@ export interface MessengerOrderInput {
  */
 export function buildMessengerOrderText(input: MessengerOrderInput): string {
   const num = formatOrderNumber(input.orderNo);
-  const count = Math.max(1, input.lineCount);
-  const itemWord = count === 1 ? 'item' : 'items';
-  return `Order ${num} · ${count} ${itemWord} · ${input.totalFormatted} · ${input.receiptUrl}`;
+  const summary = words.checkout.itemsSummary(Math.max(1, input.lineCount), input.totalFormatted);
+  return `${words.receipt.orderLabel} ${num} · ${summary} · ${input.receiptUrl}`;
 }
 
 export function buildMessengerUrl(pageIdOrUsername: string, text: string): string {
@@ -94,8 +98,10 @@ export function buildMessengerUrl(pageIdOrUsername: string, text: string): strin
   return `https://m.me/${encodeURIComponent(cleanId)}?text=${encodeURIComponent(text)}`;
 }
 
+export type ReceiptStepId = OrderStatus | 'paid';
+
 export interface ReceiptStepItem {
-  readonly id: OrderStatus;
+  readonly id: ReceiptStepId;
   readonly label: string;
   readonly timestamp: string | null;
   readonly state: 'completed' | 'current' | 'upcoming';
@@ -139,55 +145,65 @@ export function isOrderCancelled(status: OrderStatus): boolean {
   return status === 'cancelled' || status === 'expired';
 }
 
+export interface ReceiptStepOrder {
+  readonly type: OrderType;
+  readonly status: OrderStatus;
+  readonly events: readonly OrderEvent[];
+  readonly paymentMethod: PaymentMethod;
+  readonly paymentStatus: PaymentStatus;
+}
+
+function stepLabel(id: ReceiptStepId, type: OrderType, kind: ShopKind): string {
+  switch (id) {
+    case 'placed':
+      return words.receipt.steps.placed;
+    case 'paid':
+      return words.receipt.steps.paid;
+    case 'preparing':
+      return vocab(kind).prepStep;
+    case 'ready':
+      return words.receipt.hero.ready[type];
+    case 'out_for_delivery':
+      return words.receipt.steps.outForDelivery;
+    default:
+      return words.receipt.steps.completed;
+  }
+}
+
 /**
- * Builds the timestamped stepper checkpoints for c-stepper-26.
+ * The status track (c-stepper-26): placed, payment checked (transfers only), preparing, ready,
+ * out for delivery (delivery only), completed, each with its Manila time when it happened.
  */
 export function resolveReceiptSteps(
-  type: OrderType,
-  currentStatus: OrderStatus,
-  events: readonly OrderEvent[],
+  order: ReceiptStepOrder,
   kind: ShopKind,
 ): readonly ReceiptStepItem[] {
-  const steps = timelineSteps(type);
-  const eventMap = new Map<OrderStatus, string>();
-  for (const ev of events) {
-    eventMap.set(ev.status, ev.at);
-  }
+  const statuses = timelineSteps(order.type);
+  const transfer = isTransfer(order.paymentMethod);
+  const ids: ReceiptStepId[] = transfer
+    ? [statuses[0] ?? 'placed', 'paid', ...statuses.slice(1)]
+    : statuses;
+  const times = new Map<ReceiptStepId, string>();
+  for (const event of order.events) times.set(event.status, event.at);
 
-  const currentIndex = steps.indexOf(currentStatus);
+  // A placed transfer waits on the payment step, then on the shop starting it.
+  const currentId: ReceiptStepId =
+    transfer && order.status === 'placed'
+      ? order.paymentStatus === 'paid'
+        ? 'preparing'
+        : 'paid'
+      : order.status;
+  const currentIndex = ids.indexOf(currentId);
 
-  return steps.map((stepStatus, idx) => {
-    let state: 'completed' | 'current' | 'upcoming';
-    if (currentIndex === -1) {
-      state = 'upcoming';
-    } else if (idx < currentIndex) {
-      state = 'completed';
-    } else if (idx === currentIndex) {
-      state = 'current';
-    } else {
-      state = 'upcoming';
-    }
-
-    const timestampIso = eventMap.get(stepStatus);
-    const timestamp = timestampIso ? formatManilaTime(timestampIso) : null;
-
-    let label = 'Placed';
-    if (stepStatus === 'placed') {
-      label = 'Order placed';
-    } else if (stepStatus === 'preparing') {
-      label = kind === 'retail' ? 'Packing' : 'Kitchen';
-    } else if (stepStatus === 'ready') {
-      label = type === 'delivery' ? 'Ready for rider' : 'Ready for pickup';
-    } else if (stepStatus === 'out_for_delivery') {
-      label = 'Out for delivery';
-    } else if (stepStatus === 'completed') {
-      label = 'Completed';
-    }
-
+  return ids.map((id, idx) => {
+    const done =
+      currentIndex !== -1 && (idx < currentIndex || (idx === currentIndex && id === 'completed'));
+    const state = done ? 'completed' : idx === currentIndex ? 'current' : 'upcoming';
+    const at = times.get(id);
     return {
-      id: stepStatus,
-      label,
-      timestamp,
+      id,
+      label: stepLabel(id, order.type, kind),
+      timestamp: at ? formatManilaTime(at) : null,
       state,
     };
   });

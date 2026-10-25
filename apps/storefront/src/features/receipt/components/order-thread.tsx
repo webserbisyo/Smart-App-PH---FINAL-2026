@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { words, type OrderMessage, type OrderReceipt } from '@smartapp/core';
+import { Button } from '@smartapp/ui/components/button';
 import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
-import { Bike, ExternalLink, Phone, ShieldCheck, XCircle } from 'lucide-react';
+import { Bike, ExternalLink, Expand, Phone, ShieldCheck, XCircle } from 'lucide-react';
 import { formatManilaTime } from '../receipt-rules';
 
 export interface OrderThreadProps {
@@ -28,11 +29,9 @@ export function OrderThread({ order }: OrderThreadProps) {
   return (
     <div
       id="receipt-order-thread"
-      className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs"
+      className="flex flex-col gap-3 rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6 print:hidden"
     >
-      <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        Order updates
-      </h3>
+      <h2 className="text-base font-semibold">{words.receipt.thread.title}</h2>
 
       <div className="flex flex-col gap-2.5">
         {order.messages.map((msg: OrderMessage) => {
@@ -44,10 +43,10 @@ export function OrderThread({ order }: OrderThreadProps) {
             return (
               <div
                 key={msg.id}
-                className="flex max-w-xs flex-col gap-1.5 self-end rounded-xl rounded-tr-xs bg-primary/10 p-2.5 text-xs text-foreground"
+                className="flex max-w-xs flex-col gap-1.5 self-end rounded-2xl rounded-tr-xs bg-shop-10-soft p-2.5 text-sm text-shop-10-soft-foreground"
               >
-                <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                  <span className="font-semibold text-primary">
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="font-semibold">
                     {words.shop.thread.proofSent(msg.proof.referenceNo)}
                   </span>
                   <span className="tabular-nums">{timeStr}</span>
@@ -57,24 +56,27 @@ export function OrderThread({ order }: OrderThreadProps) {
                 <button
                   type="button"
                   onClick={() => setSelectedProofPath(msg.proof?.path ?? null)}
-                  className="group relative overflow-hidden rounded-lg border bg-background text-left transition-opacity hover:opacity-90"
-                  aria-label="View uploaded payment proof photo"
+                  className="group relative overflow-hidden rounded-xl bg-background text-left transition-opacity hover:opacity-90"
+                  aria-label={words.receipt.thread.viewProof(msg.proof.referenceNo)}
                 >
                   <Image
                     src={proofSrc}
-                    alt={`Payment proof ${msg.proof.referenceNo}`}
+                    alt={words.receipt.thread.proofAlt(msg.proof.referenceNo)}
                     width={176}
                     height={112}
                     unoptimized
                     className="h-28 w-44 object-cover"
                   />
-                  <span className="absolute right-1 bottom-1 rounded bg-black/70 px-1.5 py-0.5 text-xs text-white">
-                    Tap to expand
+                  <span
+                    aria-hidden="true"
+                    className="absolute right-1.5 bottom-1.5 flex size-8 items-center justify-center rounded-full glass"
+                  >
+                    <Expand className="size-4" />
                   </span>
                 </button>
 
                 {msg.proof.status === 'rejected' && msg.proof.rejectReason && (
-                  <span className="text-xs font-medium text-destructive">
+                  <span className="text-xs font-medium text-destructive-text">
                     {words.shop.thread.paymentRejected(msg.proof.rejectReason)}
                   </span>
                 )}
@@ -96,23 +98,24 @@ export function OrderThread({ order }: OrderThreadProps) {
                 ? words.shop.thread.tracking
                 : msg.status
                   ? words.shop.orderStatus[msg.status]
-                  : msg.kind);
+                  : null);
+          if (!lineText) return null;
 
           // System line (c-marker-2)
           return (
             <div
               key={msg.id}
-              className="flex items-start gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground"
+              className="flex items-start gap-2.5 rounded-xl bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground"
             >
-              <div className="mt-0.5 shrink-0">
+              <div className="mt-0.5 shrink-0" aria-hidden="true">
                 {isStatusCompleted ? (
-                  <ShieldCheck className="size-3.5 text-success" />
+                  <ShieldCheck className="size-4 text-success-text" />
                 ) : isStatusCancelled ? (
-                  <XCircle className="size-3.5 text-destructive" />
+                  <XCircle className="size-4 text-destructive-text" />
                 ) : isRider ? (
-                  <Bike className="size-3.5 text-info" />
+                  <Bike className="size-4 text-info-text" />
                 ) : (
-                  <div className="my-1 size-1.5 rounded-full bg-muted-foreground/60" />
+                  <div className="m-1.5 size-1.5 rounded-full bg-muted-foreground/60" />
                 )}
               </div>
               <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
@@ -127,39 +130,41 @@ export function OrderThread({ order }: OrderThreadProps) {
 
         {/* Rider details & tracking link (c-item-4) if delivery is active */}
         {order.rider && (
-          <div className="flex items-center justify-between rounded-lg border bg-background p-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Bike className="size-4" />
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted/50 p-3 text-sm">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
+                <Bike aria-hidden="true" className="size-5" />
               </div>
-              <div className="flex flex-col">
-                <span className="font-semibold text-foreground">{order.rider.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {order.rider.provider ?? 'Assigned rider'}
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate font-semibold text-foreground">{order.rider.name}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {order.rider.provider ?? words.receipt.thread.rider}
                 </span>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               {order.rider.phone && (
-                <a
-                  href={`tel:${order.rider.phone}`}
-                  className="flex items-center gap-1 rounded-md border bg-muted/50 px-2 py-1 font-medium text-foreground hover:bg-muted"
+                <Button
+                  variant="outline"
+                  nativeButton={false}
+                  render={<a href={`tel:${order.rider.phone}`} />}
+                  aria-label={words.receipt.thread.callRider(order.rider.name)}
+                  className="h-11 gap-1.5 rounded-full bg-card px-4"
                 >
-                  <Phone className="size-3 text-primary" />
-                  <span>Call</span>
-                </a>
+                  <Phone aria-hidden="true" className="size-4" />
+                  {words.receipt.thread.call}
+                </Button>
               )}
               {order.trackingUrl && (
-                <a
-                  href={order.trackingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 font-medium text-primary-foreground hover:bg-primary/90"
+                <Button
+                  nativeButton={false}
+                  render={<a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" />}
+                  className="h-11 gap-1.5 rounded-full px-4"
                 >
-                  <span>Track</span>
-                  <ExternalLink className="size-3" />
-                </a>
+                  {words.receipt.thread.track}
+                  <ExternalLink aria-hidden="true" className="size-4" />
+                </Button>
               )}
             </div>
           </div>
@@ -170,13 +175,13 @@ export function OrderThread({ order }: OrderThreadProps) {
       <ResponsiveDialog
         open={selectedProofPath !== null}
         onOpenChange={(open) => !open && setSelectedProofPath(null)}
-        title="Payment proof"
+        title={words.receipt.thread.proofDialog}
       >
         <div className="flex flex-col items-center justify-center p-2">
           {selectedProofPath && (
             <Image
               src={formatProofSrc(selectedProofPath)}
-              alt="Payment proof full preview"
+              alt={words.receipt.thread.proofDialog}
               width={800}
               height={600}
               unoptimized

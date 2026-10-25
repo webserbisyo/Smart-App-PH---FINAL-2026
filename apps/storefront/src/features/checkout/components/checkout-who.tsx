@@ -12,6 +12,16 @@ import {
 } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { MaskInput } from '@smartapp/ui/components/mask-input';
+import { CheckoutStep } from './checkout-step';
+
+function Required() {
+  return (
+    <span className="text-destructive-text">
+      <span aria-hidden="true">*</span>
+      <span className="sr-only">{words.location.required}</span>
+    </span>
+  );
+}
 
 interface CheckoutWhoProps {
   name: string;
@@ -43,16 +53,12 @@ export function CheckoutWho({
   errors,
 }: CheckoutWhoProps) {
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-      <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        {words.checkout.whoSection}
-      </span>
-
+    <CheckoutStep step={2} id="checkout-who" title={words.checkout.whoSection}>
       <FieldGroup className="gap-4">
         {/* Name: pattern c-input-2 */}
         <Field data-invalid={errors.name ? 'true' : undefined}>
           <FieldLabel htmlFor="checkout-name">
-            {words.checkout.name} <span className="text-destructive">*</span>
+            {words.checkout.name} <Required />
           </FieldLabel>
           <Input
             id="checkout-name"
@@ -61,12 +67,13 @@ export function CheckoutWho({
             placeholder={words.checkout.namePlaceholder}
             maxLength={60}
             autoComplete="name"
+            className="h-11 rounded-xl"
             aria-invalid={Boolean(errors.name)}
             aria-describedby={errors.name ? 'checkout-name-error' : undefined}
             required
           />
           {errors.name ? (
-            <p id="checkout-name-error" className="text-xs text-destructive">
+            <p id="checkout-name-error" className="text-sm text-destructive-text">
               {errors.name}
             </p>
           ) : null}
@@ -75,7 +82,7 @@ export function CheckoutWho({
         {/* Mobile: DiceUI MaskInput pattern ####-###-#### */}
         <Field data-invalid={errors.phone ? 'true' : undefined}>
           <FieldLabel htmlFor="checkout-phone">
-            {words.checkout.mobile} <span className="text-destructive">*</span>
+            {words.checkout.mobile} <Required />
           </FieldLabel>
           <MaskInput
             id="checkout-phone"
@@ -89,12 +96,13 @@ export function CheckoutWho({
             onValueChange={(_, unmasked) => onPhoneChange(unmasked)}
             placeholder={words.checkout.mobilePlaceholder}
             autoComplete="tel"
+            className="h-11 rounded-xl"
             aria-invalid={Boolean(errors.phone)}
             aria-describedby={errors.phone ? 'checkout-phone-error' : undefined}
             required
           />
           {errors.phone ? (
-            <p id="checkout-phone-error" className="text-xs text-destructive">
+            <p id="checkout-phone-error" className="text-sm text-destructive-text">
               {errors.phone}
             </p>
           ) : null}
@@ -113,11 +121,12 @@ export function CheckoutWho({
             onChange={(e) => onEmailChange(e.target.value)}
             placeholder={words.checkout.emailPlaceholder}
             autoComplete="email"
+            className="h-11 rounded-xl"
           />
         </Field>
 
         {/* Remember me: pattern c-checkbox-5 */}
-        <Field orientation="horizontal" className="pt-1">
+        <Field orientation="horizontal" className="min-h-11 pt-1">
           <Checkbox
             id="checkout-remember"
             checked={rememberMe}
@@ -127,12 +136,10 @@ export function CheckoutWho({
             <FieldLabel htmlFor="checkout-remember" className="cursor-pointer font-medium">
               {words.checkout.rememberMe}
             </FieldLabel>
-            <FieldDescription>
-              Saves your name, phone and address on this phone for your next order.
-            </FieldDescription>
+            <FieldDescription>{words.checkout.rememberHint}</FieldDescription>
           </FieldContent>
         </Field>
       </FieldGroup>
-    </div>
+    </CheckoutStep>
   );
 }

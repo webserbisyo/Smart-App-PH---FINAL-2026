@@ -1,18 +1,26 @@
 'use client';
 
 import { useSyncExternalStore } from 'react';
-import { formatPeso, imageSources, words, type OrderReceipt } from '@smartapp/core';
-import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/reui/alert';
+import {
+  formatPeso,
+  imageSources,
+  pesoAmountText,
+  words,
+  type OrderReceipt,
+  type PaymentInstructions,
+} from '@smartapp/core';
 import { Progress } from '@smartapp/ui/components/progress';
 import { ShopImage } from '@smartapp/ui/compositions/shop-image';
-import { Clock, AlertTriangle } from 'lucide-react';
+import { cn } from '@smartapp/ui/lib/utils';
 import { CopyButton } from '@/features/checkout/components/copy-button';
 import { formatCountdown } from '../receipt-rules';
 
 export interface PayCountdownProps {
   readonly order: OrderReceipt;
+  readonly shopName: string;
 }
 
+// One shared one-second clock for every countdown on the page.
 let currentEpochSeconds = 0;
 const timerListeners = new Set<() => void>();
 let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -40,198 +48,154 @@ function getTimerSnapshot(): number {
   return currentEpochSeconds;
 }
 
+// The server and the first paint show no time, so the markup always matches (no hydration error).
 function getServerTimerSnapshot(): number | null {
   return null;
 }
 
-export function PayCountdown({ order }: PayCountdownProps) {
-  // Reads current second via useSyncExternalStore to avoid SSR hydration mismatch and cascading renders
-  const activeSeconds = useSyncExternalStore(
-    subscribeTimer,
-    getTimerSnapshot,
-    getServerTimerSnapshot,
+function DetailRow({
+  label,
+  value,
+  copy,
+  copyLabel,
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  copy?: string;
+  copyLabel?: string;
+  strong?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex min-h-14 items-center justify-between gap-3 rounded-2xl px-3.5 py-2',
+        strong ? 'bg-shop-10-soft text-shop-10-soft-foreground' : 'bg-muted/60',
+      )}
+    >
+      <div className="flex min-w-0 flex-col">
+        <dt className={cn('text-xs', strong ? 'opacity-80' : 'text-muted-foreground')}>{label}</dt>
+        <dd
+          className={cn(
+            'font-semibold break-words tabular',
+            strong ? 'text-lg font-extrabold' : 'text-base',
+          )}
+        >
+          {value}
+        </dd>
+      </div>
+      {copy && copyLabel ? (
+        <CopyButton
+          textToCopy={copy}
+          label={copyLabel}
+          iconOnly
+          className="size-11 shrink-0 rounded-full"
+        />
+      ) : null}
+    </div>
   );
+}
+
+function PaymentDetails({
+  payment,
+  total,
+  shopName,
+}: {
+  payment: PaymentInstructions;
+  total: number;
+  shopName: string;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-sm font-semibold">
+        {words.receipt.pay.method(words.shop.paymentMethod[payment.method])}
+      </h3>
+      <dl className="flex flex-col gap-2">
+        {payment.accountName ? (
+          <DetailRow label={words.checkout.accountName} value={payment.accountName} />
+        ) : null}
+        {payment.accountNumber ? (
+          <DetailRow
+            label={words.checkout.accountNumber}
+            value={payment.accountNumber}
+            copy={payment.accountNumber}
+            copyLabel={words.receipt.pay.copyAccount}
+          />
+        ) : null}
+        <DetailRow
+          label={words.receipt.pay.amount}
+          value={words.shop.sendExactly(formatPeso(total))}
+          copy={pesoAmountText(total)}
+          copyLabel={words.receipt.pay.copyAmount}
+          strong
+        />
+      </dl>
+      {payment.qr ? (
+        <figure className="flex flex-col items-center gap-2 pt-1">
+          <ShopImage
+            src={imageSources(payment.qr)}
+            alt={words.receipt.pay.qrAlt(shopName)}
+            ratio="1:1"
+            sizes="192px"
+            fallbackText={shopName}
+            className="size-48 rounded-2xl ring-1 ring-foreground/8"
+          />
+          <figcaption className="text-xs text-muted-foreground">
+            {words.receipt.pay.qrHint}
+          </figcaption>
+        </figure>
+      ) : null}
+    </div>
+  );
+}
+
+/** Pay within 25:00 (c-alert-7 + c-progress-2 look) and the shop's details to pay, shown once. */
+export function PayCountdown({ order, shopName }: PayCountdownProps) {
+  const seconds = useSyncExternalStore(subscribeTimer, getTimerSnapshot, getServerTimerSnapshot);
 
   if (order.paymentStatus !== 'unpaid' || !order.expiresAt) {
     return null;
   }
 
-  const exactAmountFormatted = formatPeso(order.totals.total);
-
-  // Stable placeholder during SSR and initial hydration before mount
-  if (activeSeconds === null) {
-    return (
-      <div id="receipt-pay-countdown" className="flex flex-col gap-4">
-        <Alert variant="warning" className="flex flex-col gap-2 p-4">
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="size-4 text-warning" />
-              <AlertTitle className="text-sm font-semibold">
-                Please complete your transfer
-              </AlertTitle>
-            </div>
-          </div>
-          <AlertDescription className="text-xs text-muted-foreground">
-            Complete your transfer before the timer ends to keep this order.
-          </AlertDescription>
-        </Alert>
-
-        {order.payment && (
-          <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                Payment details ({order.payment.method.toUpperCase()})
-              </h3>
-              <span className="text-xs font-medium text-muted-foreground">
-                {order.payment.accountName ?? ''}
-              </span>
-            </div>
-
-            {order.payment.accountNumber && (
-              <div className="flex items-center justify-between rounded-lg bg-muted/50 p-2.5">
-                <div className="flex flex-col">
-                  <span className="text-xs font-medium text-muted-foreground uppercase">
-                    Account number
-                  </span>
-                  <span className="font-mono text-sm font-bold tabular-nums">
-                    {order.payment.accountNumber}
-                  </span>
-                </div>
-                <CopyButton textToCopy={order.payment.accountNumber} label="Copy account number" />
-              </div>
-            )}
-
-            <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-2.5">
-              <div className="flex flex-col">
-                <span className="text-xs font-medium text-muted-foreground uppercase">
-                  Amount to transfer
-                </span>
-                <span className="font-mono text-base font-extrabold text-primary tabular-nums">
-                  {words.shop.sendExactly(exactAmountFormatted)}
-                </span>
-              </div>
-              <CopyButton
-                textToCopy={String(order.totals.total / 100)}
-                label="Copy exact transfer amount"
-              />
-            </div>
-
-            {order.payment.qr && (
-              <div className="flex flex-col items-center gap-1.5 p-2">
-                <ShopImage
-                  src={imageSources(order.payment.qr)}
-                  alt="Payment QR code"
-                  ratio="1:1"
-                  sizes="192px"
-                  className="size-48 rounded-lg border shadow-xs"
-                />
-                <span className="text-xs text-muted-foreground">Scan QR with your payment app</span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const now = new Date(activeSeconds * 1000);
-  const { formatted, isExpired, shouldAnnounce, progressPercent } = formatCountdown(
-    order.expiresAt,
-    now,
-  );
+  const countdown =
+    seconds === null ? null : formatCountdown(order.expiresAt, new Date(seconds * 1000));
+  const expired = countdown?.isExpired ?? false;
+  const W = words.receipt.pay;
 
   return (
     <div id="receipt-pay-countdown" className="flex flex-col gap-4">
-      {/* Alert timer with c-progress-2 */}
-      {isExpired ? (
-        <Alert variant="destructive">
-          <AlertTriangle className="size-4" />
-          <AlertTitle>Payment time is over</AlertTitle>
-          <AlertDescription>{words.shop.thread.expired}</AlertDescription>
-        </Alert>
-      ) : (
-        <Alert
-          variant="warning"
-          role={shouldAnnounce ? 'alert' : undefined}
-          aria-live={shouldAnnounce ? 'assertive' : 'off'}
-          className="flex flex-col gap-2 p-4"
-        >
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock className="size-4 text-warning" />
-              <AlertTitle className="text-sm font-semibold">
-                {words.shop.payWithin(formatted)}
-              </AlertTitle>
-            </div>
-            <span className="font-mono text-xs font-bold text-muted-foreground tabular-nums">
-              {formatted}
-            </span>
-          </div>
-
-          <Progress value={progressPercent} className="h-1.5 w-full" />
-          <AlertDescription className="text-xs text-muted-foreground">
-            Complete your transfer before the timer ends to keep this order.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Account Details & QR code */}
-      {order.payment && !isExpired && (
-        <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              Payment details ({order.payment.method.toUpperCase()})
-            </h3>
-            <span className="text-xs font-medium text-muted-foreground">
-              {order.payment.accountName ?? ''}
-            </span>
-          </div>
-
-          {order.payment.accountNumber && (
-            <div className="flex items-center justify-between rounded-lg bg-muted/50 p-2.5">
-              <div className="flex flex-col">
-                <span className="text-xs font-medium text-muted-foreground uppercase">
-                  Account number
-                </span>
-                <span className="font-mono text-sm font-bold tabular-nums">
-                  {order.payment.accountNumber}
-                </span>
-              </div>
-              <CopyButton textToCopy={order.payment.accountNumber} label="Copy account number" />
-            </div>
-          )}
-
-          {/* Send Exactly amount banner */}
-          <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-2.5">
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-muted-foreground uppercase">
-                Amount to transfer
-              </span>
-              <span className="font-mono text-base font-extrabold text-primary tabular-nums">
-                {words.shop.sendExactly(exactAmountFormatted)}
-              </span>
-            </div>
-            <CopyButton
-              textToCopy={String(order.totals.total / 100)}
-              label="Copy exact transfer amount"
-            />
-          </div>
-
-          {/* Shop QR photo if set */}
-          {order.payment.qr && (
-            <div className="flex flex-col items-center gap-1.5 p-2">
-              <ShopImage
-                src={imageSources(order.payment.qr)}
-                alt="Payment QR code"
-                ratio="1:1"
-                sizes="192px"
-                className="size-48 rounded-lg border shadow-xs"
-              />
-              <span className="text-xs text-muted-foreground">Scan QR with your payment app</span>
-            </div>
-          )}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h2 className="text-base font-semibold">{expired ? W.timeOver : W.title}</h2>
+          <p className="text-sm text-pretty text-muted-foreground">
+            {expired ? W.timeOverText : W.keepOrder}
+          </p>
         </div>
-      )}
+        <span
+          role="timer"
+          aria-label={countdown ? W.within(countdown.formatted) : W.title}
+          className={cn(
+            'shrink-0 rounded-full px-3 py-1 text-lg font-bold tabular',
+            expired
+              ? 'bg-destructive-soft text-destructive-soft-foreground'
+              : 'bg-warning-soft text-warning-soft-foreground',
+          )}
+        >
+          {countdown?.formatted ?? '--:--'}
+        </span>
+      </div>
+      <Progress
+        value={countdown?.progressPercent ?? 100}
+        aria-label={W.title}
+        className="progress-thin"
+      />
+      {/* Read out at 10, 5 and 1 minute only. */}
+      <p aria-live="assertive" className="sr-only">
+        {countdown?.shouldAnnounce ? W.within(countdown.formatted) : ''}
+      </p>
+      {!expired && order.payment ? (
+        <PaymentDetails payment={order.payment} total={order.totals.total} shopName={shopName} />
+      ) : null}
     </div>
   );
 }

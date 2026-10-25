@@ -5,6 +5,7 @@ export { DEMO_SHOPS } from './demo/shops.js';
 export * from './words.js';
 export * from './errors.js';
 export * from './icons.js';
+export * from './art.js';
 export * from './media.js';
 export * from './demo/media.js';
 export * from './rules/palette.js';

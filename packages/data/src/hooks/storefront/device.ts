@@ -124,6 +124,16 @@ export function useFavourites(slug: string) {
   };
 }
 
+/** The receipt's install card stays hidden once the customer hides it (per shop). */
+export function useInstallDismissed(slug: string) {
+  const storage = getDeviceStorage();
+  const dismissedAt = useDeviceEntry(storage.installDismissed, slug).value;
+  return {
+    dismissed: dismissedAt !== null,
+    dismiss: (now: Date) => storage.installDismissed.write(slug, now.toISOString()),
+  };
+}
+
 export function useCheckoutDraft(slug: string) {
   const storage = getDeviceStorage();
   const draft = useDeviceEntry(storage.checkoutDraft, slug).value;

@@ -8,6 +8,7 @@ import {
   UtensilsIcon,
 } from 'lucide-react';
 import {
+  artPath,
   contrastRatio,
   DEMO_SHOPS,
   imageSources,
@@ -28,6 +29,7 @@ import { BannerCarousel, type BannerSlide } from '@smartapp/ui/compositions/bann
 import { BrandPanel } from '@smartapp/ui/compositions/brand-panel';
 import { rewardReady, stampBurst } from '@smartapp/ui/compositions/celebrate';
 import { CountUp } from '@smartapp/ui/compositions/count-up';
+import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { ShopImage, type ShopImageRatio } from '@smartapp/ui/compositions/shop-image';
 import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
@@ -527,6 +529,36 @@ function HeartToggles({ photo }: { photo: ImageSources | null }) {
   );
 }
 
+// Fluent 3D pictures for empty and success states (served by the storefront).
+function EmptyStates() {
+  return (
+    <div className="grid gap-4 md:grid-cols-3">
+      <EmptyState
+        art={`${ORIGIN}${artPath('basket_empty')}`}
+        title="Your basket is empty"
+        description="Add something you like and it shows up here."
+        action={<Button className="h-11 rounded-full px-6">Browse menu</Button>}
+      />
+      <EmptyState
+        art={`${ORIGIN}${artPath('search_empty')}`}
+        title="No match for “halo-halo”"
+        description="Try another word, or look in a category."
+        action={
+          <Button variant="outline" className="h-11 rounded-full bg-card px-6">
+            Clear
+          </Button>
+        }
+      />
+      <EmptyState
+        art={`${ORIGIN}${artPath('completed')}`}
+        title="Completed"
+        description="Thanks for ordering!"
+        variant="plain"
+      />
+    </div>
+  );
+}
+
 // Grouped hours with today highlighted, and tappable contact rows.
 function InfoLists() {
   return (
@@ -679,6 +711,15 @@ export function StorefrontSections() {
             usedIn="storefront product card and item sheet, kit"
           >
             <HeartToggles photo={imageSources(`demo:${slug}/items/${shop.item}`, ORIGIN)} />
+          </KitSection>
+
+          <KitSection
+            title="Empty state"
+            library="composition"
+            path="packages/ui/src/compositions/empty-state.tsx"
+            usedIn="storefront basket, Menu search and favourites, receipt not found, kit"
+          >
+            <EmptyStates />
           </KitSection>
 
           <KitSection

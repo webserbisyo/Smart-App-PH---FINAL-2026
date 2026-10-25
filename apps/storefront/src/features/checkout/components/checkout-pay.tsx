@@ -2,18 +2,19 @@
 
 import {
   formatPeso,
+  imageSources,
   isTransfer,
+  pesoAmountText,
   words,
   PaymentMethodEnum,
   type PaymentMethod,
   type Storefront,
 } from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/badge';
-import { Card } from '@smartapp/ui/components/card';
-import { Field, FieldGroup, FieldLabel, FieldTitle } from '@smartapp/ui/components/field';
+import { Field, FieldLabel, FieldTitle } from '@smartapp/ui/components/field';
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
-import { Separator } from '@smartapp/ui/components/separator';
+import { ShopImage } from '@smartapp/ui/compositions/shop-image';
 import {
   AlertTriangleIcon,
   BanknoteIcon,
@@ -21,8 +22,10 @@ import {
   LandmarkIcon,
   QrCodeIcon,
   SmartphoneIcon,
+  type LucideIcon,
 } from 'lucide-react';
 import type { PaymentOption } from '../checkout-rules';
+import { CheckoutStep } from './checkout-step';
 import { CopyButton } from './copy-button';
 
 interface CheckoutPayProps {
@@ -34,25 +37,53 @@ interface CheckoutPayProps {
   error?: string | undefined;
 }
 
-function methodIcon(method: PaymentMethod) {
-  switch (method) {
-    case 'cash':
-      return <BanknoteIcon aria-hidden="true" className="size-4 opacity-60" />;
-    case 'cod':
-      return <HandCoinsIcon aria-hidden="true" className="size-4 opacity-60" />;
-    case 'gcash':
-    case 'maya':
-      return <SmartphoneIcon aria-hidden="true" className="size-4 opacity-60" />;
-    case 'bank':
-      return <LandmarkIcon aria-hidden="true" className="size-4 opacity-60" />;
-    case 'qr_ph':
-      return <QrCodeIcon aria-hidden="true" className="size-4 opacity-60" />;
-  }
+const METHOD_ICON: Record<PaymentMethod, LucideIcon> = {
+  cash: BanknoteIcon,
+  cod: HandCoinsIcon,
+  gcash: SmartphoneIcon,
+  maya: SmartphoneIcon,
+  bank: LandmarkIcon,
+  qr_ph: QrCodeIcon,
+};
+
+function DetailRow({
+  label,
+  value,
+  copy,
+  strong = false,
+}: {
+  label: string;
+  value: string;
+  copy: string;
+  strong?: boolean;
+}) {
+  return (
+    <div
+      className={`flex min-h-14 items-center justify-between gap-3 rounded-2xl px-3.5 py-2 ${strong ? 'bg-shop-10-soft text-shop-10-soft-foreground' : 'bg-card'}`}
+    >
+      <div className="flex min-w-0 flex-col">
+        <span className={`text-xs ${strong ? 'opacity-80' : 'text-muted-foreground'}`}>
+          {label}
+        </span>
+        <span
+          className={`break-words tabular ${strong ? 'text-lg font-extrabold' : 'font-semibold'}`}
+        >
+          {value}
+        </span>
+      </div>
+      <CopyButton
+        textToCopy={copy}
+        label={words.checkout.copyField(label)}
+        iconOnly
+        className="size-11 shrink-0 rounded-full"
+      />
+    </div>
+  );
 }
 
 /**
- * Pay section: Payment methods cards (pattern c-radio-group-9), recommended badge (c-radio-group-15),
- * COD limit message (c-alert-7), and transfer details with copy buttons (c-button-41).
+ * Step 3, payment: method cards with icons (c-radio-group-9, recommended badge c-radio-group-15),
+ * the COD limit note (c-alert-7) and, for transfers, the account and exact amount with Copy.
  */
 export function CheckoutPay({
   sf,
@@ -66,130 +97,111 @@ export function CheckoutPay({
   const isSelectedTransfer = selectedMethod ? isTransfer(selectedMethod) : false;
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-      <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-        {words.checkout.paySection}
-      </span>
-
-      {/* Pattern c-radio-group-9 */}
-      <Card className="p-0">
-        <RadioGroup
-          value={selectedMethod ?? ''}
-          onValueChange={(val) => {
-            const parsed = PaymentMethodEnum.safeParse(val);
-            if (parsed.success) onSelectMethod(parsed.data);
-          }}
-        >
-          <FieldGroup className="gap-0">
-            {options.map((opt, i) => (
-              <div key={opt.method}>
-                {i > 0 ? <Separator /> : null}
-                <Field data-disabled={opt.disabled ? 'true' : undefined}>
-                  <FieldLabel
-                    htmlFor={`pay-${opt.method}`}
-                    className={`justify-between px-4 py-3 ${opt.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
-                  >
-                    <FieldTitle className="flex items-center gap-2">
-                      {methodIcon(opt.method)}
-                      <span>{opt.label}</span>
-                      {opt.isRecommended ? (
-                        <Badge
-                          variant="secondary"
-                          className="h-4.5 rounded-full px-1.5 text-xs tracking-wider uppercase"
-                        >
-                          {words.checkout.recommended}
-                        </Badge>
-                      ) : null}
-                    </FieldTitle>
-                    <RadioGroupItem
-                      value={opt.method}
-                      id={`pay-${opt.method}`}
-                      disabled={opt.disabled}
-                    />
-                  </FieldLabel>
-
-                  {/* COD limit notice: pattern c-alert-7 */}
-                  {opt.disabled && opt.disabledReason ? (
-                    <div className="px-4 pb-3">
-                      <Alert variant="warning" className="py-2">
-                        <AlertTriangleIcon aria-hidden="true" />
-                        <AlertDescription>{opt.disabledReason}</AlertDescription>
-                      </Alert>
-                    </div>
+    <CheckoutStep step={3} id="checkout-pay" title={words.checkout.paySection}>
+      <RadioGroup
+        value={selectedMethod ?? ''}
+        onValueChange={(val) => {
+          const parsed = PaymentMethodEnum.safeParse(val);
+          if (parsed.success) onSelectMethod(parsed.data);
+        }}
+        className="gap-2"
+      >
+        {options.map((opt) => {
+          const Icon = METHOD_ICON[opt.method];
+          return (
+            <FieldLabel
+              key={opt.method}
+              htmlFor={`pay-${opt.method}`}
+              className={`rounded-2xl ${opt.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <Field
+                orientation="horizontal"
+                data-disabled={opt.disabled ? 'true' : undefined}
+                className="min-h-14 items-center gap-3 px-3.5"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+                  <Icon aria-hidden="true" className="size-5" />
+                </span>
+                <FieldTitle className="min-w-0 flex-1 flex-wrap gap-x-2 gap-y-1 text-base">
+                  <span>{opt.label}</span>
+                  {opt.isRecommended ? (
+                    <Badge variant="secondary" className="rounded-full">
+                      {words.checkout.recommended}
+                    </Badge>
                   ) : null}
-                </Field>
-              </div>
-            ))}
-          </FieldGroup>
-        </RadioGroup>
-      </Card>
+                </FieldTitle>
+                <RadioGroupItem
+                  value={opt.method}
+                  id={`pay-${opt.method}`}
+                  disabled={opt.disabled}
+                />
+              </Field>
+              {opt.disabled && opt.disabledReason ? (
+                <div className="px-3.5 pb-3">
+                  <Alert variant="warning" className="py-2">
+                    <AlertTriangleIcon aria-hidden="true" />
+                    <AlertDescription>{opt.disabledReason}</AlertDescription>
+                  </Alert>
+                </div>
+              ) : null}
+            </FieldLabel>
+          );
+        })}
+      </RadioGroup>
 
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      {error ? <p className="text-sm text-destructive-text">{error}</p> : null}
 
-      {/* Transfer Instructions: When GCash, Maya, Bank or QR Ph is chosen */}
       {isSelectedTransfer && selectedConfig ? (
-        <div className="flex flex-col gap-3 rounded-lg border border-border/70 bg-muted/30 p-3.5 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold">{words.checkout.transferDetails}</span>
+        <div className="flex flex-col gap-2 rounded-3xl bg-muted/60 p-3">
+          <div className="flex items-center justify-between px-1 pt-1">
+            <span className="text-sm font-semibold">{words.checkout.transferDetails}</span>
             {selectedConfig.sample ? (
               <Badge variant="outline">{words.checkout.sampleLabel}</Badge>
             ) : null}
           </div>
 
           {selectedConfig.accountName ? (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">{words.checkout.accountName}</span>
-                <span className="font-medium">{selectedConfig.accountName}</span>
-              </div>
-              <CopyButton textToCopy={selectedConfig.accountName} />
-            </div>
-          ) : null}
-
-          {selectedConfig.accountNumber ? (
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">
-                  {words.checkout.accountNumber}
-                </span>
-                <span className="font-mono font-medium">{selectedConfig.accountNumber}</span>
-              </div>
-              <CopyButton textToCopy={selectedConfig.accountNumber} />
-            </div>
-          ) : null}
-
-          {/* Shop QR picture if available */}
-          {selectedConfig.qr ? (
-            <div className="flex flex-col items-center gap-1.5 py-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={selectedConfig.qr}
-                alt={`${words.shop.paymentMethod[selectedConfig.method]} QR`}
-                className="max-h-48 max-w-48 rounded-lg border border-border bg-white object-contain p-2 shadow-xs"
-              />
-              <span className="text-xs text-muted-foreground">Scan or save QR</span>
-            </div>
-          ) : null}
-
-          <Separator className="my-1" />
-
-          {/* Send exactly ₱X with Copy button */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground">Amount to pay</span>
-              <span className="font-bold text-foreground">
-                {words.checkout.sendExactly(formatPeso(totalCentavos))}
-              </span>
-            </div>
-            <CopyButton
-              textToCopy={String(Math.round(totalCentavos / 100))}
-              label={words.checkout.copy}
+            <DetailRow
+              label={words.checkout.accountName}
+              value={selectedConfig.accountName}
+              copy={selectedConfig.accountName}
             />
-          </div>
+          ) : null}
+          {selectedConfig.accountNumber ? (
+            <DetailRow
+              label={words.checkout.accountNumber}
+              value={selectedConfig.accountNumber}
+              copy={selectedConfig.accountNumber}
+            />
+          ) : null}
+          <DetailRow
+            label={words.checkout.amountToPay}
+            value={words.checkout.sendExactly(formatPeso(totalCentavos))}
+            copy={pesoAmountText(totalCentavos)}
+            strong
+          />
 
-          <p className="text-xs text-muted-foreground">{words.checkout.uploadProofNotice}</p>
+          {selectedConfig.qr ? (
+            <figure className="flex flex-col items-center gap-2 py-2">
+              <ShopImage
+                src={imageSources(selectedConfig.qr)}
+                alt={words.checkout.qrAlt(words.shop.paymentMethod[selectedConfig.method])}
+                ratio="1:1"
+                sizes="192px"
+                fallbackText={sf.info.name}
+                className="size-48 rounded-2xl ring-1 ring-foreground/8"
+              />
+              <figcaption className="text-xs text-muted-foreground">
+                {words.checkout.qrHint}
+              </figcaption>
+            </figure>
+          ) : null}
+
+          <p className="px-1 pb-1 text-sm text-muted-foreground">
+            {words.checkout.uploadProofNotice}
+          </p>
         </div>
       ) : null}
-    </div>
+    </CheckoutStep>
   );
 }

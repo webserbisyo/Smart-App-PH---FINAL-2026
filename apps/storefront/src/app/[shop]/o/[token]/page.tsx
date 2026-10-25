@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { DEMO_SHOP_SLUGS } from '@smartapp/core';
+import { DEMO_SHOP_SLUGS, words } from '@smartapp/core';
 import { DEMO_RECEIPT_TOKENS } from '@smartapp/data';
 import { getOrderReceiptForServer, getStorefrontForServer } from '@smartapp/data/server';
 import { ReceiptWrapper } from '@/features/receipt/components/receipt-wrapper';
@@ -22,12 +22,12 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: ReceiptPageProps): Promise<Metadata> {
-  const { shop: slug, token } = await params;
+  const { shop: slug } = await params;
   const shop = getStorefrontForServer(slug);
   if (!shop) return { robots: { index: false, follow: false } };
   return {
-    title: `Order · ${shop.storefront.info.name}`,
-    description: `Order receipt ${token} from ${shop.storefront.info.name}`,
+    title: words.receipt.metaTitle(shop.storefront.info.name),
+    description: words.receipt.metaDescription(shop.storefront.info.name),
     robots: { index: false, follow: false },
   };
 }

@@ -9,10 +9,12 @@ interface CopyButtonProps {
   textToCopy: string;
   label?: string;
   className?: string;
+  // A round icon button; the label is read out only.
+  iconOnly?: boolean;
 }
 
 /** Pattern c-button-41: Copies text to clipboard and toggles Check icon for 1.5s. */
-export function CopyButton({ textToCopy, label, className }: CopyButtonProps) {
+export function CopyButton({ textToCopy, label, className, iconOnly = false }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -31,7 +33,7 @@ export function CopyButton({ textToCopy, label, className }: CopyButtonProps) {
     <Button
       type="button"
       variant="outline"
-      size="sm"
+      size={iconOnly ? 'icon' : 'sm'}
       aria-label={text}
       onClick={handleCopy}
       className={className}
@@ -41,7 +43,7 @@ export function CopyButton({ textToCopy, label, className }: CopyButtonProps) {
       ) : (
         <CopyIcon aria-hidden="true" />
       )}
-      <span>{text}</span>
+      {iconOnly ? null : <span>{text}</span>}
     </Button>
   );
 }

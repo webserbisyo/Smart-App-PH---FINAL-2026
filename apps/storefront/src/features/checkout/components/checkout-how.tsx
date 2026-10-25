@@ -11,8 +11,9 @@ import {
   type Storefront,
 } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
-import { Card } from '@smartapp/ui/components/card';
 import { HowWhereSheet } from '../../location/components/how-where-sheet';
+import { ORDER_TYPE_ICON } from '../../location/components/order-type-icons';
+import { CheckoutStep } from './checkout-step';
 
 interface CheckoutHowProps {
   sf: Storefront;
@@ -31,7 +32,7 @@ export function CheckoutHow({ sf, choice, now }: CheckoutHowProps) {
   let detail: string | null = null;
   if (choice.type === 'pickup') {
     if (choice.scheduledAt) {
-      detail = `Scheduled for ${formatClock(choice.scheduledAt)}`;
+      detail = words.checkout.scheduledFor(formatClock(choice.scheduledAt));
     } else if (state.state === 'open') {
       detail = words.shop.readyIn(sf.prepMinutes);
     }
@@ -40,29 +41,36 @@ export function CheckoutHow({ sf, choice, now }: CheckoutHowProps) {
     if (zone) detail = zone.etaText;
   }
 
+  const Icon = ORDER_TYPE_ICON[choice.type ?? sf.orderTypes[0] ?? 'pickup'];
+
   return (
     <>
-      <Card className="flex flex-col gap-3 p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-            {words.checkout.howSection}
-          </span>
+      <CheckoutStep
+        step={1}
+        id="checkout-how"
+        title={words.checkout.howSection}
+        action={
           <Button
             id="checkout-change-location"
             type="button"
             variant="outline"
-            size="sm"
             onClick={() => setSheetOpen(true)}
+            className="h-11 rounded-full px-4"
           >
             {words.checkout.change}
           </Button>
+        }
+      >
+        <div className="flex items-center gap-3 rounded-2xl bg-muted/50 p-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
+            <Icon aria-hidden="true" className="size-5" />
+          </span>
+          <div className="flex min-w-0 flex-col">
+            <span className="text-base font-semibold break-words">{label}</span>
+            {detail ? <span className="text-sm text-muted-foreground">{detail}</span> : null}
+          </div>
         </div>
-
-        <div className="flex flex-col gap-0.5">
-          <span className="text-base font-semibold">{label}</span>
-          {detail ? <span className="text-sm text-muted-foreground">{detail}</span> : null}
-        </div>
-      </Card>
+      </CheckoutStep>
 
       <HowWhereSheet open={sheetOpen} onOpenChange={setSheetOpen} now={now} />
     </>
