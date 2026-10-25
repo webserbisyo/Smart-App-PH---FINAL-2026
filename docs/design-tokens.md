@@ -32,6 +32,8 @@ Each meaning colour also gets:
 
 Also: `faint-foreground`, `border-strong`, `overlay` (scrim behind sheets), `skeleton`, `chart-1..5` with fixed meanings per report.
 
+For the ReUI primitives (decision T28): `destructive-text`, `destructive-soft` and `destructive-soft-foreground` (destructive had no soft pair), `invert` / `invert-foreground` (near-black surface with light text in both themes, also light text on a photo scrim) and `focus` / `focus-foreground` (same values as `primary`). ReUI uses `-foreground` for dark text on a tint; ours means text on the solid colour, so `reui/badge` and `reui/alert` are mapped to `-soft`, `-soft-foreground` and `-text` once.
+
 ## Shop brand (storefront only)
 
 The owner picks one colour (default `#2456D3`, presets, or "use logo colour"). `shopPalette()` in core makes a 60/30/10 palette, set on the shop layout at runtime through `cssVars()`:
@@ -90,7 +92,7 @@ The mapping lives once in `packages/core` (`STATUS_TONE`) and is used by every b
 
 ## Variants and utilities (in `globals.css`)
 
-Named variants instead of brackets: `keyboard-open:` (`data-keyboard="open"`), `shell-phone:` / `shell-tablet:` / `shell-desktop:` (`data-shell` on the shell root), `sidebar-collapsed:` (inside a shell whose sidebar is collapsed to icons), `tablet-rail:` (touch only: items in the collapsed sidebar on the tablet rail; outranks the sidebar's own collapsed sizes so targets stay 44 px), `pointer-coarse:`, `hover-hover:`; nav links carry `data-active`, so active styles use `data-active:`. Shared utilities: `pressable` (scale 0.98, `touch-action: manipulation`), `tabular`, `pt-safe` / `pb-safe`, `pb-dock` (room for the dock plus the safe area), `dock-pill` (dock height, max width and bottom offset), `scrollbar-none`. A new one-off style becomes a utility here, not an arbitrary value.
+Named variants instead of brackets: `keyboard-open:` (`data-keyboard="open"`), `shell-phone:` / `shell-tablet:` / `shell-desktop:` (`data-shell` on the shell root), `sidebar-collapsed:` (inside a shell whose sidebar is collapsed to icons), `tablet-rail:` (touch only: items in the collapsed sidebar on the tablet rail; outranks the sidebar's own collapsed sizes so targets stay 44 px), `pointer-coarse:`, `hover-hover:`; nav links carry `data-active`, so active styles use `data-active:`. Stepper and timeline parts carry `data-state` and `data-orientation`: `state-active:`, `state-completed:`, `state-inactive:`, `orientation-vertical:`, which compound with `group-*` (`group-state-active/step:`, `group-orientation-vertical/timeline:`). Shared utilities: `pressable` (scale 0.98, `touch-action: manipulation`), `tabular`, `pt-safe` / `pb-safe`, `pb-dock` (room for the dock plus the safe area), `dock-pill` (dock height, max width and bottom offset), `scrollbar-none`, `h-full-less-<n>` (full height minus a spacing step, for stepper and timeline lines), `max-h-vh-<n>` (max height as n% of the viewport, for scrolling sheet and dialog bodies), `progress-thin` (a 4 px progress track). A new one-off style becomes a utility here, not an arbitrary value.
 
 ## Contrast test
 

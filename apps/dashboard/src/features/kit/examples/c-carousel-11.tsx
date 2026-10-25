@@ -1,0 +1,77 @@
+import { useEffect, useState } from 'react';
+
+import { cn } from 'cn';
+import { Card } from '@smartapp/ui/components/card';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from '@smartapp/ui/components/carousel';
+import { useKitShop } from '../kit-shop.js';
+
+export function Pattern() {
+  const shop = useKitShop();
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  // Read from the carousel during render; only the select event needs state.
+  const count = api?.scrollSnapList().length ?? 0;
+
+  useEffect(() => {
+    if (!api) return;
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
+    api.on('select', onSelect);
+    return () => {
+      api.off('select', onSelect);
+    };
+  }, [api]);
+
+  return (
+    <Carousel setApi={setApi} className="w-full max-w-xs">
+      <CarouselContent>
+        {Array.from({ length: 5 }).map((_, index) => (
+          <CarouselItem key={index}>
+            <div className="p-1">
+              <Card className="group/card relative aspect-square overflow-hidden border-0 p-0">
+                <img
+                  src={shop.photo(index)}
+                  alt={`${shop.name} slide ${index + 1}`}
+                  width={640}
+                  height={640}
+                  className="absolute inset-0 size-full scale-100 object-cover transition-transform duration-500 ease-in-out group-hover/card:scale-105"
+                />
+                {/* Background fade effects */}
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-overlay to-transparent" />
+
+                {/* Content */}
+                <div className="absolute inset-0 top-auto flex flex-col justify-end bg-overlay/40 p-4">
+                  <h3 className="text-xl font-bold text-invert-foreground">Slide {index + 1}</h3>
+                  <p className="text-sm text-invert-foreground/90">
+                    Feature description for slide {index + 1}.
+                  </p>
+                </div>
+              </Card>
+            </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
+
+      {/* Dots Navigation */}
+      <div className="flex justify-center gap-2 py-3">
+        {Array.from({ length: count }).map((_, index) => (
+          <button
+            key={index}
+            className={cn(
+              'h-2 cursor-pointer rounded-full transition-all duration-500 ease-in-out',
+              index === current
+                ? 'w-4 bg-primary opacity-100'
+                : 'w-2 bg-muted-foreground opacity-30 hover:opacity-50',
+            )}
+            onClick={() => api?.scrollTo(index)}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+    </Carousel>
+  );
+}

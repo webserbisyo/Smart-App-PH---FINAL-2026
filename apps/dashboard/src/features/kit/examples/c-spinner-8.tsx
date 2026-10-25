@@ -1,0 +1,16 @@
+import { Card, CardContent } from '@smartapp/ui/components/card';
+import { Spinner } from '@smartapp/ui/components/spinner';
+
+export function Pattern() {
+  return (
+    <Card className="min-h-50 w-full max-w-xs">
+      <CardContent className="flex grow flex-col items-center justify-center gap-4">
+        <Spinner className="size-4 opacity-50" />
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-sm font-medium">Setting up your workspace</p>
+          <p className="text-xs text-muted-foreground">This may take a few seconds...</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
