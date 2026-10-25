@@ -296,8 +296,11 @@ test.describe('menu and item sheet (T07)', () => {
     await cardOpener.focus();
     await page.keyboard.press('Enter');
 
-    // Item sheet opens
+    // Item sheet opens and takes focus, as a keyboard user would find it
     await expect(page.getByRole('heading', { name: 'Classic Smash' }).first()).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => Boolean(document.activeElement?.closest('[role="dialog"]'))))
+      .toBe(true);
 
     // Press Escape to close
     await page.keyboard.press('Escape');
