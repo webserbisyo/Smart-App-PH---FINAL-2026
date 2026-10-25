@@ -204,7 +204,7 @@ export const LOLA_REMY_PACK: ShopPack = {
         tone: 'info',
         endsAt: null,
       },
-      sections: ALL_SECTIONS_ON,
+      sections: { ...ALL_SECTIONS_ON, membersCount: false },
     },
     // Opens 5 AM: the closed-shop scheduling demo.
     hours: days(DAILY, '05:00', '20:00'),

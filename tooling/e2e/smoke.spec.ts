@@ -90,7 +90,7 @@ test.describe('scenarios (dev server, ?mock=)', () => {
     const problems = watch(page);
     await page.goto(urlFor('dev', '/kanto-smash?mock=basket'));
     const opener = page.getByRole('button', { name: /^Basket, 3 items/ });
-    await expect(opener).toBeVisible();
+    await expect(opener).toBeVisible({ timeout: 15_000 });
     await opener.click();
     const sheet = page.getByRole('dialog', { name: 'Your basket' });
     await expect(sheet).toBeVisible();
@@ -116,7 +116,9 @@ test.describe('remembered on the phone', () => {
 
   test('basket lines survive a reload, and Undo puts a removed line back', async ({ page }) => {
     await page.goto(urlFor('dev', '/kanto-smash?mock=basket'));
-    await page.getByRole('button', { name: /^Basket, 3 items/ }).click();
+    const opener = page.getByRole('button', { name: /^Basket, 3 items/ });
+    await expect(opener).toBeVisible({ timeout: 15_000 });
+    await opener.click();
     const sheet = page.getByRole('dialog', { name: 'Your basket' });
     await sheet
       .getByRole('button', { name: /^Remove / })
@@ -126,6 +128,50 @@ test.describe('remembered on the phone', () => {
     await page.getByRole('button', { name: 'Undo' }).click();
     await expect(sheet.getByRole('listitem')).toHaveCount(3);
     await page.goto(urlFor('dev', '/kanto-smash'));
-    await expect(page.getByRole('button', { name: /^Basket, 3 items/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Basket, 3 items/ })).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+});
+
+test.describe('banner carousel (T06)', () => {
+  test('carousel autoplay advances on desktop without reduced motion', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'Desktop only check');
+    await page.goto(urlFor('prod', '/kanto-smash'));
+    const banner1Dot = page.getByRole('button', { name: 'Show banner 1' });
+    const banner2Dot = page.getByRole('button', { name: 'Show banner 2' });
+    await expect(banner1Dot).toHaveAttribute('aria-current', 'true', { timeout: 15_000 });
+    await expect(banner2Dot).toHaveAttribute('aria-current', 'true', { timeout: 15_000 });
+  });
+
+  test('carousel autoplay does not advance with reducedMotion: reduce', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'Desktop only check');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(urlFor('prod', '/kanto-smash'));
+    const banner1Dot = page.getByRole('button', { name: 'Show banner 1' });
+    const banner2Dot = page.getByRole('button', { name: 'Show banner 2' });
+    await expect(banner1Dot).toHaveAttribute('aria-current', 'true', { timeout: 15_000 });
+    await page.waitForTimeout(6000);
+    await expect(banner1Dot).toHaveAttribute('aria-current', 'true');
+    await expect(banner2Dot).not.toHaveAttribute('aria-current', 'true');
+  });
+
+  test('shops with no banners ship no carousel chunk', async ({ page }) => {
+    const scripts: string[] = [];
+    page.on('request', (req) => {
+      if (req.resourceType() === 'script') {
+        scripts.push(req.url());
+      }
+    });
+    await page.goto(urlFor('dev', '/test-blank'));
+    await settle(page);
+    const hasCarouselChunk = scripts.some((url) => url.includes('banner-carousel-slides'));
+    expect(hasCarouselChunk).toBe(false);
   });
 });

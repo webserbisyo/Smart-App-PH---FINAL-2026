@@ -211,7 +211,7 @@ export const TALA_APPAREL_PACK: ShopPack = {
       ],
       bannerSeconds: 6,
       announcement: null,
-      sections: ALL_SECTIONS_ON,
+      sections: { ...ALL_SECTIONS_ON, membersCount: false },
     },
     // Closed on Mondays.
     hours: days([2, 3, 4, 5, 6, 0], '10:00', '19:00'),

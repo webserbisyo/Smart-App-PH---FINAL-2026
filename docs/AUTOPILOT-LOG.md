@@ -143,3 +143,28 @@ Night run started 2026-10-25 (Manila). Order: T02, T02b, T03a, T03b, T04, T06, T
   - `pnpm e2e`: 24/24 locally with Chrome, covering every route at phone and desktop, the offline/closed/basket scenarios, the order type and zone surviving a reload, and basket Undo plus reload.
   - Browser checks: all 5 demo shops, test-blank, test-stress and the stress basket at 360, 390, 768, 1024 and 1280 px, with 0 console errors and no sideways scroll. Closed Lola Remy (`?now=…T04:30+08:00`) shows "Closed · Opens 5 AM".
   - The tooling `lint-walls` test now loads ESLint once in `beforeAll` (T02b).
+
+## T06 Shop home with the banner carousel (branch `ag/storefront-screens`)
+
+- Plan:
+  1. Core words & section visibility rules:
+     - Expand `words.storefrontShell.home` and `words.shop` for Home screen labels.
+     - Pure function `resolveHomeSections(storefront, catalog, now, deviceState)` in `features/home/rules.ts` checking on/off switches, content emptiness, open state, and card status.
+     - Table tests in `apps/storefront/test/home-rules.test.ts`.
+  2. Components in `apps/storefront/src/features/home/components/`:
+     - `demo-ribbon.tsx`: Small "Demo shop · orders are not real" top ribbon for `isDemo` shops.
+     - `home-banners.tsx`: Renders `BannerCarousel` (21:9 on mobile, 16:9 on desktop) with priority first image or `BrandPanel` when 0 banners.
+     - `announcement-banner.tsx`: Tone-based alert (`c-alert-5` info, `c-alert-7` warning, `c-alert-6` success) with role status, hidden when expired past `endsAt`.
+     - `closed-card.tsx`: `c-empty-20` pattern card when shop is closed or busy with "Browse menu" button and optional schedule message.
+     - `rewards-card.tsx`: Client-only component reading `useMyAccount(slug)` and `storefront.stampCard`. Shows `c-card-17` + `CircularProgress`. Guest prompt ("Join and get 1 free stamp"), Member progress ("5 of 8 · 3 more to a free..."), Ready ("Your reward is ready"), Paused ("Stamps paused..."), hidden if off. Skeletons for loading.
+     - `favourites-row.tsx`: Client-only component reading `useFavourites(slug)`. If customer has hearts, renders `Scroller` + `c-card-7` cards (1:1 `ShopImage`). Hidden when empty.
+     - `categories-chips.tsx`: `c-button-27` chips (`h-11`) with Fluent SVG icon (32px img, lazy) linking to `/<slug>/menu?cat=<id>`.
+     - `best-sellers-row.tsx`: Featured items first, then others. `Scroller` + `c-card-7` cards. Quick "+" add button for single-variant items without required groups, else links to `/<slug>/menu?item=<id>`.
+     - `about-section.tsx`: Text with `c-button-35` More/Less toggle after 4 lines (`line-clamp-4`).
+     - `hours-table.tsx`: `c-table-16` pattern table with today highlighted and closures noted.
+     - `contact-section.tsx`: `c-item-4` rows for Call, Messenger, Facebook, Directions (when showAddress + pin), and address.
+     - `members-count.tsx`: `c-avatar-20` pill with initials ("128 Suki members").
+     - `shop-footer.tsx`: Shop name, "Powered by Smart App PH" (privacy link hidden until T14).
+  3. Server Component `ShopHome` in `apps/storefront/src/app/[shop]/page.tsx` assembling sections with cache per shop.
+  4. Registry update in `docs/components.md` ("Used in" for all 11 Home patterns).
+  5. Playwright e2e additions: cover all 5 demo shops in `routes.ts`, carousel autoplay test on desktop, reduced motion pause test, single-banner no-carousel-chunk test.

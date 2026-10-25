@@ -26,6 +26,7 @@ export * from './rules/order-rules.js';
 export * from './rules/stamps.js';
 export * from './rules/phone.js';
 export * from './rules/location.js';
+export * from './rules/home.js';
 export { SHOP_PACKS } from './demo/packs/index.js';
 export {
   TEST_SHOP_PACKS,
