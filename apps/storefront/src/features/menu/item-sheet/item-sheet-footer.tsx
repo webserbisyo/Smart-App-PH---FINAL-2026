@@ -1,7 +1,7 @@
 'use client';
 
 import { formatPeso, words, type LineProblem } from '@smartapp/core';
-import { Pending } from '@smartapp/ui/components/pending';
+import { Button } from '@smartapp/ui/components/button';
 import {
   NumberField,
   NumberFieldDecrement,
@@ -11,6 +11,9 @@ import {
 } from '@smartapp/ui/components/reui/number-field';
 import { AddToCartButton } from '@smartapp/ui/vendor/opensource-ui/add-to-cart';
 
+// Adding is local, so the spinner is a short beat before the check (the source waits 1.2 s).
+export const ADD_LOADING_MS = 300;
+
 export interface ItemSheetFooterProps {
   qty: number;
   onQtyChange: (qty: number) => void;
@@ -18,14 +21,12 @@ export interface ItemSheetFooterProps {
   problems: readonly LineProblem[];
   onAdd: () => void;
   onMissingClick: (problem: LineProblem) => void;
-  isAdding?: boolean;
 }
 
 /**
- * Item Sheet sticky footer:
- * - Quantity selector: c-number-field-3 (1 to 99, Hitbox)
- * - Add to Cart: Opensource UI Add to Cart in DiceUI Pending
- * - Missing required pick prompt (e.g. "Choose a patty")
+ * Fixed item sheet footer: quantity (c-number-field-3, 1 to 99) and Opensource UI Add to Cart
+ * ("Add · ₱229"). A missing required pick shows a plain button that jumps to it instead, so the
+ * cart animation only plays for a real add.
  */
 export function ItemSheetFooter({
   qty,
@@ -34,34 +35,20 @@ export function ItemSheetFooter({
   problems,
   onAdd,
   onMissingClick,
-  isAdding = false,
 }: ItemSheetFooterProps) {
-  // First blocking problem
   const firstProblem = problems.find((p) => p.code === 'required_missing' || p.code === 'too_few');
 
-  const missingText = firstProblem?.groupName
-    ? words.storefrontShell.menu.itemSheet.chooseToContinue(firstProblem.groupName)
-    : null;
-
-  const buttonLabel =
-    missingText ?? words.storefrontShell.menu.itemSheet.addWithPrice(formatPeso(totalPrice));
-
   return (
-    <div className="flex w-full items-center justify-between gap-3 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xs">
-      {/* Quantity field (1 to 99) */}
-      <div className="w-28 shrink-0">
+    <div className="shrink-0 border-t bg-popover pb-safe">
+      <div className="flex w-full items-center gap-3 px-4 py-3">
         <NumberField
           value={qty}
-          onValueChange={(val) => {
-            if (val === null || val < 1) onQtyChange(1);
-            else if (val > 99) onQtyChange(99);
-            else onQtyChange(val);
-          }}
+          onValueChange={(val) => onQtyChange(Math.min(99, Math.max(1, val ?? 1)))}
           min={1}
           max={99}
           size="lg"
-          className="w-full"
-          aria-label="Quantity"
+          className="w-32 shrink-0"
+          aria-label={words.storefrontShell.menu.itemSheet.quantity}
         >
           <NumberFieldGroup>
             <NumberFieldDecrement />
@@ -69,27 +56,29 @@ export function ItemSheetFooter({
             <NumberFieldIncrement />
           </NumberFieldGroup>
         </NumberField>
-      </div>
 
-      {/* Add To Cart button wrapped in Pending */}
-      <div className="flex-1">
-        <Pending isPending={isAdding}>
+        {firstProblem ? (
+          <Button
+            variant="outline"
+            className="h-12 min-w-0 flex-1 rounded-xl text-sm font-semibold"
+            onClick={() => onMissingClick(firstProblem)}
+          >
+            <span className="truncate">
+              {firstProblem.groupName
+                ? words.storefrontShell.menu.itemSheet.chooseToContinue(firstProblem.groupName)
+                : words.storefrontShell.menu.itemSheet.addWithPrice(formatPeso(totalPrice))}
+            </span>
+          </Button>
+        ) : (
           <AddToCartButton
-            label={buttonLabel}
+            label={words.storefrontShell.menu.itemSheet.addWithPrice(formatPeso(totalPrice))}
             loadingLabel={words.storefrontShell.menu.itemSheet.adding}
             addedLabel={words.storefrontShell.menu.itemSheet.added}
-            disabled={isAdding}
-            onClick={(e) => {
-              e.preventDefault();
-              if (firstProblem) {
-                onMissingClick(firstProblem);
-              } else {
-                onAdd();
-              }
-            }}
-            className="w-full text-xs sm:text-sm"
+            loadingMs={ADD_LOADING_MS}
+            onClick={onAdd}
+            className="min-w-0 flex-1 tabular"
           />
-        </Pending>
+        )}
       </div>
     </div>
   );

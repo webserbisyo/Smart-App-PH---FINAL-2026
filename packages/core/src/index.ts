@@ -28,6 +28,7 @@ export * from './rules/phone.js';
 export * from './rules/location.js';
 export * from './rules/home.js';
 export * from './rules/shop-info.js';
+export * from './rules/menu.js';
 export { SHOP_PACKS } from './demo/packs/index.js';
 export {
   TEST_SHOP_PACKS,

@@ -3,7 +3,8 @@
 // Changes: our cn, rose → shop-10 tokens, shadows, the heart's drop shadow and glow, the springy pop curve
 // (ease-spring) and particles as utilities with cssVars() (no inline style), labels from props, particles
 // skipped under reduced motion. Particles run 400 ms, not the source's 500 ms (docs/ux.md: motion under 400 ms).
-// /kit only (the app uses c-toggle-9). Nothing auto-updates.
+// Burst is exported so the storefront heart chip (compositions/heart-toggle) plays the same particles.
+// Nothing auto-updates.
 'use client';
 
 import {
@@ -29,7 +30,7 @@ const PARTICLES = [
 ];
 
 // Particles fly outward once on mount using a rAF-triggered transition.
-function Burst() {
+export function Burst() {
   const [out, setOut] = useState(false);
 
   useEffect(() => {

@@ -263,9 +263,11 @@
   height: calc(100% - var(--spacing) * --value(number));
 }
 
-/* Max height as a share of the viewport (scrolling sheet and dialog bodies). */
+/* Max height as a share of the viewport (scrolling sheet and dialog bodies). dvh follows the phone's
+   browser bars; vh stays as the fallback. */
 @utility max-h-vh-* {
   max-height: calc(--value(integer) * 1vh);
+  max-height: calc(--value(integer) * 1dvh);
 }
 
 /* Thin progress track (receipt pay countdown, c-progress-2). */
@@ -299,6 +301,11 @@
   padding-bottom: calc(
     env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2
   );
+}
+
+/* Sticky top under the storefront top bar: the phone's safe area plus a spacing step. */
+@utility sticky-top-* {
+  top: calc(env(safe-area-inset-top, 0px) + var(--spacing) * --value(number));
 }
 
 @utility scrollbar-none {

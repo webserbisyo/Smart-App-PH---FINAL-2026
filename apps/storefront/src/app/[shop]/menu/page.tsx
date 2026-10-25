@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { DEMO_SHOP_SLUGS, vocab } from '@smartapp/core';
+import { DEMO_SHOP_SLUGS, vocab, words } from '@smartapp/core';
 import { getStorefrontForServer } from '@smartapp/data/server';
 import { MenuContent } from '@/features/menu/components/menu-content';
 import { MenuSkeleton } from '@/features/menu/components/menu-skeleton';
@@ -22,7 +22,10 @@ export async function generateMetadata({ params }: MenuPageProps): Promise<Metad
   const title = `${kind.catalog} · ${shop.storefront.info.name}`;
   return {
     title,
-    description: `Browse the ${kind.catalog.toLowerCase()} of ${shop.storefront.info.name}`,
+    description: words.storefrontShell.menu.metaDescription(
+      kind.catalog,
+      shop.storefront.info.name,
+    ),
   };
 }
 

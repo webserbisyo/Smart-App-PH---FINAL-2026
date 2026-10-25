@@ -43,7 +43,7 @@ export interface BasketPanelProps {
   onBrowse?: (() => void) | undefined;
 }
 
-// The basket's lines, totals, alerts, and checkout CTA, shared by the drawer and 1280px sticky column.
+// The basket's lines, alerts, totals and checkout button, laid out to fill the basket drawer.
 export function BasketPanel({ onBrowse }: BasketPanelProps) {
   const router = useRouter();
   const { slug, shop } = useShop();
@@ -129,7 +129,7 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
   if (rows.length === 0) {
     // Pattern c-empty-11
     return (
-      <Empty className="py-12">
+      <Empty className="px-4 py-12">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <ShoppingBagIcon />
@@ -167,7 +167,7 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
   if (closedDecision.state === 'closed_with_scheduling') {
     const slotText = closedDecision.scheduleSlot
       ? formatClock(closedDecision.scheduleSlot)
-      : 'next opening';
+      : words.basket.nextOpening;
     mainAction = (
       <Button
         size="lg"
@@ -193,50 +193,51 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Header with Clear basket menu & confirm */}
-      <BasketHeader count={count} onClear={() => basket.clear()} />
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="shrink-0 px-4 pt-3">
+        <BasketHeader count={count} onClear={() => basket.clear()} />
+      </div>
 
-      {/* Version reset notice & closed/offline alerts */}
-      <BasketClosedAlert
-        decision={closedDecision}
-        versionResetNotice={basket.notice === 'storage_reset'}
-      />
+      {/* One scroll area; the totals and the main button stay pinned below it (redesign I9). */}
+      <div className="scrollbar-none flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 pb-4">
+        <BasketClosedAlert
+          decision={closedDecision}
+          versionResetNotice={basket.notice === 'storage_reset'}
+        />
 
-      {/* Basket Lines */}
-      <ul className="flex flex-col gap-2.5">
-        {rows.map((row) => (
-          <li key={row.identity}>
-            <BasketLine row={row} basket={basket} onChooseAgain={handleOpenItem} />
-          </li>
-        ))}
-      </ul>
+        <ul className="flex flex-col gap-2.5">
+          {rows.map((row) => (
+            <li key={row.identity}>
+              <BasketLine row={row} basket={basket} onChooseAgain={handleOpenItem} />
+            </li>
+          ))}
+        </ul>
 
-      {/* Goes Well With */}
-      <BasketGoesWellWith
-        items={companionItems}
-        optionGroups={shop.catalog.optionGroups}
-        basket={basket}
-        onOpenItem={handleOpenItem}
-      />
+        <BasketGoesWellWith
+          items={companionItems}
+          optionGroups={shop.catalog.optionGroups}
+          basket={basket}
+          onOpenItem={handleOpenItem}
+        />
 
-      {/* Stamp Progress */}
-      <BasketStampProgress stampCard={shop.storefront.stampCard} subtotal={subtotal} />
+        <BasketStampProgress stampCard={shop.storefront.stampCard} subtotal={subtotal} />
+      </div>
 
-      {/* Order Summary / Totals (c-separator-6) */}
-      <BasketTotals
-        subtotal={subtotal}
-        deliveryFee={deliveryFee}
-        discount={discount}
-        total={total}
-        isLoadingQuote={quoteQuery.isFetching}
-        hasQuoteData={Boolean(quote)}
-        quoteError={quoteQuery.isError}
-        isOnline={isOnline}
-      />
-
-      {/* Checkout / Schedule CTA button */}
-      <div className="pt-2">{mainAction}</div>
+      <div className="shrink-0 border-t bg-popover pb-safe">
+        <div className="flex flex-col gap-3 px-4 pt-3 pb-4">
+          <BasketTotals
+            subtotal={subtotal}
+            deliveryFee={deliveryFee}
+            discount={discount}
+            total={total}
+            isLoadingQuote={quoteQuery.isFetching}
+            hasQuoteData={Boolean(quote)}
+            quoteError={quoteQuery.isError}
+            isOnline={isOnline}
+          />
+          {mainAction}
+        </div>
+      </div>
     </div>
   );
 }

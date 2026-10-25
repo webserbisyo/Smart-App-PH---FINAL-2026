@@ -1,16 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { imageSources, type IconKey } from '@smartapp/core';
-import { AspectRatio } from '@smartapp/ui/components/aspect-ratio';
-import { Card } from '@smartapp/ui/components/card';
+import { useEffect, useState, type ReactNode } from 'react';
+import { imageSources, words, type IconKey } from '@smartapp/core';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   type CarouselApi,
 } from '@smartapp/ui/components/carousel';
-import { ShopImage } from '@smartapp/ui/compositions/shop-image';
+import { ShopImage, type ShopImageRatio } from '@smartapp/ui/compositions/shop-image';
 import { cn } from '@smartapp/ui/lib/utils';
 
 export interface ItemSheetPhotosProps {
@@ -18,24 +16,29 @@ export interface ItemSheetPhotosProps {
   itemName: string;
   categoryIcon?: IconKey | undefined;
   activePhotoIndex?: number | undefined;
+  ratio: Extract<ShopImageRatio, '4:3' | '1:1'>;
+  sizes: string;
+  // Glass buttons on the photo (heart, close).
+  overlay?: ReactNode;
+  className?: string | undefined;
 }
 
 /**
- * Item Sheet Photos section adhering to c-carousel-11 (no autoplay) in c-aspect-ratio-2.
- * - 0 photos: ShopImage placeholder with category icon.
- * - 1 photo: Single photo in 4:3 AspectRatio.
- * - >1 photos: Embla Carousel with slide dots navigation.
+ * Full-bleed item photos (c-carousel-11, no autoplay): swipe for more, dots on a glass pill.
+ * No photo: the shop-coloured tile with the category icon.
  */
 export function ItemSheetPhotos({
   photos,
   itemName,
   categoryIcon,
   activePhotoIndex,
+  ratio,
+  sizes,
+  overlay,
+  className,
 }: ItemSheetPhotosProps) {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
-
-  const count = api?.scrollSnapList().length ?? photos.length;
 
   useEffect(() => {
     if (!api) return;
@@ -47,101 +50,67 @@ export function ItemSheetPhotos({
   }, [api]);
 
   useEffect(() => {
-    if (
-      activePhotoIndex !== undefined &&
-      api &&
-      activePhotoIndex >= 0 &&
-      activePhotoIndex < photos.length
-    ) {
+    if (activePhotoIndex !== undefined && api && activePhotoIndex >= 0) {
       api.scrollTo(activePhotoIndex);
     }
-  }, [activePhotoIndex, api, photos.length]);
+  }, [activePhotoIndex, api]);
 
-  if (photos.length === 0) {
-    return (
-      <div className="w-full overflow-hidden rounded-xl border border-border bg-muted">
-        <AspectRatio ratio={4 / 3}>
-          <ShopImage
-            src={null}
-            alt={itemName}
-            ratio="4:3"
-            fallbackIcon={categoryIcon}
-            fallbackText={itemName}
-            sizes="(min-width: 768px) 480px, 100vw"
-          />
-        </AspectRatio>
-      </div>
-    );
-  }
-
-  if (photos.length === 1) {
-    const photo = photos[0];
-    if (!photo) return null;
-    return (
-      <div className="w-full overflow-hidden rounded-xl border border-border bg-muted">
-        <AspectRatio ratio={4 / 3}>
-          <ShopImage
-            src={imageSources(photo)}
-            alt={itemName}
-            ratio="4:3"
-            fallbackIcon={categoryIcon}
-            fallbackText={itemName}
-            sizes="(min-width: 768px) 480px, 100vw"
-            priority
-          />
-        </AspectRatio>
-      </div>
-    );
-  }
+  const single = photos.length <= 1;
+  const first = photos[0];
 
   return (
-    <div className="w-full">
-      <Carousel setApi={setApi} className="w-full">
-        <CarouselContent>
-          {photos.map((photo, index) => {
-            const sources = imageSources(photo);
-            return (
-              <CarouselItem key={photo || index}>
-                <Card className="overflow-hidden border-border bg-muted p-0">
-                  <AspectRatio ratio={4 / 3}>
-                    {sources ? (
-                      <ShopImage
-                        src={sources}
-                        alt={`${itemName} photo ${index + 1}`}
-                        ratio="4:3"
-                        fallbackIcon={categoryIcon}
-                        fallbackText={itemName}
-                        sizes="(min-width: 768px) 480px, 100vw"
-                        priority={index === 0}
-                      />
-                    ) : (
-                      <div className="size-full bg-muted" />
-                    )}
-                  </AspectRatio>
-                </Card>
+    <div className={cn('relative overflow-hidden bg-muted', className)}>
+      {single ? (
+        <ShopImage
+          src={first ? imageSources(first) : null}
+          alt={itemName}
+          ratio={ratio}
+          fallbackIcon={categoryIcon}
+          fallbackText={itemName}
+          sizes={sizes}
+          priority
+        />
+      ) : (
+        <Carousel setApi={setApi} className="w-full">
+          <CarouselContent className="ml-0">
+            {photos.map((photo, index) => (
+              <CarouselItem key={photo} className="pl-0">
+                <ShopImage
+                  src={imageSources(photo)}
+                  alt={words.storefrontShell.menu.itemSheet.photoAlt(itemName, index + 1)}
+                  ratio={ratio}
+                  fallbackIcon={categoryIcon}
+                  fallbackText={itemName}
+                  sizes={sizes}
+                  priority={index === 0}
+                />
               </CarouselItem>
-            );
-          })}
-        </CarouselContent>
-
-        {/* Dots Navigation (c-carousel-11 pattern) */}
-        <div className="flex justify-center gap-1.5 pt-2">
-          {Array.from({ length: count }).map((_, index) => (
-            <button
-              key={index}
-              type="button"
-              className={cn(
-                'h-1.5 cursor-pointer rounded-full transition-all duration-300 ease-in-out',
-                index === current
-                  ? 'w-4 bg-primary opacity-100'
-                  : 'w-1.5 bg-muted-foreground opacity-30 hover:opacity-60',
-              )}
-              onClick={() => api?.scrollTo(index)}
-              aria-label={`Go to photo ${index + 1}`}
-            />
-          ))}
-        </div>
-      </Carousel>
+            ))}
+          </CarouselContent>
+          <div className="absolute inset-x-0 bottom-3 flex justify-center">
+            <div className="flex items-center gap-1 rounded-full border glass px-1 shadow-sm">
+              {photos.map((photo, index) => (
+                <button
+                  key={photo}
+                  type="button"
+                  aria-label={words.storefrontShell.menu.itemSheet.goToPhoto(index + 1)}
+                  aria-current={index === current ? 'true' : undefined}
+                  onClick={() => api?.scrollTo(index)}
+                  className="group/dot flex size-6 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span
+                    className={cn(
+                      'h-1.5 rounded-full transition-all duration-base ease-standard',
+                      index === current ? 'w-4 bg-foreground' : 'w-1.5 bg-foreground/35',
+                    )}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </Carousel>
+      )}
+      {overlay}
     </div>
   );
 }

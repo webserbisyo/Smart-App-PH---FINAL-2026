@@ -1,6 +1,7 @@
 'use client';
 
-import { words } from '@smartapp/core';
+import { HeartIcon, SearchXIcon } from 'lucide-react';
+import { iconPath, words, type MenuSection } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Empty,
@@ -34,25 +35,80 @@ function StackedCardsIllustration() {
 
 export interface MenuSearchEmptyProps {
   query: string;
+  sections: readonly MenuSection[];
   onClear: () => void;
+  // A suggestion chip clears the search and jumps to that category.
+  onPick: (categoryId: string) => void;
 }
 
-/**
- * Empty search results using c-empty-2 pattern.
- */
-export function MenuSearchEmpty({ query, onClear }: MenuSearchEmptyProps) {
+/** No match (c-empty-2): Clear, then the categories as suggestion chips. */
+export function MenuSearchEmpty({ query, sections, onClear, onPick }: MenuSearchEmptyProps) {
   return (
-    <div className="flex items-center justify-center py-12">
-      <Empty className="max-w-md bg-muted/50">
-        <EmptyHeader>
-          <EmptyTitle>{words.storefrontShell.menu.noMatchTitle(query)}</EmptyTitle>
-          <EmptyDescription>{words.storefrontShell.menu.noMatchDescription}</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button onClick={onClear}>{words.storefrontShell.menu.clear}</Button>
-        </EmptyContent>
-      </Empty>
-    </div>
+    <Empty className="rounded-3xl bg-muted/50 py-10">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <SearchXIcon />
+        </EmptyMedia>
+        <EmptyTitle>{words.storefrontShell.menu.noMatchTitle(query)}</EmptyTitle>
+        <EmptyDescription>{words.storefrontShell.menu.noMatchDescription}</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent className="gap-4">
+        <Button onClick={onClear} className="h-11 rounded-full px-6">
+          {words.storefrontShell.menu.clear}
+        </Button>
+        {sections.length > 0 ? (
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm text-muted-foreground">{words.storefrontShell.menu.lookIn}</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {sections.map(({ category }) => (
+                <Button
+                  key={category.id}
+                  variant="outline"
+                  className="h-11 gap-2 rounded-full bg-card px-4"
+                  onClick={() => onPick(category.id)}
+                >
+                  <img
+                    src={iconPath(category.icon)}
+                    alt=""
+                    width={20}
+                    height={20}
+                    loading="lazy"
+                    className="size-5 object-contain"
+                  />
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </EmptyContent>
+    </Empty>
+  );
+}
+
+/** Favourites filter with nothing saved: one action back to everything. */
+export function MenuFavouritesEmpty({
+  catalogName,
+  onBrowse,
+}: {
+  catalogName: string;
+  onBrowse: () => void;
+}) {
+  return (
+    <Empty className="rounded-3xl bg-muted/50 py-10">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <HeartIcon />
+        </EmptyMedia>
+        <EmptyTitle>{words.storefrontShell.menu.noFavouritesTitle}</EmptyTitle>
+        <EmptyDescription>{words.storefrontShell.menu.noFavouritesDescription}</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button onClick={onBrowse} className="h-11 rounded-full px-6">
+          {words.storefrontShell.menu.seeAll(catalogName)}
+        </Button>
+      </EmptyContent>
+    </Empty>
   );
 }
 

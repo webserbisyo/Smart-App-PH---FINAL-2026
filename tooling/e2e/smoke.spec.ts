@@ -182,7 +182,7 @@ test.describe('menu and item sheet (T07)', () => {
     await page.goto(urlFor('prod', '/kanto-smash/menu'));
     await settle(page);
 
-    const searchInput = page.getByRole('textbox', { name: 'Search menu' });
+    const searchInput = page.getByRole('searchbox', { name: 'Search menu' });
     await expect(searchInput).toBeVisible();
 
     // Type search
@@ -390,7 +390,8 @@ test.describe('basket (T08)', () => {
         }),
       );
     });
-    await page.goto(urlFor('dev', '/kanto-smash/menu'));
+    // Sunday noon, shop open: the result must not depend on the real clock.
+    await page.goto(urlFor('dev', '/kanto-smash/menu?now=2026-10-25T12:00:00%2B08:00'));
 
     // One basket at every width: the dock's cart on phones, the top bar's from 1024 px (decision R1).
     const cartButton = page.getByRole('button', { name: /^Basket/ });
@@ -547,7 +548,8 @@ test.describe('basket (T08)', () => {
         }),
       );
     });
-    await page.goto(urlFor('dev', '/kanto-smash/checkout'));
+    // Sunday noon, shop open: the result must not depend on the real clock.
+    await page.goto(urlFor('dev', '/kanto-smash/checkout?now=2026-10-25T12:00:00%2B08:00'));
 
     // Switch to walk-in
     await page.locator('#checkout-change-location').click();

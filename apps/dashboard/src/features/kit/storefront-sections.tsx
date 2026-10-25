@@ -36,6 +36,8 @@ import { InfoList } from '@smartapp/ui/compositions/info-list';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
+import { HeartToggle } from '@smartapp/ui/compositions/heart-toggle';
+import { ProductCard, ProductCardSkeleton } from '@smartapp/ui/compositions/product-card';
 import type { NavItem } from '@smartapp/ui/lib/nav';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { startReveal } from '@smartapp/ui/lib/reveal-clip';
@@ -53,15 +55,16 @@ const ORIGIN = env.VITE_STOREFRONT_URL;
 interface KitShop {
   slug: DemoShopSlug;
   item: string;
+  itemName: string;
   icon: IconKey;
 }
 
 const KIT_SHOPS: readonly KitShop[] = [
-  { slug: 'kanto-smash', item: 'classic-smash', icon: 'burger' },
-  { slug: 'aqualinis', item: 'refill-purified', icon: 'water_gallon' },
-  { slug: 'tala-apparel', item: 'tala-basic-tee-sand', icon: 'tshirt' },
-  { slug: 'kape-juan', item: 'spanish-latte', icon: 'coffee' },
-  { slug: 'lola-remy', item: 'classic-pandesal', icon: 'bread' },
+  { slug: 'kanto-smash', item: 'classic-smash', itemName: 'Classic Smash', icon: 'burger' },
+  { slug: 'aqualinis', item: 'refill-purified', itemName: 'Purified Refill', icon: 'water_gallon' },
+  { slug: 'tala-apparel', item: 'tala-basic-tee-sand', itemName: 'Tala Basic Tee', icon: 'tshirt' },
+  { slug: 'kape-juan', item: 'spanish-latte', itemName: 'Spanish Latte', icon: 'coffee' },
+  { slug: 'lola-remy', item: 'classic-pandesal', itemName: 'Classic Pandesal', icon: 'bread' },
 ];
 
 const RATIOS: readonly ShopImageRatio[] = ['1:1', '4:3', '16:9', '21:9'];
@@ -428,6 +431,102 @@ function StampCards({ prizePhoto }: { prizePhoto: ImageSources | null }) {
   );
 }
 
+// Plain, new + best seller with a saved heart, sold out today, no photo (category icon) with a long
+// name, and the loading shape.
+function ProductCards({ shop }: { shop: KitShop }) {
+  const name = shop.itemName;
+  const [saved, setSaved] = useState<readonly string[]>(['b']);
+  const heart = (id: string, itemName: string) => ({
+    pressed: saved.includes(id),
+    onPressedChange: (on: boolean) =>
+      setSaved((ids) => (on ? [...ids, id] : ids.filter((other) => other !== id))),
+    label: `Save ${itemName}`,
+    pressedLabel: `Remove ${itemName} from favourites`,
+  });
+  const photo = imageSources(`demo:${shop.slug}/items/${shop.item}`, ORIGIN);
+  const add = (itemName: string) => ({ label: `Add ${itemName}`, onClick: () => undefined });
+  const cards = [
+    { id: 'a', title: name, price: '₱149', badges: [], soldOut: false, src: photo },
+    {
+      id: 'b',
+      title: name,
+      price: 'from ₱189',
+      badges: [
+        { tone: 'new' as const, label: 'New' },
+        { tone: 'bestSeller' as const, label: 'Best seller' },
+      ],
+      soldOut: false,
+      src: photo,
+    },
+    {
+      id: 'c',
+      title: name,
+      price: '₱149',
+      badges: [{ tone: 'soldOut' as const, label: 'Sold out today' }],
+      soldOut: true,
+      src: photo,
+    },
+    {
+      id: 'd',
+      title: 'A very long product name that wraps past two lines on a phone card',
+      price: '₱12,499',
+      badges: [],
+      soldOut: false,
+      src: null,
+    },
+  ];
+  return (
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+      {cards.map((card) => (
+        <ProductCard
+          key={card.id}
+          name={card.title}
+          priceLabel={card.price}
+          photo={card.src}
+          fallbackIcon={shop.icon}
+          sizes="200px"
+          openLabel={`${card.title}, ${card.price}`}
+          onOpen={() => undefined}
+          badges={card.badges}
+          soldOut={card.soldOut}
+          heart={heart(card.id, card.title)}
+          add={add(card.title)}
+          assetOrigin={ORIGIN}
+        />
+      ))}
+      <ProductCardSkeleton />
+    </div>
+  );
+}
+
+// Glass chip on a photo (32 px with a 56 px touch area) and the 44 px card button, off and on.
+function HeartToggles({ photo }: { photo: ImageSources | null }) {
+  const [on, setOn] = useState(false);
+  const [onCard, setOnCard] = useState(true);
+  return (
+    <div className="flex flex-wrap items-center gap-6">
+      <div className="relative w-40 overflow-hidden rounded-xl">
+        <ShopImage src={photo} alt="" ratio="1:1" sizes="160px" assetOrigin={ORIGIN} />
+        <HeartToggle
+          pressed={on}
+          onPressedChange={setOn}
+          label="Save item"
+          pressedLabel="Remove item from favourites"
+          className="absolute top-2 right-2"
+        />
+      </div>
+      <HeartToggle
+        pressed={onCard}
+        onPressedChange={setOnCard}
+        label="Save item"
+        pressedLabel="Remove item from favourites"
+        variant="card"
+        size="md"
+      />
+    </div>
+  );
+}
+
 // Grouped hours with today highlighted, and tappable contact rows.
 function InfoLists() {
   return (
@@ -562,6 +661,24 @@ export function StorefrontSections() {
             usedIn="storefront Home, kit"
           >
             <StampCards prizePhoto={imageSources(`demo:${slug}/items/${shop.item}`, ORIGIN)} />
+          </KitSection>
+
+          <KitSection
+            title="Product card"
+            library="composition"
+            path="packages/ui/src/compositions/product-card.tsx"
+            usedIn="storefront Menu, Home best sellers and favourites rows, kit"
+          >
+            <ProductCards shop={shop} />
+          </KitSection>
+
+          <KitSection
+            title="Heart toggle"
+            library="composition"
+            path="packages/ui/src/compositions/heart-toggle.tsx"
+            usedIn="storefront product card and item sheet, kit"
+          >
+            <HeartToggles photo={imageSources(`demo:${slug}/items/${shop.item}`, ORIGIN)} />
           </KitSection>
 
           <KitSection
@@ -764,7 +881,7 @@ export function StorefrontSections() {
             title="Like Toggle"
             library="Opensource UI (copy)"
             path="packages/ui/src/vendor/opensource-ui/like-toggle.tsx"
-            usedIn="kit only"
+            usedIn="kit; its burst plays in the heart toggle"
           >
             <div className="flex gap-3">
               <LikeButton

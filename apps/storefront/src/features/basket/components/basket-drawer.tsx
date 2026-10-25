@@ -6,7 +6,8 @@ import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { useShop } from '../../shell/components/shop-context';
 import { BasketPanel } from './basket-panel';
 
-// Bottom sheet on phones, right drawer from tablets up (pattern c-drawer-2).
+// Bottom sheet on phones (fits its content up to the drawer's max height), full-height right
+// drawer from tablets up (pattern c-drawer-2). The panel holds the one scroll area.
 export function BasketDrawer() {
   const { basketOpen, setBasketOpen } = useShop();
   const phone = useFormFactor() === 'phone';
@@ -21,11 +22,9 @@ export function BasketDrawer() {
       <DrawerContent
         aria-label={words.basket.title}
         aria-description={words.basket.description}
-        className="flex max-h-vh-85 flex-col overflow-hidden pb-safe"
+        className="overflow-hidden"
       >
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
-          <BasketPanel onBrowse={() => setBasketOpen(false)} />
-        </div>
+        <BasketPanel onBrowse={() => setBasketOpen(false)} />
       </DrawerContent>
     </Drawer>
   );
