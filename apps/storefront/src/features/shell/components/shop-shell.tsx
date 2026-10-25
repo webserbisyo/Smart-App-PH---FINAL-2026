@@ -85,7 +85,6 @@ export function ShopShell({ children }: { children: ReactNode }) {
             aria-label={words.basket.title}
             className="sticky top-24 hidden w-90 shrink-0 self-start rounded-xl border border-border bg-card p-4 xl:block"
           >
-            <h2 className="mb-3 text-base font-semibold">{words.basket.title}</h2>
             <BasketPanel />
           </aside>
         ) : null}

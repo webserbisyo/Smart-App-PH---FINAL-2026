@@ -21,7 +21,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 
 - [x] T06 Shop home (PR #16)
 - [x] T07 Menu and item sheet (PR #16)
-- [ ] T08 Basket
+- [x] T08 Basket (PR #16)
 - [ ] T09 Checkout and location
 - [ ] T10 Receipt
 - [ ] T11 My orders

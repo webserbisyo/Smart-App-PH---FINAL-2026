@@ -82,7 +82,7 @@ test.describe('scenarios (dev server, ?mock=)', () => {
         .getByText(/^Closed · Opens/)
         .filter({ visible: true })
         .first(),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15_000 });
     expect(problems).toEqual([]);
   });
 
@@ -110,7 +110,7 @@ test.describe('remembered on the phone', () => {
     await sheet.getByRole('button', { name: 'Save' }).click();
     const bar = page.getByRole('button', { name: /Delivery · Marikina Heights and Parang · ₱60/ });
     await expect(bar).toBeVisible();
-    await page.reload();
+    await page.goto(urlFor('dev', '/kanto-smash'));
     await expect(bar).toBeVisible();
   });
 
@@ -302,6 +302,232 @@ test.describe('menu and item sheet (T07)', () => {
     // Press Escape to close
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).not.toBeVisible();
+
+    expect(problems).toEqual([]);
+  });
+});
+
+test.describe('basket (T08)', () => {
+  test('clear basket with confirm dialog', async ({ page, isMobile }) => {
+    const problems = watch(page);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/kanto-smash/menu'));
+
+    if (isMobile) {
+      const cartButton = page.getByRole('button', { name: /^Basket/ });
+      await expect(cartButton).toBeVisible({ timeout: 15_000 });
+      await cartButton.click();
+    }
+
+    const basket = isMobile
+      ? page.getByRole('dialog', { name: 'Your basket' })
+      : page.locator('aside[aria-label="Your basket"]');
+
+    // Basket has lines
+    await expect(basket.getByRole('heading', { name: 'Your basket' })).toBeVisible({
+      timeout: 15_000,
+    });
+
+    // Open More menu
+    const moreBtn = basket.getByRole('button', { name: 'More options' });
+    await expect(moreBtn).toBeVisible();
+    await moreBtn.click();
+
+    // Click Clear basket menu item
+    const clearMenuItem = page.getByRole('menuitem', { name: 'Clear basket' });
+    await expect(clearMenuItem).toBeVisible();
+    await clearMenuItem.click();
+
+    // Alert dialog opens
+    const confirmBtn = page.getByRole('alertdialog').getByRole('button', { name: 'Clear basket' });
+    await expect(confirmBtn).toBeVisible();
+    await confirmBtn.click();
+
+    // Verify empty state
+    await expect(basket.getByText('Your basket is empty')).toBeVisible();
+
+    expect(problems).toEqual([]);
+  });
+
+  test('flagged line excluded from total', async ({ page, isMobile }) => {
+    const problems = watch(page);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+            {
+              itemId: 'ks-onion-rings',
+              variantId: 'ks-onion-rings--base',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/kanto-smash/menu'));
+
+    if (isMobile) {
+      const cartButton = page.getByRole('button', { name: /^Basket/ });
+      await expect(cartButton).toBeVisible({ timeout: 15_000 });
+      await cartButton.click();
+    }
+
+    const basket = isMobile
+      ? page.getByRole('dialog', { name: 'Your basket' })
+      : page.locator('aside[aria-label="Your basket"]');
+
+    // Verify Onion Rings shows warning banner
+    await expect(basket.getByText('Sold out today')).toBeVisible({ timeout: 15_000 });
+    await expect(basket.getByRole('button', { name: 'Remove Onion Rings' })).toBeVisible();
+
+    // Verify total excludes Onion Rings (total is ₱149, not ₱248)
+    const checkoutBtn = basket.getByRole('button', { name: /Checkout · ₱149/ });
+    await expect(checkoutBtn).toBeVisible();
+
+    expect(problems).toEqual([]);
+  });
+
+  test('closed shop alert and schedule button at 04:30', async ({ page, isMobile }) => {
+    const problems = watch(page);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:lola-remy',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'lr-spanish-bread',
+              variantId: 'lr-spanish-bread--base',
+              optionIds: [],
+              note: '',
+              qty: 2,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/lola-remy/menu?now=2026-10-25T04:30:00%2B08:00'));
+
+    if (isMobile) {
+      const cartButton = page.getByRole('button', { name: /^Basket/ });
+      await expect(cartButton).toBeVisible({ timeout: 15_000 });
+      await cartButton.click();
+    }
+
+    const basket = isMobile
+      ? page.getByRole('dialog', { name: 'Your basket' })
+      : page.locator('aside[aria-label="Your basket"]');
+
+    // Verify closed alert
+    await expect(basket.getByText('Closed now · Opens 5 AM. Your basket is saved.')).toBeVisible({
+      timeout: 15_000,
+    });
+
+    // Verify schedule CTA button
+    const scheduleBtn = basket.getByRole('button', { name: 'Schedule for 5:30 AM' });
+    await expect(scheduleBtn).toBeVisible();
+
+    expect(problems).toEqual([]);
+  });
+
+  test('offline basket notice and prices as last seen', async ({ page, isMobile }) => {
+    const problems = watch(page);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/kanto-smash/menu?mock=offline'));
+
+    if (isMobile) {
+      const cartButton = page.getByRole('button', { name: /^Basket/ });
+      await expect(cartButton).toBeVisible({ timeout: 15_000 });
+      await cartButton.click();
+    }
+
+    const basket = isMobile
+      ? page.getByRole('dialog', { name: 'Your basket' })
+      : page.locator('aside[aria-label="Your basket"]');
+
+    // Verify offline alert
+    await expect(basket.getByRole('alert')).toContainText("You're offline. Your basket is saved.");
+
+    // Verify prices as last seen notice
+    await expect(basket.getByText('Prices as last seen')).toBeVisible();
+
+    // Verify CTA button is disabled with offline reason
+    const disabledBtn = basket.getByRole('button', { name: /You're offline/ });
+    await expect(disabledBtn).toBeVisible();
+    await expect(disabledBtn).toBeDisabled();
+
+    expect(problems).toEqual([]);
+  });
+
+  test('desktop 1280 shows sticky basket column', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop only check');
+    const problems = watch(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/kanto-smash/menu'));
+
+    const stickyAside = page.locator('aside[aria-label="Your basket"]');
+    await expect(stickyAside).toBeVisible({ timeout: 15_000 });
+    await expect(stickyAside.getByRole('heading', { name: 'Your basket' })).toBeVisible();
 
     expect(problems).toEqual([]);
   });

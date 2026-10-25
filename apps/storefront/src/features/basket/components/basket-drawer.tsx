@@ -1,13 +1,7 @@
 'use client';
 
 import { words } from '@smartapp/core';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from '@smartapp/ui/components/drawer';
+import { Drawer, DrawerContent } from '@smartapp/ui/components/drawer';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { useShop } from '../../shell/components/shop-context';
 import { BasketPanel } from './basket-panel';
@@ -16,6 +10,7 @@ import { BasketPanel } from './basket-panel';
 export function BasketDrawer() {
   const { basketOpen, setBasketOpen } = useShop();
   const phone = useFormFactor() === 'phone';
+
   return (
     <Drawer
       open={basketOpen}
@@ -23,12 +18,12 @@ export function BasketDrawer() {
       swipeDirection={phone ? 'down' : 'right'}
       showSwipeHandle={phone}
     >
-      <DrawerContent className="pb-safe">
-        <DrawerHeader>
-          <DrawerTitle>{words.basket.title}</DrawerTitle>
-          <DrawerDescription>{words.basket.description}</DrawerDescription>
-        </DrawerHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
+      <DrawerContent
+        aria-label={words.basket.title}
+        aria-description={words.basket.description}
+        className="flex max-h-vh-85 flex-col overflow-hidden pb-safe"
+      >
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
           <BasketPanel onBrowse={() => setBasketOpen(false)} />
         </div>
       </DrawerContent>

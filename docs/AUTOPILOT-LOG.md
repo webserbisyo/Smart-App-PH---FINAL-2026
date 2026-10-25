@@ -203,3 +203,34 @@ Night run started 2026-10-25 (Manila). Order: T02, T02b, T03a, T03b, T04, T06, T
   6. Documentation:
      - Update `docs/components.md`, `docs/PROGRESS.md`, `docs/CHANGELOG.md`.
 - Result: 16/16 unit tests passed, all 58 Playwright e2e tests passed. All format checks and typechecks passed across all packages. Commit and pushed to `ag/storefront-screens` (PR #16).
+
+## T08 Basket with Flagged Lines, Closed Shop, Offline and Stamp Progress (branch `ag/storefront-screens`)
+
+- Plan:
+  1. Pure helpers & rules:
+     - `apps/storefront/src/features/basket/basket-rules.ts`:
+       - `lineProblemMessage()`: mapping `LineProblem` codes (`item_missing`, `sold_out`, `sold_out_today`, `option_missing`, `option_sold_out`, `required_missing`, `too_few`, `too_many`, `price_changed`) into founder-specified copy.
+       - `closedStateDecision()`: implements blueprint 8.2 table (open, busy with pause time, closed with scheduling today/tomorrow, closed without scheduling or later than tomorrow, paused indefinitely, offline). Returns banner text, button CTA label, disabled state, and action reason.
+       - `stampProgressMessage()`: integrates core `earnsStamp` to format "This order earns 1 stamp", "Spend ₱X more to earn a stamp", or "You already earned today's stamp".
+     - Unit tests in `apps/storefront/src/features/basket/basket-rules.test.ts`.
+  2. Components in `apps/storefront/src/features/basket/components/`:
+     - `basket-header.tsx`: "Your basket" + item count, More menu (`c-dropdown-menu-16`) with Clear basket action, trigger confirm alert dialog (`c-alert-dialog-2`) "Clear basket?" / "Remove all X items?".
+     - `basket-line.tsx`: Enhance line with `c-item-2` row, `c-number-field-2` quantity stepper, `c-button-24` remove button with Undo toast. When line has problems: render `c-alert-7` warning alert, exclude from totals, show "Remove" and if options changed/missing show "Choose again" opening item sheet. Long names clamp to 2 lines.
+     - `basket-goes-well-with.tsx`: Up to 3 companion items not currently in basket, small cards with "+" button.
+     - `basket-stamp-progress.tsx`: Member colour badge/pill (`--member` tokens) showing stamp progress if stamp card is On.
+     - `basket-totals.tsx`: `c-separator-6` pattern with subtotal (excluding flagged lines), delivery fee / "Delivery fee at checkout", discount, and 700-weight total. Skeleton loading state during quote refetch, "Couldn't check prices. Try again." on error, and "Prices as last seen" when offline.
+     - `basket-panel.tsx`: Assembles header, version reset banner ("Your basket was reset after an update."), closed/offline alert (`c-alert-7`), line list, companion items, stamp progress, totals, and main CTA button. Empty state `c-empty-11` with "Browse menu".
+     - `basket-drawer.tsx`: Drawer for mobile and right sheet for tablets/desktops with fixed header, scrollable lines (supporting 20+ lines), and fixed sticky footer.
+     - Update `apps/storefront/src/features/shell/components/shop-shell.tsx`: Ensure sticky 360px column on 1280px+ uses full basket view.
+  3. Tests:
+     - Unit tests for pure rules (`basket-rules.test.ts`).
+     - E2E smoke tests in `tooling/e2e/smoke.spec.ts`:
+       - Add Kanto items, mark one sold out (flagged line warning tone and excluded from subtotal).
+       - Closed shop notice at 04:30 ("Closed now · Opens 5:00 AM").
+       - Offline notice and prices as last seen.
+       - Clear basket with confirm dialog.
+       - Desktop 1280 sticky column view.
+  4. Documentation:
+     - Update `docs/components.md` "Used in".
+     - Tick T08 in `docs/PROGRESS.md`.
+     - Add T08 entry in `docs/CHANGELOG.md`.

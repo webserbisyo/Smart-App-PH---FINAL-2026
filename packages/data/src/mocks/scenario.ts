@@ -101,6 +101,11 @@ export function readMockScenarioFromUrl(
   if (process.env.NODE_ENV === 'production') return null;
   if (dataSource !== 'mock') return null;
   const parsed = parseMockScenario(params);
-  if (Object.keys(parsed.scenario).length > 0) setMockScenario(parsed.scenario);
+  if (Object.keys(parsed.scenario).length > 0) {
+    const reset = params.has('mock')
+      ? { latency: 'normal' as const, fail: null, empty: false, offline: false, closed: false }
+      : {};
+    setMockScenario({ ...reset, ...parsed.scenario });
+  }
   return parsed;
 }

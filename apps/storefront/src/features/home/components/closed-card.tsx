@@ -13,15 +13,18 @@ import {
   EmptyTitle,
 } from '@smartapp/ui/components/empty';
 import { MoonIcon } from 'lucide-react';
+import { useShop } from '../../shell/components/shop-context';
 
 export interface ClosedCardProps {
   storefront: Storefront;
   now?: string | Date | undefined;
 }
 
-export function ClosedCard({ storefront, now: nowProp }: ClosedCardProps) {
+export function ClosedCard({ storefront: initialStorefront, now: nowProp }: ClosedCardProps) {
   const currentNow = useNow();
   const now = nowProp ?? currentNow;
+  const { shop } = useShop();
+  const storefront = shop.storefront ?? initialStorefront;
   if (!now) return null;
 
   const state = openState(storefront, now);
