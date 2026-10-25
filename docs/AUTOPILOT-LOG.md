@@ -101,7 +101,7 @@ The autopilot rule "the same check failing after 3 real fixes" applies, so I lef
 
 ## T04 Storefront shell (branch `ag/t04-storefront-shell`)
 
-- PR: (link below when opened). Status: **open, not merged** (the first-load JS budget, see the summary).
+- PR: https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/15. Status: **open, not merged** (the first-load JS budget, see the summary).
 - Built:
   - Root layout with metadataBase; static platform page `/`; Not found (c-empty-7).
   - `/[shop]` layout: ShopTheme, per-shop title, description, icons, OG image, noindex for test shops, theme-color = shop-10.
