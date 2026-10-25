@@ -9,6 +9,7 @@ export * from './env';
 export * from './hooks/storefront/qk';
 export * from './hooks/storefront/device';
 export * from './hooks/storefront/queries';
+export * from './hooks/storefront/provider';
 export {
   DEMO_CUSTOMER,
   DEMO_RECEIPTS,

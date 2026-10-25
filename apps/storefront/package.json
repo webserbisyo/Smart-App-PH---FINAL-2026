@@ -12,6 +12,7 @@
     "@smartapp/core": "workspace:*",
     "@smartapp/data": "workspace:*",
     "@smartapp/ui": "workspace:*",
+    "lucide-react": "catalog:",
     "next": "16.4.2",
     "react": "catalog:",
     "react-dom": "catalog:"

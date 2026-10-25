@@ -4,7 +4,42 @@ Night run started 2026-10-25 (Manila). Order: T02, T02b, T03a, T03b, T04, T06, T
 
 ## Morning summary
 
-Run 1 stopped after T03b (T02 blocked). Run 2 resumed on 2026-10-25 after the founder's decision T27; the summary is rewritten when run 2 ends.
+**Run 2 stopped in T04. T02 and T02b are merged (with T03a and T03b from run 1). T04 is built and green, with its PR open and not merged, because one DONE item can't be met without your call. T06 to T14 are not started.**
+
+| Task                    | Result                                                                                                                                                        | PR                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| T02 Storefront kit      | **Merged** after your decision T27 (separate strictness for installed files; checkbox-group patched)                                                          | [#11](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/11) |
+| T02b /kit ReUI patterns | **Merged**, 119 patterns on /kit; decisions T28 (ReUI tokens mapped once) and T29 (bubble, scroll-area)                                                       | [#14](https://github.com/webserbisyo/Smart-App-PH---FINAL-2026/pull/14) |
+| T03a, T03b              | Merged in run 1                                                                                                                                               | #12, #13                                                                |
+| T04 Storefront shell    | **Open, stopped**: everything built, `pnpm check`, build and the 24 e2e tests green, but Home first-load JS is **286.6 KB gzipped against the 200 KB target** | see T04 below                                                           |
+| T06 to T14              | Not started: each builds on T04's shell                                                                                                                       | –                                                                       |
+
+**Why T04 stopped.** I made five real reduction attempts (334 → 286.6 KB; details below). The rest is structural:
+
+- The framework alone is about 171 KB gzipped: `/`, a static page with one button, already loads 183.7 KB.
+- Zod adds about 28 KB, because the phone's saved data (basket, order type, draft) is checked with the core Zod schemas.
+- Framework plus Zod is about 199 KB before any shell code.
+
+The autopilot rule "the same check failing after 3 real fixes" applies, so I left the PR open.
+
+**What you decide (one of):**
+
+1. **Raise the budget** to about 300 KB for the shop shell (today 286.6) and keep tracking it. Then T04 merges as it is and the run goes on.
+2. **Move the core schemas to `zod/mini`**, which is tree-shaken, and lazy-load the toast layer. I estimate about 250 KB. This is a larger change across T03a/T03b code, so I'd do it as its own task.
+3. **Stop validating phone data with Zod in the browser**, using small hand-written guards. This saves about 28 KB but splits validation in two.
+
+**By hand:**
+
+- In GitHub branch protection, mark the new "Storefront smoke tests (e2e)" job as required. The workflow runs it, but only you can make it required.
+- Optional:
+  - `NEXT_PUBLIC_DATA_SOURCE` / `VITE_DATA_SOURCE` in the `.env.example` files (both default to mock).
+  - A real storefront URL: `metadataBase` is `https://shop.webserbisyo.com` in code.
+
+**Notes:**
+
+- T02's squash commit title still says "blocked"; the code and log are right.
+- Decision numbers shifted again: T04's planned T25 is **T30**.
+- Playwright's Chromium does not run on macOS 12 (D8). The smoke tests run in CI; locally `PLAYWRIGHT_CHANNEL=chrome pnpm e2e` uses your Chrome (24/24 passed here).
 
 ## T02 Storefront kit (branch `ag/t02-storefront-kit`)
 
@@ -63,3 +98,46 @@ Run 1 stopped after T03b (T02 blocked). Run 2 resumed on 2026-10-25 after the fo
   - Decision numbers: the prompt's T24 is recorded as **T26** (T24 and T25 belong to the open T02 PR); N29 as planned.
   - I did not edit `.env.example` (autopilot hard stop on .env files). `NEXT_PUBLIC_DATA_SOURCE` and `VITE_DATA_SOURCE` default to `mock`; you may want to add them to the examples.
 - Tests: data 27 passing (contract against api.md, every output parsed, idempotent placeOrder, gap-free numbers with a daily reset, a proof never marks paid, the 4th proof refused, duplicate reference, COD limit, out of range, sold out today back after the next opening, steps forward only and completing needs paid, unpaid limit, reward race, paused card, daily stamp cap, clearSamples equals test-blank, scenario switch, deviceStorage reset/fallback/snapshot, basket merge); core 114 passing; `pnpm format:check`, `pnpm check` (15/15) and `pnpm build` green; the leak scan finds no scenario strings; storefront JS unchanged.
+
+## T04 Storefront shell (branch `ag/t04-storefront-shell`)
+
+- PR: (link below when opened). Status: **open, not merged** (the first-load JS budget, see the summary).
+- Built:
+  - Root layout with metadataBase; static platform page `/`; Not found (c-empty-7).
+  - `/[shop]` layout: ShopTheme, per-shop title, description, icons, OG image, noindex for test shops, theme-color = shop-10.
+  - Home: tagline, today's hours, about.
+  - "Page not found" inside a shop (catch-all).
+  - Top bar: logo, name, open state (DiceUI status), Join or avatar; on desktop also the nav links and basket button.
+  - Location bar (c-button-19) and the How and where sheet (c-radio-group-7/3/8, c-native-select-2, responsive-dialog).
+  - `storefront-dock` composition with the cart segment (c-avatar-11, c-badge-19) and its thumbnail rule.
+  - Basket drawer (phone bottom, tablet/desktop right, c-drawer-2) and the 1280 px column: lines c-item-2, quantity c-number-field-2, remove c-button-24 with Undo through `notify()`, total c-separator-6, empty c-empty-11.
+  - Offline banner (DiceUI banner); skip link.
+  - In core: `words.storefrontShell`, `words.location`, `words.basket`, and `rules/location.ts` (location bar text, sheet details, slot groups).
+  - In data: `StorefrontDataProvider`, `useNow()`, `removeWithUndo`, and lazy adapters, so the mock store loads on first call.
+  - /kit "Storefront dock" section (0, 1, 3, 9 items, ₱12,345.50 at 390 and 360 px).
+  - Playwright smoke tests, `pnpm e2e`, and the CI e2e job.
+- Decisions from the box: one pill dock with a cart segment, no bell (N30); location bar under the name (N31); Playwright 1.64.1 exact (T30); How and where with order type, pickup time and named zones (T09 adds the rest); basket drawer without checkout (T08/T09 add the rest).
+- Choices where the docs left room or disagreed (logged here and in the PR):
+  - **Test shops and `?mock=` vs production:** T03a says test shops never ship in a production build, and T03b's scan bans the scenario code. So the smoke tests run demo pages on `next start` and test shops plus scenarios on `next dev` (two Playwright web servers). The production client and server builds were checked: no test-shop data, no scenario code.
+  - **`lucide-react` in the storefront:** `catalog:`, already pinned and used by ui and the dashboard; nothing new in the lockfile. TanStack Query stays in `@smartapp/data` (new `StorefrontDataProvider`), so the storefront adds no query package.
+  - **Next 16 Cache Components:** the layout and pages read `params` and call `notFound()` inside `<Suspense>` (the documented pattern). theme-color is a hoisted `<meta>` instead of `generateViewport()`, which would block the route. The catch-all awaits `connection()`. The QueryClient treats data as static on the server, so the prerender never reads the clock. All of this clears the dev-only "instant" navigation errors without opting out of the check.
+  - **Shops without named zones (Kapé Juan):** the bar says "Delivery" and the sheet says the address comes at checkout (T09 adds distance and pins).
+  - **Dock tabs for pages not built yet** (Menu, Rewards, Orders) open "Page not found" inside the shop until T07, T11 and T12 add them. Join goes to Rewards, or to Account when the stamp card is off.
+  - **Toasts:** the viewport sits on `--z-toast`, above open drawers (found by the e2e test: Undo was under the basket drawer), and lifts above the dock on phones. These are unlayered rules in globals.css, so the installed toast file is unchanged.
+  - **Brand-coloured icons** became muted foreground (on test-stress's pale yellow they were invisible).
+  - **Back button (c-button-49):** not built yet, because no shop sub-page exists in T04.
+- First-load JS reductions tried, in order:
+  1. `sideEffects: false` on core and data.
+  2. Lazy adapters, so the mock store and all packs load on first data call.
+  3. `React.lazy` for the sheet and drawer (Next still preloads those).
+  4. `next/dynamic({ ssr: false })` for the sheet, drawer and basket column.
+  5. `sideEffects` on ui (BottomDock's nav drawer was pulled in through `dockSlotClass`).
+  - Result: 334.3 → 286.6 KB. What's left: Next about 171 KB, Zod about 28, TanStack Query about 9, tailwind-merge about 7, Base UI (toast, avatar, use-render) about 13, our code and words about 12.
+- Tests:
+  - core: location rules (8 tests).
+  - data: remove with Undo (3 tests).
+  - ui: storefront dock (6 tests: segment only with items, thumbnail count by width, aria-current, fits 360 px).
+  - `pnpm format:check`, `pnpm check` (16/16) and a clean `pnpm build` are green.
+  - `pnpm e2e`: 24/24 locally with Chrome, covering every route at phone and desktop, the offline/closed/basket scenarios, the order type and zone surviving a reload, and basket Undo plus reload.
+  - Browser checks: all 5 demo shops, test-blank, test-stress and the stress basket at 360, 390, 768, 1024 and 1280 px, with 0 console errors and no sideways scroll. Closed Lola Remy (`?now=…T04:30+08:00`) shows "Closed · Opens 5 AM".
+  - The tooling `lint-walls` test now loads ESLint once in `beforeAll` (T02b).

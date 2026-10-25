@@ -45,6 +45,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T27 Installed library files (`packages/ui/src/components`) get their own strictness: ESLint turns off only `consistent-type-assertions`, the React Compiler rules `react-hooks/refs` and `react-hooks/set-state-in-effect`, and `no-useless-assignment` for those files; TypeScript checks them in `packages/ui/tsconfig.components.json` without `exactOptionalPropertyTypes`, and apps read them as declarations through project references. Our own code (lib, hooks, compositions, vendor copies, apps, packages) keeps the full strict rules. Installed files stay unedited, except `checkbox-group.tsx`: one patch back to DiceUI's own `asChild` on the tick, because the shadcn base-nova transform rewrote it to `render`, which `@diceui/checkbox-group` 1.0.0 does not support (founder, 2026-10-25).
 - T28 ReUI primitives keep our tokens: the CLI's raw-palette CSS variables for `success`, `warning`, `info`, `destructive-foreground` and `invert` are not added. New contrast-tested tokens `focus`, `invert`, `destructive-text`, `destructive-soft` and `destructive-soft-foreground` fill the gaps. `reui/badge.tsx` and `reui/alert.tsx` are patched once: solid variants use our `-foreground`, light variants `-soft` / `-soft-foreground`, outline variants `-text`, alerts `-soft` with a `-text` icon (founder, 2026-10-25).
 - T29 The ReUI examples may install shadcn `bubble` (c-message-5) and `scroll-area` (c-scrollspy-1, c-scrollspy-2), reversing the T02 skip for these two. `popover` stays skipped: c-input-group-37 is kept without its popover (founder, 2026-10-25).
+- T30 Playwright smoke tests (`@playwright/test` 1.64.1, exact, tooling dev dependency) run in CI on every PR at phone 390 and desktop 1280 and fail on console errors, sideways scroll and broken images. `pnpm e2e` (not part of `pnpm check`); demo shop pages run on the production build, test shops and `?mock=` scenarios on a dev server, because a production build never has them (N28, T26). Locally on macOS 12 use `PLAYWRIGHT_CHANNEL=chrome`. (Planned as T25 in the T04 prompt; T25 to T29 were taken.)
 
 ## MVP A scope (accepted 2026-10-18; details in `SYSTEM.md` section 4.2 and `SMART_APP_PH_BLUEPRINT.md`)
 
@@ -77,6 +78,8 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N27 Stamp card status Off, On or Paused; limited prizes stop at 0; max earned stamps per day/week/month, default 1 per day (S23, S24, S26).
 - N28 Shop packs are the one source for mocks, tests, the dev seed and "Start with samples"; test-blank and test-stress exist only in mock and test runs.
 - N29 Mock state for customer-created data (orders, proofs, member account) lives on the device; DEMO_RECEIPTS give fixed tokens for every receipt state (/<slug>/o/demo-…).
+- N30 Storefront phone nav is one floating pill (Home, Menu or Products, Rewards, Orders) that grows a cart segment; no separate basket bar; no bell.
+- N31 The location bar sits under the shop name on phones and opens the How and where sheet.
 - S7 The order thread shows the proof and system lines (status, payment, rider, tracking); no chat posts in A.
 - S8 Continue in Messenger copies the order text first, then opens m.me in the same tap; the text has no address or phone.
 - S15 QR Ph is a payment method (the shop's QR), text only, no brand logos.

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { GiftIcon, HouseIcon, ReceiptTextIcon, UtensilsIcon } from 'lucide-react';
 import {
   contrastRatio,
   DEMO_SHOPS,
@@ -21,6 +22,8 @@ import { CountUp } from '@smartapp/ui/compositions/count-up';
 import { ShopImage, type ShopImageRatio } from '@smartapp/ui/compositions/shop-image';
 import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
+import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
+import type { NavItem } from '@smartapp/ui/lib/nav';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { startReveal } from '@smartapp/ui/lib/reveal-clip';
 import { AddToCartButton } from '@smartapp/ui/vendor/opensource-ui/add-to-cart';
@@ -232,6 +235,67 @@ function MotionDemos() {
           </Button>
         </div>
       </div>
+    </div>
+  );
+}
+
+const DOCK_TABS: NavItem[] = [
+  { id: 'home', label: 'Home', icon: <HouseIcon />, link: <a href="#kit-dock" />, active: true },
+  {
+    id: 'menu',
+    label: 'Menu',
+    icon: <UtensilsIcon />,
+    link: <a href="#kit-dock" />,
+    active: false,
+  },
+  {
+    id: 'rewards',
+    label: 'Rewards',
+    icon: <GiftIcon />,
+    link: <a href="#kit-dock" />,
+    active: false,
+  },
+  {
+    id: 'orders',
+    label: 'Orders',
+    icon: <ReceiptTextIcon />,
+    link: <a href="#kit-dock" />,
+    active: false,
+  },
+];
+
+// 0, 1, 3 and 9 items, and a ₱12,345.50 total at phone widths (decision N30).
+function DockStates({ shop }: { shop: KitShop }) {
+  const photo = imageSources(`demo:${shop.slug}/items/${shop.item}`, ORIGIN);
+  const states = [
+    { label: 'Empty basket (no cart segment)', count: 0, total: '₱0', width: 'max-w-sm' },
+    { label: '1 item', count: 1, total: '₱189', width: 'max-w-sm' },
+    { label: '3 items', count: 3, total: '₱567', width: 'max-w-sm' },
+    { label: '9 items, ₱12,345.50 at 390 px', count: 9, total: '₱12,345.50', width: 'max-w-97.5' },
+    { label: '9 items, ₱12,345.50 at 360 px', count: 9, total: '₱12,345.50', width: 'max-w-90' },
+  ];
+  return (
+    <div id="kit-dock" className="flex flex-col gap-4">
+      {states.map((s) => (
+        <div key={s.label} className="flex flex-col gap-1">
+          <span className="text-sm text-muted-foreground">{s.label}</span>
+          <div
+            className={`relative h-24 w-full ${s.width} transform-gpu overflow-hidden rounded-xl border border-border bg-muted`}
+          >
+            <StorefrontDock
+              label="Demo"
+              items={DOCK_TABS}
+              cart={{
+                count: s.count,
+                totalLabel: s.total,
+                thumbs: Array.from({ length: Math.min(3, s.count) }, () => photo),
+                link: <button type="button" />,
+                label: `Basket, ${s.count} items, ${s.total}`,
+              }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -517,6 +581,15 @@ export function StorefrontSections() {
                 count={12}
               />
             </div>
+          </KitSection>
+
+          <KitSection
+            title="Storefront dock"
+            library="composition"
+            path="packages/ui/src/compositions/storefront-dock.tsx"
+            usedIn="storefront shell (phone and tablet), kit"
+          >
+            <DockStates shop={shop} />
           </KitSection>
 
           <KitSection
