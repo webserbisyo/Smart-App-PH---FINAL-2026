@@ -1,5 +1,6 @@
 // Downloads Fluent Emoji 3D pictures (MIT) once and saves them as small WebP files for the
 // storefront's empty, success and order-step states. Run: pnpm --filter @smartapp/tooling art
+// (or `... art printer` to fetch only the named keys).
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,6 +33,7 @@ const ART: Record<string, string> = {
   closed: 'Crescent moon',
   gift: 'Wrapped gift',
   trophy: 'Trophy',
+  printer: 'Printer',
 };
 
 function pngPath(folder: string): string {
@@ -45,7 +47,9 @@ async function main() {
   if (!licence.ok) throw new Error(`LICENSE: HTTP ${licence.status}`);
   fs.writeFileSync(path.join(TARGET_DIR, 'LICENSE'), await licence.text(), 'utf8');
 
+  const only = process.argv.slice(2);
   for (const [key, folder] of Object.entries(ART)) {
+    if (only.length > 0 && !only.includes(key)) continue;
     const url = `${RAW}/${encodeURI(pngPath(folder))}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`${key}: HTTP ${res.status} for ${url}`);

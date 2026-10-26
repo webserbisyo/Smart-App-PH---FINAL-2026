@@ -22,6 +22,7 @@ export const ART_KEYS = [
   'closed',
   'gift',
   'trophy',
+  'printer',
 ] as const;
 
 export type ArtKey = (typeof ART_KEYS)[number];

@@ -66,10 +66,16 @@ export function usePlaceOrder(slug: string) {
       if (!online) throw offlineError();
       return storefront.placeOrder({ slug, ...input });
     },
-    onSuccess: (placed) => {
+    // The receipt is fetched into the cache before the call resolves, so it opens with no skeleton
+    // (decision R32). A failed fetch only means the receipt loads as usual.
+    onSuccess: async (placed) => {
       rememberOrderToken(slug, placed.token, new Date());
       void client.invalidateQueries({ queryKey: qk.myOrdersAll(slug) });
       void client.invalidateQueries({ queryKey: qk.account(slug) });
+      await client.prefetchQuery({
+        queryKey: qk.order(slug, placed.token),
+        queryFn: () => storefront.getOrder({ slug, token: placed.token }),
+      });
     },
   });
   return { ...mutation, canPlace: online };

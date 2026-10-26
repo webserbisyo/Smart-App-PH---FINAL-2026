@@ -26,7 +26,9 @@ import { Button } from '@smartapp/ui/components/button';
 import { Pending } from '@smartapp/ui/components/pending';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
 import { Spinner } from '@smartapp/ui/components/spinner';
+import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { AlertTriangleIcon } from 'lucide-react';
+import { formatManilaDateTime } from '../../receipt/receipt-rules';
 import { useShop } from '../../shell/components/shop-context';
 import { useLocationChoice } from '../../location/components/use-location-choice';
 import {
@@ -39,9 +41,13 @@ import { CheckoutHow } from './checkout-how';
 import { CheckoutPay } from './checkout-pay';
 import { CheckoutSummary } from './checkout-summary';
 import { CheckoutWho } from './checkout-who';
+import { OrderPrinter, type PrinterSlip, type PrinterState } from './order-printer';
 
-// Long enough for the check to draw (400 ms) before the receipt opens.
-const PLACED_PAUSE_MS = 450;
+// The printer's slip takes 1.6 s to feed out (decision R32); the receipt opens once it has, or at
+// once on Skip or under reduced motion.
+const PRINT_MS = 1600;
+// The slip shows the first few lines and "+ N more".
+const SLIP_LINES = 4;
 
 function DrawnCheck() {
   return (
@@ -107,6 +113,12 @@ export function CheckoutForm({ now }: { now: string }) {
   // Error feedback state
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [placedOk, setPlacedOk] = useState(false);
+  const [printer, setPrinter] = useState<PrinterState | null>(null);
+  const printStartRef = useRef(0);
+  const skipRef = useRef(false);
+  const placedTokenRef = useRef<string | null>(null);
+  const openedRef = useRef(false);
+  const reducedMotion = useReducedMotion();
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string }>({});
 
   // Track serialized state to only write when actual values change
@@ -296,6 +308,10 @@ export function CheckoutForm({ now }: { now: string }) {
 
     if (!quotePayload) return;
 
+    skipRef.current = false;
+    printStartRef.current = Date.now();
+    setPrinter('printing');
+
     try {
       const phoneRes = normalisePhPhone(phone);
       const cleanPhone = phoneRes.ok ? phoneRes.e164 : phone;
@@ -313,15 +329,18 @@ export function CheckoutForm({ now }: { now: string }) {
         clientKey: clientKeyRef.current,
       });
 
-      // The check draws in the button, then the receipt opens.
+      // The slip finishes printing, then the receipt opens (already in the cache, so no skeleton).
+      placedTokenRef.current = placed.token;
       setPlacedOk(true);
-      setTimeout(() => {
-        basket.clear();
-        if (!rememberMe) getDeviceStorage().checkoutDraft.remove(slug);
-        router.push(`/${slug}/o/${placed.token}?new=1`);
-      }, PLACED_PAUSE_MS);
+      setPrinter('printed');
+      const left = printStartRef.current + PRINT_MS - Date.now();
+      setTimeout(
+        () => openReceipt(placed.token),
+        skipRef.current || reducedMotion ? 0 : Math.max(0, left),
+      );
     } catch (err: unknown) {
       const errCode = errorCodeOf(err);
+      setPrinter(typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'jam');
       switch (errCode) {
         case 'rate_limited':
           setSubmitError(words.checkout.rateLimited);
@@ -345,6 +364,19 @@ export function CheckoutForm({ now }: { now: string }) {
     }
   }
 
+  function openReceipt(token: string) {
+    if (openedRef.current) return;
+    openedRef.current = true;
+    basket.clear();
+    if (!rememberMe) getDeviceStorage().checkoutDraft.remove(slug);
+    router.push(`/${slug}/o/${token}?new=1`);
+  }
+
+  function skipPrinting() {
+    skipRef.current = true;
+    if (placedTokenRef.current) openReceipt(placedTokenRef.current);
+  }
+
   // Quote lines for collapsible
   const quoteLines =
     quote?.lines ??
@@ -363,6 +395,29 @@ export function CheckoutForm({ now }: { now: string }) {
       photo: catalog.items.find((i) => i.id === l.itemId)?.photos[0] ?? null,
       problems: [],
     }));
+
+  const slipLines = quoteLines.map((line) => ({
+    key: line.identity,
+    name: `${line.qty}x ${line.name}`,
+    price: formatPeso(line.lineTotal),
+  }));
+  const slip: PrinterSlip = {
+    storeName: sf.info.name,
+    date: formatManilaDateTime(now),
+    items:
+      slipLines.length > SLIP_LINES
+        ? [
+            ...slipLines.slice(0, SLIP_LINES - 1),
+            {
+              key: 'more',
+              name: words.checkout.printer.more(slipLines.length - SLIP_LINES + 1),
+              price: '',
+            },
+          ]
+        : slipLines,
+    subtotal: formatPeso(subtotal),
+    total: formatPeso(total),
+  };
 
   const busy = placeOrder.isPending || placedOk;
   const placeLabel = placedOk
@@ -420,6 +475,18 @@ export function CheckoutForm({ now }: { now: string }) {
           <AlertDescription>{submitError}</AlertDescription>
         </Alert>
       ) : null}
+
+      <OrderPrinter
+        state={printer}
+        slip={slip}
+        error={submitError}
+        onSkip={skipPrinting}
+        onRetry={() => {
+          setPrinter(null);
+          void handlePlaceOrder();
+        }}
+        onClose={() => setPrinter(null)}
+      />
 
       {/* Fixed bar: the total and Place order (c-button-9 large + c-button-44 states in DiceUI Pending). */}
       <div className="fixed inset-x-0 bottom-0 z-basket border-t glass pb-safe">

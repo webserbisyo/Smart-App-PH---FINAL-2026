@@ -594,6 +594,71 @@
   }
 }
 
+/* Place order printer (decision R32, a motion exception at 1.6 s): the slip feeds out line by line
+   while the printer hums; on a paper jam the slip stops where it is and the printer shakes. Tap skips;
+   under reduced motion the slip is simply there. */
+@keyframes print-feed {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-2rem);
+  }
+  to {
+    clip-path: inset(0 0 -1rem 0);
+    transform: translateY(0);
+  }
+}
+
+@utility print-feed {
+  animation: print-feed 1.6s steps(12, end) both;
+  [data-printer='jam'] & {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes print-hum {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(1px);
+  }
+}
+
+@keyframes paper-jam {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-5deg);
+  }
+  40% {
+    transform: rotate(4deg);
+  }
+  60% {
+    transform: rotate(-3deg);
+  }
+  80% {
+    transform: rotate(2deg);
+  }
+}
+
+@utility print-head {
+  [data-printer='printing'] & {
+    animation: print-hum 120ms linear infinite;
+  }
+  [data-printer='jam'] & {
+    animation: paper-jam 400ms var(--ease-standard) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none !important;
+  }
+}
+
 /* Raised key (Add to Cart): soft top sheen, lift and bottom recess; sunken while it works. */
 @utility shadow-key-raised {
   box-shadow:
