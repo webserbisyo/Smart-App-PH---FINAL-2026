@@ -36,7 +36,12 @@ export function InfoList({
 }) {
   if (rows.length === 0) return null;
   return (
-    <ItemGroup className={cn('gap-0 overflow-hidden rounded-xl border bg-card', className)}>
+    <ItemGroup
+      className={cn(
+        'gap-0 overflow-hidden rounded-xl border bg-card has-data-[size=sm]:gap-0',
+        className,
+      )}
+    >
       {rows.map((row, index) => (
         <Fragment key={row.id}>
           {index > 0 ? <ItemSeparator className="my-0" /> : null}

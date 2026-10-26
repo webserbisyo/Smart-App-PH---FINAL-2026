@@ -8,7 +8,7 @@ export interface StatusLogoProps {
   src: ImageSources | null;
   // null while the clock loads: a plain ring and no word.
   state: OpenStateKind | null;
-  // The word on the ring: "Open", "Busy", "Closed".
+  // The word on a chip under the ring: "Busy", "Closed". Open shows the ring alone (decision R21).
   stateLabel: string;
   size?: 'md' | 'lg' | undefined;
   className?: string | undefined;
@@ -28,7 +28,7 @@ const WORD_CLASS = {
   closed: 'bg-muted text-muted-foreground',
 } as const;
 
-/** The shop logo inside its open or closed ring, with the word on a chip below (composition C1). */
+/** The shop logo inside its open, busy or closed ring; busy and closed add the word on a chip (composition C1). */
 export function StatusLogo({
   name,
   src,
@@ -54,7 +54,7 @@ export function StatusLogo({
         shape="round"
         className="relative ring-2 ring-background"
       />
-      {state ? (
+      {state && state !== 'open' ? (
         <span
           className={cn(
             'absolute -bottom-1.5 left-1/2 -translate-x-1/2 rounded-full px-1.5 text-xs leading-4 font-semibold whitespace-nowrap ring-2 ring-background',

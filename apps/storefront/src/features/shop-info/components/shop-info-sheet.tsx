@@ -100,6 +100,7 @@ export function ShopInfoSheet() {
       open={infoOpen}
       onOpenChange={setInfoOpen}
       title={words.storefrontShell.info.title}
+      scroll
     >
       {infoOpen ? <ShopInfoBody /> : null}
     </ResponsiveDialog>

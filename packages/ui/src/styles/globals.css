@@ -258,6 +258,36 @@
   bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dock-offset));
 }
 
+/* The storefront dock's sliding pill (decision R20): one tab wide, moved by transform only, so a
+   switch never changes any tab's size. The dock sets --dock-tabs and --dock-index with cssVars(). */
+@utility dock-indicator {
+  width: calc(100% / var(--dock-tabs, 1));
+  transform: translateX(calc(var(--dock-index, 0) * 100%));
+  transition:
+    transform var(--duration-slow) var(--ease-glide),
+    opacity var(--duration-base) var(--ease-standard);
+}
+
+/* The active dock icon pops once as the pill arrives. */
+@keyframes dock-pop {
+  0% {
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@utility dock-pop {
+  animation: dock-pop var(--duration-slow) var(--ease-spring);
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
 /* Full height minus a spacing step (the line of a vertical stepper or timeline). */
 @utility h-full-less-* {
   height: calc(100% - var(--spacing) * --value(number));

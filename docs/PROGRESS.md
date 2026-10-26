@@ -25,6 +25,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] T09 Checkout and location (PR #16)
 - [x] T10 Receipt (PR #16)
 - [x] R Storefront redesign: theme, glass shell, Home, Menu, basket, checkout, receipt (PR #17, replaces #16)
+- [x] R Storefront polish: sliding pill dock, logo chip, Shop info sheet (decisions R20, R21)
 - [x] T11 My orders (PR #18)
 - [x] T12 Rewards and account (PR #18)
 - [x] T13 Install as an app (PR #18)

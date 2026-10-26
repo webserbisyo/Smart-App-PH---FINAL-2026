@@ -54,7 +54,7 @@ export function ResponsiveDialog({
     if (formFactor === 'phone') {
       return (
         <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
-          <DrawerContent className="max-h-vh-92 overflow-hidden">
+          <DrawerContent className="max-h-vh-92 overflow-hidden pb-safe">
             <DrawerHeader className="pb-3">
               <DrawerTitle>{title}</DrawerTitle>
               {description ? <DrawerDescription>{description}</DrawerDescription> : null}
@@ -80,7 +80,7 @@ export function ResponsiveDialog({
   if (formFactor === 'phone') {
     return (
       <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
-        <DrawerContent className="max-h-[85vh] overflow-y-auto pb-safe">
+        <DrawerContent className="max-h-vh-85 overflow-y-auto pb-safe">
           <DrawerHeader>
             <DrawerTitle>{title}</DrawerTitle>
             {description ? <DrawerDescription>{description}</DrawerDescription> : null}
@@ -93,7 +93,7 @@ export function ResponsiveDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="max-h-vh-85 overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}

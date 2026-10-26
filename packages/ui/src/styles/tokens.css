@@ -116,6 +116,8 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   /* Springy pop with a small overshoot (Like Toggle heart, stamp press). */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Long, soft settle with no overshoot (the dock's sliding pill). */
+  --ease-glide: cubic-bezier(0.32, 0.72, 0, 1);
 
   /* Layers, lowest first: content, sticky bars, basket bar, dock, sheet and dialog, toast, confetti. */
   --z-sticky: 10;
