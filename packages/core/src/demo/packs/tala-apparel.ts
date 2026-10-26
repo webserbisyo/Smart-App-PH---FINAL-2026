@@ -216,7 +216,7 @@ export const TALA_APPAREL_PACK: ShopPack = {
     },
     // Closed on Mondays.
     hours: days([2, 3, 4, 5, 6, 0], '10:00', '19:00'),
-    closures: [],
+    closures: [{ date: '2026-11-30', reason: 'Bonifacio Day' }],
     pause: { busyUntil: null, paused: false },
     orderTypes: ['pickup', 'delivery'],
     prepMinutes: 30,

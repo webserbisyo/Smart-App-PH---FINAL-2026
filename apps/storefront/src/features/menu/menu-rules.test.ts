@@ -124,18 +124,20 @@ describe('menu rules and helpers', () => {
         q: '',
         cat: null,
         fav: false,
+        show: null,
         item: null,
       });
     });
 
     it('parses full search params correctly', () => {
       const params = parseMenuParams(
-        new URLSearchParams('q=smash&cat=burgers&fav=1&item=item-123'),
+        new URLSearchParams('q=smash&cat=burgers&fav=1&show=best&item=item-123'),
       );
       expect(params).toEqual({
         q: 'smash',
         cat: 'burgers',
         fav: true,
+        show: 'best',
         item: 'item-123',
       });
     });
@@ -146,14 +148,20 @@ describe('menu rules and helpers', () => {
       expect(params.fav).toBe(false);
     });
 
+    it('ignores an unknown quick list', () => {
+      expect(parseMenuParams(new URLSearchParams('show=cheap')).show).toBeNull();
+    });
+
     it('builds clean search string without default params', () => {
       const initial: MenuParams = {
         q: '',
         cat: null,
         fav: false,
+        show: null,
         item: null,
       };
       expect(buildMenuSearch(initial)).toBe('');
+      expect(buildMenuSearch(initial, { show: 'new' })).toBe('?show=new');
       expect(buildMenuSearch(initial, { q: 'burger' })).toBe('?q=burger');
       expect(buildMenuSearch(initial, { cat: 'sides', fav: true })).toBe('?cat=sides&fav=1');
       expect(buildMenuSearch(initial, { item: 'classic-smash' })).toBe('?item=classic-smash');
@@ -164,6 +172,7 @@ describe('menu rules and helpers', () => {
         q: 'burger',
         cat: 'combos',
         fav: true,
+        show: null,
         item: 'old-item',
       };
       const updated = buildMenuSearch(current, { item: null, q: '' });

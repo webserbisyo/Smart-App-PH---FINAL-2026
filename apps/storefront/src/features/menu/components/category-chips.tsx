@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import { HeartIcon } from 'lucide-react';
 import { iconPath, words, type MenuSection } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { Scroller } from '@smartapp/ui/components/scroller';
 import { Toggle } from '@smartapp/ui/components/toggle';
 import { Scrollspy } from '@smartapp/ui/components/reui/scrollspy';
 import { cn } from '@smartapp/ui/lib/utils';
+import type { MenuPick } from './menu-picks';
 import { keepInView, sectionId, type MenuSpy } from './menu-spy';
 
 export interface CategoryChipsProps {
@@ -15,9 +15,8 @@ export interface CategoryChipsProps {
   // Browse: the chips follow the page (ReUI Scrollspy). Favourites: a chip leaves favourites first.
   spy: MenuSpy | null;
   onJump: (categoryId: string) => void;
-  hasFavourites: boolean;
-  favActive: boolean;
-  onToggleFav: () => void;
+  // Favourites, Best sellers and New first, as toggles.
+  picks: readonly MenuPick[];
 }
 
 const CHIP =
@@ -28,9 +27,7 @@ export function CategoryChips({
   sections,
   spy,
   onJump,
-  hasFavourites,
-  favActive,
-  onToggleFav,
+  picks,
 }: CategoryChipsProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   // Scrollspy reports on every scroll; only a new section moves the row. Stable, so the spy's
@@ -50,18 +47,22 @@ export function CategoryChips({
       className="-mx-4 w-auto px-4"
     >
       <div className="flex items-center gap-2">
-        {hasFavourites ? (
-          <Toggle
-            variant="outline"
-            aria-label={words.storefrontShell.menu.filterFavourites}
-            pressed={favActive}
-            onPressedChange={onToggleFav}
-            className="h-11 shrink-0 gap-2 rounded-full px-4 text-sm font-medium aria-pressed:border-transparent aria-pressed:bg-shop-10 aria-pressed:text-shop-10-foreground"
-          >
-            <HeartIcon aria-hidden="true" className={cn('size-4', favActive && 'fill-current')} />
-            {words.storefrontShell.menu.favourites}
-          </Toggle>
-        ) : null}
+        {picks.map((pick) => {
+          const Icon = pick.icon;
+          return (
+            <Toggle
+              key={pick.id}
+              variant="outline"
+              aria-label={pick.toggleLabel}
+              pressed={pick.pressed}
+              onPressedChange={pick.onToggle}
+              className="h-11 shrink-0 gap-2 rounded-full px-4 text-sm font-medium aria-pressed:border-transparent aria-pressed:bg-shop-10 aria-pressed:text-shop-10-foreground"
+            >
+              <Icon aria-hidden="true" className={cn('size-4', pick.pressed && 'fill-current')} />
+              {pick.label}
+            </Toggle>
+          );
+        })}
         {sections.map(({ category }) => (
           <Button
             key={category.id}

@@ -15,6 +15,8 @@ export interface InfoRow {
   id: string;
   icon?: ReactNode;
   label: string;
+  // Beside the label, e.g. a Today badge.
+  badge?: ReactNode;
   // Under the label (an address, a handle).
   description?: string | null | undefined;
   // Right side (hours, a price, a status).
@@ -61,7 +63,10 @@ export function InfoList({
           >
             {row.icon ? <ItemMedia variant="icon">{row.icon}</ItemMedia> : null}
             <ItemContent className="min-w-0">
-              <ItemTitle>{row.label}</ItemTitle>
+              <ItemTitle>
+                {row.label}
+                {row.badge}
+              </ItemTitle>
               {row.description ? (
                 <ItemDescription className="truncate">{row.description}</ItemDescription>
               ) : null}

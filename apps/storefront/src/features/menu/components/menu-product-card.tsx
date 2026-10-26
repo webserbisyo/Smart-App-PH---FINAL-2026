@@ -56,16 +56,14 @@ export function MenuProductCard({
   const icon = catalog.categories.find((c) => c.id === item.categoryId)?.icon;
   const photo = item.photos[0];
 
+  // One badge per card, the most useful first: Sold out, then Best seller, then New (decision R29).
   const badges: ProductBadge[] = soldOut
     ? [{ tone: 'soldOut', label: soldOut }]
-    : [
-        ...(item.isNew
-          ? [{ tone: 'new' as const, label: words.storefrontShell.menu.badges.new }]
-          : []),
-        ...(item.featured
-          ? [{ tone: 'bestSeller' as const, label: words.storefrontShell.menu.badges.bestSeller }]
-          : []),
-      ];
+    : item.featured
+      ? [{ tone: 'bestSeller', label: words.storefrontShell.menu.badges.bestSeller }]
+      : item.isNew
+        ? [{ tone: 'new', label: words.storefrontShell.menu.badges.new }]
+        : [];
 
   return (
     <ProductCard

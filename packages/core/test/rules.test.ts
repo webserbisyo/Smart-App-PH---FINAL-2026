@@ -21,6 +21,7 @@ import {
   validateLinePicks,
 } from '../src/rules/options.js';
 import { deliveryFee, distanceM, parseMapsLink, roundKm } from '../src/rules/delivery.js';
+import { weekHours } from '../src/rules/shop-info.js';
 import {
   boardColumn,
   canAdvance,
@@ -482,4 +483,25 @@ describe('phone', () => {
     expect(normalisePhPhone(input).ok).toBe(false);
   });
   it('formats for display', () => expect(formatPhPhone('+639170001234')).toBe('0917 000 1234'));
+});
+
+describe('weekHours (decision R26)', () => {
+  it('lists Monday to Sunday with lunch breaks, today and closures', () => {
+    // 2026-10-31 is a Saturday; Kape Juan is closed on Sunday 1 Nov.
+    const week = weekHours(kape.storefront, '2026-10-31');
+    expect(week.map((d) => d.name)).toEqual([
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ]);
+    expect(week.find((d) => d.isToday)?.name).toBe('Saturday');
+    expect(week.find((d) => d.day === 0)?.closedFor).toBe('All Saints’ Day');
+    const lolaMonday = weekHours(lola.storefront, null).find((d) => d.day === 1);
+    expect(lolaMonday?.lines).toEqual(['5 AM to 12 NN', '2 PM to 8 PM']);
+    expect(weekHours(lola.storefront, null).some((d) => d.isToday)).toBe(false);
+  });
 });

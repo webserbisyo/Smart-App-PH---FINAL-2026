@@ -1,8 +1,15 @@
-// The Shop info sheet: hours grouped into runs of days, closures as lines, default member avatars.
+// The Shop info sheet: the week's hours day by day, closures as lines, default member avatars.
 import type { Weekday } from '../schemas/enums.js';
 import type { Closure, OpeningRange } from '../schemas/storefront.js';
 import { words } from '../words.js';
-import { formatClock, formatManila, manilaToDate, weekdayName, weekdayOf } from './time.js';
+import {
+  addDays,
+  formatClock,
+  formatManila,
+  manilaToDate,
+  weekdayName,
+  weekdayOf,
+} from './time.js';
 
 // Monday first, the way shops write their hours.
 const WEEK: readonly Weekday[] = [1, 2, 3, 4, 5, 6, 0];
@@ -15,8 +22,7 @@ export interface HoursGroup {
   hours: string;
 }
 
-function rangesText(ranges: readonly OpeningRange[]): string {
-  if (ranges.length === 0) return words.shop.closedNoOpening;
+function rangeLines(ranges: readonly OpeningRange[]): string[] {
   return [...ranges]
     .sort((a, b) => a.open.localeCompare(b.open))
     .map((r) =>
@@ -24,8 +30,47 @@ function rangesText(ranges: readonly OpeningRange[]): string {
         formatClock(manilaToDate('2026-01-05', r.open)),
         formatClock(manilaToDate('2026-01-05', r.close)),
       ),
-    )
-    .join(', ');
+    );
+}
+
+function rangesText(ranges: readonly OpeningRange[]): string {
+  if (ranges.length === 0) return words.shop.closedNoOpening;
+  return rangeLines(ranges).join(', ');
+}
+
+export interface WeekDayHours {
+  day: Weekday;
+  // "Monday"
+  name: string;
+  // One line per opening: ["7 AM to 2 PM", "5 PM to 9 PM"]; empty when closed all day.
+  lines: string[];
+  isToday: boolean;
+  // A closure that falls on this day in the coming week ("All Saints' Day").
+  closedFor: string | null;
+}
+
+/**
+ * Monday to Sunday, one row per day (decision R26). `today` is a Manila date; the coming week's
+ * closures mark their day. Before the clock is known, pass null: no day is marked.
+ */
+export function weekHours(
+  sf: { hours: readonly OpeningRange[]; closures: readonly Closure[] },
+  today: string | null,
+): WeekDayHours[] {
+  const todayDay = today ? weekdayOf(today) : null;
+  return WEEK.map((day) => {
+    // The date of this weekday within the next 7 days (today counts).
+    const date =
+      today !== null && todayDay !== null ? addDays(today, (day - todayDay + 7) % 7) : null;
+    const closure = date ? sf.closures.find((c) => c.date === date) : undefined;
+    return {
+      day,
+      name: words.storefrontShell.info.dayNames[day] ?? weekdayName(day),
+      lines: rangeLines(sf.hours.filter((h) => h.day === day)),
+      isToday: day === todayDay,
+      closedFor: closure ? (closure.reason ?? words.shop.closedNoOpening) : null,
+    };
+  });
 }
 
 function daysLabel(days: readonly Weekday[]): string {

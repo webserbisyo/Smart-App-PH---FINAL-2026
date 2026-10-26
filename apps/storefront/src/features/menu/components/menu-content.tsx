@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useTransition } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { FlameIcon, HeartIcon, SparklesIcon } from 'lucide-react';
 import { iconPath, menuSections, searchMenu, words, type Catalog, type Item } from '@smartapp/core';
 import { useFavourites, useNow } from '@smartapp/data';
 import { IconTile } from '@smartapp/ui/components/reui/icon-tile';
@@ -10,6 +11,7 @@ import { ItemSheet } from '../item-sheet/item-sheet';
 import { buildMenuSearch, parseMenuParams, type MenuParams } from '../url-state';
 import { CategoryChips } from './category-chips';
 import { CategoryRail } from './category-rail';
+import type { MenuPick } from './menu-picks';
 import { MenuCatalogEmpty, MenuFavouritesEmpty, MenuSearchEmpty } from './menu-empty';
 import { MenuProductCard } from './menu-product-card';
 import { MenuSearch } from './menu-search';
@@ -26,7 +28,8 @@ const CARD_SIZES = '(min-width: 1024px) 240px, (min-width: 768px) 33vw, 50vw';
 /**
  * Menu (redesign D8): every category is its own box and ReUI Scrollspy moves the chips (phones) or
  * the category box (from 1024 px) as you scroll. Search and Favourites show one flat grid instead.
- * URL: ?q= search, ?fav=1 favourites, ?cat= jump once to a category, ?item= the item sheet.
+ * URL: ?q= search, ?fav=1 favourites, ?show=best|new the quick lists, ?cat= jump once to a category,
+ * ?item= the item sheet.
  */
 export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
   const router = useRouter();
@@ -43,7 +46,15 @@ export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
   const { spy, jumpTo } = useMenuSpy(barRef);
 
   const query = params.q.trim();
-  const mode = query ? 'search' : params.fav ? 'favourites' : 'browse';
+  const mode = query
+    ? 'search'
+    : params.fav
+      ? 'favourites'
+      : params.show === 'best'
+        ? 'best'
+        : params.show === 'new'
+          ? 'new'
+          : 'browse';
   const hasFavourites = favourites.ids.length > 0;
 
   const updateParams = useCallback(
@@ -71,18 +82,67 @@ export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
   const handleOpenItem = useCallback((id: string) => updateParams({ item: id }), [updateParams]);
   const handleCloseItem = useCallback(() => updateParams({ item: null }), [updateParams]);
   const leaveForCategory = (categoryId: string) =>
-    updateParams({ q: '', fav: false, cat: categoryId });
+    updateParams({ q: '', fav: false, show: null, cat: categoryId });
 
   if (catalog.items.length === 0) {
     return <MenuCatalogEmpty catalogName={catalogTitle} />;
   }
 
+  const active = catalog.items.filter((item) => item.status === 'active');
+  const bestSellers = active.filter((item) => item.featured);
+  const newItems = active.filter((item) => item.isNew);
   const results =
     mode === 'search'
       ? searchMenu(catalog, query)
       : mode === 'favourites'
-        ? catalog.items.filter((item) => item.status === 'active' && favourites.has(item.id))
-        : [];
+        ? active.filter((item) => favourites.has(item.id))
+        : mode === 'best'
+          ? bestSellers
+          : mode === 'new'
+            ? newItems
+            : [];
+
+  const M = words.storefrontShell.menu;
+  const picks: MenuPick[] = [
+    ...(hasFavourites || params.fav
+      ? [
+          {
+            id: 'fav' as const,
+            label: M.favourites,
+            toggleLabel: M.filterFavourites,
+            icon: HeartIcon,
+            pressed: params.fav,
+            onToggle: () => updateParams({ fav: !params.fav, show: null }),
+          },
+        ]
+      : []),
+    ...(bestSellers.length > 0
+      ? [
+          {
+            id: 'best' as const,
+            label: M.bestSellers,
+            toggleLabel: M.filterBestSellers,
+            icon: FlameIcon,
+            pressed: mode === 'best',
+            onToggle: () => updateParams({ fav: false, show: mode === 'best' ? null : 'best' }),
+            count: bestSellers.length,
+          },
+        ]
+      : []),
+    ...(newItems.length > 0
+      ? [
+          {
+            id: 'new' as const,
+            label: M.newItems,
+            toggleLabel: M.filterNew,
+            icon: SparklesIcon,
+            pressed: mode === 'new',
+            onToggle: () => updateParams({ fav: false, show: mode === 'new' ? null : 'new' }),
+            count: newItems.length,
+          },
+        ]
+      : []),
+  ];
 
   const card = (item: Item) => (
     <MenuProductCard
@@ -99,9 +159,7 @@ export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
     sections,
     spy: mode === 'browse' ? spy : null,
     onJump: leaveForCategory,
-    hasFavourites: hasFavourites || params.fav,
-    favActive: params.fav,
-    onToggleFav: () => updateParams({ fav: !params.fav }),
+    picks,
   };
 
   return (
@@ -173,8 +231,12 @@ export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
             <section aria-live="polite" className="flex flex-col gap-3">
               <h2 className="px-1 text-sm font-medium text-muted-foreground">
                 {mode === 'search'
-                  ? words.storefrontShell.menu.results(results.length)
-                  : words.storefrontShell.favourites}
+                  ? M.results(results.length)
+                  : mode === 'best'
+                    ? M.bestSellers
+                    : mode === 'new'
+                      ? M.newItems
+                      : words.storefrontShell.favourites}
               </h2>
               <div className={GRID}>{results.map(card)}</div>
             </section>

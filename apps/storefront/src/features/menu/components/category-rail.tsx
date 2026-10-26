@@ -1,21 +1,20 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import { HeartIcon } from 'lucide-react';
 import { iconPath, words, type MenuSection } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { Toggle } from '@smartapp/ui/components/toggle';
 import { Scrollspy } from '@smartapp/ui/components/reui/scrollspy';
 import { cn } from '@smartapp/ui/lib/utils';
+import type { MenuPick } from './menu-picks';
 import { keepInView, sectionId, type MenuSpy } from './menu-spy';
 
 export interface CategoryRailProps {
   sections: readonly MenuSection[];
   spy: MenuSpy | null;
   onJump: (categoryId: string) => void;
-  hasFavourites: boolean;
-  favActive: boolean;
-  onToggleFav: () => void;
+  // Favourites, Best sellers and New, shown when they have something in them.
+  picks: readonly MenuPick[];
 }
 
 const ROW =
@@ -26,9 +25,7 @@ export function CategoryRail({
   sections,
   spy,
   onJump,
-  hasFavourites,
-  favActive,
-  onToggleFav,
+  picks,
 }: CategoryRailProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const lastRef = useRef<string | null>(null);
@@ -75,20 +72,30 @@ export function CategoryRail({
         <p className="px-3 pt-1 pb-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           {words.storefrontShell.menu.categories}
         </p>
-        {hasFavourites ? (
-          <Toggle
-            aria-label={words.storefrontShell.menu.filterFavourites}
-            pressed={favActive}
-            onPressedChange={onToggleFav}
-            className="h-11 w-full justify-start gap-3 rounded-xl px-3 text-sm font-medium aria-pressed:bg-shop-10-soft aria-pressed:text-shop-10-soft-foreground"
-          >
-            <HeartIcon
-              aria-hidden="true"
-              className={cn('size-5 text-shop-10-text', favActive && 'fill-current')}
-            />
-            {words.storefrontShell.menu.favourites}
-          </Toggle>
-        ) : null}
+        {picks.map((pick) => {
+          const Icon = pick.icon;
+          return (
+            <Toggle
+              key={pick.id}
+              aria-label={pick.toggleLabel}
+              pressed={pick.pressed}
+              onPressedChange={pick.onToggle}
+              className="h-11 w-full justify-start gap-3 rounded-xl px-3 text-sm font-medium aria-pressed:bg-shop-10-soft aria-pressed:text-shop-10-soft-foreground"
+            >
+              <Icon
+                aria-hidden="true"
+                className={cn('size-5 text-shop-10-text', pick.pressed && 'fill-current')}
+              />
+              {pick.label}
+              {pick.count !== undefined ? (
+                <span className="ml-auto text-xs font-normal text-muted-foreground tabular">
+                  {pick.count}
+                </span>
+              ) : null}
+            </Toggle>
+          );
+        })}
+        {picks.length > 0 ? <div aria-hidden="true" className="mx-3 my-1 border-t" /> : null}
         {spy ? (
           <Scrollspy
             key={`${spy.offset}:${spy.smooth}`}

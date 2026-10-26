@@ -91,9 +91,14 @@ describe('shop packs', () => {
       );
       expect(soldOutToday, slug).toHaveLength(1);
     }
-    expect(SHOP_PACKS['kape-juan'].storefront.closures).toHaveLength(1);
+    expect(SHOP_PACKS['kape-juan'].storefront.closures).toContainEqual({
+      date: '2026-11-01',
+      reason: 'All Saints’ Day',
+    });
     expect(SHOP_PACKS['tala-apparel'].storefront.hours.some((h) => h.day === 1)).toBe(false);
     expect(SHOP_PACKS['lola-remy'].storefront.hours[0]?.open).toBe('05:00');
+    // A lunch break: two openings on Monday (decision R26 demo hours).
+    expect(SHOP_PACKS['lola-remy'].storefront.hours.filter((h) => h.day === 1)).toHaveLength(2);
     const refill = SHOP_PACKS.aqualinis.catalog.items.find((i) => i.name === '5-Gallon Refill');
     expect(refill?.photos).toHaveLength(4);
   });

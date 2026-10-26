@@ -208,7 +208,12 @@ export const LOLA_REMY_PACK: ShopPack = {
       sections: { ...ALL_SECTIONS_ON, membersCount: false },
     },
     // Opens 5 AM: the closed-shop scheduling demo.
-    hours: days(DAILY, '05:00', '20:00'),
+    // A bakery with a lunch break, and a half day on Sunday (decision R26 demo hours).
+    hours: [
+      ...days([1, 2, 3, 4, 5, 6], '05:00', '12:00'),
+      ...days([1, 2, 3, 4, 5, 6], '14:00', '20:00'),
+      ...days([0], '05:00', '12:00'),
+    ],
     closures: [],
     pause: { busyUntil: null, paused: false },
     orderTypes: ['walk_in', 'pickup', 'delivery'],

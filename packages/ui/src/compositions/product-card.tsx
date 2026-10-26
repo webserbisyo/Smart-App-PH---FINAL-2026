@@ -1,6 +1,6 @@
 'use client';
 
-import { PlusIcon } from 'lucide-react';
+import { BanIcon, FlameIcon, PlusIcon, SparklesIcon, type LucideIcon } from 'lucide-react';
 import { cn } from 'cn';
 import type { IconKey } from '@smartapp/core/icons';
 import type { ImageSources } from '@smartapp/core/media';
@@ -21,6 +21,14 @@ const BADGE_VARIANT = {
   soldOut: 'invert',
   sample: 'secondary',
 } as const satisfies Record<ProductBadgeTone, 'default' | 'warning' | 'invert' | 'secondary'>;
+
+// Status = icon + word + colour (rule 6).
+const BADGE_ICON = {
+  new: SparklesIcon,
+  bestSeller: FlameIcon,
+  soldOut: BanIcon,
+  sample: null,
+} as const satisfies Record<ProductBadgeTone, LucideIcon | null>;
 
 export interface ProductBadge {
   tone: ProductBadgeTone;
@@ -97,16 +105,21 @@ export function ProductCard({
 
       {badges.length > 0 ? (
         <div className="pointer-events-none absolute top-3 left-3 flex flex-col items-start gap-1">
-          {badges.map((badge) => (
-            <Badge
-              key={badge.tone}
-              variant={BADGE_VARIANT[badge.tone]}
-              radius="full"
-              className="shadow-xs"
-            >
-              {badge.label}
-            </Badge>
-          ))}
+          {badges.map((badge) => {
+            const Icon = BADGE_ICON[badge.tone];
+            return (
+              <Badge
+                key={badge.tone}
+                variant={BADGE_VARIANT[badge.tone]}
+                size="lg"
+                radius="full"
+                className="gap-1 pr-2 pl-1.5 shadow-sm"
+              >
+                {Icon ? <Icon aria-hidden="true" strokeWidth={2.5} /> : null}
+                {badge.label}
+              </Badge>
+            );
+          })}
         </div>
       ) : null}
 

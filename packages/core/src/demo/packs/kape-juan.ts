@@ -247,7 +247,10 @@ export const KAPE_JUAN_PACK: ShopPack = {
       sections: { ...ALL_SECTIONS_ON, membersCount: false },
     },
     hours: days(DAILY, '07:00', '22:00'),
-    closures: [{ date: '2026-11-01', reason: 'All Saints’ Day' }],
+    closures: [
+      { date: '2026-11-01', reason: 'All Saints’ Day' },
+      { date: '2026-12-25', reason: 'Christmas Day' },
+    ],
     pause: { busyUntil: null, paused: false },
     orderTypes: ['walk_in', 'pickup', 'delivery'],
     prepMinutes: 15,
