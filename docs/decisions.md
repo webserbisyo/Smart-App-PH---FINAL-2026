@@ -47,6 +47,8 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T29 The ReUI examples may install shadcn `bubble` (c-message-5) and `scroll-area` (c-scrollspy-1, c-scrollspy-2), reversing the T02 skip for these two. `popover` stays skipped: c-input-group-37 is kept without its popover (founder, 2026-10-25).
 - T30 Playwright smoke tests (`@playwright/test` 1.64.1, exact, tooling dev dependency) run in CI on every PR at phone 390 and desktop 1280 and fail on console errors, sideways scroll and broken images. `pnpm e2e` (not part of `pnpm check`); demo shop pages run on the production build, test shops and `?mock=` scenarios on a dev server, because a production build never has them (N28, T26). Locally on macOS 12 use `PLAYWRIGHT_CHANNEL=chrome`. (Planned as T25 in the T04 prompt; T25 to T29 were taken.)
 - T31 Storefront first-load JS budget raised to 300 KB gzipped (measured 286.6 KB in T04). Follow-up before launch: core schemas to zod/mini and lazy toast, target about 250 KB (founder, 2026-10-25).
+- T32 One Serwist service worker for the whole storefront (scope `/`, built by the `/serwist/[path]` route, prerendered with `use cache` because Cache Components has no `dynamic` segment config); each shop has its own manifest at `/<slug>/manifest.webmanifest` (scope `/<slug>/`, id `/<slug>`, theme and background in the shop's page colour, like the theme-color meta) so it installs as its own app. Caching: Next static files, Fluent icons and art precached (no shop photos up front); photos CacheFirst 200 entries 30 days; Home, Menu, My orders and Rewards NetworkFirst with a 3 s timeout (T13 prompt; this replaces the stale-while-revalidate wording in T6, since stock and prices are fetched fresh anyway); checkout, receipts, join, account, proofs, API, auth and token links NetworkOnly; any other page that can't load shows `/~offline`. A new version waits for the customer's Refresh tap. Off in `next dev` unless `SERWIST_DEV=1`.
+- T33 Packages for T32 (founder, 2026-10-26: "Yes, install Serwist"): `@serwist/turbopack` and `serwist` 9.5.13 and `esbuild` 0.28.2, exact storefront dev dependencies. esbuild is 0.28.2, not the 0.25.12 first listed, because Vite 8's optional peer wants 0.27 or 0.28 (0.25 gave an unmet peer); Serwist accepts both.
 
 ## MVP A scope (accepted 2026-10-18; details in `SYSTEM.md` section 4.2 and `SMART_APP_PH_BLUEPRINT.md`)
 
@@ -83,6 +85,11 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N31 The location bar sits under the shop name on phones and opens the How and where sheet.
 - N32 The receipt PNG is made on the server with next/og; no screenshot package.
 - N33 Proof photos are compressed on the phone by a small canvas helper; no compression package.
+- N34 The stamp card on Rewards and Join uses the member colour; confetti fires once per reward on each phone (remembered there), never under reduced motion; the welcome stamp presses in once on the Join done screen.
+- N35 Join is name, mobile and email, then a 6-digit email code (resend after 60 s, the code lasts 10 minutes, no passwords). Mobile is asked at join because `joinAsMember` in `api.md` takes it (the T12 prompt had email only). A wrong code clears the boxes.
+- N36 The install card shows after joining or after the first order (receipt), never on a first visit; Chrome gets its Install button, iPhone Safari gets the 3 Share steps, other browsers nothing; Hide this keeps it away 30 days per shop. Order updates (Notify me) ask for permission only on the tap; iPhone shows "Add to home screen first" in Safari.
+- N37 Each shop has its own privacy notice at `/<slug>/privacy` (English with a Filipino summary): the shop collects the data and Smart App PH runs the app for them (RA 10173). Requests go to the shop's contact rows; no request form in A. The text is a plain-words draft, checked before the first paying shop.
+- N38 Contract additions for My orders and Rewards (`api.md`): order rows carry up to 3 item photos, the payment method, the pay-by time and the stars; the member account carries `joinedAt` and the prize `claims`.
 - S7 The order thread shows the proof and system lines (status, payment, rider, tracking); no chat posts in A.
 - S8 Continue in Messenger copies the order text first, then opens m.me in the same tap; the text has no address or phone.
 - S15 QR Ph is a payment method (the shop's QR), text only, no brand logos.
@@ -114,6 +121,7 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - R16 Two PRs on branch `claude/project-thread-jornrn`: PR 1 (shell, theme, Home, Menu, basket, checkout, receipt) replaces #16; PR 2 is T11 to T14.
 - R17 Light testing for these two PRs: `pnpm check`, `pnpm build` and CI, with screenshots only of `/kit`. This replaces the "screenshots of every changed page" step in `AGENTS.md` for PR 1 and PR 2 only.
 - R18 ShopTheme maps the shop palette onto `--primary`, `--ring` and the other base tokens, so every installed part follows the shop colour without edits to each example (kit item K10).
+- R19 The dashboard top bar shows shadcn's small divider between the sidebar button and the page title (founder, 2026-10-26: "Yes, show the line"); it appeared once the `data-horizontal` and `data-vertical` variants were defined for every Separator and Tabs.
 
 ## Open
 

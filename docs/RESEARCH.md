@@ -34,6 +34,7 @@ October 18, 2026. Sources are listed in section 6.
 | API               | NestJS on Express (by hand, no CLI)      | 12.1.2                     | Verified | Config 12.0.1, terminus 12.1.0, Standard Schema validation pipe                  |
 | API security      | helmet, jose (JWKS)                      | 8.3.0 / 6.2.12             | Verified | Supabase access tokens checked against the project's JWKS                        |
 | API tests         | Vitest + unplugin-swc                    | 5.0.3 / 2.0.0              | Verified | SWC for Nest decorators; jsdom 29.1.1 for UI tests (T19)                         |
+| PWA (storefront)  | Serwist (`@serwist/turbopack`, esbuild)  | 9.5.13 / 0.28.2            | Verified | One worker for every shop, built by a route (T18, T32); esbuild 0.28 fits Vite 8 |
 | Database and auth | Supabase (supabase-js, ssr, CLI)         | 2.117.3 / 0.12.7 / 2.120.0 | Verified | `getClaims` in the storefront proxy; migrations only via files                   |
 | UI primitives     | shadcn (Base UI), lucide icons           | 4.21.4 / 1.9.0 / 1.55.0    | Verified | Plus ReUI, DiceUI, Magic UI through the shadcn CLI                               |
 | Styling           | Tailwind CSS                             | 4.3.3                      | Verified | Tokens in `packages/ui`                                                          |
