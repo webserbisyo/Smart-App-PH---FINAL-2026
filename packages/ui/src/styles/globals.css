@@ -80,8 +80,10 @@
   --color-shop-30: var(--shop-30);
   --color-shop-10: var(--shop-10);
   --color-shop-10-foreground: var(--shop-10-foreground);
-  --color-shop-10-soft: var(--shop-10-soft);
   --color-shop-10-hover: var(--shop-10-hover);
+  --color-shop-10-text: var(--shop-10-text);
+  --color-shop-10-soft: var(--shop-10-soft);
+  --color-shop-10-soft-foreground: var(--shop-10-soft-foreground);
 
   --color-paper: var(--paper);
   --color-paper-foreground: var(--paper-foreground);
@@ -107,12 +109,94 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --animate-spin-around: spin-around 0.8s linear infinite;
+  /* Slow turn for the open-shop status ring (c-avatar-33); reduced motion stops it. */
+  --animate-spin-slow: spin 3s linear infinite;
   @keyframes spin-around {
     0% {
       transform: rotate(-90deg);
     }
     100% {
       transform: rotate(270deg);
+    }
+  }
+  --animate-shine: shine var(--duration) infinite linear;
+  --animate-shiny-text: shiny-text 8s infinite;
+  --animate-marquee-left: marquee-left var(--marquee-duration) linear var(--marquee-loop-count);
+  --animate-marquee-right: marquee-right var(--marquee-duration) linear var(--marquee-loop-count);
+  --animate-marquee-left-rtl: marquee-left-rtl var(--marquee-duration) linear
+    var(--marquee-loop-count);
+  --animate-marquee-right-rtl: marquee-right-rtl var(--marquee-duration) linear
+    var(--marquee-loop-count);
+  --animate-marquee-up: marquee-up var(--marquee-duration) linear var(--marquee-loop-count);
+  --animate-marquee-down: marquee-down var(--marquee-duration) linear var(--marquee-loop-count);
+  @keyframes shine {
+    0% {
+      background-position: 0% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    to {
+      background-position: 0% 0%;
+    }
+  }
+  @keyframes shiny-text {
+    0%,
+    90%,
+    100% {
+      background-position: calc(-100% - var(--shiny-width)) 0;
+    }
+    30%,
+    60% {
+      background-position: calc(100% + var(--shiny-width)) 0;
+    }
+  }
+  @keyframes marquee-left {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(calc(-100% - var(--marquee-gap)));
+    }
+  }
+  @keyframes marquee-right {
+    0% {
+      transform: translateX(calc(-100% - var(--marquee-gap)));
+    }
+    100% {
+      transform: translateX(0%);
+    }
+  }
+  @keyframes marquee-up {
+    0% {
+      transform: translateY(0%);
+    }
+    100% {
+      transform: translateY(calc(-100% - var(--marquee-gap)));
+    }
+  }
+  @keyframes marquee-down {
+    0% {
+      transform: translateY(calc(-100% - var(--marquee-gap)));
+    }
+    100% {
+      transform: translateY(calc(-100% - var(--marquee-gap)));
+    }
+  }
+  @keyframes marquee-left-rtl {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(calc(100% + var(--marquee-gap)));
+    }
+  }
+  @keyframes marquee-right-rtl {
+    0% {
+      transform: translateX(calc(100% + var(--marquee-gap)));
+    }
+    100% {
+      transform: translateX(0%);
     }
   }
 }
@@ -134,11 +218,30 @@
 @custom-variant state-completed (&[data-state="completed"]);
 @custom-variant state-inactive (&[data-state="inactive"]);
 @custom-variant orientation-vertical (&[data-orientation="vertical"]);
+/* The installed shadcn parts (separator, tabs, scroll area, toggle group) style orientation
+   with data-horizontal: and data-vertical:, which shadcn defines in its own tailwind.css.
+   Base UI sets data-orientation, so these copy shadcn's definitions. */
+@custom-variant data-horizontal (&:where([data-orientation="horizontal"]));
+@custom-variant data-vertical (&:where([data-orientation="vertical"]));
 @custom-variant tablet-rail {
   @media (pointer: coarse) {
     &:is([data-shell='tablet'] [data-collapsible='icon'] *) {
       @slot;
     }
+  }
+}
+
+/* Toasts sit on the toast layer, above open sheets and drawers, so Undo stays reachable. Unlayered, so
+   it outranks the installed viewport's own z-index. */
+[data-slot='toast-viewport'] {
+  z-index: var(--z-toast);
+}
+
+/* Toasts sit above the storefront dock on phones and tablets (docs/ux.md section 5). Unlayered, so it
+   outranks the toast viewport's own bottom spacing. */
+@media (max-width: 1023px) {
+  body:has([data-slot='storefront-dock'][data-keyboard='closed']) [data-slot='toast-viewport'] {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2);
   }
 }
 
@@ -160,9 +263,11 @@
   height: calc(100% - var(--spacing) * --value(number));
 }
 
-/* Max height as a share of the viewport (scrolling sheet and dialog bodies). */
+/* Max height as a share of the viewport (scrolling sheet and dialog bodies). dvh follows the phone's
+   browser bars; vh stays as the fallback. */
 @utility max-h-vh-* {
   max-height: calc(--value(integer) * 1vh);
+  max-height: calc(--value(integer) * 1dvh);
 }
 
 /* Thin progress track (receipt pay countdown, c-progress-2). */
@@ -196,6 +301,11 @@
   padding-bottom: calc(
     env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2
   );
+}
+
+/* Sticky top under the storefront top bar: the phone's safe area plus a spacing step. */
+@utility sticky-top-* {
+  top: calc(env(safe-area-inset-top, 0px) + var(--spacing) * --value(number));
 }
 
 @utility scrollbar-none {
@@ -243,6 +353,52 @@
 
 @utility ease-standard {
   transition-timing-function: var(--ease-standard);
+}
+
+@utility ease-spring {
+  transition-timing-function: var(--ease-spring);
+}
+
+/* Soft drop shadow under an icon (Like Toggle heart at rest) and the brand glow once it is on. */
+@utility heart-shadow {
+  filter: drop-shadow(0 1px 1px oklch(0 0 0 / 0.22)) drop-shadow(0 2px 3px oklch(0 0 0 / 0.12));
+}
+
+@utility heart-glow {
+  filter: drop-shadow(0 1px 1px color-mix(in oklch, var(--shop-10) 35%, transparent))
+    drop-shadow(0 2px 4px color-mix(in oklch, var(--shop-10) 20%, transparent));
+}
+
+/* Frosted glass for the storefront top bar (once scrolled) and dock (decision R6, the look of
+   Aceternity's floating dock): the card colour at 72 %, blur, a soft edge. Solid card where blur is
+   missing. */
+@utility glass {
+  background-color: var(--card);
+  border-color: color-mix(in oklch, var(--border) 70%, transparent);
+  @supports (backdrop-filter: blur(1px)) {
+    background-color: color-mix(in oklch, var(--card) 72%, transparent);
+    backdrop-filter: blur(16px) saturate(1.6);
+  }
+}
+
+/* Cart bump: the cart button pops once when something is added. */
+@keyframes cart-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@utility cart-bump {
+  animation: cart-bump var(--duration-slow) var(--ease-spring);
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 /* Stamp press: lands big and tilted, settles (Rewards). */

@@ -1,0 +1,406 @@
+'use client';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { XIcon } from 'lucide-react';
+import {
+  defaultPicks,
+  formatPeso,
+  linePrice,
+  validateLinePicks,
+  words,
+  type BasketLine,
+  type Catalog,
+  type Item,
+  type Variant,
+} from '@smartapp/core';
+import { useBasket, useFavourites } from '@smartapp/data';
+import { Button } from '@smartapp/ui/components/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@smartapp/ui/components/dialog';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@smartapp/ui/components/drawer';
+import { Hitbox } from '@smartapp/ui/components/hitbox';
+import { HeartToggle } from '@smartapp/ui/compositions/heart-toggle';
+import { notify } from '@smartapp/ui/compositions/notify';
+import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
+import { cn } from '@smartapp/ui/lib/utils';
+import { ADD_LOADING_MS, ItemSheetFooter } from './item-sheet-footer';
+import { ItemSheetGoesWellWith } from './item-sheet-goes-well-with';
+import { ItemSheetGroups } from './item-sheet-groups';
+import { ItemSheetNote } from './item-sheet-note';
+import { ItemSheetPhotos } from './item-sheet-photos';
+import { ItemSheetVariants } from './item-sheet-variants';
+
+// The sheet stays open while Add to Cart shows its check, then closes and the cart pops (I7).
+const CHECK_MS = 600;
+
+type Layout = 'sheet' | 'dialog';
+
+interface ItemSheetContentProps {
+  slug: string;
+  item: Item;
+  catalog: Catalog;
+  now: string | Date;
+  layout: Layout;
+  onClose: () => void;
+  onOpenItem: (id: string) => void;
+}
+
+/** Pairings the owner set, else other items from other categories (at most 4 are shown). */
+function companionsOf(item: Item, catalog: Catalog): Item[] {
+  const active = catalog.items.filter((other) => other.id !== item.id && other.status === 'active');
+  const paired = item.pairingIds
+    .map((id) => active.find((other) => other.id === id))
+    .filter((other): other is Item => Boolean(other));
+  return paired.length > 0
+    ? paired
+    : active.filter((other) => other.categoryId !== item.categoryId);
+}
+
+function ItemSheetContent({
+  slug,
+  item,
+  catalog,
+  now,
+  layout,
+  onClose,
+  onOpenItem,
+}: ItemSheetContentProps) {
+  const basket = useBasket(slug);
+  const favourites = useFavourites(slug);
+
+  const startingPicks = useMemo(
+    () => defaultPicks(item, catalog.optionGroups, now),
+    [item, catalog.optionGroups, now],
+  );
+  const initialVariant = useMemo(
+    () => item.variants.find((v) => v.id === startingPicks.variantId) ?? item.variants[0] ?? null,
+    [item.variants, startingPicks.variantId],
+  );
+
+  const [selectedVariant, setSelectedVariant] = useState<Variant | null>(initialVariant);
+  const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>(() => [
+    ...startingPicks.optionIds,
+  ]);
+  const [note, setNote] = useState('');
+  const [qty, setQty] = useState(1);
+  const [invalidGroupIds, setInvalidGroupIds] = useState<string[]>([]);
+  const [activePhotoIndex, setActivePhotoIndex] = useState<number | undefined>(undefined);
+
+  // A line waiting for the check animation. It is added when the sheet closes, or at once if the
+  // sheet goes away first (another item, leaving the page), so a tap on Add is never lost.
+  const pending = useRef<BasketLine | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const commit = () => {
+    const line = pending.current;
+    if (!line) return;
+    pending.current = null;
+    basket.add(line);
+    notify({
+      title: words.storefrontShell.menu.addedToast(item.name),
+      description: words.storefrontShell.menu.viewBasket,
+      tone: 'success',
+    });
+  };
+  const latest = useRef({ commit, onClose });
+  useEffect(() => {
+    latest.current = { commit, onClose };
+  });
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+      latest.current.commit();
+    },
+    [],
+  );
+
+  const activeVariant = selectedVariant ?? initialVariant;
+  if (!activeVariant) return null;
+
+  const picks = { variantId: activeVariant.id, optionIds: selectedOptionIds };
+  const problems = validateLinePicks(item, catalog.optionGroups, { ...picks, note }, now);
+  const unitTotal = linePrice(item, catalog.optionGroups, { ...picks, qty: 1 });
+  const totalPrice = linePrice(item, catalog.optionGroups, { ...picks, qty });
+
+  const itemOptionGroups = item.optionGroupIds
+    .map((gid) => catalog.optionGroups.find((g) => g.id === gid))
+    .filter((g): g is NonNullable<typeof g> => Boolean(g));
+  const category = catalog.categories.find((c) => c.id === item.categoryId);
+  const isFav = favourites.has(item.id);
+
+  const handleColorPhotoSelect = (colorValue: string) => {
+    for (const axis of item.axes) {
+      const match = axis.values.find((v) => v.name.toLowerCase() === colorValue.toLowerCase());
+      if (match?.photo) {
+        const idx = item.photos.indexOf(match.photo);
+        if (idx >= 0) {
+          setActivePhotoIndex(idx);
+          return;
+        }
+      }
+    }
+  };
+
+  const handleMissingClick = (problem: { groupId: string | null }) => {
+    if (problem.groupId) {
+      setInvalidGroupIds([problem.groupId]);
+      document
+        .getElementById(`group-${problem.groupId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const handleAdd = () => {
+    if (pending.current) return;
+    pending.current = { itemId: item.id, ...picks, note: note.trim(), qty };
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      latest.current.commit();
+      latest.current.onClose();
+    }, ADD_LOADING_MS + CHECK_MS);
+  };
+
+  const handleQuickAddCompanion = (companion: Item) => {
+    const v = companion.variants[0];
+    if (!v) return;
+    basket.add({ itemId: companion.id, variantId: v.id, optionIds: [], note: '', qty: 1 });
+    notify({
+      title: words.storefrontShell.menu.addedToast(companion.name),
+      description: words.storefrontShell.menu.viewBasket,
+      tone: 'success',
+    });
+  };
+
+  const heart = (
+    <HeartToggle
+      pressed={isFav}
+      onPressedChange={() => favourites.toggle(item.id)}
+      label={words.storefrontShell.menu.saveItem(item.name)}
+      pressedLabel={words.storefrontShell.menu.unsaveItem(item.name)}
+      size="md"
+      className="absolute top-3 right-3"
+    />
+  );
+
+  const photos = (
+    <ItemSheetPhotos
+      photos={item.photos}
+      itemName={item.name}
+      categoryIcon={category?.icon}
+      activePhotoIndex={activePhotoIndex}
+      ratio={layout === 'sheet' ? '4:3' : '1:1'}
+      sizes={layout === 'sheet' ? '100vw' : '448px'}
+      className={layout === 'sheet' ? 'rounded-t-xl' : 'md:h-full'}
+      overlay={
+        <>
+          {layout === 'sheet' ? (
+            <Hitbox
+              size="sm"
+              radius="full"
+              className="absolute top-3 left-3"
+              render={
+                <DrawerClose
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={words.storefrontShell.menu.itemSheet.close}
+                      className="size-11 rounded-full border glass shadow-sm"
+                    />
+                  }
+                >
+                  <XIcon aria-hidden="true" className="size-5" />
+                </DrawerClose>
+              }
+            />
+          ) : null}
+          {heart}
+        </>
+      }
+    />
+  );
+
+  const details = (
+    <div className="flex flex-col gap-5 px-4 pt-4 pb-6 md:px-5">
+      <div className={cn('flex flex-col gap-1', layout === 'dialog' && 'pr-8')}>
+        <h3 className="text-xl font-bold tracking-tight text-balance">{item.name}</h3>
+        {item.description ? (
+          <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+        ) : null}
+        <p className="pt-1 text-lg font-bold tabular">{formatPeso(unitTotal)}</p>
+      </div>
+
+      <ItemSheetVariants
+        item={item}
+        selectedVariant={activeVariant}
+        onSelectVariant={setSelectedVariant}
+        now={now}
+        onSelectPhotoByValue={handleColorPhotoSelect}
+      />
+
+      <ItemSheetGroups
+        groups={itemOptionGroups}
+        selectedOptionIds={selectedOptionIds}
+        onChangeOptionIds={(ids) => {
+          setSelectedOptionIds(ids);
+          setInvalidGroupIds([]);
+        }}
+        invalidGroupIds={invalidGroupIds}
+      />
+
+      <ItemSheetNote value={note} onChange={setNote} />
+
+      <ItemSheetGoesWellWith
+        items={companionsOf(item, catalog)}
+        categories={catalog.categories}
+        optionGroups={catalog.optionGroups}
+        onQuickAdd={handleQuickAddCompanion}
+        onOpenItem={onOpenItem}
+      />
+    </div>
+  );
+
+  const footer = (
+    <ItemSheetFooter
+      qty={qty}
+      onQtyChange={setQty}
+      totalPrice={totalPrice}
+      problems={problems}
+      onAdd={handleAdd}
+      onMissingClick={handleMissingClick}
+    />
+  );
+
+  if (layout === 'sheet') {
+    return (
+      <>
+        <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {photos}
+          {details}
+        </div>
+        {footer}
+      </>
+    );
+  }
+
+  return (
+    <div className="grid min-h-0 flex-1 md:grid-cols-2">
+      {photos}
+      <div className="flex min-h-0 flex-col">
+        <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {details}
+        </div>
+        {footer}
+      </div>
+    </div>
+  );
+}
+
+export interface ItemSheetProps {
+  slug: string;
+  catalog: Catalog;
+  itemId: string | null;
+  onClose: () => void;
+  onOpenItem: (id: string) => void;
+  now?: string | Date | null | undefined;
+}
+
+/** Item sheet (redesign 6): bottom sheet on phones, photo-left dialog from tablets up. */
+export function ItemSheet({
+  slug,
+  catalog,
+  itemId,
+  onClose,
+  onOpenItem,
+  now: rawNow,
+}: ItemSheetProps) {
+  const now = useMemo(() => rawNow ?? new Date(), [rawNow]);
+  const isPhone = useFormFactor() === 'phone';
+
+  const [prevItemId, setPrevItemId] = useState(itemId);
+  const [activeItem, setActiveItem] = useState<Item | null>(() => {
+    if (!itemId) return null;
+    return catalog.items.find((i) => i.id === itemId && i.status === 'active') ?? null;
+  });
+  const [isOpen, setIsOpen] = useState(Boolean(itemId));
+
+  if (prevItemId !== itemId) {
+    setPrevItemId(itemId);
+    if (itemId) {
+      const found = catalog.items.find((i) => i.id === itemId && i.status === 'active') ?? null;
+      if (found) {
+        setActiveItem(found);
+        setIsOpen(true);
+      }
+    } else {
+      setIsOpen(false);
+    }
+  }
+
+  // An unknown or hidden item in ?item= says so and closes.
+  useEffect(() => {
+    if (itemId && !catalog.items.some((i) => i.id === itemId && i.status === 'active')) {
+      notify({ title: words.storefrontShell.menu.notAvailableToast, tone: 'warning' });
+      onClose();
+    }
+  }, [catalog.items, itemId, onClose]);
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsOpen(false);
+      onClose();
+    }
+  };
+
+  if (!activeItem) return null;
+
+  const content = (
+    <ItemSheetContent
+      key={activeItem.id}
+      slug={slug}
+      item={activeItem}
+      catalog={catalog}
+      now={now}
+      layout={isPhone ? 'sheet' : 'dialog'}
+      onClose={() => handleOpenChange(false)}
+      onOpenItem={onOpenItem}
+    />
+  );
+
+  if (isPhone) {
+    return (
+      <Drawer open={isOpen} onOpenChange={handleOpenChange}>
+        <DrawerContent className="flex max-h-vh-92 flex-col overflow-hidden p-0">
+          {content}
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>{activeItem.name}</DrawerTitle>
+            <DrawerDescription>{activeItem.description ?? activeItem.name}</DrawerDescription>
+          </DrawerHeader>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="flex max-h-vh-85 flex-col gap-0 overflow-hidden p-0 sm:max-w-md md:max-w-4xl">
+        {content}
+        <DialogHeader className="sr-only">
+          <DialogTitle>{activeItem.name}</DialogTitle>
+          <DialogDescription>{activeItem.description ?? activeItem.name}</DialogDescription>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
+}

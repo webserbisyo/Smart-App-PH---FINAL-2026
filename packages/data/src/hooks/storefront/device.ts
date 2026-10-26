@@ -18,7 +18,7 @@ import {
   type ReadResult,
   type SavedReceipt,
 } from '../../device-storage';
-import { getMockScenario, subscribeMockScenario } from '../../mocks/scenario';
+import { getMockScenario, subscribeMockScenario } from '../../mocks/scenario-state';
 
 // Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
 declare const process: { env: { NODE_ENV?: string | undefined } };
@@ -44,6 +44,25 @@ export function mergeLine(lines: readonly BasketLine[], line: BasketLine): Baske
   );
 }
 
+/** Removes a line; `restore` puts it back where it was (the Undo toast), unless it was added again meanwhile. */
+export function removeLine(
+  lines: readonly BasketLine[],
+  identity: string,
+): { lines: BasketLine[]; restore: (current: readonly BasketLine[]) => BasketLine[] } | null {
+  const index = lines.findIndex((l) => lineIdentity(l) === identity);
+  const removed = lines[index];
+  if (!removed) return null;
+  return {
+    lines: lines.filter((_, i) => i !== index),
+    restore: (current) => {
+      if (current.some((l) => lineIdentity(l) === identity)) return [...current];
+      const next = [...current];
+      next.splice(Math.min(index, next.length), 0, removed);
+      return next;
+    },
+  };
+}
+
 export interface BasketApi {
   lines: BasketLine[];
   // 'storage_reset' when an old saved basket was dropped (show one line).
@@ -52,6 +71,8 @@ export interface BasketApi {
   add(line: BasketLine): void;
   setQty(identity: string, qty: number): void;
   remove(identity: string): void;
+  // Removes a line and returns Undo, or null when the line is gone already.
+  removeWithUndo(identity: string): (() => void) | null;
   replace(lines: BasketLine[]): void;
   clear(): void;
 }
@@ -76,6 +97,12 @@ export function useBasket(slug: string): BasketApi {
         ),
       ),
     remove: (identity) => write(current().filter((l) => lineIdentity(l) !== identity)),
+    removeWithUndo: (identity) => {
+      const result = removeLine(current(), identity);
+      if (!result) return null;
+      write(result.lines);
+      return () => write(result.restore(current()));
+    },
     replace: (next) => write(next),
     clear: () => storage.basket.remove(slug),
   };
@@ -94,6 +121,16 @@ export function useFavourites(slug: string) {
         saved.includes(itemId) ? saved.filter((i) => i !== itemId) : [...saved, itemId],
       );
     },
+  };
+}
+
+/** The receipt's install card stays hidden once the customer hides it (per shop). */
+export function useInstallDismissed(slug: string) {
+  const storage = getDeviceStorage();
+  const dismissedAt = useDeviceEntry(storage.installDismissed, slug).value;
+  return {
+    dismissed: dismissedAt !== null,
+    dismiss: (now: Date) => storage.installDismissed.write(slug, now.toISOString()),
   };
 }
 
@@ -170,4 +207,44 @@ function onlineNow(): boolean {
 /** False when the phone is offline (or the dev ?mock=offline scenario is on). */
 export function useOnline(): boolean {
   return useSyncExternalStore(subscribeOnline, onlineNow, () => true);
+}
+
+// One shared minute clock for open states and slots; the dev ?now= scenario pins it.
+const MINUTE_MS = 60_000;
+let clock = '';
+const clockListeners = new Set<() => void>();
+let clockTimer: ReturnType<typeof setInterval> | null = null;
+
+const minuteNow = () => new Date(Math.floor(Date.now() / MINUTE_MS) * MINUTE_MS).toISOString();
+
+function subscribeClock(listener: () => void): () => void {
+  clockListeners.add(listener);
+  clockTimer ??= setInterval(() => {
+    const next = minuteNow();
+    if (next === clock) return;
+    clock = next;
+    for (const l of clockListeners) l();
+  }, 15_000);
+  const unsubscribeScenario =
+    process.env.NODE_ENV !== 'production' ? subscribeMockScenario(listener) : () => {};
+  return () => {
+    clockListeners.delete(listener);
+    unsubscribeScenario();
+    if (clockListeners.size === 0 && clockTimer) {
+      clearInterval(clockTimer);
+      clockTimer = null;
+    }
+  };
+}
+
+function clockSnapshot(): string {
+  const pinned = process.env.NODE_ENV !== 'production' ? getMockScenario().now : null;
+  if (pinned) return pinned;
+  clock ||= minuteNow();
+  return clock;
+}
+
+/** The current minute (ISO), or null on the server and while hydrating, so open states never mismatch. */
+export function useNow(): string | null {
+  return useSyncExternalStore(subscribeClock, clockSnapshot, () => null);
 }

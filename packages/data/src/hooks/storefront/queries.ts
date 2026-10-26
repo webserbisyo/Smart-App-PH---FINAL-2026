@@ -6,6 +6,7 @@ import {
   isFinal,
   type CustomerAddress,
   type OrderPayload,
+  type OrderReceipt,
   type PaymentMethod,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
@@ -75,11 +76,14 @@ export function usePlaceOrder(slug: string) {
 }
 
 /** Polls every 15 s while the order is open and stops when it ends; keeps a copy on the phone for offline. */
-export function useOrder(slug: string, token: string) {
+export function useOrder(slug: string, token: string, initialOrder?: OrderReceipt | null) {
   const { storefront } = useAdapters();
   const query = useQuery({
     queryKey: qk.order(slug, token),
     queryFn: () => storefront.getOrder({ slug, token }),
+    initialData: initialOrder ?? undefined,
+    // The server copy paints first; the phone asks for the live order right away.
+    initialDataUpdatedAt: 0,
     refetchInterval: (q) => {
       const status = q.state.data?.status;
       return status && isFinal(status) ? false : ORDER_POLL_MS;
@@ -124,6 +128,17 @@ export function useRateOrder(slug: string, token: string) {
     mutationFn: (input: { stars: number; comment: string | null }) =>
       storefront.rateOrder({ slug, token, ...input }),
     onSuccess: () => void client.invalidateQueries({ queryKey: qk.order(slug, token) }),
+  });
+}
+
+// Notify me on the receipt (T10). The mock stores nothing; T13 passes the service worker's subscription.
+export function useSubscribePush(slug: string, token: string) {
+  const { storefront } = useAdapters();
+  return useMutation({
+    networkMode: 'always',
+    retry: false,
+    mutationFn: (subscription: PushSubscriptionJSON | null) =>
+      storefront.subscribePush({ slug, token, subscription }),
   });
 }
 

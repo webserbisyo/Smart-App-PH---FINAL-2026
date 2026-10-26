@@ -59,4 +59,4 @@ export async function refreshSession(
   return response;
 }
 
-export { getStorefrontForServer } from './mocks/server';
+export { getStorefrontForServer, getOrderReceiptForServer } from './mocks/server';

@@ -1,87 +1,48 @@
 // Dev-only scenario switch (decision T26): slow, error, empty, offline, closed and member states on any page.
-// Production builds never run it: every entry point checks NODE_ENV first, so bundlers drop the code.
-import { z } from 'zod';
-import { IsoDateTimeSchema } from '@smartapp/core';
+// Production builds never load this module: the storefront imports it dynamically behind a NODE_ENV
+// check, so neither its code nor its source text ships.
+import {
+  DEFAULT_SCENARIO,
+  DemoCustomerStateEnum,
+  getMockScenario,
+  MockScenarioSchema,
+  replaceScenario,
+  type MockScenario,
+} from './scenario-state';
+
+export * from './scenario-state';
 
 // Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
 declare const process: { env: { NODE_ENV?: string | undefined } };
-
-export const MOCK_AREAS = ['storefront', 'orders', 'account', 'auth', 'all'] as const;
-export const DEMO_CUSTOMER_STATES = [
-  'guest',
-  'member',
-  'member-ready',
-  'member-pending',
-  'member-capped',
-] as const;
-export const DemoCustomerStateEnum = z.enum(DEMO_CUSTOMER_STATES);
-export type DemoCustomerState = z.infer<typeof DemoCustomerStateEnum>;
-
-export const MockScenarioSchema = z.object({
-  latency: z.enum(['none', 'normal', 'slow']),
-  fail: z.enum(MOCK_AREAS).nullable(),
-  empty: z.boolean(),
-  offline: z.boolean(),
-  closed: z.boolean(),
-  now: IsoDateTimeSchema.nullable(),
-  as: DemoCustomerStateEnum.nullable(),
-});
-export type MockScenario = z.infer<typeof MockScenarioSchema>;
-
-export const DEFAULT_SCENARIO: MockScenario = {
-  latency: 'normal',
-  fail: null,
-  empty: false,
-  offline: false,
-  closed: false,
-  now: null,
-  as: null,
-};
-
-let current: MockScenario = DEFAULT_SCENARIO;
-const listeners = new Set<() => void>();
-
-export function isDevMock(dataSource: string): boolean {
-  return process.env.NODE_ENV !== 'production' && dataSource === 'mock';
-}
-
-export function getMockScenario(): MockScenario {
-  return current;
-}
-
-export function subscribeMockScenario(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
 
 function sessionKey(): string {
   return 'smartapp:mock-scenario';
 }
 
 export function setMockScenario(patch: Partial<MockScenario>): MockScenario {
-  if (process.env.NODE_ENV === 'production') return current;
-  current = MockScenarioSchema.parse({ ...current, ...patch });
+  if (process.env.NODE_ENV === 'production') return getMockScenario();
+  const current = MockScenarioSchema.parse({ ...getMockScenario(), ...patch });
   try {
     if (typeof window !== 'undefined')
       window.sessionStorage.setItem(sessionKey(), JSON.stringify(current));
   } catch {
     // Session storage blocked: the scenario lasts until reload.
   }
-  for (const listener of listeners) listener();
+  replaceScenario(current);
   return current;
 }
 
 /** Restores the scenario saved in this tab (dev only). */
 export function loadMockScenario(): MockScenario {
-  if (process.env.NODE_ENV === 'production') return current;
+  if (process.env.NODE_ENV === 'production') return getMockScenario();
   try {
     const raw = typeof window !== 'undefined' ? window.sessionStorage.getItem(sessionKey()) : null;
     const parsed = raw ? MockScenarioSchema.safeParse(JSON.parse(raw)) : null;
-    if (parsed?.success) current = parsed.data;
+    if (parsed?.success) replaceScenario(parsed.data);
   } catch {
     // Ignore a broken or blocked session value.
   }
-  return current;
+  return getMockScenario();
 }
 
 export interface UrlScenario {
@@ -140,6 +101,11 @@ export function readMockScenarioFromUrl(
   if (process.env.NODE_ENV === 'production') return null;
   if (dataSource !== 'mock') return null;
   const parsed = parseMockScenario(params);
-  if (Object.keys(parsed.scenario).length > 0) setMockScenario(parsed.scenario);
+  if (Object.keys(parsed.scenario).length > 0) {
+    const reset = params.has('mock')
+      ? { latency: 'normal' as const, fail: null, empty: false, offline: false, closed: false }
+      : {};
+    setMockScenario({ ...reset, ...parsed.scenario });
+  }
   return parsed;
 }

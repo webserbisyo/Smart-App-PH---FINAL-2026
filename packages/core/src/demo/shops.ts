@@ -18,6 +18,7 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     ownerName: 'Paolo Reyes',
     city: 'Marikina',
     brandColor: '#D7372F',
+    surface: 'dark',
   },
   {
     slug: 'aqualinis',
@@ -26,6 +27,7 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     ownerName: 'Ramon Dizon',
     city: 'Las Piñas',
     brandColor: '#0E7AC4',
+    surface: 'light',
   },
   {
     slug: 'tala-apparel',
@@ -34,6 +36,7 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     ownerName: 'Bea Villanueva',
     city: 'Cebu City',
     brandColor: '#2E3A87',
+    surface: 'light',
   },
   {
     slug: 'kape-juan',
@@ -42,6 +45,7 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     ownerName: 'Juan Santos',
     city: 'Quezon City',
     brandColor: '#6F4E37',
+    surface: 'light',
   },
   {
     slug: 'lola-remy',
@@ -50,5 +54,6 @@ export const DEMO_SHOPS: readonly DemoShopSummary[] = [
     ownerName: 'Carla Bautista',
     city: 'Malolos',
     brandColor: '#C27C2C',
+    surface: 'light',
   },
 ] as const;

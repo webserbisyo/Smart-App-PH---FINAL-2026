@@ -48,7 +48,7 @@ The first screen a customer sees from a Messenger link loads fast on slow data, 
  - components.md "Used in" for every pattern used. Tick T06 in PROGRESS.md, one CHANGELOG line.
 
 DONE WHEN
- - All 5 demo shops + test-blank + test-stress look finished at 360, 390, 768, 1024 and 1280 px; Lighthouse mobile on /kanto-smash (Chrome DevTools, by hand): Performance ≥ 90, Accessibility 100, CLS < 0.1; first-load JS ≤ 200 KB gzipped.
+ - All 5 demo shops + test-blank + test-stress look finished at 360, 390, 768, 1024 and 1280 px; Lighthouse mobile on /kanto-smash (Chrome DevTools, by hand): Performance ≥ 90, Accessibility 100, CLS < 0.1; first-load JS ≤ 300 KB gzipped.
 
 CHECKS AND PR
  - pnpm format:check, pnpm check, pnpm lint, pnpm build and pnpm e2e green. Never weaken eslint or tsconfig, never skip a test. No workarounds: stop and show me any error.

@@ -6,9 +6,15 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "demo:images": "node scripts/demo-images.ts"
+    "demo:images": "node scripts/demo-images.ts",
+    "e2e": "playwright test -c e2e/playwright.config.ts",
+    "avatars": "node scripts/default-avatars.ts",
+    "art": "node scripts/fluent-art.ts"
   },
   "devDependencies": {
+    "@dicebear/core": "9.4.3",
+    "@dicebear/notionists": "9.4.3",
+    "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "eslint": "10.12.0",
     "sharp": "0.35.5",

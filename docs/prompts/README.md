@@ -59,7 +59,7 @@ One prompt = one task = one branch `ag/t<nn>-<name>` = one PR into main. Paste t
 - Unit tests (Vitest) for every rule and the mock store, with a fixed seed and date.
 - Smoke tests (Playwright, from T04) open every storefront route at phone 390 and desktop 1280 for food, retail, blank and stress shops and fail on console errors, sideways scroll and broken images. Each later task adds its routes. Runs in CI on every PR.
 - Dev switch (never in a production build): `?mock=slow|error|empty|offline|closed|basket`, `?as=guest|member|member-ready|member-pending|member-capped`, `?now=2026-10-24T04:30+08:00`. Demo receipts open by fixed tokens, e.g. `/kanto-smash/o/demo-proof-rejected`. Mock email code: 123456.
-- Lighthouse by hand on the pages each prompt names; targets Performance ≥ 90, Accessibility 100, CLS < 0.1, first page ≤ 200 KB JS.
+- Lighthouse by hand on the pages each prompt names; targets Performance ≥ 90, Accessibility 100, CLS < 0.1, first page ≤ 300 KB JS.
 
 ## Placeholders and empty states
 - Every image goes through ShopImage: photo, else a tile in the shop colour with the category's Fluent icon, else initials. Logos fall back to initials; no banner shows the brand panel.

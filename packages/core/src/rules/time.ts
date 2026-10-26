@@ -18,6 +18,11 @@ const MONTH_NAMES = [
   'Dec',
 ] as const;
 
+/** "Mon" for 1 (0 = Sunday). */
+export function weekdayName(day: number): string {
+  return DAY_NAMES[day] ?? '';
+}
+
 export interface ManilaParts {
   year: number;
   month: number; // 1..12

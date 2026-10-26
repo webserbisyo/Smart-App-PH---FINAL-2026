@@ -33,6 +33,15 @@ interface TokenSwatch {
   fgClass: string;
 }
 
+// The kit's jump bar (kit pass K12): one stop per group.
+const KIT_GROUPS = [
+  { id: 'kit-tokens', label: 'Tokens' },
+  { id: 'kit-primitives', label: 'Primitives' },
+  { id: 'kit-storefront', label: 'Storefront' },
+  { id: 'kit-reui', label: 'ReUI' },
+  { id: 'kit-patterns', label: 'Library references' },
+] as const;
+
 const COLOR_TOKENS: readonly TokenSwatch[] = [
   { name: 'primary', bgClass: 'bg-primary', fgClass: 'text-primary-foreground' },
   { name: 'secondary', bgClass: 'bg-secondary', fgClass: 'text-secondary-foreground' },
@@ -84,8 +93,30 @@ export default function KitPage() {
           </Button>
         </header>
 
+        <nav
+          aria-label="Kit sections"
+          className="sticky top-0 z-sticky -mx-4 border-b bg-background/90 px-4 py-2 backdrop-blur-md md:-mx-10 md:px-10"
+        >
+          {/* Plain links: the ReUI Scrollspy reads the first scroll area on the page,
+              and the kit shows several, so it cannot track this page. */}
+          <div className="scrollbar-none flex gap-2 overflow-x-auto">
+            {KIT_GROUPS.map((group) => (
+              <Button
+                key={group.id}
+                variant="outline"
+                size="sm"
+                render={<a href={`#${group.id}`} />}
+                nativeButton={false}
+                className="h-9 shrink-0 rounded-full px-4 pointer-coarse:h-11"
+              >
+                {group.label}
+              </Button>
+            ))}
+          </div>
+        </nav>
+
         {/* Color Tokens Section */}
-        <section className="space-y-4">
+        <section id="kit-tokens" className="scroll-mt-20 space-y-4">
           <div className="space-y-1">
             <h2 className="text-xl font-semibold">Color Tokens</h2>
             <p className="text-sm text-muted-foreground">
@@ -295,6 +326,7 @@ export default function KitPage() {
           </div>
         </section>
 
+        <div id="kit-primitives" className="scroll-mt-20" />
         <ShellKitSections />
 
         <Toaster>
@@ -303,14 +335,17 @@ export default function KitPage() {
 
         <Separator />
 
+        <div id="kit-storefront" className="scroll-mt-20" />
         <StorefrontSections />
 
         <Separator />
 
+        <div id="kit-reui" className="scroll-mt-20" />
         <ReuiPrimitiveSections />
 
         <Separator />
 
+        <div id="kit-patterns" className="scroll-mt-20" />
         <StorefrontPatterns />
       </div>
     </div>

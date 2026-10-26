@@ -769,7 +769,7 @@ Every page implements the states in [`ux.md`](ux.md) section 3 (loading skeleton
 
 #### 7.1 Shell
 
-Top bar 56 px: logo, name, open state ("Open until 9 PM", "Closed · Opens 5 AM", "Busy · back 3:40 PM"), area pill (order type and zone, remembered per shop), bell (order updates for the device's orders), avatar (Account or Join). Floating dock: Home, Menu or Products, Rewards (hidden when the card is off), Orders. Basket bar above the dock with count, total and View; hidden at 0 items and on checkout and receipt.
+Top bar: logo, name, open state ("Open until 9 PM", "Closed · Opens 5 AM", "Busy · back 3:40 PM"), location bar (order type and zone, remembered per shop; N31), avatar (Account or Join); no bell. Floating dock: Home, Menu or Products, Rewards (hidden when the card is off), Orders; with items in the basket it grows a cart segment (thumbnails, count, total) that opens the basket, and there is no separate basket bar (N30). Hidden on checkout and receipt and while the keyboard is open.
 
 #### 7.2 Home `/[shop]`
 

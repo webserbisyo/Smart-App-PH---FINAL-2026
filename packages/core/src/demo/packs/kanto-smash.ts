@@ -252,6 +252,7 @@ export const KANTO_SMASH_PACK: ShopPack = {
     },
     look: {
       brandColor: '#D7372F',
+      surface: 'dark',
       banners: [
         {
           ref: 'demo:kanto-smash/banners/banner-1',
@@ -261,11 +262,8 @@ export const KANTO_SMASH_PACK: ShopPack = {
         { ref: 'demo:kanto-smash/banners/banner-3', alt: 'Barkada Bucket for groups' },
       ],
       bannerSeconds: 5,
-      announcement: {
-        text: 'Open until 12 MN on Fridays to Sundays. Late-night delivery around Marikina.',
-        tone: 'info',
-        endsAt: null,
-      },
+      // The hours already say this; the slot stays for real shop news (decision R13).
+      announcement: null,
       sections: ALL_SECTIONS_ON,
     },
     hours: [...days([1, 2, 3, 4], '11:00', '22:00'), ...days([5, 6, 0], '11:00', '24:00')],

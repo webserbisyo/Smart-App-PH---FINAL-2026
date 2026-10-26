@@ -13,6 +13,7 @@ import {
   AnnouncementToneEnum,
   OrderTypeEnum,
   PaymentMethodEnum,
+  ShopSurfaceEnum,
   StampCardStatusEnum,
   WeekdaySchema,
 } from './enums.js';
@@ -71,6 +72,8 @@ export type SectionSwitches = z.infer<typeof SectionSwitchesSchema>;
 
 export const ShopLookSchema = z.object({
   brandColor: z.string().regex(/^#[0-9a-f]{6}$/i),
+  // Light or dark page; the brand colour stays the 10 either way (decision R2).
+  surface: ShopSurfaceEnum.default('light'),
   banners: z.array(BannerSchema).max(3),
   bannerSeconds: z.number().int().min(3).max(10).default(5),
   announcement: AnnouncementSchema.nullable(),

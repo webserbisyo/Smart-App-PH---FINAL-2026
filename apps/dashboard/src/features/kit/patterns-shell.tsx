@@ -1,5 +1,8 @@
 // Shell: ReUI patterns, loaded lazily by storefront-patterns.tsx.
 import { PatternGrid } from './pattern-grid.js';
+import { Pattern as PulseRing } from './examples/c-avatar-32';
+import { Pattern as GradientRing } from './examples/c-avatar-33';
+import { Pattern as MultipleBadges } from './examples/c-avatar-34';
 import { Pattern as BorderRadius } from './examples/c-avatar-4';
 import { Pattern as StatusDots } from './examples/c-avatar-6';
 import { Pattern as GroupWithCount } from './examples/c-avatar-11';
@@ -15,6 +18,9 @@ import { Pattern as FullPage } from './examples/c-spinner-8';
 import { Pattern as DisabledButton } from './examples/c-tooltip-12';
 
 const EXAMPLES = {
+  'c-avatar-32': PulseRing,
+  'c-avatar-33': GradientRing,
+  'c-avatar-34': MultipleBadges,
   'c-avatar-4': BorderRadius,
   'c-avatar-6': StatusDots,
   'c-avatar-11': GroupWithCount,

@@ -1,8 +1,10 @@
 // Shop info and system pages: ReUI patterns, loaded lazily by storefront-patterns.tsx.
 import { PatternGrid } from './pattern-grid.js';
+import { Pattern as IconStackEmpty } from './examples/c-icon-stack-5';
 import { Pattern as NoNotifications } from './examples/c-empty-9';
 
 const EXAMPLES = {
+  'c-icon-stack-5': IconStackEmpty,
   'c-empty-9': NoNotifications,
 };
 

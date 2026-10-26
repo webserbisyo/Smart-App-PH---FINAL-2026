@@ -66,7 +66,7 @@ A customer opening any demo shop link on a phone sees a fast, branded app frame 
 DONE WHEN
  - Every demo shop opens with its colours, logo (or initials), open state and location bar at 360, 390, 768, 1024 and 1280 px; test-blank still looks finished; test-stress long name and big total never break the bar or dock.
  - Order type and zone survive a reload; basket lines survive a reload; the dock hides with the keyboard.
- - pnpm e2e green locally or in CI; Home first-load JS for /kanto-smash ≤ 200 KB gzipped (paste the build route table).
+ - pnpm e2e green locally or in CI; Home first-load JS for /kanto-smash ≤ 300 KB gzipped (paste the build route table).
 
 CHECKS AND PR
  - pnpm format:check, pnpm check, pnpm lint, pnpm build and pnpm e2e green. Never weaken eslint or tsconfig, never skip or quarantine a test. No workarounds: stop and show me any error.

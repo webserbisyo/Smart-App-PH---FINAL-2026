@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createDeviceStorage, storageKey } from '../src/device-storage';
-import { mergeLine } from '../src/hooks/storefront/device';
+import { mergeLine, removeLine } from '../src/hooks/storefront/device';
+import { lineIdentity } from '@smartapp/core';
 
 function mapBackend() {
   const map = new Map<string, string>();
@@ -76,5 +77,27 @@ describe('basket merge', () => {
     expect(twice[0]?.qty).toBe(2);
     expect(mergeLine(twice, { ...line, qty: 99 })[0]?.qty).toBe(99);
     expect(mergeLine(twice, { ...line, note: 'no onions' })).toHaveLength(2);
+  });
+});
+
+describe('basket remove with Undo', () => {
+  const a = { ...line, optionIds: ['a'] };
+  const b = { ...line, optionIds: ['b'] };
+  const c = { ...line, optionIds: ['c'] };
+
+  it('removes a line and Undo puts it back in the same place', () => {
+    const result = removeLine([a, b, c], lineIdentity(b));
+    expect(result?.lines).toEqual([a, c]);
+    expect(result?.restore(result.lines)).toEqual([a, b, c]);
+  });
+
+  it('Undo keeps lines changed meanwhile and never doubles a line added again', () => {
+    const result = removeLine([a, b, c], lineIdentity(c));
+    expect(result?.restore([a])).toEqual([a, c]);
+    expect(result?.restore([a, c])).toEqual([a, c]);
+  });
+
+  it('returns null for a line that is gone', () => {
+    expect(removeLine([a], lineIdentity(b))).toBeNull();
   });
 });

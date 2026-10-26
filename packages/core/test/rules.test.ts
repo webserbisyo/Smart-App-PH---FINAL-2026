@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SHOP_PACKS } from '../src/demo/packs/index.js';
 import type { Storefront } from '../src/schemas/storefront.js';
-import { formatPeso, optionPriceLabel, parsePeso } from '../src/rules/money.js';
+import { formatPeso, optionPriceLabel, parsePeso, pesoAmountText } from '../src/rules/money.js';
 import { formatClock, formatManila, manilaDate, minutesUntil } from '../src/rules/time.js';
 import {
   isSoldOutToday,
@@ -71,6 +71,12 @@ describe('money', () => {
     ['abc', null],
     ['12.345', null],
   ])('parsePeso(%s) = %s', (text, centavos) => expect(parsePeso(text)).toBe(centavos));
+
+  it('copies the exact amount for payment apps, centavos kept', () => {
+    expect(pesoAmountText(34500)).toBe('345');
+    expect(pesoAmountText(34550)).toBe('345.50');
+    expect(pesoAmountText(123405)).toBe('1234.05');
+  });
 });
 
 describe('time', () => {

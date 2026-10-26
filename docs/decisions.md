@@ -45,6 +45,8 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - T27 Installed library files (`packages/ui/src/components`) get their own strictness: ESLint turns off only `consistent-type-assertions`, the React Compiler rules `react-hooks/refs` and `react-hooks/set-state-in-effect`, and `no-useless-assignment` for those files; TypeScript checks them in `packages/ui/tsconfig.components.json` without `exactOptionalPropertyTypes`, and apps read them as declarations through project references. Our own code (lib, hooks, compositions, vendor copies, apps, packages) keeps the full strict rules. Installed files stay unedited, except `checkbox-group.tsx`: one patch back to DiceUI's own `asChild` on the tick, because the shadcn base-nova transform rewrote it to `render`, which `@diceui/checkbox-group` 1.0.0 does not support (founder, 2026-10-25).
 - T28 ReUI primitives keep our tokens: the CLI's raw-palette CSS variables for `success`, `warning`, `info`, `destructive-foreground` and `invert` are not added. New contrast-tested tokens `focus`, `invert`, `destructive-text`, `destructive-soft` and `destructive-soft-foreground` fill the gaps. `reui/badge.tsx` and `reui/alert.tsx` are patched once: solid variants use our `-foreground`, light variants `-soft` / `-soft-foreground`, outline variants `-text`, alerts `-soft` with a `-text` icon (founder, 2026-10-25).
 - T29 The ReUI examples may install shadcn `bubble` (c-message-5) and `scroll-area` (c-scrollspy-1, c-scrollspy-2), reversing the T02 skip for these two. `popover` stays skipped: c-input-group-37 is kept without its popover (founder, 2026-10-25).
+- T30 Playwright smoke tests (`@playwright/test` 1.64.1, exact, tooling dev dependency) run in CI on every PR at phone 390 and desktop 1280 and fail on console errors, sideways scroll and broken images. `pnpm e2e` (not part of `pnpm check`); demo shop pages run on the production build, test shops and `?mock=` scenarios on a dev server, because a production build never has them (N28, T26). Locally on macOS 12 use `PLAYWRIGHT_CHANNEL=chrome`. (Planned as T25 in the T04 prompt; T25 to T29 were taken.)
+- T31 Storefront first-load JS budget raised to 300 KB gzipped (measured 286.6 KB in T04). Follow-up before launch: core schemas to zod/mini and lazy toast, target about 250 KB (founder, 2026-10-25).
 
 ## MVP A scope (accepted 2026-10-18; details in `SYSTEM.md` section 4.2 and `SMART_APP_PH_BLUEPRINT.md`)
 
@@ -77,6 +79,10 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N27 Stamp card status Off, On or Paused; limited prizes stop at 0; max earned stamps per day/week/month, default 1 per day (S23, S24, S26).
 - N28 Shop packs are the one source for mocks, tests, the dev seed and "Start with samples"; test-blank and test-stress exist only in mock and test runs.
 - N29 Mock state for customer-created data (orders, proofs, member account) lives on the device; DEMO_RECEIPTS give fixed tokens for every receipt state (/<slug>/o/demo-…).
+- N30 Storefront phone nav is one floating pill (Home, Menu or Products, Rewards, Orders) that grows a cart segment; no separate basket bar; no bell.
+- N31 The location bar sits under the shop name on phones and opens the How and where sheet.
+- N32 The receipt PNG is made on the server with next/og; no screenshot package.
+- N33 Proof photos are compressed on the phone by a small canvas helper; no compression package.
 - S7 The order thread shows the proof and system lines (status, payment, rider, tracking); no chat posts in A.
 - S8 Continue in Messenger copies the order text first, then opens m.me in the same tap; the text has no address or phone.
 - S15 QR Ph is a payment method (the shop's QR), text only, no brand logos.
@@ -87,6 +93,27 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - S32 COD has a per-shop limit; above it the order needs payment first (cod_limit).
 - S33 Code problems: "Wrong code, try again", expired code sends a new one, resend after 60 s, check Spam or Promotions.
 - S34 A stamp is pending until the order is completed ("Pending · Order #042").
+
+## Storefront redesign (founder, 2026-10-25: "Yes to all" on D1 to D17; built without ReUI Pro)
+
+- R1 No sticky basket column at 1280 px; the basket opens from the cart button on every width (`ux.md` updated).
+- R2 Each shop has a surface, light or dark (`as const` list + Zod, mock data only for now). Kanto Smash is dark: 60 black, 30 white, 10 red.
+- R3 Light shops get a neutral near-white 60, not a tint of the brand colour.
+- R4 Logo status ring: green and animated when open (c-avatar-33 look), plain grey when closed, never red; the word sits on a chip next to it.
+- R5 The cart leaves the dock: its own round button with a count dot; the dock keeps 4 places.
+- R6 The dock takes the Aceternity Floating Dock look on our installed dock, not its code (no `@tabler/icons-react`).
+- R7 About, Hours and Contact leave Home and go into one Shop info sheet.
+- R8 Menu on ReUI Scrollspy: one horizontal rail on phones for any number of categories, a vertical list from 1024 px.
+- R9 Free parts installed for the redesign: ReUI avatars, tabs, icon stacks and shop patterns, shadcn button-group, DiceUI avatar-group and marquee, Magic UI CSS-only parts. ReUI Pro blocks (receipt-2, checkout-6 and the like) are not bought; their look is built from the free parts.
+- R10 Pictures for empty, error and receipt states are Fluent Emoji 3D (MIT) WebP files in `apps/storefront/public/art`, made once by `pnpm --filter tooling art`; keys in core (`ART_KEYS`, `artPath`). No Storyset (needs a credit).
+- R11 Default customer avatars: about 24 DiceBear notionists SVGs made once by `pnpm --filter tooling avatars` (`@dicebear/core` and `@dicebear/notionists` 9.4.3, tooling dev dependencies, never shipped to customers; notionists only instead of the whole collection).
+- R12 New shared compositions for the redesign (empty-state, shop info sheet, cart button, status ring and the others listed in `components.md` with R12) live in `packages/ui/src/compositions` (T24).
+- R13 The one-line announcement slot stays for owner news; no fixed late-night sentence for Kanto.
+- R14 No notification bell (N14 stays).
+- R15 `motion` stays Rewards-only (T25); every new part is CSS-only to stay under the 300 KB budget (T31).
+- R16 Two PRs on branch `claude/project-thread-jornrn`: PR 1 (shell, theme, Home, Menu, basket, checkout, receipt) replaces #16; PR 2 is T11 to T14.
+- R17 Light testing for these two PRs: `pnpm check`, `pnpm build` and CI, with screenshots only of `/kit`. This replaces the "screenshots of every changed page" step in `AGENTS.md` for PR 1 and PR 2 only.
+- R18 ShopTheme maps the shop palette onto `--primary`, `--ring` and the other base tokens, so every installed part follows the shop colour without edits to each example (kit item K10).
 
 ## Open
 

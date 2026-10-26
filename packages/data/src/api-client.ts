@@ -1,4 +1,4 @@
-import { ApiErrorSchema, errorWords, type ApiError } from '@smartapp/core';
+import { ApiErrorSchema, errorWords, type ApiError, type ErrorCode } from '@smartapp/core';
 import type { z } from 'zod';
 
 export class ApiRequestError extends Error {
@@ -9,6 +9,11 @@ export class ApiRequestError extends Error {
     this.name = 'ApiRequestError';
     this.apiError = apiError;
   }
+}
+
+/** The error code of a failed request ('unknown' for anything else), so screens word errors from it. */
+export function errorCodeOf(error: unknown): ErrorCode {
+  return error instanceof ApiRequestError ? error.apiError.code : 'unknown';
 }
 
 export async function fetchApi<T>(

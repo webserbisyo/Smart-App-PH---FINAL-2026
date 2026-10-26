@@ -9,6 +9,7 @@ export * from './env';
 export * from './hooks/storefront/qk';
 export * from './hooks/storefront/device';
 export * from './hooks/storefront/queries';
+export * from './hooks/storefront/provider';
 export {
   DEMO_CUSTOMER,
   DEMO_RECEIPTS,
@@ -16,10 +17,7 @@ export {
   demoBasketLines,
   type DemoReceiptToken,
 } from './mocks/activity';
-export {
-  isDevMock,
-  loadMockScenario,
-  readMockScenarioFromUrl,
-  type MockScenario,
-  type UrlScenario,
-} from './mocks/scenario';
+export { isDevMock, type MockScenario } from './mocks/scenario-state';
+export { loadMockScenario, readMockScenarioFromUrl, type UrlScenario } from './mocks/scenario';
+export * from './compress-image';
+export { useQueryClient } from '@tanstack/react-query';

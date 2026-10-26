@@ -1,5 +1,6 @@
 // Shop palette: one brand colour becomes a readable 60/30/10 palette (docs/design-tokens.md "Shop brand").
 // Pure maths (OKLab/OKLCH and WCAG 2 contrast), no package.
+import type { ShopSurface } from '../schemas/enums.js';
 
 export interface Oklch {
   l: number;
@@ -8,12 +9,21 @@ export interface Oklch {
 }
 
 export interface ShopPalette {
+  /** The page (60): near white on a light shop, near black on a dark one. */
   shop60: string;
+  /** Cards and sheets (30): white on a light shop, a raised dark grey on a dark one. */
   shop30: string;
+  /** Body text on 60 and 30. */
+  foreground: string;
+  /** The brand (10): filled buttons, the active tab, the cart. */
   shop10: string;
   shop10Foreground: string;
-  shop10Soft: string;
   shop10Hover: string;
+  /** Brand-coloured text and rings on 60 and 30 (prices, links, focus). */
+  shop10Text: string;
+  /** A soft brand tint (chips, selected rows) and the text on it. */
+  shop10Soft: string;
+  shop10SoftForeground: string;
 }
 
 export const DEFAULT_BRAND_COLOR = '#2456D3';
@@ -31,6 +41,8 @@ export const BRAND_COLOR_PRESETS = [
 /** Text colours used on --shop-10: white, or the app's foreground (near black). */
 export const PALETTE_WHITE = 'oklch(1 0 0)';
 export const PALETTE_BLACK = 'oklch(0.145 0 0)';
+/** Body text on a dark shop (the dark theme's foreground). */
+export const PALETTE_LIGHT_TEXT = 'oklch(0.985 0 0)';
 
 const MIN_TEXT_CONTRAST = 4.5;
 /** How far --shop-10 may be darkened before we switch to black text instead. */
@@ -170,12 +182,25 @@ function darkenForWhite(base: Oklch, floor: number): Oklch | null {
   return null;
 }
 
+/** Moves the lightness of `base` until text of `against` (or on it) reaches 4.5:1. */
+function untilReadable(base: Oklch, against: string, direction: 'darker' | 'lighter'): Oklch {
+  const step = direction === 'darker' ? -DARKEN_STEP : DARKEN_STEP;
+  for (let l = base.l; l >= 0 && l <= 1; l += step) {
+    const candidate = toGamut({ ...base, l });
+    if (contrastOf(candidate, against) >= MIN_TEXT_CONTRAST) return candidate;
+  }
+  return toGamut({ ...base, l: direction === 'darker' ? 0.2 : 0.9 });
+}
+
 /**
- * Builds the shop palette from one brand colour (hex). An unreadable value falls back to the default brand blue.
- * --shop-10 is the brand colour darkened until white text reaches 4.5:1; when that would change the colour too
- * much (very light brands such as pale yellow), the colour stays and the text turns black.
+ * Builds the shop palette from one brand colour (hex) and the shop's surface. An unreadable value falls back
+ * to the default brand blue.
+ * - 60 and 30 stay neutral (a hint of the brand hue only), so photos and the brand colour carry the page.
+ * - --shop-10 is the brand colour darkened until white text reaches 4.5:1; when that would change the colour
+ *   too much (very light brands such as pale yellow), the colour stays and the text turns black.
+ * - --shop-10-text is the brand colour moved until it reads at 4.5:1 on the 60 and 30 surfaces.
  */
-export function shopPalette(hex: string): ShopPalette {
+export function shopPalette(hex: string, surface: ShopSurface = 'light'): ShopPalette {
   const brand = hexToOklch(hex) ?? hexToOklch(DEFAULT_BRAND_COLOR);
   if (!brand) throw new Error('Default brand colour is invalid');
   const base = toGamut(brand);
@@ -198,12 +223,27 @@ export function shopPalette(hex: string): ShopPalette {
       ? darkerHover
       : toGamut({ ...shop10, l: Math.min(0.98, shop10.l + HOVER_STEP) });
 
+  const dark = surface === 'dark';
+  const shop60 = dark
+    ? { l: 0.16, c: Math.min(0.008, base.c), h: base.h }
+    : { l: 0.982, c: Math.min(0.003, base.c), h: base.h };
+  const shop30 = dark ? { l: 0.215, c: Math.min(0.01, base.c), h: base.h } : null;
+  const soft = dark
+    ? { l: 0.3, c: Math.min(0.06, base.c), h: base.h }
+    : { l: 0.95, c: Math.min(0.035, base.c), h: base.h };
+  const direction = dark ? 'lighter' : 'darker';
+  // The text must read on the less contrasting of the two surfaces: 60 on a light shop, 30 on a dark one.
+  const textSurface = formatOklch(dark && shop30 ? shop30 : shop60);
+
   return {
-    shop60: formatOklch({ l: 0.975, c: Math.min(0.012, base.c), h: base.h }),
-    shop30: formatOklch({ l: 0.995, c: Math.min(0.004, base.c), h: base.h }),
+    shop60: formatOklch(shop60),
+    shop30: shop30 ? formatOklch(shop30) : PALETTE_WHITE,
+    foreground: dark ? PALETTE_LIGHT_TEXT : PALETTE_BLACK,
     shop10: formatOklch(shop10),
     shop10Foreground: foreground,
-    shop10Soft: formatOklch({ l: 0.93, c: Math.min(0.05, base.c), h: base.h }),
     shop10Hover: formatOklch(hover),
+    shop10Text: formatOklch(untilReadable(base, textSurface, direction)),
+    shop10Soft: formatOklch(soft),
+    shop10SoftForeground: formatOklch(untilReadable(base, formatOklch(soft), direction)),
   };
 }

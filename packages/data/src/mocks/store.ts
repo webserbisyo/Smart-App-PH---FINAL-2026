@@ -47,7 +47,7 @@ import type { DataAdapters } from '../adapters/types';
 import { DEMO_CUSTOMER, generateMembers, generateOrders } from './activity';
 import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
-import { getMockScenario, type DemoCustomerState, type MockScenario } from './scenario';
+import { getMockScenario, type DemoCustomerState, type MockScenario } from './scenario-state';
 import {
   addMinutes,
   buildOrder,
@@ -140,7 +140,8 @@ type Persisted = z.infer<typeof PersistedSchema>;
 function packFor(slug: string, production: boolean): ShopPack | null {
   const demo = Object.entries(SHOP_PACKS).find(([s]) => s === slug)?.[1];
   if (demo) return demo;
-  if (production) return null;
+  // The NODE_ENV check is replaced at build time, so production bundles drop the test packs (N28).
+  if (production || process.env.NODE_ENV === 'production') return null;
   return Object.entries(TEST_SHOP_PACKS).find(([s]) => s === slug)?.[1] ?? null;
 }
 

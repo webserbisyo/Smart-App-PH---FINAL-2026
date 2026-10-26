@@ -201,6 +201,7 @@ export const TALA_APPAREL_PACK: ShopPack = {
     },
     look: {
       brandColor: '#2E3A87',
+      surface: 'light',
       banners: [
         { ref: 'demo:tala-apparel/banners/banner-1', alt: 'Linen pieces in warm window light' },
         {
@@ -211,7 +212,7 @@ export const TALA_APPAREL_PACK: ShopPack = {
       ],
       bannerSeconds: 6,
       announcement: null,
-      sections: ALL_SECTIONS_ON,
+      sections: { ...ALL_SECTIONS_ON, membersCount: false },
     },
     // Closed on Mondays.
     hours: days([2, 3, 4, 5, 6, 0], '10:00', '19:00'),

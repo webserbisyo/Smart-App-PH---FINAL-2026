@@ -232,6 +232,7 @@ export const KAPE_JUAN_PACK: ShopPack = {
     },
     look: {
       brandColor: '#6F4E37',
+      surface: 'light',
       banners: [
         { ref: 'demo:kape-juan/banners/banner-1', alt: 'Barako coffee in warm morning light' },
         { ref: 'demo:kape-juan/banners/banner-2', alt: 'Spanish latte with ensaymada' },
@@ -243,7 +244,7 @@ export const KAPE_JUAN_PACK: ShopPack = {
         tone: 'warning',
         endsAt: '2026-11-01T16:00:00.000Z',
       },
-      sections: ALL_SECTIONS_ON,
+      sections: { ...ALL_SECTIONS_ON, membersCount: false },
     },
     hours: days(DAILY, '07:00', '22:00'),
     closures: [{ date: '2026-11-01', reason: 'All Saints’ Day' }],
