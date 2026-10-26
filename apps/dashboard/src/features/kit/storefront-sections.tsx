@@ -674,7 +674,10 @@ export function StorefrontSections() {
     title: banner.title,
     description: banner.description,
     action: banner.link
-      ? { label: words.storefrontShell.home.bannerLink[banner.link.kind], link: <a href="#banners" /> }
+      ? {
+          label: words.storefrontShell.home.bannerLink[banner.link.kind],
+          link: <a href="#banners" />,
+        }
       : undefined,
   }));
 

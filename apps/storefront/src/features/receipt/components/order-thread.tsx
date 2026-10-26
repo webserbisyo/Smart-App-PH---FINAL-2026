@@ -195,7 +195,9 @@ export function OrderThread({ order }: OrderThreadProps) {
 
           const text =
             msg.text ??
-            (msg.kind === 'rider' && order.rider ? words.shop.thread.rider(order.rider.name) : null);
+            (msg.kind === 'rider' && order.rider
+              ? words.shop.thread.rider(order.rider.name)
+              : null);
           if (!text) return null;
           return shopSays(msg, text);
         })}

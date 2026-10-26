@@ -21,12 +21,7 @@ const ROW =
   'h-11 w-full justify-start gap-3 rounded-xl px-3 text-sm font-medium data-active:bg-shop-10-soft data-active:font-semibold data-active:text-shop-10-soft-foreground data-active:hover:bg-shop-10-soft';
 
 /** Desktop category box (c-scrollspy-1) from 1024 px: icons and counts, follows the page. */
-export function CategoryRail({
-  sections,
-  spy,
-  onJump,
-  picks,
-}: CategoryRailProps) {
+export function CategoryRail({ sections, spy, onJump, picks }: CategoryRailProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const lastRef = useRef<string | null>(null);
   const onUpdate = useCallback((id: string) => {

@@ -23,12 +23,7 @@ const CHIP =
   'h-11 shrink-0 gap-2 rounded-full px-4 text-sm font-medium data-active:border-transparent data-active:bg-shop-10 data-active:text-shop-10-foreground data-active:hover:bg-shop-10-hover';
 
 /** Phone category chips (c-scrollspy-2): 44 px, the active one in the shop colour, kept in view. */
-export function CategoryChips({
-  sections,
-  spy,
-  onJump,
-  picks,
-}: CategoryChipsProps) {
+export function CategoryChips({ sections, spy, onJump, picks }: CategoryChipsProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   // Scrollspy reports on every scroll; only a new section moves the row. Stable, so the spy's
   // listeners are set up once.

@@ -79,7 +79,7 @@ export function OrderPrinter({ state, slip, error, onSkip, onRetry, onClose }: O
             width={176}
             height={176}
             decoding="async"
-            className="relative z-10 size-36 object-contain drop-shadow-md print-head"
+            className="relative z-10 size-36 print-head object-contain drop-shadow-md"
           />
           {state === 'offline' ? null : (
             <div className="-mt-12 w-48 overflow-hidden px-2 pt-6 pb-3">

@@ -86,7 +86,7 @@ export function BannerFrame({
       />
       {hasCopy ? (
         <div className="absolute inset-0 flex items-end bg-linear-to-t from-scrim via-scrim/45 to-transparent to-70% p-3 text-on-scrim sm:p-4 md:p-6">
-          <div className="banner-copy flex max-w-md flex-col items-start gap-1">
+          <div className="flex max-w-md banner-copy flex-col items-start gap-1">
             {title ? (
               <p className="line-clamp-2 text-base leading-tight font-semibold tracking-tight text-balance sm:text-lg md:text-2xl">
                 {title}
@@ -100,7 +100,7 @@ export function BannerFrame({
             {action ? (
               <Button
                 size="lg"
-                className="mt-1.5 rounded-full pr-3 pl-4 pointer-coarse:h-11 md:mt-2"
+                className="mt-1.5 rounded-full pr-3 pl-4 md:mt-2 pointer-coarse:h-11"
                 nativeButton={false}
                 render={action.link}
               >

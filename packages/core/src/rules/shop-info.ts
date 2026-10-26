@@ -1,5 +1,5 @@
 // The Shop info sheet: the week's hours day by day, closures as lines, default member avatars.
-import type { Weekday } from '../schemas/enums.js';
+import type { AvatarSet, Weekday } from '../schemas/enums.js';
 import type { Closure, OpeningRange } from '../schemas/storefront.js';
 import { words } from '../words.js';
 import {
@@ -133,6 +133,16 @@ function avatarPath(index: number): string {
 /** The same face for the same person every time. */
 export function defaultAvatar(key: string): string {
   return avatarPath(hashOf(key) % DEFAULT_AVATAR_COUNT);
+}
+
+// Faces in each set of the avatar picker (tooling/scripts/default-avatars.ts makes the files).
+export const AVATARS_PER_SET = 12;
+
+/** The picker's faces for one set; Notionists reuses the first 12 default faces. */
+export function avatarChoices(set: AvatarSet): string[] {
+  return Array.from({ length: AVATARS_PER_SET }, (_, i) =>
+    set === 'notionists' ? avatarPath(i) : `/avatars/${set}-${String(i + 1).padStart(2, '0')}.webp`,
+  );
 }
 
 /** A few different faces for a shop's members pill, the same set on every visit. */

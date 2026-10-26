@@ -112,7 +112,9 @@ export function CheckoutWho({
         <Field>
           <div className="flex items-center justify-between gap-2">
             <FieldLabel htmlFor="checkout-email">{words.checkout.email}</FieldLabel>
-            <Badge variant="outline" size="lg" radius="full">{words.location.optionalBadge}</Badge>
+            <Badge variant="outline" size="lg" radius="full">
+              {words.location.optionalBadge}
+            </Badge>
           </div>
           <Input
             id="checkout-email"

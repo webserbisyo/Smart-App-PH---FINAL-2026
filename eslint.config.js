@@ -63,6 +63,9 @@ export default tseslint.config(
       '@typescript-eslint/consistent-type-assertions': 'off',
       'react-hooks/refs': 'off',
       'react-hooks/set-state-in-effect': 'off',
+      // DiceUI Cropper (founder, 2026-10-26)
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
       'no-useless-assignment': 'off',
     },
   },

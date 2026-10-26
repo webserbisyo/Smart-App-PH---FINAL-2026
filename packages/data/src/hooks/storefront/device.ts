@@ -1,6 +1,7 @@
 // Hooks for data kept on the phone. Every component and tab sees the same basket (useSyncExternalStore).
 import { useSyncExternalStore } from 'react';
 import {
+  defaultAvatar,
   isFinal,
   lineIdentity,
   QTY_MAX,
@@ -15,6 +16,7 @@ import {
   pruneOrderTokens,
   pruneSavedReceipts,
   LAST_SHOP_SCOPE,
+  type CustomerAvatar,
   type DeviceEntry,
   type LastShop,
   type ReadResult,
@@ -299,4 +301,19 @@ export function useNow(): string | null {
 export function useProofPreview(slug: string, path: string): string | null {
   const { value } = useDeviceEntry(getDeviceStorage().proofPreviews, slug);
   return value?.find((p) => p.path === path)?.dataUrl ?? null;
+}
+
+/** The member's picture on this phone: the picked face or cropped photo, else their default face. */
+export function useMyAvatar(slug: string, fallbackKey: string): string {
+  const { value } = useDeviceEntry(getDeviceStorage().customerAvatar, slug);
+  if (value?.kind === 'photo') return value.dataUrl;
+  if (value?.kind === 'face') return value.path;
+  return defaultAvatar(fallbackKey);
+}
+
+/** Saves the picked face or cropped photo on this phone; null goes back to the default face. */
+export function saveMyAvatar(slug: string, avatar: CustomerAvatar | null): void {
+  const entry = getDeviceStorage().customerAvatar;
+  if (avatar) entry.write(slug, avatar);
+  else entry.remove(slug);
 }

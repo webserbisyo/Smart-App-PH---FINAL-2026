@@ -103,10 +103,22 @@ export interface DeviceStorage {
   mockState: DeviceEntry<unknown>;
   // Small copies of the proof photos sent from this phone, so the order thread can show them.
   proofPreviews: DeviceEntry<ProofPreview[]>;
+  // The member's picture, picked or cropped on this phone (demo until the members area has a database).
+  customerAvatar: DeviceEntry<CustomerAvatar>;
   subscribe(listener: () => void): () => void;
   /** Bumps on every change; a cheap snapshot for useSyncExternalStore. */
   version(): number;
 }
+
+export const CustomerAvatarSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('face'), path: z.string().regex(/^\/avatars\/[a-z]+-\d{2}\.webp$/) }),
+  // A 256 px WebP crop, about 20 KB.
+  z.object({
+    kind: z.literal('photo'),
+    dataUrl: z.string().startsWith('data:image/').max(400_000),
+  }),
+]);
+export type CustomerAvatar = z.infer<typeof CustomerAvatarSchema>;
 
 export const PROOF_PREVIEWS_MAX = 6;
 export const ProofPreviewSchema = z.object({
@@ -213,11 +225,8 @@ export function createDeviceStorage(backend: Backend = pickBackend()): DeviceSto
     lastShop: entry('lastShop', 1, LastShopSchema),
     pushOrders: entry('pushOrders', 1, z.array(z.string().max(80)).max(20)),
     mockState: entry('mockState', 1, z.unknown()),
-    proofPreviews: entry(
-      'proofPreviews',
-      1,
-      z.array(ProofPreviewSchema).max(PROOF_PREVIEWS_MAX),
-    ),
+    customerAvatar: entry('customerAvatar', 1, CustomerAvatarSchema),
+    proofPreviews: entry('proofPreviews', 1, z.array(ProofPreviewSchema).max(PROOF_PREVIEWS_MAX)),
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

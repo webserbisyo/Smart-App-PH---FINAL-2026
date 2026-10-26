@@ -13,6 +13,8 @@
   },
   "devDependencies": {
     "@dicebear/core": "9.4.3",
+    "@dicebear/lorelei": "9.4.3",
+    "@dicebear/micah": "9.4.3",
     "@dicebear/notionists": "9.4.3",
     "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",

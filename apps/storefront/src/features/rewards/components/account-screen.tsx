@@ -9,8 +9,8 @@ import {
   ReceiptTextIcon,
   ShieldCheckIcon,
 } from 'lucide-react';
-import { artPath, defaultAvatar, errorWords, formatManila, words } from '@smartapp/core';
-import { errorCodeOf, useMyAccount, useSignOutCustomer } from '@smartapp/data';
+import { artPath, errorWords, formatManila, words } from '@smartapp/core';
+import { errorCodeOf, useMyAccount, useMyAvatar, useSignOutCustomer } from '@smartapp/data';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,20 +22,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@smartapp/ui/components/alert-dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { notify } from '@smartapp/ui/compositions/notify';
-import { initials } from '@smartapp/ui/compositions/shop-image';
 import { useShop } from '../../shell/components/shop-context';
+import { AvatarPicker } from './avatar-picker';
 
 const W = words.account;
 const ROW = 'flex min-h-14 items-center gap-3 px-4 py-3 sm:px-5';
 
 /**
- * Account (T12): the member's face, details and code, shortcuts to Rewards and My orders, the privacy
- * notice with how to delete your data (ask the shop), and Sign out with a confirm (c-alert-dialog-2).
+ * Account (T12): the member's picture (tap to change it, decisions R23, R24), details and code,
+ * shortcuts to Rewards and My orders, the privacy notice with how to delete your data (ask the shop),
+ * and Sign out with a confirm (c-alert-dialog-2).
  */
 export function AccountScreen() {
   const { slug, shop } = useShop();
@@ -43,6 +43,7 @@ export function AccountScreen() {
   const account = useMyAccount(slug);
   const signOut = useSignOutCustomer();
   const member = account.data;
+  const avatar = useMyAvatar(slug, member?.email ?? slug);
   const stampsOn = shop.storefront.stampCard.status !== 'off';
 
   if (account.isPending) {
@@ -108,12 +109,7 @@ export function AccountScreen() {
         className="flex flex-col overflow-hidden rounded-3xl bg-card shadow-xs ring-1 ring-foreground/8"
       >
         <div className="flex items-center gap-4 bg-member-soft p-4 text-member-soft-foreground sm:p-5">
-          <Avatar className="size-16 ring-4 ring-card">
-            <AvatarImage src={defaultAvatar(member.email)} alt="" />
-            <AvatarFallback className="bg-member text-lg font-semibold text-member-foreground">
-              {initials(member.name)}
-            </AvatarFallback>
-          </Avatar>
+          <AvatarPicker slug={slug} name={member.name} current={avatar} />
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-lg font-bold">{member.name}</span>
             <span className="truncate text-sm">{member.email}</span>

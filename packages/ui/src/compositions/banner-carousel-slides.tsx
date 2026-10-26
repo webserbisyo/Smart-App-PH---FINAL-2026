@@ -186,7 +186,7 @@ export default function BannerCarouselSlides({
                 type="button"
                 aria-label={paused ? labels.play : labels.pause}
                 onClick={() => setPaused((value) => !value)}
-                className="flex size-7 items-center justify-center rounded-full text-muted-foreground outline-none transition-colors duration-base hover-hover:hover:bg-muted hover-hover:hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors duration-base outline-none focus-visible:ring-2 focus-visible:ring-ring hover-hover:hover:bg-muted hover-hover:hover:text-foreground"
               >
                 {paused ? (
                   <PlayIcon aria-hidden="true" className="size-3.5 fill-current" />

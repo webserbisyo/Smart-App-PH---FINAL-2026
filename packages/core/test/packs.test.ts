@@ -45,7 +45,8 @@ describe('shop packs', () => {
     const banners = storefront.look.banners;
     for (const { link } of banners) {
       if (!link) continue;
-      if (link.kind === 'item') expect(itemIds.has(link.targetId ?? ''), link.targetId ?? '').toBe(true);
+      if (link.kind === 'item')
+        expect(itemIds.has(link.targetId ?? ''), link.targetId ?? '').toBe(true);
       if (link.kind === 'category')
         expect(categoryIds.has(link.targetId ?? ''), link.targetId ?? '').toBe(true);
       if (link.kind === 'rewards') expect(link.targetId).toBeNull();

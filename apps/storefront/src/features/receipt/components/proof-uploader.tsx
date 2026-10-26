@@ -253,13 +253,7 @@ export function ProofUploader({ slug, order }: ProofUploaderProps) {
             // The photo before it is sent: how much smaller it got, and Remove.
             <Attachment state="done" className="w-full">
               <AttachmentMedia variant="image" className="w-14">
-                <img
-                  src={picked.url}
-                  alt={W.photo}
-                  width={56}
-                  height={56}
-                  decoding="async"
-                />
+                <img src={picked.url} alt={W.photo} width={56} height={56} decoding="async" />
               </AttachmentMedia>
               <AttachmentContent>
                 <AttachmentTitle>{W.photo}</AttachmentTitle>
@@ -290,15 +284,9 @@ export function ProofUploader({ slug, order }: ProofUploaderProps) {
               </AttachmentMedia>
               <AttachmentContent>
                 <AttachmentTitle>
-                  {state === 'compressing'
-                    ? W.compressing
-                    : isRejected
-                      ? W.uploadAgain
-                      : W.upload}
+                  {state === 'compressing' ? W.compressing : isRejected ? W.uploadAgain : W.upload}
                 </AttachmentTitle>
-                <AttachmentDescription>
-                  {isOnline ? W.pickHint : W.offline}
-                </AttachmentDescription>
+                <AttachmentDescription>{isOnline ? W.pickHint : W.offline}</AttachmentDescription>
               </AttachmentContent>
               <AttachmentTrigger
                 id="receipt-upload-proof-button"

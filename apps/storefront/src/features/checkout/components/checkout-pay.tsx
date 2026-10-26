@@ -156,7 +156,9 @@ export function CheckoutPay({
           <div className="flex items-center justify-between px-1 pt-1">
             <span className="text-sm font-semibold">{words.checkout.transferDetails}</span>
             {selectedConfig.sample ? (
-              <Badge variant="outline" size="lg" radius="full">{words.checkout.sampleLabel}</Badge>
+              <Badge variant="outline" size="lg" radius="full">
+                {words.checkout.sampleLabel}
+              </Badge>
             ) : null}
           </div>
 
