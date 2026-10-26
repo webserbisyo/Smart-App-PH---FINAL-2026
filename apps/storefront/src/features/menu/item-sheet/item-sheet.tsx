@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { XIcon } from 'lucide-react';
+import { FlameIcon, SparklesIcon, XIcon } from 'lucide-react';
 import {
   defaultPicks,
   formatPeso,
@@ -31,10 +31,10 @@ import {
   DrawerTitle,
 } from '@smartapp/ui/components/drawer';
 import { Hitbox } from '@smartapp/ui/components/hitbox';
+import { Badge } from '@smartapp/ui/components/reui/badge';
 import { HeartToggle } from '@smartapp/ui/compositions/heart-toggle';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
-import { cn } from '@smartapp/ui/lib/utils';
 import { ADD_LOADING_MS, ItemSheetFooter } from './item-sheet-footer';
 import { ItemSheetGoesWellWith } from './item-sheet-goes-well-with';
 import { ItemSheetGroups } from './item-sheet-groups';
@@ -195,7 +195,7 @@ function ItemSheetContent({
       activePhotoIndex={activePhotoIndex}
       ratio={layout === 'sheet' ? '4:3' : '1:1'}
       sizes={layout === 'sheet' ? '100vw' : '448px'}
-      className={layout === 'sheet' ? 'rounded-t-xl' : 'md:h-full'}
+      className={layout === 'sheet' ? 'rounded-t-xl' : undefined}
       overlay={
         <>
           {layout === 'sheet' ? (
@@ -225,16 +225,41 @@ function ItemSheetContent({
     />
   );
 
-  const details = (
-    <div className="flex flex-col gap-5 px-4 pt-4 pb-6 md:px-5">
-      <div className={cn('flex flex-col gap-1', layout === 'dialog' && 'pr-8')}>
-        <h3 className="text-xl font-bold tracking-tight text-balance">{item.name}</h3>
-        {item.description ? (
-          <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+  const M = words.storefrontShell.menu;
+  // Both labels fit here, unlike the card (decision R29), with the card's icons.
+  const badges =
+    item.featured || item.isNew ? (
+      <div className="flex flex-wrap gap-1.5">
+        {item.featured ? (
+          <Badge variant="warning" size="lg" radius="full" className="gap-1 pr-2 pl-1.5">
+            <FlameIcon aria-hidden="true" strokeWidth={2.5} />
+            {M.badges.bestSeller}
+          </Badge>
         ) : null}
-        <p className="pt-1 text-lg font-bold tabular">{formatPeso(unitTotal)}</p>
+        {item.isNew ? (
+          <Badge variant="default" size="lg" radius="full" className="gap-1 pr-2 pl-1.5">
+            <SparklesIcon aria-hidden="true" strokeWidth={2.5} />
+            {M.badges.new}
+          </Badge>
+        ) : null}
       </div>
+    ) : null;
 
+  const about = (
+    <div className="flex flex-col gap-2">
+      {badges}
+      <h3 className="text-xl font-bold tracking-tight text-balance md:text-2xl">{item.name}</h3>
+      {item.description ? (
+        <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
+          {item.description}
+        </p>
+      ) : null}
+      <p className="pt-1 text-lg font-bold tabular">{formatPeso(unitTotal)}</p>
+    </div>
+  );
+
+  const choices = (
+    <>
       <ItemSheetVariants
         item={item}
         selectedVariant={activeVariant}
@@ -254,15 +279,17 @@ function ItemSheetContent({
       />
 
       <ItemSheetNote value={note} onChange={setNote} />
+    </>
+  );
 
-      <ItemSheetGoesWellWith
-        items={companionsOf(item, catalog)}
-        categories={catalog.categories}
-        optionGroups={catalog.optionGroups}
-        onQuickAdd={handleQuickAddCompanion}
-        onOpenItem={onOpenItem}
-      />
-    </div>
+  const goesWellWith = (
+    <ItemSheetGoesWellWith
+      items={companionsOf(item, catalog)}
+      categories={catalog.categories}
+      optionGroups={catalog.optionGroups}
+      onQuickAdd={handleQuickAddCompanion}
+      onOpenItem={onOpenItem}
+    />
   );
 
   const footer = (
@@ -281,19 +308,35 @@ function ItemSheetContent({
       <>
         <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {photos}
-          {details}
+          <div className="flex flex-col gap-5 px-4 pt-4 pb-6">
+            {about}
+            {choices}
+            {goesWellWith}
+          </div>
         </div>
         {footer}
       </>
     );
   }
 
+  // Desktop (decision R27): the left side is about the item (photo, name, badges, description,
+  // pairings), the right side is making it yours (a small sticky title, choices, Add bar).
   return (
     <div className="grid min-h-0 flex-1 md:grid-cols-2">
-      {photos}
+      <div className="scrollbar-none min-h-0 overflow-y-auto overscroll-contain border-r">
+        {photos}
+        <div className="flex flex-col gap-6 px-5 pt-5 pb-6">
+          {about}
+          {goesWellWith}
+        </div>
+      </div>
       <div className="flex min-h-0 flex-col">
+        <div className="flex min-h-14 items-center gap-3 border-b px-5 py-3 pr-14">
+          <p className="min-w-0 flex-1 truncate font-semibold">{item.name}</p>
+          <p className="shrink-0 font-bold tabular">{formatPeso(unitTotal)}</p>
+        </div>
         <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {details}
+          <div className="flex flex-col gap-5 px-4 pt-4 pb-6 md:px-5">{choices}</div>
         </div>
         {footer}
       </div>
