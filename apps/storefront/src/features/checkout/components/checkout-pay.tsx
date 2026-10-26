@@ -62,7 +62,7 @@ function DetailRow({
       className={`flex min-h-14 items-center justify-between gap-3 rounded-2xl px-3.5 py-2 ${strong ? 'bg-shop-10-soft text-shop-10-soft-foreground' : 'bg-card'}`}
     >
       <div className="flex min-w-0 flex-col">
-        <span className={`text-xs ${strong ? 'opacity-80' : 'text-muted-foreground'}`}>
+        <span className={`text-xs ${strong ? 'font-medium' : 'text-muted-foreground'}`}>
           {label}
         </span>
         <span

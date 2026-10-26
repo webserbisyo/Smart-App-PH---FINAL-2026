@@ -1,254 +1,184 @@
-import { createElement } from 'react';
+import { createElement, type CSSProperties, type ReactNode } from 'react';
 import { ImageResponse } from 'next/og';
-import { formatPeso, words } from '@smartapp/core';
+import { formatPeso, oklchToHex, parseOklch, shopPalette, words } from '@smartapp/core';
 import { getOrderReceiptForServer, getStorefrontForServer } from '@smartapp/data/server';
 import { formatManilaDateTime, formatOrderNumber } from '@/features/receipt/receipt-rules';
+import { paymentChip } from '@/features/receipt/receipt-look';
 
 interface RouteProps {
   params: Promise<{ shop: string; token: string }>;
 }
 
+// The image renderer takes plain colours; the palette is OKLCH (as the manifest route does).
+function hex(value: string): string {
+  const color = parseOklch(value);
+  return color ? oklchToHex(color) : value;
+}
+
+function el(type: string, style: CSSProperties, ...children: ReactNode[]) {
+  return createElement(type, { style }, ...children);
+}
+
+/**
+ * The receipt as a picture to save or share (T10). Words come from words.ts and colours from the shop's own
+ * palette on paper (always the light surface, so it prints), never fixed greys (decision R44).
+ */
 export async function GET(_request: Request, { params }: RouteProps): Promise<Response> {
   const { shop: slug, token } = await params;
   const storefront = getStorefrontForServer(slug);
   const order = await getOrderReceiptForServer(slug, token);
 
   if (!storefront || !order) {
-    return new Response('Order not found', { status: 404 });
+    return new Response(null, { status: 404 });
   }
 
-  const orderNumStr = formatOrderNumber(order.orderNo);
-  const dateStr = formatManilaDateTime(order.placedAt);
-  const shopName = storefront.storefront.info.name;
+  const { info, look } = storefront.storefront;
+  const p = shopPalette(look.brandColor, 'light');
+  const paper = hex(p.shop30);
+  const ink = hex(p.foreground);
+  const brand = hex(p.shop10);
+  const onBrand = hex(p.shop10Foreground);
+  const brandText = hex(p.shop10Text);
+  const rule = hex(p.shop10Soft);
+  const T = words.checkout.totals;
 
-  const itemElements = order.lines.map((line, idx) =>
-    createElement(
+  const row = (label: string, value: string, style: CSSProperties = {}) =>
+    el(
+      'div',
+      { display: 'flex', justifyContent: 'space-between', fontSize: 24, marginBottom: 8, ...style },
+      el('span', {}, label),
+      el('span', {}, value),
+    );
+
+  const lines = order.lines.map((line) =>
+    el(
       'div',
       {
-        key: `${line.itemId}-${idx}`,
-        style: {
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          paddingTop: '8px',
-          paddingBottom: '8px',
-          borderBottomWidth: '1px',
-          borderBottomColor: '#e5e7eb',
-          fontSize: '24px',
-        },
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        paddingTop: 10,
+        paddingBottom: 10,
+        borderBottom: `1px solid ${rule}`,
+        fontSize: 24,
       },
-      createElement(
+      el(
         'div',
-        { style: { display: 'flex', flexDirection: 'column', flex: 1 } },
-        createElement(
-          'span',
-          { style: { fontWeight: 'bold', color: '#111827' } },
-          `${line.qty}x ${line.name}`,
-        ),
-        line.variantLabel
-          ? createElement(
-              'span',
-              { style: { fontSize: '18px', color: '#6b7280' } },
-              line.variantLabel,
-            )
-          : null,
+        { display: 'flex', flexDirection: 'column', flex: 1 },
+        el('span', { fontWeight: 700 }, `${line.qty}× ${line.name}`),
+        line.variantLabel ? el('span', { fontSize: 18, opacity: 0.7 }, line.variantLabel) : null,
       ),
-      createElement(
-        'span',
-        { style: { fontWeight: 'bold', color: '#111827', marginLeft: '16px' } },
-        formatPeso(line.lineTotal),
-      ),
+      el('span', { fontWeight: 700, marginLeft: 16 }, formatPeso(line.lineTotal)),
     ),
   );
 
-  const receiptElement = createElement(
+  const receipt = el(
     'div',
     {
-      style: {
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      height: '100%',
+      backgroundColor: paper,
+      color: ink,
+      fontFamily: 'sans-serif',
+    },
+    // The shop's band: its brand colour, name and address.
+    el(
+      'div',
+      {
         display: 'flex',
         flexDirection: 'column',
-        width: '100%',
-        height: '100%',
-        backgroundColor: '#ffffff',
-        padding: '64px',
-        fontFamily: 'sans-serif',
+        alignItems: 'center',
+        backgroundColor: brand,
+        color: onBrand,
+        padding: '48px 64px 40px',
       },
-    },
-    // Header
-    createElement(
+      el('span', { fontSize: 48, fontWeight: 700 }, info.name),
+      info.contact.address
+        ? el('span', { fontSize: 20, marginTop: 8, opacity: 0.85 }, info.contact.address)
+        : null,
+    ),
+    el(
       'div',
-      {
-        style: {
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          borderBottomWidth: '2px',
-          borderBottomColor: '#111827',
-          paddingBottom: '24px',
-          marginBottom: '24px',
-        },
-      },
-      createElement(
-        'h1',
-        { style: { fontSize: '48px', fontWeight: 'bold', color: '#111827', margin: 0 } },
-        shopName,
-      ),
-      createElement(
-        'p',
-        { style: { fontSize: '20px', color: '#4b5563', marginTop: '8px', margin: 0 } },
-        storefront.storefront.info.contact.address || 'Smart App PH Storefront',
-      ),
-      createElement(
+      { display: 'flex', flexDirection: 'column', flex: 1, padding: '40px 64px 48px' },
+      el(
         'div',
         {
-          style: {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            marginTop: '32px',
-          },
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          paddingBottom: 24,
+          marginBottom: 16,
+          borderBottom: `2px solid ${ink}`,
         },
-        createElement(
+        el(
           'div',
-          { style: { display: 'flex', flexDirection: 'column' } },
-          createElement(
+          { display: 'flex', flexDirection: 'column' },
+          el('span', { fontSize: 20, opacity: 0.7 }, words.receipt.orderLabel),
+          el('span', { fontSize: 56, fontWeight: 800 }, formatOrderNumber(order.orderNo)),
+          el(
             'span',
-            { style: { fontSize: '42px', fontWeight: 'bold', color: '#111827' } },
-            orderNumStr,
-          ),
-          createElement(
-            'span',
-            { style: { fontSize: '20px', color: '#6b7280' } },
-            `${order.type.toUpperCase()} · ${order.paymentMethod.toUpperCase()}`,
+            { fontSize: 20, opacity: 0.7 },
+            `${words.shop.orderType[order.type]} · ${words.shop.paymentMethod[order.paymentMethod]}`,
           ),
         ),
-        createElement(
+        el(
           'div',
-          { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end' } },
-          createElement('span', { style: { fontSize: '20px', color: '#6b7280' } }, dateStr),
-          createElement(
+          { display: 'flex', flexDirection: 'column', alignItems: 'flex-end' },
+          el('span', { fontSize: 20, opacity: 0.7 }, formatManilaDateTime(order.placedAt)),
+          el(
             'span',
-            {
-              style: {
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: order.paymentStatus === 'paid' ? '#16a34a' : '#d97706',
-                marginTop: '4px',
-              },
-            },
-            order.paymentStatus.toUpperCase(),
+            { fontSize: 22, fontWeight: 700, color: brandText, marginTop: 4 },
+            paymentChip(order).label,
           ),
         ),
       ),
-    ),
-    // Items list
-    createElement(
-      'div',
-      { style: { display: 'flex', flexDirection: 'column', flex: 1 } },
-      ...itemElements,
-    ),
-    // Totals section
-    createElement(
-      'div',
-      {
-        style: {
-          display: 'flex',
-          flexDirection: 'column',
-          borderTopWidth: '2px',
-          borderTopColor: '#111827',
-          paddingTop: '20px',
-          marginTop: '20px',
-        },
-      },
-      createElement(
+      el('div', { display: 'flex', flexDirection: 'column', flex: 1 }, ...lines),
+      el(
         'div',
         {
-          style: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            fontSize: '24px',
-            color: '#4b5563',
-            marginBottom: '8px',
-          },
-        },
-        createElement('span', null, 'Subtotal'),
-        createElement('span', null, formatPeso(order.totals.subtotal)),
-      ),
-      order.totals.discount > 0
-        ? createElement(
-            'div',
-            {
-              style: {
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '24px',
-                color: '#16a34a',
-                marginBottom: '8px',
-              },
-            },
-            createElement('span', null, 'Discount'),
-            createElement('span', null, `-${formatPeso(order.totals.discount)}`),
-          )
-        : null,
-      order.totals.deliveryFee > 0
-        ? createElement(
-            'div',
-            {
-              style: {
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '24px',
-                color: '#4b5563',
-                marginBottom: '8px',
-              },
-            },
-            createElement('span', null, 'Delivery fee'),
-            createElement('span', null, formatPeso(order.totals.deliveryFee)),
-          )
-        : null,
-      createElement(
-        'div',
-        {
-          style: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            fontSize: '36px',
-            fontWeight: 'bold',
-            color: '#111827',
-            borderTopWidth: '1px',
-            borderTopColor: '#e5e7eb',
-            paddingTop: '12px',
-            marginTop: '8px',
-          },
-        },
-        createElement('span', null, 'Total'),
-        createElement('span', null, formatPeso(order.totals.total)),
-      ),
-    ),
-    // Footer line
-    createElement(
-      'div',
-      {
-        style: {
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          marginTop: '32px',
-          paddingTop: '16px',
-          borderTopWidth: '1px',
-          borderTopColor: '#e5e7eb',
+          borderTop: `2px solid ${ink}`,
+          paddingTop: 20,
+          marginTop: 20,
         },
-      },
-      createElement(
-        'span',
-        { style: { fontSize: '18px', fontWeight: 'bold', color: '#6b7280' } },
+        row(T.subtotal, formatPeso(order.totals.subtotal), { opacity: 0.8 }),
+        order.totals.discount > 0
+          ? row(T.discount, `−${formatPeso(order.totals.discount)}`, { color: brandText })
+          : null,
+        order.totals.deliveryFee > 0
+          ? row(T.deliveryFee, formatPeso(order.totals.deliveryFee), { opacity: 0.8 })
+          : null,
+        row(T.total, formatPeso(order.totals.total), {
+          fontSize: 36,
+          fontWeight: 800,
+          color: brandText,
+          borderTop: `1px solid ${rule}`,
+          paddingTop: 12,
+          marginTop: 8,
+          marginBottom: 0,
+        }),
+      ),
+      el(
+        'div',
+        {
+          display: 'flex',
+          justifyContent: 'center',
+          marginTop: 32,
+          paddingTop: 16,
+          borderTop: `1px solid ${rule}`,
+          fontSize: 18,
+          fontWeight: 700,
+          opacity: 0.7,
+        },
         words.shop.orderSlip,
       ),
     ),
   );
 
-  return new ImageResponse(receiptElement, {
+  return new ImageResponse(receipt, {
     width: 1080,
     height: 1400,
     headers: {

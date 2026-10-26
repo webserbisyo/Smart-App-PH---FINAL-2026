@@ -25,10 +25,17 @@ export interface ResponsiveDialogProps {
   scroll?: boolean | undefined;
 }
 
-/** The pinned bottom row of a scrolling ResponsiveDialog (Save), inside the form it submits. */
+/**
+ * The pinned bottom row of a scrolling ResponsiveDialog (Save), inside the form it submits. The body drops
+ * its bottom padding when it holds one, so the row sits flush on the sheet's edge with nothing showing
+ * under it; the sheet itself keeps the phone's safe area.
+ */
 export function ResponsiveDialogFooter({ children }: { children: ReactNode }) {
   return (
-    <div className="sticky bottom-0 z-10 -mx-4 mt-6 -mb-6 border-t bg-popover px-4 py-3 pb-safe sm:-mx-6 sm:px-6">
+    <div
+      data-slot="responsive-dialog-footer"
+      className="sticky bottom-0 z-10 -mx-4 mt-6 border-t bg-popover px-4 py-3 sm:-mx-6 sm:px-6"
+    >
       {children}
     </div>
   );
@@ -47,7 +54,7 @@ export function ResponsiveDialog({
 
   if (scroll) {
     const body = (
-      <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-6 sm:px-6">
+      <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-6 has-data-[slot=responsive-dialog-footer]:pb-0 sm:px-6">
         {children}
       </div>
     );

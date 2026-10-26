@@ -369,7 +369,8 @@ export function CheckoutForm({ now }: { now: string }) {
     openedRef.current = true;
     basket.clear();
     if (!rememberMe) getDeviceStorage().checkoutDraft.remove(slug);
-    router.push(`/${slug}/o/${token}?new=1`);
+    // Replace, not push: back from the receipt goes to the shop, never to a spent checkout (decision R45).
+    router.replace(`/${slug}/o/${token}?new=1`);
   }
 
   function skipPrinting() {

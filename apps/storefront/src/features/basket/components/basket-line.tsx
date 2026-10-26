@@ -106,7 +106,10 @@ export function BasketLine({ row, basket, onChooseAgain }: BasketLineProps) {
               >
                 <NumberFieldGroup>
                   <NumberFieldDecrement />
-                  <NumberFieldInput aria-label={words.basket.quantity(row.name)} />
+                  <NumberFieldInput
+                    aria-label={words.basket.quantity(row.name)}
+                    className="text-base"
+                  />
                   <NumberFieldIncrement />
                 </NumberFieldGroup>
               </NumberField>

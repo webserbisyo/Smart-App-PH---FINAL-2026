@@ -64,7 +64,7 @@ export function ItemSheetNote({ value, onChange }: ItemSheetNoteProps) {
         onChange={handleChange}
         placeholder={words.storefrontShell.menu.itemSheet.notesPlaceholder}
         rows={2}
-        className="resize-none overflow-hidden text-sm"
+        className="resize-none overflow-hidden"
       />
     </Field>
   );

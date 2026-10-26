@@ -143,13 +143,15 @@ export default function BannerCarouselSlides({
       </Carousel>
 
       <div className="flex min-h-7 items-center justify-center gap-3">
-        <div className="flex items-center gap-2">
+        {/* Each dot sits in a 24 px button (WCAG target size, so taps never land on the next dot) and a
+            44 px hit area; the dot itself stays small (decision R44). */}
+        <div className="flex items-center">
           {slides.map((slide, index) => {
             const active = selected === index;
             return (
               <Hitbox
                 key={`dot-${index}-${slide.alt}`}
-                size="18px"
+                size="10px"
                 radius="full"
                 render={
                   <button
@@ -157,20 +159,24 @@ export default function BannerCarouselSlides({
                     aria-label={labels.showBanner(index + 1)}
                     aria-current={active ? 'true' : undefined}
                     onClick={() => api?.scrollTo(index)}
-                    className={cn(
-                      'h-2 w-2 overflow-hidden rounded-full bg-muted-foreground/30 transition-[width,background-color] duration-base ease-standard',
-                      active && 'w-6 bg-primary/25',
-                    )}
+                    className="flex h-6 min-w-6 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    {active ? (
-                      <span
-                        key={`${index}-${timerRun}`}
-                        className={cn(
-                          'block h-full rounded-full bg-primary',
-                          autoplays && 'banner-fill',
-                        )}
-                      />
-                    ) : null}
+                    <span
+                      className={cn(
+                        'block h-2 w-2 overflow-hidden rounded-full bg-muted-foreground/30 transition-[width,background-color] duration-base ease-standard',
+                        active && 'w-6 bg-primary/25',
+                      )}
+                    >
+                      {active ? (
+                        <span
+                          key={`${index}-${timerRun}`}
+                          className={cn(
+                            'block h-full rounded-full bg-primary',
+                            autoplays && 'banner-fill',
+                          )}
+                        />
+                      ) : null}
+                    </span>
                   </button>
                 }
               />

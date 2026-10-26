@@ -621,6 +621,7 @@ export const words = {
       shareText: (orderNo: string) => `Receipt for order ${orderNo}`,
       linkCopied: 'Link copied',
       needsInternet: 'Needs internet',
+      imageFailed: "Couldn't make the receipt image. Try again, or take a screenshot.",
     },
     notify: {
       title: 'Notify me',

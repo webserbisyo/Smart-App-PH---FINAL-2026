@@ -72,23 +72,26 @@ function DetailRow({
   copyLabel?: string;
   strong?: boolean;
 }) {
+  // A list row, not dt/dd: the Copy button can't live inside a definition list (decision R44).
   return (
-    <div
+    <li
       className={cn(
         'flex min-h-14 items-center justify-between gap-3 rounded-2xl px-3.5 py-2',
         strong ? 'bg-shop-10-soft text-shop-10-soft-foreground' : 'bg-muted/60',
       )}
     >
       <div className="flex min-w-0 flex-col">
-        <dt className={cn('text-xs', strong ? 'opacity-80' : 'text-muted-foreground')}>{label}</dt>
-        <dd
+        <span className={cn('text-xs', strong ? 'font-medium' : 'text-muted-foreground')}>
+          {label}
+        </span>
+        <span
           className={cn(
             'font-semibold break-words tabular',
             strong ? 'text-lg font-extrabold' : 'text-base',
           )}
         >
           {value}
-        </dd>
+        </span>
       </div>
       {copy && copyLabel ? (
         <CopyButton
@@ -98,7 +101,7 @@ function DetailRow({
           className="size-11 shrink-0 rounded-full"
         />
       ) : null}
-    </div>
+    </li>
   );
 }
 
@@ -116,7 +119,7 @@ function PaymentDetails({
       <h3 className="text-sm font-semibold">
         {words.receipt.pay.method(words.shop.paymentMethod[payment.method])}
       </h3>
-      <dl className="flex flex-col gap-2">
+      <ul className="flex flex-col gap-2">
         {payment.accountName ? (
           <DetailRow label={words.checkout.accountName} value={payment.accountName} />
         ) : null}
@@ -135,7 +138,7 @@ function PaymentDetails({
           copyLabel={words.receipt.pay.copyAmount}
           strong
         />
-      </dl>
+      </ul>
       {payment.qr ? (
         <figure className="flex flex-col items-center gap-2 pt-1">
           <ShopImage

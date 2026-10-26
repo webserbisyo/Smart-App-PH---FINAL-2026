@@ -548,7 +548,9 @@ test.describe('basket (T08)', () => {
         }),
       );
     });
-    // Sunday noon, shop open: the result must not depend on the real clock.
+    // Sunday noon, shop open: the result must not depend on the real clock. The menu comes first, so the
+    // history is menu, checkout.
+    await page.goto(urlFor('dev', '/kanto-smash/menu?now=2026-10-25T12:00:00%2B08:00'));
     await page.goto(urlFor('dev', '/kanto-smash/checkout?now=2026-10-25T12:00:00%2B08:00'));
 
     // Switch to walk-in
@@ -568,6 +570,10 @@ test.describe('basket (T08)', () => {
 
     // Verify receipt navigation
     await expect(page).toHaveURL(/\/kanto-smash\/o\//, { timeout: 30_000 });
+
+    // The receipt replaced checkout, so back never lands on a spent checkout (decision R45).
+    await page.goBack();
+    await expect(page).toHaveURL(/\/kanto-smash\/menu/, { timeout: 10_000 });
     expect(problems).toEqual([]);
   });
 
@@ -690,6 +696,57 @@ test.describe('basket (T08)', () => {
     await expect(placeBtn).toBeDisabled();
     await expect(placeBtn).toContainText('offline');
     expect(problems).toEqual([]);
+  });
+});
+
+// iPhone zooms the page into any field under 16 px (decision R43), so every text field on a phone stays at
+// 16 px or more, whatever class a screen adds to it.
+test.describe('fields never zoom on a phone (R43)', () => {
+  test('search, item note, checkout, join and proof fields are 16 px or more', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'Phone only: from 768 px a field may be 14 px');
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
+    const paths = [
+      '/kanto-smash/menu?item=ks-classic-smash',
+      '/kanto-smash/checkout',
+      '/kanto-smash/join',
+      '/kape-juan/o/demo-placed-transfer',
+    ];
+    for (const path of paths) {
+      await page.goto(urlFor('prod', path));
+      await page.waitForLoadState('networkidle');
+      const small = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('input, textarea, select'))
+          .filter((field) => {
+            const type = field.getAttribute('type') ?? 'text';
+            if (['checkbox', 'radio', 'range', 'file', 'hidden'].includes(type)) return false;
+            // A library's hidden native twin (aria-hidden, never focused) is not a field anyone taps.
+            if (field.getAttribute('aria-hidden') === 'true') return false;
+            const box = field.getBoundingClientRect();
+            return box.width > 0 && parseFloat(getComputedStyle(field).fontSize) < 16;
+          })
+          .map((field) => `${field.id || field.tagName}: ${getComputedStyle(field).fontSize}`),
+      );
+      expect(small, path).toEqual([]);
+    }
   });
 });
 

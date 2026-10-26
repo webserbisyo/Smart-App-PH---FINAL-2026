@@ -20,7 +20,12 @@ export function useShopNav(): NavItem[] {
     label,
     icon,
     link: <Link href={href} />,
-    active: href === base ? pathname === base : pathname.startsWith(href),
+    active:
+      href === base
+        ? pathname === base
+        : pathname.startsWith(href) ||
+          // An order's own page lights up Orders (decision R45).
+          (id === 'orders' && pathname.startsWith(`${base}/o/`)),
   });
   return [
     entry('home', words.nav.home, <HouseIcon />, base),
@@ -32,11 +37,14 @@ export function useShopNav(): NavItem[] {
   ];
 }
 
-/** Checkout, receipt and open item sheet have their own actions, so the dock steps aside. */
+/**
+ * Checkout and an open item sheet have their own bottom actions, so the dock steps aside. An order's page
+ * keeps it, so there is always a way back to the shop (decision R45).
+ */
 export function useDockHidden(): boolean {
   const { slug } = useShop();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const hasItem = Boolean(searchParams?.get('item'));
-  return pathname.startsWith(`/${slug}/checkout`) || pathname.startsWith(`/${slug}/o/`) || hasItem;
+  return pathname.startsWith(`/${slug}/checkout`) || hasItem;
 }

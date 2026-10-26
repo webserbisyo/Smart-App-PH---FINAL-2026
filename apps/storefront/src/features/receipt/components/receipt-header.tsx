@@ -32,6 +32,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { CopyButton } from '@/features/checkout/components/copy-button';
+import { DrawnCheckIcon } from '@/features/checkout/components/drawn-check';
 import {
   formatManilaDateTime,
   formatManilaTime,
@@ -60,15 +61,7 @@ function DrawnCheck({ className }: { className?: string }) {
         className,
       )}
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="size-4">
-        <path
-          d="M5 12.5l4.5 4.5L19 7.5"
-          pathLength={1}
-          className="draw-check"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <DrawnCheckIcon />
     </span>
   );
 }
@@ -78,22 +71,7 @@ function Chip({ chip, check = false }: { chip: ReceiptChip; check?: boolean }) {
   return (
     <Badge variant={chip.tone} size="xl" radius="full" className="gap-1.5 px-2.5">
       {check ? (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={3}
-          aria-hidden="true"
-          className="size-3.5"
-        >
-          <path
-            d="M5 12.5l4.5 4.5L19 7.5"
-            pathLength={1}
-            className="draw-check"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <DrawnCheckIcon className="size-3.5" />
       ) : (
         <Icon aria-hidden="true" className="size-3.5" />
       )}

@@ -31,6 +31,9 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] T13 Install as an app (PR #18)
 - [x] T14 Privacy and system pages (PR #18; the Lighthouse table is still to fill by hand in Chrome DevTools)
 - [x] R Storefront polish round 2: avatar picker and photo crop, Be a Suki, banners with words, receipt ticket, printer, proof preview, order chat, toasts, motion (decisions R22 to R42; pushed to `main`)
+- [x] R Storefront round 3, batch 1: the founder's bug list (zoom, copy check, Save image, pinned Save, dock and back on the order page) and audit fixes (decisions R43 to R45)
+- [ ] R Storefront round 3, batch 2: vertical order steps with icons, pull to refresh (decision R46)
+- [ ] R Storefront round 3, batch 3: JS budget check in CI, saved copy first in the app, splash in the shop's colour, demo hours (decision R47)
 
 ## Phase 3: Dashboard screens (mock)
 

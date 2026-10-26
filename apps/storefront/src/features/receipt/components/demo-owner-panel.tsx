@@ -74,7 +74,8 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
   return (
     <div
       id="demo-owner-panel"
-      className="fixed right-4 bottom-4 z-40 max-w-sm rounded-xl border bg-card/95 p-3 text-xs shadow-lg backdrop-blur-md"
+      // In the page flow, not floating: the dock now shows on an order's page (decision R45).
+      className="rounded-xl border border-dashed bg-card p-3 text-xs"
     >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger

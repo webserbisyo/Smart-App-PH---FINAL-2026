@@ -23,10 +23,10 @@ import { Label } from '@smartapp/ui/components/label';
 import { Rating, RatingItem } from '@smartapp/ui/components/rating';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
+import { notify } from '@smartapp/ui/compositions/notify';
 import {
   Bell,
   BellOff,
-  Check,
   Copy,
   Download,
   ExternalLink,
@@ -288,18 +288,13 @@ export function ReceiptActions({ slug, order, storefront, receiptUrl }: ReceiptA
   const basket = useBasket(slug);
   const { setBasketOpen } = useShop();
   const isOnline = useOnline();
-  const [copied, setCopied] = useState<'details' | 'link' | null>(null);
+  const [savingImage, setSavingImage] = useState(false);
   const W = words.receipt.actions;
 
   const orderNo = formatOrderNumber(order.orderNo);
   const isCompleted = order.status === 'completed';
   const cancelled = isOrderCancelled(order.status);
   const stampsOn = storefront.stampCard.status === 'on';
-
-  function flashCopied(kind: 'details' | 'link') {
-    setCopied(kind);
-    setTimeout(() => setCopied(null), 3000);
-  }
 
   async function handleCopyDetails() {
     const text = buildMessengerOrderText({
@@ -310,17 +305,53 @@ export function ReceiptActions({ slug, order, storefront, receiptUrl }: ReceiptA
     });
     try {
       await navigator.clipboard.writeText(text);
-      flashCopied('details');
+      // The menu closes on tap, so the toast is the feedback.
+      notify({ title: W.copied, tone: 'success' });
     } catch {
       // Copy is not allowed here; Share still works.
     }
   }
 
-  function handleSaveImage() {
-    const link = document.createElement('a');
-    link.href = `/${slug}/o/${order.token}/image`;
-    link.download = `receipt-${order.orderNo}.png`;
-    link.click();
+  // The image is fetched and checked first: an error answer is text, and handing it over as a file left
+  // customers on a "receipt.png.txt" page with no way back in the installed app (decision R44). Phones
+  // get the share sheet (Save Image puts it in Photos); computers download it. Nothing navigates.
+  async function handleSaveImage() {
+    if (savingImage) return;
+    setSavingImage(true);
+    const name = `receipt-${order.orderNo}.png`;
+    try {
+      const response = await fetch(`/${slug}/o/${order.token}/image`, { cache: 'no-store' });
+      const blob = await response.blob();
+      if (!response.ok || !blob.type.startsWith('image/')) throw new Error('Not an image');
+      const file = new File([blob], name, { type: blob.type });
+      const phone = window.matchMedia('(pointer: coarse)').matches;
+      if (
+        phone &&
+        typeof navigator.canShare === 'function' &&
+        navigator.canShare({ files: [file] })
+      ) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: W.shareTitle(storefront.info.name, orderNo),
+          });
+          return;
+        } catch (error) {
+          // Closed by the customer: done. Refused (the tap was too long ago): download instead.
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+        }
+      }
+      const href = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = href;
+      link.download = name;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(href), 10_000);
+    } catch {
+      notify({ title: W.imageFailed, tone: 'error' });
+    } finally {
+      setSavingImage(false);
+    }
   }
 
   async function handleShare() {
@@ -338,7 +369,7 @@ export function ReceiptActions({ slug, order, storefront, receiptUrl }: ReceiptA
     }
     try {
       await navigator.clipboard.writeText(receiptUrl);
-      flashCopied('link');
+      notify({ title: W.linkCopied, tone: 'success' });
     } catch {
       // Nothing else to try.
     }
@@ -387,14 +418,14 @@ export function ReceiptActions({ slug, order, storefront, receiptUrl }: ReceiptA
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuItem onClick={handleCopyDetails} className={MENU_ITEM}>
-              {copied === 'details' ? (
-                <Check aria-hidden="true" className="text-success-text" />
-              ) : (
-                <Copy aria-hidden="true" />
-              )}
-              {copied === 'details' ? W.copied : W.copyDetails}
+              <Copy aria-hidden="true" />
+              {W.copyDetails}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleSaveImage} disabled={!isOnline} className={MENU_ITEM}>
+            <DropdownMenuItem
+              onClick={() => void handleSaveImage()}
+              disabled={!isOnline || savingImage}
+              className={MENU_ITEM}
+            >
               <Download aria-hidden="true" />
               <span className="flex-1">{W.saveImage}</span>
               {!isOnline ? (
@@ -406,12 +437,8 @@ export function ReceiptActions({ slug, order, storefront, receiptUrl }: ReceiptA
               {W.print}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleShare} className={MENU_ITEM}>
-              {copied === 'link' ? (
-                <Check aria-hidden="true" className="text-success-text" />
-              ) : (
-                <Share2 aria-hidden="true" />
-              )}
-              {copied === 'link' ? W.linkCopied : W.share}
+              <Share2 aria-hidden="true" />
+              {W.share}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

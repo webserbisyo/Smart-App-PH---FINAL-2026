@@ -52,7 +52,7 @@ export function ItemSheetFooter({
         >
           <NumberFieldGroup>
             <NumberFieldDecrement />
-            <NumberFieldInput className="font-semibold" />
+            <NumberFieldInput className="text-base font-semibold" />
             <NumberFieldIncrement />
           </NumberFieldGroup>
         </NumberField>
