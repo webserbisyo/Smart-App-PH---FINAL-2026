@@ -31,6 +31,7 @@ import {
   DrawerTitle,
 } from '@smartapp/ui/components/drawer';
 import { Hitbox } from '@smartapp/ui/components/hitbox';
+import { ProgressiveBlur } from '@smartapp/ui/components/progressive-blur';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import { HeartToggle } from '@smartapp/ui/compositions/heart-toggle';
 import { notify } from '@smartapp/ui/compositions/notify';
@@ -292,6 +293,9 @@ function ItemSheetContent({
     />
   );
 
+  // Choices soften as they scroll under the Add bar (Magic UI Progressive Blur, decision R38).
+  const scrollEdge = <ProgressiveBlur position="bottom" height="2.5rem" />;
+
   const footer = (
     <ItemSheetFooter
       qty={qty}
@@ -306,13 +310,16 @@ function ItemSheetContent({
   if (layout === 'sheet') {
     return (
       <>
-        <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {photos}
-          <div className="flex flex-col gap-5 px-4 pt-4 pb-6">
-            {about}
-            {choices}
-            {goesWellWith}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            {photos}
+            <div className="flex flex-col gap-5 px-4 pt-4 pb-10">
+              {about}
+              {choices}
+              {goesWellWith}
+            </div>
           </div>
+          {scrollEdge}
         </div>
         {footer}
       </>
@@ -335,8 +342,11 @@ function ItemSheetContent({
           <p className="min-w-0 flex-1 truncate font-semibold">{item.name}</p>
           <p className="shrink-0 font-bold tabular">{formatPeso(unitTotal)}</p>
         </div>
-        <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="flex flex-col gap-5 px-4 pt-4 pb-6 md:px-5">{choices}</div>
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div className="flex flex-col gap-5 px-4 pt-4 pb-10 md:px-5">{choices}</div>
+          </div>
+          {scrollEdge}
         </div>
         {footer}
       </div>

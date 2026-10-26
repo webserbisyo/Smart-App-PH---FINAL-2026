@@ -1,8 +1,10 @@
 import { membersPreviewAvatars, words } from '@smartapp/core';
 import { Avatar, AvatarImage } from '@smartapp/ui/components/avatar';
 import { AvatarGroup } from '@smartapp/ui/components/avatar-group';
+import { CountUp } from '@smartapp/ui/compositions/count-up';
 
-// Members count with default faces (DiceUI avatar group, decision R11), never made-up initials.
+// Members count with default faces (DiceUI avatar group, decision R11), never made-up initials. The
+// number counts up once (Number Ticker, loaded lazily; decision R38).
 export function MembersPill({ slug, count }: { slug: string; count: number }) {
   if (count <= 0) return null;
   const faces = membersPreviewAvatars(slug, Math.min(count, 4));
@@ -16,7 +18,10 @@ export function MembersPill({ slug, count }: { slug: string; count: number }) {
         ))}
       </AvatarGroup>
       <span className="text-sm font-semibold">
-        {words.storefrontShell.home.membersCount(count)}
+        <span className="sr-only">{words.storefrontShell.home.membersCount(count)}</span>
+        <span aria-hidden="true">
+          <CountUp value={count} /> {words.storefrontShell.home.membersWord}
+        </span>
       </span>
     </div>
   );

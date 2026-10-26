@@ -159,6 +159,8 @@ export const words = {
       getDirections: 'Get directions',
       address: 'Address',
       membersCount: (count: number) => `${count.toLocaleString('en-PH')} Suki members`,
+      // After the number that counts up (decision R38).
+      membersWord: 'Suki members',
       footerPoweredBy: 'Powered by Smart App PH',
       privacy: 'Privacy',
       quickAdd: 'Add to basket',

@@ -9,7 +9,13 @@ import {
   type OrderReceipt,
   type PaymentInstructions,
 } from '@smartapp/core';
-import { Progress } from '@smartapp/ui/components/progress';
+import {
+  CircularProgress,
+  CircularProgressIndicator,
+  CircularProgressRange,
+  CircularProgressTrack,
+  CircularProgressValueText,
+} from '@smartapp/ui/components/circular-progress';
 import { ShopImage } from '@smartapp/ui/compositions/shop-image';
 import { cn } from '@smartapp/ui/lib/utils';
 import { CopyButton } from '@/features/checkout/components/copy-button';
@@ -149,7 +155,7 @@ function PaymentDetails({
   );
 }
 
-/** Pay within 25:00 (c-alert-7 + c-progress-2 look) and the shop's details to pay, shown once. */
+/** Pay within 25:00 as a ring that empties, and the shop's details to pay, shown once. */
 export function PayCountdown({ order, shopName }: PayCountdownProps) {
   const seconds = useSyncExternalStore(subscribeTimer, getTimerSnapshot, getServerTimerSnapshot);
 
@@ -164,31 +170,45 @@ export function PayCountdown({ order, shopName }: PayCountdownProps) {
 
   return (
     <div id="receipt-pay-countdown" className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="text-base font-semibold">{expired ? W.timeOver : W.title}</h2>
           <p className="text-sm text-pretty text-muted-foreground">
             {expired ? W.timeOverText : W.keepOrder}
           </p>
         </div>
-        <span
-          role="timer"
-          aria-label={countdown ? W.within(countdown.formatted) : W.title}
-          className={cn(
-            'shrink-0 rounded-full px-3 py-1 text-lg font-bold tabular',
-            expired
-              ? 'bg-destructive-soft text-destructive-soft-foreground'
-              : 'bg-warning-soft text-warning-soft-foreground',
-          )}
+        {/* The time left as a ring that empties (DiceUI Circular Progress, decision R38). */}
+        <CircularProgress
+          value={countdown?.progressPercent ?? 100}
+          max={100}
+          size={76}
+          thickness={6}
+          getValueText={() => (countdown ? W.within(countdown.formatted) : W.title)}
+          aria-label={W.title}
+          className="shrink-0"
         >
-          {countdown?.formatted ?? '--:--'}
-        </span>
+          <CircularProgressIndicator>
+            <CircularProgressTrack
+              className={expired ? 'text-destructive-soft' : 'text-warning-soft'}
+            />
+            <CircularProgressRange
+              className={cn(
+                'duration-slow ease-linear',
+                expired ? 'text-destructive' : 'text-warning',
+              )}
+            />
+          </CircularProgressIndicator>
+          <CircularProgressValueText
+            aria-hidden="true"
+            className={cn(
+              'text-base font-bold tabular',
+              expired ? 'text-destructive-text' : 'text-foreground',
+            )}
+          >
+            {countdown?.formatted ?? '--:--'}
+          </CircularProgressValueText>
+        </CircularProgress>
       </div>
-      <Progress
-        value={countdown?.progressPercent ?? 100}
-        aria-label={W.title}
-        className="progress-thin"
-      />
       {/* Read out at 10, 5 and 1 minute only. */}
       <p aria-live="assertive" className="sr-only">
         {countdown?.shouldAnnounce ? W.within(countdown.formatted) : ''}
