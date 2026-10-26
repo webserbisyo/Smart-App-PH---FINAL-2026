@@ -164,6 +164,7 @@ Five demo shops are used for mock data, screenshots and the seed: Kanto Smash Bu
 ```
 pnpm install
 pnpm dev        # storefront http://localhost:3000, dashboard http://localhost:5173, api http://localhost:4000
+# On a phone on the same Wi-Fi, use the Mac's address instead of localhost (System Settings > Wi-Fi > Details), e.g. http://192.168.1.5:3000/kanto-smash
 pnpm check      # typecheck, lint, test
 ```
 

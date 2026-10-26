@@ -7,6 +7,8 @@ export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
     port: 5173,
+    // Also listen on the Wi-Fi address, so a phone on the same network can open it.
+    host: true,
   },
   define: {
     'import.meta.env.VITE_SHOW_KIT': JSON.stringify(process.env.VITE_SHOW_KIT ?? 'false'),
