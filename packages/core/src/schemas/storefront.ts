@@ -11,6 +11,7 @@ import {
 } from './common.js';
 import {
   AnnouncementToneEnum,
+  BannerLinkKindEnum,
   OrderTypeEnum,
   PaymentMethodEnum,
   ShopSurfaceEnum,
@@ -43,9 +44,20 @@ export const ShopInfoSchema = z.object({
 });
 export type ShopInfo = z.infer<typeof ShopInfoSchema>;
 
+export const BannerLinkSchema = z.object({
+  kind: BannerLinkKindEnum,
+  // The item or category id; null for Rewards.
+  targetId: IdSchema.nullable(),
+});
+export type BannerLink = z.infer<typeof BannerLinkSchema>;
+
+// A photo, with optional words and one in-shop button over it (decision R42). Photo-only banners stay valid.
 export const BannerSchema = z.object({
   ref: MediaRefSchema,
   alt: z.string().min(1).max(120),
+  title: z.string().min(1).max(40).optional(),
+  description: z.string().min(1).max(90).optional(),
+  link: BannerLinkSchema.optional(),
 });
 export type Banner = z.infer<typeof BannerSchema>;
 

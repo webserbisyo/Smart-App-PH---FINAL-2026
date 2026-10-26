@@ -257,9 +257,18 @@ export const KANTO_SMASH_PACK: ShopPack = {
         {
           ref: 'demo:kanto-smash/banners/banner-1',
           alt: 'Kanto Overload with three patties, bacon and egg',
+          title: 'New: Kanto Overload',
+          description: 'Triple patty, bacon and a runny egg.',
+          link: { kind: 'item', targetId: 'ks-kanto-overload' },
         },
         { ref: 'demo:kanto-smash/banners/banner-2', alt: 'Smash burgers on the griddle at night' },
-        { ref: 'demo:kanto-smash/banners/banner-3', alt: 'Barkada Bucket for groups' },
+        {
+          ref: 'demo:kanto-smash/banners/banner-3',
+          alt: 'Barkada Bucket for groups',
+          title: '8 stamps = 1 free Classic Smash',
+          description: 'Join free and get your first stamp today.',
+          link: { kind: 'rewards', targetId: null },
+        },
       ],
       bannerSeconds: 5,
       // The hours already say this; the slot stays for real shop news (decision R13).

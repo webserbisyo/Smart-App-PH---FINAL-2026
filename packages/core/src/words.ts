@@ -167,7 +167,13 @@ export const words = {
         region: 'Banners',
         slideOf: (current: number, total: number) => `Banner ${current} of ${total}`,
         showBanner: (index: number) => `Show banner ${index}`,
+        previous: 'Previous banner',
+        next: 'Next banner',
+        pause: 'Pause banners',
+        play: 'Play banners',
       },
+      // The button on a banner with words (decision R42), by where it goes.
+      bannerLink: { item: 'Order now', category: 'See more', rewards: 'See rewards' },
       rewards: {
         joinPrompt: 'Join and get 1 free stamp',
         ready: 'Your reward is ready',
@@ -894,6 +900,10 @@ export const words = {
     banners: 'Shop banners',
     slideOf: (index: number, total: number) => `${index} of ${total}`,
     showBanner: (index: number) => `Show banner ${index}`,
+    previous: 'Previous banner',
+    next: 'Next banner',
+    pause: 'Pause banners',
+    play: 'Play banners',
   },
   shop: {
     free: 'Free',

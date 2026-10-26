@@ -203,12 +203,24 @@ export const TALA_APPAREL_PACK: ShopPack = {
       brandColor: '#2E3A87',
       surface: 'light',
       banners: [
-        { ref: 'demo:tala-apparel/banners/banner-1', alt: 'Linen pieces in warm window light' },
+        {
+          ref: 'demo:tala-apparel/banners/banner-1',
+          alt: 'Linen pieces in warm window light',
+          title: 'The linen edit',
+          description: 'Light, breathable pieces for hot days.',
+          link: { kind: 'category', targetId: 'ta-c-tops' },
+        },
         {
           ref: 'demo:tala-apparel/banners/banner-2',
           alt: 'Abaca accessories with a spark of gold',
         },
-        { ref: 'demo:tala-apparel/banners/banner-3', alt: 'Weekend Set in natural linen' },
+        {
+          ref: 'demo:tala-apparel/banners/banner-3',
+          alt: 'Weekend Set in natural linen',
+          title: 'Weekend Set',
+          description: 'Linen button-down and wide-leg trousers, ready to go.',
+          link: { kind: 'item', targetId: 'ta-weekend-set' },
+        },
       ],
       bannerSeconds: 6,
       announcement: null,

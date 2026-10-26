@@ -90,6 +90,8 @@
 
   --color-faint-foreground: var(--faint-foreground);
   --color-overlay: var(--overlay);
+  --color-scrim: var(--scrim);
+  --color-on-scrim: var(--on-scrim);
   --color-skeleton: var(--skeleton);
 
   --color-sidebar: var(--sidebar);
@@ -534,6 +536,62 @@
 
 ::view-transition-new(reveal) {
   animation: reveal-clip var(--duration-slow) var(--ease-standard) both;
+}
+
+/* Home banners (decisions R41, R42). The carousel sets --banner-delay with cssVars() and data-paused
+   while its timer is stopped (hover, a drag, the Pause button), which freezes the timer pill and the
+   slow zoom. No motion at all under reduced motion. */
+@keyframes banner-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@utility banner-fill {
+  transform-origin: left;
+  animation: banner-fill var(--banner-delay, 5s) linear both;
+  [data-paused] & {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes banner-zoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.04);
+  }
+}
+
+@utility banner-zoom {
+  animation: banner-zoom var(--banner-delay, 5s) linear both;
+  [data-paused] & {
+    animation-play-state: paused;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* A banner's words rise in as its slide arrives and stay hidden on the slide peeking in. */
+@utility banner-copy {
+  transition:
+    opacity 250ms var(--ease-standard),
+    translate 250ms var(--ease-standard);
+  [data-banner-slide]:not([data-active]) & {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 
 /* Raised key (Add to Cart): soft top sheen, lift and bottom recess; sunken while it works. */

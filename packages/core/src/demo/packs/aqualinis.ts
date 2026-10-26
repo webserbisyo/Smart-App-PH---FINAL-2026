@@ -131,9 +131,18 @@ export const AQUALINIS_PACK: ShopPack = {
         {
           ref: 'demo:aqualinis/banners/banner-1',
           alt: 'Fresh 5-gallon refills ready for delivery',
+          title: 'Clean water at your door',
+          description: 'Sanitised container and a new cap seal on every refill.',
+          link: { kind: 'category', targetId: 'aq-c-refills' },
         },
         { ref: 'demo:aqualinis/banners/banner-2', alt: 'Water droplets on a clean container' },
-        { ref: 'demo:aqualinis/banners/banner-3', alt: 'Family Week Pack of 4 refills' },
+        {
+          ref: 'demo:aqualinis/banners/banner-3',
+          alt: 'Family Week Pack of 4 refills',
+          title: 'Family Week Pack',
+          description: '4 refills for the whole week, one order.',
+          link: { kind: 'item', targetId: 'aq-family-week-pack' },
+        },
       ],
       bannerSeconds: 5,
       announcement: {

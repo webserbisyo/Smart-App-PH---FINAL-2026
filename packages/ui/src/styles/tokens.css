@@ -73,6 +73,9 @@
 
   --faint-foreground: oklch(0.65 0 0);
   --overlay: oklch(0 0 0 / 0.5);
+  /* Shade under words on a photo (banners) and the words on it; the same in both themes. */
+  --scrim: oklch(0.16 0 0 / 0.82);
+  --on-scrim: oklch(0.99 0 0);
   --skeleton: oklch(0.92 0 0);
 
   --sidebar: var(--card);
@@ -203,6 +206,8 @@
 
   --faint-foreground: oklch(0.5 0 0);
   --overlay: oklch(0 0 0 / 0.7);
+  --scrim: oklch(0.16 0 0 / 0.82);
+  --on-scrim: oklch(0.99 0 0);
   --skeleton: oklch(0.25 0 0);
 
   --sidebar: var(--card);

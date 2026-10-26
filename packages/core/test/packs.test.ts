@@ -38,6 +38,23 @@ describe('shop packs', () => {
     for (const ref of refs) expect(parseDemoRef(ref), ref).not.toBeNull();
   });
 
+  it.each(DEMO_SHOP_SLUGS)('%s: banner buttons point at a real item or category', (slug) => {
+    const { storefront, catalog } = SHOP_PACKS[slug];
+    const itemIds = new Set(catalog.items.map((i) => i.id));
+    const categoryIds = new Set(catalog.categories.map((c) => c.id));
+    const banners = storefront.look.banners;
+    for (const { link } of banners) {
+      if (!link) continue;
+      if (link.kind === 'item') expect(itemIds.has(link.targetId ?? ''), link.targetId ?? '').toBe(true);
+      if (link.kind === 'category')
+        expect(categoryIds.has(link.targetId ?? ''), link.targetId ?? '').toBe(true);
+      if (link.kind === 'rewards') expect(link.targetId).toBeNull();
+    }
+    // The demo mixes banners with words and photo-only banners (decision R42).
+    expect(banners.some((b) => b.title)).toBe(true);
+    expect(banners.some((b) => !b.title)).toBe(true);
+  });
+
   it.each(DEMO_SHOP_SLUGS)(
     '%s: every referenced option group exists, ≤ 30 variants and ≤ 4 pairings',
     (slug) => {

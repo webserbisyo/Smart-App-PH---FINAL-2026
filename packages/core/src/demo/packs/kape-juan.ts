@@ -235,8 +235,20 @@ export const KAPE_JUAN_PACK: ShopPack = {
       surface: 'light',
       banners: [
         { ref: 'demo:kape-juan/banners/banner-1', alt: 'Barako coffee in warm morning light' },
-        { ref: 'demo:kape-juan/banners/banner-2', alt: 'Spanish latte with ensaymada' },
-        { ref: 'demo:kape-juan/banners/banner-3', alt: 'Study corner with outlets and Wi-Fi' },
+        {
+          ref: 'demo:kape-juan/banners/banner-2',
+          alt: 'Spanish latte with ensaymada',
+          title: 'Spanish latte + ensaymada',
+          description: 'Our merienda pair, sweet and creamy.',
+          link: { kind: 'item', targetId: 'kj-spanish-latte' },
+        },
+        {
+          ref: 'demo:kape-juan/banners/banner-3',
+          alt: 'Study corner with outlets and Wi-Fi',
+          title: '10 stamps = a Suki Tumbler',
+          description: 'Join free and get your first stamp today.',
+          link: { kind: 'rewards', targetId: null },
+        },
       ],
       bannerSeconds: 5,
       announcement: {

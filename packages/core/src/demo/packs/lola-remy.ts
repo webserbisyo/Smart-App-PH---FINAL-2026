@@ -195,8 +195,20 @@ export const LOLA_REMY_PACK: ShopPack = {
       brandColor: '#C27C2C',
       surface: 'light',
       banners: [
-        { ref: 'demo:lola-remy/banners/banner-1', alt: 'Hot pandesal on a bilao at 5 AM' },
-        { ref: 'demo:lola-remy/banners/banner-2', alt: 'Ensaymada Malolos in a pasalubong box' },
+        {
+          ref: 'demo:lola-remy/banners/banner-1',
+          alt: 'Hot pandesal on a bilao at 5 AM',
+          title: 'Hot pandesal from 5 AM',
+          description: 'Fresh from the oven every morning.',
+          link: { kind: 'category', targetId: 'lr-c-bread' },
+        },
+        {
+          ref: 'demo:lola-remy/banners/banner-2',
+          alt: 'Ensaymada Malolos in a pasalubong box',
+          title: 'Ensaymada Malolos box',
+          description: 'The pasalubong everyone asks about.',
+          link: { kind: 'item', targetId: 'lr-ensaymada-malolos-box' },
+        },
         { ref: 'demo:lola-remy/banners/banner-3', alt: 'Ube macapuno cake' },
       ],
       bannerSeconds: 5,

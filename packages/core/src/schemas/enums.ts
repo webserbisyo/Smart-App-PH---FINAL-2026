@@ -87,6 +87,11 @@ export const ANNOUNCEMENT_TONES = ['info', 'warning', 'success'] as const;
 export const AnnouncementToneEnum = z.enum(ANNOUNCEMENT_TONES);
 export type AnnouncementTone = z.infer<typeof AnnouncementToneEnum>;
 
+// Where a banner's button goes (decision R42): an item's sheet, a category on the menu, or Rewards.
+export const BANNER_LINK_KINDS = ['item', 'category', 'rewards'] as const;
+export const BannerLinkKindEnum = z.enum(BANNER_LINK_KINDS);
+export type BannerLinkKind = z.infer<typeof BannerLinkKindEnum>;
+
 export const OPEN_STATES = ['open', 'closed', 'busy'] as const;
 export const OpenStateKindEnum = z.enum(OPEN_STATES);
 export type OpenStateKind = z.infer<typeof OpenStateKindEnum>;

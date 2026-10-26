@@ -12,6 +12,7 @@ import {
   contrastRatio,
   DEMO_SHOPS,
   imageSources,
+  SHOP_PACKS,
   shopPalette,
   words,
   type DemoShopSlug,
@@ -76,6 +77,10 @@ const BANNER_LABELS = {
   region: words.media.banners,
   slideOf: words.media.slideOf,
   showBanner: words.media.showBanner,
+  previous: words.media.previous,
+  next: words.media.next,
+  pause: words.media.pause,
+  play: words.media.play,
 };
 
 function ImageStates({ shop, ratio }: { shop: KitShop; ratio: ShopImageRatio }) {
@@ -661,10 +666,16 @@ export function StorefrontSections() {
   if (!summary || !shop) return null;
 
   const logo = imageSources(`demo:${slug}/brand/logo`, ORIGIN);
-  const banners: BannerSlide[] = [1, 2, 3].map((n) => ({
-    src: imageSources(`demo:${slug}/banners/banner-${n}`, ORIGIN),
-    alt: `${summary.name} banner ${n}`,
+  // The demo pack's banners: some with a title, words and a button, some photo only (decision R42).
+  const banners: BannerSlide[] = SHOP_PACKS[slug].storefront.look.banners.map((banner) => ({
+    src: imageSources(banner.ref, ORIGIN),
+    alt: banner.alt,
     fallbackIcon: shop.icon,
+    title: banner.title,
+    description: banner.description,
+    action: banner.link
+      ? { label: words.storefrontShell.home.bannerLink[banner.link.kind], link: <a href="#banners" /> }
+      : undefined,
   }));
 
   return (
@@ -825,7 +836,7 @@ export function StorefrontSections() {
             title="Banner carousel"
             library="composition"
             path="packages/ui/src/compositions/banner-carousel.tsx (+ banner-carousel-slides.tsx, lazy)"
-            usedIn="kit"
+            usedIn="storefront home, kit"
           >
             <div className="space-y-6">
               <BannerCarousel
