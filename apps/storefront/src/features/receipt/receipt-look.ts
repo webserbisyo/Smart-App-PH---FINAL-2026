@@ -8,6 +8,7 @@ import {
   CircleXIcon,
   CookingPotIcon,
   HourglassIcon,
+  PackageOpenIcon,
   ReceiptTextIcon,
   Undo2Icon,
   WalletIcon,
@@ -25,6 +26,7 @@ import {
   type ShopKind,
 } from '@smartapp/core';
 import type { BadgeProps } from '@smartapp/ui/components/reui/badge';
+import type { ReceiptStepId } from './receipt-rules';
 
 export interface ReceiptChip {
   readonly label: string;
@@ -54,6 +56,19 @@ const PAYMENT_CHIP: Record<PaymentStatus, Omit<ReceiptChip, 'label'>> = {
   paid: { icon: CircleCheckIcon, tone: 'success-light' },
   refunded: { icon: Undo2Icon, tone: 'secondary' },
 };
+
+// The order steps' icons (decision R48); the preparing step follows the shop's catalogue icon, so a clothes
+// shop packs (an open box) while a kitchen cooks (a pot).
+const PREP_ICON: Record<ReturnType<typeof vocab>['catalogIcon'], LucideIcon> = {
+  utensils: CookingPotIcon,
+  package: PackageOpenIcon,
+};
+
+export function stepIcon(id: ReceiptStepId, kind: ShopKind): LucideIcon {
+  if (id === 'paid') return WalletIcon;
+  if (id === 'preparing') return PREP_ICON[vocab(kind).catalogIcon];
+  return STATUS_CHIP[id].icon;
+}
 
 export function statusChip(status: OrderStatus): ReceiptChip {
   return { label: words.shop.orderStatus[status], ...STATUS_CHIP[status] };

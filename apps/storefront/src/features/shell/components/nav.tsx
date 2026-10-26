@@ -48,3 +48,14 @@ export function useDockHidden(): boolean {
   const hasItem = Boolean(searchParams?.get('item'));
   return pathname.startsWith(`/${slug}/checkout`) || hasItem;
 }
+
+/** Pages that pull to refresh (decision R46): Home, the menu, Rewards, Orders and an order's page. */
+export function usePullRefreshOn(): boolean {
+  const { slug } = useShop();
+  const pathname = usePathname();
+  const base = `/${slug}`;
+  return (
+    pathname === base ||
+    ['/menu', '/rewards', '/orders', '/o/'].some((page) => pathname.startsWith(`${base}${page}`))
+  );
+}

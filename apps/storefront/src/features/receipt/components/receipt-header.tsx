@@ -7,17 +7,19 @@ import {
   words,
   type OrderReceipt,
   type OrderType,
+  type ShopKind,
   type Storefront,
 } from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import {
-  Stepper,
-  StepperDescription,
-  StepperIndicator,
-  StepperItem,
-  StepperNav,
-  StepperTitle,
-} from '@smartapp/ui/components/reui/stepper';
+  Timeline,
+  TimelineDate,
+  TimelineHeader,
+  TimelineIndicator,
+  TimelineItem,
+  TimelineSeparator,
+  TimelineTitle,
+} from '@smartapp/ui/components/reui/timeline';
 import { QRCode, QRCodeSvg } from '@smartapp/ui/components/qr-code';
 import { cn } from '@smartapp/ui/lib/utils';
 import {
@@ -42,7 +44,7 @@ import {
   resolveReceiptSteps,
   type ReceiptStepItem,
 } from '../receipt-rules';
-import { paymentChip, receiptHero, statusChip, type ReceiptChip } from '../receipt-look';
+import { paymentChip, receiptHero, statusChip, stepIcon, type ReceiptChip } from '../receipt-look';
 
 export interface ReceiptHeaderProps {
   readonly order: OrderReceipt;
@@ -80,19 +82,6 @@ function Chip({ chip, check = false }: { chip: ReceiptChip; check?: boolean }) {
   );
 }
 
-// The c-stepper-26 track, read only (decision R31): a check for done, a pulsing dot for now, a hollow
-// dot for next; times above, the shop colour fills the steps done.
-const INDICATORS = {
-  completed: <CheckIcon strokeWidth={3.36} className="size-3" aria-hidden="true" />,
-  active: (
-    <span aria-hidden="true" className="relative flex size-2">
-      <span className="absolute inset-0 rounded-full bg-primary-foreground opacity-75 motion-safe:animate-ping" />
-      <span className="relative size-2 rounded-full bg-primary-foreground" />
-    </span>
-  ),
-  inactive: <span aria-hidden="true" />,
-};
-
 const TYPE_ICON: Record<OrderType, LucideIcon> = {
   walk_in: FootprintsIcon,
   pickup: ShoppingBagIcon,
@@ -125,16 +114,24 @@ function Perforation() {
   );
 }
 
-function StatusTrack({ steps }: { steps: readonly ReceiptStepItem[] }) {
+// The steps' states as the ReUI state variants read them (state-completed, state-active, state-inactive).
+const ITEM_STATE = { completed: 'completed', current: 'active', upcoming: 'inactive' } as const;
+
+/**
+ * The order's steps as a vertical list (c-timeline-3, decision R48): each step has its own icon in a
+ * circle, a check once done, the step happening now in the shop colour with a soft pulse, the time on the
+ * right; the line between two steps fills as the order moves.
+ */
+function StatusTrack({ steps, kind }: { steps: readonly ReceiptStepItem[]; kind: ShopKind }) {
   const currentIndex = steps.findIndex((s) => s.state === 'current');
   // One past the last step marks every step done.
-  const value = currentIndex === -1 ? steps.length + 1 : currentIndex + 1;
+  const value = currentIndex === -1 ? steps.length : currentIndex + 1;
   const current = steps[currentIndex];
 
   return (
     <div
       id="receipt-status-track"
-      className="flex flex-col gap-3 rounded-3xl bg-card p-4 shadow-xs ring-1 ring-foreground/8 sm:p-5"
+      className="flex flex-col gap-4 rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6"
     >
       <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
         {words.receipt.progress}
@@ -142,24 +139,33 @@ function StatusTrack({ steps }: { steps: readonly ReceiptStepItem[] }) {
       <p role="status" className="sr-only">
         {current ? current.label : null}
       </p>
-      <Stepper value={value} indicators={INDICATORS} aria-label={words.receipt.progress}>
-        <StepperNav>
-          {steps.map((step, index) => (
-            <StepperItem key={step.id} step={index + 1} className="min-w-0 flex-1">
-              <div className="flex w-full flex-col gap-2">
-                <StepperDescription className="min-h-4 text-center text-xs whitespace-nowrap tabular">
-                  {step.timestamp}
-                </StepperDescription>
-                <span className="flex h-1 w-full items-center gap-0.75">
-                  <span className="flex h-full flex-1 bg-ring/20 group-first/step:rounded-s-full">
-                    <span className="flex-1 group-first/step:rounded-s-full group-state-active/step:bg-primary group-state-completed/step:bg-primary" />
-                  </span>
-                  <StepperIndicator className="size-5 bg-card ring-2 ring-ring/25 ring-inset state-active:bg-primary state-active:text-primary-foreground state-active:ring-0 state-completed:bg-primary state-completed:text-primary-foreground state-completed:ring-0" />
-                  <span className="flex h-full flex-1 bg-ring/20 group-last/step:rounded-e-full">
-                    <span className="flex-1 group-last/step:rounded-e-full group-state-completed/step:bg-primary" />
-                  </span>
-                </span>
-                <StepperTitle className="px-0.5 text-center text-xs leading-snug text-balance text-muted-foreground state-active:font-semibold state-active:text-foreground state-completed:text-foreground">
+      <Timeline value={value} render={<ol />} aria-label={words.receipt.progress}>
+        {steps.map((step, index) => {
+          const Icon = stepIcon(step.id, kind);
+          return (
+            <TimelineItem
+              key={step.id}
+              step={index + 1}
+              render={<li />}
+              data-state={ITEM_STATE[step.state]}
+              className="group-orientation-vertical/timeline:ms-12 group-orientation-vertical/timeline:not-last:pb-5"
+            >
+              <TimelineHeader className="flex min-h-8 items-center justify-between gap-3">
+                <TimelineSeparator className="w-0.5 rounded-full bg-border group-orientation-vertical/timeline:-left-7 group-orientation-vertical/timeline:h-full-less-10 group-orientation-vertical/timeline:translate-y-9" />
+                <TimelineIndicator className="flex size-8 items-center justify-center border-none bg-muted text-muted-foreground group-state-active/timeline-item:bg-primary group-state-active/timeline-item:text-primary-foreground group-state-completed/timeline-item:bg-primary group-state-completed/timeline-item:text-primary-foreground group-orientation-vertical/timeline:-left-7">
+                  {step.state === 'current' ? (
+                    <span className="absolute inset-0 rounded-full bg-primary opacity-30 motion-safe:animate-ping" />
+                  ) : null}
+                  {step.state === 'completed' ? (
+                    <CheckIcon strokeWidth={3} className="relative size-4" />
+                  ) : (
+                    <Icon className="relative size-4" />
+                  )}
+                </TimelineIndicator>
+                <TimelineTitle
+                  render={<span />}
+                  className="min-w-0 text-sm leading-snug text-pretty text-muted-foreground group-state-active/timeline-item:font-semibold group-state-active/timeline-item:text-foreground group-state-completed/timeline-item:text-foreground"
+                >
                   {step.label}
                   <span className="sr-only">
                     {step.state === 'completed'
@@ -168,12 +174,17 @@ function StatusTrack({ steps }: { steps: readonly ReceiptStepItem[] }) {
                         ? `, ${words.receipt.stepNow}`
                         : ''}
                   </span>
-                </StepperTitle>
-              </div>
-            </StepperItem>
-          ))}
-        </StepperNav>
-      </Stepper>
+                </TimelineTitle>
+                {step.timestamp ? (
+                  <TimelineDate className="mb-0 shrink-0 text-xs whitespace-nowrap tabular group-state-active/timeline-item:font-semibold group-state-active/timeline-item:text-shop-10-text">
+                    {step.timestamp}
+                  </TimelineDate>
+                ) : null}
+              </TimelineHeader>
+            </TimelineItem>
+          );
+        })}
+      </Timeline>
     </div>
   );
 }
@@ -291,7 +302,7 @@ export function ReceiptHeader({
         </div>
       </div>
 
-      {cancelled ? null : <StatusTrack steps={steps} />}
+      {cancelled ? null : <StatusTrack steps={steps} kind={kind} />}
     </section>
   );
 }

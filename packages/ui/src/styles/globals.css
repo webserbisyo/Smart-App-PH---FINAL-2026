@@ -343,6 +343,38 @@
   }
 }
 
+/* Pull to refresh (decision R46). The page follows the finger by --pull, set with setCssVars() on each
+   move, and glides back when let go; the ring rides in the gap it opens by --pull-y. Under reduced motion
+   the page stays put and the ring only fades in. */
+@utility pull-shift {
+  &[data-pull] {
+    transform: translateY(var(--pull, 0px));
+  }
+  &[data-pull='refreshing'],
+  &[data-pull='settling'] {
+    transition: transform var(--duration-slow) var(--ease-glide);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &[data-pull] {
+      transform: none;
+    }
+  }
+}
+
+@utility pull-ring {
+  transform: translateY(var(--pull-y, 0px)) scale(var(--pull-scale, 1));
+  opacity: var(--pull-fade, 1);
+  &[data-phase='refreshing'],
+  &[data-phase='settling'] {
+    transition:
+      transform var(--duration-slow) var(--ease-glide),
+      opacity var(--duration-slow) var(--ease-standard);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transform: none;
+  }
+}
+
 /* Full height minus a spacing step (the line of a vertical stepper or timeline). */
 @utility h-full-less-* {
   height: calc(100% - var(--spacing) * --value(number));

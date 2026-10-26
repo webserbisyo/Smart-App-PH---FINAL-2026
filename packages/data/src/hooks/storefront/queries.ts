@@ -39,6 +39,12 @@ export function useStorefront(slug: string) {
   });
 }
 
+/** Pull to refresh (decision R46): reads the shop, its orders and the account again; resolves when they are back. */
+export function useRefreshShop(slug: string): () => Promise<void> {
+  const client = useQueryClient();
+  return () => client.invalidateQueries({ queryKey: qk.storefront(slug) });
+}
+
 /** Re-quoted 400 ms after the basket or checkout changes; keeps the last good answer while it refetches. */
 export function useQuote(slug: string, payload: OrderPayload | null) {
   const { storefront } = useAdapters();

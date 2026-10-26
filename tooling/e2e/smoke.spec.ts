@@ -750,6 +750,50 @@ test.describe('fields never zoom on a phone (R43)', () => {
   });
 });
 
+// Pull to refresh (R46): a drag down from the top of the page past the line refreshes and glides back; a
+// short pull or a sideways first move (carousels, chip rows) never does.
+test.describe('pull to refresh (R46)', () => {
+  test('pulls past the line to refresh, never on a short or sideways drag', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, 'Touch screens only');
+    const problems = watch(page);
+    await page.goto(urlFor('prod', '/kanto-smash'));
+    await page.waitForLoadState('networkidle');
+    const cdp = await page.context().newCDPSession(page);
+    const drag = async (from: { x: number; y: number }, to: { x: number; y: number }) => {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [from] });
+      for (let step = 1; step <= 20; step += 1) {
+        const point = {
+          x: from.x + ((to.x - from.x) * step) / 20,
+          y: from.y + ((to.y - from.y) * step) / 20,
+        };
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point] });
+      }
+    };
+    const release = () =>
+      cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    const main = page.locator('main');
+
+    await drag({ x: 195, y: 300 }, { x: 195, y: 360 });
+    await expect(main).toHaveAttribute('data-pull', 'pulling');
+    await release();
+    await expect(main).toHaveAttribute('data-pull', 'settling');
+    await expect(main).not.toHaveAttribute('data-pull');
+
+    await drag({ x: 195, y: 250 }, { x: 195, y: 500 });
+    await release();
+    await expect(main).toHaveAttribute('data-pull', 'refreshing');
+    await expect(main).not.toHaveAttribute('data-pull', { timeout: 3000 });
+
+    await drag({ x: 100, y: 300 }, { x: 260, y: 360 });
+    await expect(main).not.toHaveAttribute('data-pull');
+    await release();
+    expect(problems).toEqual([]);
+  });
+});
+
 test.describe('order receipt and payment proof (T10)', () => {
   test('receipt shows pay countdown and thermal slip for unpaid transfer', async ({ page }) => {
     const problems = watch(page);

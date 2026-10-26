@@ -28,6 +28,8 @@ export function LocationBar({ className }: { className?: string | undefined }) {
   if (!now) return <Skeleton className={cn('h-7 w-24 rounded-full', className)} />;
   const label = locationLabel(shop.storefront, choice, now);
   const short = locationShortLabel(shop.storefront, choice);
+  // The spoken name starts with the words on the pill, so voice control finds it by what it shows.
+  const spoken = label.startsWith(short) ? label : `${short}. ${label}`;
 
   return (
     <>
@@ -39,7 +41,7 @@ export function LocationBar({ className }: { className?: string | undefined }) {
           className,
         )}
         aria-haspopup="dialog"
-        aria-label={`${label}. ${words.location.open}`}
+        aria-label={`${spoken}. ${words.location.open}`}
         onClick={() => {
           setLoaded(true);
           setOpen(true);

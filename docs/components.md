@@ -58,7 +58,7 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 | `celebrate`              | composition          | `packages/ui/src/compositions/celebrate.ts`                | kit, Join welcome stamp, Rewards reward ready                                                                                                                                       | T02   |
 | `checkbox`               | shadcn (base-nova)   | `packages/ui/src/components/checkbox.tsx`                  | kit, item sheet option groups                                                                                                                                                       | T02   |
 | `checkbox-group`         | DiceUI (patched T27) | `packages/ui/src/components/checkbox-group.tsx`            | kit, item sheet option groups                                                                                                                                                       | T02   |
-| `circular-progress`      | DiceUI               | `packages/ui/src/components/circular-progress.tsx`         | shop home rewards card, kit, Rewards card progress, receipt pay timer ring                                                                                                          | T02   |
+| `circular-progress`      | DiceUI               | `packages/ui/src/components/circular-progress.tsx`         | shop home rewards card, kit, Rewards card progress, receipt pay timer ring, pull to refresh ring (R46)                                                                              | T02   |
 | `client-only`            | DiceUI               | `packages/ui/src/components/client-only.tsx`               | storefront dock and basket, shop home, kit, item sheet, receipt stamps and install card                                                                                             | T02   |
 | `collapsible`            | shadcn (base-nova)   | `packages/ui/src/components/collapsible.tsx`               | kit (installed for sidebar-07), checkout summary with photos                                                                                                                        | T05   |
 | `confetti`               | Magic UI             | `packages/ui/src/components/confetti.tsx`                  | kit, Rewards (once per reward, via celebrate)                                                                                                                                       | T02   |
@@ -107,8 +107,8 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 | `reui/icon-tile`         | ReUI                 | `packages/ui/src/components/reui/icon-tile.tsx`            | c-icon-tile-* (kit), stamp-card, storefront contact and category tiles                                                                                                              | T02b  |
 | `reui/number-field`      | ReUI                 | `packages/ui/src/components/reui/number-field.tsx`         | c-number-field-2, c-number-field-3 (kit), basket quantity, item sheet quantity                                                                                                      | T02b  |
 | `reui/scrollspy`         | ReUI                 | `packages/ui/src/components/reui/scrollspy.tsx`            | c-scrollspy-1, c-scrollspy-2 (kit), menu category chips (phones) and category box (1024 px up)                                                                                      | T02b  |
-| `reui/stepper`           | ReUI                 | `packages/ui/src/components/reui/stepper.tsx`              | c-stepper-3, c-stepper-13, c-stepper-26 (kit), receipt status track (c-stepper-26 look), install card iPhone steps (c-stepper-13 look)                                              | T02b  |
-| `reui/timeline`          | ReUI                 | `packages/ui/src/components/reui/timeline.tsx`             | c-timeline-3, c-timeline-7 (kit), Rewards stamp history (c-timeline-7 look)                                                                                                         | T02b  |
+| `reui/stepper`           | ReUI                 | `packages/ui/src/components/reui/stepper.tsx`              | c-stepper-3, c-stepper-13, c-stepper-26 (kit), install card iPhone steps (c-stepper-13 look)                                                                                        | T02b  |
+| `reui/timeline`          | ReUI                 | `packages/ui/src/components/reui/timeline.tsx`             | c-timeline-3, c-timeline-7 (kit), receipt order steps (c-timeline-3 look, R48), Rewards stamp history (c-timeline-7 look)                                                           | T02b  |
 | `scroll-area`            | shadcn (base-nova)   | `packages/ui/src/components/scroll-area.tsx`               | c-scrollspy-1, c-scrollspy-2 (kit)                                                                                                                                                  | T02b  |
 | `scroller`               | DiceUI               | `packages/ui/src/components/scroller.tsx`                  | shop home (categories, favourites, best sellers), menu category chips, kit                                                                                                          | T02   |
 | `separator`              | shadcn (base-nova)   | `packages/ui/src/components/separator.tsx`                 | login-01, signup-01, top-bar, kit, basket total, zones, checkout totals                                                                                                             | T01   |
@@ -257,14 +257,14 @@ Changes from the ReUI source (T02b, decision D2): remote photos replaced with de
 | `c-spinner-8` | Full Page | Shell | First load c-spinner-8 |
 | `c-stepper-3` | Loading State | Receipt | Kit only: alternative to c-stepper-26 (decision D10) |
 | `c-stepper-13` | Vertical Descriptions | Receipt | Install card c-alert-18 + iPhone steps c-stepper-13 |
-| `c-stepper-26` | Timestamped Checkpoints | Receipt | Status c-stepper-26 (timestamped) · in use: receipt status track with the paid step |
+| `c-stepper-26` | Timestamped Checkpoints | Receipt | Kit only: the receipt moved to c-timeline-3 (decision R48) |
 
 | `c-switch-2` | With Description | Checkout | Reward switch c-switch-2 |
 | `c-table-16` | Employee Profile | Home | Hours c-table-16 |
 | `c-tabs-2` | Line Variant | Rewards and account | Tabs c-tabs-2 |
 | `c-tabs-7` | Badge Counts | My orders | Active / Past c-tabs-7 |
 | `c-textarea-6` | Auto-Resize Counter | Item sheet | Note c-textarea-6 |
-| `c-timeline-3` | Order Status | Receipt | Kit only: alternative to c-stepper-26 (decision D10) |
+| `c-timeline-3` | Order Status | Receipt | In use: receipt order steps, vertical with an icon per step (decision R48) |
 | `c-timeline-7` | Roadmap Items | Rewards and account | History c-timeline-7 |
 | `c-toggle-6` | Icon & Label | Menu | Favourites chip c-toggle-6 |
 | `c-toggle-9` | Icon Swap | Menu | heart-toggle (glass chip, Like Toggle burst) |
@@ -280,6 +280,14 @@ Opensource UI parts are copied by hand from the official pages (the one founder-
 | `add-to-cart.tsx`     | https://opensourceui.in/components/add-to-cart-button                            |
 | `thermal-receipt.tsx` | https://opensourceui.in/components/thermal-receipt                               |
 | `like-toggle.tsx`     | https://opensourceui.in/components/like-button (kit; Burst used by heart-toggle) |
+
+## Hand-written (founder approved)
+
+Written by us only where no chosen library has the part, each with the founder's yes.
+
+| File                                                                | Why                                                                                                                                          | Decision |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `apps/storefront/src/features/shell/components/pull-to-refresh.tsx` | No ReUI, DiceUI or Magic UI part pulls to refresh; the behaviour copies Ionic's `ion-refresher`, the ring is the installed circular progress | R46      |
 
 ## Blocks
 

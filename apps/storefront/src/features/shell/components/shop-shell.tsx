@@ -3,12 +3,14 @@
 import { useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { words } from '@smartapp/core';
+import { useRefreshShop } from '@smartapp/data';
 import { ClientOnly } from '@smartapp/ui/components/client-only';
 import { MAIN_CONTENT_ID, SkipNav } from '@smartapp/ui/components/skip-nav';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
 import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
 import { useBasketView } from '../../basket/components/use-basket-view';
-import { useDockHidden, useShopNav } from './nav';
+import { useDockHidden, usePullRefreshOn, useShopNav } from './nav';
+import { PullRing, usePullToRefresh } from './pull-to-refresh';
 import { useShop } from './shop-context';
 import { TopBar } from './top-bar';
 
@@ -71,15 +73,22 @@ function Dock() {
 
 /** The storefront app frame around every shop page (T04; one column at every width, decision R1). */
 export function ShopShell({ children }: { children: ReactNode }) {
+  const { slug } = useShop();
   const dockHidden = useDockHidden();
+  const { ref: pageRef, store: pullStore } = usePullToRefresh(
+    useRefreshShop(slug),
+    usePullRefreshOn(),
+  );
 
   return (
     <div className="flex min-h-dvh flex-col bg-shop-60">
       <SkipNav>{words.shell.skipToContent}</SkipNav>
       <TopBar />
+      <PullRing store={pullStore} />
       <main
+        ref={pageRef}
         id={MAIN_CONTENT_ID}
-        className="mx-auto w-full max-w-280 min-w-0 flex-1 px-4 pt-4 pb-dock lg:pb-10"
+        className="mx-auto w-full max-w-280 min-w-0 flex-1 pull-shift px-4 pt-4 pb-dock lg:pb-10"
         tabIndex={-1}
       >
         {children}
