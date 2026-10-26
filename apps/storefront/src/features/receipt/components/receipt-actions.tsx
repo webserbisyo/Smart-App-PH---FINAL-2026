@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { artPath, formatPeso, words, type OrderReceipt, type Storefront } from '@smartapp/core';
 import {
   useBasket,
-  useInstallDismissed,
   useMyAccount,
   useOnline,
+  usePushOrders,
   useRateOrder,
   useSubscribePush,
 } from '@smartapp/data';
@@ -25,6 +25,7 @@ import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import {
   Bell,
+  BellOff,
   Check,
   Copy,
   Download,
@@ -34,8 +35,9 @@ import {
   RefreshCw,
   Share2,
   Star,
-  X,
 } from 'lucide-react';
+import { InstallCard } from '../../install/components/install-card';
+import { enablePush, pushState, type PushState } from '../../install/push';
 import { useShop } from '../../shell/components/shop-context';
 import { buildMessengerOrderText, formatOrderNumber, isOrderCancelled } from '../receipt-rules';
 
@@ -53,49 +55,67 @@ function noSubscribe() {
   return () => {};
 }
 
-// Web push needs a service worker, the Push API and notifications (T13 wires the worker).
-function pushSupported(): boolean {
-  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-}
-
 function NotifyCard({ slug, token }: { slug: string; token: string }) {
-  const supported = useSyncExternalStore(noSubscribe, pushSupported, () => false);
+  const state = useSyncExternalStore<PushState>(noSubscribe, pushState, () => 'unsupported');
   const isOnline = useOnline();
   const subscribe = useSubscribePush(slug, token);
-  const [on, setOn] = useState(false);
+  const pushOrders = usePushOrders(slug);
+  const [asking, setAsking] = useState(false);
   const switchId = useId();
   const W = words.receipt.notify;
 
-  if (!supported) return null;
+  if (state === 'unsupported') return null;
+  const on = state === 'granted' && pushOrders.isOn(token);
+  const blocked = state === 'needs_install' || state === 'denied';
+  const line =
+    state === 'needs_install'
+      ? words.install.pushIphone
+      : state === 'denied'
+        ? words.install.pushDenied
+        : subscribe.isError
+          ? W.failed
+          : on
+            ? W.on
+            : W.off;
 
-  function handleChange(next: boolean) {
+  // Asks for permission only on this tap (T13); turning it off is kept on the phone.
+  async function handleChange(next: boolean) {
     if (!next) {
-      setOn(false);
+      pushOrders.set(token, false);
       return;
     }
-    subscribe.mutate(null, { onSuccess: () => setOn(true) });
+    setAsking(true);
+    const result = await enablePush();
+    setAsking(false);
+    if (!result.ok) return;
+    subscribe.mutate(result.subscription, { onSuccess: () => pushOrders.set(token, true) });
   }
 
   return (
     <div className={`${CARD} flex items-center justify-between gap-4`}>
       <div className="flex min-w-0 items-start gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
-          <Bell aria-hidden="true" className="size-5" />
+          {blocked ? (
+            <BellOff aria-hidden="true" className="size-5" />
+          ) : (
+            <Bell aria-hidden="true" className="size-5" />
+          )}
         </span>
         <div className="flex min-w-0 flex-col gap-0.5">
           <Label htmlFor={switchId} className="text-base font-semibold">
             {W.title}
           </Label>
-          <p className="text-sm text-muted-foreground">
-            {subscribe.isError ? W.failed : on ? W.on : W.off}
+          <p id={`${switchId}-line`} className="text-sm text-muted-foreground">
+            {line}
           </p>
         </div>
       </div>
       <Switch
         id={switchId}
         checked={on}
-        onCheckedChange={handleChange}
-        disabled={!isOnline || subscribe.isPending}
+        onCheckedChange={(next) => void handleChange(next)}
+        disabled={blocked || !isOnline || asking || subscribe.isPending}
+        aria-describedby={`${switchId}-line`}
       />
     </div>
   );
@@ -137,7 +157,7 @@ function StampLine({ slug, completed }: { slug: string; completed: boolean }) {
       </div>
       <Button
         nativeButton={false}
-        render={<Link href={`/${slug}/rewards`} />}
+        render={<Link href={`/${slug}/join`} />}
         className="h-11 shrink-0 rounded-full bg-member px-5 text-member-foreground hover:bg-member-hover"
       >
         {W.join}
@@ -261,47 +281,6 @@ function RatingCard({
         </Button>
       ) : null}
     </section>
-  );
-}
-
-function InstallCard({ slug, shopName }: { slug: string; shopName: string }) {
-  const { dismissed, dismiss } = useInstallDismissed(slug);
-  const installed = useSyncExternalStore(
-    noSubscribe,
-    () => window.matchMedia('(display-mode: standalone)').matches,
-    () => true,
-  );
-  const W = words.receipt.install;
-  if (dismissed || installed) return null;
-
-  return (
-    <div
-      id="receipt-install-card"
-      className={`${CARD} relative flex items-center gap-3 bg-info-soft text-info-soft-foreground ring-0`}
-    >
-      <img
-        src={artPath('install')}
-        alt=""
-        width={48}
-        height={48}
-        loading="lazy"
-        className="size-12 shrink-0 object-contain"
-      />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 pr-9">
-        <p className="text-base font-semibold text-balance">{W.title(shopName)}</p>
-        <p className="text-sm opacity-90">{W.text}</p>
-      </div>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={() => dismiss(new Date())}
-        aria-label={W.dismiss}
-        className="absolute top-2 right-2 size-11 rounded-full"
-      >
-        <X aria-hidden="true" className="size-5" />
-      </Button>
-    </div>
   );
 }
 

@@ -376,7 +376,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         s.shop.storefront.stampCard.status !== 'off' &&
         balance >= s.shop.storefront.stampCard.rule.stampsNeeded,
       memberCode: member.memberCode,
+      joinedAt: member.joinedAt,
       history,
+      claims: [...member.claims].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     });
   }
 
@@ -628,9 +630,15 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
               scheduledAt: o.receipt.scheduledAt,
               itemCount: o.receipt.lines.reduce((n, l) => n + l.qty, 0),
               summary: o.receipt.lines.map((l) => `${l.qty} × ${l.name}`).join(', '),
-              photo:
-                s.shop.catalog.items.find((i) => i.id === o.receipt.lines[0]?.itemId)?.photos[0] ??
-                null,
+              photos: o.receipt.lines
+                .flatMap((l) => {
+                  const photo = s.shop.catalog.items.find((i) => i.id === l.itemId)?.photos[0];
+                  return photo ? [photo] : [];
+                })
+                .slice(0, 3),
+              paymentMethod: o.receipt.paymentMethod,
+              expiresAt: o.receipt.expiresAt,
+              ratingStars: o.receipt.rating?.stars ?? null,
             }),
           );
       }),

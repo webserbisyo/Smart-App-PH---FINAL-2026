@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { formatPeso, words, type Item, type Storefront } from '@smartapp/core';
 import {
   Field,
@@ -40,6 +41,7 @@ interface CheckoutExtrasProps {
  * (c-textarea-6, grows with the text) and the totals (c-separator-6) with the consent line.
  */
 export function CheckoutExtras({
+  sf,
   readyReward,
   useReward,
   onUseRewardChange,
@@ -145,7 +147,15 @@ export function CheckoutExtras({
           </div>
         </dl>
 
-        <p className="text-center text-xs text-muted-foreground">{words.checkout.privacyConsent}</p>
+        <p className="text-center text-xs text-muted-foreground">
+          {words.checkout.privacyConsent}{' '}
+          <Link
+            href={`/${sf.slug}/privacy`}
+            className="font-medium text-foreground underline underline-offset-4"
+          >
+            {words.checkout.privacyLink}
+          </Link>
+        </p>
       </CheckoutStep>
     </>
   );

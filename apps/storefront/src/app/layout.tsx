@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { SerwistProvider } from '@serwist/turbopack/react';
 import { words } from '@smartapp/core';
-import '../env';
+import { serwistDev } from '../env';
 import './globals.css';
 
 // The storefront's public address: Open Graph images resolve against it.
@@ -25,7 +26,18 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {/* One service worker for every shop (T13). Off in `next dev` unless SERWIST_DEV=1. Pages are
+            cached by the shop frame (Home, Menu, Orders, Rewards only) and nothing reloads by itself. */}
+        <SerwistProvider
+          swUrl="/serwist/sw.js"
+          disable={process.env.NODE_ENV === 'development' && !serwistDev}
+          cacheOnNavigation={false}
+          reloadOnOnline={false}
+        >
+          {children}
+        </SerwistProvider>
+      </body>
     </html>
   );
 }

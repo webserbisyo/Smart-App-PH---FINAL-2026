@@ -81,7 +81,11 @@ async function CachedShopHome({ slug }: { slug: string }) {
       </div>
 
       {visibility.footer ? (
-        <ShopFooter shopName={storefront.info.name} logo={storefront.info.logo} />
+        <ShopFooter
+          slug={storefront.slug}
+          shopName={storefront.info.name}
+          logo={storefront.info.logo}
+        />
       ) : null}
     </div>
   );

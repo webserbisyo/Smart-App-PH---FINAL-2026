@@ -8,6 +8,7 @@ import {
   LastAddressSchema,
   OrderReceiptSchema,
   OrderTypeEnum,
+  ShopKindEnum,
   type BasketLine,
   type CheckoutDraft,
   type LastAddress,
@@ -91,6 +92,13 @@ export interface DeviceStorage {
   savedReceipts: DeviceEntry<SavedReceipt[]>;
   // When the customer hid the install card on the receipt.
   installDismissed: DeviceEntry<string>;
+  // Rewards celebrated with confetti, by how many rewards the member had used then (once per reward).
+  celebratedReward: DeviceEntry<number>;
+  // The stamp count the member last saw, so the counter only moves when it changed.
+  seenStamps: DeviceEntry<number>;
+  lastShop: DeviceEntry<LastShop>;
+  // Order tokens with status notifications on (per shop).
+  pushOrders: DeviceEntry<string[]>;
   // Mock mode only: what the customer created on this phone (orders, proofs, member account).
   mockState: DeviceEntry<unknown>;
   subscribe(listener: () => void): () => void;
@@ -107,6 +115,16 @@ export const SavedReceiptSchema = z.object({
   endedAt: IsoDateTimeSchema.nullable(),
 });
 export type SavedReceipt = z.infer<typeof SavedReceiptSchema>;
+
+// The shop this phone opened last, for the offline page (scope: all shops).
+export const LastShopSchema = z.object({
+  slug: z.string().max(60),
+  name: z.string().max(120),
+  kind: ShopKindEnum,
+  brandColor: z.string().regex(/^#[0-9a-f]{6}$/i),
+});
+export type LastShop = z.infer<typeof LastShopSchema>;
+export const LAST_SHOP_SCOPE = 'all';
 
 export function createDeviceStorage(backend: Backend = pickBackend()): DeviceStorage {
   let store = backend;
@@ -180,6 +198,10 @@ export function createDeviceStorage(backend: Backend = pickBackend()): DeviceSto
     guestOrderTokens: entry('guestOrderTokens', 1, z.array(GuestOrderTokenSchema)),
     savedReceipts: entry('savedReceipts', 1, z.array(SavedReceiptSchema)),
     installDismissed: entry('installDismissed', 1, IsoDateTimeSchema),
+    celebratedReward: entry('celebratedReward', 1, z.number().int().min(0)),
+    seenStamps: entry('seenStamps', 1, z.number().int().min(0)),
+    lastShop: entry('lastShop', 1, LastShopSchema),
+    pushOrders: entry('pushOrders', 1, z.array(z.string().max(80)).max(20)),
     mockState: entry('mockState', 1, z.unknown()),
     subscribe(listener) {
       listeners.add(listener);

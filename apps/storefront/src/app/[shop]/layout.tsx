@@ -4,6 +4,7 @@ import { DEMO_MEDIA, DEMO_SHOP_SLUGS, isDemoShopSlug, shopPalette } from '@smart
 import { getStorefrontForServer } from '@smartapp/data/server';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
+import { shortName } from '@/features/install/install-rules';
 import { ShopApp } from '@/features/shell/components/shop-app';
 
 interface ShopLayoutProps {
@@ -35,6 +36,9 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
   return {
     title: name,
     description: tagline ?? name,
+    // Installs as its own app (T13): per-shop manifest, home screen name on iPhone.
+    manifest: `/${slug}/manifest.webmanifest`,
+    appleWebApp: { capable: true, title: shortName(name), statusBarStyle: 'default' },
     ...(files
       ? {
           icons: { icon: files.icon, apple: files.apple },

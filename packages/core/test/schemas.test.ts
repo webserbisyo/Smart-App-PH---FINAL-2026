@@ -120,6 +120,7 @@ describe('schemas', () => {
         pendingStamps: 1,
         rewardReady: false,
         memberCode: 'KS-4821',
+        joinedAt: '2026-10-20T04:00:00.000Z',
         history: [
           {
             kind: 'welcome',
@@ -129,6 +130,7 @@ describe('schemas', () => {
             at: '2026-10-20T04:00:00.000Z',
           },
         ],
+        claims: [],
       }).success,
     ).toBe(true);
     expect(

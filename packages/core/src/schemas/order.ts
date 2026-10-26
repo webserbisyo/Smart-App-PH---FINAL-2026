@@ -254,6 +254,12 @@ export const OrderRowSchema = z.object({
   scheduledAt: IsoDateTimeSchema.nullable(),
   itemCount: z.number().int().min(1),
   summary: z.string(),
-  photo: MediaRefSchema.nullable(),
+  // Photos of the first items (up to 3), for the thumbnails on My orders.
+  photos: z.array(MediaRefSchema).max(3),
+  paymentMethod: PaymentMethodEnum,
+  // Unpaid transfers only: pay before this time or the order expires.
+  expiresAt: IsoDateTimeSchema.nullable(),
+  // Stars the customer gave, once rated.
+  ratingStars: z.number().int().min(1).max(5).nullable(),
 });
 export type OrderRow = z.infer<typeof OrderRowSchema>;
