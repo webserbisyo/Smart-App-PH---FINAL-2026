@@ -1,4 +1,5 @@
-// Dev-only scenario switch (decision T26): slow, error, empty, offline, closed and member states on any page.
+// Dev-only scenario switch (decision T26): slow, error, empty, offline, closed, no stamp card and member
+// states on any page.
 // Production builds never load this module: the storefront imports it dynamically behind a NODE_ENV
 // check, so neither its code nor its source text ships.
 import {
@@ -51,7 +52,16 @@ export interface UrlScenario {
   fillBasket: boolean;
 }
 
-const MOCK_VALUES = ['slow', 'error', 'empty', 'offline', 'closed', 'basket', 'none'] as const;
+const MOCK_VALUES = [
+  'slow',
+  'error',
+  'empty',
+  'offline',
+  'closed',
+  'nocard',
+  'basket',
+  'none',
+] as const;
 
 /** Reads `?mock=`, `?as=` and `?now=`. Only parses; the caller applies it with setMockScenario in dev builds. */
 export function parseMockScenario(params: URLSearchParams): UrlScenario {
@@ -73,6 +83,9 @@ export function parseMockScenario(params: URLSearchParams): UrlScenario {
       break;
     case 'closed':
       out.scenario.closed = true;
+      break;
+    case 'nocard':
+      out.scenario.noCard = true;
       break;
     case 'basket':
       out.fillBasket = true;
@@ -103,7 +116,14 @@ export function readMockScenarioFromUrl(
   const parsed = parseMockScenario(params);
   if (Object.keys(parsed.scenario).length > 0) {
     const reset = params.has('mock')
-      ? { latency: 'normal' as const, fail: null, empty: false, offline: false, closed: false }
+      ? {
+          latency: 'normal' as const,
+          fail: null,
+          empty: false,
+          offline: false,
+          closed: false,
+          noCard: false,
+        }
       : {};
     setMockScenario({ ...reset, ...parsed.scenario });
   }

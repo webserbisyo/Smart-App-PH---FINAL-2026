@@ -798,8 +798,13 @@ export const words = {
     qrLabel: (code: string) => `QR code for member code ${code}`,
     brightness: 'Turn up your screen brightness',
     since: (date: string) => `Member since ${date}`,
-    cardOffTitle: 'This shop has no stamp card right now',
-    cardOffBody: 'You can still order as usual.',
+    // No stamp card yet (decision R25): sells membership without promising stamps.
+    sukiTitle: (shop: string) => `Be a Suki of ${shop}`,
+    sukiBody:
+      'Join free in 30 seconds. Your orders stay in one place, checkout is faster, and you’ll be the first to collect stamps when the shop starts its card.',
+    memberInTitle: 'You’re in',
+    memberInBody: 'Stamps start when the shop opens its card.',
+    artCredit: 'Illustration by Storyset',
     backToShop: 'Back to the shop',
     errorTitle: 'We couldn’t load your stamps',
     tryAgain: 'Try again',

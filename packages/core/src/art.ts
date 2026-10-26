@@ -32,3 +32,8 @@ export const ArtKeyEnum = z.enum(ART_KEYS);
 export function artPath(key: ArtKey): string {
   return `/art/${key}.webp`;
 }
+
+// Storyset "Gift" (Rafiki, green) for Rewards before a stamp card (decision R25). Its Freepik licence
+// needs the credit line next to it, linking to Storyset.
+export const STORYSET_GIFT = '/art/storyset-gift.svg';
+export const STORYSET_URL = 'https://storyset.com';

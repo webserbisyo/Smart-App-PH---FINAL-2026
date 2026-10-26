@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CalendarCheckIcon, PauseCircleIcon, RotateCwIcon, WifiOffIcon } from 'lucide-react';
 import {
-  artPath,
   imageSources,
   rewardState,
   stampProgress,
@@ -30,13 +29,13 @@ import { NumberTicker } from '@smartapp/ui/components/number-ticker';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/reui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { rewardReady } from '@smartapp/ui/compositions/celebrate';
-import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { StampCard } from '@smartapp/ui/compositions/stamp-card';
 import { useShop } from '../../shell/components/shop-context';
 import { capReached, rewardRound, ruleLine } from '../rewards-rules';
 import { RewardCard } from './reward-card';
 import { MemberQr, StampHistory } from './rewards-parts';
 import { RewardsSkeleton } from './rewards-skeleton';
+import { SukiInvite } from './suki-invite';
 
 const W = words.rewards;
 const S = words.shop.stamps;
@@ -59,7 +58,7 @@ function reducedMotion(): boolean {
 
 /**
  * Rewards (T12): the stamp card in the member colour, the reward, stamp history and the member QR. Guests
- * see the card, the rule and Join; a shop with the card off shows a calm empty state.
+ * see the card, the rule and Join; before a shop has a card, an honest invite to join (decision R25).
  */
 export function RewardsScreen() {
   const { slug, shop } = useShop();
@@ -108,20 +107,10 @@ export function RewardsScreen() {
         <h1 id="rewards-title" className="text-2xl font-bold tracking-tight">
           {W.title}
         </h1>
-        <EmptyState
-          id="rewards-off"
-          art={artPath('closed')}
-          title={W.cardOffTitle}
-          description={W.cardOffBody}
-          action={
-            <Button
-              nativeButton={false}
-              render={<Link href={`/${slug}`} />}
-              className="h-11 rounded-full px-6"
-            >
-              {W.backToShop}
-            </Button>
-          }
+        <SukiInvite
+          slug={slug}
+          shopName={shop.storefront.info.name}
+          member={account.isPending && online ? undefined : member}
         />
       </div>
     );

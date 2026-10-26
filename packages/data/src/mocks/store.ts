@@ -406,6 +406,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       shop.storefront.look.announcement = null;
     }
     if (sc.closed) shop.storefront.closures.push({ date: manilaDate(now()), reason: null });
+    if (sc.noCard) shop.storefront.stampCard.status = 'off';
     return PublicShopSchema.parse(shop);
   }
 

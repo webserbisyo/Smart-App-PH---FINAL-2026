@@ -23,6 +23,8 @@ export const MockScenarioSchema = z.object({
   empty: z.boolean(),
   offline: z.boolean(),
   closed: z.boolean(),
+  // The shop has no stamp card yet (decision R25).
+  noCard: z.boolean(),
   now: IsoDateTimeSchema.nullable(),
   as: DemoCustomerStateEnum.nullable(),
 });
@@ -34,6 +36,7 @@ export const DEFAULT_SCENARIO: MockScenario = {
   empty: false,
   offline: false,
   closed: false,
+  noCard: false,
   now: null,
   as: null,
 };
