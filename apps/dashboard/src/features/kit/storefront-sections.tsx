@@ -291,10 +291,11 @@ const DOCK_TABS: NavItem[] = [
   },
 ];
 
-// Glass pill with the cart beside it (decisions R5 and R6): empty, 1 item, 9 items and 99+, at
-// 390 and 360 px, with a different active tab each time.
+// Glass pill with the cart beside it (decisions R5, R6 and R20): empty, 1 item, 9 items and 99+, at
+// 390 and 360 px, with a different active tab each time, and no tab active (Account, Join).
 function DockStates() {
   const states = [
+    { label: 'No tab active (Account, Join)', count: 0, active: 'none', width: 'max-w-sm' },
     { label: 'Empty basket (no cart)', count: 0, active: 'home', width: 'max-w-sm' },
     { label: '1 item, Menu active', count: 1, active: 'menu', width: 'max-w-sm' },
     {

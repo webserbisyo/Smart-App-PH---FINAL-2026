@@ -121,6 +121,8 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - R16 Two PRs on branch `claude/project-thread-jornrn`: PR 1 (shell, theme, Home, Menu, basket, checkout, receipt) replaces #16; PR 2 is T11 to T14.
 - R17 Light testing for these two PRs: `pnpm check`, `pnpm build` and CI, with screenshots only of `/kit`. This replaces the "screenshots of every changed page" step in `AGENTS.md` for PR 1 and PR 2 only.
 - R18 ShopTheme maps the shop palette onto `--primary`, `--ring` and the other base tokens, so every installed part follows the shop colour without edits to each example (kit item K10).
+- R20 Storefront dock (founder, 2026-10-26, "Sliding pill, CSS only"): equal tabs with icon and label always shown, one shop-colour pill that slides behind the active tab by CSS transform (300 ms, soft settle), a small icon pop, nothing animated under reduced motion. No tab active (Account, Join, Privacy) fades the pill out and leaves no gap. Replaces the growing icon and label capsule. No `motion` (R15 stands). No library part fits: Magic UI Dock is a hover magnifier, Base UI Tabs would announce page links as tabs, Animate UI is not one of our libraries.
+- R21 The logo shows the open state by its glowing ring alone; the word chip stays for Busy and Closed, where colour alone would be the only cue (founder, 2026-10-26). Changes R4.
 - R19 The dashboard top bar shows shadcn's small divider between the sidebar button and the page title (founder, 2026-10-26: "Yes, show the line"); it appeared once the `data-horizontal` and `data-vertical` variants were defined for every Separator and Tabs.
 
 ## Open
