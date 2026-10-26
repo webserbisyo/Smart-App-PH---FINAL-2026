@@ -69,6 +69,15 @@ export const LedgerEntrySchema = z.object({
 });
 export type LedgerEntry = z.infer<typeof LedgerEntrySchema>;
 
+export const RewardClaimSchema = z.object({
+  code: z.string().min(4).max(16),
+  status: ClaimStatusEnum,
+  qrUrl: z.url(),
+  title: z.string().min(1),
+  createdAt: IsoDateTimeSchema,
+});
+export type RewardClaim = z.infer<typeof RewardClaimSchema>;
+
 export const MemberAccountSchema = z.object({
   name: z.string().min(1).max(80),
   phone: z.string().min(1),
@@ -78,18 +87,12 @@ export const MemberAccountSchema = z.object({
   rewardReady: z.boolean(),
   // A code the shop scans or types to find this member (N6).
   memberCode: z.string().min(4).max(16),
+  joinedAt: IsoDateTimeSchema,
   history: z.array(LedgerEntrySchema),
+  // Prize claims (custom prizes), newest first: the code and QR the counter checks.
+  claims: z.array(RewardClaimSchema),
 });
 export type MemberAccount = z.infer<typeof MemberAccountSchema>;
-
-export const RewardClaimSchema = z.object({
-  code: z.string().min(4).max(16),
-  status: ClaimStatusEnum,
-  qrUrl: z.url(),
-  title: z.string().min(1),
-  createdAt: IsoDateTimeSchema,
-});
-export type RewardClaim = z.infer<typeof RewardClaimSchema>;
 
 export const CustomerAddressSchema = z.object({
   id: IdSchema,
@@ -102,6 +105,9 @@ export const CustomerAddressSchema = z.object({
   zoneId: IdSchema.nullable(),
 });
 export type CustomerAddress = z.infer<typeof CustomerAddressSchema>;
+
+// The email a customer joins with (the code goes here).
+export const CustomerEmailSchema = z.email().max(120);
 
 export const SendCodeResultSchema = z.object({
   sentAt: IsoDateTimeSchema,

@@ -14,7 +14,9 @@ import {
   getDeviceStorage,
   pruneOrderTokens,
   pruneSavedReceipts,
+  LAST_SHOP_SCOPE,
   type DeviceEntry,
+  type LastShop,
   type ReadResult,
   type SavedReceipt,
 } from '../../device-storage';
@@ -124,13 +126,51 @@ export function useFavourites(slug: string) {
   };
 }
 
-/** The receipt's install card stays hidden once the customer hides it (per shop). */
+/** When the customer last hid the install card for this shop (it stays hidden 30 days). */
 export function useInstallDismissed(slug: string) {
   const storage = getDeviceStorage();
   const dismissedAt = useDeviceEntry(storage.installDismissed, slug).value;
   return {
-    dismissed: dismissedAt !== null,
+    dismissedAt,
     dismiss: (now: Date) => storage.installDismissed.write(slug, now.toISOString()),
+  };
+}
+
+/** Confetti fires once per reward: remembers the last reward round celebrated on this phone. */
+export function useCelebratedReward(slug: string) {
+  const storage = getDeviceStorage();
+  const round = useDeviceEntry(storage.celebratedReward, slug).value;
+  return {
+    celebrated: (next: number) => round !== null && round >= next,
+    remember: (next: number) => storage.celebratedReward.write(slug, next),
+  };
+}
+
+/** The stamp count shown on the last visit (null before the first). */
+export function useSeenStamps(slug: string) {
+  const storage = getDeviceStorage();
+  const seen = useDeviceEntry(storage.seenStamps, slug).value;
+  return { seen, remember: (count: number) => storage.seenStamps.write(slug, count) };
+}
+
+/** The shop this phone opened last (the offline page links back to it). */
+export function useLastShop(): LastShop | null {
+  return useDeviceEntry(getDeviceStorage().lastShop, LAST_SHOP_SCOPE).value;
+}
+
+/** Order status notifications switched on for these receipts (mock: kept on the phone). */
+export function usePushOrders(slug: string) {
+  const storage = getDeviceStorage();
+  const tokens = useDeviceEntry(storage.pushOrders, slug).value ?? [];
+  return {
+    isOn: (token: string) => tokens.includes(token),
+    set: (token: string, on: boolean) =>
+      storage.pushOrders.write(
+        slug,
+        on
+          ? [...tokens.filter((t) => t !== token), token].slice(-20)
+          : tokens.filter((t) => t !== token),
+      ),
   };
 }
 
@@ -174,6 +214,12 @@ export function useSavedReceipt(slug: string, token: string): SavedReceipt | nul
   const storage = getDeviceStorage();
   const saved = useDeviceEntry(storage.savedReceipts, slug).value ?? [];
   return saved.find((r) => r.receipt.token === token) ?? null;
+}
+
+/** Every receipt saved on this phone for the shop (My orders offline). */
+export function useSavedReceipts(slug: string): SavedReceipt[] {
+  const storage = getDeviceStorage();
+  return useDeviceEntry(storage.savedReceipts, slug).value ?? [];
 }
 
 /** Keeps the latest receipt on the phone, until 7 days after the order ends. */

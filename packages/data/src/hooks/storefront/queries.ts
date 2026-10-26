@@ -105,6 +105,21 @@ export function useMyOrders(slug: string) {
   });
 }
 
+// Order again on My orders: loads the full order (its lines) when the button is tapped.
+export function useLoadOrder(slug: string) {
+  const { storefront } = useAdapters();
+  const client = useQueryClient();
+  return useMutation({
+    retry: false,
+    mutationFn: (token: string) =>
+      client.fetchQuery({
+        queryKey: qk.order(slug, token),
+        queryFn: () => storefront.getOrder({ slug, token }),
+        staleTime: 60_000,
+      }),
+  });
+}
+
 export function useSubmitProof(slug: string, token: string) {
   const { storefront } = useAdapters();
   const client = useQueryClient();
@@ -178,6 +193,18 @@ export function useVerifyCode() {
     networkMode: 'always',
     retry: false,
     mutationFn: (input: { email: string; code: string }) => customerAuth.verifyCustomerCode(input),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['storefront'] }),
+  });
+}
+
+// Sign out on this phone: the member session ends; the basket and favourites stay.
+export function useSignOutCustomer() {
+  const { customerAuth } = useAdapters();
+  const client = useQueryClient();
+  return useMutation({
+    networkMode: 'always',
+    retry: false,
+    mutationFn: () => customerAuth.signOutCustomer(),
     onSuccess: () => void client.invalidateQueries({ queryKey: ['storefront'] }),
   });
 }

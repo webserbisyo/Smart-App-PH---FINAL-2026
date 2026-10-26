@@ -59,22 +59,22 @@ Codes: `category_not_empty`, `item_has_orders` (archive instead).
 
 ## Storefront (public, `/s/:slug/...`)
 
-| Method                                 | HTTP                      | Input → Output                                                                                                                        |
-| -------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `getStorefront`                        | GET `/s/:slug`            | → `Storefront \| null` (pending or suspended shops are null, so the page shows Not found)                                             |
-| `quoteOrder`                           | POST `/s/:slug/quote`     | `OrderPayload` (with `scheduledAt?`) → `Quote` (with `problems[]` per line, `slots[]`, `openState`); always called before Place order |
-| `placeOrder`                           | POST `/s/:slug/orders`    | `OrderPayload + clientKey` → `{ orderId, orderNo, token }`; retry-safe                                                                |
-| `getOrder`                             | GET `/o/:token`           | → `OrderReceipt`                                                                                                                      |
-| `createProofUploadUrl` / `submitProof` | POST `/o/:token/proof`    | `{ method, referenceNo, path }` → `Payment`                                                                                           |
-| `joinAsMember`                         | POST `/s/:slug/members`   | `{ name, phone, orderToken? }` → `MemberAccount` (1 welcome stamp when the card is on; joining again returns the same account)        |
-| `getMyAccount`                         | GET `/s/:slug/me`         | → `MemberAccount \| null`                                                                                                             |
-| `saveAddress` / `removeAddress`        | `/s/:slug/me/addresses`   | `CustomerAddress`                                                                                                                     |
-| `claimReward`                          | POST `/s/:slug/me/claims` | → `RewardClaim` (custom prize)                                                                                                        |
-| `rateOrder`                            | POST `/o/:token/rating`   | `{ stars, comment? }` → `OrderRating`                                                                                                 |
-| `subscribePush`                        | POST `/o/:token/push`     | `PushSubscription` → `{ ok }`                                                                                                         |
-| `getStorefrontPreview`                 | GET `/s/:slug/preview`    | preview token → `Storefront` built from the draft                                                                                     |
-| `listMyOrders`                         | GET `/s/:slug/orders`     | `{ tokens }` (guest order tokens kept on the phone) → `OrderRow[]`                                                                    |
-| `resolveMapsLink`                      | POST `/maps/resolve`      | `{ url }` → `{ lat, lng }`; the server follows short links (maps.app.goo.gl); the mock reads full links only (`parseMapsLink`)        |
+| Method                                 | HTTP                      | Input → Output                                                                                                                             |
+| -------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `getStorefront`                        | GET `/s/:slug`            | → `Storefront \| null` (pending or suspended shops are null, so the page shows Not found)                                                  |
+| `quoteOrder`                           | POST `/s/:slug/quote`     | `OrderPayload` (with `scheduledAt?`) → `Quote` (with `problems[]` per line, `slots[]`, `openState`); always called before Place order      |
+| `placeOrder`                           | POST `/s/:slug/orders`    | `OrderPayload + clientKey` → `{ orderId, orderNo, token }`; retry-safe                                                                     |
+| `getOrder`                             | GET `/o/:token`           | → `OrderReceipt`                                                                                                                           |
+| `createProofUploadUrl` / `submitProof` | POST `/o/:token/proof`    | `{ method, referenceNo, path }` → `Payment`                                                                                                |
+| `joinAsMember`                         | POST `/s/:slug/members`   | `{ name, phone, orderToken? }` → `MemberAccount` (1 welcome stamp when the card is on; joining again returns the same account)             |
+| `getMyAccount`                         | GET `/s/:slug/me`         | → `MemberAccount \| null` (with `joinedAt` and the member's prize `claims`)                                                                |
+| `saveAddress` / `removeAddress`        | `/s/:slug/me/addresses`   | `CustomerAddress`                                                                                                                          |
+| `claimReward`                          | POST `/s/:slug/me/claims` | → `RewardClaim` (custom prize)                                                                                                             |
+| `rateOrder`                            | POST `/o/:token/rating`   | `{ stars, comment? }` → `OrderRating`                                                                                                      |
+| `subscribePush`                        | POST `/o/:token/push`     | `PushSubscription` → `{ ok }`                                                                                                              |
+| `getStorefrontPreview`                 | GET `/s/:slug/preview`    | preview token → `Storefront` built from the draft                                                                                          |
+| `listMyOrders`                         | GET `/s/:slug/orders`     | `{ tokens }` (guest order tokens kept on the phone) → `OrderRow[]` (newest first; up to 3 item photos, payment method, pay-by time, stars) |
+| `resolveMapsLink`                      | POST `/maps/resolve`      | `{ url }` → `{ lat, lng }`; the server follows short links (maps.app.goo.gl); the mock reads full links only (`parseMapsLink`)             |
 
 Every storefront method also takes the `slug` from the route (`getOrder` and the receipt methods too: the storefront route is `/[shop]/o/[token]`; a real token alone identifies the order). The cart lives on the device (`deviceStorage`, per slug). Pickup slots and open/closed text come from core (`pickupSlots`, `openState`), but the database decides.
 
