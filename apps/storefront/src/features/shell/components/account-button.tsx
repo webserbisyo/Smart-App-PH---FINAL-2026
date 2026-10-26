@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { GiftIcon, ReceiptTextIcon, UserRoundIcon } from 'lucide-react';
-import { words } from '@smartapp/core';
+import { defaultAvatar, words } from '@smartapp/core';
 import { useMyAccount } from '@smartapp/data';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
 import { Button } from '@smartapp/ui/components/button';
 import {
   DropdownMenu,
@@ -17,14 +17,13 @@ import { useShop } from './shop-context';
 
 const ITEM_CLASS = 'min-h-11 gap-2.5 px-3 text-base';
 
-// A person icon for guests, the member's initials otherwise, with a gift dot when a reward is ready.
+// A person icon for guests, the member's default face otherwise, with a gift dot when a reward is ready.
 // Opens a small menu: Account (or Join) and My orders, which left the desktop nav (decision R5).
 export function AccountButton() {
   const { slug, shop } = useShop();
   const account = useMyAccount(slug).data;
   const stampsOn = shop.storefront.stampCard.status !== 'off';
   const rewardReady = Boolean(account?.rewardReady);
-  const joinHref = stampsOn ? `/${slug}/rewards` : `/${slug}/account`;
 
   return (
     <DropdownMenu>
@@ -44,6 +43,7 @@ export function AccountButton() {
       >
         {account ? (
           <Avatar className="size-9">
+            <AvatarImage src={defaultAvatar(account.email)} alt="" />
             <AvatarFallback className="bg-shop-10-soft text-sm font-semibold text-shop-10-soft-foreground">
               {initials(account.name)}
             </AvatarFallback>
@@ -67,7 +67,7 @@ export function AccountButton() {
             {words.storefrontShell.account}
           </DropdownMenuItem>
         ) : (
-          <DropdownMenuItem className={ITEM_CLASS} render={<Link href={joinHref} />}>
+          <DropdownMenuItem className={ITEM_CLASS} render={<Link href={`/${slug}/join`} />}>
             <UserRoundIcon aria-hidden="true" />
             {words.storefrontShell.join}
           </DropdownMenuItem>

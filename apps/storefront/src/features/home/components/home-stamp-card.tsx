@@ -25,7 +25,7 @@ function HomeStampCardContent({ slug, stampCard }: HomeStampCardProps) {
   const stamped = Math.min(account?.balance ?? 0, needed);
   const pending = account?.pendingStamps ?? 0;
   const ready = Boolean(account?.rewardReady) && status !== 'paused';
-  const href = `/${slug}/rewards`;
+  const href = account || status === 'paused' ? `/${slug}/rewards` : `/${slug}/join`;
   const prize = { title: reward.title, photo: imageSources(reward.image), label: W.prize };
 
   let title: string = W.guestTitle(needed, reward.title);

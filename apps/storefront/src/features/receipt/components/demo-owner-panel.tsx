@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { isFinal, type OrderReceipt } from '@smartapp/core';
+import { isDemoShopSlug, isFinal, words, type OrderReceipt } from '@smartapp/core';
 import { qk, useAdapters, useQueryClient } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import {
@@ -10,6 +10,9 @@ import {
   CollapsibleTrigger,
 } from '@smartapp/ui/components/collapsible';
 import { ChevronDown, Wrench } from 'lucide-react';
+import { showTestNotification } from '../../install/push';
+import { useShop } from '../../shell/components/shop-context';
+import { formatOrderNumber } from '../receipt-rules';
 
 export interface DemoOwnerPanelProps {
   readonly slug: string;
@@ -18,6 +21,7 @@ export interface DemoOwnerPanelProps {
 
 export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
   const { ownerOrders } = useAdapters();
+  const { shop } = useShop();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, setIsPending] = useState(false);
@@ -243,6 +247,28 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                 Complete order
               </Button>
             )}
+
+            {/* What an order update looks like on this phone (T13). */}
+            <Button
+              type="button"
+              id="demo-owner-test-notification"
+              size="sm"
+              variant="outline"
+              className="h-7 w-full text-xs"
+              onClick={() =>
+                void showTestNotification({
+                  title: words.install.notificationTitle(shop.storefront.info.name),
+                  body: words.install.notificationBody(
+                    formatOrderNumber(order.orderNo),
+                    words.shop.orderStatus[status],
+                  ),
+                  url: `/${slug}/o/${order.token}`,
+                  icon: isDemoShopSlug(slug) ? `/demo/${slug}/brand/icon-192.png` : undefined,
+                })
+              }
+            >
+              {words.install.testNotification}
+            </Button>
 
             {/* Cancel actions */}
             {!isFinished && (

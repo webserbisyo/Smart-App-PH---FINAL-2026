@@ -24,6 +24,8 @@ export interface StampCardProps {
   readyLine?: string | undefined;
   // Join, Claim or See rewards.
   action?: ReactNode;
+  // The tile that just got its stamp lands with the press-stamp motion (Join done, a new stamp).
+  pressIndex?: number | undefined;
   // Where the Fluent fallback icon is served from (the dashboard kit passes the storefront URL).
   assetOrigin?: string | undefined;
   className?: string | undefined;
@@ -151,9 +153,15 @@ export function StampCard(props: StampCardProps) {
         aria-label={progressLabel}
         className="mt-4 grid grid-cols-5 justify-items-center gap-2"
       >
-        {Array.from({ length: needed }, (_, index) => (
-          <StampTile key={index} state={tileState(index, props)} number={index + 1} size={size} />
-        ))}
+        {Array.from({ length: needed }, (_, index) =>
+          index === props.pressIndex ? (
+            <span key={index} className="inline-flex press-stamp">
+              <StampTile state={tileState(index, props)} number={index + 1} size={size} />
+            </span>
+          ) : (
+            <StampTile key={index} state={tileState(index, props)} number={index + 1} size={size} />
+          ),
+        )}
       </div>
       {ready && readyLine ? (
         <p className="mt-3 flex justify-center">

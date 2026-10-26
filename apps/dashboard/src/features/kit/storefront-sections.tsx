@@ -34,6 +34,7 @@ import { ShopImage, type ShopImageRatio } from '@smartapp/ui/compositions/shop-i
 import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
 import { StampCard } from '@smartapp/ui/compositions/stamp-card';
+import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
 import { InfoList } from '@smartapp/ui/compositions/info-list';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
@@ -420,6 +421,17 @@ function StampCards({ prizePhoto }: { prizePhoto: ImageSources | null }) {
         action={action('Claim')}
       />
       <StampCard
+        needed={8}
+        stamped={1}
+        pressIndex={0}
+        title="Welcome! 7 more to Free Classic Smash"
+        body="The welcome stamp presses in once (no motion under reduced motion)."
+        progressLabel="1 of 8 stamps"
+        prize={prize}
+        assetOrigin={ORIGIN}
+        action={action('See my stamp card')}
+      />
+      <StampCard
         needed={20}
         stamped={13}
         title="Stamps are paused"
@@ -428,6 +440,56 @@ function StampCards({ prizePhoto }: { prizePhoto: ImageSources | null }) {
         prize={{ ...prize, photo: null }}
         assetOrigin={ORIGIN}
         action={action('See rewards', 'outline')}
+      />
+    </div>
+  );
+}
+
+// Fresh code with the resend countdown, a wrong code, and Resend ready (the join step, T12).
+function OtpResends() {
+  const [code, setCode] = useState('');
+  const [resendAt, setResendAt] = useState(() => new Date(Date.now() + 60_000).toISOString());
+  const [wrong, setWrong] = useState('12');
+  return (
+    <div className="grid gap-6 md:grid-cols-3">
+      <OtpResend
+        id="kit-otp-fresh"
+        value={code}
+        onChange={setCode}
+        label="Enter the 6-digit code"
+        sentLine="We sent it to a••@example.com"
+        hint="Not there? Check Spam or Promotions."
+        resendAt={resendAt}
+        onResend={() => setResendAt(new Date(Date.now() + 60_000).toISOString())}
+        resendLabel="Send a new code"
+        resendInLabel={(seconds) => `Send a new code in ${seconds} s`}
+      />
+      <OtpResend
+        id="kit-otp-wrong"
+        value={wrong}
+        onChange={setWrong}
+        label="Enter the 6-digit code"
+        sentLine="We sent it to a••@example.com"
+        hint="Not there? Check Spam or Promotions."
+        resendAt={null}
+        onResend={() => setWrong('')}
+        resendLabel="Send a new code"
+        resendInLabel={(seconds) => `Send a new code in ${seconds} s`}
+        error="Wrong code, try again."
+      />
+      <OtpResend
+        id="kit-otp-busy"
+        value="123456"
+        onChange={() => {}}
+        label="Enter the 6-digit code"
+        sentLine="We sent it to a••@example.com"
+        hint="Checking your code…"
+        resendAt={null}
+        onResend={() => {}}
+        resendLabel="Send a new code"
+        resendInLabel={(seconds) => `Send a new code in ${seconds} s`}
+        resending
+        disabled
       />
     </div>
   );
@@ -690,9 +752,18 @@ export function StorefrontSections() {
             title="Stamp card"
             library="composition"
             path="packages/ui/src/compositions/stamp-card.tsx"
-            usedIn="storefront Home, kit"
+            usedIn="storefront Home, Rewards, Join done, kit"
           >
             <StampCards prizePhoto={imageSources(`demo:${slug}/items/${shop.item}`, ORIGIN)} />
+          </KitSection>
+
+          <KitSection
+            title="Code with resend"
+            library="composition"
+            path="packages/ui/src/compositions/otp-resend.tsx"
+            usedIn="storefront Join (email code), kit"
+          >
+            <OtpResends />
           </KitSection>
 
           <KitSection
@@ -717,7 +788,7 @@ export function StorefrontSections() {
             title="Empty state"
             library="composition"
             path="packages/ui/src/compositions/empty-state.tsx"
-            usedIn="storefront basket, Menu search and favourites, receipt not found, kit"
+            usedIn="storefront basket, Menu search and favourites, receipt not found, My orders, Rewards, Account, offline page, kit"
           >
             <EmptyStates />
           </KitSection>
@@ -726,7 +797,7 @@ export function StorefrontSections() {
             title="Info list"
             library="composition"
             path="packages/ui/src/compositions/info-list.tsx"
-            usedIn="storefront Shop info sheet and Home info card, kit"
+            usedIn="storefront Shop info sheet and Home info card, privacy notice contact, kit"
           >
             <div id="kit-info-list">
               <InfoLists />
