@@ -294,3 +294,9 @@ function clockSnapshot(): string {
 export function useNow(): string | null {
   return useSyncExternalStore(subscribeClock, clockSnapshot, () => null);
 }
+
+/** The small copy of a proof photo sent from this phone, or null (sent elsewhere, or storage cleared). */
+export function useProofPreview(slug: string, path: string): string | null {
+  const { value } = useDeviceEntry(getDeviceStorage().proofPreviews, slug);
+  return value?.find((p) => p.path === path)?.dataUrl ?? null;
+}

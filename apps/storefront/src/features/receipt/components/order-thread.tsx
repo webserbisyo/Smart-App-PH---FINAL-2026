@@ -1,193 +1,263 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
-import { words, type OrderMessage, type OrderReceipt } from '@smartapp/core';
+import {
+  imageSources,
+  words,
+  type OrderMessage,
+  type OrderReceipt,
+  type Proof,
+} from '@smartapp/core';
+import { useProofPreview } from '@smartapp/data';
+import {
+  Attachment,
+  AttachmentContent,
+  AttachmentMedia,
+  AttachmentTitle,
+  AttachmentTrigger,
+} from '@smartapp/ui/components/attachment';
+import { Bubble, BubbleContent } from '@smartapp/ui/components/bubble';
 import { Button } from '@smartapp/ui/components/button';
+import { Marker, MarkerContent, MarkerIcon } from '@smartapp/ui/components/marker';
+import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+  MessageFooter,
+  MessageGroup,
+} from '@smartapp/ui/components/message';
 import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
-import { Bike, ExternalLink, Expand, Phone, ShieldCheck, XCircle } from 'lucide-react';
+import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
+import { cn } from '@smartapp/ui/lib/utils';
+import {
+  Bike,
+  CircleCheckIcon,
+  ExternalLink,
+  HourglassIcon,
+  ImageIcon,
+  LinkIcon,
+  Phone,
+  XCircle,
+} from 'lucide-react';
+import { useShop } from '../../shell/components/shop-context';
+import { statusChip } from '../receipt-look';
 import { formatManilaTime } from '../receipt-rules';
 
 export interface OrderThreadProps {
   readonly order: OrderReceipt;
 }
 
-function formatProofSrc(path: string): string {
-  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/')) {
-    return path;
-  }
-  return `/${path}`;
+const PROOF_STATE = {
+  pending: { icon: HourglassIcon, className: 'text-info-text' },
+  approved: { icon: CircleCheckIcon, className: 'text-success-text' },
+  rejected: { icon: XCircle, className: 'text-destructive-text' },
+} as const;
+
+/** The customer's proof (c-message-5): the photo this phone sent, the reference and its check state. */
+function ProofMessage({
+  slug,
+  proof,
+  time,
+  onView,
+}: {
+  slug: string;
+  proof: Proof;
+  time: string;
+  onView: (src: string) => void;
+}) {
+  const preview = useProofPreview(slug, proof.path);
+  const T = words.receipt.thread;
+  const state = PROOF_STATE[proof.status];
+  const StateIcon = state.icon;
+  return (
+    <Message align="end">
+      <MessageContent>
+        <Attachment orientation="vertical" className="w-full max-w-44">
+          <AttachmentMedia variant="image">
+            {preview ? (
+              <img
+                src={preview}
+                alt={T.proofAlt(proof.referenceNo)}
+                width={176}
+                height={176}
+                decoding="async"
+              />
+            ) : (
+              <ImageIcon aria-hidden="true" className="text-muted-foreground" />
+            )}
+          </AttachmentMedia>
+          {preview ? null : (
+            <AttachmentContent>
+              <AttachmentTitle>{words.receipt.proof.photoSent}</AttachmentTitle>
+            </AttachmentContent>
+          )}
+          {preview ? (
+            <AttachmentTrigger
+              aria-label={T.viewProof(proof.referenceNo)}
+              onClick={() => onView(preview)}
+            />
+          ) : null}
+        </Attachment>
+        <Bubble>
+          <BubbleContent>{words.shop.thread.proofSent(proof.referenceNo)}</BubbleContent>
+        </Bubble>
+        <MessageFooter className="gap-1.5 tabular">
+          <StateIcon aria-hidden="true" className={cn('size-3.5', state.className)} />
+          <span>{T.proofState[proof.status]}</span>
+          <span aria-hidden="true">·</span>
+          <span>{time}</span>
+        </MessageFooter>
+      </MessageContent>
+    </Message>
+  );
 }
 
+/**
+ * Order updates as a chat (decision R34): the customer's proofs on the right as bubbles with the photo,
+ * the shop's replies on the left with its logo (c-message-5), and status changes as markers (c-marker-2).
+ * Free-text chat is MVP B (S7).
+ */
 export function OrderThread({ order }: OrderThreadProps) {
-  const [selectedProofPath, setSelectedProofPath] = useState<string | null>(null);
+  const { slug, shop } = useShop();
+  const [viewing, setViewing] = useState<string | null>(null);
+  const info = shop.storefront.info;
+  const logo = info.logo ? imageSources(info.logo) : null;
+  const T = words.receipt.thread;
 
   if (!order.messages || order.messages.length === 0) {
     return null;
   }
 
+  // The shop's replies (payment checked, rider): its logo and a muted bubble on the left.
+  const shopSays = (msg: OrderMessage, text: string) => (
+    <Message key={msg.id}>
+      <MessageAvatar>
+        <ShopLogo name={info.name} src={logo} size="sm" shape="round" />
+      </MessageAvatar>
+      <MessageContent>
+        <Bubble variant="muted">
+          <BubbleContent>{text}</BubbleContent>
+        </Bubble>
+        <MessageFooter className="tabular">{formatManilaTime(msg.at)}</MessageFooter>
+      </MessageContent>
+    </Message>
+  );
+
   return (
     <div
       id="receipt-order-thread"
-      className="flex flex-col gap-3 rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6 print:hidden"
+      className="flex flex-col gap-4 rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6 print:hidden"
     >
-      <h2 className="text-base font-semibold">{words.receipt.thread.title}</h2>
+      <h2 className="text-base font-semibold">{T.title}</h2>
 
-      <div className="flex flex-col gap-2.5">
-        {order.messages.map((msg: OrderMessage) => {
-          const timeStr = formatManilaTime(msg.at);
+      <MessageGroup className="gap-4">
+        {order.messages.map((msg) => {
+          const time = formatManilaTime(msg.at);
 
-          // Proof message bubble (c-message-5)
           if (msg.proof) {
-            const proofSrc = formatProofSrc(msg.proof.path);
             return (
-              <div
+              <ProofMessage
                 key={msg.id}
-                className="flex max-w-xs flex-col gap-1.5 self-end rounded-2xl rounded-tr-xs bg-shop-10-soft p-2.5 text-sm text-shop-10-soft-foreground"
-              >
-                <div className="flex items-center justify-between gap-3 text-xs">
-                  <span className="font-semibold">
-                    {words.shop.thread.proofSent(msg.proof.referenceNo)}
-                  </span>
-                  <span className="tabular-nums">{timeStr}</span>
-                </div>
-
-                {/* Proof preview thumbnail */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedProofPath(msg.proof?.path ?? null)}
-                  className="group relative overflow-hidden rounded-xl bg-background text-left transition-opacity hover:opacity-90"
-                  aria-label={words.receipt.thread.viewProof(msg.proof.referenceNo)}
-                >
-                  <Image
-                    src={proofSrc}
-                    alt={words.receipt.thread.proofAlt(msg.proof.referenceNo)}
-                    width={176}
-                    height={112}
-                    unoptimized
-                    className="h-28 w-44 object-cover"
-                  />
-                  <span
-                    aria-hidden="true"
-                    className="absolute right-1.5 bottom-1.5 flex size-8 items-center justify-center rounded-full glass"
-                  >
-                    <Expand className="size-4" />
-                  </span>
-                </button>
-
-                {msg.proof.status === 'rejected' && msg.proof.rejectReason && (
-                  <span className="text-xs font-medium text-destructive-text">
-                    {words.shop.thread.paymentRejected(msg.proof.rejectReason)}
-                  </span>
-                )}
-              </div>
+                slug={slug}
+                proof={msg.proof}
+                time={time}
+                onView={setViewing}
+              />
             );
           }
 
-          const isStatusCompleted = msg.kind === 'status' && msg.status === 'completed';
-          const isStatusCancelled =
-            msg.kind === 'status' && (msg.status === 'cancelled' || msg.status === 'expired');
-          const isRider = msg.kind === 'rider';
-          const isTracking = msg.kind === 'tracking';
+          // An order status change: a marker line with the status icon, word and time.
+          if (msg.kind === 'status' && msg.status && !msg.text) {
+            const chip = statusChip(msg.status);
+            const Icon = chip.icon;
+            return (
+              <Marker key={msg.id} variant="separator">
+                <MarkerIcon>
+                  <Icon />
+                </MarkerIcon>
+                <MarkerContent className="tabular">{T.statusAt(chip.label, time)}</MarkerContent>
+              </Marker>
+            );
+          }
 
-          const lineText =
+          if (msg.kind === 'tracking') {
+            return (
+              <Marker key={msg.id} variant="separator">
+                <MarkerIcon>
+                  <LinkIcon />
+                </MarkerIcon>
+                <MarkerContent className="tabular">
+                  {T.statusAt(msg.text ?? words.shop.thread.tracking, time)}
+                </MarkerContent>
+              </Marker>
+            );
+          }
+
+          const text =
             msg.text ??
-            (isRider && order.rider
-              ? words.shop.thread.rider(order.rider.name)
-              : isTracking
-                ? words.shop.thread.tracking
-                : msg.status
-                  ? words.shop.orderStatus[msg.status]
-                  : null);
-          if (!lineText) return null;
-
-          // System line (c-marker-2)
-          return (
-            <div
-              key={msg.id}
-              className="flex items-start gap-2.5 rounded-xl bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground"
-            >
-              <div className="mt-0.5 shrink-0" aria-hidden="true">
-                {isStatusCompleted ? (
-                  <ShieldCheck className="size-4 text-success-text" />
-                ) : isStatusCancelled ? (
-                  <XCircle className="size-4 text-destructive-text" />
-                ) : isRider ? (
-                  <Bike className="size-4 text-info-text" />
-                ) : (
-                  <div className="m-1.5 size-1.5 rounded-full bg-muted-foreground/60" />
-                )}
-              </div>
-              <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                <span className="text-foreground">{lineText}</span>
-                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                  {timeStr}
-                </span>
-              </div>
-            </div>
-          );
+            (msg.kind === 'rider' && order.rider ? words.shop.thread.rider(order.rider.name) : null);
+          if (!text) return null;
+          return shopSays(msg, text);
         })}
+      </MessageGroup>
 
-        {/* Rider details & tracking link (c-item-4) if delivery is active */}
-        {order.rider && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted/50 p-3 text-sm">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
-                <Bike aria-hidden="true" className="size-5" />
-              </div>
-              <div className="flex min-w-0 flex-col">
-                <span className="truncate font-semibold text-foreground">{order.rider.name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {order.rider.provider ?? words.receipt.thread.rider}
-                </span>
-              </div>
+      {/* Rider details & tracking link (c-item-4) if delivery is active */}
+      {order.rider && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted/50 p-3 text-sm">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
+              <Bike aria-hidden="true" className="size-5" />
             </div>
-
-            <div className="flex items-center gap-2">
-              {order.rider.phone && (
-                <Button
-                  variant="outline"
-                  nativeButton={false}
-                  render={<a href={`tel:${order.rider.phone}`} />}
-                  aria-label={words.receipt.thread.callRider(order.rider.name)}
-                  className="h-11 gap-1.5 rounded-full bg-card px-4"
-                >
-                  <Phone aria-hidden="true" className="size-4" />
-                  {words.receipt.thread.call}
-                </Button>
-              )}
-              {order.trackingUrl && (
-                <Button
-                  nativeButton={false}
-                  render={<a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" />}
-                  className="h-11 gap-1.5 rounded-full px-4"
-                >
-                  {words.receipt.thread.track}
-                  <ExternalLink aria-hidden="true" className="size-4" />
-                </Button>
-              )}
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate font-semibold text-foreground">{order.rider.name}</span>
+              <span className="truncate text-xs text-muted-foreground">
+                {order.rider.provider ?? T.rider}
+              </span>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Proof Viewer Dialog */}
+          <div className="flex items-center gap-2">
+            {order.rider.phone && (
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<a href={`tel:${order.rider.phone}`} />}
+                aria-label={T.callRider(order.rider.name)}
+                className="h-11 gap-1.5 rounded-full bg-card px-4"
+              >
+                <Phone aria-hidden="true" className="size-4" />
+                {T.call}
+              </Button>
+            )}
+            {order.trackingUrl && (
+              <Button
+                nativeButton={false}
+                render={<a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" />}
+                className="h-11 gap-1.5 rounded-full px-4"
+              >
+                {T.track}
+                <ExternalLink aria-hidden="true" className="size-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* The proof photo, bigger */}
       <ResponsiveDialog
-        open={selectedProofPath !== null}
-        onOpenChange={(open) => !open && setSelectedProofPath(null)}
-        title={words.receipt.thread.proofDialog}
+        open={viewing !== null}
+        onOpenChange={(open) => !open && setViewing(null)}
+        title={T.proofDialog}
       >
         <div className="flex flex-col items-center justify-center p-2">
-          {selectedProofPath && (
-            <Image
-              src={formatProofSrc(selectedProofPath)}
-              alt={words.receipt.thread.proofDialog}
-              width={800}
-              height={600}
-              unoptimized
-              className="max-h-96 w-auto max-w-full rounded-lg object-contain"
+          {viewing ? (
+            <img
+              src={viewing}
+              alt={T.proofDialog}
+              decoding="async"
+              className="max-h-vh-70 w-auto max-w-full rounded-lg object-contain"
             />
-          )}
+          ) : null}
         </div>
       </ResponsiveDialog>
     </div>

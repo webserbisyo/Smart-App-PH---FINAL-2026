@@ -3,6 +3,21 @@ import { isDemoShopSlug, type DemoShopSlug } from './demo/slugs.js';
 
 export type MediaFolder = 'items' | 'banners' | 'brand';
 
+/** "4.2 MB", "310 KB" (1 KB = 1024 bytes); for the proof photo's before and after sizes. */
+export function formatFileSize(bytes: number): string {
+  const kb = Math.max(0, bytes) / 1024;
+  if (kb < 1024) return `${Math.max(1, Math.round(kb))} KB`;
+  return `${(kb / 1024).toFixed(1)} MB`;
+}
+
+/** "WebP", "JPEG", "PNG" from a MIME type, for the proof photo's size line. */
+export function imageFormatName(mimeType: string): string {
+  const sub = mimeType.split('/')[1]?.toLowerCase() ?? '';
+  if (sub === 'webp') return 'WebP';
+  if (sub === 'jpeg' || sub === 'jpg') return 'JPEG';
+  return sub.toUpperCase();
+}
+
 export type MediaRef = `demo:${DemoShopSlug}/${MediaFolder}/${string}` | (string & {});
 
 export interface ImageSources {

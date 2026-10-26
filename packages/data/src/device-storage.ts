@@ -101,10 +101,20 @@ export interface DeviceStorage {
   pushOrders: DeviceEntry<string[]>;
   // Mock mode only: what the customer created on this phone (orders, proofs, member account).
   mockState: DeviceEntry<unknown>;
+  // Small copies of the proof photos sent from this phone, so the order thread can show them.
+  proofPreviews: DeviceEntry<ProofPreview[]>;
   subscribe(listener: () => void): () => void;
   /** Bumps on every change; a cheap snapshot for useSyncExternalStore. */
   version(): number;
 }
+
+export const PROOF_PREVIEWS_MAX = 6;
+export const ProofPreviewSchema = z.object({
+  path: z.string().min(1).max(200),
+  dataUrl: z.string().startsWith('data:image/'),
+  savedAt: IsoDateTimeSchema,
+});
+export type ProofPreview = z.infer<typeof ProofPreviewSchema>;
 
 export const GuestOrderTokenSchema = z.object({ token: z.string(), addedAt: IsoDateTimeSchema });
 export type GuestOrderToken = z.infer<typeof GuestOrderTokenSchema>;
@@ -203,6 +213,11 @@ export function createDeviceStorage(backend: Backend = pickBackend()): DeviceSto
     lastShop: entry('lastShop', 1, LastShopSchema),
     pushOrders: entry('pushOrders', 1, z.array(z.string().max(80)).max(20)),
     mockState: entry('mockState', 1, z.unknown()),
+    proofPreviews: entry(
+      'proofPreviews',
+      1,
+      z.array(ProofPreviewSchema).max(PROOF_PREVIEWS_MAX),
+    ),
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

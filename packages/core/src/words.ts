@@ -559,6 +559,14 @@ export const words = {
       referencePlaceholder: 'e.g. 1234 567 890',
       upload: 'Upload proof of payment',
       uploadAgain: 'Upload again',
+      // The picked photo before it is sent (decision R33): the size it was, the size it is now.
+      photo: 'Payment photo',
+      pickHint: 'A screenshot or photo of your payment receipt',
+      sizeSaved: (from: string, to: string, format: string) => `${from} to ${to} · ${format}`,
+      remove: 'Remove photo',
+      send: 'Send proof',
+      sending: 'Sending…',
+      photoSent: 'Photo sent',
       compressing: 'Making the photo smaller…',
       uploading: 'Uploading your proof…',
       keepOpen: 'Keep this page open.',
@@ -588,6 +596,9 @@ export const words = {
       call: 'Call',
       callRider: (name: string) => `Call ${name}`,
       track: 'Track',
+      statusAt: (status: string, time: string) => `${status} · ${time}`,
+      // Under a proof bubble: where the shop's check stands.
+      proofState: { pending: 'Checking', approved: 'Approved', rejected: 'Not approved' },
     },
     messenger: {
       text: 'Send your order details to the shop on Messenger.',

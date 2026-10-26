@@ -20,4 +20,5 @@ export {
 export { isDevMock, type MockScenario } from './mocks/scenario-state';
 export { loadMockScenario, readMockScenarioFromUrl, type UrlScenario } from './mocks/scenario';
 export * from './compress-image';
+export { blobToDataUrl } from './proof-files';
 export { useQueryClient } from '@tanstack/react-query';

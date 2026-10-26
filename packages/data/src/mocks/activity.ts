@@ -10,6 +10,7 @@ import {
   pickupSlots,
   validateLinePicks,
   type BasketLine,
+  type CustomerAddress,
   type LedgerEntry,
   type OrderStatus,
   type OrderType,
@@ -77,6 +78,37 @@ const NAMES = [
 ] as const;
 
 const DAY = 24 * 60;
+
+/** Juan's two saved places in the shop's first delivery zone, so the account shows real-looking data. */
+export function demoAddresses(shop: PublicShop): CustomerAddress[] {
+  const zoneId = shop.storefront.delivery.zones[0]?.id ?? null;
+  return [
+    {
+      id: 'demo-address-home',
+      label: 'Home',
+      addressLine: '12 Sampaguita St.',
+      houseNo: 'Blue gate',
+      floor: null,
+      landmark: 'Across the sari-sari store',
+      spot: null,
+      zoneId,
+    },
+    {
+      id: 'demo-address-work',
+      label: 'Work',
+      addressLine: '88 Rizal Ave., Unit 5B',
+      houseNo: null,
+      floor: '5th floor',
+      landmark: 'Beside the bank',
+      spot: null,
+      zoneId,
+    },
+  ];
+}
+
+export function isDemoReceiptToken(value: string): value is DemoReceiptToken {
+  return DEMO_RECEIPT_TOKENS.some((token) => token === value);
+}
 
 function customerFor(i: number): { name: string; phone: string; email: string } {
   const name = NAMES[i % NAMES.length] ?? 'Customer';

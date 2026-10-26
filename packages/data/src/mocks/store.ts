@@ -44,7 +44,13 @@ import {
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
 import type { DataAdapters } from '../adapters/types';
-import { DEMO_CUSTOMER, generateMembers, generateOrders } from './activity';
+import {
+  DEMO_CUSTOMER,
+  demoAddresses,
+  generateMembers,
+  generateOrders,
+  isDemoReceiptToken,
+} from './activity';
 import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
 import { getMockScenario, type DemoCustomerState, type MockScenario } from './scenario-state';
@@ -338,10 +344,13 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       memberCode: `${slug.slice(0, 2).toUpperCase()}-1234`,
       joinedAt: addMinutes(t, -30 * 1440),
       ledger,
-      addresses: [],
+      addresses: demoAddresses(s.shop),
       claims: [],
       byCustomer: false,
     });
+    // Every demo receipt is Juan's, so My orders reaches each receipt and chat state (decision R34).
+    for (const order of s.orders)
+      if (isDemoReceiptToken(order.receipt.token)) order.memberEmail = DEMO_CUSTOMER.email;
     if (as === 'member-pending') {
       const open = s.orders.find((o) => o.receipt.token === 'demo-preparing');
       if (open) {

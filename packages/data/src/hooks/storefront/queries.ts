@@ -11,6 +11,7 @@ import {
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
 import { ApiRequestError } from '../../api-client';
+import { putProofFile, saveProofPreview } from '../../proof-files';
 import { rememberOrderToken, saveReceipt, useGuestOrderTokens, useOnline } from './device';
 import { qk } from './qk';
 
@@ -132,9 +133,18 @@ export function useSubmitProof(slug: string, token: string) {
   return useMutation({
     networkMode: 'always',
     retry: false,
-    mutationFn: async (input: { method: PaymentMethod; referenceNo: string }) => {
+    // The compressed photo goes to the upload URL first, then the proof row points at its path.
+    mutationFn: async (input: { method: PaymentMethod; referenceNo: string; file: Blob }) => {
       const upload = await storefront.createProofUploadUrl({ slug, token });
-      return storefront.submitProof({ slug, token, ...input, path: upload.path });
+      await putProofFile(upload, input.file);
+      await saveProofPreview(slug, upload.path, input.file);
+      return storefront.submitProof({
+        slug,
+        token,
+        method: input.method,
+        referenceNo: input.referenceNo,
+        path: upload.path,
+      });
     },
     onSuccess: () => void client.invalidateQueries({ queryKey: qk.order(slug, token) }),
   });

@@ -50,7 +50,7 @@ export async function compressImage(file: Blob | File, options?: CompressOptions
     return file;
   }
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
 
@@ -98,9 +98,10 @@ export async function compressImage(file: Blob | File, options?: CompressOptions
       );
     };
 
+    // Not a picture the phone can read: the screen asks for another photo.
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      resolve(file);
+      reject(new Error('unreadable_image'));
     };
 
     img.src = objectUrl;

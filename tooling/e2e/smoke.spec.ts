@@ -705,7 +705,7 @@ test.describe('order receipt and payment proof (T10)', () => {
     expect(problems).toEqual([]);
   });
 
-  test('receipt proof uploader transitions to sent on file selection', async ({ page }) => {
+  test('receipt proof: pick a photo, see it made smaller, send it', async ({ page }) => {
     const problems = watch(page);
     await page.goto(urlFor('dev', '/kape-juan/o/demo-placed-transfer'));
     await settle(page);
@@ -713,13 +713,34 @@ test.describe('order receipt and payment proof (T10)', () => {
     const fileInput = page.locator('input[type="file"]');
     await expect(fileInput).toBeAttached();
 
+    // A real 1x1 PNG: the phone compresses it to WebP before anything is sent (decision R33).
     await fileInput.setInputFiles({
       name: 'proof.png',
       mimeType: 'image/png',
-      buffer: Buffer.from('fake image payload'),
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        'base64',
+      ),
     });
+    await expect(page.getByText(/to .* · WebP/)).toBeVisible({ timeout: 15_000 });
+    await page.locator('#receipt-send-proof').click();
 
     await expect(page.getByText('Proof sent', { exact: true })).toBeVisible({ timeout: 15_000 });
+    // The photo shows in the order chat, from the copy kept on this phone.
+    await expect(page.locator('#receipt-order-thread img').first()).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
+  test('receipt proof: a file that is not a photo asks for another one', async ({ page }) => {
+    const problems = watch(page);
+    await page.goto(urlFor('dev', '/kape-juan/o/demo-placed-transfer'));
+    await settle(page);
+    await page.locator('input[type="file"]').setInputFiles({
+      name: 'proof.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('not a picture'),
+    });
+    await expect(page.getByText("Couldn't read this photo. Pick another one.")).toBeVisible();
     expect(problems).toEqual([]);
   });
 
