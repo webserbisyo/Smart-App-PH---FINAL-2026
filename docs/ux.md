@@ -48,7 +48,7 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - Forms in groups of 5 to 7 fields; each settings section saves on its own.
 - Destructive actions confirm with a reason. Order steps only move forward; there is no Undo.
 - Forgiving input: phone accepts 0917…, 917… or +63…; money accepts "₱120" and "120.50"; references ignore spaces.
-- Toasts: bottom centre above the dock on phones, bottom right on desktop; success closes after 3 s, errors stay; at most one action.
+- Toasts: bottom centre above the dock on phones, top centre on desktop (decision R36); semantic colours (green, red, amber, blue), never shop colours (R35); success closes after 3 s, errors stay; at most one action.
 
 ## 6. Screen notes (rules, not components)
 

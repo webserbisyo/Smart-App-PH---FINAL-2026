@@ -558,7 +558,7 @@ export function StorefrontPrimitiveSections() {
         title="Circular progress"
         library={DICE}
         path={P('circular-progress')}
-        usedIn="kit"
+        usedIn="storefront Rewards (stamps) and receipt pay timer, kit"
       >
         <div className="flex items-center gap-6">
           <CircularProgressCombined

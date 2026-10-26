@@ -51,6 +51,7 @@ import { ThermalReceiptCard } from '@smartapp/ui/vendor/opensource-ui/thermal-re
 import { env } from '@/app/env';
 import { KitSection } from './kit-section.js';
 import { KitShopProvider } from './kit-shop.js';
+import { PolishPrimitiveSections } from './polish-primitives.js';
 import { RedesignPrimitiveSections } from './redesign-primitives.js';
 
 // Demo photos live in the storefront's public folder; the kit loads them from there.
@@ -880,7 +881,7 @@ export function StorefrontSections() {
             title="Count up (Number Ticker)"
             library="composition · Magic UI"
             path="packages/ui/src/compositions/count-up.tsx · components/number-ticker.tsx"
-            usedIn="kit"
+            usedIn="storefront Rewards (stamps) and members pill, kit"
           >
             <div className="flex flex-wrap items-end gap-8">
               <div>
@@ -1045,6 +1046,7 @@ export function StorefrontSections() {
 
           <KitShopProvider slug={slug}>
             <RedesignPrimitiveSections />
+            <PolishPrimitiveSections />
           </KitShopProvider>
         </div>
       </ShopTheme>

@@ -957,6 +957,10 @@ export const words = {
       none: 'Ask at the counter, or reply in your order’s Messenger chat.',
     },
     lastUpdated: (date: string) => `Last updated ${date}`,
+    // Licences of the member faces (decision R23): Micah needs credit (CC BY 4.0); the others are CC0.
+    faceCredits:
+      'Member faces from DiceBear: Notionists by Zoish and Lorelei by Lisa Wischofsky (CC0), Micah by Micah Lanier (CC BY 4.0).',
+    faceLicence: 'CC BY 4.0 licence',
     back: 'Back to the shop',
   },
   share: {

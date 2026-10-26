@@ -30,9 +30,12 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] T12 Rewards and account (PR #18)
 - [x] T13 Install as an app (PR #18)
 - [x] T14 Privacy and system pages (PR #18; the Lighthouse table is still to fill by hand in Chrome DevTools)
+- [x] R Storefront polish round 2: avatar picker and photo crop, Be a Suki, banners with words, receipt ticket, printer, proof preview, order chat, toasts, motion (decisions R22 to R42; pushed to `main`)
 
 ## Phase 3: Dashboard screens (mock)
 
 ## Phase 4: Backend, area by area
+
+- [ ] Members area: customer account, picture and saved places in the database (today mock data and this phone only, decision R22)
 
 ## Phase 5: Launch

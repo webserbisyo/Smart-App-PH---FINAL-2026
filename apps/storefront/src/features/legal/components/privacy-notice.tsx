@@ -10,6 +10,9 @@ const W = words.privacy;
 // Change with the text (shown as "Last updated", Manila date).
 const UPDATED_AT = '2026-10-26T09:00:00+08:00';
 
+// The Micah faces' licence, linked next to their credit.
+const CC_BY_4 = 'https://creativecommons.org/licenses/by/4.0/';
+
 const SECTIONS = ['who', 'collect', 'why', 'phone', 'keep', 'sees', 'rights', 'contact'] as const;
 type SectionKey = (typeof SECTIONS)[number];
 
@@ -156,6 +159,17 @@ export function PrivacyNotice({ storefront }: { storefront: Storefront }) {
       <footer className="flex flex-col items-center gap-3 pt-2 text-center">
         <p className="text-sm text-muted-foreground">
           {W.lastUpdated(formatManila(UPDATED_AT, 'date'))}
+        </p>
+        <p className="text-xs text-balance text-muted-foreground">
+          {W.faceCredits}{' '}
+          <a
+            href={CC_BY_4}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center underline underline-offset-2 hover:text-foreground"
+          >
+            {W.faceLicence}
+          </a>
         </p>
         <Button
           variant="outline"
