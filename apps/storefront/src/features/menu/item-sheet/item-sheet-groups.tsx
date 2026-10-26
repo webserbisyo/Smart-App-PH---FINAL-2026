@@ -152,23 +152,29 @@ export function ItemSheetGroups({
                     return (
                       <div key={option.id}>
                         {idx > 0 ? <Separator /> : null}
+                        {/* The whole row is the label (44 px+ tap area); the box is a 20 px rounded square so
+                            "pick many" reads differently from the round "pick one" radios (decision R28). */}
                         <div
-                          className={`flex items-center justify-between px-4 py-3 text-sm transition-colors ${
+                          className={`flex px-4 text-sm transition-colors *:first:min-h-12 *:first:flex-1 *:first:gap-3 ${
                             isDisabled
                               ? 'cursor-not-allowed bg-muted/40 opacity-50'
-                              : 'hover:bg-muted/30'
+                              : 'cursor-pointer hover:bg-muted/30'
                           }`}
                         >
-                          <CheckboxGroupItem value={option.id} disabled={isDisabled}>
+                          <CheckboxGroupItem
+                            value={option.id}
+                            disabled={isDisabled}
+                            className="flex size-5 items-center justify-center rounded-md"
+                          >
                             <span className="font-medium text-foreground">{option.name}</span>
+                            <span className="ml-auto text-xs font-semibold whitespace-nowrap text-muted-foreground">
+                              {isSoldOut
+                                ? words.shop.lineProblem.sold_out
+                                : isDisabledAtMax && !isSelected
+                                  ? words.storefrontShell.menu.itemSheet.upTo(group.max)
+                                  : priceText}
+                            </span>
                           </CheckboxGroupItem>
-                          <span className="text-xs font-semibold whitespace-nowrap text-muted-foreground">
-                            {isSoldOut
-                              ? words.shop.lineProblem.sold_out
-                              : isDisabledAtMax && !isSelected
-                                ? `Up to ${group.max}`
-                                : priceText}
-                          </span>
                         </div>
                       </div>
                     );

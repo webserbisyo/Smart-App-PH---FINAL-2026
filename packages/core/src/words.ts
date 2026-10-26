@@ -261,6 +261,7 @@ export const words = {
         notesTitle: 'Special instructions',
         notesPlaceholder: 'Any notes? (allergies, requests)',
         goesWellWith: 'Goes well with',
+        upTo: (max: number) => `Up to ${max}`,
         addWithPrice: (price: string) => `Add · ${price}`,
         quantity: 'Quantity',
         close: 'Close',

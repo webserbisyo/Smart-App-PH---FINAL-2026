@@ -1,12 +1,13 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
 import { HeartIcon } from 'lucide-react';
 import { imageSources, openState, openStateText, words, type OpenStateKind } from '@smartapp/core';
 import { useNow } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { ClientOnly } from '@smartapp/ui/components/client-only';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@smartapp/ui/components/tooltip';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
 import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
 import { useNavLink, type NavItem } from '@smartapp/ui/lib/nav';
@@ -31,23 +32,42 @@ function useScrolled(): boolean {
   );
 }
 
+// Icon left of the word, the same icons as the phone dock (decision R39).
 function DesktopNavLink({ item }: { item: NavItem }) {
   return useNavLink(item, {
     className:
-      'flex h-9 items-center rounded-full px-4 text-sm font-medium text-muted-foreground outline-none transition-colors duration-base hover-hover:hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-active:bg-card data-active:text-foreground data-active:shadow-sm pointer-coarse:h-11',
-    children: item.label,
+      'flex h-9 items-center gap-2 rounded-full pr-4 pl-3.5 text-sm font-medium text-muted-foreground outline-none transition-colors duration-base hover-hover:hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring data-active:bg-card data-active:text-foreground data-active:shadow-sm pointer-coarse:h-11',
+    children: (
+      <>
+        <span aria-hidden="true" className="flex *:size-4">
+          {item.icon}
+        </span>
+        {item.label}
+      </>
+    ),
   });
+}
+
+// Hover and keyboard focus show what an icon button does (installed shadcn Tooltip, desktop pointers).
+function BarTip({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger render={<span className="flex" />}>{children}</TooltipTrigger>
+      <TooltipContent side="bottom" sideOffset={6}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 function BarCart() {
   const { shop, setBasketOpen } = useShop();
   const { count, totalLabel } = useBasketView(shop);
+  const label = words.storefrontShell.openBasket(count, totalLabel);
   return (
-    <CartButton
-      count={count}
-      label={words.storefrontShell.openBasket(count, totalLabel)}
-      onClick={() => setBasketOpen(true)}
-    />
+    <BarTip label={label}>
+      <CartButton count={count} label={label} onClick={() => setBasketOpen(true)} />
+    </BarTip>
   );
 }
 
@@ -109,16 +129,18 @@ export function TopBar() {
           ))}
         </nav>
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-11 rounded-full"
-            aria-label={words.storefrontShell.favourites}
-            nativeButton={false}
-            render={<Link href={`/${slug}/menu?fav=1`} />}
-          >
-            <HeartIcon aria-hidden="true" className="size-5" />
-          </Button>
+          <BarTip label={words.storefrontShell.favourites}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11 rounded-full"
+              aria-label={words.storefrontShell.favourites}
+              nativeButton={false}
+              render={<Link href={`/${slug}/menu?fav=1`} />}
+            >
+              <HeartIcon aria-hidden="true" className="size-5" />
+            </Button>
+          </BarTip>
           <ClientOnly>
             <span className="hidden lg:flex">
               <BarCart />

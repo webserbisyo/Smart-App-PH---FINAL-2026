@@ -1,7 +1,7 @@
 'use client';
 
 import { normalisePhPhone, words } from '@smartapp/core';
-import { Badge } from '@smartapp/ui/components/badge';
+import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Checkbox } from '@smartapp/ui/components/checkbox';
 import {
   Field,
@@ -112,7 +112,7 @@ export function CheckoutWho({
         <Field>
           <div className="flex items-center justify-between gap-2">
             <FieldLabel htmlFor="checkout-email">{words.checkout.email}</FieldLabel>
-            <Badge variant="outline">{words.location.optionalBadge}</Badge>
+            <Badge variant="outline" size="lg" radius="full">{words.location.optionalBadge}</Badge>
           </div>
           <Input
             id="checkout-email"

@@ -13,7 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@smartapp/ui/components/alert-dialog';
-import { Badge } from '@smartapp/ui/components/badge';
+import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Button } from '@smartapp/ui/components/button';
 import {
   DropdownMenu,
@@ -38,7 +38,7 @@ export function BasketHeader({ count, onClear }: BasketHeaderProps) {
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold text-foreground">{words.basket.title}</h2>
           {count > 0 ? (
-            <Badge variant="secondary" className="h-5 px-1.5 text-xs font-medium">
+            <Badge variant="secondary" size="lg" radius="full">
               {count}
             </Badge>
           ) : null}

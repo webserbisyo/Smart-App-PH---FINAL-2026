@@ -99,7 +99,7 @@ import {
   TableRow,
 } from '@smartapp/ui/components/table';
 import { Textarea } from '@smartapp/ui/components/textarea';
-import { toast } from '@smartapp/ui/components/toast';
+import { notify } from '@smartapp/ui/compositions/notify';
 import { Toggle } from '@smartapp/ui/components/toggle';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { VisuallyHiddenInput } from '@smartapp/ui/components/visually-hidden-input';
@@ -129,7 +129,7 @@ export function StorefrontPrimitiveSections() {
   const [rating, setRating] = useState(4);
   const [pending, setPending] = useState(false);
   const [phone, setPhone] = useState('');
-  const [notify, setNotify] = useState(true);
+  const [notifyMe, setNotifyMe] = useState(true);
 
   function fakeSubmit(): void {
     setPending(true);
@@ -302,8 +302,8 @@ export function StorefrontPrimitiveSections() {
       <KitSection title="Switch" library={SHADCN} path={P('switch')} usedIn="kit">
         <div className="flex flex-col gap-3">
           <Label className="flex items-center gap-3">
-            <Switch checked={notify} onCheckedChange={setNotify} /> Notify me (
-            {notify ? 'on' : 'off'})
+            <Switch checked={notifyMe} onCheckedChange={setNotifyMe} /> Notify me (
+            {notifyMe ? 'on' : 'off'})
           </Label>
           <Label className="flex items-center gap-3">
             <Switch disabled /> Use my reward (none ready)
@@ -350,25 +350,54 @@ export function StorefrontPrimitiveSections() {
         </div>
       </KitSection>
 
-      <KitSection title="Toast" library={SHADCN} path={P('toast')} usedIn="kit">
+      <KitSection
+        title="Toast"
+        library={SHADCN}
+        path="packages/ui/src/compositions/app-toaster.tsx"
+        usedIn="every storefront toast (notify), kit"
+      >
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
-            onClick={() => toast.add({ title: 'Added to basket', type: 'success' })}
+            onClick={() =>
+              notify({
+                title: 'Classic Smash added',
+                tone: 'success',
+                action: { label: 'View basket', onClick: () => undefined },
+              })
+            }
           >
-            Success toast
+            Success
           </Button>
           <Button
             variant="outline"
             onClick={() =>
-              toast.add({
+              notify({
                 title: 'Could not place your order',
                 description: 'Check your connection and try again.',
-                type: 'error',
+                tone: 'error',
               })
             }
           >
-            Error toast
+            Error
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              notify({
+                title: 'Kitchen closes in 15 minutes',
+                description: 'Order now to get it today.',
+                tone: 'warning',
+              })
+            }
+          >
+            Warning
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => notify({ title: 'You are back online', tone: 'info' })}
+          >
+            Info
           </Button>
         </div>
       </KitSection>

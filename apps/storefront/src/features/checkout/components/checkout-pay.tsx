@@ -10,7 +10,7 @@ import {
   type PaymentMethod,
   type Storefront,
 } from '@smartapp/core';
-import { Badge } from '@smartapp/ui/components/badge';
+import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Field, FieldLabel, FieldTitle } from '@smartapp/ui/components/field';
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
@@ -125,7 +125,7 @@ export function CheckoutPay({
                 <FieldTitle className="min-w-0 flex-1 flex-wrap gap-x-2 gap-y-1 text-base">
                   <span>{opt.label}</span>
                   {opt.isRecommended ? (
-                    <Badge variant="secondary" className="rounded-full">
+                    <Badge variant="secondary" size="lg" radius="full">
                       {words.checkout.recommended}
                     </Badge>
                   ) : null}
@@ -156,7 +156,7 @@ export function CheckoutPay({
           <div className="flex items-center justify-between px-1 pt-1">
             <span className="text-sm font-semibold">{words.checkout.transferDetails}</span>
             {selectedConfig.sample ? (
-              <Badge variant="outline">{words.checkout.sampleLabel}</Badge>
+              <Badge variant="outline" size="lg" radius="full">{words.checkout.sampleLabel}</Badge>
             ) : null}
           </div>
 

@@ -20,7 +20,7 @@ import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import { Separator } from '@smartapp/ui/components/separator';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
-import { Toaster } from '@smartapp/ui/components/toast';
+import { AppToaster } from '@smartapp/ui/compositions/app-toaster';
 import { ShellKitSections } from '../shell-sections.js';
 import { StorefrontPrimitiveSections } from '../storefront-primitives.js';
 import { ReuiPrimitiveSections } from '../reui-primitives.js';
@@ -329,9 +329,9 @@ export default function KitPage() {
         <div id="kit-primitives" className="scroll-mt-20" />
         <ShellKitSections />
 
-        <Toaster>
+        <AppToaster>
           <StorefrontPrimitiveSections />
-        </Toaster>
+        </AppToaster>
 
         <Separator />
 

@@ -21,7 +21,7 @@ import {
   type OrderType,
 } from '@smartapp/core';
 import { useBasket, useResolveMapsLink } from '@smartapp/data';
-import { Badge } from '@smartapp/ui/components/badge';
+import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Field,
@@ -509,7 +509,7 @@ function HowWhereForm({ now, onDone }: { now: string; onDone: () => void }) {
                 <Field>
                   <div className="flex items-center justify-between gap-2">
                     <FieldLabel htmlFor="rider-house-no">{words.location.houseNo}</FieldLabel>
-                    <Badge variant="outline">{words.location.optionalBadge}</Badge>
+                    <Badge variant="outline" size="lg" radius="full">{words.location.optionalBadge}</Badge>
                   </div>
                   <Input
                     id="rider-house-no"
@@ -522,7 +522,7 @@ function HowWhereForm({ now, onDone }: { now: string; onDone: () => void }) {
                 <Field>
                   <div className="flex items-center justify-between gap-2">
                     <FieldLabel htmlFor="rider-floor">{words.location.floor}</FieldLabel>
-                    <Badge variant="outline">{words.location.optionalBadge}</Badge>
+                    <Badge variant="outline" size="lg" radius="full">{words.location.optionalBadge}</Badge>
                   </div>
                   <Input
                     id="rider-floor"

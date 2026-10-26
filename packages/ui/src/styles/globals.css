@@ -245,6 +245,47 @@
   }
 }
 
+/* Desktop: toasts drop in at the top centre, under the top bar (decision R36). The stack grows downwards,
+   so the installed toast's bottom-anchored transforms are mirrored here. Unlayered, so it outranks them. */
+@media (min-width: 1024px) {
+  [data-slot='toast-viewport'] {
+    top: var(--toast-top);
+    bottom: auto;
+    left: 0;
+    right: 0;
+    margin-inline: auto;
+  }
+  [data-slot='toast'] {
+    top: 0;
+    bottom: auto;
+    transform-origin: top;
+    transform: translateX(var(--toast-swipe-movement-x))
+      translateY(
+        calc(
+          var(--toast-swipe-movement-y) + (var(--toast-index) * var(--peek)) +
+            (var(--shrink) * var(--height))
+        )
+      )
+      scale(var(--scale));
+  }
+  [data-slot='toast']::after {
+    top: auto;
+    bottom: 100%;
+  }
+  [data-slot='toast'][data-expanded] {
+    transform: translateX(var(--toast-swipe-movement-x))
+      translateY(
+        calc(
+          var(--toast-offset-y) + (var(--toast-index) * var(--gap)) + var(--toast-swipe-movement-y)
+        )
+      );
+  }
+  [data-slot='toast'][data-starting-style],
+  [data-slot='toast'][data-ending-style]:not([data-limited]):not([data-swipe-direction]) {
+    transform: translateY(-150%);
+  }
+}
+
 /* The touch rail is wider (44 px targets), so the collapsed header matches it. */
 @media (pointer: coarse) {
   [data-shell='tablet'] {

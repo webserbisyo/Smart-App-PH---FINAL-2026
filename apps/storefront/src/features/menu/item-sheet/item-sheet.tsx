@@ -41,6 +41,7 @@ import { ItemSheetGroups } from './item-sheet-groups';
 import { ItemSheetNote } from './item-sheet-note';
 import { ItemSheetPhotos } from './item-sheet-photos';
 import { ItemSheetVariants } from './item-sheet-variants';
+import { useAddedToast } from '../use-added-toast';
 
 // The sheet stays open while Add to Cart shows its check, then closes and the cart pops (I7).
 const CHECK_MS = 600;
@@ -79,6 +80,7 @@ function ItemSheetContent({
 }: ItemSheetContentProps) {
   const basket = useBasket(slug);
   const favourites = useFavourites(slug);
+  const addedToast = useAddedToast();
 
   const startingPicks = useMemo(
     () => defaultPicks(item, catalog.optionGroups, now),
@@ -107,11 +109,7 @@ function ItemSheetContent({
     if (!line) return;
     pending.current = null;
     basket.add(line);
-    notify({
-      title: words.storefrontShell.menu.addedToast(item.name),
-      description: words.storefrontShell.menu.viewBasket,
-      tone: 'success',
-    });
+    addedToast(item.name);
   };
   const latest = useRef({ commit, onClose });
   useEffect(() => {
@@ -175,11 +173,7 @@ function ItemSheetContent({
     const v = companion.variants[0];
     if (!v) return;
     basket.add({ itemId: companion.id, variantId: v.id, optionIds: [], note: '', qty: 1 });
-    notify({
-      title: words.storefrontShell.menu.addedToast(companion.name),
-      description: words.storefrontShell.menu.viewBasket,
-      tone: 'success',
-    });
+    addedToast(companion.name);
   };
 
   const heart = (

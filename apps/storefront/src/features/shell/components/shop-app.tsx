@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import type { PublicShop } from '@smartapp/core';
 import { StorefrontDataProvider } from '@smartapp/data';
-import { Toaster } from '@smartapp/ui/components/toast';
+import { AppToaster } from '@smartapp/ui/compositions/app-toaster';
 import { dataSource } from '@/env';
 import { AppWorker } from '../../install/components/app-worker';
 import { InstallWatcher } from '../../install/components/install-watcher';
@@ -14,13 +14,13 @@ import { ShopShell } from './shop-shell';
 export function ShopApp({ shop, children }: { shop: PublicShop; children: ReactNode }) {
   return (
     <StorefrontDataProvider slug={shop.storefront.slug} source={dataSource} initialShop={shop}>
-      <Toaster>
+      <AppToaster>
         <ShopProvider initialShop={shop}>
           <InstallWatcher />
           <AppWorker />
           <ShopShell>{children}</ShopShell>
         </ShopProvider>
-      </Toaster>
+      </AppToaster>
     </StorefrontDataProvider>
   );
 }

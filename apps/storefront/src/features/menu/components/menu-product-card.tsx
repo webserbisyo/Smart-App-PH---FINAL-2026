@@ -10,23 +10,20 @@ import {
   type Item,
 } from '@smartapp/core';
 import { useBasket, useFavourites } from '@smartapp/data';
-import { notify } from '@smartapp/ui/compositions/notify';
 import { ProductCard, type ProductBadge } from '@smartapp/ui/compositions/product-card';
 import { useShop } from '../../shell/components/shop-context';
+import { useAddedToast } from '../use-added-toast';
 
 /** Adds an item that has one variant and no required choice, and says so (the card's "+"). */
 export function useQuickAdd(): (item: Item) => void {
   const { slug } = useShop();
   const basket = useBasket(slug);
+  const addedToast = useAddedToast();
   return (item) => {
     const variant = item.variants[0];
     if (!variant) return;
     basket.add({ itemId: item.id, variantId: variant.id, optionIds: [], note: '', qty: 1 });
-    notify({
-      title: words.storefrontShell.menu.addedToast(item.name),
-      description: words.storefrontShell.menu.viewBasket,
-      tone: 'success',
-    });
+    addedToast(item.name);
   };
 }
 

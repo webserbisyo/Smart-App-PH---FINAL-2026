@@ -87,6 +87,8 @@
   --dock-height: 4rem;
   --dock-offset: 0.75rem;
   --dock-max-width: 27.5rem;
+  /* Desktop toasts sit just under the storefront top bar. */
+  --toast-top: 5rem;
   --rail-width: 3.75rem;
   --shell-sidebar-width: 15.5rem;
   /* Top bar and sidebar header share these (sidebar-07: h-16, h-12 when collapsed). */
