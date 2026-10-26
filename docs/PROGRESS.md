@@ -25,10 +25,10 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] T09 Checkout and location (PR #16)
 - [x] T10 Receipt (PR #16)
 - [x] R Storefront redesign: theme, glass shell, Home, Menu, basket, checkout, receipt (PR #17, replaces #16)
-- [x] T11 My orders (PR #17)
-- [x] T12 Rewards and account (PR #17)
-- [x] T13 Install as an app (PR #17)
-- [x] T14 Privacy and system pages (PR #17; the Lighthouse table is still to fill by hand in Chrome DevTools)
+- [x] T11 My orders (PR #18)
+- [x] T12 Rewards and account (PR #18)
+- [x] T13 Install as an app (PR #18)
+- [x] T14 Privacy and system pages (PR #18; the Lighthouse table is still to fill by hand in Chrome DevTools)
 
 ## Phase 3: Dashboard screens (mock)
 
