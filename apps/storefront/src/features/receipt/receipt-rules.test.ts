@@ -7,6 +7,7 @@ import {
   formatManilaTime,
   formatOrderNumber,
   isOrderCancelled,
+  readyAboutAt,
   resolveReceiptSteps,
 } from './receipt-rules';
 
@@ -180,8 +181,34 @@ describe('resolveReceiptSteps', () => {
       ['ready', 'upcoming'],
       ['completed', 'upcoming'],
     ]);
+    // The step happening now reads in the present tense, with "Now" and no dashes.
+    expect(waiting[1]?.label).toBe('Checking payment');
+    expect(waiting[1]?.timestamp).toBe('Now');
+    expect(waiting[3]?.timestamp).toBeNull();
     const paid = resolveReceiptSteps({ ...order, paymentStatus: 'paid' }, 'food');
     expect(paid.map((s) => s.state).slice(0, 3)).toEqual(['completed', 'completed', 'current']);
+    expect(paid[1]?.label).toBe('Payment checked');
+  });
+
+  it('shows the ready estimate on the Ready step', () => {
+    const order = {
+      type: 'pickup',
+      status: 'preparing',
+      scheduledAt: null,
+      placedAt: '2026-10-25T04:00:00.000Z',
+      events: [{ status: 'preparing', at: '2026-10-25T04:05:00.000Z' }],
+      paymentMethod: 'cash',
+      paymentStatus: 'unpaid',
+    } as const;
+    const readyAt = readyAboutAt(order, 20);
+    expect(readyAt).toBe('2026-10-25T04:25:00.000Z');
+    const steps = resolveReceiptSteps(order, 'food', readyAt);
+    expect(steps.find((s) => s.id === 'ready')?.timestamp).toMatch(/^about 12:25\sPM$/);
+    // No estimate while a transfer waits on payment, or for a scheduled order.
+    expect(
+      readyAboutAt({ ...order, paymentMethod: 'gcash', paymentStatus: 'pending' }, 20),
+    ).toBeNull();
+    expect(readyAboutAt({ ...order, scheduledAt: '2026-10-25T08:00:00.000Z' }, 20)).toBeNull();
   });
 
   it('marks every step done once the order is completed', () => {

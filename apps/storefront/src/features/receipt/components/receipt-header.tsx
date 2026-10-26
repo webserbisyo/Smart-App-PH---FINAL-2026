@@ -1,7 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
-import { artPath, words, type OrderReceipt, type Storefront } from '@smartapp/core';
+import { useMemo, type ReactNode } from 'react';
+import {
+  artPath,
+  formatPeso,
+  words,
+  type OrderReceipt,
+  type OrderType,
+  type Storefront,
+} from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import {
   Stepper,
@@ -13,12 +20,24 @@ import {
 } from '@smartapp/ui/components/reui/stepper';
 import { QRCode, QRCodeSvg } from '@smartapp/ui/components/qr-code';
 import { cn } from '@smartapp/ui/lib/utils';
-import { CheckIcon } from 'lucide-react';
+import {
+  BikeIcon,
+  CheckIcon,
+  Clock3Icon,
+  FootprintsIcon,
+  MapPinIcon,
+  ShoppingBagIcon,
+  TimerIcon,
+  WalletIcon,
+  type LucideIcon,
+} from 'lucide-react';
 import { CopyButton } from '@/features/checkout/components/copy-button';
 import {
   formatManilaDateTime,
+  formatManilaTime,
   formatOrderNumber,
   isOrderCancelled,
+  readyAboutAt,
   resolveReceiptSteps,
   type ReceiptStepItem,
 } from '../receipt-rules';
@@ -83,29 +102,50 @@ function Chip({ chip, check = false }: { chip: ReceiptChip; check?: boolean }) {
   );
 }
 
-// The c-stepper-26 track, read only: times above, the shop colour fills the steps done.
-const DONE = <CheckIcon strokeWidth={3.36} className="size-2.5" aria-hidden="true" />;
-function DashedRing({ spin = false }: { spin?: boolean }) {
+// The c-stepper-26 track, read only (decision R31): a check for done, a pulsing dot for now, a hollow
+// dot for next; times above, the shop colour fills the steps done.
+const INDICATORS = {
+  completed: <CheckIcon strokeWidth={3.36} className="size-3" aria-hidden="true" />,
+  active: (
+    <span aria-hidden="true" className="relative flex size-2">
+      <span className="absolute inset-0 rounded-full bg-primary-foreground opacity-75 motion-safe:animate-ping" />
+      <span className="relative size-2 rounded-full bg-primary-foreground" />
+    </span>
+  ),
+  inactive: <span aria-hidden="true" />,
+};
+
+const TYPE_ICON: Record<OrderType, LucideIcon> = {
+  walk_in: FootprintsIcon,
+  pickup: ShoppingBagIcon,
+  delivery: BikeIcon,
+};
+
+/** One icon row on the ticket: type, placed, ready about, payment, delivery address. */
+function TicketRow({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode }) {
   return (
-    <svg
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden="true"
-      className={cn('size-4', spin && 'motion-safe:animate-spin')}
-    >
-      <circle
-        cx="8"
-        cy="8"
-        r="4.45"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeDasharray="3 1"
-        pathLength={28}
-      />
-    </svg>
+    <li className="flex min-w-0 items-start gap-2.5 text-sm">
+      <span
+        aria-hidden="true"
+        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
+      >
+        <Icon className="size-3.5" />
+      </span>
+      <span className="min-w-0 pt-1 text-pretty break-words">{children}</span>
+    </li>
   );
 }
-const INDICATORS = { completed: DONE, inactive: <DashedRing />, loading: <DashedRing spin /> };
+
+// The tear line between the ticket's parts: a dashed rule with a notch cut into each side.
+function Perforation() {
+  return (
+    <div aria-hidden="true" className="-mx-5 flex items-center sm:-mx-6">
+      <span className="-ml-3 size-6 shrink-0 rounded-full bg-shop-60" />
+      <span className="mx-2 flex-1 border-t-2 border-dashed" />
+      <span className="-mr-3 size-6 shrink-0 rounded-full bg-shop-60" />
+    </div>
+  );
+}
 
 function StatusTrack({ steps }: { steps: readonly ReceiptStepItem[] }) {
   const currentIndex = steps.findIndex((s) => s.state === 'current');
@@ -127,16 +167,16 @@ function StatusTrack({ steps }: { steps: readonly ReceiptStepItem[] }) {
       <Stepper value={value} indicators={INDICATORS} aria-label={words.receipt.progress}>
         <StepperNav>
           {steps.map((step, index) => (
-            <StepperItem key={step.id} step={index + 1} loading className="min-w-0 flex-1">
+            <StepperItem key={step.id} step={index + 1} className="min-w-0 flex-1">
               <div className="flex w-full flex-col gap-2">
-                <StepperDescription className="text-center text-xs whitespace-nowrap tabular">
-                  {step.timestamp ?? <span aria-hidden="true">--</span>}
+                <StepperDescription className="min-h-4 text-center text-xs whitespace-nowrap tabular">
+                  {step.timestamp}
                 </StepperDescription>
                 <span className="flex h-1 w-full items-center gap-0.75">
                   <span className="flex h-full flex-1 bg-ring/20 group-first/step:rounded-s-full">
                     <span className="flex-1 group-first/step:rounded-s-full group-state-active/step:bg-primary group-state-completed/step:bg-primary" />
                   </span>
-                  <StepperIndicator className="size-4 bg-ring/20 text-ring state-active:bg-primary state-active:text-primary-foreground state-completed:bg-primary state-completed:text-primary-foreground" />
+                  <StepperIndicator className="size-5 bg-card ring-2 ring-ring/25 ring-inset state-active:bg-primary state-active:text-primary-foreground state-active:ring-0 state-completed:bg-primary state-completed:text-primary-foreground state-completed:ring-0" />
                   <span className="flex h-full flex-1 bg-ring/20 group-last/step:rounded-e-full">
                     <span className="flex-1 group-last/step:rounded-e-full group-state-completed/step:bg-primary" />
                   </span>
@@ -172,11 +212,13 @@ export function ReceiptHeader({
   const status = statusChip(order.status);
   const payment = paymentChip(order);
   const cancelled = isOrderCancelled(order.status);
-  const steps = useMemo(() => resolveReceiptSteps(order, kind), [order, kind]);
+  const readyAt = readyAboutAt(order, storefront.prepMinutes);
+  const steps = useMemo(() => resolveReceiptSteps(order, kind, readyAt), [order, kind, readyAt]);
 
   const typeLine = order.scheduledAt
     ? `${words.shop.orderType[order.type]} · ${words.receipt.scheduled(formatManilaDateTime(order.scheduledAt))}`
     : words.shop.orderType[order.type];
+  const T = words.receipt.ticket;
 
   return (
     <section aria-labelledby="receipt-title" className="flex flex-col gap-4">
@@ -205,7 +247,9 @@ export function ReceiptHeader({
           </div>
         </div>
 
-        <div className="flex flex-col gap-5 border-t border-dashed pt-5 sm:flex-row sm:items-center sm:justify-between">
+        <Perforation />
+
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               {words.receipt.orderLabel}
@@ -225,12 +269,32 @@ export function ReceiptHeader({
                 className="size-11 rounded-full"
               />
             </div>
-            <p className="text-sm font-medium">{typeLine}</p>
-            {order.deliveryAddress ? (
-              <p className="text-sm text-pretty break-words text-muted-foreground">
-                {order.deliveryAddress}
-              </p>
-            ) : null}
+            <ul className="mt-3 grid gap-2.5">
+              <TicketRow icon={TYPE_ICON[order.type]}>
+                <span className="font-medium">{typeLine}</span>
+              </TicketRow>
+              <TicketRow icon={Clock3Icon}>
+                <span className="tabular">{T.placed(formatManilaDateTime(order.placedAt))}</span>
+              </TicketRow>
+              {readyAt && !cancelled ? (
+                <TicketRow icon={TimerIcon}>
+                  <span className="tabular">{T.readyAbout(formatManilaTime(readyAt))}</span>
+                </TicketRow>
+              ) : null}
+              <TicketRow icon={WalletIcon}>
+                <span className="tabular">
+                  {T.paidWith(
+                    words.shop.paymentMethod[order.paymentMethod],
+                    formatPeso(order.totals.total),
+                  )}
+                </span>
+              </TicketRow>
+              {order.deliveryAddress ? (
+                <TicketRow icon={MapPinIcon}>
+                  <span className="text-muted-foreground">{order.deliveryAddress}</span>
+                </TicketRow>
+              ) : null}
+            </ul>
           </div>
 
           {/* The QR stays black on white on every shop so any scanner reads it. */}

@@ -505,6 +505,20 @@ export const words = {
       outForDelivery: 'Out for delivery',
       completed: 'Completed',
     },
+    // The step happening now, in the present tense (decision R31).
+    stepsNow: {
+      placed: 'Waiting for the shop',
+      paid: 'Checking payment',
+      outForDelivery: 'On the way',
+    },
+    now: 'Now',
+    readyAbout: (time: string) => `about ${time}`,
+    // The icon rows on the receipt ticket (decision R30).
+    ticket: {
+      placed: (when: string) => `Placed ${when}`,
+      readyAbout: (time: string) => `Ready about ${time}`,
+      paidWith: (method: string, total: string) => `${method} · ${total}`,
+    },
     expiredTitle: 'Order expired',
     refundedTitle: 'Order cancelled and refunded',
     cancelledTitle: 'Order cancelled',

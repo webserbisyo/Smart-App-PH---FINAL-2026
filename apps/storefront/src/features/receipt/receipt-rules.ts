@@ -153,30 +153,57 @@ export interface ReceiptStepOrder {
   readonly paymentStatus: PaymentStatus;
 }
 
-function stepLabel(id: ReceiptStepId, type: OrderType, kind: ShopKind): string {
+// The step happening now reads in the present tense ("Checking payment"); the others as a plain step.
+function stepLabel(id: ReceiptStepId, type: OrderType, kind: ShopKind, now: boolean): string {
+  const S = now ? { ...words.receipt.steps, ...words.receipt.stepsNow } : words.receipt.steps;
   switch (id) {
     case 'placed':
-      return words.receipt.steps.placed;
+      return S.placed;
     case 'paid':
-      return words.receipt.steps.paid;
+      return S.paid;
     case 'preparing':
       return vocab(kind).prepStep;
     case 'ready':
       return words.receipt.hero.ready[type];
     case 'out_for_delivery':
-      return words.receipt.steps.outForDelivery;
+      return S.outForDelivery;
     default:
-      return words.receipt.steps.completed;
+      return S.completed;
   }
+}
+
+export interface ReadyEstimateOrder {
+  readonly status: OrderStatus;
+  readonly scheduledAt: string | null;
+  readonly placedAt: string;
+  readonly events: readonly OrderEvent[];
+  readonly paymentMethod: PaymentMethod;
+  readonly paymentStatus: PaymentStatus;
+}
+
+/**
+ * About when an ASAP order is ready: the shop's one prep time after it started (or after it was
+ * placed). None while a transfer waits on payment, for a scheduled order (its time is already shown)
+ * and once the order is ready or over.
+ */
+export function readyAboutAt(order: ReadyEstimateOrder, prepMinutes: number): string | null {
+  if (order.status !== 'placed' && order.status !== 'preparing') return null;
+  if (order.scheduledAt) return null;
+  if (isTransfer(order.paymentMethod) && order.paymentStatus !== 'paid') return null;
+  const started = order.events.find((event) => event.status === 'preparing')?.at ?? order.placedAt;
+  const at = new Date(started).getTime() + prepMinutes * 60_000;
+  return Number.isNaN(at) ? null : new Date(at).toISOString();
 }
 
 /**
  * The status track (c-stepper-26): placed, payment checked (transfers only), preparing, ready,
- * out for delivery (delivery only), completed, each with its Manila time when it happened.
+ * out for delivery (delivery only), completed. Done steps show their Manila time, the step happening
+ * now shows its time or "Now", and Ready shows "about 4:02 PM" when `readyAt` is known.
  */
 export function resolveReceiptSteps(
   order: ReceiptStepOrder,
   kind: ShopKind,
+  readyAt: string | null = null,
 ): readonly ReceiptStepItem[] {
   const statuses = timelineSteps(order.type);
   const transfer = isTransfer(order.paymentMethod);
@@ -200,10 +227,20 @@ export function resolveReceiptSteps(
       currentIndex !== -1 && (idx < currentIndex || (idx === currentIndex && id === 'completed'));
     const state = done ? 'completed' : idx === currentIndex ? 'current' : 'upcoming';
     const at = times.get(id);
+    const timestamp =
+      state === 'upcoming'
+        ? id === 'ready' && readyAt
+          ? words.receipt.readyAbout(formatManilaTime(readyAt))
+          : null
+        : at
+          ? formatManilaTime(at)
+          : state === 'current'
+            ? words.receipt.now
+            : null;
     return {
       id,
-      label: stepLabel(id, order.type, kind),
-      timestamp: at ? formatManilaTime(at) : null,
+      label: stepLabel(id, order.type, kind, state === 'current'),
+      timestamp,
       state,
     };
   });
