@@ -53,6 +53,14 @@ const SIZE = 96;
 const PICKER_SIZE = 128;
 const PICKER_SEEDS = SEEDS.slice(0, 12);
 
+// One drawing function per set, since each style has its own option types.
+const PICKER_SETS = {
+  lorelei: (seed: string, background: string) =>
+    createAvatar(lorelei, { seed, size: PICKER_SIZE, backgroundColor: [background] }).toString(),
+  micah: (seed: string, background: string) =>
+    createAvatar(micah, { seed, size: PICKER_SIZE, backgroundColor: [background] }).toString(),
+};
+
 async function write(svg: string, size: number, name: string) {
   const file = path.join(OUTPUT_DIR, `${name}.webp`);
   await sharp(Buffer.from(svg)).resize(size, size).webp({ quality: 82 }).toFile(file);
@@ -76,21 +84,13 @@ async function main() {
     }
     console.log(`Wrote ${SEEDS.length} default avatars to ${OUTPUT_DIR}`);
   }
-  for (const [set, style] of [
-    ['lorelei', lorelei],
-    ['micah', micah],
-  ] as const) {
+  for (const [set, draw] of Object.entries(PICKER_SETS)) {
     if (!wants(set)) continue;
     let index = 0;
     for (const seed of PICKER_SEEDS) {
       index += 1;
       const background = BACKGROUNDS[(index - 1) % BACKGROUNDS.length] ?? 'e3f0d8';
-      const svg = createAvatar(style, {
-        seed,
-        size: PICKER_SIZE,
-        backgroundColor: [background],
-      }).toString();
-      await write(svg, PICKER_SIZE, `${set}-${String(index).padStart(2, '0')}`);
+      await write(draw(seed, background), PICKER_SIZE, `${set}-${String(index).padStart(2, '0')}`);
     }
     console.log(`Wrote ${PICKER_SEEDS.length} ${set} avatars to ${OUTPUT_DIR}`);
   }
