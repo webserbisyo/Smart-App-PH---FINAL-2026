@@ -44,9 +44,9 @@ export interface BannerCarouselProps {
 // Phones show banners at 16:9 so the words fit; from 768 px they use the given ratio (21:9).
 const BANNER_FRAME = 'rounded-none aspect-video md:aspect-(--ratio)';
 
-// One slide on a phone is 11/12 wide, so the next one peeks in; 12 px between slides.
+// One whole slide at every width, 12 px between slides; the next one no longer peeks in (decision R52).
 export const BANNER_TRACK = '-ml-3 flex';
-export const BANNER_SLIDE = 'min-w-0 shrink-0 grow-0 basis-11/12 pl-3 md:basis-full';
+export const BANNER_SLIDE = 'min-w-0 shrink-0 grow-0 basis-full pl-3';
 
 export interface BannerFrameProps {
   slide: BannerSlide;

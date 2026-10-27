@@ -200,8 +200,9 @@ export const TALA_APPAREL_PACK: ShopPack = {
       },
     },
     look: {
-      brandColor: '#2E3A87',
-      surface: 'light',
+      brandColor: '#C9A227',
+      surface: 'dark',
+      pageColor: '#253475',
       banners: [
         {
           ref: 'demo:tala-apparel/banners/banner-1',

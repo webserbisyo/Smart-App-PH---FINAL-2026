@@ -150,8 +150,16 @@ function ImageStates({ shop, ratio }: { shop: KitShop; ratio: ShopImageRatio }) 
   );
 }
 
-function PaletteSwatches({ brandColor, surface }: { brandColor: string; surface: ShopSurface }) {
-  const palette = shopPalette(brandColor, surface);
+function PaletteSwatches({
+  brandColor,
+  surface,
+  pageColor,
+}: {
+  brandColor: string;
+  surface: ShopSurface;
+  pageColor: string | null;
+}) {
+  const palette = shopPalette(brandColor, surface, pageColor);
   const pairs = [
     {
       name: 'shop-60',
@@ -704,7 +712,11 @@ export function StorefrontSections() {
         </div>
       </section>
 
-      <ShopTheme brandColor={summary.brandColor} surface={summary.surface}>
+      <ShopTheme
+        brandColor={summary.brandColor}
+        surface={summary.surface}
+        pageColor={summary.pageColor}
+      >
         <div className="space-y-12 rounded-xl bg-shop-60 p-4 text-foreground md:p-6">
           <KitSection
             title="Shop palette (ShopTheme)"
@@ -713,9 +725,20 @@ export function StorefrontSections() {
             usedIn="kit"
           >
             <p className="text-sm">
-              Brand <span className="font-mono">{summary.brandColor}</span> → shopPalette()
+              Brand <span className="font-mono">{summary.brandColor}</span>
+              {summary.pageColor ? (
+                <>
+                  {' '}
+                  · page <span className="font-mono">{summary.pageColor}</span>
+                </>
+              ) : null}{' '}
+              → shopPalette()
             </p>
-            <PaletteSwatches brandColor={summary.brandColor} surface={summary.surface} />
+            <PaletteSwatches
+              brandColor={summary.brandColor}
+              surface={summary.surface}
+              pageColor={summary.pageColor}
+            />
           </KitSection>
 
           <KitSection

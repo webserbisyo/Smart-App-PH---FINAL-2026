@@ -70,13 +70,13 @@ async function ShopFrame({ params, children }: ShopLayoutProps) {
   const shop = getStorefrontForServer(slug);
   // Unknown, pending or suspended: the page calls notFound() (Cache Components wants it there).
   if (!shop) return children;
-  const { brandColor, surface } = shop.storefront.look;
+  const { brandColor, surface, pageColor } = shop.storefront.look;
   return (
-    <ShopTheme brandColor={brandColor} surface={surface} withPortals>
+    <ShopTheme brandColor={brandColor} surface={surface} pageColor={pageColor} withPortals>
       {/* Per-shop theme-color: the page colour (shop-60), so the phone's status bar meets the glass top bar.
           React hoists it into <head>; a viewport export can't read params without blocking the whole route
           under Cache Components. */}
-      <meta name="theme-color" content={shopPalette(brandColor, surface).shop60} />
+      <meta name="theme-color" content={shopPalette(brandColor, surface, pageColor).shop60} />
       <AppSplash name={shop.storefront.info.name} icon={brandFiles(slug)?.splash ?? null} />
       <ShopApp shop={shop}>{children}</ShopApp>
     </ShopTheme>

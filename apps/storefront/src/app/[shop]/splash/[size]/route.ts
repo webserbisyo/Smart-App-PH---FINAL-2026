@@ -44,8 +44,8 @@ export async function GET(request: Request, { params }: RouteProps): Promise<Res
   if (!screen || !shop) return new Response(null, { status: 404 });
 
   const { name } = shop.storefront.info;
-  const { brandColor, surface } = shop.storefront.look;
-  const p = shopPalette(brandColor, surface);
+  const { brandColor, surface, pageColor } = shop.storefront.look;
+  const p = shopPalette(brandColor, surface, pageColor);
   const { ratio } = screen;
   const width = screen.width * ratio;
   const height = screen.height * ratio;

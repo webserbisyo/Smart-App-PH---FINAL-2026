@@ -194,6 +194,7 @@ export const LOLA_REMY_PACK: ShopPack = {
     look: {
       brandColor: '#C27C2C',
       surface: 'light',
+      pageColor: '#FFF1C9',
       banners: [
         {
           ref: 'demo:lola-remy/banners/banner-1',

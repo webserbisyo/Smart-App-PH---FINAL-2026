@@ -10,7 +10,7 @@ export interface HomeBannersProps {
   storefront: Storefront;
 }
 
-const SIZES = '(min-width: 1280px) 1120px, 92vw';
+const SIZES = '(min-width: 1280px) 1120px, 100vw';
 
 // The banner's button (decision R42): an item's sheet, a category on the menu, or Rewards while the
 // stamp card is on. A link the shop can no longer serve is simply left off.

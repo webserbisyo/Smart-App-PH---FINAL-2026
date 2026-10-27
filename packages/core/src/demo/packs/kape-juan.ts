@@ -233,6 +233,7 @@ export const KAPE_JUAN_PACK: ShopPack = {
     look: {
       brandColor: '#6F4E37',
       surface: 'light',
+      pageColor: '#EEE2CF',
       banners: [
         { ref: 'demo:kape-juan/banners/banner-1', alt: 'Barako coffee in warm morning light' },
         {

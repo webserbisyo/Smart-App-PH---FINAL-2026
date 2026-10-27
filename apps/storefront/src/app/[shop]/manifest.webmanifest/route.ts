@@ -51,9 +51,9 @@ export async function GET(_request: Request, { params }: ManifestContext) {
   const shop = getStorefrontForServer(slug);
   if (!shop) return new Response(null, { status: 404 });
   const { name, tagline } = shop.storefront.info;
-  const { brandColor, surface } = shop.storefront.look;
+  const { brandColor, surface, pageColor } = shop.storefront.look;
   // The page colour, as the theme-color meta in [shop]/layout, so the status bar never changes colour.
-  const page = hex(shopPalette(brandColor, surface).shop60);
+  const page = hex(shopPalette(brandColor, surface, pageColor).shop60);
   const manifest = {
     id: `/${slug}`,
     name,

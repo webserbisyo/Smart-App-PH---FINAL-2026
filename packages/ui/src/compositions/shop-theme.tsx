@@ -10,6 +10,8 @@ export interface ShopThemeProps extends Omit<ComponentProps<'div'>, 'style'> {
   brandColor: string;
   // Light or dark page (decision R2). A dark shop also gets the app's dark tokens (muted, borders, states).
   surface?: ShopSurface | undefined;
+  // Optional page colour (hex) for the 60; none keeps the neutral page (decision R52).
+  pageColor?: string | null | undefined;
   // The storefront sets this once: sheets, dialogs and toasts render outside this wrapper (portals), so the
   // shop's colours are copied onto <html> too. The kit leaves it off, since it shows several shops at once.
   withPortals?: boolean | undefined;
@@ -42,6 +44,15 @@ export function shopThemeVars(palette: ShopPalette): CssVarsObject {
     '--secondary-foreground': palette.shop10SoftForeground,
     '--ring': palette.shop10Text,
     '--focus': palette.shop10Text,
+    // With a page colour, quiet fills and lines follow its hue.
+    ...(palette.tint
+      ? {
+          '--muted': palette.tint.muted,
+          '--accent': palette.tint.muted,
+          '--border': palette.tint.border,
+          '--input': palette.tint.border,
+        }
+      : {}),
   };
 }
 
@@ -49,12 +60,13 @@ export function shopThemeVars(palette: ShopPalette): CssVarsObject {
 export function ShopTheme({
   brandColor,
   surface = 'light',
+  pageColor,
   withPortals = false,
   className,
   children,
   ...props
 }: ShopThemeProps) {
-  const vars = shopThemeVars(shopPalette(brandColor, surface));
+  const vars = shopThemeVars(shopPalette(brandColor, surface, pageColor));
   const dark = surface === 'dark';
   return (
     <div

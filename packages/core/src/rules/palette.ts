@@ -24,6 +24,8 @@ export interface ShopPalette {
   /** A soft brand tint (chips, selected rows) and the text on it. */
   shop10Soft: string;
   shop10SoftForeground: string;
+  /** Only with a page colour: quiet fills, hovers and lines in the page's hue, so greys don't look pasted on. */
+  tint: { muted: string; border: string } | null;
 }
 
 export const DEFAULT_BRAND_COLOR = '#2456D3';
@@ -48,6 +50,8 @@ const MIN_TEXT_CONTRAST = 4.5;
 /** How far --shop-10 may be darkened before we switch to black text instead. */
 const MAX_DARKEN = 0.2;
 const DARKEN_STEP = 0.005;
+/** From this lightness a brand keeps its colour with black text. */
+const LIGHT_BRAND = 0.7;
 const HOVER_STEP = 0.06;
 
 type Rgb = readonly [number, number, number];
@@ -192,20 +196,41 @@ function untilReadable(base: Oklch, against: string, direction: 'darker' | 'ligh
   return toGamut({ ...base, l: direction === 'darker' ? 0.2 : 0.9 });
 }
 
+// A page colour is kept in a band where body text and the app's muted text stay readable (decision R52).
+const LIGHT_PAGE = { min: 0.89, max: 0.98, chroma: 0.08 } as const;
+const DARK_PAGE = { min: 0.16, max: 0.25, chroma: 0.09 } as const;
+
+function pageFrom(color: Oklch, dark: boolean): Oklch {
+  const band = dark ? DARK_PAGE : LIGHT_PAGE;
+  return toGamut({
+    l: Math.min(band.max, Math.max(band.min, color.l)),
+    c: Math.min(band.chroma, color.c),
+    h: color.h,
+  });
+}
+
 /**
  * Builds the shop palette from one brand colour (hex) and the shop's surface. An unreadable value falls back
  * to the default brand blue.
  * - 60 and 30 stay neutral (a hint of the brand hue only), so photos and the brand colour carry the page.
- * - --shop-10 is the brand colour darkened until white text reaches 4.5:1; when that would change the colour
- *   too much (very light brands such as pale yellow), the colour stays and the text turns black.
+ * - --shop-10 is the brand colour darkened until white text reaches 4.5:1; a light brand (L 0.7 and up, such
+ *   as gold or pale yellow), or one that would change too much, keeps its colour and the text turns black.
  * - --shop-10-text is the brand colour moved until it reads at 4.5:1 on the 60 and 30 surfaces.
+ * - An optional page colour (hex) makes the 60 a real colour (decision R52): kept in a readable lightness
+ *   band, with white cards on a light page and cards one step lighter than the page on a dark one.
  */
-export function shopPalette(hex: string, surface: ShopSurface = 'light'): ShopPalette {
+export function shopPalette(
+  hex: string,
+  surface: ShopSurface = 'light',
+  pageColor?: string | null,
+): ShopPalette {
   const brand = hexToOklch(hex) ?? hexToOklch(DEFAULT_BRAND_COLOR);
   if (!brand) throw new Error('Default brand colour is invalid');
   const base = toGamut(brand);
 
-  let shop10 = darkenForWhite(base, Math.max(0, base.l - MAX_DARKEN));
+  // A light brand (gold, yellow) keeps its colour with black text instead of turning muddy (decision R52).
+  const keepLight = base.l >= LIGHT_BRAND && contrastOf(base, PALETTE_BLACK) >= MIN_TEXT_CONTRAST;
+  let shop10 = keepLight ? null : darkenForWhite(base, Math.max(0, base.l - MAX_DARKEN));
   let foreground = PALETTE_WHITE;
   if (!shop10) {
     if (contrastOf(base, PALETTE_BLACK) >= MIN_TEXT_CONTRAST) {
@@ -224,13 +249,36 @@ export function shopPalette(hex: string, surface: ShopSurface = 'light'): ShopPa
       : toGamut({ ...shop10, l: Math.min(0.98, shop10.l + HOVER_STEP) });
 
   const dark = surface === 'dark';
-  const shop60 = dark
+  const pageBase = pageColor ? hexToOklch(pageColor) : null;
+  const page = pageBase ? pageFrom(pageBase, dark) : null;
+  let shop60: Oklch = dark
     ? { l: 0.16, c: Math.min(0.008, base.c), h: base.h }
     : { l: 0.982, c: Math.min(0.003, base.c), h: base.h };
-  const shop30 = dark ? { l: 0.215, c: Math.min(0.01, base.c), h: base.h } : null;
-  const soft = dark
+  let shop30: Oklch | null = dark ? { l: 0.215, c: Math.min(0.01, base.c), h: base.h } : null;
+  let soft: Oklch = dark
     ? { l: 0.3, c: Math.min(0.06, base.c), h: base.h }
     : { l: 0.95, c: Math.min(0.035, base.c), h: base.h };
+  let tint: ShopPalette['tint'] = null;
+  if (page) {
+    shop60 = page;
+    if (dark) {
+      // Cards one step up from the page; chips another step up in the page's hue.
+      const card = toGamut({ ...page, l: page.l + 0.055 });
+      shop30 = card;
+      soft = toGamut({ l: card.l + 0.1, c: Math.min(0.08, page.c), h: page.h });
+      tint = {
+        muted: formatOklch({ l: card.l + 0.04, c: Math.min(0.05, page.c), h: page.h }),
+        border: formatOklch({ l: card.l + 0.1, c: Math.min(0.05, page.c), h: page.h }),
+      };
+    } else {
+      // Chips sit a little deeper than the page so they still show on it.
+      soft = toGamut({ l: Math.min(0.92, page.l - 0.04), c: Math.min(0.06, base.c), h: base.h });
+      tint = {
+        muted: formatOklch({ l: page.l - 0.03, c: Math.min(0.03, page.c), h: page.h }),
+        border: formatOklch({ l: page.l - 0.09, c: Math.min(0.04, page.c), h: page.h }),
+      };
+    }
+  }
   const direction = dark ? 'lighter' : 'darker';
   // The text must read on the less contrasting of the two surfaces: 60 on a light shop, 30 on a dark one.
   const textSurface = formatOklch(dark && shop30 ? shop30 : shop60);
@@ -245,5 +293,6 @@ export function shopPalette(hex: string, surface: ShopSurface = 'light'): ShopPa
     shop10Text: formatOklch(untilReadable(base, textSurface, direction)),
     shop10Soft: formatOklch(soft),
     shop10SoftForeground: formatOklch(untilReadable(base, formatOklch(soft), direction)),
+    tint,
   };
 }

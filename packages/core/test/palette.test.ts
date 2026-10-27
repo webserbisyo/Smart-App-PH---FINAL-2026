@@ -60,10 +60,55 @@ describe('shopPalette', () => {
     for (const [bg, fg] of pairs) expect(contrastRatio(bg, fg)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('keeps 60 and 30 neutral: no tinted page behind the photos', () => {
+  const PAGE_CASES = [
+    ...DEMO_SHOPS.flatMap((shop) =>
+      shop.pageColor ? [[shop.brandColor, shop.surface, shop.pageColor] as const] : [],
+    ),
+    ...BRAND_COLOR_PRESETS.flatMap((hex) =>
+      (['#FFFFFF', '#FFF1C9', '#E2F1FD', '#253475', '#000000', '#7A1F1F'] as const).flatMap(
+        (page) => SHOP_SURFACES.map((surface) => [hex, surface, page] as const),
+      ),
+    ),
+  ];
+
+  it.each(PAGE_CASES)(
+    '%s on %s with page %s: every text pair passes 4.5:1',
+    (hex, surface, page) => {
+      const p = shopPalette(hex, surface, page);
+      const pairs: readonly (readonly [string, string])[] = [
+        [p.shop60, p.foreground],
+        [p.shop30, p.foreground],
+        [p.shop60, p.shop10Text],
+        [p.shop30, p.shop10Text],
+        [p.shop10, p.shop10Foreground],
+        [p.shop10Hover, p.shop10Foreground],
+        [p.shop10Soft, p.shop10SoftForeground],
+        [p.shop10Soft, p.foreground],
+      ];
+      for (const [bg, fg] of pairs) expect(contrastRatio(bg, fg)).toBeGreaterThanOrEqual(4.5);
+      expect(p.tint).not.toBeNull();
+    },
+  );
+
+  it('gives each demo shop a different page colour', () => {
+    const pages = DEMO_SHOPS.map(
+      (shop) => shopPalette(shop.brandColor, shop.surface, shop.pageColor).shop60,
+    );
+    expect(new Set(pages).size).toBe(DEMO_SHOPS.length);
+  });
+
+  it('keeps a page colour in a readable band: light stays light, dark stays dark', () => {
+    const light = shopPalette('#2456D3', 'light', '#253475');
+    const dark = shopPalette('#2456D3', 'dark', '#FFF1C9');
+    expect(contrastRatio(light.shop60, PALETTE_BLACK)).toBeGreaterThan(12);
+    expect(contrastRatio(dark.shop60, PALETTE_WHITE)).toBeGreaterThan(12);
+  });
+
+  it('keeps 60 and 30 neutral without a page colour: no tinted page behind the photos', () => {
     for (const hex of BRANDS) {
       for (const surface of SHOP_SURFACES) {
         const p = shopPalette(hex, surface);
+        expect(p.tint).toBeNull();
         expect(Number(/oklch\([\d.]+ ([\d.]+)/.exec(p.shop60)?.[1])).toBeLessThanOrEqual(0.01);
       }
     }
@@ -91,7 +136,8 @@ describe('shopPalette', () => {
   });
 
   it('returns OKLCH strings', () => {
-    const p = shopPalette('#D7372F');
-    for (const value of Object.values(p)) expect(value).toMatch(/^oklch\(/);
+    const { tint, ...p } = shopPalette('#D7372F', 'light', '#FFF1C9');
+    const values = [...Object.values(p), ...(tint ? Object.values(tint) : [])];
+    for (const value of values) expect(value).toMatch(/^oklch\(/);
   });
 });

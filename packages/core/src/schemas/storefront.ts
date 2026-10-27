@@ -86,6 +86,12 @@ export const ShopLookSchema = z.object({
   brandColor: z.string().regex(/^#[0-9a-f]{6}$/i),
   // Light or dark page; the brand colour stays the 10 either way (decision R2).
   surface: ShopSurfaceEnum.default('light'),
+  // Optional page colour for the 60 (decision R52); null keeps the neutral page.
+  pageColor: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullable()
+    .default(null),
   banners: z.array(BannerSchema).max(3),
   bannerSeconds: z.number().int().min(3).max(10).default(5),
   announcement: AnnouncementSchema.nullable(),

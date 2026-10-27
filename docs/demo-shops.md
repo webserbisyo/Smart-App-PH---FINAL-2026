@@ -32,7 +32,7 @@ Gmail "+" addresses all land in the founder's inbox, so codes and resets can be 
 - Order types: walk-in, pickup, delivery
 - Payments: cash, COD (limit ₱3,000), GCash, Maya. Sample accounts: GCash 0917 000 0001, Maya 0917 000 0002 (fake, labelled "Sample").
 - Delivery: distance 0–3 km ₱49, 3–5 km ₱79; zones Concepcion Uno and Dos ₱40 · Marikina Heights and Parang ₱60 · Rest of Marikina ₱80.
-- Brand colour: `#D7372F` (ketchup red)
+- Brand colour: `#D7372F` (ketchup red) · dark page, no page colour
 - Stamps: 1 per order of ₱250 or more (max 1 a day); 8 stamps = free Classic Smash (Single).
 
 Menu:
@@ -80,7 +80,7 @@ Add-on groups (shared library):
 - Order types: walk-in, pickup, delivery
 - Payments: cash, COD, GCash. Sample account: GCash 0928 000 0001 (fake, labelled "Sample").
 - Delivery: zones only. Pamplona Uno, Dos and Tres ₱0 (owner note: 2 gallons minimum) · Talon and Almanza ₱20 · Rest of Las Piñas ₱40.
-- Brand colour: `#0E7AC4` (water blue)
+- Brand colour: `#0E7AC4` (water blue) · page `#E2F1FD` (sky)
 - Stamps: 1 per order (max 1 a day); 10 stamps = ₱100 off.
 
 Menu:
@@ -112,7 +112,7 @@ Add-on groups (shared library):
 - Order types: pickup, delivery
 - Payments: COD, GCash, Bank, QR Ph. Sample accounts: GCash 0995 000 0001, BPI 0000 0000 01 (fake, labelled "Sample").
 - Delivery: zones only. Cebu City ₱80 · Mandaue ₱120 · Lapu-Lapu and Talisay ₱150. Shipping is not in A.
-- Brand colour: `#2E3A87` (midnight indigo)
+- Brand colour: `#C9A227` (kislap gold) on a dark page `#253475` (midnight indigo, like the logo), decision R52
 - Stamps: 1 per order of ₱1,000 or more (max 1 a day); 5 stamps = Kislap Limited Edition Tee, only 100 pieces.
 
 Menu:
@@ -151,7 +151,7 @@ Add-on groups (shared library):
 - Order types: walk-in, pickup, delivery
 - Payments: cash, GCash, Maya. Sample accounts: GCash 0918 000 0001, Maya 0918 000 0002 (fake, labelled "Sample").
 - Delivery: distance 0–2 km ₱39, 2–4 km ₱59 (no zones). Closed 1 Nov (All Saints’ Day) as the closure demo.
-- Brand colour: `#6F4E37` (coffee brown)
+- Brand colour: `#6F4E37` (coffee brown) · page `#EEE2CF` (latte)
 - Stamps: 1 per order of ₱150 or more (max 1 a day); 10 stamps = Kapé Juan Suki Tumbler (limited, 50 pieces in the mock).
 
 Menu:
@@ -198,7 +198,7 @@ Add-on groups (shared library):
 - Order types: walk-in, pickup, delivery
 - Payments: cash, COD, GCash, QR Ph. Sample account: GCash 0906 000 0001 (fake, labelled "Sample").
 - Delivery: distance 0–3 km ₱40; zones Malolos proper ₱50 · Nearby barangays ₱80.
-- Brand colour: `#C27C2C` (golden crust)
+- Brand colour: `#C27C2C` (golden crust) · page `#FFF1C9` (butter)
 - Stamps: 1 per order of ₱150 or more (max 1 a day); 10 stamps = free Ube Cheese Pandesal, pack of 10.
 
 Menu:

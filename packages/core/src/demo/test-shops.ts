@@ -44,6 +44,7 @@ const BLANK_STOREFRONT: Storefront = {
   look: {
     brandColor: '#2456D3',
     surface: 'light',
+    pageColor: null,
     banners: [],
     bannerSeconds: 5,
     announcement: null,

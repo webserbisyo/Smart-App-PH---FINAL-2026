@@ -14,6 +14,10 @@ export const DemoShopSummarySchema = z.object({
   // Brand colour as #rrggbb; screens set it through cssVars(), never as a class.
   brandColor: z.string().regex(/^#[0-9a-f]{6}$/i),
   surface: ShopSurfaceEnum,
+  pageColor: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullable(),
 });
 
 export type DemoShopSummary = z.infer<typeof DemoShopSummarySchema>;
