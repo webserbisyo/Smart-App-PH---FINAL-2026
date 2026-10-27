@@ -1,23 +1,13 @@
 'use client';
 
-import { lazy, Suspense, useId, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense } from 'react';
 import Link from 'next/link';
 import { artPath, words, type OrderReceipt, type Storefront } from '@smartapp/core';
-import {
-  useBasket,
-  useMyAccount,
-  useOnline,
-  usePushOrders,
-  useSubscribePush,
-} from '@smartapp/data';
+import { useBasket, useMyAccount } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { ClientOnly } from '@smartapp/ui/components/client-only';
-import { Label } from '@smartapp/ui/components/label';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { Switch } from '@smartapp/ui/components/switch';
-import { Bell, BellOff, MoreVertical, RefreshCw } from 'lucide-react';
-import { InstallCard } from '../../install/components/install-card';
-import { enablePush, pushState, type PushState } from '../../install/push';
+import { MoreVertical, RefreshCw } from 'lucide-react';
 import { useShop } from '../../shell/components/shop-context';
 import { useLaterPart } from '../../shell/use-when-idle';
 import { isOrderCancelled } from '../receipt-rules';
@@ -27,9 +17,16 @@ import { isOrderCancelled } from '../receipt-rules';
 const ReceiptMoreMenu = lazy(() =>
   import('./receipt-more-menu').then((m) => ({ default: m.ReceiptMoreMenu })),
 );
-// Rating only shows on a finished order: its code loads after the page's first JavaScript, and the
-// server's copy shows meanwhile (decision R49).
+// Notify me and the install card only draw in the browser (they read the phone's permissions and
+// install state), so their code loads after the page's first JavaScript (decision R49). Parts the server
+// draws and a customer needs at once (the proof uploader) stay in the page's code: until a later part's
+// code arrives, a tap on its server copy does nothing. Rating is the exception: it sits at the end of a
+// finished order, and its code is asked for as the page starts, long before anyone scrolls to it.
 const RatingCard = lazy(() => import('./rating-card').then((m) => ({ default: m.RatingCard })));
+const NotifyCard = lazy(() => import('./notify-card').then((m) => ({ default: m.NotifyCard })));
+const InstallCard = lazy(() =>
+  import('../../install/components/install-card').then((m) => ({ default: m.InstallCard })),
+);
 const MORE_ID = 'receipt-more-actions-button';
 const MORE_CLASS = 'size-12 shrink-0 rounded-full bg-card';
 
@@ -38,78 +35,6 @@ export interface ReceiptActionsProps {
   readonly order: OrderReceipt;
   readonly storefront: Storefront;
   readonly receiptUrl: string;
-}
-
-const CARD = 'rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6';
-
-function noSubscribe() {
-  return () => {};
-}
-
-function NotifyCard({ slug, token }: { slug: string; token: string }) {
-  const state = useSyncExternalStore<PushState>(noSubscribe, pushState, () => 'unsupported');
-  const isOnline = useOnline();
-  const subscribe = useSubscribePush(slug, token);
-  const pushOrders = usePushOrders(slug);
-  const [asking, setAsking] = useState(false);
-  const switchId = useId();
-  const W = words.receipt.notify;
-
-  if (state === 'unsupported') return null;
-  const on = state === 'granted' && pushOrders.isOn(token);
-  const blocked = state === 'needs_install' || state === 'denied';
-  const line =
-    state === 'needs_install'
-      ? words.install.pushIphone
-      : state === 'denied'
-        ? words.install.pushDenied
-        : subscribe.isError
-          ? W.failed
-          : on
-            ? W.on
-            : W.off;
-
-  // Asks for permission only on this tap (T13); turning it off is kept on the phone.
-  async function handleChange(next: boolean) {
-    if (!next) {
-      pushOrders.set(token, false);
-      return;
-    }
-    setAsking(true);
-    const result = await enablePush();
-    setAsking(false);
-    if (!result.ok) return;
-    subscribe.mutate(result.subscription, { onSuccess: () => pushOrders.set(token, true) });
-  }
-
-  return (
-    <div className={`${CARD} flex items-center justify-between gap-4`}>
-      <div className="flex min-w-0 items-start gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
-          {blocked ? (
-            <BellOff aria-hidden="true" className="size-5" />
-          ) : (
-            <Bell aria-hidden="true" className="size-5" />
-          )}
-        </span>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <Label htmlFor={switchId} className="text-base font-semibold">
-            {W.title}
-          </Label>
-          <p id={`${switchId}-line`} className="text-sm text-muted-foreground">
-            {line}
-          </p>
-        </div>
-      </div>
-      <Switch
-        id={switchId}
-        checked={on}
-        onCheckedChange={(next) => void handleChange(next)}
-        disabled={blocked || !isOnline || asking || subscribe.isPending}
-        aria-describedby={`${switchId}-line`}
-      />
-    </div>
-  );
 }
 
 function StampLine({ slug, completed }: { slug: string; completed: boolean }) {
@@ -229,7 +154,13 @@ export function ReceiptActions({ slug, order, storefront, receiptUrl }: ReceiptA
         )}
       </div>
 
-      {!cancelled && !isCompleted ? <NotifyCard slug={slug} token={order.token} /> : null}
+      {!cancelled && !isCompleted ? (
+        <ClientOnly>
+          <Suspense fallback={null}>
+            <NotifyCard slug={slug} token={order.token} />
+          </Suspense>
+        </ClientOnly>
+      ) : null}
 
       {stampsOn && !cancelled ? (
         <ClientOnly>
@@ -248,7 +179,9 @@ export function ReceiptActions({ slug, order, storefront, receiptUrl }: ReceiptA
       ) : null}
 
       <ClientOnly>
-        <InstallCard slug={slug} shopName={storefront.info.name} />
+        <Suspense fallback={null}>
+          <InstallCard slug={slug} shopName={storefront.info.name} />
+        </Suspense>
       </ClientOnly>
     </div>
   );
