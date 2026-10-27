@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { Suspense, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { words } from '@smartapp/core';
 import { useRefreshShop } from '@smartapp/data';
@@ -9,7 +9,7 @@ import { MAIN_CONTENT_ID, SkipNav } from '@smartapp/ui/components/skip-nav';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
 import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
 import { useBasketView } from '../../basket/components/use-basket-view';
-import { useDockHidden, usePullRefreshOn, useShopNav } from './nav';
+import { useItemOpen, useOnCheckout, usePullRefreshOn, useShopNav } from './nav';
 import { PullRing, usePullToRefresh } from './pull-to-refresh';
 import { useShop } from './shop-context';
 import { TopBar } from './top-bar';
@@ -71,17 +71,32 @@ function Dock() {
   );
 }
 
+function PhoneDock() {
+  return (
+    <div className="lg:hidden">
+      <Dock />
+    </div>
+  );
+}
+
+// An open item sheet hides the dock. ?item= is only known in the browser, so this sits in its own
+// Suspense with the dock as the server's answer: without it the whole shop frame rendered in the browser
+// only, and the phone showed a grey skeleton until every script ran (decision R50).
+function DockUnlessItem() {
+  return useItemOpen() ? null : <PhoneDock />;
+}
+
 /** The storefront app frame around every shop page (T04; one column at every width, decision R1). */
 export function ShopShell({ children }: { children: ReactNode }) {
   const { slug } = useShop();
-  const dockHidden = useDockHidden();
+  const onCheckout = useOnCheckout();
   const { ref: pageRef, store: pullStore } = usePullToRefresh(
     useRefreshShop(slug),
     usePullRefreshOn(),
   );
 
   return (
-    <div className="flex min-h-dvh flex-col bg-shop-60">
+    <div className="flex min-h-dvh flex-col bg-shop-60 text-foreground">
       <SkipNav>{words.shell.skipToContent}</SkipNav>
       <TopBar />
       <PullRing store={pullStore} />
@@ -93,10 +108,10 @@ export function ShopShell({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
-      {dockHidden ? null : (
-        <div className="lg:hidden">
-          <Dock />
-        </div>
+      {onCheckout ? null : (
+        <Suspense fallback={<PhoneDock />}>
+          <DockUnlessItem />
+        </Suspense>
       )}
       <LazyBasketDrawer />
       <LazyShopInfoSheet />

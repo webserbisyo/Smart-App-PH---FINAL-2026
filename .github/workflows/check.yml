@@ -42,6 +42,10 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Each storefront page's first JavaScript stays inside its budget (decisions T31, R49).
+      - name: Storefront JS budget
+        run: pnpm --filter @smartapp/tooling budget
+
       - name: Scan build outputs for leaks and forbidden strings
         run: |
           echo "Scanning dist/ and .next/ for demo emails, /kit, and localhost..."

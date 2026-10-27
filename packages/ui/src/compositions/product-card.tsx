@@ -41,6 +41,8 @@ export interface ProductCardProps {
   photo: ImageSources | null;
   fallbackIcon?: IconKey | undefined;
   sizes: string;
+  // The first cards on the page: the photo loads at once, high priority (the page's largest paint).
+  priority?: boolean | undefined;
   // Spoken name of the open button, e.g. "Classic Smash, ₱149".
   openLabel: string;
   onOpen: () => void;
@@ -65,6 +67,7 @@ export function ProductCard({
   photo,
   fallbackIcon,
   sizes,
+  priority = false,
   openLabel,
   onOpen,
   badges = [],
@@ -98,6 +101,7 @@ export function ProductCard({
           fallbackIcon={fallbackIcon}
           fallbackText={name}
           sizes={sizes}
+          priority={priority}
           assetOrigin={assetOrigin}
           className="transition-all duration-slow ease-standard group-data-sold-out/product:opacity-70 group-data-sold-out/product:grayscale hover-hover:group-hover/product:scale-105"
         />

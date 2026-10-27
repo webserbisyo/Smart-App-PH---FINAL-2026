@@ -56,3 +56,39 @@ export function shortName(name: string): string {
   }
   return out || clean.slice(0, SHORT_NAME_MAX);
 }
+
+/**
+ * iPhone screens in CSS pixels and pixel ratio. iOS shows an installed app's launch picture only when one
+ * matches the screen exactly, else white (decision R51), so each gets its own picture.
+ */
+export const IOS_SCREENS = [
+  { width: 440, height: 956, ratio: 3 },
+  { width: 430, height: 932, ratio: 3 },
+  { width: 428, height: 926, ratio: 3 },
+  { width: 414, height: 896, ratio: 3 },
+  { width: 414, height: 896, ratio: 2 },
+  { width: 414, height: 736, ratio: 3 },
+  { width: 402, height: 874, ratio: 3 },
+  { width: 393, height: 852, ratio: 3 },
+  { width: 390, height: 844, ratio: 3 },
+  { width: 375, height: 812, ratio: 3 },
+  { width: 375, height: 667, ratio: 2 },
+  { width: 320, height: 568, ratio: 2 },
+] as const;
+
+export type IosScreen = (typeof IOS_SCREENS)[number];
+
+/** "1170x2532": the picture's size in real pixels, as its address names it. */
+export function splashSizeName(screen: IosScreen): string {
+  return `${screen.width * screen.ratio}x${screen.height * screen.ratio}`;
+}
+
+/** The screen a picture address names, or null for any size we don't make. */
+export function splashScreen(sizeName: string): IosScreen | null {
+  return IOS_SCREENS.find((screen) => splashSizeName(screen) === sizeName) ?? null;
+}
+
+/** The media query iOS matches a launch picture with (portrait only, as the manifest). */
+export function splashMedia(screen: IosScreen): string {
+  return `(device-width: ${screen.width}px) and (device-height: ${screen.height}px) and (-webkit-device-pixel-ratio: ${screen.ratio}) and (orientation: portrait)`;
+}

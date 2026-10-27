@@ -9,7 +9,8 @@
     "demo:images": "node scripts/demo-images.ts",
     "e2e": "playwright test -c e2e/playwright.config.ts",
     "avatars": "node scripts/default-avatars.ts",
-    "art": "node scripts/fluent-art.ts"
+    "art": "node scripts/fluent-art.ts",
+    "budget": "node scripts/js-budget.ts"
   },
   "devDependencies": {
     "@dicebear/core": "9.4.3",

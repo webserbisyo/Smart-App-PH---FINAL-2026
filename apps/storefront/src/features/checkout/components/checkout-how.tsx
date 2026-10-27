@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import {
   chosenZone,
   formatClock,
@@ -11,9 +12,14 @@ import {
   type Storefront,
 } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
-import { HowWhereSheet } from '../../location/components/how-where-sheet';
 import { ORDER_TYPE_ICON } from '../../location/components/order-type-icons';
 import { CheckoutStep } from './checkout-step';
+
+// The sheet loads on the first Change, as from the location pill (decision R49).
+const HowWhereSheet = dynamic(
+  () => import('../../location/components/how-where-sheet').then((m) => m.HowWhereSheet),
+  { ssr: false },
+);
 
 interface CheckoutHowProps {
   sf: Storefront;
@@ -26,6 +32,8 @@ interface CheckoutHowProps {
  */
 export function CheckoutHow({ sf, choice, now }: CheckoutHowProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetLoaded, setSheetLoaded] = useState(false);
+  if (sheetOpen && !sheetLoaded) setSheetLoaded(true);
   const state = openState(sf, now);
   const label = locationLabel(sf, choice, now);
 
@@ -72,7 +80,9 @@ export function CheckoutHow({ sf, choice, now }: CheckoutHowProps) {
         </div>
       </CheckoutStep>
 
-      <HowWhereSheet open={sheetOpen} onOpenChange={setSheetOpen} now={now} />
+      {sheetLoaded ? (
+        <HowWhereSheet open={sheetOpen} onOpenChange={setSheetOpen} now={now} />
+      ) : null}
     </>
   );
 }

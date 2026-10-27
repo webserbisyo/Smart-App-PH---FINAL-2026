@@ -456,6 +456,41 @@
   z-index: var(--z-confetti);
 }
 
+@utility z-splash {
+  z-index: var(--z-splash);
+}
+
+/* The installed app's launch (decision R51): the shop's icon and name on its page colour, the same picture
+   iPhone shows while the app starts, fading into the page as soon as it paints (80 ms hold, 300 ms fade,
+   the icon growing a little). Only in the installed app; never in a browser tab or under reduced motion. */
+@keyframes splash-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes splash-grow {
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@utility app-splash {
+  display: none;
+  pointer-events: none;
+  @media (display-mode: standalone) {
+    display: flex;
+    animation: splash-out var(--duration-slow) var(--ease-standard) 80ms both;
+    & > * {
+      animation: splash-grow var(--duration-slow) var(--ease-standard) 80ms both;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
 @utility duration-fast {
   transition-duration: var(--duration-fast);
 }

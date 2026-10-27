@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import {
   imageSources,
   words,
@@ -26,7 +27,6 @@ import {
   MessageFooter,
   MessageGroup,
 } from '@smartapp/ui/components/message';
-import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
 import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { cn } from '@smartapp/ui/lib/utils';
 import {
@@ -40,8 +40,14 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useShop } from '../../shell/components/shop-context';
+import { useWhenIdle } from '../../shell/use-when-idle';
 import { statusChip } from '../receipt-look';
 import { formatManilaTime } from '../receipt-rules';
+
+// The bigger photo (Base UI dialog and drawer) loads only on orders with a proof, once the page is idle.
+const ProofViewer = dynamic(() => import('./proof-viewer').then((m) => m.ProofViewer), {
+  ssr: false,
+});
 
 export interface OrderThreadProps {
   readonly order: OrderReceipt;
@@ -120,6 +126,8 @@ function ProofMessage({
 export function OrderThread({ order }: OrderThreadProps) {
   const { slug, shop } = useShop();
   const [viewing, setViewing] = useState<string | null>(null);
+  const [viewerLoaded, loadViewer] = useWhenIdle(order.messages?.some((msg) => msg.proof) ?? false);
+  if (viewing !== null && !viewerLoaded) loadViewer();
   const info = shop.storefront.info;
   const logo = info.logo ? imageSources(info.logo) : null;
   const T = words.receipt.thread;
@@ -245,23 +253,7 @@ export function OrderThread({ order }: OrderThreadProps) {
         </div>
       )}
 
-      {/* The proof photo, bigger */}
-      <ResponsiveDialog
-        open={viewing !== null}
-        onOpenChange={(open) => !open && setViewing(null)}
-        title={T.proofDialog}
-      >
-        <div className="flex flex-col items-center justify-center p-2">
-          {viewing ? (
-            <img
-              src={viewing}
-              alt={T.proofDialog}
-              decoding="async"
-              className="max-h-vh-70 w-auto max-w-full rounded-lg object-contain"
-            />
-          ) : null}
-        </div>
-      </ResponsiveDialog>
+      {viewerLoaded ? <ProofViewer src={viewing} onClose={() => setViewing(null)} /> : null}
     </div>
   );
 }

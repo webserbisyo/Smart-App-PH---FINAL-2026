@@ -28,7 +28,7 @@ Gmail "+" addresses all land in the founder's inbox, so codes and resets can be 
 - Description: Thin, crispy-edged smash burgers on toasted potato buns, made to order. Born as a weekend stall, now the barkada's late-night stop in Marikina.
 - Owner: Paolo Reyes · Phone: 0917 801 2201
 - Address: 28 Bayan-Bayanan Ave., Brgy. Concepcion Uno, Marikina City, Metro Manila 1807 · Landmark: near the Concepcion Uno barangay hall · Pin: 14.6430, 121.1010
-- Hours: Mon to Thu 11:00 AM to 10:00 PM; Fri to Sun 11:00 AM to 12:00 MN
+- Hours: Mon to Thu 9:00 AM to 10:00 PM; Fri to Sun 9:00 AM to 12:00 MN
 - Order types: walk-in, pickup, delivery
 - Payments: cash, COD (limit ₱3,000), GCash, Maya. Sample accounts: GCash 0917 000 0001, Maya 0917 000 0002 (fake, labelled "Sample").
 - Delivery: distance 0–3 km ₱49, 3–5 km ₱79; zones Concepcion Uno and Dos ₱40 · Marikina Heights and Parang ₱60 · Rest of Marikina ₱80.
@@ -76,7 +76,7 @@ Add-on groups (shared library):
 - Description: Purified, alkaline and mineral water refills with 8-stage filtration, tested monthly. Free delivery within the Pamplona barangays for 2 gallons or more.
 - Owner: Ramon Dizon · Phone: 0928 455 3302
 - Address: Unit 3, 145 Alabang–Zapote Road, Brgy. Pamplona Dos, Las Piñas City, Metro Manila 1740 · Landmark: 5 minutes from Las Piñas City Hall · Pin: 14.4510, 120.9840
-- Hours: Mon to Sat 6:00 AM to 8:00 PM; Sun 7:00 AM to 5:00 PM
+- Hours: Mon to Sat 6:00 AM to 9:00 PM; Sun 7:00 AM to 9:00 PM
 - Order types: walk-in, pickup, delivery
 - Payments: cash, COD, GCash. Sample account: GCash 0928 000 0001 (fake, labelled "Sample").
 - Delivery: zones only. Pamplona Uno, Dos and Tres ₱0 (owner note: 2 gallons minimum) · Talon and Almanza ₱20 · Rest of Las Piñas ₱40.
@@ -108,7 +108,7 @@ Add-on groups (shared library):
 - Description: Small-batch clothing and accessories sewn in Cebu, with woven and abaca details from local makers. Sizes S to XL; try-on at the studio by appointment.
 - Owner: Bea Villanueva · Phone: 0995 230 4403
 - Address: 2/F, 88 Salinas Drive, Brgy. Lahug, Cebu City, Cebu 6000 · Landmark: two blocks from JY Square Mall · Pin: 10.3310, 123.8990
-- Hours: Tue to Sun 10:00 AM to 7:00 PM; closed Monday
+- Hours: daily 9:00 AM to 9:00 PM
 - Order types: pickup, delivery
 - Payments: COD, GCash, Bank, QR Ph. Sample accounts: GCash 0995 000 0001, BPI 0000 0000 01 (fake, labelled "Sample").
 - Delivery: zones only. Cebu City ₱80 · Mandaue ₱120 · Lapu-Lapu and Talisay ₱150. Shipping is not in A.
@@ -194,7 +194,7 @@ Add-on groups (shared library):
 - Description: A family bakeshop in Malolos baking pandesal twice a day (5 AM and 3 PM), Ensaymada Malolos and Bulacan pasalubong from Lola Remy's recipes, now run by her apo.
 - Owner: Carla Bautista · Phone: 0906 318 6605
 - Address: 214 Paseo del Congreso, City of Malolos, Bulacan 3000 (barangay to confirm on the map) · Landmark: 5 minutes' walk from Barasoain Church · Pin: 14.8470, 120.8120
-- Hours: daily 5:00 AM to 8:00 PM
+- Hours: Mon to Sat 5:00 AM to 12:00 NN and 2:00 PM to 8:00 PM; Sun 5:00 AM to 12:00 NN (the closed-shop demo, decision R26)
 - Order types: walk-in, pickup, delivery
 - Payments: cash, COD, GCash, QR Ph. Sample account: GCash 0906 000 0001 (fake, labelled "Sample").
 - Delivery: distance 0–3 km ₱40; zones Malolos proper ₱50 · Nearby barangays ₱80.

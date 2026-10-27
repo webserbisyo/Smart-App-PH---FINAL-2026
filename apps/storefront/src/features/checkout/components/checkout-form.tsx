@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   errorWords,
@@ -30,6 +31,7 @@ import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { AlertTriangleIcon } from 'lucide-react';
 import { formatManilaDateTime } from '../../receipt/receipt-rules';
 import { useShop } from '../../shell/components/shop-context';
+import { useWhenIdle } from '../../shell/use-when-idle';
 import { useLocationChoice } from '../../location/components/use-location-choice';
 import {
   checkPlaceOrderEligibility,
@@ -41,7 +43,13 @@ import { CheckoutHow } from './checkout-how';
 import { CheckoutPay } from './checkout-pay';
 import { CheckoutSummary } from './checkout-summary';
 import { CheckoutWho } from './checkout-who';
-import { OrderPrinter, type PrinterSlip, type PrinterState } from './order-printer';
+import type { PrinterSlip, PrinterState } from './order-printer';
+
+// The printer (a dialog) loads when the page is idle, or when Place order is pressed before that
+// (decision R49).
+const OrderPrinter = dynamic(() => import('./order-printer').then((m) => m.OrderPrinter), {
+  ssr: false,
+});
 
 // The printer's slip takes 1.6 s to feed out (decision R32); the receipt opens once it has, or at
 // once on Skip or under reduced motion.
@@ -114,6 +122,8 @@ export function CheckoutForm({ now }: { now: string }) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [placedOk, setPlacedOk] = useState(false);
   const [printer, setPrinter] = useState<PrinterState | null>(null);
+  const [printerLoaded, loadPrinter] = useWhenIdle();
+  if (printer !== null && !printerLoaded) loadPrinter();
   const printStartRef = useRef(0);
   const skipRef = useRef(false);
   const placedTokenRef = useRef<string | null>(null);
@@ -477,17 +487,19 @@ export function CheckoutForm({ now }: { now: string }) {
         </Alert>
       ) : null}
 
-      <OrderPrinter
-        state={printer}
-        slip={slip}
-        error={submitError}
-        onSkip={skipPrinting}
-        onRetry={() => {
-          setPrinter(null);
-          void handlePlaceOrder();
-        }}
-        onClose={() => setPrinter(null)}
-      />
+      {printerLoaded ? (
+        <OrderPrinter
+          state={printer}
+          slip={slip}
+          error={submitError}
+          onSkip={skipPrinting}
+          onRetry={() => {
+            setPrinter(null);
+            void handlePlaceOrder();
+          }}
+          onClose={() => setPrinter(null)}
+        />
+      ) : null}
 
       {/* Fixed bar: the total and Place order (c-button-9 large + c-button-44 states in DiceUI Pending). */}
       <div className="fixed inset-x-0 bottom-0 z-basket border-t glass pb-safe">

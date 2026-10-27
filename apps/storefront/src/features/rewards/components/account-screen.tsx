@@ -1,5 +1,6 @@
 'use client';
 
+import { lazy, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -11,25 +12,22 @@ import {
 } from 'lucide-react';
 import { artPath, errorWords, formatManila, words } from '@smartapp/core';
 import { errorCodeOf, useMyAccount, useMyAvatar, useSignOutCustomer } from '@smartapp/data';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@smartapp/ui/components/alert-dialog';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { useShop } from '../../shell/components/shop-context';
+import { useLaterPart } from '../../shell/use-when-idle';
 import { AvatarPicker } from './avatar-picker';
 
 const W = words.account;
+
+// The confirm (Base UI alert dialog) loads when the page is idle or Sign out is touched (decision R49).
+const SignOutConfirm = lazy(() =>
+  import('./sign-out-confirm').then((m) => ({ default: m.SignOutConfirm })),
+);
+const SIGN_OUT_ID = 'account-sign-out';
+const SIGN_OUT_CLASS = 'h-12 gap-2 rounded-full text-base text-destructive-text';
 const ROW = 'flex min-h-14 items-center gap-3 px-4 py-3 sm:px-5';
 
 /**
@@ -42,6 +40,7 @@ export function AccountScreen() {
   const router = useRouter();
   const account = useMyAccount(slug);
   const signOut = useSignOutCustomer();
+  const confirm = useLaterPart();
   const member = account.data;
   const avatar = useMyAvatar(slug, member?.email ?? slug);
   const stampsOn = shop.storefront.stampCard.status !== 'off';
@@ -90,6 +89,25 @@ export function AccountScreen() {
       onError: (error) => notify({ title: errorWords(errorCodeOf(error)), tone: 'error' }),
     });
   }
+
+  const signOutLabel = (
+    <>
+      <LogOutIcon aria-hidden="true" className="size-5" />
+      {W.signOut}
+    </>
+  );
+  // Looks and reads the same as the confirm's own button; a tap asks as soon as it arrives.
+  const signOutStandIn = (
+    <Button
+      id={SIGN_OUT_ID}
+      variant="outline"
+      className={SIGN_OUT_CLASS}
+      aria-haspopup="dialog"
+      {...confirm.standIn}
+    >
+      {signOutLabel}
+    </Button>
+  );
 
   const details = [
     { label: W.email, value: member.email },
@@ -151,37 +169,22 @@ export function AccountScreen() {
         </Link>
       </nav>
 
-      <AlertDialog>
-        <AlertDialogTrigger
-          render={
-            <Button
-              id="account-sign-out"
-              variant="outline"
-              className="h-12 gap-2 rounded-full text-base text-destructive-text"
-            />
-          }
-        >
-          <LogOutIcon aria-hidden="true" className="size-5" />
-          {W.signOut}
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{W.signOutTitle}</AlertDialogTitle>
-            <AlertDialogDescription>{W.signOutBody}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="h-11">{W.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleSignOut}
-              disabled={signOut.isPending}
-              className="h-11"
-            >
-              {W.signOut}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {confirm.loaded ? (
+        <Suspense fallback={signOutStandIn}>
+          <SignOutConfirm
+            buttonId={SIGN_OUT_ID}
+            buttonClassName={SIGN_OUT_CLASS}
+            pending={signOut.isPending}
+            onConfirm={handleSignOut}
+            openNow={confirm.openNow}
+            focused={confirm.focused}
+          >
+            {signOutLabel}
+          </SignOutConfirm>
+        </Suspense>
+      ) : (
+        signOutStandIn
+      )}
     </div>
   );
 }

@@ -275,7 +275,8 @@ export const KANTO_SMASH_PACK: ShopPack = {
       announcement: null,
       sections: ALL_SECTIONS_ON,
     },
-    hours: [...days([1, 2, 3, 4], '11:00', '22:00'), ...days([5, 6, 0], '11:00', '24:00')],
+    // Opens at 9 AM so the demo is open when people try it (decision R47).
+    hours: [...days([1, 2, 3, 4], '09:00', '22:00'), ...days([5, 6, 0], '09:00', '24:00')],
     closures: [],
     pause: { busyUntil: null, paused: false },
     orderTypes: ['walk_in', 'pickup', 'delivery'],

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { installCardVisible, installPlatform, isIosSafari, shortName } from './install-rules';
+import {
+  IOS_SCREENS,
+  installCardVisible,
+  installPlatform,
+  isIosSafari,
+  shortName,
+  splashMedia,
+  splashScreen,
+  splashSizeName,
+} from './install-rules';
 
 const IPHONE_SAFARI =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
@@ -47,5 +56,18 @@ describe('install rules', () => {
     expect(shortName('Kanto Smash')).toBe('Kanto Smash');
     expect(shortName('Kapé Juan Coffee House')).toBe('Kapé Juan');
     expect(shortName('Supercalifragilistic')).toBe('Supercalifra');
+  });
+
+  it('names each iPhone launch picture by its real pixels and finds it again', () => {
+    const iphone13 = { width: 390, height: 844, ratio: 3 } as const;
+    expect(splashSizeName(iphone13)).toBe('1170x2532');
+    expect(splashScreen('1170x2532')).toEqual(iphone13);
+    expect(splashScreen('1170x2533')).toBeNull();
+    expect(splashScreen('../etc')).toBeNull();
+    expect(splashMedia(iphone13)).toBe(
+      '(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
+    );
+    // Two screens never share a picture name.
+    expect(new Set(IOS_SCREENS.map(splashSizeName)).size).toBe(IOS_SCREENS.length);
   });
 });

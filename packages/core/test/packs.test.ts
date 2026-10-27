@@ -113,7 +113,15 @@ describe('shop packs', () => {
       date: '2026-11-01',
       reason: 'All Saints’ Day',
     });
-    expect(SHOP_PACKS['tala-apparel'].storefront.hours.some((h) => h.day === 1)).toBe(false);
+    // At least four of five demo shops are open from 9 AM to 9 PM every day (decision R47).
+    const openNineToNine = DEMO_SHOP_SLUGS.filter((slug) =>
+      [0, 1, 2, 3, 4, 5, 6].every((day) =>
+        SHOP_PACKS[slug].storefront.hours.some(
+          (h) => h.day === day && h.open <= '09:00' && h.close >= '21:00',
+        ),
+      ),
+    );
+    expect(openNineToNine.length).toBeGreaterThanOrEqual(4);
     expect(SHOP_PACKS['lola-remy'].storefront.hours[0]?.open).toBe('05:00');
     // A lunch break: two openings on Monday (decision R26 demo hours).
     expect(SHOP_PACKS['lola-remy'].storefront.hours.filter((h) => h.day === 1)).toHaveLength(2);

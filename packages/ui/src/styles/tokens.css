@@ -124,13 +124,15 @@
   /* Long, soft settle with no overshoot (the dock's sliding pill). */
   --ease-glide: cubic-bezier(0.32, 0.72, 0, 1);
 
-  /* Layers, lowest first: content, sticky bars, basket bar, dock, sheet and dialog, toast, confetti. */
+  /* Layers, lowest first: content, sticky bars, basket bar, dock, sheet and dialog, toast, confetti,
+     the installed app's launch splash. */
   --z-sticky: 10;
   --z-basket: 20;
   --z-dock: 30;
   --z-sheet: 50;
   --z-toast: 60;
   --z-confetti: 70;
+  --z-splash: 80;
 }
 
 .dark {

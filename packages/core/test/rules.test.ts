@@ -100,16 +100,16 @@ describe('openState', () => {
       kanto.storefront,
       '2026-10-26 23:00',
       'closed',
-      'Closed · Opens tomorrow 11 AM',
+      'Closed · Opens tomorrow 9 AM',
     ],
     ['open past midnight close', kanto.storefront, '2026-10-30 23:30', 'open', 'Open until 12 MN'],
     ['Lola Remy 4:30 AM', lola.storefront, '2026-10-26 04:30', 'closed', 'Closed · Opens 5 AM'],
     [
-      'Tala on Monday',
-      tala.storefront,
+      'a closed day',
+      with_(tala.storefront, { hours: tala.storefront.hours.filter((h) => h.day !== 1) }),
       '2026-10-26 12:00',
       'closed',
-      'Closed · Opens tomorrow 10 AM',
+      'Closed · Opens tomorrow 9 AM',
     ],
     ['closure skipped', kape.storefront, '2026-10-31 23:00', 'closed', 'Closed · Opens Mon 7 AM'],
   ])('%s', (_label, sf, now, state, text) => {
@@ -145,8 +145,8 @@ describe('pickupSlots', () => {
     expect(slots[0]).toBe(mnl('2026-10-26 12:30'));
     expect(slots).toContain(mnl('2026-10-26 21:45'));
     expect(slots).not.toContain(mnl('2026-10-26 22:00'));
-    expect(slots).toContain(mnl('2026-10-27 11:30'));
-    expect(slots).not.toContain(mnl('2026-10-27 11:15'));
+    expect(slots).toContain(mnl('2026-10-27 09:30'));
+    expect(slots).not.toContain(mnl('2026-10-27 09:15'));
     expect(slots.every((s) => manilaDate(s) <= '2026-10-27')).toBe(true);
   });
 

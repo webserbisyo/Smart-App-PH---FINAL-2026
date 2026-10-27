@@ -1,14 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useTransition } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useTransition } from 'react';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { FlameIcon, HeartIcon, SparklesIcon } from 'lucide-react';
 import { iconPath, menuSections, searchMenu, words, type Catalog, type Item } from '@smartapp/core';
 import { useFavourites, useNow } from '@smartapp/data';
 import { IconTile } from '@smartapp/ui/components/reui/icon-tile';
 import { useShop } from '../../shell/components/shop-context';
-import { ItemSheet } from '../item-sheet/item-sheet';
-import { buildMenuSearch, parseMenuParams, type MenuParams } from '../url-state';
+import { useWhenIdle } from '../../shell/use-when-idle';
+import {
+  buildMenuSearch,
+  parseMenuParams,
+  type MenuParamSource,
+  type MenuParams,
+} from '../url-state';
 import { CategoryChips } from './category-chips';
 import { CategoryRail } from './category-rail';
 import type { MenuPick } from './menu-picks';
@@ -22,8 +28,16 @@ export interface MenuContentProps {
   catalogTitle: string;
 }
 
+// The sheet (drawer, number field, photo carousel) loads when the page is idle or an item opens, so the
+// menu's first JavaScript stays small (decision R49).
+const ItemSheet = dynamic(() => import('../item-sheet/item-sheet').then((m) => m.ItemSheet), {
+  ssr: false,
+});
+
 const GRID = 'grid grid-cols-2 gap-3 md:grid-cols-3';
 const CARD_SIZES = '(min-width: 1024px) 240px, (min-width: 768px) 33vw, 50vw';
+// Two cards a row on a phone.
+const FIRST_ROW = 2;
 
 /**
  * Menu (redesign D8): every category is its own box and ReUI Scrollspy moves the chips (phones) or
@@ -31,10 +45,30 @@ const CARD_SIZES = '(min-width: 1024px) 240px, (min-width: 768px) 33vw, 50vw';
  * URL: ?q= search, ?fav=1 favourites, ?show=best|new the quick lists, ?cat= jump once to a category,
  * ?item= the item sheet.
  */
-export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
+export function MenuContent(props: MenuContentProps) {
+  // The URL's ?q=, ?fav= and so on are only known in the browser. The server sends the plain menu (no
+  // search, no sheet) as this boundary's stand-in, so the first paint is the real menu, not a skeleton
+  // waiting for every script (decision R50); the browser then swaps in the view for the URL.
+  return (
+    <Suspense fallback={<MenuView {...props} searchParams={NO_PARAMS} />}>
+      <MenuForUrl {...props} />
+    </Suspense>
+  );
+}
+
+const NO_PARAMS: MenuParamSource = { get: () => null };
+
+function MenuForUrl(props: MenuContentProps) {
+  return <MenuView {...props} searchParams={useSearchParams()} />;
+}
+
+function MenuView({
+  catalog,
+  catalogTitle,
+  searchParams,
+}: MenuContentProps & { searchParams: MenuParamSource }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const { slug } = useShop();
   const favourites = useFavourites(slug);
@@ -44,6 +78,8 @@ export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
   const sections = useMemo(() => menuSections(catalog), [catalog]);
   const barRef = useRef<HTMLDivElement>(null);
   const { spy, jumpTo } = useMenuSpy(barRef);
+  const [sheetLoaded, loadSheet] = useWhenIdle();
+  if (params.item && !sheetLoaded) loadSheet();
 
   const query = params.q.trim();
   const mode = query
@@ -144,6 +180,8 @@ export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
       : []),
   ];
 
+  // The first row's photos are the page's largest paint on a phone: they load at once.
+  const firstIds = new Set(sections[0]?.items.slice(0, FIRST_ROW).map((item) => item.id));
   const card = (item: Item) => (
     <MenuProductCard
       key={item.id}
@@ -152,6 +190,7 @@ export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
       now={now}
       onOpen={handleOpenItem}
       sizes={CARD_SIZES}
+      priority={firstIds.has(item.id)}
     />
   );
 
@@ -260,14 +299,16 @@ export function MenuContent({ catalog, catalogTitle }: MenuContentProps) {
         </div>
       </div>
 
-      <ItemSheet
-        slug={slug}
-        catalog={catalog}
-        itemId={params.item}
-        onClose={handleCloseItem}
-        onOpenItem={handleOpenItem}
-        now={now}
-      />
+      {sheetLoaded ? (
+        <ItemSheet
+          slug={slug}
+          catalog={catalog}
+          itemId={params.item}
+          onClose={handleCloseItem}
+          onOpenItem={handleOpenItem}
+          now={now}
+        />
+      ) : null}
     </div>
   );
 }

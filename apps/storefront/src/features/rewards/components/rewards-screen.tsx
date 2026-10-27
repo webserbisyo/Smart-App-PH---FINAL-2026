@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useEffect, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { CalendarCheckIcon, PauseCircleIcon, RotateCwIcon, WifiOffIcon } from 'lucide-react';
@@ -25,7 +25,6 @@ import {
   CircularProgressRange,
   CircularProgressTrack,
 } from '@smartapp/ui/components/circular-progress';
-import { NumberTicker } from '@smartapp/ui/components/number-ticker';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/reui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { rewardReady } from '@smartapp/ui/compositions/celebrate';
@@ -36,6 +35,12 @@ import { RewardCard } from './reward-card';
 import { MemberQr, StampHistory } from './rewards-parts';
 import { RewardsSkeleton } from './rewards-skeleton';
 import { SukiInvite } from './suki-invite';
+
+// Magic UI Number Ticker pulls in motion, so it loads after the page (decision R38: motion only where
+// loaded lazily). Until then the count shows where it starts.
+const NumberTicker = lazy(() =>
+  import('@smartapp/ui/components/number-ticker').then((m) => ({ default: m.NumberTicker })),
+);
 
 const W = words.rewards;
 const S = words.shop.stamps;
@@ -247,11 +252,13 @@ export function RewardsScreen() {
                   {calm ? (
                     progress.filled
                   ) : (
-                    <NumberTicker
-                      value={progress.filled}
-                      startValue={Math.min(seen ?? progress.filled, progress.filled)}
-                      className="tracking-normal text-member-soft-foreground"
-                    />
+                    <Suspense fallback={Math.min(seen ?? progress.filled, progress.filled)}>
+                      <NumberTicker
+                        value={progress.filled}
+                        startValue={Math.min(seen ?? progress.filled, progress.filled)}
+                        className="tracking-normal text-member-soft-foreground"
+                      />
+                    </Suspense>
                   )}
                   <span className="text-base font-semibold"> / {needed}</span>
                 </span>

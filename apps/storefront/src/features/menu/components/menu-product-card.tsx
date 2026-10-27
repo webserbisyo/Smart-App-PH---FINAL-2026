@@ -34,6 +34,7 @@ export interface MenuProductCardProps {
   // Opens the item sheet (?item=); the "+" opens it too when the item needs choices.
   onOpen: (itemId: string) => void;
   sizes: string;
+  priority?: boolean | undefined;
   className?: string | undefined;
 }
 
@@ -44,6 +45,7 @@ export function MenuProductCard({
   now,
   onOpen,
   sizes,
+  priority,
   className,
 }: MenuProductCardProps) {
   const { slug } = useShop();
@@ -73,6 +75,7 @@ export function MenuProductCard({
       photo={photo ? imageSources(photo) : null}
       fallbackIcon={icon}
       sizes={sizes}
+      priority={priority}
       openLabel={words.storefrontShell.menu.openItem(item.name, price)}
       onOpen={() => onOpen(item.id)}
       badges={badges}

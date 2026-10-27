@@ -152,7 +152,7 @@ export const AQUALINIS_PACK: ShopPack = {
       },
       sections: { ...ALL_SECTIONS_ON, membersCount: false },
     },
-    hours: [...days([1, 2, 3, 4, 5, 6], '06:00', '20:00'), ...days([0], '07:00', '17:00')],
+    hours: [...days([1, 2, 3, 4, 5, 6], '06:00', '21:00'), ...days([0], '07:00', '21:00')],
     closures: [],
     pause: { busyUntil: null, paused: false },
     orderTypes: ['walk_in', 'pickup', 'delivery'],

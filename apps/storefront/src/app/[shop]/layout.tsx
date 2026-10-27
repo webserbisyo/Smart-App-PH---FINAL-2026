@@ -4,7 +4,13 @@ import { DEMO_MEDIA, DEMO_SHOP_SLUGS, isDemoShopSlug, shopPalette } from '@smart
 import { getStorefrontForServer } from '@smartapp/data/server';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
-import { shortName } from '@/features/install/install-rules';
+import { AppSplash } from '@/features/install/components/app-splash';
+import {
+  IOS_SCREENS,
+  shortName,
+  splashMedia,
+  splashSizeName,
+} from '@/features/install/install-rules';
 import { ShopApp } from '@/features/shell/components/shop-app';
 
 interface ShopLayoutProps {
@@ -22,6 +28,7 @@ function brandFiles(slug: string) {
   const base = `/demo/${slug}/brand`;
   return {
     icon: `${base}/icon-192.png`,
+    splash: `${base}/icon-512.png`,
     apple: `${base}/apple-touch-icon.png`,
     og: `${base}/og.jpg`,
   };
@@ -38,7 +45,16 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
     description: tagline ?? name,
     // Installs as its own app (T13): per-shop manifest, home screen name on iPhone.
     manifest: `/${slug}/manifest.webmanifest`,
-    appleWebApp: { capable: true, title: shortName(name), statusBarStyle: 'default' },
+    appleWebApp: {
+      capable: true,
+      title: shortName(name),
+      statusBarStyle: 'default',
+      // The launch picture per iPhone screen: the shop's icon on its page colour (decision R51).
+      startupImage: IOS_SCREENS.map((screen) => ({
+        url: `/${slug}/splash/${splashSizeName(screen)}`,
+        media: splashMedia(screen),
+      })),
+    },
     ...(files
       ? {
           icons: { icon: files.icon, apple: files.apple },
@@ -61,6 +77,7 @@ async function ShopFrame({ params, children }: ShopLayoutProps) {
           React hoists it into <head>; a viewport export can't read params without blocking the whole route
           under Cache Components. */}
       <meta name="theme-color" content={shopPalette(brandColor, surface).shop60} />
+      <AppSplash name={shop.storefront.info.name} icon={brandFiles(slug)?.splash ?? null} />
       <ShopApp shop={shop}>{children}</ShopApp>
     </ShopTheme>
   );

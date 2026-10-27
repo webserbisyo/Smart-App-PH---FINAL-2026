@@ -39,14 +39,16 @@ export function useShopNav(): NavItem[] {
 
 /**
  * Checkout and an open item sheet have their own bottom actions, so the dock steps aside. An order's page
- * keeps it, so there is always a way back to the shop (decision R45).
+ * keeps it, so there is always a way back to the shop (decision R45). Checkout is known from the path on
+ * the server; the item sheet only from ?item= in the browser (useItemOpen, decision R50).
  */
-export function useDockHidden(): boolean {
+export function useOnCheckout(): boolean {
   const { slug } = useShop();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const hasItem = Boolean(searchParams?.get('item'));
-  return pathname.startsWith(`/${slug}/checkout`) || hasItem;
+  return usePathname().startsWith(`/${slug}/checkout`);
+}
+
+export function useItemOpen(): boolean {
+  return Boolean(useSearchParams()?.get('item'));
 }
 
 /** Pages that pull to refresh (decision R46): Home, the menu, Rewards, Orders and an order's page. */

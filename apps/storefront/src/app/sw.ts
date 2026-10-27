@@ -1,7 +1,7 @@
 // The storefront's one service worker (T13, decision T26), built by the /serwist route. Every shop app
 // shares it at scope "/". Caching table: docs/decisions.md T26 and the PR body.
 import type { PrecacheEntry, RuntimeCaching, SerwistGlobalConfig } from 'serwist';
-import { CacheFirst, ExpirationPlugin, NetworkFirst, NetworkOnly, Serwist } from 'serwist';
+import { CacheFirst, ExpirationPlugin, NetworkOnly, Serwist, StaleWhileRevalidate } from 'serwist';
 import { isPrivateUrl, keepsOffline } from '../features/install/cache-rules';
 
 declare global {
@@ -39,12 +39,13 @@ const runtimeCaching: RuntimeCaching[] = [
     }),
   },
   {
-    // Fresh when the signal is good; after 3 s the saved copy, then the offline page.
+    // The saved copy opens at once and a fresh one is fetched behind it for next time (decision T6, back
+    // from T32's 3 s network wait in R47); the page itself refetches menu, stock and open/closed on load.
+    // Never opened before: the network, then the offline page.
     matcher: ({ request, url, sameOrigin }) =>
       sameOrigin && keepsOffline(url.pathname) && isPageRequest(request, url),
-    handler: new NetworkFirst({
+    handler: new StaleWhileRevalidate({
       cacheName: 'shop-pages',
-      networkTimeoutSeconds: 3,
       matchOptions: { ignoreSearch: true },
       plugins: [new ExpirationPlugin({ maxEntries: 40, maxAgeSeconds: 7 * DAY })],
     }),

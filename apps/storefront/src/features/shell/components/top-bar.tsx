@@ -1,16 +1,16 @@
 'use client';
 
-import { useSyncExternalStore, type ReactNode } from 'react';
+import { lazy, Suspense, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
 import { HeartIcon } from 'lucide-react';
 import { imageSources, openState, openStateText, words, type OpenStateKind } from '@smartapp/core';
 import { useNow } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { ClientOnly } from '@smartapp/ui/components/client-only';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@smartapp/ui/components/tooltip';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
 import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
 import { useNavLink, type NavItem } from '@smartapp/ui/lib/nav';
+import { useWhenIdle } from '../use-when-idle';
 import { useBasketView } from '../../basket/components/use-basket-view';
 import { LocationBar } from '../../location/components/location-bar';
 import { AccountButton } from './account-button';
@@ -48,15 +48,31 @@ function DesktopNavLink({ item }: { item: NavItem }) {
   });
 }
 
-// Hover and keyboard focus show what an icon button does (installed shadcn Tooltip, desktop pointers).
+const BarTipLoaded = lazy(() => import('./bar-tip').then((m) => ({ default: m.BarTipLoaded })));
+
+const HOVER = '(hover: hover) and (pointer: fine)';
+
+function subscribeHover(onChange: () => void) {
+  const media = window.matchMedia(HOVER);
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+}
+
+// Tooltips only help a mouse, so phones never load them, and computers load them once the page is idle
+// (decision R49).
 function BarTip({ label, children }: { label: string; children: ReactNode }) {
+  const hover = useSyncExternalStore(
+    subscribeHover,
+    () => window.matchMedia(HOVER).matches,
+    () => false,
+  );
+  const [loaded] = useWhenIdle(hover);
+  const plain = <span className="flex">{children}</span>;
+  if (!hover || !loaded) return plain;
   return (
-    <Tooltip>
-      <TooltipTrigger render={<span className="flex" />}>{children}</TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={6}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    <Suspense fallback={plain}>
+      <BarTipLoaded label={label}>{children}</BarTipLoaded>
+    </Suspense>
   );
 }
 

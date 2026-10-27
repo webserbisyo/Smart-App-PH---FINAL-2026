@@ -33,7 +33,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] R Storefront polish round 2: avatar picker and photo crop, Be a Suki, banners with words, receipt ticket, printer, proof preview, order chat, toasts, motion (decisions R22 to R42; pushed to `main`)
 - [x] R Storefront round 3, batch 1: the founder's bug list (zoom, copy check, Save image, pinned Save, dock and back on the order page) and audit fixes (decisions R43 to R45)
 - [x] R Storefront round 3, batch 2: vertical order steps with icons, pull to refresh (decisions R46, R48)
-- [ ] R Storefront round 3, batch 3: JS budget check in CI, saved copy first in the app, splash in the shop's colour, demo hours (decision R47)
+- [x] R Storefront round 3, batch 3: JS budget check in CI, saved copy first in the app, splash in the shop's colour, demo hours (decisions R47, R49 to R51)
 
 ## Phase 3: Dashboard screens (mock)
 

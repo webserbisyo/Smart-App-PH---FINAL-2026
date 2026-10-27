@@ -36,6 +36,8 @@ export function useStorefront(slug: string) {
   return useQuery({
     queryKey: qk.storefront(slug),
     queryFn: () => storefront.getStorefront({ slug }),
+    // Back in the app after a while: the menu, stock and open/closed are read again (decision R47).
+    refetchOnWindowFocus: true,
   });
 }
 
