@@ -2,7 +2,7 @@
 
 The one list of what screens can call. Each row is one method on a `@smartapp/data` adapter. The mock adapter and the API adapter both implement it with the same name, input and output, so switching an area from `mock` to `api` changes no screen. Change a row here first, then the code.
 
-Trimmed from the old `api-surface.md` (2026-10-11) to fit the restart: NestJS from day 1, mock adapters first, auth direct to Supabase. `B-full.md` was checked too; its modules add rows here only when they are built.
+Trimmed from the old `api-surface.md` (2026-10-11) to fit the restart: NestJS from day 1, mock adapters first, auth through NestJS (decision T34). `B-full.md` was checked too; its modules add rows here only when they are built.
 
 ## Rules
 
@@ -16,7 +16,7 @@ Trimmed from the old `api-surface.md` (2026-10-11) to fit the restart: NestJS fr
 - **Shop scope:** the API takes the shop from `tenant_members` for the logged-in owner, never from the URL or body. Public storefront routes take the `slug`.
 - **Rules that must be trusted** (totals, stock, stamps, order steps) run in SQL functions. Nest validates, checks permission and calls them.
 
-## Auth (Supabase directly, both phases)
+## Auth (NestJS `/auth`, Supabase Auth behind it)
 
 | Method                                      | Input                                       | Output / notes                                                                                                               |
 | ------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -136,7 +136,7 @@ Codes: `stamp_cap_reached`, `stamps_insufficient`, `claim_not_pending`.
 
 Codes: `draft_conflict`.
 
-## Live updates (Supabase Realtime from `@smartapp/data`)
+## Live updates (from NestJS, never Supabase Realtime)
 
 | Channel                                   | Who          | Payload                                  |
 | ----------------------------------------- | ------------ | ---------------------------------------- |

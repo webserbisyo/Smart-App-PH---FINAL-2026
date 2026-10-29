@@ -50,7 +50,7 @@ Each module = one database task, one API task, then one task per screen.
 - Drizzle never owns the schema; `supabase/migrations` does.
 - Each module adds its methods to `docs/api.md` before any code, and its screens follow `docs/ux.md`.
 - Supabase secret key used only for staff logins and storage clean-up.
-- Jobs: pg_cron for SQL jobs, a Nest worker for the outbox and emails.
+- Jobs: a Nest worker for scheduled jobs, the outbox and emails (no pg_cron).
 
 ## 4. Source for porting
 

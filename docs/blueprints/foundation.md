@@ -27,8 +27,8 @@ Versions are checked with `npm view <pkg> version` at install time and pinned ex
 | Storefront       | Next.js 16.4.x App Router, React 19.3, Tailwind 4.3 (Vercel)                                                                                                                                                                                                                     |
 | Dashboard        | Vite 8.3 + React 19.3, TanStack Router (code routes) + TanStack Query, React Hook Form + Zod (Vercel)                                                                                                                                                                            |
 | API              | NestJS 12.x by hand (no Nest CLI), ESM, Express adapter with adapter-neutral code; built-in Standard Schema validation with the shared Zod schemas, `@nestjs/config`, Terminus `/health`, helmet, `jose` for Supabase JWT checks, Vitest; later Drizzle ORM (Railway, Singapore) |
-| Shared           | `@smartapp/core` (Zod schemas, types, money, words, demo fixtures), `@smartapp/ui` (tokens + installed components), `@smartapp/data` (Supabase auth client, API client, mock adapters, Query hooks)                                                                              |
-| Backend services | Supabase Singapore: Postgres, Auth, later Storage and Realtime. Resend for email later                                                                                                                                                                                           |
+| Shared           | `@smartapp/core` (Zod schemas, types, money, words, demo fixtures), `@smartapp/ui` (tokens + installed components), `@smartapp/data` (API client to NestJS, mock adapters, Query hooks)                                                                                          |
+| Backend services | Supabase Singapore: Postgres, Auth and later Storage, reached only through NestJS (decision T34). Resend for email later                                                                                                                                                         |
 
 The storefront is one Next.js app and is also the installable PWA (no separate Vite storefront). Serwist precaches the app shell and caches shop pages stale-while-revalidate, so the installed app opens the saved copy instantly and refreshes menu, stock and open/closed in the background. Stock, prices and open/closed are always fetched fresh before checkout. See T6 in `decisions.md`.
 
@@ -51,7 +51,7 @@ supabase/
 docs/           blueprints/, prompts/, decisions, PROGRESS, CHANGELOG, components, design-tokens, demo-shops
 ```
 
-Import walls (enforced by ESLint): apps never import each other; only `packages/data` and `apps/api` import `@supabase/*`; `packages/core` has no React and does not import `ui` or `data`; `packages/ui` does not import `data`; dashboard features never import each other (shared dashboard code goes in `apps/dashboard/src/app/`).
+Import walls (enforced by ESLint): apps never import each other; only `apps/api` imports `@supabase/*`; `packages/core` has no React and does not import `ui` or `data`; `packages/ui` does not import `data`; dashboard features never import each other (shared dashboard code goes in `apps/dashboard/src/app/`).
 
 CSS: one stylesheet, `packages/ui/src/styles/globals.css` (Tailwind v4, imports `tokens.css`). Each app's CSS file only imports it and adds `@source` for `packages/ui/src`, because Tailwind does not scan workspace packages by itself. No `tailwind.config.js`; never follow Tailwind v3 guides. ESLint fails on inline `style` (except `cssVars()`), arbitrary values and hex in class names outside `packages/ui`.
 
@@ -61,7 +61,7 @@ CSS: one stylesheet, `packages/ui/src/styles/globals.css` (Tailwind v4, imports 
 Screen -> hook in @smartapp/data -> adapter
                                     |-- mock: fixtures from @smartapp/core/demo, fake latency and errors
                                     `-- api:  NestJS -> Postgres (RLS) / SQL functions
-Auth (all phases): app -> @smartapp/data -> Supabase Auth directly
+Auth (all phases): app -> @smartapp/data -> NestJS /auth -> Supabase Auth
 ```
 
 - `DATA_SOURCE=mock|api` per app; each area moves to `api` when its backend lands. `docs/api.md` is the contract both adapters follow; a test fails if either misses a method.
@@ -110,6 +110,7 @@ Every prompt carries this line: "Use the planned library components. Install any
 | Open API surface                                             | helmet, CORS allow-list, 100 kB body limit, Zod on every input (unknown keys stripped), no customer data in logs                                                                                                                                                                             |
 | Two places for rules (Nest and SQL)                          | Money, stock and stamps stay in SQL functions; Nest validates, checks permission and calls them                                                                                                                                                                                              |
 | Extra latency (app -> Railway -> Supabase)                   | Same region (Singapore); public storefront reads cached in Next                                                                                                                                                                                                                              |
+| API down means everything is down, login included            | Health check with auto-restart on Railway; cached public shop pages                                                                                                                                                                                                                          |
 | Cost                                                         | Railway Hobby only from the first wired area; check pricing then                                                                                                                                                                                                                             |
 
 ## 9. Quality bar (every screen)

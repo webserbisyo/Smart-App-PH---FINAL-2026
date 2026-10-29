@@ -25,14 +25,14 @@ Not in the MVP (Blueprint B): POS, shifts, kitchen screen, staff and roles, prom
 
 ## 3. Phases
 
-| Phase                       | What                                                                                                            | Done when                                                           |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| 0 Foundation                | T01: monorepo, docs, auth migration, demo accounts, login and sign up, blank "dashboard" and "storefront" pages | Each demo owner can log in; CI green                                |
-| 1 Kit and shell             | Install planned components, `/kit` page, tokens, app shells for both apps, mock data for the 5 demo shops       | Both shells work on phone and desktop with mock data                |
-| 2 Storefront screens (mock) | One screen per task, in the order of section 1                                                                  | Every screen and state visible with all 5 shops                     |
-| 3 Dashboard screens (mock)  | One screen per task                                                                                             | Owner can do every MVP job on mock data                             |
-| 4 Backend, area by area     | For each area: migration (RLS, grants, SQL functions), Nest module, switch the adapter to `api`                 | The area works on the dev database; mocks still pass the same tests |
-| 5 Launch                    | Prod Supabase, Railway, Vercel domains, Resend, privacy page, proof deletion job, audit and fixes               | Acceptance list below passes on a real phone                        |
+| Phase                       | What                                                                                                                             | Done when                                                           |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 0 Foundation                | T01: monorepo, docs, auth migration, demo accounts, login and sign up, blank "dashboard" and "storefront" pages                  | Each demo owner can log in; CI green                                |
+| 1 Kit and shell             | Install planned components, `/kit` page, tokens, app shells for both apps, mock data for the 5 demo shops                        | Both shells work on phone and desktop with mock data                |
+| 2 Storefront screens (mock) | One screen per task, in the order of section 1                                                                                   | Every screen and state visible with all 5 shops                     |
+| 3 Dashboard screens (mock)  | One screen per task                                                                                                              | Owner can do every MVP job on mock data                             |
+| 4 Backend, area by area     | Login moves behind NestJS first. For each area: migration (RLS, grants, SQL functions), Nest module, switch the adapter to `api` | The area works on the dev database; mocks still pass the same tests |
+| 5 Launch                    | Prod Supabase, Railway, Vercel domains, Resend, privacy page, proof deletion job, audit and fixes                                | Acceptance list below passes on a real phone                        |
 
 Area order in phase 4: shops and settings, catalog, orders and payments, members and stamps, reports.
 

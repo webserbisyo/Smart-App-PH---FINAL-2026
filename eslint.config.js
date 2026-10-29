@@ -113,7 +113,7 @@ export default tseslint.config(
             },
             {
               group: ['@supabase/*', '@supabase/**'],
-              message: 'Import wall: only packages/data and apps/api may import @supabase/*.',
+              message: 'Import wall: only apps/api may import @supabase/*.',
             },
           ],
         },
@@ -134,7 +134,29 @@ export default tseslint.config(
             },
             {
               group: ['@supabase/*', '@supabase/**'],
-              message: 'Import wall: only packages/data and apps/api may import @supabase/*.',
+              message: 'Import wall: only apps/api may import @supabase/*.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Import wall: packages/data calls NestJS only (decision T34); login files excepted until auth moves to NestJS
+  {
+    files: ['packages/data/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/data/src/auth.ts',
+      'packages/data/src/server.ts',
+      'packages/data/src/hooks/auth.ts',
+    ],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@supabase/*', '@supabase/**'],
+              message: 'Import wall: only apps/api may import @supabase/*.',
             },
           ],
         },
@@ -212,7 +234,7 @@ export default tseslint.config(
             },
             {
               group: ['@supabase/*', '@supabase/**'],
-              message: 'Import wall: only packages/data and apps/api may import @supabase/*.',
+              message: 'Import wall: only apps/api may import @supabase/*.',
             },
           ],
         },
@@ -233,7 +255,7 @@ export default tseslint.config(
             },
             {
               group: ['@supabase/*', '@supabase/**'],
-              message: 'Import wall: only packages/data and apps/api may import @supabase/*.',
+              message: 'Import wall: only apps/api may import @supabase/*.',
             },
             {
               group: ['@/features/**', '**/features/**', '../*/**'],

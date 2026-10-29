@@ -12,7 +12,7 @@ Frontend first with mock data. The database has only auth (profiles) and demo ow
 
 - pnpm + Turborepo, Node 24, TypeScript strict. Packages `@smartapp/*`.
 - `apps/storefront` Next.js (App Router) · `apps/dashboard` Vite + React + TanStack Router/Query · `apps/api` NestJS.
-- `packages/core` Zod schemas, types, money, words, error codes, demo fixtures (no React, no Supabase) · `packages/ui` tokens, the one `globals.css` and installed components · `packages/data` auth client, API client, mock adapters, Query hooks.
+- `packages/core` Zod schemas, types, money, words, error codes, demo fixtures (no React, no Supabase) · `packages/ui` tokens, the one `globals.css` and installed components · `packages/data` API client (calls NestJS only), mock adapters, Query hooks.
 - `supabase/migrations` SQL only.
 
 ## Commands
@@ -24,7 +24,7 @@ Frontend first with mock data. The database has only auth (profiles) and demo ow
 1. **Components:** use the planned library components. Install anything missing with the shadcn CLI, which is an exact root devDependency (`pnpm exec shadcn add ...`; registries `@reui`, `@diceui`, `@magicui`). If you hand-write a component instead, stop and tell the founder why before continuing. Do not rewrite installed component files; wrap or compose them.
 2. **Registry:** every install or new reuse updates `docs/components.md` in the same commit. Every installed component gets a section on `/kit`.
 3. **Mock data:** only in `packages/data/src/mocks` and `packages/core/src/demo`, typed by the Zod schemas in `packages/core`. Screens never import mocks directly. Mock and API adapters follow `docs/api.md` exactly.
-4. **Imports:** apps never import each other; only `packages/data` and `apps/api` import `@supabase/*`; `packages/core` imports no React, `@smartapp/ui` or `@smartapp/data`; `packages/ui` does not import `@smartapp/data`; dashboard features never import each other (shared code goes in `apps/dashboard/src/app/`). Never weaken `eslint.config.js` to pass.
+4. **Imports:** apps never import each other; only `apps/api` imports `@supabase/*`; `packages/core` imports no React, `@smartapp/ui` or `@smartapp/data`; `packages/ui` does not import `@smartapp/data`; dashboard features never import each other (shared code goes in `apps/dashboard/src/app/`). Never weaken `eslint.config.js` to pass.
 5. **Types:** no `any`, no `as` casts, no `@ts-ignore` or `@ts-expect-error`. Closed lists are `as const` arrays plus a Zod enum, mirrored by a database CHECK (no Postgres enums).
 6. **Look:** Tailwind token classes only (`docs/design-tokens.md`). No arbitrary values (`p-[13px]`), no hex, no raw palette classes (`bg-red-500`), no inline `style` except CSS variables set through the typed `cssVars()` helper (shop colours, progress). No CSS modules or extra CSS files: the only stylesheet is `packages/ui/src/styles/globals.css`. Lucide icons only; status = icon + word + colour.
 7. **Words and numbers:** our visible text in `packages/core/src/words.ts` (dynamic text as functions). Plain English with local words where natural (Suki, Members); short verb buttons; an error says what to do next; never "Coming soon". Money in integer centavos; Manila time for display; never compare the shop type in code. Screens word errors from their `code`, never from the message text.
@@ -33,6 +33,7 @@ Frontend first with mock data. The database has only auth (profiles) and demo ow
 10. **Packages:** exact versions (no `^`), and no release younger than 7 days unless it is a security fix. pnpm settings live in `pnpm-workspace.yaml` (`minimumReleaseAge`, `allowBuilds`, `catalog`); `.npmrc` settings are ignored. No new package without the founder's yes, except what the shadcn CLI adds with a planned component.
 11. **Git:** branch `ag/t<nn>-<name>` from the latest `main`. Never push to `main`, never merge, never force-push. Always open the PR yourself (`gh pr create --base main`) and print its link.
 12. **Security:** one login error for every failed login (never say which part was wrong). Another shop's pages show Not found, never "forbidden". Every API route has `@Public()` or `@Can()`; the shop comes from `tenant_members`, never from the URL or body. No customer data in logs.
+13. **Backend:** browser → NestJS → Postgres for everything, login included (decision T34). No Supabase calls from apps, no edge functions, pg_net, pg_cron, Realtime or rule-carrying triggers.
 
 ## Every task
 
