@@ -511,6 +511,60 @@
   transition-timing-function: var(--ease-spring);
 }
 
+@utility ease-enter {
+  transition-timing-function: var(--ease-enter);
+}
+
+@utility ease-exit {
+  transition-timing-function: var(--ease-exit);
+}
+
+@utility duration-celebrate {
+  transition-duration: var(--duration-celebrate);
+}
+
+/* Depth (decision T35): navy-tinted in the dashboard, neutral elsewhere; dark mode nearly flat. Composes
+   with ring-* like Tailwind's own shadow-* (cards keep their 1 px ring). */
+@utility elevation-xs {
+  --tw-shadow: var(--elevation-xs);
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow), var(--tw-shadow);
+}
+
+@utility elevation-sm {
+  --tw-shadow: var(--elevation-sm);
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow), var(--tw-shadow);
+}
+
+@utility elevation-md {
+  --tw-shadow: var(--elevation-md);
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow), var(--tw-shadow);
+}
+
+@utility elevation-lg {
+  --tw-shadow: var(--elevation-lg);
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow), var(--tw-shadow);
+}
+
+@utility elevation-xl {
+  --tw-shadow: var(--elevation-xl);
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+    var(--tw-ring-shadow), var(--tw-shadow);
+}
+
+/* Big numbers and headings (24 px and up) sit a touch tighter. */
+@utility tracking-display {
+  letter-spacing: -0.01em;
+}
+
 /* Soft drop shadow under an icon (Like Toggle heart at rest) and the brand glow once it is on. */
 @utility heart-shadow {
   filter: drop-shadow(0 1px 1px oklch(0 0 0 / 0.22)) drop-shadow(0 2px 3px oklch(0 0 0 / 0.12));

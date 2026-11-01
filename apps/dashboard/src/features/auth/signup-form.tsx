@@ -71,7 +71,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
+      <Card className="elevation-sm">
         <CardHeader>
           <CardTitle>{words.auth.signupTitle}</CardTitle>
           <CardDescription>{words.auth.signupSubtitle}</CardDescription>

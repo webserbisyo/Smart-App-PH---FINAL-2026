@@ -129,6 +129,18 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   /* Long, soft settle with no overshoot (the dock's sliding pill). */
   --ease-glide: cubic-bezier(0.32, 0.72, 0, 1);
+  /* Things appearing (emphasized decelerate) and leaving (emphasized accelerate, about 0.7 of the
+     entrance); the one celebration (stamp filled, reward unlocked) runs 500 ms (decision T35). */
+  --ease-enter: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --duration-celebrate: 500ms;
+
+  /* Depth: elevation-xs..xl utilities. Neutral here; the dashboard tints them navy. */
+  --elevation-xs: 0 1px 2px 0 oklch(0 0 0 / 0.05);
+  --elevation-sm: 0 1px 3px 0 oklch(0 0 0 / 0.1), 0 1px 2px -1px oklch(0 0 0 / 0.1);
+  --elevation-md: 0 4px 12px -2px oklch(0 0 0 / 0.1), 0 2px 4px -2px oklch(0 0 0 / 0.08);
+  --elevation-lg: 0 12px 24px -6px oklch(0 0 0 / 0.14), 0 4px 8px -4px oklch(0 0 0 / 0.1);
+  --elevation-xl: 0 24px 48px -12px oklch(0 0 0 / 0.25);
 
   /* Layers, lowest first: content, sticky bars, basket bar, dock, sheet and dialog, toast, confetti,
      the installed app's launch splash. */
@@ -234,6 +246,20 @@
    mint for stamps and rewards only. Same token names as above, so no component changes. */
 :root[data-app='dashboard'] {
   --radius: 0.75rem;
+
+  /* Motion: snappier popovers and sheets (120 / 180 / 260 ms). */
+  --duration-base: 180ms;
+  --duration-slow: 260ms;
+
+  /* Depth: navy-tinted, low alpha; at most two levels on screen at once. */
+  --elevation-xs: 0 1px 2px 0 oklch(0.213 0.087 260.9 / 0.06);
+  --elevation-sm:
+    0 1px 3px 0 oklch(0.213 0.087 260.9 / 0.08), 0 1px 2px -1px oklch(0.213 0.087 260.9 / 0.06);
+  --elevation-md:
+    0 4px 12px -2px oklch(0.213 0.087 260.9 / 0.1), 0 2px 4px -2px oklch(0.213 0.087 260.9 / 0.06);
+  --elevation-lg:
+    0 12px 24px -6px oklch(0.213 0.087 260.9 / 0.14), 0 4px 8px -4px oklch(0.213 0.087 260.9 / 0.08);
+  --elevation-xl: 0 24px 48px -12px oklch(0.213 0.087 260.9 / 0.22);
 
   --background: oklch(0.985 0.004 271.4);
   --foreground: oklch(0.213 0.087 260.9);
@@ -383,4 +409,11 @@
 
   --sidebar-accent: var(--muted);
   --sidebar-accent-foreground: var(--foreground);
+
+  /* Dark: a lighter surface and a 1 px edge carry depth, so shadows nearly vanish. */
+  --elevation-xs: 0 0 0 0 transparent;
+  --elevation-sm: 0 1px 2px 0 oklch(0 0 0 / 0.3);
+  --elevation-md: 0 1px 2px 0 oklch(0 0 0 / 0.3);
+  --elevation-lg: 0 4px 12px -2px oklch(0 0 0 / 0.4);
+  --elevation-xl: 0 12px 24px -6px oklch(0 0 0 / 0.5);
 }

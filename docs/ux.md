@@ -73,3 +73,14 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - Editor: opens full screen outside the shell (N13); the shop look and content edited on a live preview of the real storefront, Draft and Publish, contrast warning, logo colour helper (N7, N8).
 - Insights: simple blocks for 7 or 30 days, no % comparisons.
 - Settings: operations only (info, hours, order types, payments, delivery), each section with its own Save.
+
+## 7. Dashboard brand rules (decision T35)
+
+- One solid blue (`primary`) element per view: the main action or the hero number. Everything else neutral.
+- Phone: one primary and at most one secondary button per screen; frequent actions in a sticky bottom bar (48 px), destructive ones in menus, away from the thumb.
+- Mint (`member`) means stamps and rewards only, never success or links; success is the darker green.
+- Status is colour, icon and word together; red and green states always differ by icon shape too.
+- Money and counts use `tabular` and right-align in tables; weights 400 body, 500 labels, 600 headings, 700 only for numbers.
+- The logo gradient (`brand-gradient`) only on the logo, the login band, the loyalty strip and the reward moment; never behind text, on buttons or as gradient text.
+- Depth with `elevation-*`, at most two levels on screen; motion with `ease-enter` / `ease-exit` and the duration tokens, transform and opacity only; one 500 ms celebration (`duration-celebrate`) when a stamp card fills.
+- No glass panels: blur only on the top bar and dock (`frost`). No animated backgrounds, count-up money or looping effects in the dashboard.
