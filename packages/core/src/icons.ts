@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import type { CategoryIcon } from './schemas/catalog.js';
+export type { CategoryIcon };
 
 export const ICON_KEYS = [
   // 52 existing keys
@@ -150,7 +152,7 @@ export const ICON_KEYS = [
   'mobile_phone',
   'fork_knife',
   'spoon',
-  'kitchen_knife',
+  'knife',
   'salt',
   'takeout_box',
   'fortune_cookie',
@@ -210,38 +212,38 @@ export type IconKey = (typeof ICON_KEYS)[number];
 
 export const IconKeyEnum = z.enum(ICON_KEYS);
 
-export interface CategoryIconFluent {
-  kind: 'fluent';
-  key: IconKey;
-  style: 'flat' | 'color' | '3d';
+export const CATEGORY_ICON_STYLES = ['flat', 'color', '3d'] as const;
+export type CategoryIconStyle = (typeof CATEGORY_ICON_STYLES)[number];
+export const CategoryIconStyleEnum = z.enum(CATEGORY_ICON_STYLES);
+
+export function iconExtension(style: CategoryIconStyle = 'flat'): 'svg' | 'webp' {
+  return style === 'flat' ? 'svg' : 'webp';
 }
 
-export interface CategoryIconEmoji {
-  kind: 'emoji';
-  char: string;
-}
-
-export interface CategoryIconImage {
-  kind: 'image';
-  ref: string;
-}
-
-export type AnyCategoryIcon = CategoryIconFluent | CategoryIconEmoji | CategoryIconImage;
-
-export function charToCodepoint(char: string): string {
-  return Array.from(char)
-    .map((c) => c.codePointAt(0)?.toString(16) ?? '')
-    .filter(Boolean)
-    .join('-')
-    .toLowerCase();
+/**
+ * Returns path to an icon. Compatible with legacy iconPath(key).
+ */
+export function iconPath(icon: IconKey | CategoryIcon, style?: CategoryIconStyle): string {
+  if (typeof icon === 'string') {
+    const s = style ?? 'flat';
+    return `/icons/fluent/${s}/${icon}.${iconExtension(s)}`;
+  }
+  if (icon.kind === 'fluent') {
+    const s = style ?? icon.style ?? 'flat';
+    return `/icons/fluent/${s}/${icon.key}.${iconExtension(s)}`;
+  }
+  if (icon.kind === 'image') {
+    return icon.ref;
+  }
+  return '';
 }
 
 /**
  * Resolves the URL for an icon. Returns a relative URL path or null (e.g. for custom images handled by ImageLoader).
  */
 export function categoryIconUrl(
-  icon: AnyCategoryIcon | IconKey | string | null | undefined,
-  style?: 'flat' | 'color' | '3d',
+  icon: CategoryIcon | IconKey | null | undefined,
+  style?: CategoryIconStyle,
   baseUrl = '',
 ): string | null {
   if (!icon) return null;
@@ -249,19 +251,12 @@ export function categoryIconUrl(
 
   if (typeof icon === 'string') {
     const s = style ?? 'flat';
-    const ext = s === '3d' ? 'webp' : 'svg';
-    return `${base}/icons/fluent/${s}/${icon}.${ext}`;
+    return `${base}/icons/fluent/${s}/${icon}.${iconExtension(s)}`;
   }
 
   if (icon.kind === 'fluent') {
     const s = style ?? icon.style ?? 'flat';
-    const ext = s === '3d' ? 'webp' : 'svg';
-    return `${base}/icons/fluent/${s}/${icon.key}.${ext}`;
-  }
-
-  if (icon.kind === 'emoji') {
-    const cp = charToCodepoint(icon.char);
-    return `${base}/icons/fluent/all/${cp}.svg`;
+    return `${base}/icons/fluent/${s}/${icon.key}.${iconExtension(s)}`;
   }
 
   if (icon.kind === 'image') {
@@ -276,28 +271,4 @@ export function categoryIconUrl(
   }
 
   return null;
-}
-
-/**
- * Returns path to icon. Compatible with legacy iconPath(key).
- */
-export function iconPath(
-  icon: IconKey | AnyCategoryIcon | string,
-  style?: 'flat' | 'color' | '3d',
-): string {
-  if (typeof icon === 'string') {
-    return `/icons/fluent/${icon}.svg`;
-  }
-  if (icon.kind === 'fluent') {
-    const s = style ?? icon.style ?? 'flat';
-    const ext = s === '3d' ? 'webp' : 'svg';
-    return `/icons/fluent/${s}/${icon.key}.${ext}`;
-  }
-  if (icon.kind === 'emoji') {
-    return `/icons/fluent/all/${charToCodepoint(icon.char)}.svg`;
-  }
-  if (icon.kind === 'image') {
-    return icon.ref;
-  }
-  return '';
 }

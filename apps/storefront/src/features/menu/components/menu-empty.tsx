@@ -1,6 +1,7 @@
-import { artPath, iconPath, words, type MenuSection } from '@smartapp/core';
+import { artPath, words, type MenuSection } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
+import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 
 export interface MenuSearchEmptyProps {
   query: string;
@@ -34,20 +35,12 @@ export function MenuSearchEmpty({ query, sections, onClear, onPick }: MenuSearch
                 className="h-11 gap-2 rounded-full bg-card px-4"
                 onClick={() => onPick(category.id)}
               >
-                {typeof category.icon === 'object' && category.icon.kind === 'emoji' ? (
-                  <span aria-hidden="true" className="text-base leading-none select-none">
-                    {category.icon.char}
-                  </span>
-                ) : (
-                  <img
-                    src={iconPath(category.icon)}
-                    alt=""
-                    width={20}
-                    height={20}
-                    loading="lazy"
-                    className="size-5 object-contain"
-                  />
-                )}
+                <CategoryIcon
+                  icon={category.icon}
+                  size={20}
+                  className="size-5 object-contain"
+                  textClassName="text-base"
+                />
                 {category.name}
               </Button>
             ))}

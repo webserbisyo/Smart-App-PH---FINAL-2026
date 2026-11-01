@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "rootDir": "src",
+    "outDir": "dist/types",
+    "tsBuildInfoFile": "dist/types/components-relaxed.tsbuildinfo",
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": false
+  },
+  "include": [
+    "src/components/reui/emoji-picker.tsx",
+    "src/components/reui/data-grid/data-grid-cell-selection.tsx"
+  ],
+  "exclude": [],
+  "references": [{ "path": "./tsconfig.components.json" }, { "path": "./tsconfig.lib.json" }]
+}

@@ -16,5 +16,9 @@
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["src/components", "src/lib", "src/hooks"],
-  "references": [{ "path": "./tsconfig.lib.json" }, { "path": "./tsconfig.components.json" }]
+  "references": [
+    { "path": "./tsconfig.lib.json" },
+    { "path": "./tsconfig.components.json" },
+    { "path": "./tsconfig.components-relaxed.json" }
+  ]
 }

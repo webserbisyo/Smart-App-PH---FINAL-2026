@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { cn } from 'cn';
-import { iconPath, type IconKey, type CategoryIcon } from '@smartapp/core';
+import type { IconKey, CategoryIcon as CategoryIconType } from '@smartapp/core/icons';
 import type { ImageSources } from '@smartapp/core/media';
 import { AspectRatio } from '@smartapp/ui/components/aspect-ratio';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
+import { CategoryIcon } from './category-icon';
 
 export const SHOP_IMAGE_RATIOS = {
   '1:1': 1,
@@ -21,7 +22,7 @@ export interface ShopImageProps {
   alt: string;
   ratio: ShopImageRatio;
   // Fluent icon shown on the shop-coloured tile when there is no photo.
-  fallbackIcon?: IconKey | CategoryIcon | undefined;
+  fallbackIcon?: IconKey | CategoryIconType | undefined;
   // Initials of this text are shown when there is no icon either.
   fallbackText?: string | undefined;
   sizes: string;
@@ -98,22 +99,13 @@ export function ShopImage({
         )}
       >
         {fallbackIcon ? (
-          typeof fallbackIcon === 'object' && fallbackIcon.kind === 'emoji' ? (
-            <span aria-hidden="true" className="text-2xl font-semibold tracking-wide select-none">
-              {fallbackIcon.char}
-            </span>
-          ) : (
-            <img
-              src={`${assetOrigin.replace(/\/+$/, '')}${iconPath(fallbackIcon)}`}
-              alt=""
-              aria-hidden="true"
-              width={64}
-              height={64}
-              loading="lazy"
-              decoding="async"
-              className="size-1/3 max-h-16 min-h-6 max-w-16 min-w-6 object-contain"
-            />
-          )
+          <CategoryIcon
+            icon={fallbackIcon}
+            size={64}
+            assetOrigin={assetOrigin}
+            className="size-1/3 max-h-16 min-h-6 max-w-16 min-w-6 object-contain"
+            textClassName="text-2xl font-semibold tracking-wide"
+          />
         ) : text ? (
           <span aria-hidden="true" className="text-2xl font-semibold tracking-wide">
             {text}

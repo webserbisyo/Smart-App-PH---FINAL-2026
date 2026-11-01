@@ -59,18 +59,35 @@ export default tseslint.config(
   // Installed shadcn components in packages/ui (after React Hooks so it wins; decision T27)
   {
     files: ['packages/ui/src/components/**'],
-    linterOptions: {
-      reportUnusedDisableDirectives: 'off',
-    },
     rules: {
       '@typescript-eslint/consistent-type-assertions': 'off',
-      '@typescript-eslint/no-unused-vars': 'off',
       'react-hooks/refs': 'off',
       'react-hooks/set-state-in-effect': 'off',
       // DiceUI Cropper (founder, 2026-10-26)
       'react-hooks/immutability': 'off',
       'react-hooks/preserve-manual-memoization': 'off',
       'no-useless-assignment': 'off',
+    },
+  },
+  // Scope reportUnusedDisableDirectives: off to only installed files with unused directives (decision T39)
+  {
+    files: [
+      'packages/ui/src/components/reui/data-grid/data-grid-table.tsx',
+      'packages/ui/src/components/reui/data-grid/data-grid-table-virtual.tsx',
+    ],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
+  },
+  // Scope @typescript-eslint/no-unused-vars: off to only installed files with unused vars (decision T39)
+  {
+    files: [
+      'packages/ui/src/components/reui/data-grid/data-grid-table.tsx',
+      'packages/ui/src/components/reui/data-grid/data-grid-table-dnd.tsx',
+      'packages/ui/src/components/reui/emoji-picker.tsx',
+    ],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
   // Storefront Next.js plugin

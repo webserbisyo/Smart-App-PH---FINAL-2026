@@ -1,10 +1,9 @@
 import { z } from 'zod';
-import { IconKeyEnum } from '../icons.js';
+import { IconKeyEnum, CategoryIconStyleEnum, type CategoryIconStyle } from '../icons.js';
 import { CentavosSchema, IdSchema, IsoDateTimeSchema, MediaRefSchema } from './common.js';
 import { AvailabilityEnum, ItemStatusEnum, SortKindEnum } from './enums.js';
 
-export const CategoryIconStyleEnum = z.enum(['flat', 'color', '3d']);
-export type CategoryIconStyle = z.infer<typeof CategoryIconStyleEnum>;
+export { CategoryIconStyleEnum, type CategoryIconStyle };
 
 export const CategoryIconSchema = z.discriminatedUnion('kind', [
   z.object({

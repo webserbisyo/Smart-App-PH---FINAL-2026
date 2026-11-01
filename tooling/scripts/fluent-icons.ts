@@ -11,7 +11,6 @@ const TARGET_DIR = path.join(projectRoot, 'apps/storefront/public/icons/fluent')
 const FLAT_DIR = path.join(TARGET_DIR, 'flat');
 const COLOR_DIR = path.join(TARGET_DIR, 'color');
 const THREE_D_DIR = path.join(TARGET_DIR, '3d');
-const ALL_DIR = path.join(TARGET_DIR, 'all');
 
 // 200 curated keys mapping to Fluent Emoji folders in microsoft/fluentui-emoji
 export const ICON_MAPPING: Record<string, string> = {
@@ -164,7 +163,7 @@ export const ICON_MAPPING: Record<string, string> = {
   mobile_phone: 'Mobile phone',
   fork_knife: 'Fork and knife',
   spoon: 'Spoon',
-  kitchen_knife: 'Kitchen knife',
+  knife: 'Kitchen knife',
   salt: 'Salt',
   takeout_box: 'Takeout box',
   fortune_cookie: 'Fortune cookie',
@@ -253,7 +252,6 @@ async function downloadFluentIcons() {
   fs.mkdirSync(FLAT_DIR, { recursive: true });
   fs.mkdirSync(COLOR_DIR, { recursive: true });
   fs.mkdirSync(THREE_D_DIR, { recursive: true });
-  fs.mkdirSync(ALL_DIR, { recursive: true });
 
   const rawBase = 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main';
 
@@ -271,60 +269,44 @@ async function downloadFluentIcons() {
 
   await runWithLimit(entries, 12, async ([key, folder]) => {
     const flatDest = path.join(FLAT_DIR, `${key}.svg`);
-    const legacyDest = path.join(TARGET_DIR, `${key}.svg`);
-    const colorDest = path.join(COLOR_DIR, `${key}.svg`);
+    const colorDest = path.join(COLOR_DIR, `${key}.webp`);
     const threeDDest = path.join(THREE_D_DIR, `${key}.webp`);
-
-    // Metadata for codepoint
-    let unicode = '';
-    const metaUrl = `${rawBase}/assets/${encodeURIComponent(folder)}/metadata.json`;
-    try {
-      const metaRes = await fetch(metaUrl);
-      if (metaRes.ok) {
-        const data: unknown = await metaRes.json();
-        if (
-          typeof data === 'object' &&
-          data !== null &&
-          'unicode' in data &&
-          typeof data.unicode === 'string'
-        ) {
-          unicode = data.unicode;
-        }
-      }
-    } catch {
-      // ignore
-    }
+    const oldColorSvg = path.join(COLOR_DIR, `${key}.svg`);
 
     // 1. Flat SVG
-    if (!fs.existsSync(flatDest) || !fs.existsSync(legacyDest)) {
+    if (!fs.existsSync(flatDest)) {
       const relPath = getAssetPath(folder, 'Flat', 'svg');
       const url = `${rawBase}/${encodeURI(relPath)}`;
       const res = await fetch(url);
       if (res.ok) {
         const text = await res.text();
         fs.writeFileSync(flatDest, text, 'utf8');
-        fs.writeFileSync(legacyDest, text, 'utf8');
-        if (unicode) {
-          const codepointDest = path.join(ALL_DIR, `${unicode}.svg`);
-          fs.writeFileSync(codepointDest, text, 'utf8');
-        }
-      }
-    } else if (unicode) {
-      const codepointDest = path.join(ALL_DIR, `${unicode}.svg`);
-      if (!fs.existsSync(codepointDest)) {
-        fs.copyFileSync(flatDest, codepointDest);
       }
     }
 
-    // 2. Color SVG
+    // 2. Color WebP (128x128)
     if (!fs.existsSync(colorDest)) {
-      const relPath = getAssetPath(folder, 'Color', 'svg');
-      const url = `${rawBase}/${encodeURI(relPath)}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const text = await res.text();
-        fs.writeFileSync(colorDest, text, 'utf8');
+      if (fs.existsSync(oldColorSvg)) {
+        const buf = fs.readFileSync(oldColorSvg);
+        await sharp(buf)
+          .resize(128, 128, { fit: 'contain' })
+          .webp({ quality: 82 })
+          .toFile(colorDest);
+        fs.unlinkSync(oldColorSvg);
+      } else {
+        const relPath = getAssetPath(folder, 'Color', 'svg');
+        const url = `${rawBase}/${encodeURI(relPath)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const buf = Buffer.from(await res.arrayBuffer());
+          await sharp(buf)
+            .resize(128, 128, { fit: 'contain' })
+            .webp({ quality: 82 })
+            .toFile(colorDest);
+        }
       }
+    } else if (fs.existsSync(oldColorSvg)) {
+      fs.unlinkSync(oldColorSvg);
     }
 
     // 3. 3D WebP (128x128)

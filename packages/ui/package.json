@@ -15,7 +15,7 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "build": "tsc -b tsconfig.components.json",
+    "build": "tsc -b tsconfig.components.json tsconfig.components-relaxed.json",
     "typecheck": "tsc -b",
     "test": "vitest run"
   },
