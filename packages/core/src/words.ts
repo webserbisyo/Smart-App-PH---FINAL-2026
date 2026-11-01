@@ -1383,4 +1383,7 @@ export const catalogWords = {
   selectIconAria: (key: string) => `Select ${key} icon`,
   clearSelection: 'Clear selection',
   categoryGeneral: 'General',
+  categorySheetDesc: 'Group your items so customers find them fast.',
+  groupSheetDesc: 'Make choices like size or extras once, then use them on any item.',
+  fluentIconLabel: (key: string, style: string) => `${key.replaceAll('_', ' ')} · ${style}`,
 } as const;

@@ -114,6 +114,7 @@ export function ItemsTable({
       // 2. Photo
       {
         id: 'photo',
+        meta: { headerTitle: catalogWords.colPhoto },
         header: () => <span className="text-xs font-semibold">{catalogWords.colPhoto}</span>,
         cell: ({ row }) => (
           <div className="flex items-center py-1">
@@ -131,6 +132,7 @@ export function ItemsTable({
       // 3. Name
       {
         id: 'name',
+        meta: { headerTitle: catalogWords.colName },
         accessorKey: 'name',
         header: ({ column }) => (
           <DataGridColumnHeader column={column} title={catalogWords.colName} />
@@ -158,6 +160,7 @@ export function ItemsTable({
       // 4. Category
       {
         id: 'category',
+        meta: { headerTitle: catalogWords.colCategory },
         accessorFn: (row) => categoryMap.get(row.categoryId)?.name ?? catalogWords.categoryGeneral,
         header: ({ column }) => (
           <DataGridColumnHeader column={column} title={catalogWords.colCategory} />
@@ -175,6 +178,7 @@ export function ItemsTable({
       // 5. Price
       {
         id: 'price',
+        meta: { headerTitle: catalogWords.colPrice },
         accessorFn: (row) => row.variants[0]?.price ?? 0,
         header: ({ column }) => (
           <div className="flex w-full justify-end">
@@ -193,6 +197,7 @@ export function ItemsTable({
       // 6. Add-ons
       {
         id: 'addOns',
+        meta: { headerTitle: catalogWords.colAddOns },
         header: () => <span className="text-xs font-semibold">{catalogWords.colAddOns}</span>,
         cell: ({ row }) => {
           const itemGroups = optionGroups.filter((g) => row.original.optionGroupIds.includes(g.id));
@@ -228,6 +233,7 @@ export function ItemsTable({
       // 7. Visible switch
       {
         id: 'visible',
+        meta: { headerTitle: catalogWords.colVisible },
         header: () => <span className="text-xs font-semibold">{catalogWords.colVisible}</span>,
         cell: ({ row }) => {
           const item = row.original;
@@ -251,6 +257,7 @@ export function ItemsTable({
       // 8. Sold out switch
       {
         id: 'soldOut',
+        meta: { headerTitle: catalogWords.colSoldOut },
         header: () => <span className="text-xs font-semibold">{catalogWords.colSoldOut}</span>,
         cell: ({ row }) => {
           const item = row.original;
@@ -274,6 +281,7 @@ export function ItemsTable({
       // 9. Actions
       {
         id: 'actions',
+        meta: { headerTitle: catalogWords.colActions },
         header: () => <span className="text-xs font-semibold">{catalogWords.colActions}</span>,
         cell: ({ row }) => (
           <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
@@ -332,23 +340,7 @@ export function ItemsTable({
   const itemIds = React.useMemo(() => items.map((i) => i.id), [items]);
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border/80 bg-card p-3 shadow-xs">
-      {/* Table toolbar */}
-      <div className="flex items-center justify-between pb-1">
-        <span className="text-xs text-muted-foreground">
-          {catalogWords.itemCount(items.length)}
-        </span>
-        <DataGridColumnVisibility
-          table={table}
-          trigger={
-            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-medium">
-              <Columns3Icon className="size-3.5" />
-              <span>{catalogWords.columnsToggle}</span>
-            </Button>
-          }
-        />
-      </div>
-
+    <div className="flex min-w-0 flex-col gap-2 rounded-xl border border-border/80 bg-card p-3 shadow-xs">
       {/* ReUI Data Grid with DnD rows */}
       <DataGrid
         table={table}
@@ -363,7 +355,26 @@ export function ItemsTable({
             'h-14 transition-colors hover:bg-muted/40 data-[state=selected]:bg-primary/5 cursor-default',
         }}
       >
-        <DataGridTableDndRows handleDragEnd={handleDragEnd} dataIds={itemIds} />
+        {/* Table toolbar: inside DataGrid, because the column menu reads its context */}
+        <div className="flex items-center justify-between pb-1">
+          <span className="text-xs text-muted-foreground">
+            {catalogWords.itemCount(items.length)}
+          </span>
+          <DataGridColumnVisibility
+            table={table}
+            trigger={
+              <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-medium">
+                <Columns3Icon className="size-3.5" />
+                <span>{catalogWords.columnsToggle}</span>
+              </Button>
+            }
+          />
+        </div>
+
+        {/* Wide tables scroll inside the card, never the page */}
+        <div className="w-full overflow-x-auto">
+          <DataGridTableDndRows handleDragEnd={handleDragEnd} dataIds={itemIds} />
+        </div>
       </DataGrid>
     </div>
   );

@@ -22,7 +22,7 @@ import {
   CropperImage,
   type CropperAreaData,
 } from '@smartapp/ui/components/cropper';
-import { EmojiPicker } from '@smartapp/ui/components/reui/emoji-picker';
+import { EmojiPicker, EmojiPickerPanel } from '@smartapp/ui/components/reui/emoji-picker';
 import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
@@ -269,7 +269,9 @@ export function CategoryIconDialog({
                   onSelect({ kind: 'emoji', char: selection.value });
                   onOpenChange(false);
                 }}
-              />
+              >
+                <EmojiPickerPanel className="w-full" />
+              </EmojiPicker>
             </div>
           </TabsContent>
 

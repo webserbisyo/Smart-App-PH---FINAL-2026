@@ -119,10 +119,10 @@ function CategorySheetForm({
       <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{category ? catalogWords.editCategory : catalogWords.addCategory}</SheetTitle>
-          <SheetDescription>Organize your items into customer-facing categories.</SheetDescription>
+          <SheetDescription>{catalogWords.categorySheetDesc}</SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSave} className="mt-6 flex flex-1 flex-col justify-between space-y-6">
+        <form onSubmit={handleSave} className="flex flex-1 flex-col justify-between space-y-6 px-4">
           <div className="space-y-5">
             {errorMsg && (
               <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
@@ -161,7 +161,14 @@ function CategorySheetForm({
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                   <span className="truncate text-xs font-semibold text-foreground">
                     {selectedIcon.kind === 'fluent'
-                      ? `${selectedIcon.key} (${selectedIcon.style})`
+                      ? catalogWords.fluentIconLabel(
+                          selectedIcon.key,
+                          {
+                            flat: catalogWords.styleFlat,
+                            color: catalogWords.styleColor,
+                            '3d': catalogWords.style3d,
+                          }[selectedIcon.style],
+                        )
                       : selectedIcon.kind === 'emoji'
                         ? catalogWords.emojiLabel(selectedIcon.char)
                         : catalogWords.customImage}
@@ -180,7 +187,7 @@ function CategorySheetForm({
             </div>
           </div>
 
-          <SheetFooter className="flex flex-row items-center justify-between gap-2 border-t border-border pt-4">
+          <SheetFooter className="-mx-4 flex flex-row items-center justify-between gap-2 border-t border-border pt-4">
             {category ? (
               <Button
                 type="button"

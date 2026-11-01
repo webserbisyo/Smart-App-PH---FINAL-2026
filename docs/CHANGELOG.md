@@ -2,7 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
-- 2026-11-01 T15b menu page part 2: grid and table views, bulk action bar with undo, category icons (Flat, Color, 3D WebP, local emoji picker, and custom image crop)
+- 2026-11-01 T15b menu page part 2: grid and table views, bulk action bar with undo, category icons (Flat, Color, 3D WebP, local emoji picker, and custom image crop); review fixes: table crash, menu photo sizes, sheet padding, inline emoji panel (#24, pushed to main)
 - 2026-11-01 T15a menu page part 1: items list, categories, add-on groups, and item editor with photo upload and variant matrix (#23)
 - 2026-11-01 CI fix: security overrides for qs 6.16.1 and seroval 1.6.11 so `pnpm audit --prod` passes again (decision T38)
 - 2026-11-01 T35 brand, part 2: favicon.ico (flat blue at 16 and 32 px) and PWA-ready icons, navy-tinted elevation and dashboard motion tokens, ease-enter/exit and celebrate tokens, dashboard UX rules (ux.md section 7), frosted dock with the accent pill

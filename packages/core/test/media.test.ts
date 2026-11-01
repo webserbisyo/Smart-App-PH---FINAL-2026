@@ -3,6 +3,18 @@ import { imageUrl, imageSources } from '../src/media.js';
 
 describe('Media Helpers', () => {
   describe('imageUrl', () => {
+    it('snaps a width to a saved size, so the file exists', () => {
+      expect(imageUrl('demo:kanto-smash/items/classic-smash', 128)).toBe(
+        '/demo/kanto-smash/items/classic-smash-320.webp',
+      );
+      expect(imageUrl('demo:kanto-smash/items/classic-smash', 512)).toBe(
+        '/demo/kanto-smash/items/classic-smash-640.webp',
+      );
+      expect(imageUrl('demo:kanto-smash/items/classic-smash', 2000)).toBe(
+        '/demo/kanto-smash/items/classic-smash-640.webp',
+      );
+    });
+
     it('returns storefront-relative URL for an item without origin', () => {
       const url = imageUrl('demo:kanto-smash/items/classic-smash', 640);
       expect(url).toBe('/demo/kanto-smash/items/classic-smash-640.webp');
