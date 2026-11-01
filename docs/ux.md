@@ -83,4 +83,5 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - Money and counts use `tabular` and right-align in tables; weights 400 body, 500 labels, 600 headings, 700 only for numbers.
 - The logo gradient (`brand-gradient`) only on the logo, the login band, the loyalty strip and the reward moment; never behind text, on buttons or as gradient text.
 - Depth with `elevation-*`, at most two levels on screen; motion with `ease-enter` / `ease-exit` and the duration tokens, transform and opacity only; one 500 ms celebration (`duration-celebrate`) when a stamp card fills.
+- The stamp card is the one tactile part (decision T36): 2 px border, dashed empty slots, solid mint filled slots with a navy icon, a pop when a stamp fills.
 - No glass panels: blur only on the top bar and dock (`frost`). No animated backgrounds, count-up money or looping effects in the dashboard.
