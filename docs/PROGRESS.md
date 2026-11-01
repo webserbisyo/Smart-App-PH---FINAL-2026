@@ -37,6 +37,8 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 
 ## Phase 3: Dashboard screens (mock)
 
+- [x] T15a Menu page part 1: items list, add-ons, categories, and item editor
+
 ## Phase 4: Backend, area by area
 
 - [ ] Members area: customer account, picture and saved places in the database (today mock data and this phone only, decision R22)

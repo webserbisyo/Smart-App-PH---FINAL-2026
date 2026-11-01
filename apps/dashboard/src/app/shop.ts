@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import { DEMO_SHOPS, words, type ShopKind } from '@smartapp/core';
-import type { UserClaims } from '@smartapp/data';
+import { setMockOwnerSlug, type UserClaims } from '@smartapp/data';
 
 export interface CurrentShop {
   slug: string;
@@ -21,8 +21,12 @@ function makeInitials(name: string): string {
 export function resolveShop(claims: UserClaims): CurrentShop {
   const found = DEMO_SHOPS.find((shop) => shop.slug === claims.demoShop);
   const name = found?.name ?? words.shell.myShop;
+  const slug = found?.slug ?? '';
+  if (slug) {
+    setMockOwnerSlug(slug);
+  }
   return {
-    slug: found?.slug ?? '',
+    slug,
     name,
     kind: found?.kind ?? 'food',
     initials: makeInitials(name),

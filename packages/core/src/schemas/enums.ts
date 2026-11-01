@@ -155,3 +155,11 @@ export const WeekdaySchema = z.union([
   z.literal(6),
 ]);
 export type Weekday = z.infer<typeof WeekdaySchema>;
+
+export const SORT_KINDS = ['category', 'item', 'option'] as const;
+export const SortKindEnum = z.enum(SORT_KINDS);
+export type SortKind = z.infer<typeof SortKindEnum>;
+
+export const UPLOAD_KINDS = ['logo', 'banner', 'item', 'category', 'qr'] as const;
+export const UploadKindEnum = z.enum(UPLOAD_KINDS);
+export type UploadKind = z.infer<typeof UploadKindEnum>;

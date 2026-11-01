@@ -159,3 +159,12 @@ export function canQuickAdd(
 export function variantLabel(variant: Pick<Variant, 'values'>): string | null {
   return variant.values.length ? variant.values.join(' · ') : null;
 }
+
+/** Wording for add-on rule: "Pick 1, required", "Pick up to 3", etc. */
+export function groupRuleLabel(min: number, max: number): string {
+  if (min === 1 && max === 1) return 'Pick 1, required';
+  if (min === 0 && max === 1) return 'Pick 1, optional';
+  if (min === 0) return `Pick up to ${max}`;
+  if (min === max) return `Pick exactly ${min}`;
+  return `Pick ${min} to ${max}`;
+}

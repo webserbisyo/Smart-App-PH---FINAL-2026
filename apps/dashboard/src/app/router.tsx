@@ -34,6 +34,7 @@ import { PlanSettingsScreen } from '../features/settings/screens/plan.js';
 import { SettingsIndexScreen } from '../features/settings/screens/settings-index.js';
 import { SettingsLayout } from '../features/settings/screens/settings-layout.js';
 import { ShopSettingsScreen } from '../features/settings/screens/shop.js';
+import { setMockOwnerSlug } from '@smartapp/data';
 import { requireAuth, requireGuest, signOut } from './guards.js';
 import type { PageMeta } from './page-meta.js';
 import { AppShell } from './shell/app-shell.js';
@@ -85,7 +86,11 @@ const shellRoute = createRoute({
   id: 'shell',
   beforeLoad: async () => {
     const claims = await requireAuth();
-    return { claims, shop: resolveShop(claims) };
+    const shop = resolveShop(claims);
+    if (shop.slug) {
+      setMockOwnerSlug(shop.slug);
+    }
+    return { claims, shop };
   },
   component: ShellLayout,
 });

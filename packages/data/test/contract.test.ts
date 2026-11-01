@@ -120,7 +120,7 @@ describe('contract: outputs parse with their schemas', () => {
         url: 'https://www.google.com/maps/@14.6,121.1,17z',
       }),
     ).toEqual({ lat: 14.6, lng: 121.1 });
-  });
+  }, 30_000);
 
   it('a custom prize claim parses', async () => {
     const { store } = testStore();

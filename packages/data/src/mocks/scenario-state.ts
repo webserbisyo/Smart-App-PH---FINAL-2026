@@ -6,7 +6,7 @@ import { IsoDateTimeSchema } from '@smartapp/core';
 // Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
 declare const process: { env: { NODE_ENV?: string | undefined } };
 
-export const MOCK_AREAS = ['storefront', 'orders', 'account', 'auth', 'all'] as const;
+export const MOCK_AREAS = ['storefront', 'orders', 'account', 'auth', 'catalog', 'all'] as const;
 export const DEMO_CUSTOMER_STATES = [
   'guest',
   'member',

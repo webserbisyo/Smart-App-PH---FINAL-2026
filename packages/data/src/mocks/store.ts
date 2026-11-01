@@ -34,6 +34,15 @@ import {
   SHOP_PACKS,
   TEST_SHOP_PACKS,
   words,
+  CategoryDraftSchema,
+  CategorySchema,
+  ItemDraftSchema,
+  OptionGroupDraftSchema,
+  OwnerItemSchema,
+  OwnerOptionGroupSchema,
+  SortOrderInputSchema,
+  UploadKindEnum,
+  UploadResultSchema,
   type ErrorCode,
   type MemberAccount,
   type OrderPayload,
@@ -43,6 +52,7 @@ import {
   type ShopPack,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
+import { getAuthClient, getClaims } from '../auth';
 import type { DataAdapters } from '../adapters/types';
 import {
   DEMO_CUSTOMER,
@@ -161,6 +171,26 @@ export type MockStore = DataAdapters & {
   /** For tests and the dev panel: the raw state of one shop. */
   inspect(slug: string): ShopState | null;
 };
+
+let activeMockOwnerSlug: string | null = null;
+
+export function setMockOwnerSlug(slug: string | null): void {
+  activeMockOwnerSlug = slug;
+}
+
+async function resolveOwnerShopSlug(): Promise<string> {
+  if (activeMockOwnerSlug) return activeMockOwnerSlug;
+  const client = getAuthClient();
+  if (client) {
+    try {
+      const claims = await getClaims(client);
+      if (claims?.demoShop) return claims.demoShop;
+    } catch {
+      // ignore
+    }
+  }
+  return 'kanto-smash';
+}
 
 export function createMockStore(options: MockStoreOptions = {}): MockStore {
   const seed = options.seed ?? 20261025;
@@ -411,7 +441,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
   }
 
   async function run<T>(
-    area: 'storefront' | 'orders' | 'account' | 'auth',
+    area: 'storefront' | 'orders' | 'account' | 'auth' | 'catalog',
     fn: () => T,
   ): Promise<T> {
     const sc = scenario();
@@ -1146,11 +1176,266 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       }),
   };
 
+  const ownerCatalog: DataAdapters['ownerCatalog'] = {
+    listCategories: async () => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        return s.shop.catalog.categories
+          .map((c) => CategorySchema.parse(c))
+          .sort((a, b) => a.sort - b.sort);
+      });
+    },
+
+    saveCategory: async (input) => {
+      const slug = await resolveOwnerShopSlug();
+      const draft = CategoryDraftSchema.parse(input);
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        if (draft.id) {
+          const existing = s.shop.catalog.categories.find((c) => c.id === draft.id);
+          if (!existing) fail('not_found', 404);
+          existing.name = draft.name;
+          existing.icon = draft.icon;
+          return CategorySchema.parse(existing);
+        }
+        const maxSort = s.shop.catalog.categories.reduce((m, c) => Math.max(m, c.sort), -1);
+        const newCat = {
+          id: `cat_${Math.random().toString(36).slice(2, 9)}`,
+          name: draft.name,
+          icon: draft.icon,
+          sort: maxSort + 1,
+        };
+        s.shop.catalog.categories.push(newCat);
+        return CategorySchema.parse(newCat);
+      });
+    },
+
+    removeCategory: async ({ id }) => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        const hasItems = s.shop.catalog.items.some((i) => i.categoryId === id);
+        if (hasItems) {
+          fail('category_not_empty', 400);
+        }
+        s.shop.catalog.categories = s.shop.catalog.categories.filter((c) => c.id !== id);
+      });
+    },
+
+    listItems: async () => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        return s.shop.catalog.items.map((item) => {
+          const hasOrders = s.orders.some((o) => o.receipt.lines.some((l) => l.itemId === item.id));
+          return OwnerItemSchema.parse({ ...item, hasOrders });
+        });
+      });
+    },
+
+    saveItem: async ({ id, draft }) => {
+      const slug = await resolveOwnerShopSlug();
+      const parsed = ItemDraftSchema.parse(draft);
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        if (id) {
+          const existing = s.shop.catalog.items.find((i) => i.id === id);
+          if (!existing) fail('not_found', 404);
+          const hasOrders = s.orders.some((o) => o.receipt.lines.some((l) => l.itemId === id));
+          existing.name = parsed.name;
+          existing.description = parsed.description;
+          existing.categoryId = parsed.categoryId;
+          existing.photos = parsed.photos;
+          existing.axes = parsed.axes;
+          existing.variants = parsed.variants;
+          existing.optionGroupIds = parsed.optionGroupIds;
+          existing.pairingIds = parsed.pairingIds;
+          existing.featured = parsed.featured;
+          existing.isNew = parsed.isNew;
+          existing.status = parsed.status;
+          return OwnerItemSchema.parse({ ...existing, hasOrders });
+        }
+        const newItemId = `item_${Math.random().toString(36).slice(2, 9)}`;
+        const variants = parsed.variants.map((v, i) => ({
+          ...v,
+          id: v.id ? v.id : `${newItemId}_var_${i + 1}`,
+        }));
+        const newItem = {
+          id: newItemId,
+          categoryId: parsed.categoryId,
+          name: parsed.name,
+          description: parsed.description,
+          photos: parsed.photos,
+          axes: parsed.axes,
+          variants,
+          optionGroupIds: parsed.optionGroupIds,
+          pairingIds: parsed.pairingIds,
+          featured: parsed.featured,
+          isNew: parsed.isNew,
+          status: parsed.status,
+          sample: false,
+        };
+        s.shop.catalog.items.push(newItem);
+        return OwnerItemSchema.parse({ ...newItem, hasOrders: false });
+      });
+    },
+
+    removeItem: async ({ id }) => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        const item = s.shop.catalog.items.find((i) => i.id === id);
+        if (!item) fail('not_found', 404);
+        const hasOrders = s.orders.some((o) => o.receipt.lines.some((l) => l.itemId === id));
+        if (hasOrders) {
+          fail('item_has_orders', 400);
+        }
+        s.shop.catalog.items = s.shop.catalog.items.filter((i) => i.id !== id);
+      });
+    },
+
+    setItemStatus: async ({ id, status }) => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        const item = s.shop.catalog.items.find((i) => i.id === id);
+        if (!item) fail('not_found', 404);
+        const hasOrders = s.orders.some((o) => o.receipt.lines.some((l) => l.itemId === id));
+        item.status = status;
+        return OwnerItemSchema.parse({ ...item, hasOrders });
+      });
+    },
+
+    setSoldOut: async ({ variantId, availability, soldOutUntil }) => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        const item = s.shop.catalog.items.find((i) => i.variants.some((v) => v.id === variantId));
+        if (!item) fail('not_found', 404);
+        const variant = item.variants.find((v) => v.id === variantId);
+        if (!variant) fail('not_found', 404);
+        variant.availability = availability;
+        variant.soldOutUntil =
+          soldOutUntil ??
+          (availability === 'sold_out_today' ? nextOpening(s.shop.storefront, now()) : null);
+        const hasOrders = s.orders.some((o) => o.receipt.lines.some((l) => l.itemId === item.id));
+        return OwnerItemSchema.parse({ ...item, hasOrders });
+      });
+    },
+
+    listOptionGroups: async () => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        return s.shop.catalog.optionGroups.map((group) => {
+          const usedBy = s.shop.catalog.items.filter((i) =>
+            i.optionGroupIds.includes(group.id),
+          ).length;
+          return OwnerOptionGroupSchema.parse({ ...group, usedBy });
+        });
+      });
+    },
+
+    saveOptionGroup: async (input) => {
+      const slug = await resolveOwnerShopSlug();
+      const parsed = OptionGroupDraftSchema.parse(input);
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        const options = parsed.options.map((opt, i) => ({
+          ...opt,
+          id: opt.id ?? `opt_${Math.random().toString(36).slice(2, 9)}_${i}`,
+        }));
+        if (parsed.id) {
+          const existing = s.shop.catalog.optionGroups.find((g) => g.id === parsed.id);
+          if (!existing) fail('not_found', 404);
+          existing.name = parsed.name;
+          existing.min = parsed.min;
+          existing.max = parsed.max;
+          existing.options = options;
+          const usedBy = s.shop.catalog.items.filter((i) =>
+            i.optionGroupIds.includes(parsed.id!),
+          ).length;
+          return OwnerOptionGroupSchema.parse({ ...existing, usedBy });
+        }
+        const newGroup = {
+          id: `grp_${Math.random().toString(36).slice(2, 9)}`,
+          name: parsed.name,
+          min: parsed.min,
+          max: parsed.max,
+          options,
+        };
+        s.shop.catalog.optionGroups.push(newGroup);
+        return OwnerOptionGroupSchema.parse({ ...newGroup, usedBy: 0 });
+      });
+    },
+
+    removeOptionGroup: async ({ id }) => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        for (const item of s.shop.catalog.items) {
+          item.optionGroupIds = item.optionGroupIds.filter((gid) => gid !== id);
+        }
+        s.shop.catalog.optionGroups = s.shop.catalog.optionGroups.filter((g) => g.id !== id);
+      });
+    },
+
+    saveSortOrder: async (input) => {
+      const slug = await resolveOwnerShopSlug();
+      const { kind, ids } = SortOrderInputSchema.parse(input);
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        if (kind === 'category') {
+          const catMap = new Map(s.shop.catalog.categories.map((c) => [c.id, c]));
+          const sorted: typeof s.shop.catalog.categories = [];
+          ids.forEach((id, idx) => {
+            const cat = catMap.get(id);
+            if (cat) {
+              cat.sort = idx;
+              sorted.push(cat);
+              catMap.delete(id);
+            }
+          });
+          let curSort = sorted.length;
+          for (const rem of catMap.values()) {
+            rem.sort = curSort++;
+            sorted.push(rem);
+          }
+          s.shop.catalog.categories = sorted;
+        } else if (kind === 'item') {
+          const itemMap = new Map(s.shop.catalog.items.map((i) => [i.id, i]));
+          const sorted: typeof s.shop.catalog.items = [];
+          for (const id of ids) {
+            const item = itemMap.get(id);
+            if (item) {
+              sorted.push(item);
+              itemMap.delete(id);
+            }
+          }
+          for (const rem of itemMap.values()) {
+            sorted.push(rem);
+          }
+          s.shop.catalog.items = sorted;
+        }
+      });
+    },
+
+    createUploadUrl: async ({ kind }) => {
+      UploadKindEnum.parse(kind);
+      return run('catalog', () => {
+        const path = `uploads/${kind}/${Date.now()}-${makeToken(rng).slice(0, 6)}.webp`;
+        return UploadResultSchema.parse({ uploadUrl: `mock://upload/${path}`, path });
+      });
+    },
+  };
+
   return {
     storefront,
     customerAuth,
     ownerOrders,
     ownerSamples,
+    ownerCatalog,
     now,
     reset() {
       state = { shops: new Map(), session: null, codes: {} };

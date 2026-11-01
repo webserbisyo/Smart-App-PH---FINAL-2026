@@ -45,6 +45,9 @@ export const ErrorCode = [
   'stamp_cap_reached',
   'stamp_daily_cap',
   'claim_not_pending',
+  // Catalog (owner)
+  'category_not_empty',
+  'item_has_orders',
 ] as const;
 
 export const ErrorCodeEnum = z.enum(ErrorCode);
