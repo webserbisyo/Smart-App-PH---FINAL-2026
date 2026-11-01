@@ -75,7 +75,7 @@ const LOCAL_STORAGE_VIEW_KEY = 'smartapp:catalog:view';
 
 const FALLBACK_GENERAL_CATEGORY: Category = {
   id: 'uncategorized',
-  name: 'General',
+  name: catalogWords.categoryGeneral,
   sort: 0,
   icon: { kind: 'fluent', key: 'burger', style: 'flat' },
 };
@@ -522,7 +522,10 @@ export function ItemsList() {
       void refetchItems();
       void refetchCats();
     } catch (err: unknown) {
-      console.error(err);
+      notify({
+        title: errorWords(errorCodeOf(err)),
+        tone: 'error',
+      });
     }
   };
 

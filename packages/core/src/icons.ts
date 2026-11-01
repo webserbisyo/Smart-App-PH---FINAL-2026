@@ -232,9 +232,6 @@ export function iconPath(icon: IconKey | CategoryIcon, style?: CategoryIconStyle
     const s = style ?? icon.style ?? 'flat';
     return `/icons/fluent/${s}/${icon.key}.${iconExtension(s)}`;
   }
-  if (icon.kind === 'image') {
-    return icon.ref;
-  }
   return '';
 }
 
@@ -257,17 +254,6 @@ export function categoryIconUrl(
   if (icon.kind === 'fluent') {
     const s = style ?? icon.style ?? 'flat';
     return `${base}/icons/fluent/${s}/${icon.key}.${iconExtension(s)}`;
-  }
-
-  if (icon.kind === 'image') {
-    if (
-      icon.ref.startsWith('http://') ||
-      icon.ref.startsWith('https://') ||
-      icon.ref.startsWith('/')
-    ) {
-      return icon.ref;
-    }
-    return `${base}/${icon.ref.replace(/^\/+/, '')}`;
   }
 
   return null;

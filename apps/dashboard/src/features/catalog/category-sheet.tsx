@@ -1,14 +1,14 @@
 import * as React from 'react';
 import {
-  iconPath,
   catalogWords,
   errorWords,
   IconKeyEnum,
   type Category,
-  type CategoryIcon,
+  type CategoryIcon as CategoryIconType,
 } from '@smartapp/core';
 import { useSaveCategory, useRemoveCategory, errorCodeOf } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
+import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import {
@@ -60,7 +60,7 @@ function CategorySheetForm({
   onClose: () => void;
 }) {
   const [name, setName] = React.useState(category?.name ?? '');
-  const [selectedIcon, setSelectedIcon] = React.useState<CategoryIcon>(() => {
+  const [selectedIcon, setSelectedIcon] = React.useState<CategoryIconType>(() => {
     if (!category?.icon) return { kind: 'fluent', key: 'burger', style: 'flat' };
     if (typeof category.icon === 'string') {
       const parsed = IconKeyEnum.safeParse(category.icon);
@@ -140,7 +140,7 @@ function CategorySheetForm({
                 id="category-name"
                 value={name}
                 maxLength={40}
-                placeholder="e.g. Burgers, Drinks, Desserts"
+                placeholder={catalogWords.categoryNamePlaceholder}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
               />
@@ -151,34 +151,20 @@ function CategorySheetForm({
               <Label>{catalogWords.categoryIconLabel}</Label>
               <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-muted/20 p-3">
                 <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-card shadow-xs">
-                  {selectedIcon.kind === 'emoji' ? (
-                    <span aria-hidden="true" className="text-3xl leading-none select-none">
-                      {selectedIcon.char}
-                    </span>
-                  ) : selectedIcon.kind === 'image' ? (
-                    <img
-                      src={selectedIcon.ref}
-                      alt=""
-                      className="size-full rounded-xl object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={`${env.VITE_STOREFRONT_URL.replace(/\/+$/, '')}${iconPath(
-                        selectedIcon,
-                        selectedIcon.style,
-                      )}`}
-                      alt=""
-                      className="size-8 object-contain"
-                    />
-                  )}
+                  <CategoryIcon
+                    icon={selectedIcon}
+                    size={32}
+                    assetOrigin={env.VITE_STOREFRONT_URL}
+                    className="size-8 object-contain"
+                  />
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                   <span className="truncate text-xs font-semibold text-foreground">
                     {selectedIcon.kind === 'fluent'
                       ? `${selectedIcon.key} (${selectedIcon.style})`
                       : selectedIcon.kind === 'emoji'
-                        ? `Emoji: ${selectedIcon.char}`
-                        : 'Custom image'}
+                        ? catalogWords.emojiLabel(selectedIcon.char)
+                        : catalogWords.customImage}
                   </span>
                   <Button
                     type="button"

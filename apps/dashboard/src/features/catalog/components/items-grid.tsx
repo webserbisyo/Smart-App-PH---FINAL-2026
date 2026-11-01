@@ -148,7 +148,7 @@ export function ItemsGrid({
                 {item.name}
               </span>
               <div className="flex items-center justify-between gap-1 text-xs text-muted-foreground">
-                <span className="truncate">{category?.name ?? 'General'}</span>
+                <span className="truncate">{category?.name ?? catalogWords.categoryGeneral}</span>
                 <span className="text-sm font-bold text-foreground tabular">
                   {itemPriceLabel(item)}
                 </span>

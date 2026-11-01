@@ -5,11 +5,12 @@ import {
   ICON_KEYS,
   iconPath,
   catalogWords,
-  type CategoryIcon,
+  errorWords,
+  type CategoryIcon as CategoryIconType,
   type IconKey,
   type CategoryIconStyle,
 } from '@smartapp/core';
-import { useCreateUploadUrl, compressImage } from '@smartapp/data';
+import { useCreateUploadUrl, compressImage, errorCodeOf } from '@smartapp/data';
 import { env } from '@/app/env';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@smartapp/ui/components/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
@@ -22,13 +23,15 @@ import {
   type CropperAreaData,
 } from '@smartapp/ui/components/cropper';
 import { EmojiPicker } from '@smartapp/ui/components/reui/emoji-picker';
+import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
+import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
 
 export interface CategoryIconDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedIcon?: CategoryIcon | IconKey | null;
-  onSelect: (icon: CategoryIcon) => void;
+  selectedIcon?: CategoryIconType | IconKey | null;
+  onSelect: (icon: CategoryIconType) => void;
 }
 
 const LOCAL_STORAGE_CUSTOM_ICONS = 'smartapp:category:custom-icons';
@@ -61,6 +64,21 @@ export function CategoryIconDialog({
     }
   });
 
+  // Track created object URLs so we can revoke them on unmount
+  const createdUrlsRef = React.useRef<Set<string>>(new Set());
+
+  // Keep session previews of compressed blobs
+  const [sessionPreviews, setSessionPreviews] = React.useState<
+    Map<string, { blob: Blob; url: string }>
+  >(new Map());
+
+  React.useEffect(() => {
+    const urls = createdUrlsRef.current;
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
   const createUpload = useCreateUploadUrl();
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -77,6 +95,7 @@ export function CategoryIconDialog({
     if (!file) return;
     setUploadFile(file);
     const url = URL.createObjectURL(file);
+    createdUrlsRef.current.add(url);
     setPreviewUrl(url);
   };
 
@@ -85,7 +104,7 @@ export function CategoryIconDialog({
     if (!uploadFile) return;
     setIsUploading(true);
     try {
-      await compressImage(uploadFile, {
+      const compressed = await compressImage(uploadFile, {
         maxSide: 128,
         quality: 0.9,
       });
@@ -93,6 +112,16 @@ export function CategoryIconDialog({
       const res = await createUpload.mutateAsync({ kind: 'category' });
       // In mock/test environments, res.path is the media reference
       const iconRef = res.path;
+
+      // Keep the compressed file as an object URL preview for this session
+      const compressedUrl = URL.createObjectURL(compressed);
+      createdUrlsRef.current.add(compressedUrl);
+
+      setSessionPreviews((prev) => {
+        const next = new Map(prev);
+        next.set(iconRef, { blob: compressed, url: compressedUrl });
+        return next;
+      });
 
       // Update custom icons history
       const updated = [iconRef, ...customIcons.filter((ref) => ref !== iconRef)].slice(0, 20);
@@ -105,12 +134,18 @@ export function CategoryIconDialog({
 
       onSelect({ kind: 'image', ref: iconRef });
       onOpenChange(false);
-    } catch (err) {
-      console.error('Failed to upload category icon:', err);
+    } catch (err: unknown) {
+      notify({
+        title: errorWords(errorCodeOf(err)),
+        tone: 'error',
+      });
     } finally {
       setIsUploading(false);
       setUploadFile(null);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        createdUrlsRef.current.delete(previewUrl);
+      }
       setPreviewUrl(null);
     }
   };
@@ -161,7 +196,7 @@ export function CategoryIconDialog({
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search icons..."
+                  placeholder={catalogWords.searchIconsPlaceholder}
                   className="h-8 pl-8 text-xs"
                 />
               </div>
@@ -203,7 +238,7 @@ export function CategoryIconDialog({
                   <button
                     key={key}
                     type="button"
-                    aria-label={`Select ${key} icon`}
+                    aria-label={catalogWords.selectIconAria(key)}
                     onClick={() => {
                       onSelect({ kind: 'fluent', key, style });
                       onOpenChange(false);
@@ -292,6 +327,10 @@ export function CategoryIconDialog({
                     size="sm"
                     onClick={() => {
                       setUploadFile(null);
+                      if (previewUrl) {
+                        URL.revokeObjectURL(previewUrl);
+                        createdUrlsRef.current.delete(previewUrl);
+                      }
                       setPreviewUrl(null);
                     }}
                   >
@@ -314,21 +353,32 @@ export function CategoryIconDialog({
             {/* Custom icons history */}
             {customIcons.length > 0 && (
               <div className="space-y-2 border-t border-border/60 pt-2">
-                <span className="text-xs font-medium text-muted-foreground">Previous uploads</span>
+                <span className="text-xs font-medium text-muted-foreground">
+                  {catalogWords.previousUploads}
+                </span>
                 <div className="flex flex-wrap gap-2">
-                  {customIcons.map((ref) => (
-                    <button
-                      key={ref}
-                      type="button"
-                      onClick={() => {
-                        onSelect({ kind: 'image', ref });
-                        onOpenChange(false);
-                      }}
-                      className="size-11 overflow-hidden rounded-lg border border-border/80 bg-card transition-colors hover:border-primary/50"
-                    >
-                      <img src={ref} alt="Custom icon" className="size-full object-cover" />
-                    </button>
-                  ))}
+                  {customIcons.map((ref) => {
+                    const preview = sessionPreviews.get(ref);
+                    const effectiveRef = preview ? preview.url : ref;
+                    return (
+                      <button
+                        key={ref}
+                        type="button"
+                        onClick={() => {
+                          onSelect({ kind: 'image', ref });
+                          onOpenChange(false);
+                        }}
+                        className="flex size-11 items-center justify-center overflow-hidden rounded-lg border border-border/80 bg-card transition-colors hover:border-primary/50"
+                      >
+                        <CategoryIcon
+                          icon={{ kind: 'image', ref: effectiveRef }}
+                          alt={catalogWords.customIcon}
+                          size={32}
+                          className="size-8 object-cover"
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

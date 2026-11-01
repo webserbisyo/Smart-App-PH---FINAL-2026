@@ -199,7 +199,7 @@ export function ItemsActionBar({
       <ActionBarClose
         className="flex size-7 min-w-7 items-center justify-center rounded-md p-1 hover:bg-muted"
         onClick={onClearSelection}
-        aria-label="Clear selection"
+        aria-label={catalogWords.clearSelection}
       >
         <XIcon className="size-3.5" />
       </ActionBarClose>

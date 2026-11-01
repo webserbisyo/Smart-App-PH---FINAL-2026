@@ -42,6 +42,7 @@ describe('Icons', () => {
       '/icons/fluent/3d/burger.webp',
     );
     expect(iconPath({ kind: 'emoji', char: '🍔' })).toBe('');
+    expect(iconPath({ kind: 'image', ref: 'uploads/category/test.webp' })).toBe('');
   });
 
   it('categoryIconUrl generates correct URLs across styles', () => {
@@ -52,6 +53,7 @@ describe('Icons', () => {
       '/icons/fluent/3d/burger.webp',
     );
     expect(categoryIconUrl({ kind: 'emoji', char: '🍔' })).toBeNull();
+    expect(categoryIconUrl({ kind: 'image', ref: 'uploads/category/test.webp' })).toBeNull();
     expect(
       categoryIconUrl({ kind: 'fluent', key: 'burger', style: 'flat' }, undefined, 'https://cdn'),
     ).toBe('https://cdn/icons/fluent/flat/burger.svg');

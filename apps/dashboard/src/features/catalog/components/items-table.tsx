@@ -158,14 +158,16 @@ export function ItemsTable({
       // 4. Category
       {
         id: 'category',
-        accessorFn: (row) => categoryMap.get(row.categoryId)?.name ?? 'General',
+        accessorFn: (row) => categoryMap.get(row.categoryId)?.name ?? catalogWords.categoryGeneral,
         header: ({ column }) => (
           <DataGridColumnHeader column={column} title={catalogWords.colCategory} />
         ),
         cell: ({ row }) => {
           const cat = categoryMap.get(row.original.categoryId);
           return (
-            <span className="truncate text-xs text-muted-foreground">{cat?.name ?? 'General'}</span>
+            <span className="truncate text-xs text-muted-foreground">
+              {cat?.name ?? catalogWords.categoryGeneral}
+            </span>
           );
         },
         size: 130,

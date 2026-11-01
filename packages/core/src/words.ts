@@ -1374,4 +1374,13 @@ export const catalogWords = {
   style3d: '3D',
   uploadCropHint: 'Crop to square (128×128)',
   uploadButton: 'Upload image',
+  previousUploads: 'Previous uploads',
+  customIcon: 'Custom icon',
+  customImage: 'Custom image',
+  emojiLabel: (char: string) => `Emoji: ${char}`,
+  categoryNamePlaceholder: 'e.g. Burgers, Drinks, Desserts',
+  searchIconsPlaceholder: 'Search icons...',
+  selectIconAria: (key: string) => `Select ${key} icon`,
+  clearSelection: 'Clear selection',
+  categoryGeneral: 'General',
 } as const;
