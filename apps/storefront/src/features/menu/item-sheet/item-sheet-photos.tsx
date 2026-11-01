@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { imageSources, words, type IconKey } from '@smartapp/core';
+import { imageSources, words, type IconKey, type CategoryIcon } from '@smartapp/core';
 import {
   Carousel,
   CarouselContent,
@@ -14,7 +14,7 @@ import { cn } from '@smartapp/ui/lib/utils';
 export interface ItemSheetPhotosProps {
   photos: readonly string[];
   itemName: string;
-  categoryIcon?: IconKey | undefined;
+  categoryIcon?: IconKey | CategoryIcon | undefined;
   activePhotoIndex?: number | undefined;
   ratio: Extract<ShopImageRatio, '4:3' | '1:1'>;
   sizes: string;

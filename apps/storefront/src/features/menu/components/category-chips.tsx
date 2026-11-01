@@ -1,11 +1,12 @@
 'use client';
 
 import { useCallback, useRef } from 'react';
-import { iconPath, words, type MenuSection } from '@smartapp/core';
+import { words, type MenuSection } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { Scroller } from '@smartapp/ui/components/scroller';
 import { Toggle } from '@smartapp/ui/components/toggle';
 import { Scrollspy } from '@smartapp/ui/components/reui/scrollspy';
+import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 import { cn } from '@smartapp/ui/lib/utils';
 import type { MenuPick } from './menu-picks';
 import { keepInView, sectionId, type MenuSpy } from './menu-spy';
@@ -67,13 +68,11 @@ export function CategoryChips({ sections, spy, onJump, picks }: CategoryChipsPro
               ? { 'data-scrollspy-anchor': sectionId(category.id) }
               : { onClick: () => onJump(category.id) })}
           >
-            <img
-              src={iconPath(category.icon)}
-              alt=""
-              width={20}
-              height={20}
-              loading="lazy"
+            <CategoryIcon
+              icon={category.icon}
+              size={20}
               className="size-5 shrink-0 object-contain"
+              textClassName="text-base"
             />
             {category.name}
           </Button>

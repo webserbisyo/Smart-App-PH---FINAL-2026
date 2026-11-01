@@ -258,3 +258,140 @@ export function useCreateUploadUrl() {
     mutationFn: (input: { kind: UploadKind }) => ownerCatalog.createUploadUrl(input),
   });
 }
+
+export function useBulkSetSoldOut() {
+  const { ownerCatalog } = useAdapters();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: {
+      items: { variantId: string; availability: Availability; soldOutUntil?: string | null }[];
+    }) => {
+      await Promise.all(
+        input.items.map((item) =>
+          ownerCatalog.setSoldOut({
+            variantId: item.variantId,
+            availability: item.availability,
+            soldOutUntil: item.soldOutUntil ?? null,
+          }),
+        ),
+      );
+    },
+    onMutate: async ({ items }) => {
+      await qc.cancelQueries({ queryKey: ownerCatalogQk.items() });
+      const previous = qc.getQueryData<OwnerItem[]>(ownerCatalogQk.items());
+      if (previous) {
+        const itemMap = new Map(items.map((i) => [i.variantId, i]));
+        qc.setQueryData<OwnerItem[]>(
+          ownerCatalogQk.items(),
+          previous.map((item) => ({
+            ...item,
+            variants: item.variants.map((v) => {
+              const target = itemMap.get(v.id);
+              if (!target) return v;
+              return {
+                ...v,
+                availability: target.availability,
+                soldOutUntil: target.soldOutUntil ?? null,
+              };
+            }),
+          })),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(ownerCatalogQk.items(), context.previous);
+      }
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+    },
+  });
+}
+
+export function useBulkSetItemStatus() {
+  const { ownerCatalog } = useAdapters();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { itemIds: string[]; status: ItemStatus }) => {
+      await Promise.all(
+        input.itemIds.map((id) => ownerCatalog.setItemStatus({ id, status: input.status })),
+      );
+    },
+    onMutate: async ({ itemIds, status }) => {
+      await qc.cancelQueries({ queryKey: ownerCatalogQk.items() });
+      const previous = qc.getQueryData<OwnerItem[]>(ownerCatalogQk.items());
+      if (previous) {
+        const idSet = new Set(itemIds);
+        qc.setQueryData<OwnerItem[]>(
+          ownerCatalogQk.items(),
+          previous.map((item) => (idSet.has(item.id) ? { ...item, status } : item)),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(ownerCatalogQk.items(), context.previous);
+      }
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+    },
+  });
+}
+
+export function useBulkMoveCategory() {
+  const { ownerCatalog } = useAdapters();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { items: OwnerItem[]; targetCategoryId: string }) => {
+      await Promise.all(
+        input.items.map((item) =>
+          ownerCatalog.saveItem({
+            id: item.id,
+            draft: {
+              categoryId: input.targetCategoryId,
+              name: item.name,
+              description: item.description,
+              photos: item.photos,
+              axes: item.axes,
+              variants: item.variants,
+              optionGroupIds: item.optionGroupIds,
+              pairingIds: item.pairingIds,
+              featured: item.featured,
+              isNew: item.isNew,
+              status: item.status,
+            },
+          }),
+        ),
+      );
+    },
+    onMutate: async ({ items, targetCategoryId }) => {
+      await qc.cancelQueries({ queryKey: ownerCatalogQk.items() });
+      const previous = qc.getQueryData<OwnerItem[]>(ownerCatalogQk.items());
+      if (previous) {
+        const idSet = new Set(items.map((i) => i.id));
+        qc.setQueryData<OwnerItem[]>(
+          ownerCatalogQk.items(),
+          previous.map((item) =>
+            idSet.has(item.id) ? { ...item, categoryId: targetCategoryId } : item,
+          ),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(ownerCatalogQk.items(), context.previous);
+      }
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+    },
+  });
+}

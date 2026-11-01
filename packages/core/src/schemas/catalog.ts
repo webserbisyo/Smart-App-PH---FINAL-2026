@@ -1,12 +1,41 @@
 import { z } from 'zod';
-import { IconKeyEnum } from '../icons.js';
+import { IconKeyEnum, CategoryIconStyleEnum, type CategoryIconStyle } from '../icons.js';
 import { CentavosSchema, IdSchema, IsoDateTimeSchema, MediaRefSchema } from './common.js';
 import { AvailabilityEnum, ItemStatusEnum, SortKindEnum } from './enums.js';
+
+export { CategoryIconStyleEnum, type CategoryIconStyle };
+
+export const CategoryIconSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('fluent'),
+    key: IconKeyEnum,
+    style: CategoryIconStyleEnum,
+  }),
+  z.object({
+    kind: z.literal('emoji'),
+    char: z.string().min(1).max(8),
+  }),
+  z.object({
+    kind: z.literal('image'),
+    ref: MediaRefSchema,
+  }),
+]);
+export type CategoryIcon = z.infer<typeof CategoryIconSchema>;
+
+export const CategoryIconInputSchema = z.union([
+  IconKeyEnum.transform((key) => ({
+    kind: 'fluent' as const,
+    key,
+    style: 'flat' as const,
+  })),
+  CategoryIconSchema,
+]);
+export type CategoryIconInput = z.input<typeof CategoryIconInputSchema>;
 
 export const CategorySchema = z.object({
   id: IdSchema,
   name: z.string().min(1).max(40),
-  icon: IconKeyEnum,
+  icon: CategoryIconInputSchema,
   sort: z.number().int().min(0),
 });
 export type Category = z.infer<typeof CategorySchema>;
@@ -14,7 +43,7 @@ export type Category = z.infer<typeof CategorySchema>;
 export const CategoryDraftSchema = z.object({
   id: IdSchema.optional(),
   name: z.string().min(1).max(40),
-  icon: IconKeyEnum,
+  icon: CategoryIconInputSchema,
 });
 export type CategoryDraft = z.infer<typeof CategoryDraftSchema>;
 

@@ -54,7 +54,12 @@ export function category(
   icon: IconKey,
   sort: number,
 ): Category {
-  return { id: `${prefix}-c-${key}`, name, icon, sort };
+  return {
+    id: `${prefix}-c-${key}`,
+    name,
+    icon: { kind: 'fluent', key: icon, style: 'flat' },
+    sort,
+  };
 }
 
 export interface AxisSpec {

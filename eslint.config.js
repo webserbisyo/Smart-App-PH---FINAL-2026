@@ -69,6 +69,27 @@ export default tseslint.config(
       'no-useless-assignment': 'off',
     },
   },
+  // Scope reportUnusedDisableDirectives: off to only installed files with unused directives (decision T39)
+  {
+    files: [
+      'packages/ui/src/components/reui/data-grid/data-grid-table.tsx',
+      'packages/ui/src/components/reui/data-grid/data-grid-table-virtual.tsx',
+    ],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
+  },
+  // Scope @typescript-eslint/no-unused-vars: off to only installed files with unused vars (decision T39)
+  {
+    files: [
+      'packages/ui/src/components/reui/data-grid/data-grid-table.tsx',
+      'packages/ui/src/components/reui/data-grid/data-grid-table-dnd.tsx',
+      'packages/ui/src/components/reui/emoji-picker.tsx',
+    ],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
   // Storefront Next.js plugin
   {
     files: ['apps/storefront/**/*.{ts,tsx}'],

@@ -16,7 +16,8 @@ const serwist = createSerwistRoute({
   // cached when seen (sw.ts), never all 12 MB up front.
   globPatterns: [
     '.next/static/**/*.{js,css,woff2}',
-    'public/icons/**/*.{svg,png,webp}',
+    'public/icons/fluent/flat/**/*.svg',
+    'public/icons/*.*',
     'public/art/**/*.webp',
   ],
   additionalPrecacheEntries: [{ url: '/~offline', revision: buildRevision() }],

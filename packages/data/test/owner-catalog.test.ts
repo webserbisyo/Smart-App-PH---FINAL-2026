@@ -31,16 +31,17 @@ describe('ownerCatalog mock adapter', () => {
       icon: 'combo',
     });
     expect(created.name).toBe('Special Sauces');
-    expect(created.icon).toBe('combo');
+    expect(created.icon).toEqual({ kind: 'fluent', key: 'combo', style: 'flat' });
     expect(created.id).toBeDefined();
 
-    // Update existing category
+    // Update existing category with emoji icon
     const updated = await store.ownerCatalog.saveCategory({
       id: created.id,
       name: 'Signature Sauces',
-      icon: 'combo',
+      icon: { kind: 'emoji', char: '🥫' },
     });
     expect(updated.name).toBe('Signature Sauces');
+    expect(updated.icon).toEqual({ kind: 'emoji', char: '🥫' });
 
     // Removing empty category succeeds
     await store.ownerCatalog.removeCategory({ id: created.id });

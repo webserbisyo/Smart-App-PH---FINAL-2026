@@ -205,4 +205,36 @@ describe('owner catalog schemas', () => {
     expect(groupRuleLabel(2, 2)).toBe('Pick exactly 2');
     expect(groupRuleLabel(1, 3)).toBe('Pick 1 to 3');
   });
+
+  it('validates CategoryIconSchema across 3 kinds and transforms legacy IconKey strings', () => {
+    // 1. Fluent kind
+    const fluentIcon = { kind: 'fluent' as const, key: 'burger' as const, style: 'color' as const };
+    const parsedFluent = CategoryDraftSchema.parse({ name: 'Burgers', icon: fluentIcon });
+    expect(parsedFluent.icon).toEqual({ kind: 'fluent', key: 'burger', style: 'color' });
+
+    // 2. Emoji kind
+    const emojiIcon = { kind: 'emoji' as const, char: '🍔' };
+    const parsedEmoji = CategoryDraftSchema.parse({ name: 'Burgers', icon: emojiIcon });
+    expect(parsedEmoji.icon).toEqual({ kind: 'emoji', char: '🍔' });
+
+    // 3. Image kind
+    const imageIcon = { kind: 'image' as const, ref: 'demo:kanto-smash/items/classic' };
+    const parsedImage = CategoryDraftSchema.parse({ name: 'Burgers', icon: imageIcon });
+    expect(parsedImage.icon).toEqual({ kind: 'image', ref: 'demo:kanto-smash/items/classic' });
+
+    // 4. Legacy string backwards compatibility (transforms string to { kind: 'fluent', key, style: 'flat' })
+    const parsedLegacy = CategoryDraftSchema.parse({ name: 'Burgers', icon: 'burger' });
+    expect(parsedLegacy.icon).toEqual({ kind: 'fluent', key: 'burger', style: 'flat' });
+
+    // 5. Invalid values fail
+    expect(
+      CategoryDraftSchema.safeParse({ name: 'Burgers', icon: 'non_existent_key' }).success,
+    ).toBe(false);
+    expect(
+      CategoryDraftSchema.safeParse({
+        name: 'Burgers',
+        icon: { kind: 'fluent', key: 'burger', style: 'invalid_style' },
+      }).success,
+    ).toBe(false);
+  });
 });

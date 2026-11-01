@@ -7,9 +7,13 @@
     "rootDir": "src",
     "outDir": "dist/types",
     "tsBuildInfoFile": "dist/types/components.tsbuildinfo",
-    "exactOptionalPropertyTypes": false
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": true
   },
   "include": ["src/components/**/*"],
-  "exclude": [],
+  "exclude": [
+    "src/components/reui/emoji-picker.tsx",
+    "src/components/reui/data-grid/data-grid-cell-selection.tsx"
+  ],
   "references": [{ "path": "./tsconfig.lib.json" }]
 }

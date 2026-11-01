@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { iconPath, words, type Category } from '@smartapp/core';
+import { words, type Category } from '@smartapp/core';
 import { IconTile } from '@smartapp/ui/components/reui/icon-tile';
 import { Scroller } from '@smartapp/ui/components/scroller';
+import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 
 export interface CategoriesChipsProps {
   slug: string;
@@ -27,14 +28,7 @@ export function CategoriesChips({ slug, categories }: CategoriesChipsProps) {
                 className="flex w-20 pressable flex-col items-center gap-2 rounded-xl py-1 text-center text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <IconTile variant="frame" size="xl" radius="full">
-                  <img
-                    src={iconPath(cat.icon)}
-                    alt=""
-                    width={32}
-                    height={32}
-                    loading="lazy"
-                    className="size-8 object-contain"
-                  />
+                  <CategoryIcon icon={cat.icon} size={32} className="size-8 object-contain" />
                 </IconTile>
                 <span className="line-clamp-2 w-full break-words">{cat.name}</span>
               </Link>

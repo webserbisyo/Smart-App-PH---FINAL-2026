@@ -4,9 +4,10 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useTransition } from
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { FlameIcon, HeartIcon, SparklesIcon } from 'lucide-react';
-import { iconPath, menuSections, searchMenu, words, type Catalog, type Item } from '@smartapp/core';
+import { menuSections, searchMenu, words, type Catalog, type Item } from '@smartapp/core';
 import { useFavourites, useNow } from '@smartapp/data';
 import { IconTile } from '@smartapp/ui/components/reui/icon-tile';
+import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 import { useShop } from '../../shell/components/shop-context';
 import { useWhenIdle } from '../../shell/use-when-idle';
 import {
@@ -242,13 +243,11 @@ function MenuView({
                 >
                   <header className="flex items-center gap-3 px-1">
                     <IconTile variant="frame" size="default" radius="full">
-                      <img
-                        src={iconPath(category.icon)}
-                        alt=""
-                        width={24}
-                        height={24}
-                        loading="lazy"
+                      <CategoryIcon
+                        icon={category.icon}
+                        size={24}
                         className="size-6 object-contain"
+                        textClassName="text-xl"
                       />
                     </IconTile>
                     <h2

@@ -210,19 +210,20 @@ function AddOnSheetForm({
       <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>{group ? catalogWords.editGroup : catalogWords.addGroup}</SheetTitle>
-          <SheetDescription>
-            Create customization options that can be shared across items.
-          </SheetDescription>
+          <SheetDescription>{catalogWords.groupSheetDesc}</SheetDescription>
         </SheetHeader>
 
         {group && group.usedBy > 0 && (
-          <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
+          <div className="mx-4 flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
             <AlertTriangleIcon className="size-4 shrink-0" />
             <span>{catalogWords.groupWarningNotice(group.usedBy)}</span>
           </div>
         )}
 
-        <form onSubmit={handleSave} className="mt-4 flex flex-1 flex-col justify-between space-y-6">
+        <form
+          onSubmit={handleSave}
+          className="mt-4 flex flex-1 flex-col justify-between space-y-6 px-4"
+        >
           <div className="space-y-5">
             {errorMsg && (
               <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
@@ -459,7 +460,7 @@ function AddOnSheetForm({
             </div>
           </div>
 
-          <SheetFooter className="flex flex-row items-center justify-between gap-2 border-t border-border pt-4">
+          <SheetFooter className="-mx-4 flex flex-row items-center justify-between gap-2 border-t border-border pt-4">
             {group ? (
               <Button
                 type="button"

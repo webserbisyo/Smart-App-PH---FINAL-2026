@@ -1,14 +1,14 @@
 import * as React from 'react';
 import {
-  ICON_KEYS,
-  iconPath,
   catalogWords,
   errorWords,
+  IconKeyEnum,
   type Category,
-  type IconKey,
+  type CategoryIcon as CategoryIconType,
 } from '@smartapp/core';
 import { useSaveCategory, useRemoveCategory, errorCodeOf } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
+import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import {
@@ -29,8 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@smartapp/ui/components/alert-dialog';
+import { CategoryIconDialog } from './components/category-icon-dialog.js';
 import { env } from '@/app/env';
-import { cn } from 'cn';
 
 export interface CategorySheetProps {
   open: boolean;
@@ -60,7 +60,15 @@ function CategorySheetForm({
   onClose: () => void;
 }) {
   const [name, setName] = React.useState(category?.name ?? '');
-  const [selectedIcon, setSelectedIcon] = React.useState<IconKey>(category?.icon ?? 'burger');
+  const [selectedIcon, setSelectedIcon] = React.useState<CategoryIconType>(() => {
+    if (!category?.icon) return { kind: 'fluent', key: 'burger', style: 'flat' };
+    if (typeof category.icon === 'string') {
+      const parsed = IconKeyEnum.safeParse(category.icon);
+      return { kind: 'fluent', key: parsed.success ? parsed.data : 'burger', style: 'flat' };
+    }
+    return category.icon;
+  });
+  const [iconDialogOpen, setIconDialogOpen] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
 
@@ -111,10 +119,10 @@ function CategorySheetForm({
       <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{category ? catalogWords.editCategory : catalogWords.addCategory}</SheetTitle>
-          <SheetDescription>Organize your items into customer-facing categories.</SheetDescription>
+          <SheetDescription>{catalogWords.categorySheetDesc}</SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSave} className="mt-6 flex flex-1 flex-col justify-between space-y-6">
+        <form onSubmit={handleSave} className="flex flex-1 flex-col justify-between space-y-6 px-4">
           <div className="space-y-5">
             {errorMsg && (
               <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
@@ -132,7 +140,7 @@ function CategorySheetForm({
                 id="category-name"
                 value={name}
                 maxLength={40}
-                placeholder="e.g. Burgers, Drinks, Desserts"
+                placeholder={catalogWords.categoryNamePlaceholder}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
               />
@@ -141,33 +149,45 @@ function CategorySheetForm({
             {/* Icon Picker */}
             <div className="space-y-2">
               <Label>{catalogWords.categoryIconLabel}</Label>
-              <div className="grid max-h-56 grid-cols-6 gap-2 overflow-y-auto rounded-xl border border-border/80 bg-muted/20 p-3">
-                {ICON_KEYS.map((key) => {
-                  const isSelected = selectedIcon === key;
-                  const src = `${env.VITE_STOREFRONT_URL.replace(/\/+$/, '')}${iconPath(key)}`;
-
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      aria-label={`Select icon ${key}`}
-                      onClick={() => setSelectedIcon(key)}
-                      className={cn(
-                        'flex size-11 items-center justify-center rounded-xl border p-1.5 transition-all',
-                        isSelected
-                          ? 'border-primary bg-primary/10 shadow-xs ring-2 ring-primary/30'
-                          : 'border-border/40 bg-card hover:bg-muted/60',
-                      )}
-                    >
-                      <img src={src} alt={key} className="size-6 object-contain" loading="lazy" />
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-muted/20 p-3">
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-card shadow-xs">
+                  <CategoryIcon
+                    icon={selectedIcon}
+                    size={32}
+                    assetOrigin={env.VITE_STOREFRONT_URL}
+                    className="size-8 object-contain"
+                  />
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <span className="truncate text-xs font-semibold text-foreground">
+                    {selectedIcon.kind === 'fluent'
+                      ? catalogWords.fluentIconLabel(
+                          selectedIcon.key,
+                          {
+                            flat: catalogWords.styleFlat,
+                            color: catalogWords.styleColor,
+                            '3d': catalogWords.style3d,
+                          }[selectedIcon.style],
+                        )
+                      : selectedIcon.kind === 'emoji'
+                        ? catalogWords.emojiLabel(selectedIcon.char)
+                        : catalogWords.customImage}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-fit text-xs font-medium"
+                    onClick={() => setIconDialogOpen(true)}
+                  >
+                    {catalogWords.iconDialogTitle}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
 
-          <SheetFooter className="flex flex-row items-center justify-between gap-2 border-t border-border pt-4">
+          <SheetFooter className="-mx-4 flex flex-row items-center justify-between gap-2 border-t border-border pt-4">
             {category ? (
               <Button
                 type="button"
@@ -218,6 +238,14 @@ function CategorySheetForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Category Icon Dialog */}
+      <CategoryIconDialog
+        open={iconDialogOpen}
+        onOpenChange={setIconDialogOpen}
+        selectedIcon={selectedIcon}
+        onSelect={setSelectedIcon}
+      />
     </>
   );
 }

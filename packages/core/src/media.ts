@@ -75,6 +75,8 @@ export function parseDemoRef(ref: string | null | undefined): ParsedDemoRef | nu
 
 /**
  * Returns the WebP image URL for a given MediaRef and target width.
+ * The width snaps to the smallest saved size that covers it (or the largest saved size),
+ * so a caller never asks for a file that does not exist.
  * Returns null if the ref is invalid, unknown, or missing from DEMO_MEDIA.
  */
 export function imageUrl(
@@ -85,8 +87,10 @@ export function imageUrl(
   const parsed = parseDemoRef(ref);
   if (!parsed) return null;
 
+  const [small, large] = parsed.widths;
+  const saved = width <= small ? small : large;
   const cleanOrigin = origin.replace(/\/+$/, '');
-  return `${cleanOrigin}/demo/${parsed.slug}/${parsed.folder}/${parsed.name}-${width}.webp`;
+  return `${cleanOrigin}/demo/${parsed.slug}/${parsed.folder}/${parsed.name}-${saved}.webp`;
 }
 
 /**
