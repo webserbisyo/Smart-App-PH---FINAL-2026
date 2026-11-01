@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-01 CI fix: security overrides for qs 6.16.1 and seroval 1.6.11 so `pnpm audit --prod` passes again (decision T38)
 - 2026-11-01 T35 brand, part 2: favicon.ico (flat blue at 16 and 32 px) and PWA-ready icons, navy-tinted elevation and dashboard motion tokens, ease-enter/exit and celebrate tokens, dashboard UX rules (ux.md section 7), frosted dock with the accent pill
 - 2026-11-01 T35 Smart App PH brand on the dashboard and login: brand tokens scoped to the dashboard (light and dark, contrast-tested), logo on login and in the sidebar, favicon and tab title, frosted top bar and dock, logo files named and moved to `docs/brand/` (decision T35)
 - 2026-10-29 docs: strict 3-tier (decision T34), `@supabase` imports only in `apps/api` (login files in `packages/data` excepted until auth moves)
@@ -29,4 +30,3 @@ One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 - 2026-10-18 T01 monorepo, auth migration, 5 demo owners, login and sign-up, /kit, lint walls (#5)
 - 2026-10-18 docs: README feature tracker, SYSTEM.md, SMART_APP_PH_BLUEPRINT.md, RESEARCH.md; decisions N1 to N11; ux.md, api.md, A-mvp.md, B-full.md aligned (#3)
 - 2026-10-17 docs: restart pack moved to the root; cross-check of the old repos (UX, CSS, security and order rules), new docs/ux.md and docs/api.md
-- 2026-11-01 CI fix: security overrides for qs 6.16.1 and seroval 1.6.11 so `pnpm audit --prod` passes again (decision T38)
