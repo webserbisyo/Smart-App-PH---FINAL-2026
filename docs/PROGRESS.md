@@ -38,6 +38,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 ## Phase 3: Dashboard screens (mock)
 
 - [x] T15a Menu page part 1: items list, add-ons, categories, and item editor
+- [x] T15b Menu page part 2: grid and table views, bulk actions, and category icons
 
 ## Phase 4: Backend, area by area
 

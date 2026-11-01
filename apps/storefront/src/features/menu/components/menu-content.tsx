@@ -242,14 +242,20 @@ function MenuView({
                 >
                   <header className="flex items-center gap-3 px-1">
                     <IconTile variant="frame" size="default" radius="full">
-                      <img
-                        src={iconPath(category.icon)}
-                        alt=""
-                        width={24}
-                        height={24}
-                        loading="lazy"
-                        className="size-6 object-contain"
-                      />
+                      {typeof category.icon === 'object' && category.icon.kind === 'emoji' ? (
+                        <span aria-hidden="true" className="text-xl leading-none select-none">
+                          {category.icon.char}
+                        </span>
+                      ) : (
+                        <img
+                          src={iconPath(category.icon)}
+                          alt=""
+                          width={24}
+                          height={24}
+                          loading="lazy"
+                          className="size-6 object-contain"
+                        />
+                      )}
                     </IconTile>
                     <h2
                       id={`${sectionId(category.id)}-title`}

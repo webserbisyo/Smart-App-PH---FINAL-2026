@@ -27,14 +27,20 @@ export function CategoriesChips({ slug, categories }: CategoriesChipsProps) {
                 className="flex w-20 pressable flex-col items-center gap-2 rounded-xl py-1 text-center text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <IconTile variant="frame" size="xl" radius="full">
-                  <img
-                    src={iconPath(cat.icon)}
-                    alt=""
-                    width={32}
-                    height={32}
-                    loading="lazy"
-                    className="size-8 object-contain"
-                  />
+                  {typeof cat.icon === 'object' && cat.icon.kind === 'emoji' ? (
+                    <span aria-hidden="true" className="text-2xl leading-none select-none">
+                      {cat.icon.char}
+                    </span>
+                  ) : (
+                    <img
+                      src={iconPath(cat.icon)}
+                      alt=""
+                      width={32}
+                      height={32}
+                      loading="lazy"
+                      className="size-8 object-contain"
+                    />
+                  )}
                 </IconTile>
                 <span className="line-clamp-2 w-full break-words">{cat.name}</span>
               </Link>

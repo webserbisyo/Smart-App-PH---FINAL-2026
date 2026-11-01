@@ -41,14 +41,20 @@ export function CategoryRail({ sections, spy, onJump, picks }: CategoryRailProps
             ? { 'data-scrollspy-anchor': sectionId(category.id) }
             : { onClick: () => onJump(category.id) })}
         >
-          <img
-            src={iconPath(category.icon)}
-            alt=""
-            width={20}
-            height={20}
-            loading="lazy"
-            className="size-5 shrink-0 object-contain"
-          />
+          {typeof category.icon === 'object' && category.icon.kind === 'emoji' ? (
+            <span aria-hidden="true" className="text-base leading-none select-none">
+              {category.icon.char}
+            </span>
+          ) : (
+            <img
+              src={iconPath(category.icon)}
+              alt=""
+              width={20}
+              height={20}
+              loading="lazy"
+              className="size-5 shrink-0 object-contain"
+            />
+          )}
           <span className="min-w-0 truncate">{category.name}</span>
           <span className="ml-auto text-xs font-normal text-muted-foreground tabular">
             {items.length}

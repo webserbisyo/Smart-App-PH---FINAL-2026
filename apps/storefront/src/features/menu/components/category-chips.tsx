@@ -67,14 +67,20 @@ export function CategoryChips({ sections, spy, onJump, picks }: CategoryChipsPro
               ? { 'data-scrollspy-anchor': sectionId(category.id) }
               : { onClick: () => onJump(category.id) })}
           >
-            <img
-              src={iconPath(category.icon)}
-              alt=""
-              width={20}
-              height={20}
-              loading="lazy"
-              className="size-5 shrink-0 object-contain"
-            />
+            {typeof category.icon === 'object' && category.icon.kind === 'emoji' ? (
+              <span aria-hidden="true" className="text-base leading-none select-none">
+                {category.icon.char}
+              </span>
+            ) : (
+              <img
+                src={iconPath(category.icon)}
+                alt=""
+                width={20}
+                height={20}
+                loading="lazy"
+                className="size-5 shrink-0 object-contain"
+              />
+            )}
             {category.name}
           </Button>
         ))}

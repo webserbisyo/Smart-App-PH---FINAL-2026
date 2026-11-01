@@ -1,11 +1,11 @@
 import * as React from 'react';
 import {
-  ICON_KEYS,
   iconPath,
   catalogWords,
   errorWords,
+  IconKeyEnum,
   type Category,
-  type IconKey,
+  type CategoryIcon,
 } from '@smartapp/core';
 import { useSaveCategory, useRemoveCategory, errorCodeOf } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
@@ -29,8 +29,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@smartapp/ui/components/alert-dialog';
+import { CategoryIconDialog } from './components/category-icon-dialog.js';
 import { env } from '@/app/env';
-import { cn } from 'cn';
 
 export interface CategorySheetProps {
   open: boolean;
@@ -60,7 +60,15 @@ function CategorySheetForm({
   onClose: () => void;
 }) {
   const [name, setName] = React.useState(category?.name ?? '');
-  const [selectedIcon, setSelectedIcon] = React.useState<IconKey>(category?.icon ?? 'burger');
+  const [selectedIcon, setSelectedIcon] = React.useState<CategoryIcon>(() => {
+    if (!category?.icon) return { kind: 'fluent', key: 'burger', style: 'flat' };
+    if (typeof category.icon === 'string') {
+      const parsed = IconKeyEnum.safeParse(category.icon);
+      return { kind: 'fluent', key: parsed.success ? parsed.data : 'burger', style: 'flat' };
+    }
+    return category.icon;
+  });
+  const [iconDialogOpen, setIconDialogOpen] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
 
@@ -141,28 +149,47 @@ function CategorySheetForm({
             {/* Icon Picker */}
             <div className="space-y-2">
               <Label>{catalogWords.categoryIconLabel}</Label>
-              <div className="grid max-h-56 grid-cols-6 gap-2 overflow-y-auto rounded-xl border border-border/80 bg-muted/20 p-3">
-                {ICON_KEYS.map((key) => {
-                  const isSelected = selectedIcon === key;
-                  const src = `${env.VITE_STOREFRONT_URL.replace(/\/+$/, '')}${iconPath(key)}`;
-
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      aria-label={`Select icon ${key}`}
-                      onClick={() => setSelectedIcon(key)}
-                      className={cn(
-                        'flex size-11 items-center justify-center rounded-xl border p-1.5 transition-all',
-                        isSelected
-                          ? 'border-primary bg-primary/10 shadow-xs ring-2 ring-primary/30'
-                          : 'border-border/40 bg-card hover:bg-muted/60',
-                      )}
-                    >
-                      <img src={src} alt={key} className="size-6 object-contain" loading="lazy" />
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-muted/20 p-3">
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-card shadow-xs">
+                  {selectedIcon.kind === 'emoji' ? (
+                    <span aria-hidden="true" className="text-3xl leading-none select-none">
+                      {selectedIcon.char}
+                    </span>
+                  ) : selectedIcon.kind === 'image' ? (
+                    <img
+                      src={selectedIcon.ref}
+                      alt=""
+                      className="size-full rounded-xl object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={`${env.VITE_STOREFRONT_URL.replace(/\/+$/, '')}${iconPath(
+                        selectedIcon,
+                        selectedIcon.style,
+                      )}`}
+                      alt=""
+                      className="size-8 object-contain"
+                    />
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <span className="truncate text-xs font-semibold text-foreground">
+                    {selectedIcon.kind === 'fluent'
+                      ? `${selectedIcon.key} (${selectedIcon.style})`
+                      : selectedIcon.kind === 'emoji'
+                        ? `Emoji: ${selectedIcon.char}`
+                        : 'Custom image'}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-fit text-xs font-medium"
+                    onClick={() => setIconDialogOpen(true)}
+                  >
+                    {catalogWords.iconDialogTitle}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -218,6 +245,14 @@ function CategorySheetForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Category Icon Dialog */}
+      <CategoryIconDialog
+        open={iconDialogOpen}
+        onOpenChange={setIconDialogOpen}
+        selectedIcon={selectedIcon}
+        onSelect={setSelectedIcon}
+      />
     </>
   );
 }

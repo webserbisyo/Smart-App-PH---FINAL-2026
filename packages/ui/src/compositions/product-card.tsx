@@ -2,7 +2,7 @@
 
 import { BanIcon, FlameIcon, PlusIcon, SparklesIcon, type LucideIcon } from 'lucide-react';
 import { cn } from 'cn';
-import type { IconKey } from '@smartapp/core/icons';
+import type { IconKey, CategoryIcon } from '@smartapp/core';
 import type { ImageSources } from '@smartapp/core/media';
 import { Button } from '@smartapp/ui/components/button';
 import { Hitbox } from '@smartapp/ui/components/hitbox';
@@ -39,7 +39,7 @@ export interface ProductCardProps {
   name: string;
   priceLabel: string;
   photo: ImageSources | null;
-  fallbackIcon?: IconKey | undefined;
+  fallbackIcon?: IconKey | CategoryIcon | undefined;
   sizes: string;
   // The first cards on the page: the photo loads at once, high priority (the page's largest paint).
   priority?: boolean | undefined;

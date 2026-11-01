@@ -34,14 +34,20 @@ export function MenuSearchEmpty({ query, sections, onClear, onPick }: MenuSearch
                 className="h-11 gap-2 rounded-full bg-card px-4"
                 onClick={() => onPick(category.id)}
               >
-                <img
-                  src={iconPath(category.icon)}
-                  alt=""
-                  width={20}
-                  height={20}
-                  loading="lazy"
-                  className="size-5 object-contain"
-                />
+                {typeof category.icon === 'object' && category.icon.kind === 'emoji' ? (
+                  <span aria-hidden="true" className="text-base leading-none select-none">
+                    {category.icon.char}
+                  </span>
+                ) : (
+                  <img
+                    src={iconPath(category.icon)}
+                    alt=""
+                    width={20}
+                    height={20}
+                    loading="lazy"
+                    className="size-5 object-contain"
+                  />
+                )}
                 {category.name}
               </Button>
             ))}

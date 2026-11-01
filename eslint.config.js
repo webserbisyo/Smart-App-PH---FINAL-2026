@@ -59,8 +59,12 @@ export default tseslint.config(
   // Installed shadcn components in packages/ui (after React Hooks so it wins; decision T27)
   {
     files: ['packages/ui/src/components/**'],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
     rules: {
       '@typescript-eslint/consistent-type-assertions': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
       'react-hooks/refs': 'off',
       'react-hooks/set-state-in-effect': 'off',
       // DiceUI Cropper (founder, 2026-10-26)

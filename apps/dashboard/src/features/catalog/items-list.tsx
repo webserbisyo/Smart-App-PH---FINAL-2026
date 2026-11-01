@@ -8,13 +8,29 @@ import {
   RefreshCwIcon,
   WifiOffIcon,
   SparklesIcon,
+  ListIcon,
+  LayoutGridIcon,
+  TableIcon,
 } from 'lucide-react';
-import { catalogWords, errorWords, type OwnerItem, type Category } from '@smartapp/core';
+import {
+  catalogWords,
+  errorWords,
+  type OwnerItem,
+  type Category,
+  type Availability,
+} from '@smartapp/core';
 import {
   useOwnerItems,
   useOwnerCategories,
   useOwnerOptionGroups,
   useSaveSortOrder,
+  useSaveItem,
+  useRemoveItem,
+  useSetItemStatus,
+  useSetSoldOut,
+  useBulkSetSoldOut,
+  useBulkSetItemStatus,
+  useBulkMoveCategory,
   useAdapters,
   errorCodeOf,
 } from '@smartapp/data';
@@ -26,24 +42,63 @@ import { Badge } from '@smartapp/ui/components/badge';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Stat, StatLabel, StatValue } from '@smartapp/ui/components/stat';
 import { Sortable, SortableItem } from '@smartapp/ui/components/reui/sortable';
+import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@smartapp/ui/components/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@smartapp/ui/components/alert-dialog';
+import { notify } from '@smartapp/ui/compositions/notify';
 import { ItemRow } from './item-row.js';
+import { ItemsGrid } from './components/items-grid.js';
+import { ItemsTable } from './components/items-table.js';
+import { ItemsActionBar } from './components/items-action-bar.js';
 import { cn } from 'cn';
 
 type FilterTab = 'all' | 'sold_out' | 'hidden';
+type CatalogView = 'list' | 'grid' | 'table';
+
+const LOCAL_STORAGE_VIEW_KEY = 'smartapp:catalog:view';
 
 const FALLBACK_GENERAL_CATEGORY: Category = {
   id: 'uncategorized',
   name: 'General',
   sort: 0,
-  icon: 'burger',
+  icon: { kind: 'fluent', key: 'burger', style: 'flat' },
 };
 
 const FALLBACK_OTHER_CATEGORY: Category = {
   id: 'other',
   name: 'Other',
   sort: 999,
-  icon: 'other',
+  icon: { kind: 'fluent', key: 'other', style: 'flat' },
 };
+
+function getDefaultView(): CatalogView {
+  if (typeof window === 'undefined') return 'grid';
+  try {
+    const saved = localStorage.getItem(LOCAL_STORAGE_VIEW_KEY);
+    if (saved === 'list' || saved === 'grid' || saved === 'table') {
+      return saved;
+    }
+  } catch {
+    // Ignore storage errors
+  }
+  return window.innerWidth < 768 ? 'list' : 'grid';
+}
 
 export function ItemsList() {
   const navigate = useNavigate();
@@ -67,11 +122,24 @@ export function ItemsList() {
 
   const { data: optionGroups = [] } = useOwnerOptionGroups();
   const saveSortOrder = useSaveSortOrder();
+  const saveItem = useSaveItem();
+  const removeItem = useRemoveItem();
+  const setStatus = useSetItemStatus();
+  const setSoldOut = useSetSoldOut();
+  const bulkSetSoldOut = useBulkSetSoldOut();
+  const bulkSetStatus = useBulkSetItemStatus();
+  const bulkMoveCategory = useBulkMoveCategory();
 
+  const [view, setView] = React.useState<CatalogView>(getDefaultView);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState<FilterTab>('all');
   const [isReordering, setIsReordering] = React.useState(false);
   const [announcement, setAnnouncement] = React.useState('');
+
+  // Single-item action dialog states (for triggers from Grid and Table)
+  const [soldOutTargetItem, setSoldOutTargetItem] = React.useState<OwnerItem | null>(null);
+  const [deleteTargetItem, setDeleteTargetItem] = React.useState<OwnerItem | null>(null);
 
   const nonArchivedItems = React.useMemo(() => {
     return (items ?? []).filter((item) => item.status !== 'archived');
@@ -156,38 +224,305 @@ export function ItemsList() {
     return sections;
   }, [categories, filteredItems]);
 
-  const handleReorder = (newItems: OwnerItem[]) => {
-    const ids = newItems.map((item) => item.id);
-    saveSortOrder.mutate({ kind: 'item', ids });
-  };
-
-  const handleMove = (item: OwnerItem, direction: -1 | 1) => {
-    const currentIndex = nonArchivedItems.findIndex((i) => i.id === item.id);
-    if (currentIndex === -1) return;
-    const targetIndex = currentIndex + direction;
-    if (targetIndex < 0 || targetIndex >= nonArchivedItems.length) return;
-
-    const reordered = [...nonArchivedItems];
-    const [moved] = reordered.splice(currentIndex, 1);
-    if (!moved) return;
-    reordered.splice(targetIndex, 0, moved);
-
-    setAnnouncement(
-      `Moved ${item.name} to position ${targetIndex + 1} of ${nonArchivedItems.length}`,
-    );
-    saveSortOrder.mutate({ kind: 'item', ids: reordered.map((i) => i.id) });
-  };
-
-  const handleStartWithSamples = async () => {
+  // View switch handler
+  const handleViewChange = (nextView: string) => {
+    if (nextView !== 'list' && nextView !== 'grid' && nextView !== 'table') return;
+    setView(nextView);
     try {
-      await ownerSamples.applySamplePack({
-        slug,
-        packSlug: kind === 'food' ? 'burger-joint' : 'clothing-boutique',
-      });
-      await refetchItems();
-      await refetchCats();
+      localStorage.setItem(LOCAL_STORAGE_VIEW_KEY, nextView);
     } catch {
-      // Ignored
+      // Ignore
+    }
+  };
+
+  // Selection handlers
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+  };
+
+  const handleSelectAll = (all: boolean) => {
+    if (all) {
+      setSelectedIds(filteredItems.map((i) => i.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  // Reorder handlers
+  const handleReorder = (newItems: OwnerItem[]) => {
+    const ids = newItems.map((i) => i.id);
+    saveSortOrder.mutate({
+      kind: 'item',
+      ids,
+    });
+  };
+
+  const handleReorderFromTable = (ids: string[]) => {
+    saveSortOrder.mutate({
+      kind: 'item',
+      ids,
+    });
+  };
+
+  const handleMove = (item: OwnerItem, delta: number) => {
+    const idx = nonArchivedItems.findIndex((i) => i.id === item.id);
+    if (idx < 0) return;
+    const targetIdx = idx + delta;
+    if (targetIdx < 0 || targetIdx >= nonArchivedItems.length) return;
+
+    const list = [...nonArchivedItems];
+    const [moved] = list.splice(idx, 1);
+    if (moved) {
+      list.splice(targetIdx, 0, moved);
+      handleReorder(list);
+      setAnnouncement(catalogWords.movedAnnouncement(item.name, targetIdx + 1, list.length));
+    }
+  };
+
+  // Single-item action handlers
+  const handleEdit = (item: OwnerItem) => {
+    navigate({ to: '/catalog/$id', params: { id: item.id } });
+  };
+
+  const handleDuplicate = (item: OwnerItem) => {
+    saveItem.mutate({
+      draft: {
+        categoryId: item.categoryId,
+        name: `${item.name} (Copy)`,
+        description: item.description,
+        photos: item.photos,
+        axes: item.axes,
+        variants: item.variants.map((v, i) => ({
+          id: `var_${Math.random().toString(36).slice(2, 9)}_${i}`,
+          values: v.values,
+          price: v.price,
+          availability: v.availability,
+          soldOutUntil: v.soldOutUntil,
+        })),
+        optionGroupIds: item.optionGroupIds,
+        pairingIds: item.pairingIds,
+        featured: item.featured,
+        isNew: item.isNew,
+        status: 'hidden',
+      },
+    });
+  };
+
+  const handleToggleStatus = (item: OwnerItem) => {
+    const nextStatus = item.status === 'hidden' ? 'active' : 'hidden';
+    setStatus.mutate({ id: item.id, status: nextStatus });
+  };
+
+  const handleSetSoldOut = (item: OwnerItem) => {
+    const isSoldOut = item.variants.every((v) => v.availability === 'sold_out');
+    if (isSoldOut) {
+      // Mark available
+      for (const v of item.variants) {
+        setSoldOut.mutate({ variantId: v.id, availability: 'available' });
+      }
+    } else {
+      if (item.variants.length > 1) {
+        setSoldOutTargetItem(item);
+      } else {
+        const first = item.variants[0];
+        if (first) {
+          setSoldOut.mutate({ variantId: first.id, availability: 'sold_out' });
+        }
+      }
+    }
+  };
+
+  const handleApplySoldOutChoice = (type: 'today' | 'indefinite') => {
+    if (!soldOutTargetItem) return;
+    const availability: Availability = 'sold_out';
+    const soldOutUntil =
+      type === 'today' ? new Date(Date.now() + 24 * 3600 * 1000).toISOString() : null;
+
+    for (const v of soldOutTargetItem.variants) {
+      setSoldOut.mutate({ variantId: v.id, availability, soldOutUntil });
+    }
+    setSoldOutTargetItem(null);
+  };
+
+  const handleArchive = (item: OwnerItem) => {
+    setStatus.mutate({ id: item.id, status: 'archived' });
+  };
+
+  const handleDelete = (item: OwnerItem) => {
+    setDeleteTargetItem(item);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteTargetItem) {
+      removeItem.mutate({ id: deleteTargetItem.id });
+      setDeleteTargetItem(null);
+    }
+  };
+
+  // Bulk action handlers
+  const handleBulkSoldOutToday = async (ids: string[]) => {
+    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
+    const until = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+    const variants = previousState.flatMap((i) =>
+      i.variants.map((v) => ({
+        variantId: v.id,
+        availability: 'sold_out' as const,
+        soldOutUntil: until,
+      })),
+    );
+    await bulkSetSoldOut.mutateAsync({ items: variants });
+    setSelectedIds([]);
+
+    notify({
+      title: catalogWords.bulkUpdated(ids.length),
+      tone: 'success',
+      action: {
+        label: catalogWords.undo,
+        onClick: () => {
+          const rollback = previousState.flatMap((i) =>
+            i.variants.map((v) => ({
+              variantId: v.id,
+              availability: v.availability,
+              soldOutUntil: v.soldOutUntil,
+            })),
+          );
+          bulkSetSoldOut.mutate({ items: rollback });
+        },
+      },
+    });
+  };
+
+  const handleBulkBackOn = async (ids: string[]) => {
+    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
+    const variants = previousState.flatMap((i) =>
+      i.variants.map((v) => ({
+        variantId: v.id,
+        availability: 'available' as const,
+        soldOutUntil: null,
+      })),
+    );
+    await bulkSetSoldOut.mutateAsync({ items: variants });
+    setSelectedIds([]);
+
+    notify({
+      title: catalogWords.bulkUpdated(ids.length),
+      tone: 'success',
+      action: {
+        label: catalogWords.undo,
+        onClick: () => {
+          const rollback = previousState.flatMap((i) =>
+            i.variants.map((v) => ({
+              variantId: v.id,
+              availability: v.availability,
+              soldOutUntil: v.soldOutUntil,
+            })),
+          );
+          bulkSetSoldOut.mutate({ items: rollback });
+        },
+      },
+    });
+  };
+
+  const handleBulkHide = async (ids: string[]) => {
+    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
+    await bulkSetStatus.mutateAsync({ itemIds: ids, status: 'hidden' });
+    setSelectedIds([]);
+
+    notify({
+      title: catalogWords.bulkUpdated(ids.length),
+      tone: 'success',
+      action: {
+        label: catalogWords.undo,
+        onClick: () => {
+          previousState.forEach((item) => {
+            setStatus.mutate({ id: item.id, status: item.status });
+          });
+        },
+      },
+    });
+  };
+
+  const handleBulkShow = async (ids: string[]) => {
+    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
+    await bulkSetStatus.mutateAsync({ itemIds: ids, status: 'active' });
+    setSelectedIds([]);
+
+    notify({
+      title: catalogWords.bulkUpdated(ids.length),
+      tone: 'success',
+      action: {
+        label: catalogWords.undo,
+        onClick: () => {
+          previousState.forEach((item) => {
+            setStatus.mutate({ id: item.id, status: item.status });
+          });
+        },
+      },
+    });
+  };
+
+  const handleBulkMoveCategory = async (ids: string[], targetCategoryId: string) => {
+    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
+    const catName = categories?.find((c) => c.id === targetCategoryId)?.name ?? 'Category';
+    await bulkMoveCategory.mutateAsync({ items: previousState, targetCategoryId });
+    setSelectedIds([]);
+
+    notify({
+      title: catalogWords.bulkMoved(ids.length, catName),
+      tone: 'success',
+      action: {
+        label: catalogWords.undo,
+        onClick: () => {
+          previousState.forEach((item) => {
+            saveItem.mutate({
+              id: item.id,
+              draft: {
+                categoryId: item.categoryId,
+                name: item.name,
+                description: item.description,
+                photos: item.photos,
+                axes: item.axes,
+                variants: item.variants,
+                optionGroupIds: item.optionGroupIds,
+                pairingIds: item.pairingIds,
+                featured: item.featured,
+                isNew: item.isNew,
+                status: item.status,
+              },
+            });
+          });
+        },
+      },
+    });
+  };
+
+  const handleBulkArchive = async (ids: string[]) => {
+    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
+    await bulkSetStatus.mutateAsync({ itemIds: ids, status: 'archived' });
+    setSelectedIds([]);
+
+    notify({
+      title: catalogWords.bulkArchived(ids.length),
+      tone: 'success',
+      action: {
+        label: catalogWords.undo,
+        onClick: () => {
+          previousState.forEach((item) => {
+            setStatus.mutate({ id: item.id, status: item.status });
+          });
+        },
+      },
+    });
+  };
+
+  const handlePopulateSamples = async () => {
+    if (!ownerSamples) return;
+    try {
+      await ownerSamples.applySamplePack({ slug, packSlug: slug });
+      void refetchItems();
+      void refetchCats();
+    } catch (err: unknown) {
+      console.error(err);
     }
   };
 
@@ -249,7 +584,7 @@ export function ItemsList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
       {/* Screen Reader Announcement for Drag */}
       <div aria-live="polite" className="sr-only">
         {announcement}
@@ -349,54 +684,87 @@ export function ItemsList() {
           ) : null}
         </div>
 
-        {/* Filter Pills & Actions */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-          <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-muted/60 p-1">
+        {/* Filter Pills, View Switch & Actions */}
+        <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1 sm:flex-nowrap sm:pb-0">
+          {/* Status Filters */}
+          <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
             <button
               type="button"
               onClick={() => setFilter('all')}
               className={cn(
-                'rounded-lg px-3 py-1 text-xs font-semibold transition-all',
+                'rounded-lg px-2.5 py-1 text-xs font-semibold transition-all',
                 filter === 'all'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {catalogWords.filterAll}
-              <span className="ml-1.5 font-mono text-xs opacity-80">{totalCount}</span>
+              <span className="ml-1 font-mono text-xs opacity-80">{totalCount}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setFilter('sold_out')}
               className={cn(
-                'rounded-lg px-3 py-1 text-xs font-semibold transition-all',
+                'rounded-lg px-2.5 py-1 text-xs font-semibold transition-all',
                 filter === 'sold_out'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {catalogWords.filterSoldOut}
-              <span className="ml-1.5 font-mono text-xs opacity-80">{soldOutCount}</span>
+              <span className="ml-1 font-mono text-xs opacity-80">{soldOutCount}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setFilter('hidden')}
               className={cn(
-                'rounded-lg px-3 py-1 text-xs font-semibold transition-all',
+                'rounded-lg px-2.5 py-1 text-xs font-semibold transition-all',
                 filter === 'hidden'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {catalogWords.filterHidden}
-              <span className="ml-1.5 font-mono text-xs opacity-80">{hiddenCount}</span>
+              <span className="ml-1 font-mono text-xs opacity-80">{hiddenCount}</span>
             </button>
           </div>
 
-          {/* Reorder Mode Button */}
-          {nonArchivedItems.length > 1 && (
+          {/* View Toggle: List / Grid / Table (Table hidden on phone) */}
+          <ToggleGroup
+            value={[view]}
+            onValueChange={(val) => {
+              const v = val[0];
+              if (v) handleViewChange(v);
+            }}
+            className="h-8 shrink-0 rounded-xl border border-border/80 bg-muted/50 p-0.5"
+          >
+            <ToggleGroupItem
+              value="list"
+              aria-label={catalogWords.viewList}
+              className="size-7 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs data-checked:bg-card data-checked:text-foreground data-checked:shadow-xs"
+            >
+              <ListIcon className="size-3.5" />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="grid"
+              aria-label={catalogWords.viewGrid}
+              className="size-7 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs data-checked:bg-card data-checked:text-foreground data-checked:shadow-xs"
+            >
+              <LayoutGridIcon className="size-3.5" />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="table"
+              aria-label={catalogWords.viewTable}
+              className="hidden size-7 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs data-checked:bg-card data-checked:text-foreground data-checked:shadow-xs md:inline-flex"
+            >
+              <TableIcon className="size-3.5" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+
+          {/* Reorder Mode Button (in list view) */}
+          {view === 'list' && nonArchivedItems.length > 1 && (
             <Button
               type="button"
               variant={isReordering ? 'default' : 'outline'}
@@ -422,7 +790,7 @@ export function ItemsList() {
         </div>
       </div>
 
-      {/* Main List Content */}
+      {/* Main Content Area */}
       {nonArchivedItems.length === 0 ? (
         <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 py-16 text-center">
           <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -448,15 +816,15 @@ export function ItemsList() {
             <Button
               variant="outline"
               size="sm"
-              className="text-xs"
-              onClick={handleStartWithSamples}
+              className="text-xs font-medium"
+              onClick={() => void handlePopulateSamples()}
             >
               {catalogWords.startWithSamples}
             </Button>
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-3 py-12 text-center">
+        <div className="space-y-3 py-12 text-center">
           <p className="text-sm font-medium text-foreground">
             {search ? catalogWords.noSearchResults(search) : 'No items match this filter.'}
           </p>
@@ -490,8 +858,39 @@ export function ItemsList() {
             ))}
           </div>
         </Sortable>
+      ) : view === 'table' ? (
+        /* TABLE VIEW (ReUI Data Grid) */
+        <ItemsTable
+          items={filteredItems}
+          categories={categories ?? []}
+          optionGroups={optionGroups}
+          selectedIds={selectedIds}
+          onToggleSelect={handleToggleSelect}
+          onSelectAll={handleSelectAll}
+          onReorder={handleReorderFromTable}
+          onEdit={handleEdit}
+          onDuplicate={handleDuplicate}
+          onToggleStatus={handleToggleStatus}
+          onSetSoldOut={handleSetSoldOut}
+          onArchive={handleArchive}
+          onDelete={handleDelete}
+        />
+      ) : view === 'grid' ? (
+        /* GRID VIEW (4:3 Photo Cards) */
+        <ItemsGrid
+          items={filteredItems}
+          categories={categories ?? []}
+          selectedIds={selectedIds}
+          onToggleSelect={handleToggleSelect}
+          onEdit={handleEdit}
+          onDuplicate={handleDuplicate}
+          onToggleStatus={handleToggleStatus}
+          onSetSoldOut={handleSetSoldOut}
+          onArchive={handleArchive}
+          onDelete={handleDelete}
+        />
       ) : (
-        /* Grouped Category Sections */
+        /* LIST VIEW (Grouped Category Sections) */
         <div className="space-y-8">
           {groupedSections.map(({ category, items }) => (
             <div key={category.id} className="space-y-3">
@@ -508,13 +907,99 @@ export function ItemsList() {
 
               <div className="space-y-2.5">
                 {items.map((item) => (
-                  <ItemRow key={item.id} item={item} optionGroups={optionGroups} />
+                  <ItemRow
+                    key={item.id}
+                    item={item}
+                    optionGroups={optionGroups}
+                    onMoveUp={() => {}}
+                    onMoveDown={() => {}}
+                  />
                 ))}
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Floating Action Bar when rows are selected */}
+      <ItemsActionBar
+        selectedIds={selectedIds}
+        categories={categories ?? []}
+        onClearSelection={() => setSelectedIds([])}
+        onBulkSoldOutToday={handleBulkSoldOutToday}
+        onBulkBackOn={handleBulkBackOn}
+        onBulkHide={handleBulkHide}
+        onBulkShow={handleBulkShow}
+        onBulkMoveCategory={handleBulkMoveCategory}
+        onBulkArchive={handleBulkArchive}
+      />
+
+      {/* Sold Out Options Dialog */}
+      <Dialog
+        open={soldOutTargetItem !== null}
+        onOpenChange={(open) => !open && setSoldOutTargetItem(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{catalogWords.soldOutTitle}</DialogTitle>
+            <DialogDescription>{catalogWords.soldOutDescription}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-3">
+            <button
+              type="button"
+              onClick={() => handleApplySoldOutChoice('today')}
+              className="flex w-full flex-col items-start gap-1 rounded-xl border border-border/80 bg-card p-3.5 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
+            >
+              <span className="text-sm font-semibold text-foreground">
+                {catalogWords.soldOutToday}
+              </span>
+              <span className="text-xs text-muted-foreground">{catalogWords.soldOutTodayDesc}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleApplySoldOutChoice('indefinite')}
+              className="flex w-full flex-col items-start gap-1 rounded-xl border border-border/80 bg-card p-3.5 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
+            >
+              <span className="text-sm font-semibold text-foreground">
+                {catalogWords.soldOutIndefinitely}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {catalogWords.soldOutIndefinitelyDesc}
+              </span>
+            </button>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setSoldOutTargetItem(null)}>
+              {catalogWords.cancel}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Alert Dialog */}
+      <AlertDialog
+        open={deleteTargetItem !== null}
+        onOpenChange={(open) => !open && setDeleteTargetItem(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{catalogWords.confirmDelete}</AlertDialogTitle>
+            <AlertDialogDescription>{catalogWords.confirmDeleteDescription}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
+            >
+              {catalogWords.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Sticky Mobile Add Item Button */}
       <div className="fixed right-0 bottom-16 left-0 z-30 border-t border-border/40 bg-background/80 p-3 backdrop-blur-md sm:hidden">
