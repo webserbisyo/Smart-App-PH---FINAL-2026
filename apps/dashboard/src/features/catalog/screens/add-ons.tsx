@@ -89,7 +89,7 @@ export function CatalogAddOnsScreen() {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-16">
+    <div className="flex min-h-full flex-col pb-16">
       <PageHeader
         title={words.screens.catalog.title(kind)}
         tabs={useCatalogTabs()}
@@ -98,19 +98,19 @@ export function CatalogAddOnsScreen() {
             type="button"
             variant="default"
             size="sm"
-            className="h-9 rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+            className="h-9 rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
             onClick={handleOpenAdd}
           >
-            <PlusIcon className="size-4 mr-1.5" />
+            <PlusIcon className="mr-1.5 size-4" />
             {words.screens.catalog.addAddOnGroup}
           </Button>
         }
       />
 
-      <div className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full space-y-4">
+      <div className="mx-auto w-full max-w-6xl flex-1 space-y-4 p-4 md:p-6">
         {/* Offline Banner */}
         {!isOnline && (
-          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-warning-soft border border-warning/20 text-warning-text text-xs">
+          <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
             <WifiOffIcon className="size-4 shrink-0" />
             <span>{words.screens.catalog.offlineNotice}</span>
           </div>
@@ -118,18 +118,15 @@ export function CatalogAddOnsScreen() {
 
         {/* Loading Skeleton */}
         {groupsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="p-5 rounded-2xl border border-border/60 bg-card space-y-4"
-              >
+              <div key={i} className="space-y-4 rounded-2xl border border-border/60 bg-card p-5">
                 <div className="space-y-2">
                   <Skeleton className="h-5 w-36" />
                   <Skeleton className="h-4 w-24" />
                 </div>
                 <Skeleton className="h-12 w-full rounded-xl" />
-                <div className="flex justify-between items-center pt-2">
+                <div className="flex items-center justify-between pt-2">
                   <Skeleton className="h-4 w-28" />
                   <Skeleton className="h-8 w-16" />
                 </div>
@@ -137,12 +134,12 @@ export function CatalogAddOnsScreen() {
             ))}
           </div>
         ) : groupsError ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto space-y-4">
-            <div className="size-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
+          <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 py-16 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <ListPlusIcon className="size-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-semibold text-foreground text-base">
+              <h3 className="text-base font-semibold text-foreground">
                 Failed to load add-on groups
               </h3>
               <p className="text-xs text-muted-foreground">
@@ -160,12 +157,12 @@ export function CatalogAddOnsScreen() {
             </Button>
           </div>
         ) : optionGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto space-y-4 border border-dashed border-border rounded-2xl p-8 bg-card/50">
-            <div className="size-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+          <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 rounded-2xl border border-dashed border-border bg-card/50 p-8 py-16 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <ListPlusIcon className="size-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-semibold text-foreground text-base">
+              <h3 className="text-base font-semibold text-foreground">
                 {words.screens.catalog.emptyAddOns}
               </h3>
               <p className="text-xs text-muted-foreground">
@@ -174,15 +171,15 @@ export function CatalogAddOnsScreen() {
             </div>
             <Button
               size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs"
+              className="bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
               onClick={handleOpenAdd}
             >
-              <PlusIcon className="size-3.5 mr-1" />
+              <PlusIcon className="mr-1 size-3.5" />
               {words.screens.catalog.addAddOnGroup}
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {optionGroups.map((group) => {
               const ruleLabel = groupRuleLabel(group.min, group.max);
               const usingItems = itemsUsingGroup.get(group.id) ?? [];
@@ -200,20 +197,20 @@ export function CatalogAddOnsScreen() {
                       handleOpenEdit(group);
                     }
                   }}
-                  className="group relative flex flex-col justify-between p-5 rounded-2xl border border-border/80 bg-card shadow-xs hover:border-primary/40 hover:shadow-sm transition-all duration-180 cursor-pointer text-left"
+                  className="group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-border/80 bg-card p-5 text-left shadow-xs transition-all duration-180 hover:border-primary/40 hover:shadow-sm"
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h3 className="font-bold text-base text-foreground tracking-tight truncate group-hover:text-primary transition-colors">
+                        <h3 className="truncate text-base font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
                           {group.name}
                         </h3>
-                        <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                        <p className="mt-0.5 text-xs font-medium text-muted-foreground">
                           {ruleLabel}
                         </p>
                       </div>
 
-                      <Badge variant="outline" className="text-xs font-mono shrink-0">
+                      <Badge variant="outline" className="shrink-0 font-mono text-xs">
                         {words.screens.catalog.optionCount(group.options.length)}
                       </Badge>
                     </div>
@@ -223,27 +220,27 @@ export function CatalogAddOnsScreen() {
                       {group.options.slice(0, 5).map((opt) => (
                         <span
                           key={opt.name}
-                          className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted/50 border border-border/40 text-xs text-muted-foreground"
+                          className="inline-flex items-center rounded-md border border-border/40 bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground"
                         >
                           {opt.name}
                           {opt.soldOut && (
-                            <span className="ml-1 text-xs text-warning-text font-bold uppercase">
+                            <span className="ml-1 text-xs font-bold text-warning-text uppercase">
                               (Out)
                             </span>
                           )}
                         </span>
                       ))}
                       {group.options.length > 5 && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-muted/30 text-xs text-muted-foreground">
+                        <span className="inline-flex items-center rounded-md bg-muted/30 px-1.5 py-0.5 text-xs text-muted-foreground">
                           +{group.options.length - 5} more
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-5 pt-4 border-t border-border/50 flex items-center justify-between gap-3">
+                  <div className="mt-5 flex items-center justify-between gap-3 border-t border-border/50 pt-4">
                     {/* Used By Thumbnails */}
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
                       {usingItems.length > 0 ? (
                         <div className="flex items-center gap-2">
                           <AvatarGroup size={24} max={3}>
@@ -255,19 +252,19 @@ export function CatalogAddOnsScreen() {
                               </Avatar>
                             ))}
                           </AvatarGroup>
-                          <span className="text-xs text-muted-foreground font-mono truncate">
+                          <span className="truncate font-mono text-xs text-muted-foreground">
                             {words.screens.catalog.usedByCount(usedByCount)}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground font-mono">
+                        <span className="font-mono text-xs text-muted-foreground">
                           {words.screens.catalog.usedByCount(0)}
                         </span>
                       )}
                     </div>
 
                     {/* Card Actions */}
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex shrink-0 items-center gap-1">
                       <Button
                         type="button"
                         variant="ghost"
@@ -302,11 +299,7 @@ export function CatalogAddOnsScreen() {
         )}
       </div>
 
-      <AddOnSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        group={selectedGroup}
-      />
+      <AddOnSheet open={sheetOpen} onOpenChange={setSheetOpen} group={selectedGroup} />
 
       <DevScenarioPanel />
     </div>

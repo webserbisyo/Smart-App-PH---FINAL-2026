@@ -50,13 +50,10 @@ export function DevScenarioPanel() {
   };
 
   const hasOverrides =
-    scenario.latency !== 'none' ||
-    scenario.fail !== null ||
-    scenario.empty ||
-    scenario.offline;
+    scenario.latency !== 'none' || scenario.fail !== null || scenario.empty || scenario.offline;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed right-4 bottom-4 z-50">
       {!isOpen ? (
         <Button
           type="button"
@@ -64,8 +61,10 @@ export function DevScenarioPanel() {
           variant="outline"
           onClick={() => setIsOpen(true)}
           className={cn(
-            'shadow-lg backdrop-blur-md text-xs font-mono gap-1.5 h-8',
-            hasOverrides ? 'bg-warning-soft border-warning/50 text-warning-text' : 'bg-background/90',
+            'h-8 gap-1.5 font-mono text-xs shadow-lg backdrop-blur-md',
+            hasOverrides
+              ? 'border-warning/50 bg-warning-soft text-warning-text'
+              : 'bg-background/90',
           )}
         >
           <BugIcon className="size-3.5" />
@@ -73,9 +72,9 @@ export function DevScenarioPanel() {
           {hasOverrides && <span className="size-1.5 rounded-full bg-warning" />}
         </Button>
       ) : (
-        <div className="w-64 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-3 shadow-xl space-y-3 text-xs">
+        <div className="w-64 space-y-3 rounded-xl border border-border/80 bg-background/95 p-3 text-xs shadow-xl backdrop-blur-md">
           <div className="flex items-center justify-between border-b border-border/40 pb-2">
-            <span className="font-semibold text-foreground flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5 font-semibold text-foreground">
               <BugIcon className="size-3.5 text-primary" />
               Dev Scenarios
             </span>
@@ -93,14 +92,17 @@ export function DevScenarioPanel() {
               type="button"
               onClick={handleToggleSlow}
               className={cn(
-                'w-full flex items-center justify-between p-2 rounded-lg border text-left transition-colors',
+                'flex w-full items-center justify-between rounded-lg border p-2 text-left transition-colors',
                 scenario.latency === 'slow'
                   ? 'border-warning/50 bg-warning-soft font-semibold text-warning-text'
                   : 'border-border/40 hover:bg-muted/30',
               )}
             >
               <span>Slow Latency (2s)</span>
-              <Badge variant={scenario.latency === 'slow' ? 'default' : 'outline'} className="text-xs">
+              <Badge
+                variant={scenario.latency === 'slow' ? 'default' : 'outline'}
+                className="text-xs"
+              >
                 {scenario.latency === 'slow' ? 'ON' : 'OFF'}
               </Badge>
             </button>
@@ -109,14 +111,17 @@ export function DevScenarioPanel() {
               type="button"
               onClick={handleToggleError}
               className={cn(
-                'w-full flex items-center justify-between p-2 rounded-lg border text-left transition-colors',
+                'flex w-full items-center justify-between rounded-lg border p-2 text-left transition-colors',
                 scenario.fail === 'catalog'
                   ? 'border-destructive/50 bg-destructive/10 font-semibold text-destructive'
                   : 'border-border/40 hover:bg-muted/30',
               )}
             >
               <span>Catalog Error (500)</span>
-              <Badge variant={scenario.fail === 'catalog' ? 'destructive' : 'outline'} className="text-xs">
+              <Badge
+                variant={scenario.fail === 'catalog' ? 'destructive' : 'outline'}
+                className="text-xs"
+              >
                 {scenario.fail === 'catalog' ? 'ON' : 'OFF'}
               </Badge>
             </button>
@@ -125,7 +130,7 @@ export function DevScenarioPanel() {
               type="button"
               onClick={handleToggleEmpty}
               className={cn(
-                'w-full flex items-center justify-between p-2 rounded-lg border text-left transition-colors',
+                'flex w-full items-center justify-between rounded-lg border p-2 text-left transition-colors',
                 scenario.empty
                   ? 'border-primary/50 bg-primary/10 font-semibold text-primary'
                   : 'border-border/40 hover:bg-muted/30',
@@ -141,7 +146,7 @@ export function DevScenarioPanel() {
               type="button"
               onClick={handleToggleOffline}
               className={cn(
-                'w-full flex items-center justify-between p-2 rounded-lg border text-left transition-colors',
+                'flex w-full items-center justify-between rounded-lg border p-2 text-left transition-colors',
                 scenario.offline
                   ? 'border-destructive/50 bg-destructive/10 font-semibold text-destructive'
                   : 'border-border/40 hover:bg-muted/30',
@@ -160,7 +165,7 @@ export function DevScenarioPanel() {
               variant="outline"
               size="sm"
               onClick={handleReset}
-              className="w-full text-xs h-7"
+              className="h-7 w-full text-xs"
             >
               Reset to Normal
             </Button>

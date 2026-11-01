@@ -172,7 +172,9 @@ export function ItemsList() {
     if (!moved) return;
     reordered.splice(targetIndex, 0, moved);
 
-    setAnnouncement(`Moved ${item.name} to position ${targetIndex + 1} of ${nonArchivedItems.length}`);
+    setAnnouncement(
+      `Moved ${item.name} to position ${targetIndex + 1} of ${nonArchivedItems.length}`,
+    );
     saveSortOrder.mutate({ kind: 'item', ids: reordered.map((i) => i.id) });
   };
 
@@ -200,14 +202,14 @@ export function ItemsList() {
           <Skeleton className="h-20 rounded-xl" />
           <Skeleton className="h-20 rounded-xl" />
         </div>
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <Skeleton className="h-10 w-72 rounded-xl" />
           <Skeleton className="h-10 w-32 rounded-xl" />
         </div>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-3.5 p-3.5 rounded-2xl border bg-card">
-              <Skeleton className="size-14 rounded-xl shrink-0" />
+            <div key={i} className="flex items-center gap-3.5 rounded-2xl border bg-card p-3.5">
+              <Skeleton className="size-14 shrink-0 rounded-xl" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-48" />
                 <Skeleton className="h-3 w-28" />
@@ -222,17 +224,13 @@ export function ItemsList() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto space-y-4">
-        <div className="size-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
+      <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 py-16 text-center">
+        <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
           <RefreshCwIcon className="size-6" />
         </div>
         <div className="space-y-1">
-          <h3 className="font-semibold text-foreground text-base">
-            Failed to load catalog
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {errorWords(errorCodeOf(error))}
-          </p>
+          <h3 className="text-base font-semibold text-foreground">Failed to load catalog</h3>
+          <p className="text-xs text-muted-foreground">{errorWords(errorCodeOf(error))}</p>
         </div>
         <Button
           variant="outline"
@@ -259,18 +257,18 @@ export function ItemsList() {
 
       {/* Offline Banner */}
       {!isOnline && (
-        <div className="flex items-center gap-2.5 p-3 rounded-xl bg-warning-soft border border-warning/20 text-warning-text text-xs">
+        <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
           <WifiOffIcon className="size-4 shrink-0" />
           <span>{words.screens.catalog.offlineNotice}</span>
         </div>
       )}
 
       {/* Top Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <button
           type="button"
           onClick={() => setFilter('all')}
-          className="text-left cursor-pointer transition-opacity active:opacity-90"
+          className="cursor-pointer text-left transition-opacity active:opacity-90"
         >
           <Stat
             className={cn(
@@ -281,7 +279,7 @@ export function ItemsList() {
             )}
           >
             <StatLabel>{words.screens.catalog.statTotalItems(kind)}</StatLabel>
-            <StatValue className="text-2xl font-bold font-mono tracking-tight text-foreground">
+            <StatValue className="font-mono text-2xl font-bold tracking-tight text-foreground">
               {totalCount}
             </StatValue>
           </Stat>
@@ -290,7 +288,7 @@ export function ItemsList() {
         <button
           type="button"
           onClick={() => setFilter(filter === 'sold_out' ? 'all' : 'sold_out')}
-          className="text-left cursor-pointer transition-opacity active:opacity-90"
+          className="cursor-pointer text-left transition-opacity active:opacity-90"
         >
           <Stat
             className={cn(
@@ -301,7 +299,7 @@ export function ItemsList() {
             )}
           >
             <StatLabel>{words.screens.catalog.statSoldOut}</StatLabel>
-            <StatValue className="text-2xl font-bold font-mono tracking-tight text-warning-text">
+            <StatValue className="font-mono text-2xl font-bold tracking-tight text-warning-text">
               {soldOutCount}
             </StatValue>
           </Stat>
@@ -310,7 +308,7 @@ export function ItemsList() {
         <button
           type="button"
           onClick={() => setFilter(filter === 'hidden' ? 'all' : 'hidden')}
-          className="text-left cursor-pointer transition-opacity active:opacity-90"
+          className="cursor-pointer text-left transition-opacity active:opacity-90"
         >
           <Stat
             className={cn(
@@ -321,7 +319,7 @@ export function ItemsList() {
             )}
           >
             <StatLabel>{words.screens.catalog.statHidden}</StatLabel>
-            <StatValue className="text-2xl font-bold font-mono tracking-tight text-muted-foreground">
+            <StatValue className="font-mono text-2xl font-bold tracking-tight text-muted-foreground">
               {hiddenCount}
             </StatValue>
           </Stat>
@@ -329,14 +327,14 @@ export function ItemsList() {
       </div>
 
       {/* Search & Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+      <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
         {/* Search Input with Clear Button */}
-        <div className="relative flex-1 max-w-md">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+        <div className="relative max-w-md flex-1">
+          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
             placeholder={words.screens.catalog.searchPlaceholder(kind)}
-            className="pl-9 pr-9 h-10 rounded-xl bg-card border-border/80 text-sm"
+            className="h-10 rounded-xl border-border/80 bg-card pr-9 pl-9 text-sm"
             onChange={(e) => setSearch(e.target.value)}
           />
           {search ? (
@@ -344,7 +342,7 @@ export function ItemsList() {
               type="button"
               aria-label={words.screens.catalog.clearSearch}
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-full"
+              className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
             >
               <XIcon className="size-4" />
             </button>
@@ -353,47 +351,47 @@ export function ItemsList() {
 
         {/* Filter Pills & Actions */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 border border-border/60">
+          <div className="flex items-center gap-1.5 rounded-xl border border-border/60 bg-muted/60 p-1">
             <button
               type="button"
               onClick={() => setFilter('all')}
               className={cn(
-                'px-3 py-1 rounded-lg text-xs font-semibold transition-all',
+                'rounded-lg px-3 py-1 text-xs font-semibold transition-all',
                 filter === 'all'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {words.screens.catalog.filterAll}
-              <span className="ml-1.5 text-xs font-mono opacity-80">{totalCount}</span>
+              <span className="ml-1.5 font-mono text-xs opacity-80">{totalCount}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setFilter('sold_out')}
               className={cn(
-                'px-3 py-1 rounded-lg text-xs font-semibold transition-all',
+                'rounded-lg px-3 py-1 text-xs font-semibold transition-all',
                 filter === 'sold_out'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {words.screens.catalog.filterSoldOut}
-              <span className="ml-1.5 text-xs font-mono opacity-80">{soldOutCount}</span>
+              <span className="ml-1.5 font-mono text-xs opacity-80">{soldOutCount}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setFilter('hidden')}
               className={cn(
-                'px-3 py-1 rounded-lg text-xs font-semibold transition-all',
+                'rounded-lg px-3 py-1 text-xs font-semibold transition-all',
                 filter === 'hidden'
                   ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {words.screens.catalog.filterHidden}
-              <span className="ml-1.5 text-xs font-mono opacity-80">{hiddenCount}</span>
+              <span className="ml-1.5 font-mono text-xs opacity-80">{hiddenCount}</span>
             </button>
           </div>
 
@@ -403,10 +401,10 @@ export function ItemsList() {
               type="button"
               variant={isReordering ? 'default' : 'outline'}
               size="sm"
-              className="h-8 text-xs shrink-0"
+              className="h-8 shrink-0 text-xs"
               onClick={() => setIsReordering(!isReordering)}
             >
-              <ArrowUpDownIcon className="size-3.5 mr-1.5" />
+              <ArrowUpDownIcon className="mr-1.5 size-3.5" />
               {isReordering ? words.screens.catalog.doneReordering : words.screens.catalog.reorder}
             </Button>
           )}
@@ -415,10 +413,10 @@ export function ItemsList() {
           <Button
             type="button"
             size="sm"
-            className="hidden sm:inline-flex h-8 text-xs shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+            className="hidden h-8 shrink-0 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90 sm:inline-flex"
             onClick={() => navigate({ to: '/catalog/new' })}
           >
-            <PlusIcon className="size-3.5 mr-1.5" />
+            <PlusIcon className="mr-1.5 size-3.5" />
             {words.screens.catalog.addItem(kind)}
           </Button>
         </div>
@@ -426,12 +424,12 @@ export function ItemsList() {
 
       {/* Main List Content */}
       {nonArchivedItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto space-y-4">
-          <div className="size-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+        <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 py-16 text-center">
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <SparklesIcon className="size-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-semibold text-foreground text-base">
+            <h3 className="text-base font-semibold text-foreground">
               {words.screens.catalog.emptyItems(kind)}
             </h3>
             <p className="text-xs text-muted-foreground">
@@ -441,10 +439,10 @@ export function ItemsList() {
           <div className="flex items-center gap-2 pt-2">
             <Button
               size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold"
+              className="bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
               onClick={() => navigate({ to: '/catalog/new' })}
             >
-              <PlusIcon className="size-3.5 mr-1" />
+              <PlusIcon className="mr-1 size-3.5" />
               {words.screens.catalog.addItem(kind)}
             </Button>
             <Button
@@ -458,7 +456,7 @@ export function ItemsList() {
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center max-w-sm mx-auto space-y-3">
+        <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-3 py-12 text-center">
           <p className="text-sm font-medium text-foreground">
             {search ? words.screens.catalog.noSearchResults(search) : 'No items match this filter.'}
           </p>
@@ -499,10 +497,10 @@ export function ItemsList() {
             <div key={category.id} className="space-y-3">
               <div className="flex items-center justify-between border-b border-border/50 pb-2">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-bold text-foreground tracking-tight">
+                  <h2 className="text-sm font-bold tracking-tight text-foreground">
                     {category.name}
                   </h2>
-                  <Badge variant="secondary" className="text-xs py-0 px-1.5 font-mono">
+                  <Badge variant="secondary" className="px-1.5 py-0 font-mono text-xs">
                     {words.screens.catalog.itemCount(items.length)}
                   </Badge>
                 </div>
@@ -510,11 +508,7 @@ export function ItemsList() {
 
               <div className="space-y-2.5">
                 {items.map((item) => (
-                  <ItemRow
-                    key={item.id}
-                    item={item}
-                    optionGroups={optionGroups}
-                  />
+                  <ItemRow key={item.id} item={item} optionGroups={optionGroups} />
                 ))}
               </div>
             </div>
@@ -523,13 +517,13 @@ export function ItemsList() {
       )}
 
       {/* Sticky Mobile Add Item Button */}
-      <div className="sm:hidden fixed bottom-16 left-0 right-0 p-3 bg-background/80 backdrop-blur-md border-t border-border/40 z-30">
+      <div className="fixed right-0 bottom-16 left-0 z-30 border-t border-border/40 bg-background/80 p-3 backdrop-blur-md sm:hidden">
         <Button
           type="button"
-          className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md font-semibold text-sm"
+          className="h-11 w-full bg-primary text-sm font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
           onClick={() => navigate({ to: '/catalog/new' })}
         >
-          <PlusIcon className="size-4 mr-1.5" />
+          <PlusIcon className="mr-1.5 size-4" />
           {words.screens.catalog.addItem(kind)}
         </Button>
       </div>

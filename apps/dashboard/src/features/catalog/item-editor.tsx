@@ -350,9 +350,9 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto pb-28">
+    <div className="mx-auto max-w-5xl pb-28">
       {/* Header Back & Title */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="mb-6 flex items-center gap-3">
         <Button
           type="button"
           variant="ghost"
@@ -369,23 +369,25 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
               : words.screens.catalog.newTitle(kind)}
           </h1>
           <p className="text-xs text-muted-foreground">
-            {initialItem ? 'Update details, prices and options.' : 'Create a new item in your catalog.'}
+            {initialItem
+              ? 'Update details, prices and options.'
+              : 'Create a new item in your catalog.'}
           </p>
         </div>
       </div>
 
       {errorMsg && (
-        <div className="mb-6 rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
+        <div className="mb-6 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive">
           {errorMsg}
         </div>
       )}
 
       {/* Main Layout: 720px Form + Sticky Preview Column */}
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
+      <div className="flex flex-col items-start gap-8 lg:flex-row">
         {/* Form Column */}
         <form onSubmit={handleSave} className="w-full max-w-3xl space-y-6">
           {/* Photos Section */}
-          <div className="p-5 rounded-2xl border border-border/60 bg-card shadow-xs">
+          <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <PhotoUploadSection
               photos={photos}
               disabled={!isOnline}
@@ -397,7 +399,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           </div>
 
           {/* Basics Section */}
-          <div className="p-5 rounded-2xl border border-border/60 bg-card shadow-xs space-y-4">
+          <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
                 {words.screens.catalog.sectionBasics}
@@ -410,9 +412,9 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
             <div className="space-y-4 pt-1">
               {/* Name */}
               <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <Label htmlFor="item-name">{words.screens.catalog.nameLabel}</Label>
-                  <span className="text-xs text-muted-foreground font-mono">{name.length}/80</span>
+                  <span className="font-mono text-xs text-muted-foreground">{name.length}/80</span>
                 </div>
                 <Input
                   id="item-name"
@@ -429,9 +431,9 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
 
               {/* Description */}
               <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
+                <div className="flex items-center justify-between">
                   <Label htmlFor="item-desc">{words.screens.catalog.descLabel}</Label>
-                  <span className="text-xs text-muted-foreground font-mono">
+                  <span className="font-mono text-xs text-muted-foreground">
                     {description.length}/300
                   </span>
                 </div>
@@ -472,7 +474,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                 <div className="space-y-1.5">
                   <Label htmlFor="item-price">{words.screens.catalog.priceLabel}</Label>
                   <div className="relative max-w-xs">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-mono">
+                    <span className="absolute top-1/2 left-3 -translate-y-1/2 font-mono text-sm text-muted-foreground">
                       ₱
                     </span>
                     <Input
@@ -496,7 +498,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           </div>
 
           {/* Sizes & Colours (Variants) Section */}
-          <div className="p-5 rounded-2xl border border-border/60 bg-card shadow-xs space-y-4">
+          <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
@@ -514,7 +516,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                   className="h-8 text-xs"
                   onClick={handleAddAxis}
                 >
-                  <PlusIcon className="size-3.5 mr-1" />
+                  <PlusIcon className="mr-1 size-3.5" />
                   {words.screens.catalog.addAxis}
                 </Button>
               )}
@@ -523,11 +525,11 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
             {axes.map((axis, axisIndex) => (
               <div
                 key={axisIndex}
-                className="p-3.5 rounded-xl border border-border/60 bg-muted/20 space-y-3"
+                className="space-y-3 rounded-xl border border-border/60 bg-muted/20 p-3.5"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex-1 max-w-xs">
-                    <Label className="text-xs text-muted-foreground mb-1 block">Choice name</Label>
+                  <div className="max-w-xs flex-1">
+                    <Label className="mb-1 block text-xs text-muted-foreground">Choice name</Label>
                     <Input
                       value={axis.name}
                       placeholder="e.g. Size, Temperature, Colour"
@@ -557,7 +559,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                         className="h-6 text-xs text-primary"
                         onClick={() => handleAddAxisValue(axisIndex)}
                       >
-                        <PlusIcon className="size-3 mr-1" />
+                        <PlusIcon className="mr-1 size-3" />
                         Add value
                       </Button>
                     )}
@@ -567,11 +569,11 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                     {axis.values.map((val, valIndex) => (
                       <div
                         key={valIndex}
-                        className="flex items-center gap-1.5 p-1 px-2 rounded-lg bg-card border border-border/60 text-xs"
+                        className="flex items-center gap-1.5 rounded-lg border border-border/60 bg-card p-1 px-2 text-xs"
                       >
                         <input
                           value={val.name}
-                          className="bg-transparent border-none text-xs focus:outline-hidden w-20"
+                          className="w-20 border-none bg-transparent text-xs focus:outline-hidden"
                           onChange={(e) =>
                             handleUpdateAxisValueName(axisIndex, valIndex, e.target.value)
                           }
@@ -600,22 +602,22 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                   {variants.map((variant, vIdx) => (
                     <div
                       key={variant.id}
-                      className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/50 bg-card text-xs"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-card p-2.5 text-xs"
                     >
-                      <span className="font-semibold text-foreground min-w-28 truncate">
+                      <span className="min-w-28 truncate font-semibold text-foreground">
                         {variant.values.join(' · ')}
                       </span>
 
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-muted-foreground font-mono">₱</span>
+                          <span className="font-mono text-muted-foreground">₱</span>
                           <Input
                             type="number"
                             min={0}
                             step={1}
                             value={variant.price ? variant.price / 100 : ''}
                             placeholder="0"
-                            className="h-7 w-24 text-xs font-mono"
+                            className="h-7 w-24 font-mono text-xs"
                             onChange={(e) => {
                               const p = parseFloat(e.target.value) || 0;
                               updateVariant(vIdx, { price: Math.round(p * 100) });
@@ -644,7 +646,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           </div>
 
           {/* Add-ons Section */}
-          <div className="p-5 rounded-2xl border border-border/60 bg-card shadow-xs space-y-4">
+          <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
@@ -661,27 +663,27 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                 className="h-8 text-xs"
                 onClick={() => setAddOnSheetOpen(true)}
               >
-                <PlusIcon className="size-3.5 mr-1" />
+                <PlusIcon className="mr-1 size-3.5" />
                 {words.screens.catalog.createAddOnGroup}
               </Button>
             </div>
 
             {optionGroups.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic py-2">
+              <p className="py-2 text-xs text-muted-foreground italic">
                 No add-on groups created yet.
               </p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              <div className="grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-2">
                 {optionGroups.map((group) => {
                   const isChecked = optionGroupIds.includes(group.id);
                   return (
                     <label
                       key={group.id}
                       className={cn(
-                        'flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors select-none',
+                        'flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors select-none',
                         isChecked
                           ? 'border-primary/50 bg-primary/5 shadow-2xs'
-                          : 'border-border/60 hover:bg-muted/30 bg-card',
+                          : 'border-border/60 bg-card hover:bg-muted/30',
                       )}
                     >
                       <Checkbox
@@ -690,11 +692,12 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                         className="mt-0.5"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-foreground truncate">
+                        <p className="truncate text-xs font-semibold text-foreground">
                           {group.name}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {group.options.length} options · {group.min === 1 ? 'Required' : 'Optional'}
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {group.options.length} options ·{' '}
+                          {group.min === 1 ? 'Required' : 'Optional'}
                         </p>
                       </div>
                     </label>
@@ -705,7 +708,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           </div>
 
           {/* Goes Well With (Pairings) Section */}
-          <div className="p-5 rounded-2xl border border-border/60 bg-card shadow-xs space-y-4">
+          <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
                 {words.screens.catalog.sectionPairings} ({pairingIds.length}/4)
@@ -715,7 +718,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 max-h-56 overflow-y-auto">
+            <div className="grid max-h-56 grid-cols-1 gap-2 overflow-y-auto pt-1 sm:grid-cols-2">
               {allItems
                 .filter((i) => i.id !== initialItem?.id && i.status !== 'archived')
                 .map((pairItem) => {
@@ -726,22 +729,22 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                       type="button"
                       onClick={() => togglePairing(pairItem.id)}
                       className={cn(
-                        'flex items-center gap-2.5 p-2 rounded-xl border text-left transition-colors',
+                        'flex items-center gap-2.5 rounded-xl border p-2 text-left transition-colors',
                         isSelected
                           ? 'border-primary/50 bg-primary/5'
-                          : 'border-border/40 hover:bg-muted/40 bg-card',
+                          : 'border-border/40 bg-card hover:bg-muted/40',
                       )}
                     >
                       <CatalogPhoto photoRef={pairItem.photos[0]} alt={pairItem.name} size="sm" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-foreground truncate">
+                        <p className="truncate text-xs font-semibold text-foreground">
                           {pairItem.name}
                         </p>
-                        <p className="text-xs text-muted-foreground font-mono">
+                        <p className="font-mono text-xs text-muted-foreground">
                           {itemPriceLabel(pairItem)}
                         </p>
                       </div>
-                      {isSelected && <CheckIcon className="size-4 text-primary shrink-0 mr-1" />}
+                      {isSelected && <CheckIcon className="mr-1 size-4 shrink-0 text-primary" />}
                     </button>
                   );
                 })}
@@ -749,7 +752,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           </div>
 
           {/* Show As Switches */}
-          <div className="p-5 rounded-2xl border border-border/60 bg-card shadow-xs space-y-4">
+          <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
                 {words.screens.catalog.sectionShowAs}
@@ -759,7 +762,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
               </p>
             </div>
 
-            <div className="space-y-4 pt-1 divide-y divide-border/40">
+            <div className="space-y-4 divide-y divide-border/40 pt-1">
               {/* Featured */}
               <div className="flex items-center justify-between pt-2 first:pt-0">
                 <div>
@@ -783,9 +786,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
               <div className="flex items-center justify-between pt-4">
                 <div>
                   <Label className="text-xs font-semibold">{words.screens.catalog.newLabel}</Label>
-                  <p className="text-xs text-muted-foreground">
-                    {words.screens.catalog.newDesc}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{words.screens.catalog.newDesc}</p>
                 </div>
                 <Switch
                   checked={isNew}
@@ -819,7 +820,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
 
           {/* Archive / Delete Danger Zone (for existing items) */}
           {initialItem && (
-            <div className="p-5 rounded-2xl border border-destructive/20 bg-destructive/5 space-y-3">
+            <div className="space-y-3 rounded-2xl border border-destructive/20 bg-destructive/5 p-5">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-xs font-semibold text-destructive">
@@ -837,10 +838,10 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="border-destructive/30 text-destructive hover:bg-destructive/10 text-xs shrink-0"
+                    className="shrink-0 border-destructive/30 text-xs text-destructive hover:bg-destructive/10"
                     onClick={handleArchive}
                   >
-                    <ArchiveIcon className="size-3.5 mr-1.5" />
+                    <ArchiveIcon className="mr-1.5 size-3.5" />
                     {words.screens.catalog.archive}
                   </Button>
                 ) : (
@@ -848,10 +849,10 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                     type="button"
                     variant="destructive"
                     size="sm"
-                    className="text-xs shrink-0"
+                    className="shrink-0 text-xs"
                     onClick={() => setDeleteConfirmOpen(true)}
                   >
-                    <Trash2Icon className="size-3.5 mr-1.5" />
+                    <Trash2Icon className="mr-1.5 size-3.5" />
                     {words.screens.catalog.delete}
                   </Button>
                 )}
@@ -860,7 +861,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           )}
 
           {/* Sticky Save Bar */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border/50 z-40 flex items-center justify-end gap-3 shadow-lg">
+          <div className="fixed right-0 bottom-0 left-0 z-40 flex items-center justify-end gap-3 border-t border-border/50 bg-background/90 p-4 shadow-lg backdrop-blur-md">
             <Button
               type="button"
               variant="outline"
@@ -872,7 +873,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
             <Button
               type="submit"
               disabled={saveItem.isPending || !isOnline}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-28 font-semibold"
+              className="min-w-28 bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
             >
               {saveItem.isPending ? words.screens.catalog.saving : words.screens.catalog.save}
             </Button>
@@ -880,49 +881,49 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
         </form>
 
         {/* Sticky Desktop Phone Preview Column */}
-        <div className="hidden lg:block w-80 sticky top-20 shrink-0">
-          <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm space-y-4">
+        <div className="sticky top-20 hidden w-80 shrink-0 lg:block">
+          <div className="space-y-4 rounded-2xl border border-border/80 bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-border/40 pb-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 {words.screens.catalog.previewHeading}
               </span>
               <SparklesIcon className="size-4 text-primary" />
             </div>
 
             {/* Simulated Phone Card */}
-            <div className="rounded-xl border border-border/60 overflow-hidden bg-background shadow-xs">
-              <div className="h-44 w-full relative bg-muted">
+            <div className="overflow-hidden rounded-xl border border-border/60 bg-background shadow-xs">
+              <div className="relative h-44 w-full bg-muted">
                 <CatalogPhoto
                   photoRef={photos[0]}
                   alt="Preview"
                   size="lg"
-                  className="w-full h-full rounded-none"
+                  className="h-full w-full rounded-none"
                 />
                 <div className="absolute top-2 left-2 flex gap-1">
                   {featured && (
-                    <Badge variant="default" className="text-xs py-0 px-1 font-bold">
+                    <Badge variant="default" className="px-1 py-0 text-xs font-bold">
                       FEATURED
                     </Badge>
                   )}
                   {isNew && (
-                    <Badge variant="secondary" className="text-xs py-0 px-1 font-bold">
+                    <Badge variant="secondary" className="px-1 py-0 text-xs font-bold">
                       NEW
                     </Badge>
                   )}
                 </div>
               </div>
 
-              <div className="p-3 space-y-2">
-                <div className="flex justify-between items-start gap-2">
-                  <h4 className="font-semibold text-sm text-foreground leading-tight">
+              <div className="space-y-2 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="text-sm leading-tight font-semibold text-foreground">
                     {name || 'Item Name'}
                   </h4>
-                  <span className="font-mono font-bold text-xs shrink-0">
+                  <span className="shrink-0 font-mono text-xs font-bold">
                     {itemPriceLabel(previewItem)}
                   </span>
                 </div>
 
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="line-clamp-2 text-xs text-muted-foreground">
                   {description || 'Item description will appear here.'}
                 </p>
 
@@ -940,11 +941,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
       </div>
 
       {/* Add-on Creation Sheet */}
-      <AddOnSheet
-        open={addOnSheetOpen}
-        onOpenChange={setAddOnSheetOpen}
-        group={null}
-      />
+      <AddOnSheet open={addOnSheetOpen} onOpenChange={setAddOnSheetOpen} group={null} />
 
       {/* Delete Confirmation Alert Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

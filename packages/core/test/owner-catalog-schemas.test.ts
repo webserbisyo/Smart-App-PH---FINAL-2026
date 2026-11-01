@@ -20,7 +20,15 @@ describe('owner catalog schemas', () => {
       name: 'Classic Burger',
       description: 'Juicy patty with fresh lettuce',
       photos: ['demo:kanto-smash/items/classic'],
-      axes: [{ name: 'Size', values: [{ name: 'Regular', photo: null }, { name: 'Double', photo: null }] }],
+      axes: [
+        {
+          name: 'Size',
+          values: [
+            { name: 'Regular', photo: null },
+            { name: 'Double', photo: null },
+          ],
+        },
+      ],
       variants: [
         {
           id: 'var_1',
@@ -165,7 +173,9 @@ describe('owner catalog schemas', () => {
 
   it('errorWords resolves category_not_empty and item_has_orders', () => {
     expect(errorWords('category_not_empty')).toBe('Move its items to another category first.');
-    expect(errorWords('item_has_orders')).toBe('This item has past orders. Hide it instead of removing.');
+    expect(errorWords('item_has_orders')).toBe(
+      'This item has past orders. Hide it instead of removing.',
+    );
   });
 
   it('pure helpers: itemPriceLabel and groupRuleLabel format as expected', () => {

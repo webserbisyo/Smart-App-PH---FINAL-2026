@@ -42,7 +42,7 @@ export function CatalogPhoto({ photoRef, alt, size = 'md', className }: CatalogP
     return (
       <div
         className={cn(
-          'flex shrink-0 items-center justify-center bg-muted/60 text-muted-foreground border border-border/40',
+          'flex shrink-0 items-center justify-center border border-border/40 bg-muted/60 text-muted-foreground',
           sizeClasses,
           className,
         )}
@@ -58,7 +58,7 @@ export function CatalogPhoto({ photoRef, alt, size = 'md', className }: CatalogP
       src={src}
       alt={alt}
       loading="lazy"
-      className={cn('shrink-0 object-cover border border-border/40', sizeClasses, className)}
+      className={cn('shrink-0 border border-border/40 object-cover', sizeClasses, className)}
     />
   );
 }

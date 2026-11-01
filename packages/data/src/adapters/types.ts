@@ -152,4 +152,3 @@ export interface DataAdapters {
   ownerSamples: OwnerSamplesAdapter;
   ownerCatalog: OwnerCatalogAdapter;
 }
-

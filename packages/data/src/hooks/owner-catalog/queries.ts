@@ -20,7 +20,7 @@ export function useOwnerItems() {
 
 export function useOwnerItem(id: string | null | undefined) {
   const { data: items, isLoading, error, refetch } = useOwnerItems();
-  const item = id && items ? items.find((i) => i.id === id) ?? null : null;
+  const item = id && items ? (items.find((i) => i.id === id) ?? null) : null;
   return { data: item, isLoading, error, refetch };
 }
 
@@ -34,6 +34,6 @@ export function useOwnerOptionGroups() {
 
 export function useOwnerOptionGroup(id: string | null | undefined) {
   const { data: groups, isLoading, error, refetch } = useOwnerOptionGroups();
-  const group = id && groups ? groups.find((g) => g.id === id) ?? null : null;
+  const group = id && groups ? (groups.find((g) => g.id === id) ?? null) : null;
   return { data: group, isLoading, error, refetch };
 }

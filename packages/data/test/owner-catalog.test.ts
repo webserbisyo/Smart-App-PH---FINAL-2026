@@ -189,9 +189,7 @@ describe('ownerCatalog HTTP API adapter', () => {
     // Test listCategories
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => [
-        { id: 'cat_1', name: 'Burgers', icon: 'burger', sort: 0 },
-      ],
+      json: async () => [{ id: 'cat_1', name: 'Burgers', icon: 'burger', sort: 0 }],
     });
     const categories = await adapter.listCategories();
     expect(categories.length).toBe(1);

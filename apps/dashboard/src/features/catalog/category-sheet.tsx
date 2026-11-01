@@ -108,29 +108,27 @@ function CategorySheetForm({
 
   return (
     <>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto flex flex-col">
+      <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>
             {category ? words.screens.catalog.editCategory : words.screens.catalog.addCategory}
           </SheetTitle>
-          <SheetDescription>
-            Organize your items into customer-facing categories.
-          </SheetDescription>
+          <SheetDescription>Organize your items into customer-facing categories.</SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSave} className="flex-1 flex flex-col justify-between mt-6 space-y-6">
+        <form onSubmit={handleSave} className="mt-6 flex flex-1 flex-col justify-between space-y-6">
           <div className="space-y-5">
             {errorMsg && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-2.5 text-xs text-destructive">
+              <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
                 {errorMsg}
               </div>
             )}
 
             {/* Name */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <Label htmlFor="category-name">{words.screens.catalog.categoryNameLabel}</Label>
-                <span className="text-xs text-muted-foreground font-mono">{name.length}/40</span>
+                <span className="font-mono text-xs text-muted-foreground">{name.length}/40</span>
               </div>
               <Input
                 id="category-name"
@@ -145,7 +143,7 @@ function CategorySheetForm({
             {/* Icon Picker */}
             <div className="space-y-2">
               <Label>{words.screens.catalog.categoryIconLabel}</Label>
-              <div className="grid grid-cols-6 gap-2 p-3 rounded-xl border border-border/80 bg-muted/20 max-h-56 overflow-y-auto">
+              <div className="grid max-h-56 grid-cols-6 gap-2 overflow-y-auto rounded-xl border border-border/80 bg-muted/20 p-3">
                 {ICON_KEYS.map((key) => {
                   const isSelected = selectedIcon === key;
                   const src = `${env.VITE_STOREFRONT_URL.replace(/\/+$/, '')}${iconPath(key)}`;
@@ -157,18 +155,13 @@ function CategorySheetForm({
                       aria-label={`Select icon ${key}`}
                       onClick={() => setSelectedIcon(key)}
                       className={cn(
-                        'size-11 rounded-xl flex items-center justify-center p-1.5 transition-all border',
+                        'flex size-11 items-center justify-center rounded-xl border p-1.5 transition-all',
                         isSelected
                           ? 'border-primary bg-primary/10 shadow-xs ring-2 ring-primary/30'
-                          : 'border-border/40 hover:bg-muted/60 bg-card',
+                          : 'border-border/40 bg-card hover:bg-muted/60',
                       )}
                     >
-                      <img
-                        src={src}
-                        alt={key}
-                        className="size-6 object-contain"
-                        loading="lazy"
-                      />
+                      <img src={src} alt={key} className="size-6 object-contain" loading="lazy" />
                     </button>
                   );
                 })}
@@ -176,7 +169,7 @@ function CategorySheetForm({
             </div>
           </div>
 
-          <SheetFooter className="pt-4 border-t border-border flex flex-row items-center justify-between gap-2">
+          <SheetFooter className="flex flex-row items-center justify-between gap-2 border-t border-border pt-4">
             {category ? (
               <Button
                 type="button"
@@ -188,22 +181,19 @@ function CategorySheetForm({
               >
                 {words.screens.catalog.delete}
               </Button>
-            ) : <span />}
+            ) : (
+              <span />
+            )}
 
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onClose}
-              >
+              <Button type="button" variant="outline" size="sm" onClick={onClose}>
                 {words.screens.catalog.cancel}
               </Button>
               <Button
                 type="submit"
                 size="sm"
                 disabled={saveCategory.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
               >
                 {saveCategory.isPending ? words.screens.catalog.saving : words.screens.catalog.save}
               </Button>
@@ -225,7 +215,7 @@ function CategorySheetForm({
             <AlertDialogCancel>{words.screens.catalog.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold"
+              className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
             >
               {words.screens.catalog.delete}
             </AlertDialogAction>

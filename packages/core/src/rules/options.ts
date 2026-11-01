@@ -165,4 +165,3 @@ export function variantLabel(variant: Pick<Variant, 'values'>): string | null {
 export function groupRuleLabel(min: number, max: number): string {
   return words.screens.catalog.ruleWording(min, max);
 }
-

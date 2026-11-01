@@ -59,9 +59,9 @@ export const OptionGroupBaseSchema = z.object({
   options: z.array(OptionSchema).min(1).max(20),
 });
 
-export const OptionGroupSchema = OptionGroupBaseSchema
-  .refine((g) => g.min <= g.max, { message: 'min must be at most max' })
-  .refine((g) => g.min <= g.options.length, { message: 'min is more than the options' });
+export const OptionGroupSchema = OptionGroupBaseSchema.refine((g) => g.min <= g.max, {
+  message: 'min must be at most max',
+}).refine((g) => g.min <= g.options.length, { message: 'min is more than the options' });
 export type OptionGroup = z.infer<typeof OptionGroupSchema>;
 
 export const OwnerOptionGroupSchema = OptionGroupBaseSchema.extend({
@@ -109,13 +109,14 @@ export const ItemBaseSchema = z.object({
   sample: z.boolean(),
 });
 
-export const ItemSchema = ItemBaseSchema
-  .refine((item) => item.variants.every((v) => v.values.length === item.axes.length), {
+export const ItemSchema = ItemBaseSchema.refine(
+  (item) => item.variants.every((v) => v.values.length === item.axes.length),
+  {
     message: 'Every variant needs one value per axis',
-  })
-  .refine((item) => !item.pairingIds.includes(item.id), {
-    message: 'An item cannot pair with itself',
-  });
+  },
+).refine((item) => !item.pairingIds.includes(item.id), {
+  message: 'An item cannot pair with itself',
+});
 export type Item = z.infer<typeof ItemSchema>;
 
 export const OwnerItemSchema = ItemBaseSchema.extend({
@@ -170,4 +171,3 @@ export const CatalogSchema = z.object({
   optionGroups: z.array(OptionGroupSchema),
 });
 export type Catalog = z.infer<typeof CatalogSchema>;
-

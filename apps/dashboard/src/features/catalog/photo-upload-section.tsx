@@ -25,11 +25,7 @@ import {
   CropperImage,
   type CropperAreaData,
 } from '@smartapp/ui/components/cropper';
-import {
-  Sortable,
-  SortableItem,
-  SortableItemHandle,
-} from '@smartapp/ui/components/reui/sortable';
+import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
 import { CatalogPhoto } from './catalog-photo.js';
 import { cn } from 'cn';
 
@@ -195,17 +191,13 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
           <h3 className="text-sm font-semibold text-foreground">
             {words.screens.catalog.sectionPhotos}
           </h3>
-          <p className="text-xs text-muted-foreground">
-            {words.screens.catalog.sectionPhotosDesc}
-          </p>
+          <p className="text-xs text-muted-foreground">{words.screens.catalog.sectionPhotosDesc}</p>
         </div>
-        <span className="text-xs text-muted-foreground font-mono">
-          {photos.length}/5 photos
-        </span>
+        <span className="font-mono text-xs text-muted-foreground">{photos.length}/5 photos</span>
       </div>
 
       {errorMsg && (
-        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-2.5 text-xs text-destructive">
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
           {errorMsg}
         </div>
       )}
@@ -241,13 +233,13 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
             if (e.dataTransfer.files) void handleFiles(e.dataTransfer.files);
           }}
           className={cn(
-            'flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-border/80',
-            'hover:border-primary/50 hover:bg-muted/20 transition-all cursor-pointer text-center space-y-2',
-            isCompressing && 'opacity-60 pointer-events-none',
+            'flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/80 p-6',
+            'cursor-pointer space-y-2 text-center transition-all hover:border-primary/50 hover:bg-muted/20',
+            isCompressing && 'pointer-events-none opacity-60',
           )}
         >
           {isCompressing ? (
-            <Loader2Icon className="size-8 text-primary animate-spin" />
+            <Loader2Icon className="size-8 animate-spin text-primary" />
           ) : (
             <UploadCloudIcon className="size-8 text-muted-foreground" />
           )}
@@ -255,9 +247,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
             <p className="text-sm font-medium text-foreground">
               {words.screens.catalog.photoDropzone}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {words.screens.catalog.photoMaxMb}
-            </p>
+            <p className="text-xs text-muted-foreground">{words.screens.catalog.photoMaxMb}</p>
           </div>
         </div>
       )}
@@ -266,15 +256,13 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
       {photos.length > 0 && (
         <div className="space-y-2">
           {photos.length > 1 && (
-            <p className="text-xs text-muted-foreground">Drag handles to set cover image (first photo):</p>
+            <p className="text-xs text-muted-foreground">
+              Drag handles to set cover image (first photo):
+            </p>
           )}
 
-          <Sortable
-            value={photos}
-            getItemValue={(photo) => photo}
-            onValueChange={onChange}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Sortable value={photos} getItemValue={(photo) => photo} onValueChange={onChange}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {photos.map((photo, index) => {
                 const meta = photoMeta.get(photo);
                 const isCover = index === 0;
@@ -283,25 +271,30 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                   <SortableItem key={photo} value={photo}>
                     <div
                       className={cn(
-                        'relative flex items-center gap-3 p-3 rounded-xl border bg-card shadow-xs transition-shadow hover:shadow-sm',
+                        'relative flex items-center gap-3 rounded-xl border bg-card p-3 shadow-xs transition-shadow hover:shadow-sm',
                         isCover ? 'border-primary/50 bg-primary/5' : 'border-border/80',
                       )}
                     >
                       {/* Drag Handle */}
                       <SortableItemHandle
-                        className="text-muted-foreground hover:text-foreground cursor-grab p-1"
+                        className="cursor-grab p-1 text-muted-foreground hover:text-foreground"
                         aria-label={`Drag photo ${index + 1}`}
                       >
                         <GripVerticalIcon className="size-4" />
                       </SortableItemHandle>
 
                       {/* Photo Thumbnail */}
-                      <div className="relative size-16 shrink-0 rounded-lg overflow-hidden border border-border/60">
-                        <CatalogPhoto photoRef={photo} alt={`Photo ${index + 1}`} size="md" className="size-full rounded-lg" />
+                      <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-border/60">
+                        <CatalogPhoto
+                          photoRef={photo}
+                          alt={`Photo ${index + 1}`}
+                          size="md"
+                          className="size-full rounded-lg"
+                        />
                         {isCover && (
                           <Badge
                             variant="default"
-                            className="absolute -top-1.5 -left-1.5 px-1.5 py-0 text-xs uppercase font-bold tracking-wider"
+                            className="absolute -top-1.5 -left-1.5 px-1.5 py-0 text-xs font-bold tracking-wider uppercase"
                           >
                             Cover
                           </Badge>
@@ -309,22 +302,25 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                       </div>
 
                       {/* Meta & Status */}
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
                           {meta && (
                             <>
-                              <Badge variant="secondary" className="text-xs py-0 px-1 font-mono">
+                              <Badge variant="secondary" className="px-1 py-0 font-mono text-xs">
                                 {meta.format}
                               </Badge>
-                              <Badge variant="outline" className="text-xs py-0 px-1 font-mono">
-                                {formatSize(meta.originalBytes)} → {formatSize(meta.compressedBytes)}
+                              <Badge variant="outline" className="px-1 py-0 font-mono text-xs">
+                                {formatSize(meta.originalBytes)} →{' '}
+                                {formatSize(meta.compressedBytes)}
                               </Badge>
                             </>
                           )}
                         </div>
 
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
-                          {isCover ? 'Cover photo for customer view' : `Gallery photo #${index + 1}`}
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {isCover
+                            ? 'Cover photo for customer view'
+                            : `Gallery photo #${index + 1}`}
                         </p>
 
                         {/* Progress bar */}
@@ -340,7 +336,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                             <button
                               type="button"
                               onClick={() => void handleRetryUpload(photo)}
-                              className="font-semibold underline hover:no-underline flex items-center gap-1"
+                              className="flex items-center gap-1 font-semibold underline hover:no-underline"
                             >
                               <RefreshCwIcon className="size-3" />
                               Retry
@@ -350,7 +346,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                       </div>
 
                       {/* Photo Actions */}
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex shrink-0 items-center gap-1">
                         <Button
                           type="button"
                           variant="ghost"
@@ -388,7 +384,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
             <DialogTitle>{words.screens.catalog.photoCropSquare}</DialogTitle>
           </DialogHeader>
           {cropTarget && (
-            <div className="relative h-64 w-full bg-card rounded-lg overflow-hidden flex items-center justify-center border border-border">
+            <div className="relative flex h-64 w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
               <Cropper
                 aspectRatio={1}
                 crop={crop}
@@ -407,7 +403,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
             </Button>
             <Button
               type="button"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+              className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
               onClick={handleApplyCrop}
             >
               {words.screens.catalog.confirm}

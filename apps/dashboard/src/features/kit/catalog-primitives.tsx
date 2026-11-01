@@ -3,11 +3,7 @@ import { GripVerticalIcon, UploadCloudIcon } from 'lucide-react';
 import { Stat, StatLabel, StatValue } from '@smartapp/ui/components/stat';
 import { BadgeOverflow } from '@smartapp/ui/components/badge-overflow';
 import { Badge } from '@smartapp/ui/components/badge';
-import {
-  Sortable,
-  SortableItem,
-  SortableItemHandle,
-} from '@smartapp/ui/components/reui/sortable';
+import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
 import {
   FileUpload,
   FileUploadDropzone,
@@ -50,22 +46,22 @@ export function CatalogPrimitiveSections() {
         path="packages/ui/src/components/stat.tsx"
         usedIn="catalog items list header stats, kit"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl">
+        <div className="grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
           <Stat className="rounded-xl border border-border/80 bg-card p-3.5 shadow-xs">
-            <StatLabel className="text-xs text-muted-foreground font-medium">All items</StatLabel>
-            <StatValue className="text-2xl font-bold font-mono tracking-tight text-foreground">
+            <StatLabel className="text-xs font-medium text-muted-foreground">All items</StatLabel>
+            <StatValue className="font-mono text-2xl font-bold tracking-tight text-foreground">
               24
             </StatValue>
           </Stat>
           <Stat className="rounded-xl border border-border/80 bg-card p-3.5 shadow-xs">
-            <StatLabel className="text-xs text-muted-foreground font-medium">Sold out</StatLabel>
-            <StatValue className="text-2xl font-bold font-mono tracking-tight text-warning-text">
+            <StatLabel className="text-xs font-medium text-muted-foreground">Sold out</StatLabel>
+            <StatValue className="font-mono text-2xl font-bold tracking-tight text-warning-text">
               2
             </StatValue>
           </Stat>
           <Stat className="rounded-xl border border-border/80 bg-card p-3.5 shadow-xs">
-            <StatLabel className="text-xs text-muted-foreground font-medium">Hidden</StatLabel>
-            <StatValue className="text-2xl font-bold font-mono tracking-tight text-muted-foreground">
+            <StatLabel className="text-xs font-medium text-muted-foreground">Hidden</StatLabel>
+            <StatValue className="font-mono text-2xl font-bold tracking-tight text-muted-foreground">
               1
             </StatValue>
           </Stat>
@@ -78,18 +74,20 @@ export function CatalogPrimitiveSections() {
         path="packages/ui/src/components/badge-overflow.tsx"
         usedIn="catalog item row add-ons preview, kit"
       >
-        <div className="max-w-md p-4 rounded-xl border border-border/80 bg-card space-y-2">
-          <p className="text-xs text-muted-foreground">Compact multi-badge row with overflow counter:</p>
+        <div className="max-w-md space-y-2 rounded-xl border border-border/80 bg-card p-4">
+          <p className="text-xs text-muted-foreground">
+            Compact multi-badge row with overflow counter:
+          </p>
           <BadgeOverflow
             items={DEMO_TAGS}
             lineCount={1}
             renderBadge={(tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs font-medium py-0 px-2 h-5">
+              <Badge key={tag} variant="secondary" className="h-5 px-2 py-0 text-xs font-medium">
                 {tag}
               </Badge>
             )}
             renderOverflow={(count) => (
-              <Badge variant="outline" className="text-xs font-mono h-5 py-0 px-1.5">
+              <Badge variant="outline" className="h-5 px-1.5 py-0 font-mono text-xs">
                 +{count}
               </Badge>
             )}
@@ -109,10 +107,10 @@ export function CatalogPrimitiveSections() {
             <div className="space-y-1.5">
               {items.map((item) => (
                 <SortableItem key={item.id} value={item.id}>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl border border-border/70 bg-card shadow-xs text-sm">
+                  <div className="flex items-center justify-between rounded-xl border border-border/70 bg-card p-2.5 text-sm shadow-xs">
                     <span className="font-semibold text-foreground">{item.name}</span>
                     <SortableItemHandle
-                      className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded"
+                      className="cursor-grab rounded p-1 text-muted-foreground hover:text-foreground active:cursor-grabbing"
                       aria-label={`Drag ${item.name}`}
                     >
                       <GripVerticalIcon className="size-4" />
@@ -133,19 +131,15 @@ export function CatalogPrimitiveSections() {
       >
         <div className="max-w-md space-y-2">
           <FileUpload maxFiles={5} accept="image/*">
-            <FileUploadDropzone className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-xl text-center space-y-2 hover:border-primary/50 transition-colors">
+            <FileUploadDropzone className="flex flex-col items-center justify-center space-y-2 rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-primary/50">
               <UploadCloudIcon className="size-8 text-muted-foreground" />
               <div className="space-y-0.5">
-                <p className="text-xs font-semibold text-foreground">
-                  Drag photos here or browse
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  JPG, PNG, WebP up to 15 MB
-                </p>
+                <p className="text-xs font-semibold text-foreground">Drag photos here or browse</p>
+                <p className="text-xs text-muted-foreground">JPG, PNG, WebP up to 15 MB</p>
               </div>
               <FileUploadTrigger
                 render={
-                  <Button variant="outline" size="sm" className="text-xs h-8 mt-2">
+                  <Button variant="outline" size="sm" className="mt-2 h-8 text-xs">
                     Choose photos
                   </Button>
                 }

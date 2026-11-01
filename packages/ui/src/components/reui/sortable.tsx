@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as React from "react"
-import type { CSSProperties, ReactElement, ReactNode } from "react"
+import * as React from 'react';
+import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import {
   Children,
   cloneElement,
@@ -11,9 +11,9 @@ import {
   useMemo,
   useState,
   useSyncExternalStore,
-} from "react"
-import { mergeProps } from "@base-ui/react/merge-props"
-import { useRender } from "@base-ui/react/use-render"
+} from 'react';
+import { mergeProps } from '@base-ui/react/merge-props';
+import { useRender } from '@base-ui/react/use-render';
 import type {
   DragCancelEvent,
   DragEndEvent,
@@ -21,7 +21,7 @@ import type {
   DropAnimation,
   Modifiers,
   UniqueIdentifier,
-} from "@dnd-kit/core"
+} from '@dnd-kit/core';
 import {
   defaultDropAnimationSideEffects,
   DndContext,
@@ -33,7 +33,7 @@ import {
   useSensor,
   useSensors,
   type DraggableSyntheticListeners,
-} from "@dnd-kit/core"
+} from '@dnd-kit/core';
 import {
   arrayMove,
   defaultAnimateLayoutChanges,
@@ -43,45 +43,45 @@ import {
   useSortable,
   verticalListSortingStrategy,
   type AnimateLayoutChanges,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
-import { createPortal } from "react-dom"
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { createPortal } from 'react-dom';
 
-import { cn } from "cn"
+import { cn } from 'cn';
 
 // Sortable Item Context
 const SortableItemContext = createContext<{
-  listeners: DraggableSyntheticListeners | undefined
-  isDragging?: boolean
-  disabled?: boolean
+  listeners: DraggableSyntheticListeners | undefined;
+  isDragging?: boolean;
+  disabled?: boolean;
 }>({
   listeners: undefined,
   isDragging: false,
   disabled: false,
-})
+});
 
-const IsOverlayContext = createContext(false)
+const IsOverlayContext = createContext(false);
 
 const SortableInternalContext = createContext<{
-  activeId: UniqueIdentifier | null
-  modifiers?: Modifiers
+  activeId: UniqueIdentifier | null;
+  modifiers?: Modifiers;
 }>({
   activeId: null,
   modifiers: undefined,
-})
+});
 
 const animateLayoutChanges: AnimateLayoutChanges = (args) =>
-  defaultAnimateLayoutChanges({ ...args, wasDragging: true })
+  defaultAnimateLayoutChanges({ ...args, wasDragging: true });
 
 const dropAnimationConfig: DropAnimation = {
   sideEffects: defaultDropAnimationSideEffects({
     styles: {
       active: {
-        opacity: "0.4",
+        opacity: '0.4',
       },
     },
   }),
-}
+};
 
 /**
  * Client-mount gate for the `createPortal` calls below, which need
@@ -95,54 +95,50 @@ const dropAnimationConfig: DropAnimation = {
  * module-scoped so their identities stay stable; an inline `getSnapshot` is the
  * classic cause of an infinite re-subscribe loop.
  */
-const subscribeToNothing = () => () => {}
-const getIsMounted = () => true
-const getIsMountedOnServer = () => false
+const subscribeToNothing = () => () => {};
+const getIsMounted = () => true;
+const getIsMountedOnServer = () => false;
 
-const MOUSE_SENSOR_OPTIONS = { activationConstraint: { distance: 10 } }
+const MOUSE_SENSOR_OPTIONS = { activationConstraint: { distance: 10 } };
 const TOUCH_SENSOR_OPTIONS = {
   activationConstraint: { delay: 250, tolerance: 5 },
-}
+};
 const KEYBOARD_SENSOR_OPTIONS = {
   coordinateGetter: sortableKeyboardCoordinates,
-}
+};
 const MEASURING_CONFIG = {
   droppable: { strategy: MeasuringStrategy.Always },
-}
+};
 const STRATEGY_MAP = {
   horizontal: rectSortingStrategy,
   grid: rectSortingStrategy,
   vertical: verticalListSortingStrategy,
-} as const
+} as const;
 
 // Multipurpose Sortable Component
 export interface SortableCommitMeta<T> {
-  event: DragEndEvent
-  activeIndex: number
-  overIndex: number
-  previousValue: T[]
+  event: DragEndEvent;
+  activeIndex: number;
+  overIndex: number;
+  previousValue: T[];
 }
 
 export interface SortableRootProps<T> extends Omit<
-  useRender.ComponentProps<"div">,
-  "onDragStart" | "onDragEnd" | "children"
+  useRender.ComponentProps<'div'>,
+  'onDragStart' | 'onDragEnd' | 'children'
 > {
-  value: T[]
-  onValueChange: (value: T[]) => void
-  getItemValue: (item: T) => string
-  children: ReactNode
-  onMove?: (event: {
-    event: DragEndEvent
-    activeIndex: number
-    overIndex: number
-  }) => void
-  onValueCommit?: (value: T[], meta: SortableCommitMeta<T>) => void
-  strategy?: "horizontal" | "vertical" | "grid"
-  onDragStart?: (event: DragStartEvent) => void
-  onDragEnd?: (event: DragEndEvent) => void
-  onDragCancel?: (event: DragCancelEvent) => void
-  accessibility?: React.ComponentProps<typeof DndContext>["accessibility"]
-  modifiers?: Modifiers
+  value: T[];
+  onValueChange: (value: T[]) => void;
+  getItemValue: (item: T) => string;
+  children: ReactNode;
+  onMove?: (event: { event: DragEndEvent; activeIndex: number; overIndex: number }) => void;
+  onValueCommit?: (value: T[], meta: SortableCommitMeta<T>) => void;
+  strategy?: 'horizontal' | 'vertical' | 'grid';
+  onDragStart?: (event: DragStartEvent) => void;
+  onDragEnd?: (event: DragEndEvent) => void;
+  onDragCancel?: (event: DragCancelEvent) => void;
+  accessibility?: React.ComponentProps<typeof DndContext>['accessibility'];
+  modifiers?: Modifiers;
 }
 
 function Sortable<T>({
@@ -153,7 +149,7 @@ function Sortable<T>({
   render,
   onMove,
   onValueCommit,
-  strategy = "vertical",
+  strategy = 'vertical',
   onDragStart,
   onDragEnd,
   onDragCancel,
@@ -162,114 +158,103 @@ function Sortable<T>({
   children,
   ...props
 }: SortableRootProps<T>) {
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
-  const mounted = useSyncExternalStore(
-    subscribeToNothing,
-    getIsMounted,
-    getIsMountedOnServer
-  )
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const mounted = useSyncExternalStore(subscribeToNothing, getIsMounted, getIsMountedOnServer);
 
   const sensors = useSensors(
     useSensor(MouseSensor, MOUSE_SENSOR_OPTIONS),
     useSensor(TouchSensor, TOUCH_SENSOR_OPTIONS),
-    useSensor(KeyboardSensor, KEYBOARD_SENSOR_OPTIONS)
-  )
+    useSensor(KeyboardSensor, KEYBOARD_SENSOR_OPTIONS),
+  );
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
-      setActiveId(event.active.id)
-      onDragStart?.(event)
+      setActiveId(event.active.id);
+      onDragStart?.(event);
     },
-    [onDragStart]
-  )
+    [onDragStart],
+  );
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      const { active, over } = event
-      setActiveId(null)
-      onDragEnd?.(event)
+      const { active, over } = event;
+      setActiveId(null);
+      onDragEnd?.(event);
 
-      if (!over) return
+      if (!over) return;
 
       // Handle item reordering
-      const activeIndex = value.findIndex(
-        (item: T) => getItemValue(item) === active.id
-      )
-      const overIndex = value.findIndex(
-        (item: T) => getItemValue(item) === over.id
-      )
+      const activeIndex = value.findIndex((item: T) => getItemValue(item) === active.id);
+      const overIndex = value.findIndex((item: T) => getItemValue(item) === over.id);
 
-      if (activeIndex === -1 || overIndex === -1) return
+      if (activeIndex === -1 || overIndex === -1) return;
 
       if (activeIndex !== overIndex) {
         if (onMove) {
-          onMove({ event, activeIndex, overIndex })
+          onMove({ event, activeIndex, overIndex });
         } else {
-          const newValue = arrayMove(value, activeIndex, overIndex)
-          onValueChange(newValue)
+          const newValue = arrayMove(value, activeIndex, overIndex);
+          onValueChange(newValue);
           onValueCommit?.(newValue, {
             event,
             activeIndex,
             overIndex,
             previousValue: value,
-          })
+          });
         }
       }
     },
-    [value, getItemValue, onValueChange, onMove, onDragEnd, onValueCommit]
-  )
+    [value, getItemValue, onValueChange, onMove, onDragEnd, onValueCommit],
+  );
 
   const handleDragCancel = useCallback(
     (event: DragCancelEvent) => {
-      setActiveId(null)
-      onDragCancel?.(event)
+      setActiveId(null);
+      onDragCancel?.(event);
     },
-    [onDragCancel]
-  )
+    [onDragCancel],
+  );
 
   const itemIds = useMemo(() => {
-    const ids = value.map(getItemValue)
-    if (process.env.NODE_ENV !== "production") {
-      const seen = new Set<string>()
+    const ids = value.map(getItemValue);
+    if (process.env.NODE_ENV !== 'production') {
+      const seen = new Set<string>();
       for (const id of ids) {
         if (seen.has(id)) {
           console.warn(
-            `[Sortable] Duplicate item id "${id}". Item ids must be unique, or drag and drop will misbehave.`
-          )
-          break
+            `[Sortable] Duplicate item id "${id}". Item ids must be unique, or drag and drop will misbehave.`,
+          );
+          break;
         }
-        seen.add(id)
+        seen.add(id);
       }
     }
-    return ids
-  }, [value, getItemValue])
+    return ids;
+  }, [value, getItemValue]);
 
-  const contextValue = useMemo(
-    () => ({ activeId, modifiers }),
-    [activeId, modifiers]
-  )
+  const contextValue = useMemo(() => ({ activeId, modifiers }), [activeId, modifiers]);
 
   const defaultProps = {
-    "data-slot": "sortable",
-    "data-dragging": activeId !== null,
-    className: cn(activeId !== null && "cursor-grabbing!", className),
+    'data-slot': 'sortable',
+    'data-dragging': activeId !== null,
+    className: cn(activeId !== null && 'cursor-grabbing!', className),
     children,
-  }
+  };
 
   // Find the active child for the overlay
   const overlayContent = useMemo(() => {
-    if (!activeId) return null
-    let result: ReactNode = null
+    if (!activeId) return null;
+    let result: ReactNode = null;
     Children.forEach(children, (child) => {
       if (isValidElement(child) && (child.props as any).value === activeId) {
         result = cloneElement(child as ReactElement<any>, {
           ...(child.props as any),
-          className: cn((child.props as any).className, "z-50"),
-        })
+          className: cn((child.props as any).className, 'z-50'),
+        });
       }
-    })
-    return result
-  }, [activeId, children])
+    });
+    return result;
+  }, [activeId, children]);
 
   return (
     <SortableInternalContext.Provider value={contextValue}>
@@ -287,9 +272,9 @@ function Sortable<T>({
           strategy={STRATEGY_MAP[strategy] ?? verticalListSortingStrategy}
         >
           {useRender({
-            defaultTagName: "div",
+            defaultTagName: 'div',
             render,
-            props: mergeProps<"div">(defaultProps, props),
+            props: mergeProps<'div'>(defaultProps, props),
           })}
         </SortableContext>
         {mounted &&
@@ -297,32 +282,24 @@ function Sortable<T>({
             <DragOverlay
               dropAnimation={dropAnimationConfig}
               modifiers={modifiers}
-              className={cn("z-50", activeId && "cursor-grabbing")}
+              className={cn('z-50', activeId && 'cursor-grabbing')}
             >
-              <IsOverlayContext.Provider value={true}>
-                {overlayContent}
-              </IsOverlayContext.Provider>
+              <IsOverlayContext.Provider value={true}>{overlayContent}</IsOverlayContext.Provider>
             </DragOverlay>,
-            document.body
+            document.body,
           )}
       </DndContext>
     </SortableInternalContext.Provider>
-  )
+  );
 }
 
-export interface SortableItemProps extends useRender.ComponentProps<"div"> {
-  value: string
-  disabled?: boolean
+export interface SortableItemProps extends useRender.ComponentProps<'div'> {
+  value: string;
+  disabled?: boolean;
 }
 
-function SortableItem({
-  value,
-  className,
-  render,
-  disabled,
-  ...props
-}: SortableItemProps) {
-  const isOverlay = useContext(IsOverlayContext)
+function SortableItem({ value, className, render, disabled, ...props }: SortableItemProps) {
+  const isOverlay = useContext(IsOverlayContext);
 
   const {
     setNodeRef,
@@ -335,36 +312,32 @@ function SortableItem({
     id: value,
     disabled: disabled || isOverlay,
     animateLayoutChanges,
-  })
+  });
 
   const style = {
     transition,
     transform: CSS.Transform.toString(transform),
-  } as CSSProperties
+  } as CSSProperties;
 
   const defaultProps = isOverlay
     ? {
-        "data-slot": "sortable-item",
-        "data-value": value,
-        "data-dragging": true,
+        'data-slot': 'sortable-item',
+        'data-value': value,
+        'data-dragging': true,
         className: cn(className),
         children: props.children,
       }
     : {
-        "data-slot": "sortable-item",
-        "data-value": value,
-        "data-dragging": isSortableDragging,
-        "data-disabled": disabled,
+        'data-slot': 'sortable-item',
+        'data-value': value,
+        'data-dragging': isSortableDragging,
+        'data-disabled': disabled,
         ref: setNodeRef,
         style,
         ...attributes,
-        className: cn(
-          isSortableDragging && "opacity-50 z-50",
-          disabled && "opacity-50",
-          className
-        ),
+        className: cn(isSortableDragging && 'opacity-50 z-50', disabled && 'opacity-50', className),
         children: props.children,
-      }
+      };
 
   return (
     <SortableItemContext.Provider
@@ -375,16 +348,16 @@ function SortableItem({
       }
     >
       {useRender({
-        defaultTagName: "div",
+        defaultTagName: 'div',
         render,
-        props: mergeProps<"div">(defaultProps, props),
+        props: mergeProps<'div'>(defaultProps, props),
       })}
     </SortableItemContext.Provider>
-  )
+  );
 }
 
-export interface SortableItemHandleProps extends useRender.ComponentProps<"div"> {
-  cursor?: boolean
+export interface SortableItemHandleProps extends useRender.ComponentProps<'div'> {
+  cursor?: boolean;
 }
 
 function SortableItemHandle({
@@ -393,68 +366,55 @@ function SortableItemHandle({
   cursor = true,
   ...props
 }: SortableItemHandleProps) {
-  const { listeners, isDragging, disabled } = useContext(SortableItemContext)
+  const { listeners, isDragging, disabled } = useContext(SortableItemContext);
 
   const defaultProps = {
-    "data-slot": "sortable-item-handle",
-    "data-dragging": isDragging,
-    "data-disabled": disabled,
+    'data-slot': 'sortable-item-handle',
+    'data-dragging': isDragging,
+    'data-disabled': disabled,
     ...listeners,
-    className: cn(
-      cursor && (isDragging ? "cursor-grabbing!" : "cursor-grab!"),
-      className
-    ),
+    className: cn(cursor && (isDragging ? 'cursor-grabbing!' : 'cursor-grab!'), className),
     children: props.children,
-  }
+  };
 
   return useRender({
-    defaultTagName: "div",
+    defaultTagName: 'div',
     render,
-    props: mergeProps<"div">(defaultProps, props),
-  })
+    props: mergeProps<'div'>(defaultProps, props),
+  });
 }
 
 export interface SortableOverlayProps extends Omit<
   React.ComponentProps<typeof DragOverlay>,
-  "children"
+  'children'
 > {
-  children?: ReactNode | ((params: { value: UniqueIdentifier }) => ReactNode)
+  children?: ReactNode | ((params: { value: UniqueIdentifier }) => ReactNode);
 }
 
-function SortableOverlay({
-  children,
-  className,
-  ...props
-}: SortableOverlayProps) {
-  const { activeId, modifiers } = useContext(SortableInternalContext)
-  const mounted = useSyncExternalStore(
-    subscribeToNothing,
-    getIsMounted,
-    getIsMountedOnServer
-  )
+function SortableOverlay({ children, className, ...props }: SortableOverlayProps) {
+  const { activeId, modifiers } = useContext(SortableInternalContext);
+  const mounted = useSyncExternalStore(subscribeToNothing, getIsMounted, getIsMountedOnServer);
 
   const content =
     activeId && children
-      ? typeof children === "function"
+      ? typeof children === 'function'
         ? children({ value: activeId })
         : children
-      : null
+      : null;
 
-  if (!mounted) return null
+  if (!mounted) return null;
 
   return createPortal(
     <DragOverlay
       dropAnimation={dropAnimationConfig}
       modifiers={modifiers}
-      className={cn("z-50", activeId && "cursor-grabbing", className)}
+      className={cn('z-50', activeId && 'cursor-grabbing', className)}
       {...props}
     >
-      <IsOverlayContext.Provider value={true}>
-        {content}
-      </IsOverlayContext.Provider>
+      <IsOverlayContext.Provider value={true}>{content}</IsOverlayContext.Provider>
     </DragOverlay>,
-    document.body
-  )
+    document.body,
+  );
 }
 
-export { Sortable, SortableItem, SortableItemHandle, SortableOverlay }
+export { Sortable, SortableItem, SortableItemHandle, SortableOverlay };

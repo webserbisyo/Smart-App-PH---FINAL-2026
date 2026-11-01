@@ -1,10 +1,5 @@
 import * as React from 'react';
-import {
-  GripVerticalIcon,
-  PlusIcon,
-  Trash2Icon,
-  AlertTriangleIcon,
-} from 'lucide-react';
+import { GripVerticalIcon, PlusIcon, Trash2Icon, AlertTriangleIcon } from 'lucide-react';
 import {
   formatPeso,
   words,
@@ -212,7 +207,7 @@ function AddOnSheetForm({
 
   return (
     <>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto flex flex-col">
+      <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>
             {group ? words.screens.catalog.editGroup : words.screens.catalog.addGroup}
@@ -223,25 +218,25 @@ function AddOnSheetForm({
         </SheetHeader>
 
         {group && group.usedBy > 0 && (
-          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-warning-soft border border-warning/20 text-warning-text text-xs mt-3">
+          <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
             <AlertTriangleIcon className="size-4 shrink-0" />
             <span>{words.screens.catalog.groupWarningNotice(group.usedBy)}</span>
           </div>
         )}
 
-        <form onSubmit={handleSave} className="flex-1 flex flex-col justify-between mt-4 space-y-6">
+        <form onSubmit={handleSave} className="mt-4 flex flex-1 flex-col justify-between space-y-6">
           <div className="space-y-5">
             {errorMsg && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-2.5 text-xs text-destructive">
+              <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
                 {errorMsg}
               </div>
             )}
 
             {/* Group Name */}
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
+              <div className="flex items-center justify-between">
                 <Label htmlFor="group-name">Add-on name</Label>
-                <span className="text-xs text-muted-foreground font-mono">{name.length}/40</span>
+                <span className="font-mono text-xs text-muted-foreground">{name.length}/40</span>
               </div>
               <Input
                 id="group-name"
@@ -270,25 +265,25 @@ function AddOnSheetForm({
                     handlePresetChange(next);
                   }
                 }}
-                className="grid grid-cols-2 gap-1.5 w-full"
+                className="grid w-full grid-cols-2 gap-1.5"
               >
-                <ToggleGroupItem value="pick_1_req" className="text-xs h-9 justify-center">
+                <ToggleGroupItem value="pick_1_req" className="h-9 justify-center text-xs">
                   {words.screens.catalog.rulePickOneRequired}
                 </ToggleGroupItem>
-                <ToggleGroupItem value="pick_1_opt" className="text-xs h-9 justify-center">
+                <ToggleGroupItem value="pick_1_opt" className="h-9 justify-center text-xs">
                   {words.screens.catalog.rulePickOneOptional}
                 </ToggleGroupItem>
-                <ToggleGroupItem value="pick_any" className="text-xs h-9 justify-center">
+                <ToggleGroupItem value="pick_any" className="h-9 justify-center text-xs">
                   {words.screens.catalog.rulePickAny}
                 </ToggleGroupItem>
-                <ToggleGroupItem value="custom" className="text-xs h-9 justify-center">
+                <ToggleGroupItem value="custom" className="h-9 justify-center text-xs">
                   {words.screens.catalog.ruleCustom}
                 </ToggleGroupItem>
               </ToggleGroup>
 
               {/* Custom Min / Max inputs */}
               {rulePreset === 'custom' && (
-                <div className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-border/60 bg-muted/20">
+                <div className="grid grid-cols-2 gap-3 rounded-xl border border-border/60 bg-muted/20 p-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="min-picks" className="text-xs">
                       {words.screens.catalog.minPicksLabel}
@@ -312,7 +307,9 @@ function AddOnSheetForm({
                       min={minPicks}
                       max={20}
                       value={maxPicks}
-                      onChange={(e) => setMaxPicks(Math.max(minPicks, parseInt(e.target.value, 10) || 1))}
+                      onChange={(e) =>
+                        setMaxPicks(Math.max(minPicks, parseInt(e.target.value, 10) || 1))
+                      }
                     />
                   </div>
                 </div>
@@ -322,12 +319,14 @@ function AddOnSheetForm({
             {/* Options List */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">{words.screens.catalog.optionsLabel}</Label>
+                <Label className="text-sm font-semibold">
+                  {words.screens.catalog.optionsLabel}
+                </Label>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs font-semibold gap-1"
+                  className="h-8 gap-1 text-xs font-semibold"
                   onClick={handleAddOption}
                 >
                   <PlusIcon className="size-3.5" />
@@ -339,12 +338,12 @@ function AddOnSheetForm({
                 {options.map((opt, index) => (
                   <div
                     key={opt.id ?? index}
-                    className="flex items-center gap-2 p-2.5 rounded-xl border border-border/70 bg-card shadow-xs"
+                    className="flex items-center gap-2 rounded-xl border border-border/70 bg-card p-2.5 shadow-xs"
                   >
-                    <GripVerticalIcon className="size-4 text-muted-foreground shrink-0 cursor-grab" />
+                    <GripVerticalIcon className="size-4 shrink-0 cursor-grab text-muted-foreground" />
 
                     {/* Option Name */}
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <Input
                         value={opt.name}
                         placeholder={words.screens.catalog.optionName}
@@ -356,7 +355,7 @@ function AddOnSheetForm({
                     {/* Delta Price */}
                     <div className="w-24 shrink-0">
                       <div className="relative">
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground">
+                        <span className="absolute top-1/2 left-2.5 -translate-y-1/2 font-mono text-xs text-muted-foreground">
                           +₱
                         </span>
                         <Input
@@ -364,7 +363,7 @@ function AddOnSheetForm({
                           min={0}
                           value={opt.priceDelta ? opt.priceDelta / 100 : ''}
                           placeholder="0"
-                          className="h-8 text-xs pl-7 text-right font-mono"
+                          className="h-8 pl-7 text-right font-mono text-xs"
                           onChange={(e) => {
                             const val = parseFloat(e.target.value) || 0;
                             updateOption(index, { priceDelta: Math.round(val * 100) });
@@ -374,30 +373,34 @@ function AddOnSheetForm({
                     </div>
 
                     {/* Default Checkbox */}
-                    <div className="flex items-center gap-1 shrink-0 px-1">
+                    <div className="flex shrink-0 items-center gap-1 px-1">
                       <Checkbox
                         id={`opt-default-${index}`}
                         checked={opt.isDefault}
-                        onCheckedChange={(checked) => updateOption(index, { isDefault: Boolean(checked) })}
+                        onCheckedChange={(checked) =>
+                          updateOption(index, { isDefault: Boolean(checked) })
+                        }
                       />
                       <Label
                         htmlFor={`opt-default-${index}`}
-                        className="text-xs text-muted-foreground cursor-pointer"
+                        className="cursor-pointer text-xs text-muted-foreground"
                       >
                         Default
                       </Label>
                     </div>
 
                     {/* Sold Out Switch */}
-                    <div className="flex items-center gap-1 shrink-0 px-1">
+                    <div className="flex shrink-0 items-center gap-1 px-1">
                       <Switch
                         id={`opt-soldout-${index}`}
                         checked={opt.soldOut}
-                        onCheckedChange={(checked) => updateOption(index, { soldOut: Boolean(checked) })}
+                        onCheckedChange={(checked) =>
+                          updateOption(index, { soldOut: Boolean(checked) })
+                        }
                       />
                       <Label
                         htmlFor={`opt-soldout-${index}`}
-                        className="text-xs text-muted-foreground cursor-pointer"
+                        className="cursor-pointer text-xs text-muted-foreground"
                       >
                         Out
                       </Label>
@@ -408,7 +411,7 @@ function AddOnSheetForm({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-8 text-muted-foreground hover:text-destructive shrink-0"
+                      className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                       onClick={() => handleRemoveOption(index)}
                       disabled={options.length <= 1}
                     >
@@ -420,11 +423,11 @@ function AddOnSheetForm({
             </div>
 
             {/* Customer Live Preview */}
-            <div className="pt-2 border-t border-border/50 space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="space-y-2 border-t border-border/50 pt-2">
+              <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 {words.screens.catalog.previewHeading}
               </span>
-              <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-2">
+              <div className="space-y-2 rounded-xl border border-border/60 bg-muted/10 p-3.5">
                 <div className="flex items-baseline justify-between">
                   <span className="text-sm font-semibold text-foreground">
                     {name || 'Add-on group'}
@@ -437,9 +440,13 @@ function AddOnSheetForm({
                   {options.map((opt, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-card border border-border/40"
+                      className="flex items-center justify-between rounded-lg border border-border/40 bg-card px-2 py-1 text-xs"
                     >
-                      <span className={opt.soldOut ? 'line-through text-muted-foreground' : 'text-foreground'}>
+                      <span
+                        className={
+                          opt.soldOut ? 'text-muted-foreground line-through' : 'text-foreground'
+                        }
+                      >
                         {opt.name || `Option ${i + 1}`}
                       </span>
                       <span className="font-mono text-muted-foreground">
@@ -456,7 +463,7 @@ function AddOnSheetForm({
             </div>
           </div>
 
-          <SheetFooter className="pt-4 border-t border-border flex flex-row items-center justify-between gap-2">
+          <SheetFooter className="flex flex-row items-center justify-between gap-2 border-t border-border pt-4">
             {group ? (
               <Button
                 type="button"
@@ -468,24 +475,23 @@ function AddOnSheetForm({
               >
                 {words.screens.catalog.delete}
               </Button>
-            ) : <span />}
+            ) : (
+              <span />
+            )}
 
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={onClose}
-              >
+              <Button type="button" variant="outline" size="sm" onClick={onClose}>
                 {words.screens.catalog.cancel}
               </Button>
               <Button
                 type="submit"
                 size="sm"
                 disabled={saveOptionGroup.isPending}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
               >
-                {saveOptionGroup.isPending ? words.screens.catalog.saving : words.screens.catalog.save}
+                {saveOptionGroup.isPending
+                  ? words.screens.catalog.saving
+                  : words.screens.catalog.save}
               </Button>
             </div>
           </SheetFooter>
@@ -507,7 +513,7 @@ function AddOnSheetForm({
             <AlertDialogCancel>{words.screens.catalog.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold"
+              className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
             >
               {words.screens.catalog.delete}
             </AlertDialogAction>

@@ -20,12 +20,7 @@ import {
   type OwnerOptionGroup,
   type Availability,
 } from '@smartapp/core';
-import {
-  useSetItemStatus,
-  useSetSoldOut,
-  useSaveItem,
-  useRemoveItem,
-} from '@smartapp/data';
+import { useSetItemStatus, useSetSoldOut, useSaveItem, useRemoveItem } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Switch } from '@smartapp/ui/components/switch';
@@ -189,14 +184,19 @@ export function ItemRow({
     <>
       <div
         className={cn(
-          'group relative flex items-center justify-between gap-3 p-3.5 rounded-2xl border bg-card transition-all duration-180',
-          isSoldOut ? 'opacity-65 border-border/50' : 'border-border/80 hover:border-primary/40 hover:shadow-xs',
+          'group relative flex items-center justify-between gap-3 rounded-2xl border bg-card p-3.5 transition-all duration-180',
+          isSoldOut
+            ? 'border-border/50 opacity-65'
+            : 'border-border/80 hover:border-primary/40 hover:shadow-xs',
         )}
       >
         {/* Left: Reorder Handle or Item Thumbnail & Name */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           {isReordering ? (
-            <div {...dragHandleProps} className="text-muted-foreground hover:text-foreground cursor-grab p-1">
+            <div
+              {...dragHandleProps}
+              className="cursor-grab p-1 text-muted-foreground hover:text-foreground"
+            >
               <GripVerticalIcon className="size-5" />
             </div>
           ) : null}
@@ -212,7 +212,7 @@ export function ItemRow({
             {isSample && (
               <Badge
                 variant="outline"
-                className="absolute -top-1.5 -left-1.5 px-1 py-0 text-xs font-semibold uppercase bg-background shadow-xs"
+                className="absolute -top-1.5 -left-1.5 bg-background px-1 py-0 text-xs font-semibold uppercase shadow-xs"
               >
                 {words.screens.catalog.sampleBadge}
               </Badge>
@@ -221,26 +221,23 @@ export function ItemRow({
 
           {/* Details */}
           <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-sm text-foreground line-clamp-2 tracking-tight">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="line-clamp-2 text-sm font-semibold tracking-tight text-foreground">
                 {item.name}
               </h3>
               {item.featured && (
-                <Badge variant="secondary" className="text-xs py-0 px-1.5 font-medium">
+                <Badge variant="secondary" className="px-1.5 py-0 text-xs font-medium">
                   {words.screens.catalog.featuredLabel}
                 </Badge>
               )}
               {item.isNew && (
-                <Badge variant="outline" className="text-xs py-0 px-1.5 text-muted-foreground">
+                <Badge variant="outline" className="px-1.5 py-0 text-xs text-muted-foreground">
                   {words.screens.catalog.newLabel}
                 </Badge>
               )}
               {isSoldOut && (
-                <Badge
-                  variant="destructive"
-                  className="text-xs py-0 px-1.5 font-medium"
-                >
-                  <BanIcon className="size-3 mr-1" />
+                <Badge variant="destructive" className="px-1.5 py-0 text-xs font-medium">
+                  <BanIcon className="mr-1 size-3" />
                   {words.screens.catalog.statSoldOut}
                 </Badge>
               )}
@@ -255,12 +252,16 @@ export function ItemRow({
                   lineCount={1}
                   className="max-w-44 sm:max-w-64"
                   renderBadge={(g) => (
-                    <Badge key={g.id} variant="outline" className="text-xs py-0 px-1 text-muted-foreground font-normal">
+                    <Badge
+                      key={g.id}
+                      variant="outline"
+                      className="px-1 py-0 text-xs font-normal text-muted-foreground"
+                    >
                       {g.name}
                     </Badge>
                   )}
                   renderOverflow={(count) => (
-                    <Badge variant="secondary" className="text-xs py-0 px-1 font-mono">
+                    <Badge variant="secondary" className="px-1 py-0 font-mono text-xs">
                       +{count}
                     </Badge>
                   )}
@@ -271,10 +272,10 @@ export function ItemRow({
         </div>
 
         {/* Price & Status Controls */}
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex shrink-0 items-center gap-4">
           {/* Right-aligned tabular price */}
           <div className="text-right">
-            <span className="font-bold text-sm font-mono tracking-tight text-foreground">
+            <span className="font-mono text-sm font-bold tracking-tight text-foreground">
               {itemPriceLabel(item)}
             </span>
           </div>
@@ -284,7 +285,7 @@ export function ItemRow({
             <label htmlFor={`sold-out-${item.id}`} className="sr-only">
               {words.screens.catalog.statSoldOut}
             </label>
-            <div className="flex items-center justify-center size-11">
+            <div className="flex size-11 items-center justify-center">
               <Switch
                 id={`sold-out-${item.id}`}
                 checked={isSoldOut}
@@ -295,7 +296,7 @@ export function ItemRow({
           </div>
 
           {/* Visible Switch with 44px touch area */}
-          <div className="hidden sm:flex items-center justify-center size-11">
+          <div className="hidden size-11 items-center justify-center sm:flex">
             <Switch
               id={`visible-${item.id}`}
               checked={!isHidden}
@@ -320,28 +321,34 @@ export function ItemRow({
             <MoreVerticalIcon className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => navigate({ to: `/catalog/$itemId`, params: { itemId: item.id } })}>
-              <PencilIcon className="size-4 mr-2" />
+            <DropdownMenuItem
+              onClick={() => navigate({ to: `/catalog/$itemId`, params: { itemId: item.id } })}
+            >
+              <PencilIcon className="mr-2 size-4" />
               {words.screens.catalog.edit}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleDuplicate}>
-              <CopyIcon className="size-4 mr-2" />
+              <CopyIcon className="mr-2 size-4" />
               {words.screens.catalog.duplicate}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleToggleVisible(isHidden)}>
-              {isHidden ? <EyeIcon className="size-4 mr-2" /> : <EyeOffIcon className="size-4 mr-2" />}
+              {isHidden ? (
+                <EyeIcon className="mr-2 size-4" />
+              ) : (
+                <EyeOffIcon className="mr-2 size-4" />
+              )}
               {isHidden ? words.screens.catalog.show : words.screens.catalog.hide}
             </DropdownMenuItem>
 
             {canMoveUp && onMoveUp && (
               <DropdownMenuItem onClick={onMoveUp}>
-                <ChevronUpIcon className="size-4 mr-2" />
+                <ChevronUpIcon className="mr-2 size-4" />
                 {words.screens.catalog.moveUp}
               </DropdownMenuItem>
             )}
             {canMoveDown && onMoveDown && (
               <DropdownMenuItem onClick={onMoveDown}>
-                <ChevronDownIcon className="size-4 mr-2" />
+                <ChevronDownIcon className="mr-2 size-4" />
                 {words.screens.catalog.moveDown}
               </DropdownMenuItem>
             )}
@@ -350,7 +357,7 @@ export function ItemRow({
 
             {item.hasOrders ? (
               <DropdownMenuItem onClick={handleArchive}>
-                <ArchiveIcon className="size-4 mr-2 text-warning-text" />
+                <ArchiveIcon className="mr-2 size-4 text-warning-text" />
                 {words.screens.catalog.archive}
               </DropdownMenuItem>
             ) : (
@@ -358,7 +365,7 @@ export function ItemRow({
                 onClick={() => setDeleteConfirmOpen(true)}
                 className="text-destructive focus:text-destructive"
               >
-                <Trash2Icon className="size-4 mr-2" />
+                <Trash2Icon className="mr-2 size-4" />
                 {words.screens.catalog.delete}
               </DropdownMenuItem>
             )}
@@ -371,9 +378,7 @@ export function ItemRow({
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>{words.screens.catalog.soldOutTitle}</DialogTitle>
-            <DialogDescription>
-              {words.screens.catalog.soldOutDescription}
-            </DialogDescription>
+            <DialogDescription>{words.screens.catalog.soldOutDescription}</DialogDescription>
           </DialogHeader>
 
           {item.variants.length > 1 ? (
@@ -385,13 +390,18 @@ export function ItemRow({
                 {item.variants.map((v) => {
                   const varSoldOut = v.availability === 'sold_out';
                   return (
-                    <div key={v.id} className="flex items-center justify-between p-2 rounded-lg border border-border/60">
+                    <div
+                      key={v.id}
+                      className="flex items-center justify-between rounded-lg border border-border/60 p-2"
+                    >
                       <span className="text-sm font-medium">{v.values.join(' / ')}</span>
                       <Button
                         size="sm"
                         variant={varSoldOut ? 'destructive' : 'outline'}
-                        className="text-xs h-7"
-                        onClick={() => handleApplySoldOutChoice(varSoldOut ? 'indefinite' : 'today', v.id)}
+                        className="h-7 text-xs"
+                        onClick={() =>
+                          handleApplySoldOutChoice(varSoldOut ? 'indefinite' : 'today', v.id)
+                        }
                       >
                         {varSoldOut ? 'Mark Available' : 'Mark Sold Out'}
                       </Button>
@@ -405,12 +415,12 @@ export function ItemRow({
               <button
                 type="button"
                 onClick={() => handleApplySoldOutChoice('today')}
-                className="w-full text-left p-3 rounded-xl border border-border/80 hover:border-primary/50 hover:bg-muted/40 transition-colors"
+                className="w-full rounded-xl border border-border/80 p-3 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
               >
-                <p className="font-semibold text-sm text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                   {words.screens.catalog.soldOutToday}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {words.screens.catalog.soldOutTodayDesc}
                 </p>
               </button>
@@ -418,12 +428,12 @@ export function ItemRow({
               <button
                 type="button"
                 onClick={() => handleApplySoldOutChoice('indefinite')}
-                className="w-full text-left p-3 rounded-xl border border-border/80 hover:border-primary/50 hover:bg-muted/40 transition-colors"
+                className="w-full rounded-xl border border-border/80 p-3 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
               >
-                <p className="font-semibold text-sm text-foreground">
+                <p className="text-sm font-semibold text-foreground">
                   {words.screens.catalog.soldOutIndefinitely}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {words.screens.catalog.soldOutIndefinitelyDesc}
                 </p>
               </button>
@@ -451,7 +461,7 @@ export function ItemRow({
             <AlertDialogCancel>{words.screens.catalog.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold"
+              className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
             >
               {words.screens.catalog.delete}
             </AlertDialogAction>

@@ -9,18 +9,8 @@ import {
   WifiOffIcon,
   FolderIcon,
 } from 'lucide-react';
-import {
-  words,
-  iconPath,
-  errorWords,
-  type Category,
-} from '@smartapp/core';
-import {
-  useOwnerCategories,
-  useOwnerItems,
-  useSaveSortOrder,
-  errorCodeOf,
-} from '@smartapp/data';
+import { words, iconPath, errorWords, type Category } from '@smartapp/core';
+import { useOwnerCategories, useOwnerItems, useSaveSortOrder, errorCodeOf } from '@smartapp/data';
 import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { env } from '@/app/env';
@@ -95,7 +85,7 @@ export function CatalogCategoriesScreen() {
   }
 
   return (
-    <div className="flex flex-col min-h-full pb-16">
+    <div className="flex min-h-full flex-col pb-16">
       <PageHeader
         title={words.screens.catalog.title(kind)}
         tabs={useCatalogTabs()}
@@ -109,24 +99,26 @@ export function CatalogCategoriesScreen() {
                 className="h-9 text-xs"
                 onClick={() => setIsReordering(!isReordering)}
               >
-                {isReordering ? words.screens.catalog.doneReordering : words.screens.catalog.reorder}
+                {isReordering
+                  ? words.screens.catalog.doneReordering
+                  : words.screens.catalog.reorder}
               </Button>
             )}
             <Button
               type="button"
               variant="default"
               size="sm"
-              className="h-9 rounded-xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-9 rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
               onClick={handleOpenAdd}
             >
-              <PlusIcon className="size-4 mr-1.5" />
+              <PlusIcon className="mr-1.5 size-4" />
               {words.screens.catalog.addCategory}
             </Button>
           </div>
         }
       />
 
-      <div className="flex-1 p-4 md:p-6 max-w-4xl mx-auto w-full space-y-4">
+      <div className="mx-auto w-full max-w-4xl flex-1 space-y-4 p-4 md:p-6">
         {/* Screen Reader Announcement */}
         <div aria-live="polite" className="sr-only">
           {announcement}
@@ -134,7 +126,7 @@ export function CatalogCategoriesScreen() {
 
         {/* Offline Banner */}
         {!isOnline && (
-          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-warning-soft border border-warning/20 text-warning-text text-xs">
+          <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
             <WifiOffIcon className="size-4 shrink-0" />
             <span>{words.screens.catalog.offlineNotice}</span>
           </div>
@@ -146,7 +138,7 @@ export function CatalogCategoriesScreen() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-card"
+                className="flex items-center justify-between rounded-xl border border-border/60 bg-card p-4"
               >
                 <div className="flex items-center gap-3.5">
                   <Skeleton className="size-10 rounded-xl" />
@@ -160,17 +152,13 @@ export function CatalogCategoriesScreen() {
             ))}
           </div>
         ) : catsError ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto space-y-4">
-            <div className="size-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center">
+          <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 py-16 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <FolderIcon className="size-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-semibold text-foreground text-base">
-                Failed to load categories
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                {errorWords(errorCodeOf(catsError))}
-              </p>
+              <h3 className="text-base font-semibold text-foreground">Failed to load categories</h3>
+              <p className="text-xs text-muted-foreground">{errorWords(errorCodeOf(catsError))}</p>
             </div>
             <Button
               variant="outline"
@@ -183,12 +171,12 @@ export function CatalogCategoriesScreen() {
             </Button>
           </div>
         ) : categories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto space-y-4 border border-dashed border-border rounded-2xl p-8 bg-card/50">
-            <div className="size-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+          <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 rounded-2xl border border-dashed border-border bg-card/50 p-8 py-16 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <FolderIcon className="size-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-semibold text-foreground text-base">
+              <h3 className="text-base font-semibold text-foreground">
                 {words.screens.catalog.emptyCategories}
               </h3>
               <p className="text-xs text-muted-foreground">
@@ -197,19 +185,15 @@ export function CatalogCategoriesScreen() {
             </div>
             <Button
               size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs"
+              className="bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
               onClick={handleOpenAdd}
             >
-              <PlusIcon className="size-3.5 mr-1" />
+              <PlusIcon className="mr-1 size-3.5" />
               {words.screens.catalog.addCategory}
             </Button>
           </div>
         ) : isReordering ? (
-          <Sortable
-            value={categories}
-            getItemValue={(cat) => cat.id}
-            onValueChange={handleReorder}
-          >
+          <Sortable value={categories} getItemValue={(cat) => cat.id} onValueChange={handleReorder}>
             <div className="space-y-2.5">
               {categories.map((cat, index) => {
                 const count = itemCounts.get(cat.id) ?? 0;
@@ -217,29 +201,29 @@ export function CatalogCategoriesScreen() {
 
                 return (
                   <SortableItem key={cat.id} value={cat.id}>
-                    <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/80 bg-card shadow-xs transition-shadow hover:shadow-sm">
-                      <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center justify-between rounded-xl border border-border/80 bg-card p-3.5 shadow-xs transition-shadow hover:shadow-sm">
+                      <div className="flex min-w-0 items-center gap-3">
                         <SortableItemHandle
-                          className="p-1.5 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded-md hover:bg-muted/50"
+                          className="cursor-grab rounded-md p-1.5 text-muted-foreground hover:bg-muted/50 hover:text-foreground active:cursor-grabbing"
                           aria-label={`Drag to reorder ${cat.name}`}
                         >
                           <GripVerticalIcon className="size-4" />
                         </SortableItemHandle>
 
-                        <div className="size-10 rounded-xl bg-muted/30 border border-border/50 flex items-center justify-center shrink-0 p-1.5">
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-muted/30 p-1.5">
                           <img
                             src={iconSrc}
                             alt=""
-                            className="size-6 object-contain pointer-events-none"
+                            className="pointer-events-none size-6 object-contain"
                             loading="lazy"
                           />
                         </div>
 
                         <div className="min-w-0">
-                          <p className="font-semibold text-sm text-foreground truncate">
+                          <p className="truncate text-sm font-semibold text-foreground">
                             {cat.name}
                           </p>
-                          <p className="text-xs text-muted-foreground font-mono">
+                          <p className="font-mono text-xs text-muted-foreground">
                             {words.screens.catalog.itemCount(count)}
                           </p>
                         </div>
@@ -294,35 +278,35 @@ export function CatalogCategoriesScreen() {
                     }
                   }}
                   className={cn(
-                    'group flex items-center justify-between p-3.5 rounded-xl border border-border/80 bg-card shadow-xs',
-                    'transition-all duration-180 hover:border-primary/40 hover:shadow-sm cursor-pointer select-none text-left',
+                    'group flex items-center justify-between rounded-xl border border-border/80 bg-card p-3.5 shadow-xs',
+                    'cursor-pointer text-left transition-all duration-180 select-none hover:border-primary/40 hover:shadow-sm',
                   )}
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="size-10 rounded-xl bg-muted/40 border border-border/60 flex items-center justify-center shrink-0 p-1.5 transition-transform group-hover:scale-105">
+                  <div className="flex min-w-0 items-center gap-3.5">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/40 p-1.5 transition-transform group-hover:scale-105">
                       <img
                         src={iconSrc}
                         alt=""
-                        className="size-6 object-contain pointer-events-none"
+                        className="pointer-events-none size-6 object-contain"
                         loading="lazy"
                       />
                     </div>
 
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                      <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
                         {cat.name}
                       </p>
-                      <p className="text-xs text-muted-foreground font-mono">
+                      <p className="font-mono text-xs text-muted-foreground">
                         {words.screens.catalog.itemCount(count)}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs font-mono">
+                    <Badge variant="secondary" className="font-mono text-xs">
                       #{index + 1}
                     </Badge>
-                    <ChevronRightIcon className="size-4 text-muted-foreground group-hover:text-foreground transition-transform group-hover:translate-x-0.5" />
+                    <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
                   </div>
                 </div>
               );
@@ -331,11 +315,7 @@ export function CatalogCategoriesScreen() {
         )}
       </div>
 
-      <CategorySheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        category={selectedCat}
-      />
+      <CategorySheet open={sheetOpen} onOpenChange={setSheetOpen} category={selectedCat} />
 
       <DevScenarioPanel />
     </div>

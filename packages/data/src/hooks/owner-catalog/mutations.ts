@@ -143,9 +143,7 @@ export function useSetSoldOut() {
             return {
               ...item,
               variants: item.variants.map((v) =>
-                v.id === variantId
-                  ? { ...v, availability, soldOutUntil: soldOutUntil ?? null }
-                  : v,
+                v.id === variantId ? { ...v, availability, soldOutUntil: soldOutUntil ?? null } : v,
               ),
             };
           }),

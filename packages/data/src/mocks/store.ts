@@ -1329,7 +1329,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       return run('catalog', () => {
         const s = requireShop(slug);
         return s.shop.catalog.optionGroups.map((group) => {
-          const usedBy = s.shop.catalog.items.filter((i) => i.optionGroupIds.includes(group.id)).length;
+          const usedBy = s.shop.catalog.items.filter((i) =>
+            i.optionGroupIds.includes(group.id),
+          ).length;
           return OwnerOptionGroupSchema.parse({ ...group, usedBy });
         });
       });
@@ -1351,7 +1353,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           existing.min = parsed.min;
           existing.max = parsed.max;
           existing.options = options;
-          const usedBy = s.shop.catalog.items.filter((i) => i.optionGroupIds.includes(parsed.id!)).length;
+          const usedBy = s.shop.catalog.items.filter((i) =>
+            i.optionGroupIds.includes(parsed.id!),
+          ).length;
           return OwnerOptionGroupSchema.parse({ ...existing, usedBy });
         }
         const newGroup = {
