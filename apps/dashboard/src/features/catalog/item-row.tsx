@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import {
   itemPriceLabel,
-  words,
+  catalogWords,
   type OwnerItem,
   type OwnerOptionGroup,
   type Availability,
@@ -214,7 +214,7 @@ export function ItemRow({
                 variant="outline"
                 className="absolute -top-1.5 -left-1.5 bg-background px-1 py-0 text-xs font-semibold uppercase shadow-xs"
               >
-                {words.screens.catalog.sampleBadge}
+                {catalogWords.sampleBadge}
               </Badge>
             )}
           </div>
@@ -227,18 +227,18 @@ export function ItemRow({
               </h3>
               {item.featured && (
                 <Badge variant="secondary" className="px-1.5 py-0 text-xs font-medium">
-                  {words.screens.catalog.featuredLabel}
+                  {catalogWords.featuredLabel}
                 </Badge>
               )}
               {item.isNew && (
                 <Badge variant="outline" className="px-1.5 py-0 text-xs text-muted-foreground">
-                  {words.screens.catalog.newLabel}
+                  {catalogWords.newLabel}
                 </Badge>
               )}
               {isSoldOut && (
                 <Badge variant="destructive" className="px-1.5 py-0 text-xs font-medium">
                   <BanIcon className="mr-1 size-3" />
-                  {words.screens.catalog.statSoldOut}
+                  {catalogWords.statSoldOut}
                 </Badge>
               )}
             </div>
@@ -283,14 +283,14 @@ export function ItemRow({
           {/* Sold Out Switch with 44px touch area */}
           <div className="flex items-center gap-1.5">
             <label htmlFor={`sold-out-${item.id}`} className="sr-only">
-              {words.screens.catalog.statSoldOut}
+              {catalogWords.statSoldOut}
             </label>
             <div className="flex size-11 items-center justify-center">
               <Switch
                 id={`sold-out-${item.id}`}
                 checked={isSoldOut}
                 onCheckedChange={handleToggleSoldOut}
-                aria-label={words.screens.catalog.statSoldOut}
+                aria-label={catalogWords.statSoldOut}
               />
             </div>
           </div>
@@ -301,7 +301,7 @@ export function ItemRow({
               id={`visible-${item.id}`}
               checked={!isHidden}
               onCheckedChange={handleToggleVisible}
-              aria-label={words.screens.catalog.visibleLabel}
+              aria-label={catalogWords.visibleLabel}
             />
           </div>
         </div>
@@ -314,7 +314,7 @@ export function ItemRow({
                 variant="ghost"
                 size="icon"
                 className="size-8 text-muted-foreground hover:text-foreground"
-                aria-label={words.screens.catalog.moreActions}
+                aria-label={catalogWords.moreActions}
               />
             }
           >
@@ -325,11 +325,11 @@ export function ItemRow({
               onClick={() => navigate({ to: `/catalog/$itemId`, params: { itemId: item.id } })}
             >
               <PencilIcon className="mr-2 size-4" />
-              {words.screens.catalog.edit}
+              {catalogWords.edit}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleDuplicate}>
               <CopyIcon className="mr-2 size-4" />
-              {words.screens.catalog.duplicate}
+              {catalogWords.duplicate}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleToggleVisible(isHidden)}>
               {isHidden ? (
@@ -337,19 +337,19 @@ export function ItemRow({
               ) : (
                 <EyeOffIcon className="mr-2 size-4" />
               )}
-              {isHidden ? words.screens.catalog.show : words.screens.catalog.hide}
+              {isHidden ? catalogWords.show : catalogWords.hide}
             </DropdownMenuItem>
 
             {canMoveUp && onMoveUp && (
               <DropdownMenuItem onClick={onMoveUp}>
                 <ChevronUpIcon className="mr-2 size-4" />
-                {words.screens.catalog.moveUp}
+                {catalogWords.moveUp}
               </DropdownMenuItem>
             )}
             {canMoveDown && onMoveDown && (
               <DropdownMenuItem onClick={onMoveDown}>
                 <ChevronDownIcon className="mr-2 size-4" />
-                {words.screens.catalog.moveDown}
+                {catalogWords.moveDown}
               </DropdownMenuItem>
             )}
 
@@ -358,7 +358,7 @@ export function ItemRow({
             {item.hasOrders ? (
               <DropdownMenuItem onClick={handleArchive}>
                 <ArchiveIcon className="mr-2 size-4 text-warning-text" />
-                {words.screens.catalog.archive}
+                {catalogWords.archive}
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem
@@ -366,7 +366,7 @@ export function ItemRow({
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2Icon className="mr-2 size-4" />
-                {words.screens.catalog.delete}
+                {catalogWords.delete}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -377,14 +377,14 @@ export function ItemRow({
       <Dialog open={soldOutModalOpen} onOpenChange={setSoldOutModalOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{words.screens.catalog.soldOutTitle}</DialogTitle>
-            <DialogDescription>{words.screens.catalog.soldOutDescription}</DialogDescription>
+            <DialogTitle>{catalogWords.soldOutTitle}</DialogTitle>
+            <DialogDescription>{catalogWords.soldOutDescription}</DialogDescription>
           </DialogHeader>
 
           {item.variants.length > 1 ? (
             <div className="space-y-3 py-2">
               <span className="text-xs font-semibold text-muted-foreground">
-                {words.screens.catalog.selectVariantsSoldOut}
+                {catalogWords.selectVariantsSoldOut}
               </span>
               <div className="space-y-2">
                 {item.variants.map((v) => {
@@ -417,11 +417,9 @@ export function ItemRow({
                 onClick={() => handleApplySoldOutChoice('today')}
                 className="w-full rounded-xl border border-border/80 p-3 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
               >
-                <p className="text-sm font-semibold text-foreground">
-                  {words.screens.catalog.soldOutToday}
-                </p>
+                <p className="text-sm font-semibold text-foreground">{catalogWords.soldOutToday}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {words.screens.catalog.soldOutTodayDesc}
+                  {catalogWords.soldOutTodayDesc}
                 </p>
               </button>
 
@@ -431,10 +429,10 @@ export function ItemRow({
                 className="w-full rounded-xl border border-border/80 p-3 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
               >
                 <p className="text-sm font-semibold text-foreground">
-                  {words.screens.catalog.soldOutIndefinitely}
+                  {catalogWords.soldOutIndefinitely}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {words.screens.catalog.soldOutIndefinitelyDesc}
+                  {catalogWords.soldOutIndefinitelyDesc}
                 </p>
               </button>
             </div>
@@ -442,7 +440,7 @@ export function ItemRow({
 
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setSoldOutModalOpen(false)}>
-              {words.screens.catalog.cancel}
+              {catalogWords.cancel}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -452,18 +450,16 @@ export function ItemRow({
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{words.screens.catalog.confirmDelete}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {words.screens.catalog.confirmDeleteDescription}
-            </AlertDialogDescription>
+            <AlertDialogTitle>{catalogWords.confirmDelete}</AlertDialogTitle>
+            <AlertDialogDescription>{catalogWords.confirmDeleteDescription}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{words.screens.catalog.cancel}</AlertDialogCancel>
+            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
             >
-              {words.screens.catalog.delete}
+              {catalogWords.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

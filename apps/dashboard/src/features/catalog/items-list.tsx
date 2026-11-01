@@ -9,7 +9,7 @@ import {
   WifiOffIcon,
   SparklesIcon,
 } from 'lucide-react';
-import { words, errorWords, type OwnerItem, type Category } from '@smartapp/core';
+import { catalogWords, errorWords, type OwnerItem, type Category } from '@smartapp/core';
 import {
   useOwnerItems,
   useOwnerCategories,
@@ -242,7 +242,7 @@ export function ItemsList() {
           }}
         >
           <RefreshCwIcon className="size-3.5" />
-          {words.screens.catalog.tryAgain}
+          {catalogWords.tryAgain}
         </Button>
       </div>
     );
@@ -259,7 +259,7 @@ export function ItemsList() {
       {!isOnline && (
         <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
           <WifiOffIcon className="size-4 shrink-0" />
-          <span>{words.screens.catalog.offlineNotice}</span>
+          <span>{catalogWords.offlineNotice}</span>
         </div>
       )}
 
@@ -278,7 +278,7 @@ export function ItemsList() {
                 : 'border-border/80 bg-card hover:bg-muted/40',
             )}
           >
-            <StatLabel>{words.screens.catalog.statTotalItems(kind)}</StatLabel>
+            <StatLabel>{catalogWords.statTotalItems(kind)}</StatLabel>
             <StatValue className="font-mono text-2xl font-bold tracking-tight text-foreground">
               {totalCount}
             </StatValue>
@@ -298,7 +298,7 @@ export function ItemsList() {
                 : 'border-border/80 bg-card hover:bg-muted/40',
             )}
           >
-            <StatLabel>{words.screens.catalog.statSoldOut}</StatLabel>
+            <StatLabel>{catalogWords.statSoldOut}</StatLabel>
             <StatValue className="font-mono text-2xl font-bold tracking-tight text-warning-text">
               {soldOutCount}
             </StatValue>
@@ -318,7 +318,7 @@ export function ItemsList() {
                 : 'border-border/80 bg-card hover:bg-muted/40',
             )}
           >
-            <StatLabel>{words.screens.catalog.statHidden}</StatLabel>
+            <StatLabel>{catalogWords.statHidden}</StatLabel>
             <StatValue className="font-mono text-2xl font-bold tracking-tight text-muted-foreground">
               {hiddenCount}
             </StatValue>
@@ -333,14 +333,14 @@ export function ItemsList() {
           <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            placeholder={words.screens.catalog.searchPlaceholder(kind)}
+            placeholder={catalogWords.searchPlaceholder(kind)}
             className="h-10 rounded-xl border-border/80 bg-card pr-9 pl-9 text-sm"
             onChange={(e) => setSearch(e.target.value)}
           />
           {search ? (
             <button
               type="button"
-              aria-label={words.screens.catalog.clearSearch}
+              aria-label={catalogWords.clearSearch}
               onClick={() => setSearch('')}
               className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
             >
@@ -362,7 +362,7 @@ export function ItemsList() {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              {words.screens.catalog.filterAll}
+              {catalogWords.filterAll}
               <span className="ml-1.5 font-mono text-xs opacity-80">{totalCount}</span>
             </button>
 
@@ -376,7 +376,7 @@ export function ItemsList() {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              {words.screens.catalog.filterSoldOut}
+              {catalogWords.filterSoldOut}
               <span className="ml-1.5 font-mono text-xs opacity-80">{soldOutCount}</span>
             </button>
 
@@ -390,7 +390,7 @@ export function ItemsList() {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              {words.screens.catalog.filterHidden}
+              {catalogWords.filterHidden}
               <span className="ml-1.5 font-mono text-xs opacity-80">{hiddenCount}</span>
             </button>
           </div>
@@ -405,7 +405,7 @@ export function ItemsList() {
               onClick={() => setIsReordering(!isReordering)}
             >
               <ArrowUpDownIcon className="mr-1.5 size-3.5" />
-              {isReordering ? words.screens.catalog.doneReordering : words.screens.catalog.reorder}
+              {isReordering ? catalogWords.doneReordering : catalogWords.reorder}
             </Button>
           )}
 
@@ -417,7 +417,7 @@ export function ItemsList() {
             onClick={() => navigate({ to: '/catalog/new' })}
           >
             <PlusIcon className="mr-1.5 size-3.5" />
-            {words.screens.catalog.addItem(kind)}
+            {catalogWords.addItem(kind)}
           </Button>
         </div>
       </div>
@@ -430,7 +430,7 @@ export function ItemsList() {
           </div>
           <div className="space-y-1">
             <h3 className="text-base font-semibold text-foreground">
-              {words.screens.catalog.emptyItems(kind)}
+              {catalogWords.emptyItems(kind)}
             </h3>
             <p className="text-xs text-muted-foreground">
               Add your first item or populate with standard samples.
@@ -443,7 +443,7 @@ export function ItemsList() {
               onClick={() => navigate({ to: '/catalog/new' })}
             >
               <PlusIcon className="mr-1 size-3.5" />
-              {words.screens.catalog.addItem(kind)}
+              {catalogWords.addItem(kind)}
             </Button>
             <Button
               variant="outline"
@@ -451,18 +451,18 @@ export function ItemsList() {
               className="text-xs"
               onClick={handleStartWithSamples}
             >
-              {words.screens.catalog.startWithSamples}
+              {catalogWords.startWithSamples}
             </Button>
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-3 py-12 text-center">
           <p className="text-sm font-medium text-foreground">
-            {search ? words.screens.catalog.noSearchResults(search) : 'No items match this filter.'}
+            {search ? catalogWords.noSearchResults(search) : 'No items match this filter.'}
           </p>
           {search && (
             <Button variant="outline" size="sm" onClick={() => setSearch('')}>
-              {words.screens.catalog.clearSearch}
+              {catalogWords.clearSearch}
             </Button>
           )}
         </div>
@@ -501,7 +501,7 @@ export function ItemsList() {
                     {category.name}
                   </h2>
                   <Badge variant="secondary" className="px-1.5 py-0 font-mono text-xs">
-                    {words.screens.catalog.itemCount(items.length)}
+                    {catalogWords.itemCount(items.length)}
                   </Badge>
                 </div>
               </div>
@@ -524,7 +524,7 @@ export function ItemsList() {
           onClick={() => navigate({ to: '/catalog/new' })}
         >
           <PlusIcon className="mr-1.5 size-4" />
-          {words.screens.catalog.addItem(kind)}
+          {catalogWords.addItem(kind)}
         </Button>
       </div>
     </div>

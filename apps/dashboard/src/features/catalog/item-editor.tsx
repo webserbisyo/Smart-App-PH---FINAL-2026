@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import {
   itemPriceLabel,
-  words,
+  catalogWords,
   errorWords,
   type OwnerItem,
   type ItemDraft,
@@ -120,7 +120,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty && !isSubmitted) {
         e.preventDefault();
-        e.returnValue = words.screens.catalog.unsavedChanges;
+        e.returnValue = catalogWords.unsavedChanges;
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -364,9 +364,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
         </Button>
         <div>
           <h1 className="text-xl font-bold text-foreground">
-            {initialItem
-              ? words.screens.catalog.itemTitle(kind)
-              : words.screens.catalog.newTitle(kind)}
+            {initialItem ? catalogWords.itemTitle(kind) : catalogWords.newTitle(kind)}
           </h1>
           <p className="text-xs text-muted-foreground">
             {initialItem
@@ -402,25 +400,23 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
-                {words.screens.catalog.sectionBasics}
+                {catalogWords.sectionBasics}
               </h3>
-              <p className="text-xs text-muted-foreground">
-                {words.screens.catalog.sectionBasicsDesc}
-              </p>
+              <p className="text-xs text-muted-foreground">{catalogWords.sectionBasicsDesc}</p>
             </div>
 
             <div className="space-y-4 pt-1">
               {/* Name */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="item-name">{words.screens.catalog.nameLabel}</Label>
+                  <Label htmlFor="item-name">{catalogWords.nameLabel}</Label>
                   <span className="font-mono text-xs text-muted-foreground">{name.length}/80</span>
                 </div>
                 <Input
                   id="item-name"
                   value={name}
                   maxLength={80}
-                  placeholder={words.screens.catalog.namePlaceholder}
+                  placeholder={catalogWords.namePlaceholder}
                   onChange={(e) => {
                     markDirty();
                     setName(e.target.value);
@@ -432,7 +428,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
               {/* Description */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="item-desc">{words.screens.catalog.descLabel}</Label>
+                  <Label htmlFor="item-desc">{catalogWords.descLabel}</Label>
                   <span className="font-mono text-xs text-muted-foreground">
                     {description.length}/300
                   </span>
@@ -442,7 +438,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                   value={description}
                   maxLength={300}
                   rows={3}
-                  placeholder={words.screens.catalog.descPlaceholder}
+                  placeholder={catalogWords.descPlaceholder}
                   onChange={(e) => {
                     markDirty();
                     setDescription(e.target.value);
@@ -452,7 +448,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
 
               {/* Category */}
               <div className="space-y-1.5">
-                <Label htmlFor="item-cat">{words.screens.catalog.categoryLabel}</Label>
+                <Label htmlFor="item-cat">{catalogWords.categoryLabel}</Label>
                 <NativeSelect
                   id="item-cat"
                   value={effectiveCategoryId}
@@ -472,7 +468,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
               {/* Base Price (shown when no axes) */}
               {axes.length === 0 && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="item-price">{words.screens.catalog.priceLabel}</Label>
+                  <Label htmlFor="item-price">{catalogWords.priceLabel}</Label>
                   <div className="relative max-w-xs">
                     <span className="absolute top-1/2 left-3 -translate-y-1/2 font-mono text-sm text-muted-foreground">
                       ₱
@@ -502,11 +498,9 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
-                  {words.screens.catalog.sectionVariants}
+                  {catalogWords.sectionVariants}
                 </h3>
-                <p className="text-xs text-muted-foreground">
-                  {words.screens.catalog.sectionVariantsDesc}
-                </p>
+                <p className="text-xs text-muted-foreground">{catalogWords.sectionVariantsDesc}</p>
               </div>
               {axes.length < 2 && (
                 <Button
@@ -517,7 +511,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                   onClick={handleAddAxis}
                 >
                   <PlusIcon className="mr-1 size-3.5" />
-                  {words.screens.catalog.addAxis}
+                  {catalogWords.addAxis}
                 </Button>
               )}
             </div>
@@ -650,11 +644,9 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
-                  {words.screens.catalog.sectionAddOns}
+                  {catalogWords.sectionAddOns}
                 </h3>
-                <p className="text-xs text-muted-foreground">
-                  {words.screens.catalog.sectionAddOnsDesc}
-                </p>
+                <p className="text-xs text-muted-foreground">{catalogWords.sectionAddOnsDesc}</p>
               </div>
               <Button
                 type="button"
@@ -664,7 +656,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                 onClick={() => setAddOnSheetOpen(true)}
               >
                 <PlusIcon className="mr-1 size-3.5" />
-                {words.screens.catalog.createAddOnGroup}
+                {catalogWords.createAddOnGroup}
               </Button>
             </div>
 
@@ -711,11 +703,9 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
-                {words.screens.catalog.sectionPairings} ({pairingIds.length}/4)
+                {catalogWords.sectionPairings} ({pairingIds.length}/4)
               </h3>
-              <p className="text-xs text-muted-foreground">
-                {words.screens.catalog.sectionPairingsDesc}
-              </p>
+              <p className="text-xs text-muted-foreground">{catalogWords.sectionPairingsDesc}</p>
             </div>
 
             <div className="grid max-h-56 grid-cols-1 gap-2 overflow-y-auto pt-1 sm:grid-cols-2">
@@ -755,23 +745,17 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           <div className="space-y-4 rounded-2xl border border-border/60 bg-card p-5 shadow-xs">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
-                {words.screens.catalog.sectionShowAs}
+                {catalogWords.sectionShowAs}
               </h3>
-              <p className="text-xs text-muted-foreground">
-                {words.screens.catalog.sectionShowAsDesc}
-              </p>
+              <p className="text-xs text-muted-foreground">{catalogWords.sectionShowAsDesc}</p>
             </div>
 
             <div className="space-y-4 divide-y divide-border/40 pt-1">
               {/* Featured */}
               <div className="flex items-center justify-between pt-2 first:pt-0">
                 <div>
-                  <Label className="text-xs font-semibold">
-                    {words.screens.catalog.featuredLabel}
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    {words.screens.catalog.featuredDesc}
-                  </p>
+                  <Label className="text-xs font-semibold">{catalogWords.featuredLabel}</Label>
+                  <p className="text-xs text-muted-foreground">{catalogWords.featuredDesc}</p>
                 </div>
                 <Switch
                   checked={featured}
@@ -785,8 +769,8 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
               {/* New */}
               <div className="flex items-center justify-between pt-4">
                 <div>
-                  <Label className="text-xs font-semibold">{words.screens.catalog.newLabel}</Label>
-                  <p className="text-xs text-muted-foreground">{words.screens.catalog.newDesc}</p>
+                  <Label className="text-xs font-semibold">{catalogWords.newLabel}</Label>
+                  <p className="text-xs text-muted-foreground">{catalogWords.newDesc}</p>
                 </div>
                 <Switch
                   checked={isNew}
@@ -800,12 +784,8 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
               {/* Visible */}
               <div className="flex items-center justify-between pt-4">
                 <div>
-                  <Label className="text-xs font-semibold">
-                    {words.screens.catalog.visibleLabel}
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    {words.screens.catalog.visibleDesc}
-                  </p>
+                  <Label className="text-xs font-semibold">{catalogWords.visibleLabel}</Label>
+                  <p className="text-xs text-muted-foreground">{catalogWords.visibleDesc}</p>
                 </div>
                 <Switch
                   checked={status === 'active'}
@@ -842,7 +822,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                     onClick={handleArchive}
                   >
                     <ArchiveIcon className="mr-1.5 size-3.5" />
-                    {words.screens.catalog.archive}
+                    {catalogWords.archive}
                   </Button>
                 ) : (
                   <Button
@@ -853,7 +833,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
                     onClick={() => setDeleteConfirmOpen(true)}
                   >
                     <Trash2Icon className="mr-1.5 size-3.5" />
-                    {words.screens.catalog.delete}
+                    {catalogWords.delete}
                   </Button>
                 )}
               </div>
@@ -868,14 +848,14 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
               disabled={saveItem.isPending}
               onClick={() => navigate({ to: '/catalog' })}
             >
-              {words.screens.catalog.cancel}
+              {catalogWords.cancel}
             </Button>
             <Button
               type="submit"
               disabled={saveItem.isPending || !isOnline}
               className="min-w-28 bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
             >
-              {saveItem.isPending ? words.screens.catalog.saving : words.screens.catalog.save}
+              {saveItem.isPending ? catalogWords.saving : catalogWords.save}
             </Button>
           </div>
         </form>
@@ -885,7 +865,7 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
           <div className="space-y-4 rounded-2xl border border-border/80 bg-card p-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-border/40 pb-2">
               <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                {words.screens.catalog.previewHeading}
+                {catalogWords.previewHeading}
               </span>
               <SparklesIcon className="size-4 text-primary" />
             </div>
@@ -947,18 +927,16 @@ export function ItemEditor({ initialItem }: ItemEditorProps) {
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{words.screens.catalog.confirmDelete}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {words.screens.catalog.confirmDeleteDescription}
-            </AlertDialogDescription>
+            <AlertDialogTitle>{catalogWords.confirmDelete}</AlertDialogTitle>
+            <AlertDialogDescription>{catalogWords.confirmDeleteDescription}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{words.screens.catalog.cancel}</AlertDialogCancel>
+            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDelete}
             >
-              {words.screens.catalog.delete}
+              {catalogWords.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

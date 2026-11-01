@@ -7,7 +7,7 @@ import {
   Loader2Icon,
   GripVerticalIcon,
 } from 'lucide-react';
-import { words } from '@smartapp/core';
+import { catalogWords } from '@smartapp/core';
 import { useCreateUploadUrl, compressImage } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Badge } from '@smartapp/ui/components/badge';
@@ -73,13 +73,13 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
 
     for (const file of list) {
       if (file.size > 15 * 1024 * 1024) {
-        setErrorMsg(words.screens.catalog.photoTooLarge);
+        setErrorMsg(catalogWords.photoTooLarge);
         continue;
       }
 
       const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
       if (!validTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|heic)$/i)) {
-        setErrorMsg(words.screens.catalog.photoUnsupported);
+        setErrorMsg(catalogWords.photoUnsupported);
         continue;
       }
 
@@ -188,10 +188,8 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-foreground">
-            {words.screens.catalog.sectionPhotos}
-          </h3>
-          <p className="text-xs text-muted-foreground">{words.screens.catalog.sectionPhotosDesc}</p>
+          <h3 className="text-sm font-semibold text-foreground">{catalogWords.sectionPhotos}</h3>
+          <p className="text-xs text-muted-foreground">{catalogWords.sectionPhotosDesc}</p>
         </div>
         <span className="font-mono text-xs text-muted-foreground">{photos.length}/5 photos</span>
       </div>
@@ -244,10 +242,8 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
             <UploadCloudIcon className="size-8 text-muted-foreground" />
           )}
           <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">
-              {words.screens.catalog.photoDropzone}
-            </p>
-            <p className="text-xs text-muted-foreground">{words.screens.catalog.photoMaxMb}</p>
+            <p className="text-sm font-medium text-foreground">{catalogWords.photoDropzone}</p>
+            <p className="text-xs text-muted-foreground">{catalogWords.photoMaxMb}</p>
           </div>
         </div>
       )}
@@ -352,7 +348,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                           variant="ghost"
                           size="icon"
                           className="size-8 text-muted-foreground hover:text-foreground"
-                          title={words.screens.catalog.photoCrop}
+                          title={catalogWords.photoCrop}
                           onClick={() => setCropTarget({ index, url: photo })}
                         >
                           <CropIcon className="size-4" />
@@ -362,7 +358,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                           variant="ghost"
                           size="icon"
                           className="size-8 text-muted-foreground hover:text-destructive"
-                          title={words.screens.catalog.photoRemove}
+                          title={catalogWords.photoRemove}
                           onClick={() => handleRemovePhoto(index)}
                         >
                           <Trash2Icon className="size-4" />
@@ -381,7 +377,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
       <Dialog open={cropTarget !== null} onOpenChange={(open) => !open && setCropTarget(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{words.screens.catalog.photoCropSquare}</DialogTitle>
+            <DialogTitle>{catalogWords.photoCropSquare}</DialogTitle>
           </DialogHeader>
           {cropTarget && (
             <div className="relative flex h-64 w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
@@ -399,14 +395,14 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
           )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setCropTarget(null)}>
-              {words.screens.catalog.cancel}
+              {catalogWords.cancel}
             </Button>
             <Button
               type="button"
               className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
               onClick={handleApplyCrop}
             >
-              {words.screens.catalog.confirm}
+              {catalogWords.confirm}
             </Button>
           </DialogFooter>
         </DialogContent>

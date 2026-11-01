@@ -2,7 +2,7 @@ import * as React from 'react';
 import {
   ICON_KEYS,
   iconPath,
-  words,
+  catalogWords,
   errorWords,
   type Category,
   type IconKey,
@@ -110,9 +110,7 @@ function CategorySheetForm({
     <>
       <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>
-            {category ? words.screens.catalog.editCategory : words.screens.catalog.addCategory}
-          </SheetTitle>
+          <SheetTitle>{category ? catalogWords.editCategory : catalogWords.addCategory}</SheetTitle>
           <SheetDescription>Organize your items into customer-facing categories.</SheetDescription>
         </SheetHeader>
 
@@ -127,7 +125,7 @@ function CategorySheetForm({
             {/* Name */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="category-name">{words.screens.catalog.categoryNameLabel}</Label>
+                <Label htmlFor="category-name">{catalogWords.categoryNameLabel}</Label>
                 <span className="font-mono text-xs text-muted-foreground">{name.length}/40</span>
               </div>
               <Input
@@ -142,7 +140,7 @@ function CategorySheetForm({
 
             {/* Icon Picker */}
             <div className="space-y-2">
-              <Label>{words.screens.catalog.categoryIconLabel}</Label>
+              <Label>{catalogWords.categoryIconLabel}</Label>
               <div className="grid max-h-56 grid-cols-6 gap-2 overflow-y-auto rounded-xl border border-border/80 bg-muted/20 p-3">
                 {ICON_KEYS.map((key) => {
                   const isSelected = selectedIcon === key;
@@ -179,7 +177,7 @@ function CategorySheetForm({
                 disabled={removeCategory.isPending}
                 onClick={() => setDeleteConfirmOpen(true)}
               >
-                {words.screens.catalog.delete}
+                {catalogWords.delete}
               </Button>
             ) : (
               <span />
@@ -187,7 +185,7 @@ function CategorySheetForm({
 
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="sm" onClick={onClose}>
-                {words.screens.catalog.cancel}
+                {catalogWords.cancel}
               </Button>
               <Button
                 type="submit"
@@ -195,7 +193,7 @@ function CategorySheetForm({
                 disabled={saveCategory.isPending}
                 className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
               >
-                {saveCategory.isPending ? words.screens.catalog.saving : words.screens.catalog.save}
+                {saveCategory.isPending ? catalogWords.saving : catalogWords.save}
               </Button>
             </div>
           </SheetFooter>
@@ -206,18 +204,16 @@ function CategorySheetForm({
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{words.screens.catalog.deleteCategoryConfirm}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {words.screens.catalog.confirmDeleteDescription}
-            </AlertDialogDescription>
+            <AlertDialogTitle>{catalogWords.deleteCategoryConfirm}</AlertDialogTitle>
+            <AlertDialogDescription>{catalogWords.confirmDeleteDescription}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{words.screens.catalog.cancel}</AlertDialogCancel>
+            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
             >
-              {words.screens.catalog.delete}
+              {catalogWords.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

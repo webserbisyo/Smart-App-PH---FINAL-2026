@@ -8,7 +8,7 @@ import {
   WifiOffIcon,
 } from 'lucide-react';
 import {
-  words,
+  catalogWords,
   groupRuleLabel,
   errorWords,
   type OwnerOptionGroup,
@@ -91,7 +91,7 @@ export function CatalogAddOnsScreen() {
   return (
     <div className="flex min-h-full flex-col pb-16">
       <PageHeader
-        title={words.screens.catalog.title(kind)}
+        title={catalogWords.title(kind)}
         tabs={useCatalogTabs()}
         actions={
           <Button
@@ -102,7 +102,7 @@ export function CatalogAddOnsScreen() {
             onClick={handleOpenAdd}
           >
             <PlusIcon className="mr-1.5 size-4" />
-            {words.screens.catalog.addAddOnGroup}
+            {catalogWords.addAddOnGroup}
           </Button>
         }
       />
@@ -112,7 +112,7 @@ export function CatalogAddOnsScreen() {
         {!isOnline && (
           <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
             <WifiOffIcon className="size-4 shrink-0" />
-            <span>{words.screens.catalog.offlineNotice}</span>
+            <span>{catalogWords.offlineNotice}</span>
           </div>
         )}
 
@@ -153,7 +153,7 @@ export function CatalogAddOnsScreen() {
               onClick={() => void refetchGroups()}
             >
               <RefreshCwIcon className="size-3.5" />
-              {words.screens.catalog.tryAgain}
+              {catalogWords.tryAgain}
             </Button>
           </div>
         ) : optionGroups.length === 0 ? (
@@ -163,7 +163,7 @@ export function CatalogAddOnsScreen() {
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-semibold text-foreground">
-                {words.screens.catalog.emptyAddOns}
+                {catalogWords.emptyAddOns}
               </h3>
               <p className="text-xs text-muted-foreground">
                 Create options like toppings, sugar levels, or extras for your items.
@@ -175,7 +175,7 @@ export function CatalogAddOnsScreen() {
               onClick={handleOpenAdd}
             >
               <PlusIcon className="mr-1 size-3.5" />
-              {words.screens.catalog.addAddOnGroup}
+              {catalogWords.addAddOnGroup}
             </Button>
           </div>
         ) : (
@@ -211,7 +211,7 @@ export function CatalogAddOnsScreen() {
                       </div>
 
                       <Badge variant="outline" className="shrink-0 font-mono text-xs">
-                        {words.screens.catalog.optionCount(group.options.length)}
+                        {catalogWords.optionCount(group.options.length)}
                       </Badge>
                     </div>
 
@@ -253,12 +253,12 @@ export function CatalogAddOnsScreen() {
                             ))}
                           </AvatarGroup>
                           <span className="truncate font-mono text-xs text-muted-foreground">
-                            {words.screens.catalog.usedByCount(usedByCount)}
+                            {catalogWords.usedByCount(usedByCount)}
                           </span>
                         </div>
                       ) : (
                         <span className="font-mono text-xs text-muted-foreground">
-                          {words.screens.catalog.usedByCount(0)}
+                          {catalogWords.usedByCount(0)}
                         </span>
                       )}
                     </div>
@@ -270,7 +270,7 @@ export function CatalogAddOnsScreen() {
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:text-foreground"
-                        title={words.screens.catalog.duplicate}
+                        title={catalogWords.duplicate}
                         aria-label={`Duplicate ${group.name}`}
                         onClick={(e) => handleDuplicate(e, group)}
                       >
@@ -281,7 +281,7 @@ export function CatalogAddOnsScreen() {
                         variant="ghost"
                         size="icon"
                         className="size-8 text-muted-foreground hover:text-foreground"
-                        title={words.screens.catalog.edit}
+                        title={catalogWords.edit}
                         aria-label={`Edit ${group.name}`}
                         onClick={(e) => {
                           e.stopPropagation();

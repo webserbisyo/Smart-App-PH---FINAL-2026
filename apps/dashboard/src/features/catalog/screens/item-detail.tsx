@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { AlertCircleIcon, ArrowLeftIcon, RefreshCwIcon } from 'lucide-react';
-import { words, errorWords } from '@smartapp/core';
+import { catalogWords, errorWords } from '@smartapp/core';
 import { useOwnerItem, errorCodeOf } from '@smartapp/data';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Button } from '@smartapp/ui/components/button';
@@ -44,7 +44,7 @@ export function CatalogItemScreen() {
           {error && (
             <Button variant="outline" size="sm" onClick={() => void refetch()}>
               <RefreshCwIcon className="mr-1 size-3.5" />
-              {words.screens.catalog.tryAgain}
+              {catalogWords.tryAgain}
             </Button>
           )}
           <Button

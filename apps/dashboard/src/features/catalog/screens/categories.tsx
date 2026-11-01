@@ -9,7 +9,7 @@ import {
   WifiOffIcon,
   FolderIcon,
 } from 'lucide-react';
-import { words, iconPath, errorWords, type Category } from '@smartapp/core';
+import { catalogWords, iconPath, errorWords, type Category } from '@smartapp/core';
 import { useOwnerCategories, useOwnerItems, useSaveSortOrder, errorCodeOf } from '@smartapp/data';
 import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
@@ -87,7 +87,7 @@ export function CatalogCategoriesScreen() {
   return (
     <div className="flex min-h-full flex-col pb-16">
       <PageHeader
-        title={words.screens.catalog.title(kind)}
+        title={catalogWords.title(kind)}
         tabs={useCatalogTabs()}
         actions={
           <div className="flex items-center gap-2">
@@ -99,9 +99,7 @@ export function CatalogCategoriesScreen() {
                 className="h-9 text-xs"
                 onClick={() => setIsReordering(!isReordering)}
               >
-                {isReordering
-                  ? words.screens.catalog.doneReordering
-                  : words.screens.catalog.reorder}
+                {isReordering ? catalogWords.doneReordering : catalogWords.reorder}
               </Button>
             )}
             <Button
@@ -112,7 +110,7 @@ export function CatalogCategoriesScreen() {
               onClick={handleOpenAdd}
             >
               <PlusIcon className="mr-1.5 size-4" />
-              {words.screens.catalog.addCategory}
+              {catalogWords.addCategory}
             </Button>
           </div>
         }
@@ -128,7 +126,7 @@ export function CatalogCategoriesScreen() {
         {!isOnline && (
           <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
             <WifiOffIcon className="size-4 shrink-0" />
-            <span>{words.screens.catalog.offlineNotice}</span>
+            <span>{catalogWords.offlineNotice}</span>
           </div>
         )}
 
@@ -167,7 +165,7 @@ export function CatalogCategoriesScreen() {
               onClick={() => void refetchCats()}
             >
               <RefreshCwIcon className="size-3.5" />
-              {words.screens.catalog.tryAgain}
+              {catalogWords.tryAgain}
             </Button>
           </div>
         ) : categories.length === 0 ? (
@@ -177,7 +175,7 @@ export function CatalogCategoriesScreen() {
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-semibold text-foreground">
-                {words.screens.catalog.emptyCategories}
+                {catalogWords.emptyCategories}
               </h3>
               <p className="text-xs text-muted-foreground">
                 Organize dishes or merchandise into customer-facing sections.
@@ -189,7 +187,7 @@ export function CatalogCategoriesScreen() {
               onClick={handleOpenAdd}
             >
               <PlusIcon className="mr-1 size-3.5" />
-              {words.screens.catalog.addCategory}
+              {catalogWords.addCategory}
             </Button>
           </div>
         ) : isReordering ? (
@@ -224,7 +222,7 @@ export function CatalogCategoriesScreen() {
                             {cat.name}
                           </p>
                           <p className="font-mono text-xs text-muted-foreground">
-                            {words.screens.catalog.itemCount(count)}
+                            {catalogWords.itemCount(count)}
                           </p>
                         </div>
                       </div>
@@ -297,7 +295,7 @@ export function CatalogCategoriesScreen() {
                         {cat.name}
                       </p>
                       <p className="font-mono text-xs text-muted-foreground">
-                        {words.screens.catalog.itemCount(count)}
+                        {catalogWords.itemCount(count)}
                       </p>
                     </div>
                   </div>

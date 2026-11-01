@@ -2,7 +2,7 @@ import * as React from 'react';
 import { GripVerticalIcon, PlusIcon, Trash2Icon, AlertTriangleIcon } from 'lucide-react';
 import {
   formatPeso,
-  words,
+  catalogWords,
   groupRuleLabel,
   errorWords,
   type OwnerOptionGroup,
@@ -209,9 +209,7 @@ function AddOnSheetForm({
     <>
       <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>
-            {group ? words.screens.catalog.editGroup : words.screens.catalog.addGroup}
-          </SheetTitle>
+          <SheetTitle>{group ? catalogWords.editGroup : catalogWords.addGroup}</SheetTitle>
           <SheetDescription>
             Create customization options that can be shared across items.
           </SheetDescription>
@@ -220,7 +218,7 @@ function AddOnSheetForm({
         {group && group.usedBy > 0 && (
           <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
             <AlertTriangleIcon className="size-4 shrink-0" />
-            <span>{words.screens.catalog.groupWarningNotice(group.usedBy)}</span>
+            <span>{catalogWords.groupWarningNotice(group.usedBy)}</span>
           </div>
         )}
 
@@ -251,7 +249,7 @@ function AddOnSheetForm({
             {/* Rule Presets */}
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <Label>{words.screens.catalog.ruleLabel}</Label>
+                <Label>{catalogWords.ruleLabel}</Label>
                 <Badge variant="outline" className="text-xs font-medium">
                   {groupRuleLabel(minPicks, maxPicks)}
                 </Badge>
@@ -268,16 +266,16 @@ function AddOnSheetForm({
                 className="grid w-full grid-cols-2 gap-1.5"
               >
                 <ToggleGroupItem value="pick_1_req" className="h-9 justify-center text-xs">
-                  {words.screens.catalog.rulePickOneRequired}
+                  {catalogWords.rulePickOneRequired}
                 </ToggleGroupItem>
                 <ToggleGroupItem value="pick_1_opt" className="h-9 justify-center text-xs">
-                  {words.screens.catalog.rulePickOneOptional}
+                  {catalogWords.rulePickOneOptional}
                 </ToggleGroupItem>
                 <ToggleGroupItem value="pick_any" className="h-9 justify-center text-xs">
-                  {words.screens.catalog.rulePickAny}
+                  {catalogWords.rulePickAny}
                 </ToggleGroupItem>
                 <ToggleGroupItem value="custom" className="h-9 justify-center text-xs">
-                  {words.screens.catalog.ruleCustom}
+                  {catalogWords.ruleCustom}
                 </ToggleGroupItem>
               </ToggleGroup>
 
@@ -286,7 +284,7 @@ function AddOnSheetForm({
                 <div className="grid grid-cols-2 gap-3 rounded-xl border border-border/60 bg-muted/20 p-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="min-picks" className="text-xs">
-                      {words.screens.catalog.minPicksLabel}
+                      {catalogWords.minPicksLabel}
                     </Label>
                     <Input
                       id="min-picks"
@@ -299,7 +297,7 @@ function AddOnSheetForm({
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="max-picks" className="text-xs">
-                      {words.screens.catalog.maxPicksLabel}
+                      {catalogWords.maxPicksLabel}
                     </Label>
                     <Input
                       id="max-picks"
@@ -319,9 +317,7 @@ function AddOnSheetForm({
             {/* Options List */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold">
-                  {words.screens.catalog.optionsLabel}
-                </Label>
+                <Label className="text-sm font-semibold">{catalogWords.optionsLabel}</Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -330,7 +326,7 @@ function AddOnSheetForm({
                   onClick={handleAddOption}
                 >
                   <PlusIcon className="size-3.5" />
-                  {words.screens.catalog.addOption}
+                  {catalogWords.addOption}
                 </Button>
               </div>
 
@@ -346,7 +342,7 @@ function AddOnSheetForm({
                     <div className="min-w-0 flex-1">
                       <Input
                         value={opt.name}
-                        placeholder={words.screens.catalog.optionName}
+                        placeholder={catalogWords.optionName}
                         className="h-8 text-xs"
                         onChange={(e) => updateOption(index, { name: e.target.value })}
                       />
@@ -425,7 +421,7 @@ function AddOnSheetForm({
             {/* Customer Live Preview */}
             <div className="space-y-2 border-t border-border/50 pt-2">
               <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                {words.screens.catalog.previewHeading}
+                {catalogWords.previewHeading}
               </span>
               <div className="space-y-2 rounded-xl border border-border/60 bg-muted/10 p-3.5">
                 <div className="flex items-baseline justify-between">
@@ -473,7 +469,7 @@ function AddOnSheetForm({
                 disabled={removeOptionGroup.isPending}
                 onClick={() => setDeleteConfirmOpen(true)}
               >
-                {words.screens.catalog.delete}
+                {catalogWords.delete}
               </Button>
             ) : (
               <span />
@@ -481,7 +477,7 @@ function AddOnSheetForm({
 
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="sm" onClick={onClose}>
-                {words.screens.catalog.cancel}
+                {catalogWords.cancel}
               </Button>
               <Button
                 type="submit"
@@ -489,9 +485,7 @@ function AddOnSheetForm({
                 disabled={saveOptionGroup.isPending}
                 className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
               >
-                {saveOptionGroup.isPending
-                  ? words.screens.catalog.saving
-                  : words.screens.catalog.save}
+                {saveOptionGroup.isPending ? catalogWords.saving : catalogWords.save}
               </Button>
             </div>
           </SheetFooter>
@@ -506,16 +500,16 @@ function AddOnSheetForm({
             <AlertDialogDescription>
               {group && group.usedBy > 0
                 ? `This group is used by ${group.usedBy} item(s). Removing it will detach it from all items.`
-                : words.screens.catalog.confirmDeleteDescription}
+                : catalogWords.confirmDeleteDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{words.screens.catalog.cancel}</AlertDialogCancel>
+            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
             >
-              {words.screens.catalog.delete}
+              {catalogWords.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

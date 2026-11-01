@@ -43,6 +43,8 @@ Installed files stay exactly as the CLI wrote them (T27), including the ones tha
 
 Tooling only: `emojibase-data` 17.0.0, an exact `@smartapp/tooling` devDependency (the version the ReUI picker reads). Optional (no npm package): `@diceui/swap` (view toggle icon), shadcn `kbd` (desktop shortcuts / and N), shadcn `context-menu` (right-click a row).
 
+Dev only: @tanstack/react-query-devtools 5.104.1, an exact dashboard devDependency, loaded with React.lazy only when import.meta.env.DEV; after pnpm build, confirm ReactQueryDevtools is not in the built files.
+
 Pattern references: `c-data-grid-7` and `-14` (selection, drag rows), `c-table-11` (product table), `c-toggle-group-8` (view switch), `c-emoji-picker-5` (custom emoji tab), `c-card-8` (image hover).
 
 ## Reuse (do not rebuild these)

@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { PlusIcon } from 'lucide-react';
-import { words } from '@smartapp/core';
+import { catalogWords } from '@smartapp/core';
 import { useShop } from '@/app/shop';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { Button } from '@smartapp/ui/components/button';
@@ -15,7 +15,7 @@ export function CatalogItemsScreen() {
   return (
     <div className="flex min-h-full flex-col pb-16">
       <PageHeader
-        title={words.screens.catalog.title(kind)}
+        title={catalogWords.title(kind)}
         tabs={useCatalogTabs()}
         actions={
           <Button
@@ -26,7 +26,7 @@ export function CatalogItemsScreen() {
             onClick={() => navigate({ to: '/catalog/new' })}
           >
             <PlusIcon className="mr-1.5 size-4" />
-            {words.screens.catalog.addItem(kind)}
+            {catalogWords.addItem(kind)}
           </Button>
         }
       />

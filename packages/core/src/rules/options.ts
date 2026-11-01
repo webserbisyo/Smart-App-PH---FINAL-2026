@@ -4,7 +4,6 @@ import { NOTE_MAX } from '../schemas/basket.js';
 import type { Item, OptionGroup, Variant } from '../schemas/catalog.js';
 import type { LineProblem } from '../schemas/order.js';
 import { variantAvailability } from './hours.js';
-import { words } from '../words.js';
 
 export interface LinePicks {
   variantId: string;
@@ -163,5 +162,9 @@ export function variantLabel(variant: Pick<Variant, 'values'>): string | null {
 
 /** Wording for add-on rule: "Pick 1, required", "Pick up to 3", etc. */
 export function groupRuleLabel(min: number, max: number): string {
-  return words.screens.catalog.ruleWording(min, max);
+  if (min === 1 && max === 1) return 'Pick 1, required';
+  if (min === 0 && max === 1) return 'Pick 1, optional';
+  if (min === 0) return `Pick up to ${max}`;
+  if (min === max) return `Pick exactly ${min}`;
+  return `Pick ${min} to ${max}`;
 }
