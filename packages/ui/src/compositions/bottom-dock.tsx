@@ -62,7 +62,7 @@ export function BottomDock({ label, items, more }: BottomDockProps) {
         aria-label={label}
         data-slot="bottom-dock"
         data-keyboard={keyboardOpen ? 'open' : 'closed'}
-        className="fixed inset-x-4 dock-pill z-30 mx-auto flex items-center gap-1 rounded-full border border-border bg-card px-1 shadow-lg keyboard-open:hidden"
+        className="fixed inset-x-4 dock-pill z-30 mx-auto flex items-center gap-1 rounded-full border border-border frost px-1 shadow-lg keyboard-open:hidden"
       >
         {items.map((item) => (
           <DockSlot key={item.id} item={item} />

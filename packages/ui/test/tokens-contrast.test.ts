@@ -129,6 +129,79 @@ describe('Design Tokens Contrast', () => {
   });
 });
 
+describe('Smart App PH brand tokens contrast (dashboard, decision T35)', () => {
+  const currentDir = import.meta.dirname ?? __dirname;
+  const css = readFileSync(resolve(currentDir, '../src/styles/tokens.css'), 'utf-8');
+
+  function block(selector: string): string {
+    const start = css.indexOf(`${selector} {`);
+    if (start === -1) throw new Error(`Block ${selector} not found`);
+    return css.slice(start, css.indexOf('}', start));
+  }
+  function ratio(scope: string, bg: string, fg: string): number {
+    const read = (token: string): [number, number, number] => {
+      const match = scope.match(new RegExp(`--${token}:\\s*([^;]+);`));
+      if (!match || !match[1]) throw new Error(`Token --${token} not found`);
+      return parseOklch(match[1]);
+    };
+    return contrastRatio(
+      srgbToLuminance(...oklchToRgb(...read(bg))),
+      srgbToLuminance(...oklchToRgb(...read(fg))),
+    );
+  }
+
+  const light = block(":root[data-app='dashboard']");
+  const dark = block(":root[data-app='dashboard'].dark");
+  const text: readonly [string, string][] = [
+    ['primary', 'primary-foreground'],
+    ['primary-hover', 'primary-foreground'],
+    ['secondary', 'secondary-foreground'],
+    ['muted', 'muted-foreground'],
+    ['accent', 'accent-foreground'],
+    ['destructive', 'destructive-foreground'],
+    ['success', 'success-foreground'],
+    ['warning', 'warning-foreground'],
+    ['info', 'info-foreground'],
+    ['member', 'member-foreground'],
+    ['highlight', 'highlight-foreground'],
+    ['background', 'foreground'],
+    ['card', 'card-foreground'],
+    ['card', 'muted-foreground'],
+    ['card', 'success-text'],
+    ['card', 'warning-text'],
+    ['card', 'info-text'],
+    ['card', 'member-text'],
+    ['card', 'destructive-text'],
+    ['success-soft', 'success-soft-foreground'],
+    ['warning-soft', 'warning-soft-foreground'],
+    ['info-soft', 'info-soft-foreground'],
+    ['member-soft', 'member-soft-foreground'],
+    ['destructive-soft', 'destructive-soft-foreground'],
+    ['invert', 'invert-foreground'],
+    ['focus', 'focus-foreground'],
+  ];
+  const edges: readonly [string, string][] = [
+    ['card', 'input'],
+    ['card', 'ring'],
+    ['background', 'ring'],
+  ];
+  for (const [name, scope] of [
+    ['light', light],
+    ['dark', dark],
+  ] as const) {
+    for (const [bg, fg] of text) {
+      it(`${name}: ${bg} vs ${fg} >= 4.5:1`, () => {
+        expect(ratio(scope, bg, fg)).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+    for (const [bg, fg] of edges) {
+      it(`${name}: ${bg} vs ${fg} >= 3:1`, () => {
+        expect(ratio(scope, bg, fg)).toBeGreaterThanOrEqual(3);
+      });
+    }
+  }
+});
+
 describe('Shop palette contrast (5 demo brands and the presets)', () => {
   const brands = [...DEMO_SHOPS.map((shop) => shop.brandColor), ...BRAND_COLOR_PRESETS];
   for (const hex of brands) {

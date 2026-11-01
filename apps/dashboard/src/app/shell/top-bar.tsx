@@ -31,7 +31,7 @@ export function TopBar({
 }) {
   if (formFactor === 'phone') {
     return (
-      <header className="sticky top-0 z-20 flex min-h-14 items-center gap-1 border-b border-border bg-background px-2 pt-safe">
+      <header className="sticky top-0 z-20 flex min-h-14 items-center gap-1 border-b border-border frost px-2 pt-safe">
         {page.parent ? (
           <Button
             variant="ghost"
@@ -52,7 +52,7 @@ export function TopBar({
 
   const crumbs = page.parent ? [page.parent] : [];
   return (
-    <header className="sticky top-0 z-20 box-content flex h-shell-header shrink-0 items-center gap-2 border-b border-border bg-background px-4 transition-all ease-linear motion-reduce:transition-none sidebar-collapsed:h-shell-header-collapsed">
+    <header className="sticky top-0 z-20 box-content flex h-shell-header shrink-0 items-center gap-2 border-b border-border frost px-4 transition-all ease-linear motion-reduce:transition-none sidebar-collapsed:h-shell-header-collapsed">
       {formFactor === 'tablet' ? (
         <Button
           variant="ghost"

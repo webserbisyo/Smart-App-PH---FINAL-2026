@@ -68,9 +68,13 @@ export function AppSidebar({
               {...(withTooltip ? { tooltip: shop.name } : {})}
               render={<Link to="/" />}
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {shop.initials}
-              </div>
+              <img
+                src="/brand/smartappph-mark-gradient.webp"
+                alt=""
+                width={32}
+                height={32}
+                className="aspect-square size-8 shrink-0"
+              />
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{shop.name}</span>
                 <span className="truncate text-xs text-success-text">{words.shell.open}</span>

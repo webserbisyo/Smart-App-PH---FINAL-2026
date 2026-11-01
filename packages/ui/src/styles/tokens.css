@@ -110,6 +110,12 @@
   --shop-10-soft: oklch(0.95 0.024 263.9);
   --shop-10-soft-foreground: oklch(0.501 0.2 263.9);
 
+  /* Smart App PH logo gradient (brand-gradient utility, decision T35); the same in every theme. */
+  --logo-blue: oklch(0.511 0.274 263.5);
+  --logo-sky: oklch(0.63 0.198 253.6);
+  --logo-cyan: oklch(0.735 0.127 214.1);
+  --logo-mint: oklch(0.866 0.175 164.6);
+
   /* Receipt paper (thermal receipt body). */
   --paper: oklch(0.979 0.008 91.5);
   --paper-foreground: oklch(0.27 0 0);
@@ -220,4 +226,161 @@
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+}
+
+/* Smart App PH brand (decision T35): the owner dashboard and its login only. index.html sets
+   data-app="dashboard" on <html>, so the storefront keeps the defaults above and each shop's own
+   colours. Values come from the "Malinaw" research (2026-11-01): navy ink, logo blue for actions,
+   mint for stamps and rewards only. Same token names as above, so no component changes. */
+:root[data-app='dashboard'] {
+  --radius: 0.75rem;
+
+  --background: oklch(0.985 0.004 271.4);
+  --foreground: oklch(0.213 0.087 260.9);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.213 0.087 260.9);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.213 0.087 260.9);
+
+  --primary: oklch(0.511 0.274 263.5);
+  --primary-foreground: oklch(1 0 0);
+  --primary-hover: oklch(0.46 0.232 263);
+
+  --secondary: oklch(0.964 0.007 268.5);
+  --secondary-foreground: oklch(0.213 0.087 260.9);
+  --muted: oklch(0.964 0.007 268.5);
+  --muted-foreground: oklch(0.451 0.029 259.8);
+  --accent: oklch(0.969 0.014 264.5);
+  --accent-foreground: oklch(0.391 0.189 263);
+
+  --destructive: oklch(0.56 0.19 24.9);
+  --destructive-foreground: oklch(1 0 0);
+  --destructive-text: oklch(0.481 0.171 24.9);
+  --destructive-soft: oklch(0.95 0.023 27.3);
+  --destructive-soft-foreground: oklch(0.401 0.14 25);
+
+  --invert: oklch(0.209 0.051 262.8);
+  --invert-foreground: oklch(0.985 0.004 271.4);
+  --focus: oklch(0.511 0.274 263.5);
+  --focus-foreground: oklch(1 0 0);
+
+  --border: oklch(0.925 0.01 267.4);
+  --border-strong: oklch(0.639 0.021 265.9);
+  /* Control edges reach 3:1 on white. */
+  --input: oklch(0.639 0.021 265.9);
+  --ring: oklch(0.511 0.274 263.5);
+
+  --success: oklch(0.48 0.131 150.2);
+  --success-foreground: oklch(1 0 0);
+  --success-hover: oklch(0.399 0.109 150.2);
+  --success-text: oklch(0.48 0.131 150.2);
+  --success-soft: oklch(0.951 0.051 149.6);
+  --success-soft-foreground: oklch(0.399 0.109 150.2);
+
+  --warning: oklch(0.801 0.16 75.2);
+  --warning-foreground: oklch(0.213 0.087 260.9);
+  --warning-hover: oklch(0.74 0.156 75.1);
+  --warning-text: oklch(0.441 0.092 74.9);
+  --warning-soft: oklch(0.96 0.032 73.5);
+  --warning-soft-foreground: oklch(0.441 0.092 74.9);
+
+  --info: oklch(0.489 0.086 215.6);
+  --info-foreground: oklch(1 0 0);
+  --info-hover: oklch(0.411 0.072 215.2);
+  --info-text: oklch(0.489 0.086 215.6);
+  --info-soft: oklch(0.951 0.038 215);
+  --info-soft-foreground: oklch(0.411 0.072 215.2);
+
+  /* Mint means stamps and rewards, nothing else. A mint fill always carries navy text. */
+  --member: oklch(0.831 0.16 167.8);
+  --member-foreground: oklch(0.213 0.087 260.9);
+  --member-hover: oklch(0.76 0.152 167.8);
+  --member-text: oklch(0.451 0.09 168.2);
+  --member-soft: oklch(0.95 0.06 168.5);
+  --member-soft-foreground: oklch(0.451 0.09 168.2);
+
+  --highlight: oklch(0.801 0.16 75.2);
+  --highlight-foreground: oklch(0.213 0.087 260.9);
+
+  --faint-foreground: oklch(0.554 0.025 263.1);
+  --overlay: oklch(0.213 0.087 260.9 / 0.5);
+  --skeleton: oklch(0.925 0.01 267.4);
+
+  --sidebar: var(--background);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+}
+
+:root[data-app='dashboard'].dark {
+  --background: oklch(0.152 0.059 262);
+  --foreground: oklch(0.985 0.004 271.4);
+  --card: oklch(0.209 0.051 262.8);
+  --card-foreground: oklch(0.985 0.004 271.4);
+  --popover: oklch(0.209 0.051 262.8);
+  --popover-foreground: oklch(0.985 0.004 271.4);
+
+  --primary: oklch(0.689 0.163 263.1);
+  --primary-foreground: oklch(0.152 0.059 262);
+  --primary-hover: oklch(0.789 0.105 263.2);
+
+  --secondary: oklch(0.281 0.04 261.9);
+  --secondary-foreground: oklch(0.985 0.004 271.4);
+  --muted: oklch(0.281 0.04 261.9);
+  --muted-foreground: oklch(0.869 0.015 264.5);
+  --accent: oklch(0.249 0.1 263.2);
+  --accent-foreground: oklch(0.87 0.062 262.8);
+
+  --destructive: oklch(0.74 0.158 24.8);
+  --destructive-foreground: oklch(0.152 0.059 262);
+  --destructive-text: oklch(0.831 0.094 24.9);
+  --destructive-soft: oklch(0.249 0.08 25.1);
+  --destructive-soft-foreground: oklch(0.9 0.05 25.7);
+
+  --invert: oklch(0.381 0.034 260.2);
+  --invert-foreground: oklch(0.985 0.004 271.4);
+  --focus: oklch(0.689 0.163 263.1);
+  --focus-foreground: oklch(0.152 0.059 262);
+
+  --border: oklch(0.281 0.04 261.9);
+  --border-strong: oklch(0.451 0.029 259.8);
+  --input: oklch(0.554 0.025 263.1);
+  --ring: oklch(0.689 0.163 263.1);
+
+  --success: oklch(0.741 0.171 150);
+  --success-foreground: oklch(0.152 0.059 262);
+  --success-hover: oklch(0.83 0.13 150);
+  --success-text: oklch(0.741 0.171 150);
+  --success-soft: oklch(0.25 0.068 149.6);
+  --success-soft-foreground: oklch(0.899 0.089 150);
+
+  --warning: oklch(0.801 0.16 75.2);
+  --warning-foreground: oklch(0.152 0.059 262);
+  --warning-hover: oklch(0.86 0.118 75.3);
+  --warning-text: oklch(0.86 0.118 75.3);
+  --warning-soft: oklch(0.28 0.058 75.4);
+  --warning-soft-foreground: oklch(0.919 0.063 74.6);
+
+  --info: oklch(0.77 0.12 215.3);
+  --info-foreground: oklch(0.152 0.059 262);
+  --info-hover: oklch(0.839 0.1 215.1);
+  --info-text: oklch(0.839 0.1 215.1);
+  --info-soft: oklch(0.259 0.046 216.4);
+  --info-soft-foreground: oklch(0.901 0.07 214.2);
+
+  --member: oklch(0.831 0.16 167.8);
+  --member-foreground: oklch(0.152 0.059 262);
+  --member-hover: oklch(0.871 0.14 168);
+  --member-text: oklch(0.871 0.14 168);
+  --member-soft: oklch(0.278 0.056 167.8);
+  --member-soft-foreground: oklch(0.91 0.1 168.4);
+
+  --highlight: oklch(0.801 0.16 75.2);
+  --highlight-foreground: oklch(0.152 0.059 262);
+
+  --faint-foreground: oklch(0.639 0.021 265.9);
+  --overlay: oklch(0 0 0 / 0.7);
+  --skeleton: oklch(0.281 0.04 261.9);
+
+  --sidebar-accent: var(--muted);
+  --sidebar-accent-foreground: var(--foreground);
 }

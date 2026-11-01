@@ -36,6 +36,10 @@ For the ReUI primitives (decision T28): `destructive-text`, `destructive-soft` a
 
 For banner words over a photo (decision R42): `scrim` (a near-black fade, the same in both themes) and `on-scrim` (white text on it).
 
+## Smart App PH brand (dashboard and login only, decision T35)
+
+`tokens.css` sets the same token names again under `:root[data-app='dashboard']` (and `.dark`), so every installed part takes the brand with no class changes; the storefront never matches it. Values: page `#F9FAFD`, cards white, text navy `#011540`, muted `#4C5666`, borders `#E3E6ED`, control edges `#868C99` (3:1), primary logo blue `#0047FF` (dark `#6497FF`), `member` = mint `#2DE8B3` with navy text (stamps and rewards only), radius 12 px. Utilities: `brand-gradient` (logo gradient, static, never behind text or on controls) and `frost` (top bar and dock: page colour at 82 %, 12 px blur, solid fallback). Logo files: `docs/brand/` (masters), `apps/dashboard/public/brand/` (web), plus `favicon.png` and `apple-touch-icon.png`.
+
 ## Shop brand (storefront only)
 
 The owner picks one colour (default `#2456D3`, presets, or "use logo colour") and a surface, light or dark (`look.surface`, decision R2), and may set a page colour (`look.pageColor`, decision R52). `shopPalette(hex, surface, pageColor)` in core makes a 60/30/10 palette, set on the shop layout at runtime through `cssVars()`:
