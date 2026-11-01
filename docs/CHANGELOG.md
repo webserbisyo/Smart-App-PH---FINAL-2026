@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-01 CI fix: security overrides for qs 6.16.1 and seroval 1.6.11 so `pnpm audit --prod` passes again (decision T38)
 - 2026-11-01 T35 brand, part 2: favicon.ico (flat blue at 16 and 32 px) and PWA-ready icons, navy-tinted elevation and dashboard motion tokens, ease-enter/exit and celebrate tokens, dashboard UX rules (ux.md section 7), frosted dock with the accent pill
 - 2026-11-01 T35 Smart App PH brand on the dashboard and login: brand tokens scoped to the dashboard (light and dark, contrast-tested), logo on login and in the sidebar, favicon and tab title, frosted top bar and dock, logo files named and moved to `docs/brand/` (decision T35)
 - 2026-10-29 docs: strict 3-tier (decision T34), `@supabase` imports only in `apps/api` (login files in `packages/data` excepted until auth moves)
