@@ -12,6 +12,10 @@ export function createAuthClient(url: string, publishableKey: string): SupabaseC
   return browserClient;
 }
 
+export function getAuthClient(): SupabaseClient<Database> | null {
+  return browserClient;
+}
+
 export interface UserClaims {
   userId: string;
   email: string;

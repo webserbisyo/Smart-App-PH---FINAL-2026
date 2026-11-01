@@ -1,15 +1,23 @@
 // One interface per area, named exactly like the rows in docs/api.md. The mock implements every row; the API
 // adapter for each area comes in phase 4.
 import type {
+  Availability,
   BoardOrder,
+  Category,
+  CategoryDraft,
   CustomerAddress,
+  ItemDraft,
+  ItemStatus,
   LatLng,
   MemberAccount,
+  OptionGroupDraft,
   OrderPayload,
   OrderRating,
   OrderReceipt,
   OrderRow,
   OrderStatus,
+  OwnerItem,
+  OwnerOptionGroup,
   OwnerOrder,
   Payment,
   PaymentMethod,
@@ -17,6 +25,9 @@ import type {
   Quote,
   RewardClaim,
   SendCodeResult,
+  SortOrderInput,
+  UploadKind,
+  UploadResult,
 } from '@smartapp/core';
 
 export interface PlacedOrder {
@@ -114,9 +125,31 @@ export interface OwnerSamplesAdapter {
   clearSamples(input: { slug: string }): Promise<PublicShop>;
 }
 
+export interface OwnerCatalogAdapter {
+  listCategories(): Promise<Category[]>;
+  saveCategory(input: CategoryDraft): Promise<Category>;
+  removeCategory(input: { id: string }): Promise<void>;
+  listItems(): Promise<OwnerItem[]>;
+  saveItem(input: { id?: string; draft: ItemDraft }): Promise<OwnerItem>;
+  removeItem(input: { id: string }): Promise<void>;
+  setItemStatus(input: { id: string; status: ItemStatus }): Promise<OwnerItem>;
+  setSoldOut(input: {
+    variantId: string;
+    availability: Availability;
+    soldOutUntil?: string | null;
+  }): Promise<OwnerItem>;
+  listOptionGroups(): Promise<OwnerOptionGroup[]>;
+  saveOptionGroup(input: OptionGroupDraft): Promise<OwnerOptionGroup>;
+  removeOptionGroup(input: { id: string }): Promise<void>;
+  saveSortOrder(input: SortOrderInput): Promise<void>;
+  createUploadUrl(input: { kind: UploadKind }): Promise<UploadResult>;
+}
+
 export interface DataAdapters {
   storefront: StorefrontAdapter;
   customerAuth: CustomerAuthAdapter;
   ownerOrders: OwnerOrdersAdapter;
   ownerSamples: OwnerSamplesAdapter;
+  ownerCatalog: OwnerCatalogAdapter;
 }
+

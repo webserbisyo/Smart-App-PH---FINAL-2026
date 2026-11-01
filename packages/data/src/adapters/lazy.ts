@@ -3,6 +3,7 @@
 import type {
   CustomerAuthAdapter,
   DataAdapters,
+  OwnerCatalogAdapter,
   OwnerOrdersAdapter,
   OwnerSamplesAdapter,
   StorefrontAdapter,
@@ -53,5 +54,21 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     clearSamples: async (input) => (await real()).ownerSamples.clearSamples(input),
   };
 
-  return { storefront, customerAuth, ownerOrders, ownerSamples };
+  const ownerCatalog: OwnerCatalogAdapter = {
+    listCategories: async () => (await real()).ownerCatalog.listCategories(),
+    saveCategory: async (input) => (await real()).ownerCatalog.saveCategory(input),
+    removeCategory: async (input) => (await real()).ownerCatalog.removeCategory(input),
+    listItems: async () => (await real()).ownerCatalog.listItems(),
+    saveItem: async (input) => (await real()).ownerCatalog.saveItem(input),
+    removeItem: async (input) => (await real()).ownerCatalog.removeItem(input),
+    setItemStatus: async (input) => (await real()).ownerCatalog.setItemStatus(input),
+    setSoldOut: async (input) => (await real()).ownerCatalog.setSoldOut(input),
+    listOptionGroups: async () => (await real()).ownerCatalog.listOptionGroups(),
+    saveOptionGroup: async (input) => (await real()).ownerCatalog.saveOptionGroup(input),
+    removeOptionGroup: async (input) => (await real()).ownerCatalog.removeOptionGroup(input),
+    saveSortOrder: async (input) => (await real()).ownerCatalog.saveSortOrder(input),
+    createUploadUrl: async (input) => (await real()).ownerCatalog.createUploadUrl(input),
+  };
+
+  return { storefront, customerAuth, ownerOrders, ownerSamples, ownerCatalog };
 }

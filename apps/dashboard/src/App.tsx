@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
+import { DataProvider } from '@smartapp/data';
 import { router } from './app/router.js';
+import { env } from './app/env.js';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,7 +15,9 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <DataProvider source={env.VITE_DATA_SOURCE}>
+        <RouterProvider router={router} />
+      </DataProvider>
     </QueryClientProvider>
   );
 }

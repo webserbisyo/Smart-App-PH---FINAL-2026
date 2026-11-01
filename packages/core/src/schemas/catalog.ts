@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { IconKeyEnum } from '../icons.js';
 import { CentavosSchema, IdSchema, IsoDateTimeSchema, MediaRefSchema } from './common.js';
-import { AvailabilityEnum, ItemStatusEnum } from './enums.js';
+import { AvailabilityEnum, ItemStatusEnum, SortKindEnum } from './enums.js';
 
 export const CategorySchema = z.object({
   id: IdSchema,
@@ -10,6 +10,13 @@ export const CategorySchema = z.object({
   sort: z.number().int().min(0),
 });
 export type Category = z.infer<typeof CategorySchema>;
+
+export const CategoryDraftSchema = z.object({
+  id: IdSchema.optional(),
+  name: z.string().min(1).max(40),
+  icon: IconKeyEnum,
+});
+export type CategoryDraft = z.infer<typeof CategoryDraftSchema>;
 
 export const AxisValueSchema = z.object({
   name: z.string().min(1).max(30),
@@ -44,21 +51,87 @@ export const OptionSchema = z.object({
 });
 export type Option = z.infer<typeof OptionSchema>;
 
-export const OptionGroupSchema = z
-  .object({
-    id: IdSchema,
-    name: z.string().min(1).max(40),
-    min: z.number().int().min(0).max(10),
-    max: z.number().int().min(1).max(10),
-    options: z.array(OptionSchema).min(1).max(20),
-  })
+export const OptionGroupBaseSchema = z.object({
+  id: IdSchema,
+  name: z.string().min(1).max(40),
+  min: z.number().int().min(0).max(10),
+  max: z.number().int().min(1).max(10),
+  options: z.array(OptionSchema).min(1).max(20),
+});
+
+export const OptionGroupSchema = OptionGroupBaseSchema
   .refine((g) => g.min <= g.max, { message: 'min must be at most max' })
   .refine((g) => g.min <= g.options.length, { message: 'min is more than the options' });
 export type OptionGroup = z.infer<typeof OptionGroupSchema>;
 
-export const ItemSchema = z
+export const OwnerOptionGroupSchema = OptionGroupBaseSchema.extend({
+  usedBy: z.number().int().min(0),
+})
+  .refine((g) => g.min <= g.max, { message: 'min must be at most max' })
+  .refine((g) => g.min <= g.options.length, { message: 'min is more than the options' });
+export type OwnerOptionGroup = z.infer<typeof OwnerOptionGroupSchema>;
+
+export const OptionDraftSchema = z.object({
+  id: IdSchema.optional(),
+  name: z.string().min(1).max(60),
+  priceDelta: CentavosSchema,
+  isDefault: z.boolean(),
+  soldOut: z.boolean(),
+});
+export type OptionDraft = z.infer<typeof OptionDraftSchema>;
+
+export const OptionGroupDraftSchema = z
   .object({
-    id: IdSchema,
+    id: IdSchema.optional(),
+    name: z.string().min(1).max(40),
+    min: z.number().int().min(0).max(10),
+    max: z.number().int().min(1).max(10),
+    options: z.array(OptionDraftSchema).min(1).max(20),
+  })
+  .refine((g) => g.min <= g.max, { message: 'min must be at most max' })
+  .refine((g) => g.min <= g.options.length, { message: 'min is more than the options' });
+export type OptionGroupDraft = z.infer<typeof OptionGroupDraftSchema>;
+
+export const ItemBaseSchema = z.object({
+  id: IdSchema,
+  categoryId: IdSchema,
+  name: z.string().min(1).max(80),
+  description: z.string().max(300).nullable(),
+  photos: z.array(MediaRefSchema).max(5),
+  axes: z.array(VariantAxisSchema).max(2),
+  variants: z.array(VariantSchema).min(1).max(30),
+  optionGroupIds: z.array(IdSchema),
+  pairingIds: z.array(IdSchema).max(4),
+  featured: z.boolean(),
+  isNew: z.boolean(),
+  status: ItemStatusEnum,
+  // Sample data from a pack; customers of a real shop never see it, demo shops show it.
+  sample: z.boolean(),
+});
+
+export const ItemSchema = ItemBaseSchema
+  .refine((item) => item.variants.every((v) => v.values.length === item.axes.length), {
+    message: 'Every variant needs one value per axis',
+  })
+  .refine((item) => !item.pairingIds.includes(item.id), {
+    message: 'An item cannot pair with itself',
+  });
+export type Item = z.infer<typeof ItemSchema>;
+
+export const OwnerItemSchema = ItemBaseSchema.extend({
+  hasOrders: z.boolean(),
+})
+  .refine((item) => item.variants.every((v) => v.values.length === item.axes.length), {
+    message: 'Every variant needs one value per axis',
+  })
+  .refine((item) => !item.pairingIds.includes(item.id), {
+    message: 'An item cannot pair with itself',
+  });
+export type OwnerItem = z.infer<typeof OwnerItemSchema>;
+
+export const ItemDraftSchema = z
+  .object({
+    id: IdSchema.optional(),
     categoryId: IdSchema,
     name: z.string().min(1).max(80),
     description: z.string().max(300).nullable(),
@@ -70,16 +143,26 @@ export const ItemSchema = z
     featured: z.boolean(),
     isNew: z.boolean(),
     status: ItemStatusEnum,
-    // Sample data from a pack; customers of a real shop never see it, demo shops show it.
-    sample: z.boolean(),
   })
   .refine((item) => item.variants.every((v) => v.values.length === item.axes.length), {
     message: 'Every variant needs one value per axis',
   })
-  .refine((item) => !item.pairingIds.includes(item.id), {
+  .refine((item) => !item.id || !item.pairingIds.includes(item.id), {
     message: 'An item cannot pair with itself',
   });
-export type Item = z.infer<typeof ItemSchema>;
+export type ItemDraft = z.infer<typeof ItemDraftSchema>;
+
+export const UploadResultSchema = z.object({
+  uploadUrl: z.string(),
+  path: z.string(),
+});
+export type UploadResult = z.infer<typeof UploadResultSchema>;
+
+export const SortOrderInputSchema = z.object({
+  kind: SortKindEnum,
+  ids: z.array(z.string().min(1)),
+});
+export type SortOrderInput = z.infer<typeof SortOrderInputSchema>;
 
 export const CatalogSchema = z.object({
   categories: z.array(CategorySchema),
@@ -87,3 +170,4 @@ export const CatalogSchema = z.object({
   optionGroups: z.array(OptionGroupSchema),
 });
 export type Catalog = z.infer<typeof CatalogSchema>;
+

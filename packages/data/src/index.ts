@@ -17,8 +17,13 @@ export {
   demoBasketLines,
   type DemoReceiptToken,
 } from './mocks/activity';
-export { isDevMock, type MockScenario } from './mocks/scenario-state';
-export { loadMockScenario, readMockScenarioFromUrl, type UrlScenario } from './mocks/scenario';
+export { isDevMock, type MockScenario, getMockScenario, subscribeMockScenario } from './mocks/scenario-state';
+export { loadMockScenario, readMockScenarioFromUrl, setMockScenario, type UrlScenario } from './mocks/scenario';
 export * from './compress-image';
 export { blobToDataUrl } from './proof-files';
 export { useQueryClient } from '@tanstack/react-query';
+export { createApiOwnerCatalogAdapter, type ApiOwnerCatalogOptions } from './adapters/api/owner-catalog';
+export { setMockOwnerSlug } from './mocks/store';
+export * from './hooks/owner-catalog/index';
+
+

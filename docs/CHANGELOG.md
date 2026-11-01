@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-01 T15a menu page part 1: items list, categories, add-on groups, and item editor with photo upload and variant matrix
 - 2026-11-01 T35 brand, part 2: favicon.ico (flat blue at 16 and 32 px) and PWA-ready icons, navy-tinted elevation and dashboard motion tokens, ease-enter/exit and celebrate tokens, dashboard UX rules (ux.md section 7), frosted dock with the accent pill
 - 2026-11-01 T35 Smart App PH brand on the dashboard and login: brand tokens scoped to the dashboard (light and dark, contrast-tested), logo on login and in the sidebar, favicon and tab title, frosted top bar and dock, logo files named and moved to `docs/brand/` (decision T35)
 - 2026-10-29 docs: strict 3-tier (decision T34), `@supabase` imports only in `apps/api` (login files in `packages/data` excepted until auth moves)
