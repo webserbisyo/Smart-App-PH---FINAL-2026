@@ -32,13 +32,13 @@ Run each from `packages/ui` with the pinned CLI (`pnpm exec shadcn add ...`), ne
 
 Installed files stay exactly as the CLI wrote them (T27), including the ones that ship with `any` and their own eslint-disable. If the CLI output breaks typecheck, stop and tell me; don't patch on your own. ReUI `c-*` patterns are references only: rebuild them in our feature files, never import an example. Each install gets a `docs/components.md` row and a `/kit` section in the same commit. Do NOT install: DiceUI `file-upload`, ReUI `filters`, DiceUI `faceted` or `tour`, any pattern that needs `sonner` (use our `notify`), or Magic UI effects.
 
-| Install | npm packages it may add (exact) |
-| --- | --- |
-| `@reui/sortable` | `@dnd-kit/core` 6.3.1, `@dnd-kit/sortable` 10.0.0, `@dnd-kit/utilities` 3.2.2 |
-| `@reui/use-file-upload` | none |
-| `@reui/file-type` | none |
-| `@diceui/badge-overflow` | none |
-| `@diceui/stat` | none |
+| Install                  | npm packages it may add (exact)                                               |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| `@reui/sortable`         | `@dnd-kit/core` 6.3.1, `@dnd-kit/sortable` 10.0.0, `@dnd-kit/utilities` 3.2.2 |
+| `@reui/use-file-upload`  | none                                                                          |
+| `@reui/file-type`        | none                                                                          |
+| `@diceui/badge-overflow` | none                                                                          |
+| `@diceui/stat`           | none                                                                          |
 
 Dev only: `@tanstack/react-query-devtools` 5.104.1, an exact dashboard devDependency matching `@tanstack/react-query` 5.104.1. Optional (no npm package): `@diceui/editable` for renaming a category in place.
 
@@ -54,20 +54,20 @@ Apps never import each other, so do not import the storefront item sheet. The pr
 
 Style by wrapping each part in feature files (`apps/dashboard/src/features/catalog/components/`) with token classes only. That means no hex, no arbitrary values, no raw palette classes, and no inline style except `cssVars()`. Base look: navy ink, one solid blue element per view, 12 px radius, Plus Jakarta Sans, the 8 pt grid, `elevation-*` (at most 2 levels on screen), motion 120/180/260 ms with `ease-enter`/`ease-exit`, transform and opacity only, and none at all with reduced motion. No glass, no count-up, no looping effects. Weights: 600 for headings, 700 only for numbers, `tabular` for money.
 
-| Part | Look |
-| --- | --- |
-| Item row | 56 px square photo with a 12 px radius, name at weight 600 (2 lines at most), price right-aligned in tabular numbers ("₱120", or "from ₱120" when it has variants), status chips with icon + word + colour, a Sold out switch, and a More menu. A sold-out row fades to muted in 180 ms and its photo goes greyscale |
-| Sold out and Visible switches | 44 px touch area. Sold out uses the warning tone and a ban icon; Visible uses an eye or eye-off icon. Flips in 120 ms |
-| Drag | Grip icon handle. The lifted row gets `elevation-md` and a 2% scale; a dashed primary outline marks the drop spot; it settles in 180 ms. Keyboard drag with spoken updates ("Moved Adobo to position 3 of 8") |
-| Photo area | A dashed 2 px drop area with a 12 px radius, up to 5 tiles, a Cover label on the first, a progress bar per tile, a Retry on failed tiles, a square crop, and drag to reorder |
-| Editor sections | `reui/frame`, solid surface, `elevation-xs`, a heading at 600 with one helper line |
-| Inputs | 16 px text, ₱ prefix on prices, character counters (name 80, description 300), errors that say what to do next |
-| Filter chips | Pill shape with a count on each chip; the selected chip is solid navy |
-| Category rail and chips | Desktop: a scrollspy rail on the left. Phone: chips that scroll sideways. The active one is primary with a sliding underline. Fluent icons in `icon-tile` |
-| Sheets and dialogs | Phone: a bottom sheet with a 48 px sticky Save bar. Desktop: a dialog at `elevation-lg` |
-| File-type badge | Neutral tones only (no brand colour per format), shows the type and size, e.g. "PNG 4.2 MB, becomes 180 KB" |
-| Stat tiles | Plain numbers at weight 700 (no count-up); each tile taps to filter |
-| Save bar and toast | Slides up in 260 ms when there are edits. A "Saved" toast; quick changes (sold out, visible, reorder) get Undo |
+| Part                          | Look                                                                                                                                                                                                                                                                                                                 |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Item row                      | 56 px square photo with a 12 px radius, name at weight 600 (2 lines at most), price right-aligned in tabular numbers ("₱120", or "from ₱120" when it has variants), status chips with icon + word + colour, a Sold out switch, and a More menu. A sold-out row fades to muted in 180 ms and its photo goes greyscale |
+| Sold out and Visible switches | 44 px touch area. Sold out uses the warning tone and a ban icon; Visible uses an eye or eye-off icon. Flips in 120 ms                                                                                                                                                                                                |
+| Drag                          | Grip icon handle. The lifted row gets `elevation-md` and a 2% scale; a dashed primary outline marks the drop spot; it settles in 180 ms. Keyboard drag with spoken updates ("Moved Adobo to position 3 of 8")                                                                                                        |
+| Photo area                    | A dashed 2 px drop area with a 12 px radius, up to 5 tiles, a Cover label on the first, a progress bar per tile, a Retry on failed tiles, a square crop, and drag to reorder                                                                                                                                         |
+| Editor sections               | `reui/frame`, solid surface, `elevation-xs`, a heading at 600 with one helper line                                                                                                                                                                                                                                   |
+| Inputs                        | 16 px text, ₱ prefix on prices, character counters (name 80, description 300), errors that say what to do next                                                                                                                                                                                                       |
+| Filter chips                  | Pill shape with a count on each chip; the selected chip is solid navy                                                                                                                                                                                                                                                |
+| Category rail and chips       | Desktop: a scrollspy rail on the left. Phone: chips that scroll sideways. The active one is primary with a sliding underline. Fluent icons in `icon-tile`                                                                                                                                                            |
+| Sheets and dialogs            | Phone: a bottom sheet with a 48 px sticky Save bar. Desktop: a dialog at `elevation-lg`                                                                                                                                                                                                                              |
+| File-type badge               | Neutral tones only (no brand colour per format), shows the type and size, e.g. "PNG 4.2 MB, becomes 180 KB"                                                                                                                                                                                                          |
+| Stat tiles                    | Plain numbers at weight 700 (no count-up); each tile taps to filter                                                                                                                                                                                                                                                  |
+| Save bar and toast            | Slides up in 260 ms when there are edits. A "Saved" toast; quick changes (sold out, visible, reorder) get Undo                                                                                                                                                                                                       |
 
 Every restyled wrapper gets an example on `/kit`.
 
@@ -93,6 +93,7 @@ States on every tab: a loading skeleton in the real row shape; empty with one ac
    - new error codes `category_not_empty` and `item_has_orders` in `errors.ts`, with words in `errorWords`.
 
    These schemas are the API contract: NestJS will validate with the same ones later.
+
 2. **Interface in `packages/data/src/adapters/types.ts`:** `OwnerCatalogAdapter`, with method names exactly as in docs/api.md: `listCategories`, `saveCategory`, `removeCategory`, `listItems`, `saveItem`, `setItemStatus`, `setSoldOut`, `listOptionGroups`, `saveOptionGroup`, `removeOptionGroup`, `saveSortOrder`, `createUploadUrl`. Inputs and outputs are typed with the core schemas only. Add `ownerCatalog` to `DataAdapters`. The shop is never an input: it comes from the signed-in owner (rule 12). The mock reads it from the session's `demoShop`.
 3. **Mock** in `packages/data/src/mocks/`: implements every method on the existing mock store, seeded from each shop's pack. Every demo owner account (burger → kanto-smash, water → aqualinis, tala → tala-apparel, cafe → kape-juan, bakery → lola-remy) sees its own shop's real catalog, categories, add-on groups and existing photos (`demo:<slug>/items/<name>` refs, shown with `imageSources(ref, VITE_STOREFRONT_URL)`). Write no new fake products and copy no image files. Parse every return value with its schema. Mock `createUploadUrl` keeps the compressed photo in memory (object URL). It uses the existing scenario tool for slow, error and offline modes.
 4. **HTTP adapter** in `packages/data/src/adapters/api/owner-catalog.ts`: the same interface built on `fetchApi(url, schema)` with `VITE_API_URL`, the HTTP verbs and paths from docs/api.md, and the owner's bearer token. No token helper exists yet, so the factory takes a `getToken(): Promise<string | null>` parameter; do not add one inside the adapter. It is not used yet. Only make it compile, plus one unit test with a stubbed `fetch` that checks paths and schema parsing. `createAdapters('api')` may stay as it is for other areas. Add a clear TODO naming where `ownerCatalog` will switch, so moving to NestJS means turning `VITE_DATA_SOURCE` to `api` for this area with no screen changes.

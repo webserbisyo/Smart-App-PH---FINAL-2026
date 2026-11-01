@@ -34,12 +34,12 @@ Run each from `packages/ui` with the pinned CLI (`pnpm exec shadcn add ...`), ne
 
 Installed files stay exactly as the CLI wrote them (T27), including the ones that ship with `any` and their own eslint-disable. If the CLI output breaks typecheck, stop and tell me; don't patch on your own. ReUI `c-*` patterns are references only: rebuild them in our feature files, never import an example. Each install gets a `docs/components.md` row and a `/kit` section in the same commit. Do NOT install: DiceUI `file-upload`, ReUI `filters`, DiceUI `faceted` or `tour`, any pattern that needs `sonner` (use our `notify`), or Magic UI effects.
 
-| Install | npm packages it may add (exact) |
-| --- | --- |
+| Install                                                                                                                                                                                                                          | npm packages it may add (exact)                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `@reui/data-grid`, `@reui/data-grid-table`, `@reui/data-grid-table-dnd-rows`, `@reui/data-grid-column-header`, `@reui/data-grid-column-visibility`, `@reui/data-grid-scroll-area` (shadcn `select` and `popover` come with them) | `@tanstack/react-table` 9.3.1, `@tanstack/react-virtual` 3.14.22 (not 3.14.24: too new), `@dnd-kit/modifiers` 9.0.0 |
-| `@reui/emoji-picker` | none |
-| `@diceui/action-bar` | none |
-| `button-group` (shadcn) | none |
+| `@reui/emoji-picker`                                                                                                                                                                                                             | none                                                                                                                |
+| `@diceui/action-bar`                                                                                                                                                                                                             | none                                                                                                                |
+| `button-group` (shadcn)                                                                                                                                                                                                          | none                                                                                                                |
 
 Tooling only: `emojibase-data` 17.0.0, an exact `@smartapp/tooling` devDependency (the version the ReUI picker reads). Optional (no npm package): `@diceui/swap` (view toggle icon), shadcn `kbd` (desktop shortcuts / and N), shadcn `context-menu` (right-click a row).
 
@@ -55,13 +55,13 @@ Apps never import each other, so do not import the storefront item sheet. The pr
 
 Style by wrapping each part in feature files (`apps/dashboard/src/features/catalog/components/`) with token classes only. That means no hex, no arbitrary values, no raw palette classes, and no inline style except `cssVars()`. Base look: navy ink, one solid blue element per view, 12 px radius, Plus Jakarta Sans, the 8 pt grid, `elevation-*` (at most 2 levels on screen), motion 120/180/260 ms with `ease-enter`/`ease-exit`, transform and opacity only, and none at all with reduced motion. No glass, no count-up, no looping effects. Weights: 600 for headings, 700 only for numbers, `tabular` for money.
 
-| Part | Look |
-| --- | --- |
+| Part                    | Look                                                                                                                                                                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | View toggle and actions | `toggle-group` with List, Grid and Table icons. Action icons are lucide (Pencil, Copy, Eye or EyeOff, Ban, Archive, Trash2) in a `button-group`, 44 px, each with a `tooltip`. Delete uses the destructive tone and only shows when the item has never been ordered |
-| Grid card | Photo 4:3 with a 12 px radius and a gentle zoom on hover (transform only, off with reduced motion), name, price, chips, action strip at the bottom |
-| Data grid | Navy header row at weight 500, 56 px rows, tabular prices on the right, a soft primary tint on ticked rows, sticky header, column picker |
-| Action bar | Solid navy bar at `elevation-lg`, slides up in 260 ms, shows "3 selected" and the bulk actions |
-| Emoji picker | Inside our popover with a 12 px radius and Plus Jakarta Sans labels; the custom tab shows the shop's uploaded icons |
+| Grid card               | Photo 4:3 with a 12 px radius and a gentle zoom on hover (transform only, off with reduced motion), name, price, chips, action strip at the bottom                                                                                                                  |
+| Data grid               | Navy header row at weight 500, 56 px rows, tabular prices on the right, a soft primary tint on ticked rows, sticky header, column picker                                                                                                                            |
+| Action bar              | Solid navy bar at `elevation-lg`, slides up in 260 ms, shows "3 selected" and the bulk actions                                                                                                                                                                      |
+| Emoji picker            | Inside our popover with a 12 px radius and Plus Jakarta Sans labels; the custom tab shows the shop's uploaded icons                                                                                                                                                 |
 
 Every restyled wrapper gets an example on `/kit`.
 
