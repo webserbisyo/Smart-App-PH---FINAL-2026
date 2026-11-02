@@ -91,18 +91,16 @@ export function nextActions(order: OrderStepInput): OrderStatus[] {
 export const BOARD_COLUMNS = ['scheduled', 'new', 'preparing', 'ready', 'out', 'done'] as const;
 export type BoardColumn = (typeof BOARD_COLUMNS)[number];
 
-const SCHEDULED_AHEAD_MS = 30 * 60_000;
-
-/** Board column; a placed order more than 30 minutes ahead sits in Scheduled (not a status). */
+/** Board column; a placed order sits in Scheduled when now < startBy, else New. */
 export function boardColumn(
-  order: { status: OrderStatus; scheduledAt: string | null },
+  order: { status: OrderStatus; startBy: string },
   now: string | Date,
 ): BoardColumn | null {
   switch (order.status) {
     case 'placed': {
       const t = (now instanceof Date ? now : new Date(now)).getTime();
-      const ahead = order.scheduledAt ? new Date(order.scheduledAt).getTime() - t : 0;
-      return ahead > SCHEDULED_AHEAD_MS ? 'scheduled' : 'new';
+      const startByTime = new Date(order.startBy).getTime();
+      return t < startByTime ? 'scheduled' : 'new';
     }
     case 'preparing':
       return 'preparing';
@@ -115,6 +113,25 @@ export function boardColumn(
     default:
       return null;
   }
+}
+
+/** Whether an order status advance can be recalled (within 10s grace period and has a previous step). */
+export function canRecall(
+  order: { status: OrderStatus; lastStepAt: string },
+  now: string | Date,
+): boolean {
+  if (isFinal(order.status)) return false;
+  if (order.status === 'placed') return false;
+  const nowMs = (now instanceof Date ? now : new Date(now)).getTime();
+  const lastStepMs = new Date(order.lastStepAt).getTime();
+  const diff = nowMs - lastStepMs;
+  return diff >= 0 && diff <= 10_000;
+}
+
+/** Whether an order can be rescheduled (pickup/delivery in placed or preparing). */
+export function canReschedule(order: { type: OrderType; status: OrderStatus }): boolean {
+  if (order.type !== 'pickup' && order.type !== 'delivery') return false;
+  return order.status === 'placed' || order.status === 'preparing';
 }
 
 export const PAY_WINDOW_MINUTES = 30;

@@ -385,10 +385,16 @@ describe('order rules', () => {
     expect(statusTone('preparing').tone).toBe('warning');
     expect(
       boardColumn(
-        { status: 'placed', scheduledAt: mnl('2026-10-26 15:00') },
+        { status: 'placed', startBy: mnl('2026-10-26 14:40') },
         mnl('2026-10-26 12:00'),
       ),
     ).toBe('scheduled');
+    expect(
+      boardColumn(
+        { status: 'placed', startBy: mnl('2026-10-26 11:50') },
+        mnl('2026-10-26 12:00'),
+      ),
+    ).toBe('new');
   });
 
   it('pay countdown', () => {
