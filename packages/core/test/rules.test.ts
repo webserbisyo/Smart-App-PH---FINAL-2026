@@ -515,21 +515,15 @@ describe('weekHours (decision R26)', () => {
 describe('canRecall, canReschedule, pickupCode (decision T50, T51, T52)', () => {
   const mnl = (str: string) => `${str.replace(' ', 'T')}:00+08:00`;
 
-  it('canRecall allows undo within 10 seconds of lastStepAt', () => {
-    const stepAt = new Date(mnl('2026-10-26 12:00:00')).toISOString();
-    const order = { lastStepAt: stepAt };
-
-    // 9 seconds later -> true
-    const at9s = new Date(new Date(stepAt).getTime() + 9_000);
-    expect(canRecall(order, at9s)).toBe(true);
-
-    // 10 seconds later -> true
-    const at10s = new Date(new Date(stepAt).getTime() + 10_000);
-    expect(canRecall(order, at10s)).toBe(true);
-
-    // 11 seconds later -> false (recall expired)
-    const at11s = new Date(new Date(stepAt).getTime() + 11_000);
-    expect(canRecall(order, at11s)).toBe(false);
+  it('canRecall allows a recall up to 10 seconds after the last step (T51)', () => {
+    const stepAt = mnl('2026-10-26 12:00');
+    const order = { status: 'ready' as const, lastStepAt: stepAt };
+    const after = (ms: number) => new Date(new Date(stepAt).getTime() + ms);
+    expect(canRecall(order, after(9_000))).toBe(true);
+    expect(canRecall(order, after(10_000))).toBe(true);
+    expect(canRecall(order, after(11_000))).toBe(false);
+    expect(canRecall({ status: 'placed', lastStepAt: stepAt }, after(1_000))).toBe(false);
+    expect(canRecall({ status: 'completed', lastStepAt: stepAt }, after(1_000))).toBe(false);
   });
 
   it('canReschedule only allows pickup and delivery in placed or preparing', () => {

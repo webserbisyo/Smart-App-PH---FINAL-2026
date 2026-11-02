@@ -747,7 +747,7 @@ function lolaRemyDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       status: 'placed',
       paymentStatus: idx % 2 === 0 ? 'paid' : 'unpaid',
       paymentMethod: idx % 2 === 0 ? gcash : cash,
-      note: idx < greetingNotes.length ? greetingNotes[idx] : null,
+      note: greetingNotes[idx] ?? null,
       ...(idx % 3 === 0 ? { deliveryFee: delivery.fee, deliveryAddress: delivery.address } : {}),
     };
   });
@@ -909,7 +909,7 @@ function kapeJuanDrafts(shop: PublicShop, now: Date): DraftOrder[] {
 
 function talaApparelDrafts(shop: PublicShop, now: Date): DraftOrder[] {
   const iso = now.toISOString();
-  const pickup = 'pickup' as OrderType;
+  const pickup: OrderType = 'pickup';
   const delivery = deliveryFor(shop);
   const gcash = methodFor(shop, pickup, 'gcash');
   const bank = methodFor(shop, pickup, 'bank');
@@ -1089,7 +1089,8 @@ function aqualinisDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       placedAt: addMinutes(iso, -100),
       scheduledAt: slot2Time,
       type: 'delivery',
-      status: 'paid',
+      status: 'placed',
+      paymentStatus: 'paid',
       paymentMethod: gcash,
       deliveryFee: delivery.fee,
       deliveryAddress: '24 Orchid St., Pamplona Dos, Las Piñas',
@@ -1100,7 +1101,8 @@ function aqualinisDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       placedAt: addMinutes(iso, -80),
       scheduledAt: slot2Time,
       type: 'delivery',
-      status: 'unpaid',
+      status: 'placed',
+      paymentStatus: 'unpaid',
       paymentMethod: cod,
       deliveryFee: delivery.fee,
       deliveryAddress: 'Unit 5A, Las Piñas Residences',
@@ -1360,7 +1362,7 @@ export function generateOrders(shop: PublicShop, now: Date, rng: Rng): OrderReco
     }
     return buildOrder(shop, {
       ...rest,
-      seenAt,
+      ...(seenAt !== undefined ? { seenAt } : {}),
       id: `${slug}-o-${index + 1}`,
       slug,
       token: d.token ?? token(rng),

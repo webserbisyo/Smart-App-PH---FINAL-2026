@@ -33,7 +33,6 @@ import {
   BoardOrderSchema,
   BookingRulesSchema,
   OpenStateSchema,
-  pickupCode,
   scheduleDays,
   parseMapsLink,
   PaymentSchema,
@@ -160,6 +159,9 @@ const PersistedSchema = z.object({
       redeemed: z.number(),
       stamp: z.enum(['none', 'pending', 'earned', 'reversed']),
       byCustomer: z.boolean(),
+      // Older saved orders have no seen time or owner note.
+      seenAt: z.string().nullable().default(null),
+      ownerNote: z.string().nullable().default(null),
     }),
   ),
   members: z.array(
@@ -678,7 +680,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return publicShop(requireShop(slug));
       }),
 
-    getSchedule: ({ slug, type, lines }) =>
+    getSchedule: ({ slug, lines }) =>
       run('storefront', () => {
         const s = requireShop(slug);
         const bookings = computeBookings(s);
@@ -688,7 +690,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     quoteOrder: ({ slug, payload }) =>
       run('storefront', () => {
         const s = requireShop(slug);
-        if (payload.scheduledAt) {
+        const at = payload.scheduledAt;
+        if (at) {
           const sched = scheduleDays(
             s.shop.storefront,
             payload.lines,
@@ -696,8 +699,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             computeBookings(s),
             now(),
           );
-          const day = sched.days.find((d) => d.date === manilaDate(payload.scheduledAt));
-          const slot = day?.slots.find((sl) => sl.at === payload.scheduledAt);
+          const day = sched.days.find((d) => d.date === manilaDate(at));
+          const slot = day?.slots.find((sl) => sl.at === at);
           if (!day || day.state !== 'open' || !slot || slot.state !== 'open') {
             fail('slot_unavailable', 409);
           }
@@ -724,7 +727,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const phone = normalisePhPhone(body.customer.phone);
         if (!phone.ok) fail('invalid_input', 422, { phone: [words.shop.phoneInvalid] });
 
-        if (body.scheduledAt) {
+        const at = body.scheduledAt;
+        if (at) {
           const sched = scheduleDays(
             s.shop.storefront,
             body.lines,
@@ -732,8 +736,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             computeBookings(s),
             now(),
           );
-          const day = sched.days.find((d) => d.date === manilaDate(body.scheduledAt));
-          const slot = day?.slots.find((sl) => sl.at === body.scheduledAt);
+          const day = sched.days.find((d) => d.date === manilaDate(at));
+          const slot = day?.slots.find((sl) => sl.at === at);
           if (!day || day.state !== 'open' || !slot || slot.state !== 'open') {
             fail('slot_unavailable', 409);
           }
@@ -1678,6 +1682,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           pairingIds: parsed.pairingIds,
           featured: parsed.featured,
           isNew: parsed.isNew,
+          noticeDays: parsed.noticeDays,
+          dailyLimit: parsed.dailyLimit,
           status: parsed.status,
           sample: false,
         };

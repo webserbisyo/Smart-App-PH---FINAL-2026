@@ -150,18 +150,23 @@ describe('schemas', () => {
   });
 
   it('booking rules schema enforces 15, 30, 60 slot lengths', () => {
+    const rest = { prepMinutes: 20, takeOrdersWhileClosed: true };
     expect(
-      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 15, ordersPerSlot: 4 }).success,
+      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 15, ordersPerSlot: 4, ...rest })
+        .success,
     ).toBe(true);
     expect(
-      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 30, ordersPerSlot: null }).success,
+      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 30, ordersPerSlot: null, ...rest })
+        .success,
     ).toBe(true);
     expect(
-      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 60, ordersPerSlot: 10 }).success,
+      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 60, ordersPerSlot: 10, ...rest })
+        .success,
     ).toBe(true);
     // 20 is not a valid slotMinutes length
     expect(
-      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 20, ordersPerSlot: 4 }).success,
+      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 20, ordersPerSlot: 4, ...rest })
+        .success,
     ).toBe(false);
   });
 

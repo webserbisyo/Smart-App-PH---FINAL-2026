@@ -1,7 +1,7 @@
+import type { ScheduleDayState } from '../schemas/enums.js';
 import type {
   Schedule,
   ScheduleDay,
-  ScheduleDayState,
   ScheduleNoticeItem,
   ScheduleSlot,
 } from '../schemas/schedule.js';
@@ -128,15 +128,20 @@ export function scheduleDays(
     earliestMoment = new Date(nowMs + storefront.prepMinutes * MS_MINUTE);
   }
 
-  // Handle busy pause
+  // Busy: slots only after the pause, plus prep time (same as pickupSlots).
   if (storefront.pause.busyUntil) {
     const busyUntilMs = new Date(storefront.pause.busyUntil).getTime();
-    if (busyUntilMs > earliestMoment.getTime()) {
-      earliestMoment = new Date(busyUntilMs);
+    const afterBusy = busyUntilMs + storefront.prepMinutes * MS_MINUTE;
+    if (busyUntilMs > nowMs && afterBusy > earliestMoment.getTime()) {
+      earliestMoment = new Date(afterBusy);
     }
   }
 
   const state = openState(storefront, now);
+  // Closed and not taking orders while closed: nothing to book until it opens (same as pickupSlots, N1).
+  if (state.state === 'closed' && !storefront.takeOrdersWhileClosed) {
+    return { days: [], earliest: null, noticeItem };
+  }
   const closedDates = new Set(storefront.closures.map((c) => c.date));
   const stepMs = (storefront.slotMinutes ?? 30) * MS_MINUTE;
   const daysAhead = storefront.daysAhead ?? 1;
@@ -158,19 +163,6 @@ export function scheduleDays(
     if (intervals.length === 0) {
       days.push({ date, state: 'closed', slots: [] });
       continue;
-    }
-
-    // Closed shop with takeOrdersWhileClosed off: only days from next opening are open
-    if (state.state === 'closed' && !storefront.takeOrdersWhileClosed) {
-      if (!state.nextOpening) {
-        days.push({ date, state: 'closed', slots: [] });
-        continue;
-      }
-      const nextDate = manilaDate(state.nextOpening);
-      if (date < nextDate) {
-        days.push({ date, state: 'closed', slots: [] });
-        continue;
-      }
     }
 
     // Days before earliest notice requirement

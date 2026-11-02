@@ -65,7 +65,7 @@ export function useRecallOrder(slug: string) {
   return useMutation({
     mutationFn: (input: { orderId: string }) =>
       ownerOrders.recallOrder({ slug, orderId: input.orderId }),
-    onMutate: async ({ orderId }) => {
+    onMutate: async () => {
       await qc.cancelQueries({ queryKey: ownerOrdersQk.open(slug) });
       const previous = qc.getQueryData<BoardOrder[]>(ownerOrdersQk.open(slug));
       return { previous };

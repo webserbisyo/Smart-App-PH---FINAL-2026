@@ -1,16 +1,7 @@
-import {
-  type OrderPayload,
-  type OrderType,
-  type PublicShop,
-  type Quote,
-  type Schedule,
-  PublicShopSchema,
-  QuoteSchema,
-  ScheduleSchema,
-} from '@smartapp/core';
+import { PublicShopSchema, QuoteSchema, ScheduleSchema } from '@smartapp/core';
 import { z } from 'zod';
 import { fetchApi } from '../../api-client';
-import type { PlacedOrder, StorefrontAdapter } from '../types';
+import type { StorefrontAdapter } from '../types';
 
 export interface ApiStorefrontOptions {
   baseUrl: string;
