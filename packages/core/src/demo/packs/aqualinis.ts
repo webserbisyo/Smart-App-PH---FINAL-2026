@@ -177,6 +177,9 @@ export const AQUALINIS_PACK: ShopPack = {
     orderTypes: ['walk_in', 'pickup', 'delivery'],
     prepMinutes: 20,
     takeOrdersWhileClosed: true,
+    daysAhead: 2,
+    slotMinutes: 30,
+    ordersPerSlot: 3,
     payments: [
       { method: 'cash', accountName: null, accountNumber: null, qr: null, sample: true },
       { method: 'cod', accountName: null, accountNumber: null, qr: null, sample: true },

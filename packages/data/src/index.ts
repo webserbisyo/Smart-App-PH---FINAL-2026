@@ -25,6 +25,9 @@ export {
 } from './mocks/scenario-state';
 export {
   loadMockScenario,
+  ordersEmpty,
+  ordersRush,
+  ordersTrickle,
   readMockScenarioFromUrl,
   setMockScenario,
   type UrlScenario,

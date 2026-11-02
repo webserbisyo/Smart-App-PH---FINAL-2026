@@ -129,6 +129,8 @@ const items = makeItems('lola-remy', P, [
     price: 450,
     groups: ['cake'],
     photos: ['chocolate-moist-cake'],
+    noticeDays: 2,
+    dailyLimit: 6,
   },
   {
     key: 'ube-macapuno-cake',
@@ -145,6 +147,8 @@ const items = makeItems('lola-remy', P, [
     groups: ['cake'],
     photos: ['ube-macapuno-cake'],
     featured: true,
+    noticeDays: 2,
+    dailyLimit: 6,
   },
   { key: 'mamon', category: 'cakes', name: 'Mamon (box of 6)', price: 180, photos: ['mamon'] },
   {
@@ -261,6 +265,9 @@ export const LOLA_REMY_PACK: ShopPack = {
     orderTypes: ['walk_in', 'pickup', 'delivery'],
     prepMinutes: 20,
     takeOrdersWhileClosed: true,
+    daysAhead: 30,
+    slotMinutes: 60,
+    ordersPerSlot: 4,
     payments: [
       { method: 'cash', accountName: null, accountNumber: null, qr: null, sample: true },
       { method: 'cod', accountName: null, accountNumber: null, qr: null, sample: true },

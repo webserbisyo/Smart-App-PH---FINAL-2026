@@ -195,6 +195,7 @@ const items = makeItems('kape-juan', P, [
     price: 185,
     groups: ['warm'],
     photos: ['chicken-pesto-sandwich'],
+    noticeDays: 1,
   },
   {
     key: 'longganisa-pandesal',
@@ -284,6 +285,9 @@ export const KAPE_JUAN_PACK: ShopPack = {
     orderTypes: ['walk_in', 'pickup', 'delivery'],
     prepMinutes: 15,
     takeOrdersWhileClosed: true,
+    daysAhead: 7,
+    slotMinutes: 30,
+    ordersPerSlot: null,
     payments: [
       { method: 'cash', accountName: null, accountNumber: null, qr: null, sample: true },
       {

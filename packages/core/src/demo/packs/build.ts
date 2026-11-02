@@ -94,6 +94,8 @@ export interface ItemSpec {
   isNew?: boolean;
   availability?: (values: readonly string[]) => Availability;
   special?: (values: readonly string[]) => number | null;
+  noticeDays?: number | undefined;
+  dailyLimit?: number | null | undefined;
 }
 
 export interface CustomTemplateSpec {
@@ -213,6 +215,8 @@ export function makeItems(
       isNew: spec.isNew ?? false,
       status: 'active',
       sample,
+      noticeDays: spec.noticeDays ?? 0,
+      dailyLimit: spec.dailyLimit ?? null,
     };
   });
 }

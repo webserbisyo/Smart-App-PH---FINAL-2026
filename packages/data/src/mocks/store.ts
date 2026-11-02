@@ -85,9 +85,11 @@ import {
   generateMembers,
   generateOrders,
   isDemoReceiptToken,
+  orderableLines,
 } from './activity';
 import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
+import { registerTrickleHandler } from './scenario';
 import { getMockScenario, type DemoCustomerState, type MockScenario } from './scenario-state';
 import {
   addMinutes,
@@ -256,6 +258,38 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       variantTemplates: clone(variantTemplates),
     };
   }
+
+  registerTrickleHandler(() => {
+    const slug = activeMockOwnerSlug ?? 'kanto-smash';
+    const s = state.shops.get(slug);
+    if (!s || s.shop.catalog.items.length === 0) return;
+    const t = now();
+    const iso = t.toISOString();
+    const bDate = manilaDate(iso);
+    const orderNo = nextOrderNo(s, bDate);
+    const customer = {
+      name: 'Trickle Customer',
+      phone: `+63917000${String(3000 + s.orders.length).padStart(4, '0')}`,
+      email: 'trickle@example.com',
+    };
+    const lines = orderableLines(s.shop, t, rng, 2);
+    if (lines.length === 0) return;
+    const order = buildOrder(s.shop, {
+      id: `${slug}-o-trickle-${Date.now()}`,
+      slug,
+      token: makeToken(rng),
+      orderNo,
+      placedAt: iso,
+      type: s.shop.storefront.orderTypes[0] ?? 'pickup',
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: s.shop.storefront.payments[0]?.method ?? 'cash',
+      lines,
+      customer,
+      isFirstOrder: false,
+    });
+    s.orders.push(order);
+  });
 
   function loadPersisted(): Persisted | null {
     if (!persistence) return null;
@@ -1083,6 +1117,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     listOrders: (input) =>
       run('orders', () => {
         const s = requireShop(input.slug);
+        if (scenario().empty || scenario().ordersMode === 'empty') return [];
         let list =
           'open' in input
             ? s.orders.filter((o) => !isFinal(o.receipt.status))
@@ -1105,6 +1140,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     listScheduled: ({ slug, from, to }) =>
       run('orders', () => {
         const s = requireShop(slug);
+        if (scenario().empty || scenario().ordersMode === 'empty') return { orders: [], days: [] };
         const scheduled = s.orders
           .filter(
             (o) =>
@@ -1131,6 +1167,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     findOrder: ({ slug, code }) =>
       run('orders', () => {
         const s = requireShop(slug);
+        if (scenario().empty || scenario().ordersMode === 'empty') return [];
         const q = code.trim().toUpperCase();
         const todayDate = manilaDate(now());
         const matches = s.orders.filter((o) => {

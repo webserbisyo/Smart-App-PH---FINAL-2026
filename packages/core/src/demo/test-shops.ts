@@ -57,6 +57,9 @@ const BLANK_STOREFRONT: Storefront = {
   orderTypes: ['walk_in'],
   prepMinutes: 20,
   takeOrdersWhileClosed: true,
+  daysAhead: 7,
+  slotMinutes: 30,
+  ordersPerSlot: null,
   payments: [{ method: 'cash', accountName: null, accountNumber: null, qr: null, sample: false }],
   codMaxTotal: null,
   delivery: { distance: [], zones: [], freeDeliveryFrom: null },
@@ -184,6 +187,7 @@ function stressSpecs(): ItemSpec[] {
       values[0] === 'Small' && values[1] === 'Single' && values[2] === 'Standard'
         ? 'sold_out'
         : 'available',
+    noticeDays: 30,
   });
   return specs;
 }
@@ -237,6 +241,11 @@ const STRESS_STOREFRONT: Storefront = {
     },
   },
   orderTypes: ['walk_in', 'pickup', 'delivery'],
+  prepMinutes: 20,
+  takeOrdersWhileClosed: true,
+  daysAhead: 60,
+  slotMinutes: 30,
+  ordersPerSlot: 1,
   payments: [
     { method: 'cash', accountName: null, accountNumber: null, qr: null, sample: true },
     { method: 'cod', accountName: null, accountNumber: null, qr: null, sample: true },

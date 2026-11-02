@@ -27,6 +27,7 @@ export const MockScenarioSchema = z.object({
   noCard: z.boolean(),
   now: IsoDateTimeSchema.nullable(),
   as: DemoCustomerStateEnum.nullable(),
+  ordersMode: z.enum(['default', 'rush', 'empty', 'trickle']).default('default'),
 });
 export type MockScenario = z.infer<typeof MockScenarioSchema>;
 
@@ -39,6 +40,7 @@ export const DEFAULT_SCENARIO: MockScenario = {
   noCard: false,
   now: null,
   as: null,
+  ordersMode: 'default',
 };
 
 let current: MockScenario = DEFAULT_SCENARIO;

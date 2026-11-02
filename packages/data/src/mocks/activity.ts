@@ -357,8 +357,786 @@ function demoReceiptDrafts(shop: PublicShop, now: Date): DraftOrder[] {
   ];
 }
 
-/** Orders for the owner side: today's board in every status and a few past days. */
-function activityDrafts(shop: PublicShop, now: Date): DraftOrder[] {
+import { getMockScenario } from './scenario-state';
+
+function kantoSmashDrafts(shop: PublicShop, now: Date): DraftOrder[] {
+  const iso = now.toISOString();
+  const walkIn = typeFor(shop, 'walk_in');
+  const pickup = typeFor(shop, 'pickup');
+  const gcash = methodFor(shop, pickup, 'gcash');
+  const cash = methodFor(shop, pickup, 'cash');
+  const delivery = deliveryFor(shop);
+  const cod = methodFor(shop, 'delivery', 'cod');
+
+  // 18 open orders across all columns:
+  // 2 scheduled, 4 new (2 with pending transfer proof), 5 preparing (1 amber, 1 red, 1 long note), 4 ready (1 amber, 1 long note), 3 out (1 rider)
+  const openDrafts: DraftOrder[] = [
+    // Scheduled (2)
+    {
+      customerIndex: 1,
+      placedAt: addMinutes(iso, -10),
+      scheduledAt: addMinutes(iso, 120),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    {
+      customerIndex: 2,
+      placedAt: addMinutes(iso, -8),
+      scheduledAt: addMinutes(iso, 180),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'unpaid',
+      paymentMethod: cash,
+    },
+    // New (4)
+    {
+      customerIndex: 0,
+      placedAt: addMinutes(iso, -2),
+      type: walkIn,
+      status: 'placed',
+      paymentStatus: 'unpaid',
+      paymentMethod: methodFor(shop, walkIn, 'cash'),
+      isFirstOrder: true,
+    },
+    {
+      customerIndex: 3,
+      placedAt: addMinutes(iso, -5),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'pending',
+      paymentMethod: gcash,
+      expiresAt: addMinutes(iso, 25),
+      proofs: [proof('pf-ks-1', 'pending', addMinutes(iso, -3), '2001 111 2222')],
+    },
+    {
+      customerIndex: 4,
+      placedAt: addMinutes(iso, -9),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'pending',
+      paymentMethod: gcash,
+      expiresAt: addMinutes(iso, 21),
+      proofs: [proof('pf-ks-2', 'pending', addMinutes(iso, -6), '2001 333 4444')],
+    },
+    {
+      customerIndex: 5,
+      placedAt: addMinutes(iso, -12),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      proofs: [proof('pf-ks-3', 'approved', addMinutes(iso, -10), '2001 555 6666')],
+    },
+    // Preparing (5) - 1 amber late (age 25 > prep 20), 1 red late (age 35 > prep 20), 1 long note
+    {
+      customerIndex: 6,
+      placedAt: addMinutes(iso, -25),
+      type: pickup,
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    {
+      customerIndex: 7,
+      placedAt: addMinutes(iso, -35),
+      type: pickup,
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    {
+      customerIndex: 8,
+      placedAt: addMinutes(iso, -18),
+      type: pickup,
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      note: 'Please make sure patties are extra smashed with crispy lacy edges! Extra sauce on the side please, no pickles at all.',
+    },
+    {
+      customerIndex: 9,
+      placedAt: addMinutes(iso, -14),
+      type: walkIn,
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: methodFor(shop, walkIn, 'cash'),
+    },
+    {
+      customerIndex: 1,
+      placedAt: addMinutes(iso, -10),
+      type: pickup,
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    // Ready (4) - 1 amber late (dueAt was placedAt + 20 = now - 25m), 1 long note
+    {
+      customerIndex: 2,
+      placedAt: addMinutes(iso, -45),
+      type: pickup,
+      status: 'ready',
+      paymentStatus: 'paid',
+      paymentMethod: cash,
+    },
+    {
+      customerIndex: 3,
+      placedAt: addMinutes(iso, -30),
+      type: pickup,
+      status: 'ready',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      note: 'Pickup by Grab driver. Please double bag so the drink does not spill on the way.',
+    },
+    {
+      customerIndex: 4,
+      placedAt: addMinutes(iso, -22),
+      type: pickup,
+      status: 'ready',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    {
+      customerIndex: 5,
+      placedAt: addMinutes(iso, -18),
+      type: pickup,
+      status: 'ready',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    // Out for delivery (3) - 1 with rider
+    {
+      customerIndex: 6,
+      placedAt: addMinutes(iso, -40),
+      type: 'delivery',
+      status: 'out_for_delivery',
+      paymentStatus: 'unpaid',
+      paymentMethod: cod,
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+      rider: { name: 'Kuya Jomar', phone: '0917 111 2222', provider: 'Lalamove' },
+      trackingUrl: 'https://example.com/track/ks-ride-1',
+    },
+    {
+      customerIndex: 7,
+      placedAt: addMinutes(iso, -32),
+      type: 'delivery',
+      status: 'out_for_delivery',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+    },
+    {
+      customerIndex: 8,
+      placedAt: addMinutes(iso, -28),
+      type: 'delivery',
+      status: 'out_for_delivery',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+    },
+  ];
+
+  // Earlier completed/cancelled orders today
+  const historyToday: DraftOrder[] = [
+    {
+      customerIndex: 9,
+      placedAt: addMinutes(iso, -120),
+      type: pickup,
+      status: 'completed',
+      paymentStatus: 'paid',
+      paymentMethod: cash,
+      rating: { stars: 5, comment: 'Crispy smash burger, the best!', at: addMinutes(iso, -90) },
+    },
+    {
+      customerIndex: 0,
+      placedAt: addMinutes(iso, -180),
+      type: walkIn,
+      status: 'completed',
+      paymentStatus: 'paid',
+      paymentMethod: methodFor(shop, walkIn, 'cash'),
+    },
+    {
+      customerIndex: 1,
+      placedAt: addMinutes(iso, -95),
+      type: pickup,
+      status: 'cancelled',
+      paymentStatus: 'unpaid',
+      paymentMethod: cash,
+      cancelReason: 'Customer asked to cancel.',
+    },
+  ];
+
+  // Past days: three completed orders each
+  const pastDays: DraftOrder[] = [];
+  for (let day = 1; day <= 3; day += 1) {
+    for (let k = 0; k < 3; k += 1) {
+      pastDays.push({
+        customerIndex: (day * 3 + k) % NAMES.length,
+        placedAt: addMinutes(iso, -day * DAY - k * 90),
+        type: k === 2 ? 'delivery' : pickup,
+        status: 'completed',
+        paymentStatus: 'paid',
+        paymentMethod:
+          k === 2 ? methodFor(shop, 'delivery', 'cod') : methodFor(shop, pickup, 'cash'),
+        ...(k === 2 ? { deliveryFee: delivery.fee, deliveryAddress: delivery.address } : {}),
+      });
+    }
+  }
+
+  return [...openDrafts, ...historyToday, ...pastDays];
+}
+
+function lolaRemyDrafts(shop: PublicShop, now: Date): DraftOrder[] {
+  const iso = now.toISOString();
+  const pickup = typeFor(shop, 'pickup');
+  const gcash = methodFor(shop, pickup, 'gcash');
+  const cash = methodFor(shop, pickup, 'cash');
+  const delivery = deliveryFor(shop);
+  const todayDate = manilaDate(now);
+
+  const d = new Date(now.getTime() + 8 * 3600 * 1000);
+  const dayOfWeek = d.getUTCDay();
+  const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+  const nextSaturday = addDays(todayDate, daysUntilSaturday);
+
+  const choc = shop.catalog.items.find((i) => i.id === 'lr-chocolate-moist-cake');
+  const ube = shop.catalog.items.find((i) => i.id === 'lr-ube-macapuno-cake');
+  const chocVarId = choc?.variants[0]?.id ?? 'lr-chocolate-moist-cake--base';
+  const ubeVarId = ube?.variants[0]?.id ?? 'lr-ube-macapuno-cake--base';
+
+  // 1. Next Saturday fully booked for cakes: 6 cakes total across slots
+  const saturdayCakeOrders: DraftOrder[] = [
+    {
+      customerIndex: 1,
+      placedAt: addMinutes(iso, -300),
+      scheduledAt: manilaToDate(nextSaturday, '10:00').toISOString(),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      note: 'Happy 7th birthday, Migo!',
+      lines: [
+        { itemId: choc?.id ?? 'lr-chocolate-moist-cake', variantId: chocVarId, optionIds: [], qty: 1, note: '' },
+        { itemId: ube?.id ?? 'lr-ube-macapuno-cake', variantId: ubeVarId, optionIds: [], qty: 1, note: '' },
+      ],
+    },
+    {
+      customerIndex: 2,
+      placedAt: addMinutes(iso, -240),
+      scheduledAt: manilaToDate(nextSaturday, '11:00').toISOString(),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      note: 'Happy 50th Wedding Anniversary Lolo and Lola!',
+      lines: [
+        { itemId: ube?.id ?? 'lr-ube-macapuno-cake', variantId: ubeVarId, optionIds: [], qty: 1, note: '' },
+      ],
+    },
+    {
+      customerIndex: 3,
+      placedAt: addMinutes(iso, -200),
+      scheduledAt: manilaToDate(nextSaturday, '15:00').toISOString(),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      note: 'Congratulations Sofia on your graduation!',
+      lines: [
+        { itemId: choc?.id ?? 'lr-chocolate-moist-cake', variantId: chocVarId, optionIds: [], qty: 2, note: '' },
+      ],
+    },
+    {
+      customerIndex: 4,
+      placedAt: addMinutes(iso, -180),
+      scheduledAt: manilaToDate(nextSaturday, '16:00').toISOString(),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      note: 'Happy Birthday Tita Baby!',
+      lines: [
+        { itemId: ube?.id ?? 'lr-ube-macapuno-cake', variantId: ubeVarId, optionIds: [], qty: 1, note: '' },
+      ],
+    },
+  ];
+
+  // 2. One 40-line party order
+  const activeItems = shop.catalog.items.filter((i) => i.status === 'active' && i.variants.length > 0);
+  const partyLines: BasketLine[] = [];
+  for (let i = 0; i < 40; i += 1) {
+    const item = activeItems[i % activeItems.length]!;
+    const variant = item.variants[0]!;
+    partyLines.push({
+      itemId: item.id,
+      variantId: variant.id,
+      optionIds: [],
+      qty: (i % 2) + 1,
+      note: i === 0 ? 'Assorted bakery party box' : '',
+    });
+  }
+
+  const partyOrder: DraftOrder = {
+    customerIndex: 5,
+    placedAt: addMinutes(iso, -150),
+    scheduledAt: manilaToDate(addDays(todayDate, 4), '14:00').toISOString(),
+    type: pickup,
+    status: 'placed',
+    paymentStatus: 'paid',
+    paymentMethod: gcash,
+    note: 'Big family reunion! Please pack each pastry in individual boxes.',
+    lines: partyLines,
+  };
+
+  // 3. 20 other scheduled orders over the next 30 days (total 4 + 1 + 20 = 25 scheduled)
+  const scheduledDaysOffsets = [
+    1, 2, 3, 5, 7, 8, 10, 12, 13, 14, 16, 18, 19, 20, 22, 24, 25, 27, 28, 29,
+  ];
+  const greetingNotes = [
+    'Happy 18th Birthday Chloe!',
+    'Best wishes Carlos and Maria!',
+    'Thank you teachers!',
+    'Welcome home Kuya Noel!',
+    'Happy Christening Baby Lucas!',
+  ];
+  const moreScheduled: DraftOrder[] = scheduledDaysOffsets.map((offset, idx) => {
+    const day = addDays(todayDate, offset);
+    const hour = 8 + (idx % 8);
+    const timeStr = `${String(hour).padStart(2, '0')}:00`;
+    return {
+      customerIndex: (idx + 6) % NAMES.length,
+      placedAt: addMinutes(iso, -100 - idx * 10),
+      scheduledAt: manilaToDate(day, timeStr).toISOString(),
+      type: idx % 3 === 0 ? 'delivery' : pickup,
+      status: 'placed',
+      paymentStatus: idx % 2 === 0 ? 'paid' : 'unpaid',
+      paymentMethod: idx % 2 === 0 ? gcash : cash,
+      note: idx < greetingNotes.length ? greetingNotes[idx] : null,
+      ...(idx % 3 === 0 ? { deliveryFee: delivery.fee, deliveryAddress: delivery.address } : {}),
+    };
+  });
+
+  // Open orders today
+  const todayOpen: DraftOrder[] = [
+    {
+      customerIndex: 0,
+      placedAt: addMinutes(iso, -6),
+      type: pickup,
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: cash,
+    },
+    {
+      customerIndex: 1,
+      placedAt: addMinutes(iso, -15),
+      type: pickup,
+      status: 'ready',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    {
+      customerIndex: 2,
+      placedAt: addMinutes(iso, -3),
+      type: typeFor(shop, 'walk_in'),
+      status: 'placed',
+      paymentStatus: 'unpaid',
+      paymentMethod: cash,
+    },
+  ];
+
+  // Past days completed orders
+  const pastDays: DraftOrder[] = [];
+  for (let day = 1; day <= 3; day += 1) {
+    for (let k = 0; k < 3; k += 1) {
+      pastDays.push({
+        customerIndex: (day * 3 + k) % NAMES.length,
+        placedAt: addMinutes(iso, -day * DAY - k * 90),
+        type: pickup,
+        status: 'completed',
+        paymentStatus: 'paid',
+        paymentMethod: cash,
+      });
+    }
+  }
+
+  return [...saturdayCakeOrders, partyOrder, ...moreScheduled, ...todayOpen, ...pastDays];
+}
+
+function kapeJuanDrafts(shop: PublicShop, now: Date): DraftOrder[] {
+  const iso = now.toISOString();
+  const walkIn = typeFor(shop, 'walk_in');
+  const pickup = typeFor(shop, 'pickup');
+  const gcash = methodFor(shop, pickup, 'gcash');
+  const cash = methodFor(shop, pickup, 'cash');
+  const todayDate = manilaDate(now);
+
+  // ASAP coffees now
+  const todayOpen: DraftOrder[] = [
+    {
+      customerIndex: 0,
+      placedAt: addMinutes(iso, -3),
+      type: walkIn,
+      status: 'placed',
+      paymentStatus: 'unpaid',
+      paymentMethod: methodFor(shop, walkIn, 'cash'),
+      isFirstOrder: true,
+    },
+    {
+      customerIndex: 1,
+      placedAt: addMinutes(iso, -7),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    {
+      customerIndex: 2,
+      placedAt: addMinutes(iso, -12),
+      type: pickup,
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    {
+      customerIndex: 3,
+      placedAt: addMinutes(iso, -18),
+      type: walkIn,
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: methodFor(shop, walkIn, 'cash'),
+    },
+    {
+      customerIndex: 4,
+      placedAt: addMinutes(iso, -24),
+      type: pickup,
+      status: 'ready',
+      paymentStatus: 'paid',
+      paymentMethod: cash,
+    },
+    {
+      customerIndex: 5,
+      placedAt: addMinutes(iso, -28),
+      type: pickup,
+      status: 'ready',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+  ];
+
+  // 6 bookings next week
+  const cateringItem = shop.catalog.items.find((i) => i.id === 'kj-chicken-pesto-sandwich');
+  const cateringVarId = cateringItem?.variants[0]?.id ?? 'kj-chicken-pesto-sandwich--base';
+  const bookingsNextWeek: DraftOrder[] = [1, 2, 3, 4, 5, 6].map((dayOffset, idx) => {
+    const isCatering = idx === 1;
+    return {
+      customerIndex: (idx + 6) % NAMES.length,
+      placedAt: addMinutes(iso, -150 - idx * 20),
+      scheduledAt: manilaToDate(addDays(todayDate, dayOffset), '09:00').toISOString(),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      note: isCatering ? 'Catering meeting booking (10 pax)' : 'Morning office coffee run',
+      ...(isCatering && cateringItem
+        ? {
+            lines: [
+              {
+                itemId: cateringItem.id,
+                variantId: cateringVarId,
+                optionIds: [],
+                qty: 10,
+                note: 'Pack with napkins and cutlery',
+              },
+            ],
+          }
+        : {}),
+    };
+  });
+
+  // Past days completed orders
+  const pastDays: DraftOrder[] = [];
+  for (let day = 1; day <= 3; day += 1) {
+    for (let k = 0; k < 3; k += 1) {
+      pastDays.push({
+        customerIndex: (day * 3 + k) % NAMES.length,
+        placedAt: addMinutes(iso, -day * DAY - k * 90),
+        type: pickup,
+        status: 'completed',
+        paymentStatus: 'paid',
+        paymentMethod: cash,
+      });
+    }
+  }
+
+  return [...todayOpen, ...bookingsNextWeek, ...pastDays];
+}
+
+function talaApparelDrafts(shop: PublicShop, now: Date): DraftOrder[] {
+  const iso = now.toISOString();
+  const pickup = 'pickup' as OrderType;
+  const delivery = deliveryFor(shop);
+  const gcash = methodFor(shop, pickup, 'gcash');
+  const bank = methodFor(shop, pickup, 'bank');
+
+  // One ₱12,345.50 order:
+  // Weekend Set (1799) x 6 = 10,794
+  // Habi-print Midi Dress (1299) x 1 = 1,299
+  // Terno-sleeve Blouse (1199) x 1 = 1,199
+  // Subtotal = 13,292.00 (1,329,200). Discount = 94650. Total = 1,234,550 centavos = ₱12,345.50!
+  const weekendSet = shop.catalog.items.find((i) => i.id === 'ta-weekend-set');
+  const habiDress = shop.catalog.items.find((i) => i.id === 'ta-habi-print-midi-dress');
+  const ternoBlouse = shop.catalog.items.find((i) => i.id === 'ta-terno-sleeve-blouse');
+
+  const bigOrderLines: BasketLine[] = [
+    {
+      itemId: weekendSet?.id ?? 'ta-weekend-set',
+      variantId: weekendSet?.variants[0]?.id ?? 'ta-weekend-set--s',
+      optionIds: [],
+      qty: 6,
+      note: 'Sizes S to L for bridal entourage',
+    },
+    {
+      itemId: habiDress?.id ?? 'ta-habi-print-midi-dress',
+      variantId: habiDress?.variants[0]?.id ?? 'ta-habi-print-midi-dress--m',
+      optionIds: [],
+      qty: 1,
+      note: 'Maid of honour fitting',
+    },
+    {
+      itemId: ternoBlouse?.id ?? 'ta-terno-sleeve-blouse',
+      variantId: ternoBlouse?.variants[0]?.id ?? 'ta-terno-sleeve-blouse--m',
+      optionIds: [],
+      qty: 1,
+      note: 'Mother of the bride',
+    },
+  ];
+
+  const bigOrder: DraftOrder = {
+    customerIndex: 2,
+    placedAt: addMinutes(iso, -20),
+    type: pickup,
+    status: 'placed',
+    paymentStatus: 'paid',
+    paymentMethod: bank,
+    discount: 94650,
+    rewardTitle: 'VIP Loyalty Discount (₱946.50 off)',
+    note: 'Custom bridal party fitting. Please ensure all items are boxed with handwritten tags.',
+    lines: bigOrderLines,
+  };
+
+  // Other open orders with long product names
+  const otherOpen: DraftOrder[] = [
+    {
+      customerIndex: 0,
+      placedAt: addMinutes(iso, -5),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    {
+      customerIndex: 1,
+      placedAt: addMinutes(iso, -15),
+      type: 'delivery',
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+    },
+    {
+      customerIndex: 3,
+      placedAt: addMinutes(iso, -35),
+      type: pickup,
+      status: 'ready',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+    },
+    {
+      customerIndex: 4,
+      placedAt: addMinutes(iso, -45),
+      type: 'delivery',
+      status: 'out_for_delivery',
+      paymentStatus: 'unpaid',
+      paymentMethod: methodFor(shop, 'delivery', 'cod'),
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+      rider: { name: 'Kuya Ronald', phone: '0917 555 8888', provider: 'Lalamove' },
+      trackingUrl: 'https://example.com/track/ta-ride-1',
+    },
+  ];
+
+  // Past days completed orders
+  const pastDays: DraftOrder[] = [];
+  for (let day = 1; day <= 3; day += 1) {
+    for (let k = 0; k < 3; k += 1) {
+      pastDays.push({
+        customerIndex: (day * 3 + k) % NAMES.length,
+        placedAt: addMinutes(iso, -day * DAY - k * 90),
+        type: k === 1 ? 'delivery' : pickup,
+        status: 'completed',
+        paymentStatus: 'paid',
+        paymentMethod: gcash,
+        ...(k === 1 ? { deliveryFee: delivery.fee, deliveryAddress: delivery.address } : {}),
+      });
+    }
+  }
+
+  return [bigOrder, ...otherOpen, ...pastDays];
+}
+
+function aqualinisDrafts(shop: PublicShop, now: Date): DraftOrder[] {
+  const iso = now.toISOString();
+  const delivery = deliveryFor(shop);
+  const cod = methodFor(shop, 'delivery', 'cod');
+  const gcash = methodFor(shop, 'delivery', 'gcash');
+  const todayDate = manilaDate(now);
+  const tomorrow = addDays(todayDate, 1);
+
+  // Two slots full tomorrow (each slot gets 3 orders, matching ordersPerSlot: 3)
+  const slot1Time = manilaToDate(tomorrow, '10:00').toISOString();
+  const slot2Time = manilaToDate(tomorrow, '14:00').toISOString();
+
+  const tomorrowFullSlots: DraftOrder[] = [
+    // Slot 1 (10:00) - 3 orders
+    {
+      customerIndex: 0,
+      placedAt: addMinutes(iso, -180),
+      scheduledAt: slot1Time,
+      type: 'delivery',
+      status: 'placed',
+      paymentStatus: 'unpaid',
+      paymentMethod: cod,
+      deliveryFee: delivery.fee,
+      deliveryAddress: 'Block 4 Lot 12, Pamplona Uno, Las Piñas',
+      isFirstOrder: false,
+    },
+    {
+      customerIndex: 1,
+      placedAt: addMinutes(iso, -160),
+      scheduledAt: slot1Time,
+      type: 'delivery',
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      deliveryFee: delivery.fee,
+      deliveryAddress: 'Unit 301, Talon Village, Las Piñas',
+      isFirstOrder: false,
+    },
+    {
+      customerIndex: 2,
+      placedAt: addMinutes(iso, -140),
+      scheduledAt: slot1Time,
+      type: 'delivery',
+      status: 'placed',
+      paymentStatus: 'unpaid',
+      paymentMethod: cod,
+      deliveryFee: delivery.fee,
+      deliveryAddress: '88 Alabang-Zapote Rd., Las Piñas',
+      isFirstOrder: false,
+    },
+    // Slot 2 (14:00) - 3 orders
+    {
+      customerIndex: 3,
+      placedAt: addMinutes(iso, -120),
+      scheduledAt: slot2Time,
+      type: 'delivery',
+      status: 'placed',
+      paymentStatus: 'unpaid',
+      paymentMethod: cod,
+      deliveryFee: delivery.fee,
+      deliveryAddress: '15 Rosal St., Almanza Uno, Las Piñas',
+      isFirstOrder: false,
+    },
+    {
+      customerIndex: 4,
+      placedAt: addMinutes(iso, -100),
+      scheduledAt: slot2Time,
+      type: 'delivery',
+      status: 'paid',
+      paymentMethod: gcash,
+      deliveryFee: delivery.fee,
+      deliveryAddress: '24 Orchid St., Pamplona Dos, Las Piñas',
+      isFirstOrder: false,
+    },
+    {
+      customerIndex: 5,
+      placedAt: addMinutes(iso, -80),
+      scheduledAt: slot2Time,
+      type: 'delivery',
+      status: 'unpaid',
+      paymentMethod: cod,
+      deliveryFee: delivery.fee,
+      deliveryAddress: 'Unit 5A, Las Piñas Residences',
+      isFirstOrder: false,
+    },
+  ];
+
+  // Open orders today
+  const todayOpen: DraftOrder[] = [
+    {
+      customerIndex: 6,
+      placedAt: addMinutes(iso, -10),
+      type: 'delivery',
+      status: 'placed',
+      paymentStatus: 'unpaid',
+      paymentMethod: cod,
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+      isFirstOrder: false,
+    },
+    {
+      customerIndex: 7,
+      placedAt: addMinutes(iso, -20),
+      type: 'delivery',
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+      isFirstOrder: false,
+    },
+    {
+      customerIndex: 8,
+      placedAt: addMinutes(iso, -35),
+      type: 'delivery',
+      status: 'out_for_delivery',
+      paymentStatus: 'unpaid',
+      paymentMethod: cod,
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+      rider: { name: 'Kuya Danny', phone: '0917 222 3333', provider: 'AquaLinis Fleet' },
+      trackingUrl: 'https://example.com/track/aq-ride-1',
+      isFirstOrder: false,
+    },
+  ];
+
+  // Past days completed orders
+  const pastDays: DraftOrder[] = [];
+  for (let day = 1; day <= 3; day += 1) {
+    for (let k = 0; k < 3; k += 1) {
+      pastDays.push({
+        customerIndex: (day * 3 + k) % NAMES.length,
+        placedAt: addMinutes(iso, -day * DAY - k * 90),
+        type: 'delivery',
+        status: 'completed',
+        paymentStatus: 'paid',
+        paymentMethod: cod,
+        deliveryFee: delivery.fee,
+        deliveryAddress: delivery.address,
+        isFirstOrder: false,
+      });
+    }
+  }
+
+  return [...tomorrowFullSlots, ...todayOpen, ...pastDays];
+}
+
+function defaultActivityDrafts(shop: PublicShop, now: Date): DraftOrder[] {
   const iso = now.toISOString();
   const walkIn = typeFor(shop, 'walk_in');
   const pickup = typeFor(shop, 'pickup');
@@ -485,7 +1263,7 @@ function activityDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       scheduledAt: addMinutes(iso, 180),
     },
   ];
-  // Past days: three completed orders each, for history and insights later.
+
   for (let day = 1; day <= 3; day += 1) {
     for (let k = 0; k < 3; k += 1) {
       drafts.push({
@@ -503,6 +1281,26 @@ function activityDrafts(shop: PublicShop, now: Date): DraftOrder[] {
   return drafts;
 }
 
+/** Orders for the owner side: today's board in every status and a few past days. */
+function activityDrafts(shop: PublicShop, now: Date): DraftOrder[] {
+  const sc = getMockScenario();
+  if (sc.ordersMode === 'rush' || shop.storefront.slug === 'kanto-smash') {
+    return kantoSmashDrafts(shop, now);
+  }
+  switch (shop.storefront.slug) {
+    case 'lola-remy':
+      return lolaRemyDrafts(shop, now);
+    case 'kape-juan':
+      return kapeJuanDrafts(shop, now);
+    case 'tala-apparel':
+      return talaApparelDrafts(shop, now);
+    case 'aqualinis':
+      return aqualinisDrafts(shop, now);
+    default:
+      return defaultActivityDrafts(shop, now);
+  }
+}
+
 /** Builds every generated order for a shop, numbered gap-free per Manila day in placement order. */
 export function generateOrders(shop: PublicShop, now: Date, rng: Rng): OrderRecord[] {
   const slug = shop.storefront.slug;
@@ -512,6 +1310,7 @@ export function generateOrders(shop: PublicShop, now: Date, rng: Rng): OrderReco
     .filter((d) => d.lines.length > 0)
     .sort((a, b) => a.placedAt.localeCompare(b.placedAt));
   const counters = new Map<string, number>();
+  let openCount = 0;
   return drafts.map((d, index) => {
     const date = manilaDate(d.placedAt);
     const orderNo = (counters.get(date) ?? 0) + 1;
@@ -519,8 +1318,17 @@ export function generateOrders(shop: PublicShop, now: Date, rng: Rng): OrderReco
     const customer = d.customer ?? customerFor(d.customerIndex ?? index);
     const { customerIndex: _unused, ...rest } = d;
     void _unused;
+    const isOpen = ['placed', 'preparing', 'ready', 'out_for_delivery'].includes(d.status);
+    let seenAt = rest.seenAt;
+    if (isOpen) {
+      if (seenAt === undefined) {
+        seenAt = openCount % 2 === 0 ? addMinutes(d.placedAt, 2) : null;
+      }
+      openCount += 1;
+    }
     return buildOrder(shop, {
       ...rest,
+      seenAt,
       id: `${slug}-o-${index + 1}`,
       slug,
       token: d.token ?? token(rng),

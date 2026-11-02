@@ -60,6 +60,9 @@ const MOCK_VALUES = [
   'closed',
   'nocard',
   'basket',
+  'orders-rush',
+  'orders-empty',
+  'orders-trickle',
   'none',
 ] as const;
 
@@ -89,6 +92,15 @@ export function parseMockScenario(params: URLSearchParams): UrlScenario {
       break;
     case 'basket':
       out.fillBasket = true;
+      break;
+    case 'orders-rush':
+      out.scenario.ordersMode = 'rush';
+      break;
+    case 'orders-empty':
+      out.scenario.ordersMode = 'empty';
+      break;
+    case 'orders-trickle':
+      out.scenario.ordersMode = 'trickle';
       break;
     case 'none':
       Object.assign(out.scenario, { ...DEFAULT_SCENARIO });
@@ -123,9 +135,42 @@ export function readMockScenarioFromUrl(
           offline: false,
           closed: false,
           noCard: false,
+          ordersMode: 'default' as const,
         }
       : {};
     setMockScenario({ ...reset, ...parsed.scenario });
   }
   return parsed;
 }
+
+let trickleCallback: (() => void) | null = null;
+let trickleTimer: ReturnType<typeof setInterval> | null = null;
+
+export function registerTrickleHandler(handler: () => void): () => void {
+  trickleCallback = handler;
+  return () => {
+    if (trickleCallback === handler) trickleCallback = null;
+  };
+}
+
+export function ordersRush(): MockScenario {
+  return setMockScenario({ ordersMode: 'rush' });
+}
+
+export function ordersEmpty(): MockScenario {
+  return setMockScenario({ ordersMode: 'empty' });
+}
+
+export function ordersTrickle(on = true): MockScenario {
+  if (trickleTimer) {
+    clearInterval(trickleTimer);
+    trickleTimer = null;
+  }
+  if (on && typeof window !== 'undefined') {
+    trickleTimer = setInterval(() => {
+      trickleCallback?.();
+    }, 20_000);
+  }
+  return setMockScenario({ ordersMode: on ? 'trickle' : 'default' });
+}
+

@@ -318,6 +318,9 @@ export const KANTO_SMASH_PACK: ShopPack = {
     orderTypes: ['walk_in', 'pickup', 'delivery'],
     prepMinutes: 20,
     takeOrdersWhileClosed: true,
+    daysAhead: 1,
+    slotMinutes: 15,
+    ordersPerSlot: null,
     payments: [
       { method: 'cash', accountName: null, accountNumber: null, qr: null, sample: true },
       { method: 'cod', accountName: null, accountNumber: null, qr: null, sample: true },
