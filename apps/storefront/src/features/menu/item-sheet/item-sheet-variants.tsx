@@ -1,10 +1,12 @@
 'use client';
 
 import {
+  catalogWords,
   findVariant,
   formatPeso,
   possibleValues,
   variantAvailability,
+  words,
   type Item,
   type Variant,
 } from '@smartapp/core';
@@ -28,10 +30,10 @@ export interface ItemSheetVariantsProps {
 
 /**
  * Variants section for the item sheet:
- * - Food single axis with prices -> radio rows (c-radio-group-17 pattern)
- * - Retail multiple axes -> chips per axis (c-toggle-group-4 pattern, controlled)
- * - Impossible or sold-out combinations greyed with "Not available"
- * - Choosing a colour with a photo notifies parent to show that photo first
+ * - Single axis with prices -> radio rows (c-radio-group-17 pattern)
+ * - 2 or 3 axes -> chips per axis (c-toggle-group-4 pattern, controlled)
+ * - Impossible or sold-out combinations greyed with words.menu.itemSheet.notAvailable
+ * - Choosing an option with a photo notifies parent to show that photo first
  */
 export function ItemSheetVariants({
   item,
@@ -47,8 +49,8 @@ export function ItemSheetVariants({
 
   // Single axis (common in food or simple options) -> c-radio-group-17 pattern
   if (item.axes.length <= 1) {
-    const axisName = item.axes[0]?.name ?? 'Size';
-    const basePrice = item.variants[0]?.price ?? 0;
+    const axisName = item.axes[0]?.name ?? catalogWords.choiceUnnamed;
+    const basePrice = item.basePrice ?? item.variants[0]?.price ?? 0;
 
     return (
       <div className="flex flex-col gap-2">
@@ -91,7 +93,9 @@ export function ItemSheetVariants({
                       <FieldTitle className="text-sm font-medium">{label}</FieldTitle>
                       {isSoldOut ? (
                         <FieldDescription className="text-xs text-destructive">
-                          {avail === 'sold_out_today' ? 'Sold out today' : 'Sold out'}
+                          {avail === 'sold_out_today'
+                            ? words.menu.badges.soldOutToday
+                            : words.menu.badges.soldOut}
                         </FieldDescription>
                       ) : null}
                     </FieldContent>
@@ -108,7 +112,7 @@ export function ItemSheetVariants({
     );
   }
 
-  // Retail 2 axes (e.g. Size and Color) -> c-toggle-group-4 chips per axis
+  // 2 or 3 axes (e.g. Size and Colour, or Size, Patty, Temperature) -> c-toggle-group-4 chips per axis
   const currentValues = selectedVariant?.values ?? item.variants[0]?.values ?? [];
 
   const handleAxisChange = (axisIndex: number, newValue: string) => {
@@ -169,12 +173,15 @@ export function ItemSheetVariants({
                     key={v.name}
                     value={v.name}
                     disabled={isDisabled ? true : undefined}
-                    className={`h-9 rounded-md px-3 text-xs font-medium ${
+                    className={`h-9 rounded-md px-3 text-xs font-medium gap-1 ${
                       isDisabled ? 'line-through opacity-40' : ''
                     }`}
-                    title={isDisabled ? 'Not available' : v.name}
+                    title={isDisabled ? words.menu.itemSheet.notAvailable : v.name}
                   >
-                    {v.name}
+                    <span>{v.name}</span>
+                    {v.priceDelta > 0 && (
+                      <span className="text-muted-foreground">+{formatPeso(v.priceDelta)}</span>
+                    )}
                   </ToggleGroupItem>
                 );
               })}
