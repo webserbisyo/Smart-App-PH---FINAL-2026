@@ -4,6 +4,7 @@ import { UserIcon } from 'lucide-react';
 import { vocab, words } from '@smartapp/core';
 import type { NavItem } from '@smartapp/ui/lib/nav';
 import { env } from './env.js';
+import { useOpenOrders } from '@smartapp/data';
 import { CATALOG_ICONS, FOOTER_ICONS, NAV, type NavPath } from './nav.js';
 import { useShop } from './shop.js';
 
@@ -34,10 +35,13 @@ export function useNavItems({ onShare }: { onShare: () => void }): NavItems {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const shop = useShop();
   const shopVocab = vocab(shop.kind);
+  const { data: openOrders } = useOpenOrders(shop.slug);
+  const openCount = openOrders?.length ?? 0;
 
   const all = NAV.map((def): NavItem & { placement: string } => {
     const icon = def.icon === 'catalog' ? CATALOG_ICONS[shopVocab.catalogIcon] : def.icon;
     const label = def.words === 'catalog' ? words.nav.catalog(shop.kind) : words.nav[def.words];
+    const count = def.id === 'orders' && openCount > 0 ? openCount : undefined;
     return {
       id: def.id,
       label,
@@ -45,6 +49,7 @@ export function useNavItems({ onShare }: { onShare: () => void }): NavItems {
       link: navLink(def.path),
       active: isActivePath(pathname, def.path),
       placement: def.placement,
+      count,
     };
   });
 

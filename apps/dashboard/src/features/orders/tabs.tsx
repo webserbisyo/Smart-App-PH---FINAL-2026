@@ -3,34 +3,68 @@ import { z } from 'zod';
 import { words } from '@smartapp/core';
 import type { NavItem } from '@smartapp/ui/lib/nav';
 
-export const ORDER_VIEWS = ['board', 'list'] as const;
-export const OrdersSearchSchema = z.object({
-  view: z.enum(ORDER_VIEWS).optional().catch(undefined),
-});
+export const ORDER_VIEWS = ['now', 'scheduled', 'history'] as const;
+export type OrderView = (typeof ORDER_VIEWS)[number];
 
-// Board and List are two views of /orders (?view=list).
+export const ORDER_TYPES = ['all', 'walk_in', 'pickup', 'delivery'] as const;
+export type OrderTypeFilter = (typeof ORDER_TYPES)[number];
+
+export const ORDER_STEPS = ['starting_soon', 'new', 'preparing', 'ready', 'out', 'done'] as const;
+export type OrderStepFilter = (typeof ORDER_STEPS)[number];
+
+export const OrdersSearchSchema = z.object({
+  view: z.enum(ORDER_VIEWS).optional().catch('now'),
+  type: z.enum(ORDER_TYPES).optional().catch('all'),
+  step: z.enum(ORDER_STEPS).optional().catch(undefined),
+  q: z.string().optional().catch(undefined),
+});
+export type OrdersSearch = z.infer<typeof OrdersSearchSchema>;
+
 export function useOrdersTabs(): NavItem[] {
-  const { view } = useSearch({ strict: false });
+  const search = useSearch({ strict: false }) as OrdersSearch;
+  const currentView = search.view ?? 'now';
+  const type = search.type ?? 'all';
+  const step = search.step;
+
   return [
     {
-      id: 'board',
-      label: words.screens.orders.tabBoard,
-      icon: null,
-      link: <Link to="/orders" search={{}} activeOptions={{ exact: true, includeSearch: true }} />,
-      active: view !== 'list',
-    },
-    {
-      id: 'list',
-      label: words.screens.orders.tabList,
+      id: 'now',
+      label: words.screens.orders.tabNow,
       icon: null,
       link: (
         <Link
           to="/orders"
-          search={{ view: 'list' }}
+          search={{ view: 'now', type, step }}
           activeOptions={{ exact: true, includeSearch: true }}
         />
       ),
-      active: view === 'list',
+      active: currentView === 'now',
+    },
+    {
+      id: 'scheduled',
+      label: words.screens.orders.tabScheduled,
+      icon: null,
+      link: (
+        <Link
+          to="/orders"
+          search={{ view: 'scheduled', type }}
+          activeOptions={{ exact: true, includeSearch: true }}
+        />
+      ),
+      active: currentView === 'scheduled',
+    },
+    {
+      id: 'history',
+      label: words.screens.orders.tabHistory,
+      icon: null,
+      link: (
+        <Link
+          to="/orders"
+          search={{ view: 'history', type }}
+          activeOptions={{ exact: true, includeSearch: true }}
+        />
+      ),
+      active: currentView === 'history',
     },
   ];
 }
