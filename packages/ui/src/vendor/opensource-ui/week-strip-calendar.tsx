@@ -42,7 +42,7 @@ export type WeekStripCalendarProps = Readonly<
     onSelect?: (date: Date) => void;
     dayStates?: Record<string, WeekStripDayState>;
     getDayState?: (date: Date) => WeekStripDayState | undefined;
-  } & ComponentPropsWithoutRef<'div'>
+  } & Omit<ComponentPropsWithoutRef<'div'>, 'onSelect'>
 >;
 
 // Week strip — swipe weeks with arrows, tap a day to select it.

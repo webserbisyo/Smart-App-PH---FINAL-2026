@@ -13,7 +13,13 @@
   "include": ["src/components/**/*"],
   "exclude": [
     "src/components/reui/emoji-picker.tsx",
-    "src/components/reui/data-grid/data-grid-cell-selection.tsx"
+    "src/components/reui/data-grid/data-grid-cell-selection.tsx",
+    "src/components/reui/kanban.tsx",
+    "src/components/reui/event-calendar/**/*"
   ],
-  "references": [{ "path": "./tsconfig.lib.json" }]
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    }
+  ]
 }
