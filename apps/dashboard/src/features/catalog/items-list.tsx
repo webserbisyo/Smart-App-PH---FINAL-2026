@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
   PlusIcon,
   ArchiveIcon,
@@ -55,11 +55,12 @@ import { SamplesBanner } from './samples-banner.js';
 import { FloatingAddButton } from './floating-add-button.js';
 import { isItemSoldOut, useItemActions } from './components/item-actions.js';
 import { cn } from 'cn';
+import { CATALOG_FILTERS, type CatalogFilter } from './tabs.js';
 
-type FilterTab = 'all' | 'sold_out' | 'hidden' | 'archived';
+type FilterTab = CatalogFilter;
 // Table view is hidden for launch (decision T41); it comes back for big menus.
 type CatalogView = 'list' | 'grid';
-const FILTERS: readonly FilterTab[] = ['all', 'sold_out', 'hidden', 'archived'];
+const FILTERS: readonly FilterTab[] = CATALOG_FILTERS;
 
 const LOCAL_STORAGE_VIEW_KEY = 'smartapp:catalog:view';
 
@@ -121,8 +122,18 @@ export function ItemsList() {
   const [view, setView] = React.useState<CatalogView>(getDefaultView);
   const [selecting, setSelecting] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
-  const [search, setSearch] = React.useState('');
-  const [filter, setFilter] = React.useState<FilterTab>('all');
+  // Search and filter live in the address too, so Back from an item restores them (decision T47).
+  const listSearch = useSearch({ strict: false });
+  const [search, setSearch] = React.useState(listSearch.q ?? '');
+  const [filter, setFilter] = React.useState<FilterTab>(listSearch.filter ?? 'all');
+  const urlQ = listSearch.q;
+  const urlFilter = listSearch.filter;
+  React.useEffect(() => {
+    const q = search.trim() ? search : undefined;
+    const f = filter === 'all' ? undefined : filter;
+    if (q === urlQ && f === urlFilter) return;
+    void navigate({ to: '/catalog', search: { q, filter: f }, replace: true });
+  }, [search, filter, urlQ, urlFilter, navigate]);
   const [isReordering, setIsReordering] = React.useState(false);
   const [announcement, setAnnouncement] = React.useState('');
 

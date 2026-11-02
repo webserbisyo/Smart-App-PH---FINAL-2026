@@ -13,6 +13,8 @@ export interface PesoInputProps {
   disabled?: boolean | undefined;
   // Shown while empty, e.g. the automatic price behind a special price field.
   placeholder?: string | undefined;
+  // The phone keyboard's Enter key label, e.g. "next" inside the item editor.
+  enterKeyHint?: 'next' | 'done' | undefined;
 }
 
 // A price field in pesos that hands back integer centavos; half-typed text ("12.") stays on screen.
@@ -23,6 +25,7 @@ export function PesoInput({
   className,
   disabled,
   placeholder,
+  enterKeyHint,
   'aria-label': ariaLabel,
 }: PesoInputProps) {
   const [text, setText] = React.useState(() => pesoText(value));
@@ -41,6 +44,7 @@ export function PesoInput({
         id={id}
         inputMode="decimal"
         autoComplete="off"
+        enterKeyHint={enterKeyHint}
         aria-label={ariaLabel}
         disabled={disabled}
         placeholder={placeholder ?? catalogWords.pricePlaceholder}

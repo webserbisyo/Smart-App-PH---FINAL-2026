@@ -71,7 +71,7 @@ export function CatalogCategoriesScreen() {
   };
 
   // One icon style for the whole shop (decision T42): changing it restyles every category icon.
-  async function handleStyleChange(style: CategoryIconStyle) {
+  async function handleStyleChange(style: CategoryIconStyle, undoTo?: CategoryIconStyle) {
     try {
       await Promise.all(
         categories.flatMap((cat) =>
@@ -86,7 +86,14 @@ export function CatalogCategoriesScreen() {
             : [],
         ),
       );
-      notify({ title: catalogWords.iconStyleSaved, tone: 'success' });
+      // Restyling every icon is reversible, so it gets Undo (ux.md s8); the Undo itself does not.
+      notify({
+        title: catalogWords.iconStyleSaved,
+        tone: 'success',
+        ...(undoTo
+          ? { action: { label: catalogWords.undo, onClick: () => void handleStyleChange(undoTo) } }
+          : {}),
+      });
     } catch (err: unknown) {
       notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
     }
@@ -96,6 +103,17 @@ export function CatalogCategoriesScreen() {
   const [selectedCat, setSelectedCat] = React.useState<Category | null>(null);
   const [isReordering, setIsReordering] = React.useState(false);
   const [announcement, setAnnouncement] = React.useState('');
+  // The category just added or edited is outlined for a moment, like on Add-ons and Variants.
+  const [highlightId, setHighlightId] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!highlightId) return;
+    document
+      .getElementById(`category-${highlightId}`)
+      ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const timer = window.setTimeout(() => setHighlightId(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [highlightId]);
 
   // Item counts per category
   const itemCounts = React.useMemo(() => {
@@ -195,7 +213,7 @@ export function CatalogCategoriesScreen() {
                   value={iconStyle}
                   onValueChange={(value) => {
                     const next = CATEGORY_ICON_STYLES.find((st) => st === value);
-                    if (next && next !== iconStyle) void handleStyleChange(next);
+                    if (next && next !== iconStyle) void handleStyleChange(next, iconStyle);
                   }}
                 >
                   <SelectTrigger
@@ -344,6 +362,7 @@ export function CatalogCategoriesScreen() {
               return (
                 <div
                   key={cat.id}
+                  id={`category-${cat.id}`}
                   role="button"
                   tabIndex={0}
                   onClick={() => handleOpenEdit(cat)}
@@ -356,6 +375,7 @@ export function CatalogCategoriesScreen() {
                   className={cn(
                     'group flex items-center justify-between rounded-xl border border-border/80 bg-card p-3 shadow-xs',
                     'cursor-pointer text-left transition-all duration-180 select-none hover:border-primary/40 hover:shadow-sm',
+                    highlightId === cat.id && 'border-primary ring-2 ring-primary/30',
                   )}
                 >
                   <div className="flex min-w-0 items-center gap-3.5">
@@ -389,7 +409,12 @@ export function CatalogCategoriesScreen() {
         )}
       </div>
 
-      <CategorySheet open={sheetOpen} onOpenChange={setSheetOpen} category={selectedCat} />
+      <CategorySheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        category={selectedCat}
+        onSaved={(saved) => setHighlightId(saved.id)}
+      />
 
       {categories.length > 0 && !isReordering ? (
         <FloatingAddButton label={catalogWords.addCategory} onClick={handleOpenAdd} />

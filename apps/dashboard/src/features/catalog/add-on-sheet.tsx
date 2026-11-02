@@ -72,6 +72,8 @@ export interface AddOnSheetProps {
   group?: OwnerOptionGroup | null | undefined;
   // Called with the saved group, e.g. so the item editor can tick a group it just made.
   onSaved?: ((group: OwnerOptionGroup) => void) | undefined;
+  // Opened from inside the item editor, where the result shows in place: no success toast (ux.md s8).
+  quiet?: boolean | undefined;
 }
 
 const RULE_PRESETS = ['pick_1_req', 'pick_1_opt', 'pick_any', 'custom'] as const;
@@ -106,7 +108,7 @@ function blankOption(): OptionDraft {
 }
 
 // Add-on group form: a dialog on tablet and desktop, a bottom drawer on phone.
-export function AddOnSheet({ open, onOpenChange, group, onSaved }: AddOnSheetProps) {
+export function AddOnSheet({ open, onOpenChange, group, onSaved, quiet = false }: AddOnSheetProps) {
   return (
     <ResponsiveDialog
       open={open}
@@ -120,6 +122,7 @@ export function AddOnSheet({ open, onOpenChange, group, onSaved }: AddOnSheetPro
           key={group ? group.id : 'new'}
           group={group}
           onSaved={onSaved}
+          quiet={quiet}
           onClose={() => onOpenChange(false)}
         />
       ) : null}
@@ -130,10 +133,12 @@ export function AddOnSheet({ open, onOpenChange, group, onSaved }: AddOnSheetPro
 function AddOnForm({
   group,
   onSaved,
+  quiet,
   onClose,
 }: {
   group?: OwnerOptionGroup | null | undefined;
   onSaved?: ((group: OwnerOptionGroup) => void) | undefined;
+  quiet: boolean;
   onClose: () => void;
 }) {
   const [name, setName] = React.useState(group?.name ?? '');
@@ -244,7 +249,7 @@ function AddOnForm({
         await syncUsedOn(result);
         return result;
       });
-      notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
+      if (!quiet) notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
       onSaved?.(saved);
       onClose();
     } catch (err: unknown) {

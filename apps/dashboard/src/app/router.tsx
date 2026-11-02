@@ -14,7 +14,7 @@ import { CatalogItemScreen } from '../features/catalog/screens/item-detail.js';
 import { CatalogItemsScreen } from '../features/catalog/screens/items.js';
 import { CatalogVariantsScreen } from '../features/catalog/screens/variants.js';
 import { NewCatalogItemScreen } from '../features/catalog/screens/new-item.js';
-import { NewItemSearchSchema } from '../features/catalog/tabs.js';
+import { CatalogSearchSchema, NewItemSearchSchema } from '../features/catalog/tabs.js';
 import { EditorScreen } from '../features/editor/screens/editor.js';
 import { HomeScreen } from '../features/home/screens/home.js';
 import { InsightsScreen } from '../features/insights/screens/insights.js';
@@ -37,14 +37,15 @@ import { SettingsIndexScreen } from '../features/settings/screens/settings-index
 import { SettingsLayout } from '../features/settings/screens/settings-layout.js';
 import { ShopSettingsScreen } from '../features/settings/screens/shop.js';
 import { setMockOwnerSlug } from '@smartapp/data';
+import { rememberPreviousPath } from './back.js';
 import { requireAuth, requireGuest, signOut } from './guards.js';
 import type { PageMeta } from './page-meta.js';
 import { AppShell } from './shell/app-shell.js';
 import { resolveShop } from './shop.js';
 
 const s = words.screens;
-const page = (title: PageMeta['title'], parent?: PageMeta['parent']) => ({
-  page: { title, parent },
+const page = (title: PageMeta['title'], parent?: PageMeta['parent'], hideDock?: boolean) => ({
+  page: { title, parent, hideDock },
 });
 const orders = { to: '/orders', title: () => s.orders.title } as const;
 const catalog = { to: '/catalog', title: s.catalog.title } as const;
@@ -129,7 +130,13 @@ const orderRoute = shellPage(
   page(() => s.orders.detailTitle, orders),
 );
 
-const catalogRoute = shellPage('/catalog', CatalogItemsScreen, page(s.catalog.title));
+const catalogRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/catalog',
+  validateSearch: CatalogSearchSchema,
+  component: CatalogItemsScreen,
+  staticData: page(s.catalog.title),
+});
 const catalogCategoriesRoute = shellPage(
   '/catalog/categories',
   CatalogCategoriesScreen,
@@ -150,12 +157,12 @@ const catalogNewRoute = createRoute({
   path: '/catalog/new',
   validateSearch: NewItemSearchSchema,
   component: NewCatalogItemScreen,
-  staticData: page(s.catalog.newTitle, catalog),
+  staticData: page(s.catalog.newTitle, catalog, true),
 });
 const catalogItemRoute = shellPage(
   '/catalog/$itemId',
   CatalogItemScreen,
-  page(s.catalog.itemTitle, catalog),
+  page(s.catalog.itemTitle, catalog, true),
 );
 
 const membersRoute = shellPage(
@@ -264,6 +271,15 @@ const routeTree =
 export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
+  // Back to a list lands where the owner was, not at the top (decision T47).
+  scrollRestoration: true,
+});
+
+// Back on a sub-page needs to know where the owner came from (app/back.ts).
+router.subscribe('onResolved', ({ fromLocation, toLocation }) => {
+  if (fromLocation && fromLocation.pathname !== toLocation.pathname) {
+    rememberPreviousPath(fromLocation.pathname);
+  }
 });
 
 declare module '@tanstack/react-router' {

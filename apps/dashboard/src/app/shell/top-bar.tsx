@@ -16,6 +16,7 @@ import { Separator } from '@smartapp/ui/components/separator';
 import { SidebarTrigger } from '@smartapp/ui/components/sidebar';
 import type { FormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import type { usePageMeta } from '../page-meta.js';
+import { useBackToParent } from '../back.js';
 import { AccountMenu } from './account-menu.js';
 
 export function TopBar({
@@ -29,6 +30,7 @@ export function TopBar({
   claims: UserClaims;
   onOpenMenu: () => void;
 }) {
+  const onBack = useBackToParent(page.parent?.to);
   if (formFactor === 'phone') {
     return (
       <header className="sticky top-0 z-20 flex min-h-14 items-center gap-1 border-b border-border frost px-2 pt-safe">
@@ -39,7 +41,7 @@ export function TopBar({
             className="size-11"
             aria-label={words.shell.back}
             nativeButton={false}
-            render={<Link to={page.parent.to} />}
+            render={<Link to={page.parent.to} onClick={onBack} />}
           >
             <ArrowLeftIcon />
           </Button>
@@ -78,7 +80,9 @@ export function TopBar({
           {crumbs.map((crumb) => (
             <Fragment key={crumb.to}>
               <BreadcrumbItem>
-                <BreadcrumbLink render={<Link to={crumb.to} />}>{crumb.title}</BreadcrumbLink>
+                <BreadcrumbLink render={<Link to={crumb.to} onClick={onBack} />}>
+                  {crumb.title}
+                </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
             </Fragment>

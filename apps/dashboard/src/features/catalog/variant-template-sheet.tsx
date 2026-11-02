@@ -63,6 +63,8 @@ export interface VariantTemplateSheetProps {
   initial?: { name: string; options: readonly string[] } | undefined;
   onSaved?: ((saved: VariantSaved) => void) | undefined;
   onDeleted?: ((template: OwnerVariantTemplate) => void) | undefined;
+  // Opened from inside the item editor, where the result shows in place: no success toast (ux.md s8).
+  quiet?: boolean | undefined;
 }
 
 interface DraftOption {
@@ -88,6 +90,7 @@ export function VariantTemplateSheet({
   initial,
   onSaved,
   onDeleted,
+  quiet = false,
 }: VariantTemplateSheetProps) {
   const dirty = React.useRef(false);
   const [leaveOpen, setLeaveOpen] = React.useState(false);
@@ -115,6 +118,7 @@ export function VariantTemplateSheet({
             key={template?.id ?? 'new'}
             template={template}
             initial={initial}
+            quiet={quiet}
             onDirty={(value) => {
               dirty.current = value;
             }}
@@ -162,6 +166,7 @@ export function VariantTemplateSheet({
 function VariantForm({
   template,
   initial,
+  quiet,
   onDirty,
   onSaved,
   onDeleted,
@@ -169,6 +174,7 @@ function VariantForm({
 }: {
   template: OwnerVariantTemplate | null;
   initial: { name: string; options: readonly string[] } | undefined;
+  quiet: boolean;
   onDirty: (dirty: boolean) => void;
   onSaved: (saved: VariantSaved) => void;
   onDeleted: (template: OwnerVariantTemplate) => void;
@@ -302,13 +308,16 @@ function VariantForm({
       );
       const saved = result.template;
       const updated = result.updatedItemIds.length;
-      notify({
-        title:
-          applyToItems && updated > 0
-            ? catalogWords.variantSavedUpdated(saved.name, updated)
-            : catalogWords.savedToast(saved.name),
-        tone: 'success',
-      });
+      // Inside the item editor the choice card shows the result; updating other items is still news.
+      if (!quiet || (applyToItems && updated > 0)) {
+        notify({
+          title:
+            applyToItems && updated > 0
+              ? catalogWords.variantSavedUpdated(saved.name, updated)
+              : catalogWords.savedToast(saved.name),
+          tone: 'success',
+        });
+      }
       const firstSoldOut = result.soldOutItemIds[0];
       if (firstSoldOut && changes) {
         notify({

@@ -155,15 +155,21 @@ function toDraft(form: FormState, categoryId: string): ItemDraft {
 }
 
 export function ItemEditor({ initialItem, copyFrom, initialName }: ItemEditorProps) {
-  // Discard on an existing item starts the form again from what is saved.
+  // Discard on an existing item starts the form again from what is saved; its Undo starts it again
+  // from the discarded changes.
   const [resetKey, setResetKey] = React.useState(0);
+  const [restoreForm, setRestoreForm] = React.useState<FormState | null>(null);
   return (
     <ItemEditorForm
       key={resetKey}
       initialItem={initialItem ?? null}
       copyFrom={copyFrom ?? null}
       initialName={initialName}
-      onReset={() => setResetKey((k) => k + 1)}
+      restoreForm={restoreForm}
+      onReset={(snapshot) => {
+        setRestoreForm(snapshot);
+        setResetKey((k) => k + 1);
+      }}
     />
   );
 }
@@ -172,12 +178,14 @@ function ItemEditorForm({
   initialItem,
   copyFrom,
   initialName,
+  restoreForm,
   onReset,
 }: {
   initialItem: OwnerItem | null;
   copyFrom: OwnerItem | null;
   initialName: string | undefined;
-  onReset: () => void;
+  restoreForm: FormState | null;
+  onReset: (snapshot: FormState | null) => void;
 }) {
   const navigate = useNavigate();
   const { kind } = useShop();
@@ -193,9 +201,12 @@ function ItemEditorForm({
   const archiveAction = useAsyncAction();
 
   const isCopy = !initialItem && copyFrom !== null;
-  const [initial] = React.useState(() => initialForm(initialItem ?? copyFrom, isCopy));
-  const [form, setForm] = React.useState<FormState>(() =>
-    !initialItem && !copyFrom && initialName ? { ...initial, name: initialName } : initial,
+  // What the form compares against to know it has unsaved changes; a save makes the saved item the new start.
+  const [initial, setInitial] = React.useState(() => initialForm(initialItem ?? copyFrom, isCopy));
+  const [form, setForm] = React.useState<FormState>(
+    () =>
+      restoreForm ??
+      (!initialItem && !copyFrom && initialName ? { ...initial, name: initialName } : initial),
   );
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = React.useState<FieldErrors>({});
@@ -227,11 +238,6 @@ function ItemEditorForm({
     enableBeforeUnload: () => isDirty && !leaving.current,
     withResolver: true,
   });
-
-  const leaveTo = (to: '/catalog') => {
-    leaving.current = true;
-    void navigate({ to });
-  };
 
   const showError = (message: string) => {
     setErrorMsg(message);
@@ -272,12 +278,29 @@ function ItemEditorForm({
       return;
     }
     try {
-      leaving.current = true;
+      setErrorMsg(null);
       const saved = await saveAction.run(() =>
         saveItem.mutateAsync(initialItem ? { id: initialItem.id, draft } : { draft }),
       );
-      notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
-      void navigate({ to: '/catalog' });
+      if (initialItem) {
+        // Save stays on the item (decision T47): the button shows Saved and the form starts again
+        // from what was saved, so the Unsaved bar goes away and the owner keeps editing.
+        const next = initialForm(saved, false);
+        setInitial(next);
+        setForm(next);
+        return;
+      }
+      // A new item becomes that item's page, in place of the New page, so Back still goes to the list.
+      notify({
+        title: catalogWords.addedToast(saved.name),
+        tone: 'success',
+        action: {
+          label: catalogWords.addAnother,
+          onClick: () => void navigate({ to: '/catalog/new' }),
+        },
+      });
+      leaving.current = true;
+      void navigate({ to: '/catalog/$itemId', params: { itemId: saved.id }, replace: true });
     } catch (err: unknown) {
       leaving.current = false;
       showError(errorWords(errorCodeOf(err)));
@@ -286,10 +309,35 @@ function ItemEditorForm({
 
   const handleDiscard = () => {
     if (initialItem) {
-      onReset();
+      // Discard happens at once, with Undo (ux.md s8: reversible actions never ask).
+      const snapshot = form;
+      onReset(null);
+      notify({
+        title: catalogWords.changesDiscarded,
+        tone: 'success',
+        action: { label: catalogWords.undo, onClick: () => onReset(snapshot) },
+      });
       return;
     }
-    leaveTo('/catalog');
+    // A new item with anything typed asks first (the leave dialog); an untouched one just closes.
+    void navigate({ to: '/catalog' });
+  };
+
+  // Enter in a one-line field moves to the next field instead of saving: on a phone the Go key
+  // would otherwise publish a half-made item. Only the Save button saves.
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== 'Enter' || e.defaultPrevented || e.nativeEvent.isComposing) return;
+    const target = e.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    e.preventDefault();
+    const fields = Array.from(
+      e.currentTarget.querySelectorAll<HTMLElement>(
+        'input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]):not([disabled]), textarea:not([disabled])',
+      ),
+    );
+    const next = fields[fields.indexOf(target) + 1];
+    if (next) next.focus();
+    else target.blur();
   };
 
   const handleDelete = async () => {
@@ -411,6 +459,7 @@ function ItemEditorForm({
           id="item-form"
           noValidate
           onSubmit={(e) => void handleSave(e)}
+          onKeyDown={handleFormKeyDown}
           className="w-full min-w-0 flex-1 space-y-4"
         >
           <section className={card}>
@@ -443,6 +492,7 @@ function ItemEditorForm({
                 aria-invalid={fieldErrors.name ? true : undefined}
                 aria-describedby={fieldErrors.name ? 'item-name-error' : undefined}
                 placeholder={catalogWords.namePlaceholderFor(kind)}
+                enterKeyHint="next"
                 className="h-11 md:h-9"
                 onChange={(e) => update({ name: e.target.value })}
               />
@@ -469,6 +519,7 @@ function ItemEditorForm({
               <PesoInput
                 id="item-price"
                 className="max-w-48"
+                enterKeyHint="next"
                 value={form.basePrice}
                 onChange={(basePrice) =>
                   update({ basePrice, choices: withVersions(form.choices, basePrice) })
@@ -651,25 +702,28 @@ function ItemEditorForm({
         </aside>
       </div>
 
-      {isDirty || !initialItem ? (
-        <div className="pointer-events-none sticky bottom-4 z-30 mt-6 flex justify-center shell-phone:above-dock">
+      {isDirty || !initialItem || saveAction.status !== 'idle' ? (
+        // Item pages have no phone dock (hideDock), so the bar sits on the bottom edge above the safe area.
+        <div className="pointer-events-none sticky bottom-4 z-30 mt-6 flex justify-center pb-safe">
           <div
             role="region"
             aria-label={catalogWords.unsavedPill}
-            className="animate-in fade-in-0 slide-in-from-bottom-4 pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-card p-1.5 pl-4 elevation-md duration-200 motion-reduce:animate-none"
+            className="animate-in fade-in-0 slide-in-from-bottom-4 pointer-events-auto flex w-full items-center justify-end gap-1 rounded-full border border-border bg-card p-1.5 pl-3 elevation-md duration-200 motion-reduce:animate-none sm:w-auto sm:pl-4"
           >
             {isDirty && saveAction.status === 'idle' ? (
-              <span className="mr-1 flex items-center gap-2 text-sm font-medium text-foreground">
-                <span aria-hidden="true" className="size-2 rounded-full bg-warning" />
-                <span className={cn(!initialItem && 'sr-only sm:not-sr-only')}>
-                  {catalogWords.unsavedPill}
+              <span className="mr-auto flex min-w-0 items-center gap-2 text-sm font-medium text-foreground sm:mr-1">
+                <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-warning" />
+                {/* Phones show the short word so Discard and Save keep their full size. */}
+                <span className={cn('truncate', !initialItem && 'sr-only sm:not-sr-only')}>
+                  <span className="sm:hidden">{catalogWords.unsavedShort}</span>
+                  <span className="hidden sm:inline">{catalogWords.unsavedPill}</span>
                 </span>
               </span>
             ) : null}
             <Button
               type="button"
               variant="ghost"
-              className="h-11 rounded-full px-4 md:h-10"
+              className="h-11 rounded-full px-3 sm:px-4 md:h-10"
               disabled={saveAction.busy}
               onClick={handleDiscard}
             >
@@ -682,7 +736,7 @@ function ItemEditorForm({
               busyLabel={initialItem ? actionWords.saving : actionWords.adding}
               doneLabel={initialItem ? actionWords.saved : actionWords.added}
               disabled={!isOnline}
-              className="h-11 min-w-28 rounded-full px-5 font-semibold md:h-10"
+              className="h-11 min-w-24 rounded-full px-4 font-semibold sm:min-w-28 sm:px-5 md:h-10"
             >
               {initialItem ? catalogWords.save : catalogWords.addItem(kind)}
             </AsyncButton>
@@ -722,6 +776,7 @@ function ItemEditorForm({
         open={addOnSheetOpen}
         onOpenChange={setAddOnSheetOpen}
         group={null}
+        quiet
         onSaved={(group) =>
           setForm((prev) => ({ ...prev, optionGroupIds: [...prev.optionGroupIds, group.id] }))
         }
@@ -730,6 +785,7 @@ function ItemEditorForm({
         open={categorySheetOpen}
         onOpenChange={setCategorySheetOpen}
         category={null}
+        quiet
         onSaved={(category) => update({ categoryId: category.id })}
       />
 
