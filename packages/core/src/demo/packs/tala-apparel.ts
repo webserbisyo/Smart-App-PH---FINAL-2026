@@ -1,5 +1,5 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
-import { ALL_SECTIONS_ON, category, DAILY, days, group, makeItems, peso } from './build.js';
+import { ALL_SECTIONS_ON, category, DAILY, days, group, makeItems, peso, templates } from './build.js';
 
 const P = 'ta';
 
@@ -19,7 +19,25 @@ const optionGroups = [
   group(P, 'hem', 'Hemming', 0, 1, [{ name: 'Hem to my length, write it in the note' }]),
 ];
 
-const SIZES = { name: 'Size', values: ['S', 'M', 'L', 'XL'] } as const;
+const variantTemplates = templates(P, 'retail', {
+  edits: {
+    colour: {
+      options: [
+        'Black',
+        'White',
+        'Sand',
+        'Natural',
+        'Indigo',
+        'Cream',
+        'Terracotta',
+        'Olive',
+      ],
+    },
+  },
+  extra: [{ key: 'length', name: 'Length', options: ['Regular', 'Petite'] }],
+});
+
+const SIZES = { name: 'Size', template: 'size', values: ['S', 'M', 'L', 'XL'] } as const;
 
 const items = makeItems('tala-apparel', P, [
   {
@@ -31,6 +49,7 @@ const items = makeItems('tala-apparel', P, [
       SIZES,
       {
         name: 'Colour',
+        template: 'colour',
         values: [
           { name: 'Black', photo: 'tala-basic-tee-black' },
           { name: 'White', photo: 'tala-basic-tee-white' },
@@ -55,6 +74,7 @@ const items = makeItems('tala-apparel', P, [
       SIZES,
       {
         name: 'Colour',
+        template: 'colour',
         values: [
           { name: 'Natural', photo: 'linen-button-down-natural' },
           { name: 'Indigo', photo: 'linen-button-down-indigo' },
@@ -71,7 +91,7 @@ const items = makeItems('tala-apparel', P, [
     key: 'cropped-knit-top',
     category: 'tops',
     name: 'Cropped Knit Top',
-    axes: [SIZES, { name: 'Colour', values: ['Cream', 'Terracotta'] }],
+    axes: [SIZES, { name: 'Colour', template: 'colour', values: ['Cream', 'Terracotta'] }],
     price: 599,
     groups: ['gift'],
     photos: ['cropped-knit-top'],
@@ -90,10 +110,18 @@ const items = makeItems('tala-apparel', P, [
     key: 'wide-leg-trousers',
     category: 'bottoms',
     name: 'Wide-leg Trousers',
-    axes: [SIZES, { name: 'Colour', values: ['Black', 'Olive'] }],
+    axes: [
+      SIZES,
+      { name: 'Colour', template: 'colour', values: ['Black', 'Olive'] },
+      { name: 'Length', template: 'length', values: ['Regular', 'Petite'] },
+    ],
     price: 1099,
     groups: ['hem', 'gift'],
     photos: ['wide-leg-trousers'],
+    availability: (values) =>
+      values[0] === 'L' && values[1] === 'Olive' && values[2] === 'Petite'
+        ? 'sold_out'
+        : 'available',
   },
   {
     key: 'pleated-midi-skirt',
@@ -299,5 +327,5 @@ export const TALA_APPAREL_PACK: ShopPack = {
     },
     membersCount: 87,
   },
-  catalog: { categories, items, optionGroups },
+  catalog: { categories, items, optionGroups, variantTemplates },
 };

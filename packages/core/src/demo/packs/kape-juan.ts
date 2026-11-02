@@ -1,5 +1,5 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
-import { ALL_SECTIONS_ON, category, DAILY, days, group, makeItems, peso } from './build.js';
+import { ALL_SECTIONS_ON, category, DAILY, days, group, makeItems, peso, templates } from './build.js';
 
 const P = 'kj';
 
@@ -31,14 +31,21 @@ const optionGroups = [
   group(P, 'warm', 'Warm it up', 0, 1, [{ name: 'Warm it up' }]),
 ];
 
-const SIZE_TEMP = [
-  { name: 'Size', values: ['12 oz', '16 oz'] },
-  { name: 'Temp', values: ['Hot', 'Iced'] },
+const variantTemplates = templates(P, 'food');
+
+const CUP_TEMP = [
+  {
+    name: 'Cup size',
+    template: 'cup-size',
+    values: ['12 oz', { name: '16 oz', price: 20 }],
+  },
+  {
+    name: 'Temperature',
+    template: 'temperature',
+    values: ['Hot', 'Iced'],
+  },
 ] as const;
-const bySize =
-  (small: number, large: number) =>
-  (values: readonly string[]): number =>
-    values[0] === '16 oz' ? large : small;
+
 const ESPRESSO_GROUPS = ['sugar', 'milk', 'shot', 'ice'];
 
 const items = makeItems('kape-juan', P, [
@@ -46,8 +53,8 @@ const items = makeItems('kape-juan', P, [
     key: 'americano',
     category: 'espresso',
     name: 'Americano',
-    axes: SIZE_TEMP,
-    price: bySize(110, 130),
+    axes: CUP_TEMP,
+    price: 110,
     groups: ESPRESSO_GROUPS,
     pairs: ['banana-bread', 'ensaymada'],
     photos: ['americano'],
@@ -57,8 +64,8 @@ const items = makeItems('kape-juan', P, [
     key: 'cafe-latte',
     category: 'espresso',
     name: 'Café Latte',
-    axes: SIZE_TEMP,
-    price: bySize(140, 160),
+    axes: CUP_TEMP,
+    price: 140,
     groups: ESPRESSO_GROUPS,
     pairs: ['ensaymada'],
     photos: ['cafe-latte'],
@@ -68,8 +75,8 @@ const items = makeItems('kape-juan', P, [
     category: 'espresso',
     name: 'Spanish Latte',
     description: 'Espresso, milk and a little condensed milk.',
-    axes: SIZE_TEMP,
-    price: bySize(160, 180),
+    axes: CUP_TEMP,
+    price: 160,
     groups: ESPRESSO_GROUPS,
     pairs: ['ensaymada', 'banana-bread'],
     photos: ['spanish-latte'],
@@ -79,8 +86,8 @@ const items = makeItems('kape-juan', P, [
     key: 'caramel-macchiato',
     category: 'espresso',
     name: 'Caramel Macchiato',
-    axes: SIZE_TEMP,
-    price: bySize(170, 190),
+    axes: CUP_TEMP,
+    price: 170,
     groups: ESPRESSO_GROUPS,
     photos: ['caramel-macchiato'],
   },
@@ -319,5 +326,5 @@ export const KAPE_JUAN_PACK: ShopPack = {
     },
     membersCount: 215,
   },
-  catalog: { categories, items, optionGroups },
+  catalog: { categories, items, optionGroups, variantTemplates },
 };

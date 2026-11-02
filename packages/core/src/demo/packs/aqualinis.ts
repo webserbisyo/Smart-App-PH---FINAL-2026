@@ -1,5 +1,5 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
-import { ALL_SECTIONS_ON, category, days, group, makeItems, peso } from './build.js';
+import { ALL_SECTIONS_ON, category, days, group, makeItems, peso, templates } from './build.js';
 
 const P = 'aq';
 
@@ -17,7 +17,12 @@ const optionGroups = [
   ]),
 ];
 
-const WATER_PRICE: Record<string, number> = { Purified: 30, Mineral: 40, Alkaline: 45 };
+const variantTemplates = templates(P, 'retail', {
+  extra: [
+    { key: 'water', name: 'Water', options: ['Purified', 'Alkaline', 'Mineral'] },
+    { key: 'container', name: 'Container', options: ['Round', 'Slim with faucet'] },
+  ],
+});
 
 const items = makeItems('aqualinis', P, [
   {
@@ -28,15 +33,20 @@ const items = makeItems('aqualinis', P, [
     axes: [
       {
         name: 'Water',
+        template: 'water',
         values: [
-          { name: 'Purified', photo: 'refill-purified' },
-          { name: 'Alkaline', photo: 'refill-alkaline' },
-          { name: 'Mineral', photo: 'refill-mineral' },
+          { name: 'Purified', photo: 'refill-purified', price: 0 },
+          { name: 'Alkaline', photo: 'refill-alkaline', price: 15 },
+          { name: 'Mineral', photo: 'refill-mineral', price: 10 },
         ],
       },
-      { name: 'Container', values: ['Round', { name: 'Slim with faucet', photo: 'refill-slim' }] },
+      {
+        name: 'Container',
+        template: 'container',
+        values: ['Round', { name: 'Slim with faucet', photo: 'refill-slim', price: 0 }],
+      },
     ],
-    price: (values) => WATER_PRICE[values[0] ?? ''] ?? 0,
+    price: 30,
     groups: ['care'],
     pairs: ['family-week-pack', 'tube-ice'],
     photos: ['refill-purified', 'refill-alkaline', 'refill-mineral', 'refill-slim'],
@@ -86,17 +96,25 @@ const items = makeItems('aqualinis', P, [
     key: 'bottled-water-case',
     category: 'bottled',
     name: 'Bottled Water Case',
-    axes: [{ name: 'Size', values: ['350 mL × 24', '500 mL × 24', '1 L × 12'] }],
-    price: (values) =>
-      ({ '350 mL × 24': 160, '500 mL × 24': 180, '1 L × 12': 180 })[values[0] ?? ''] ?? 0,
+    axes: [
+      {
+        name: 'Size',
+        values: [
+          '350 mL × 24',
+          { name: '500 mL × 24', price: 20 },
+          { name: '1 L × 12', price: 20 },
+        ],
+      },
+    ],
+    price: 160,
     photos: ['bottled-water-case'],
   },
   {
     key: 'tube-ice',
     category: 'ice',
     name: 'Tube Ice',
-    axes: [{ name: 'Weight', values: ['2 kg', '5 kg'] }],
-    price: (values) => (values[0] === '5 kg' ? 110 : 50),
+    axes: [{ name: 'Weight', values: ['2 kg', { name: '5 kg', price: 60 }] }],
+    price: 50,
     photos: ['tube-ice'],
   },
 ]);
@@ -203,5 +221,5 @@ export const AQUALINIS_PACK: ShopPack = {
     },
     membersCount: 342,
   },
-  catalog: { categories, items, optionGroups },
+  catalog: { categories, items, optionGroups, variantTemplates },
 };

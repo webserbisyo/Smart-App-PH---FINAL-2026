@@ -1,7 +1,17 @@
 // Small builders so the packs read like the menu tables in docs/prompts/ref/demo-menus.md.
 // Prices are written in pesos here and stored in centavos.
 import type { Availability } from '../../schemas/enums.js';
-import type { Category, Item, OptionGroup, Variant } from '../../schemas/catalog.js';
+import type {
+  Category,
+  Item,
+  OptionGroup,
+  Variant,
+  VariantAxis,
+  VariantTemplate,
+} from '../../schemas/catalog.js';
+import { computedVariantPrice } from '../../schemas/catalog.js';
+import type { ShopKind } from '../../schemas/demo-shop.js';
+import { defaultVariantTemplates } from '../../rules/variant-templates.js';
 import type { IconKey } from '../../icons.js';
 import { DEMO_MEDIA } from '../media.js';
 import type { DemoShopSlug } from '../slugs.js';
@@ -64,7 +74,8 @@ export function category(
 
 export interface AxisSpec {
   name: string;
-  values: readonly (string | { name: string; photo: string })[];
+  values: readonly (string | { name: string; photo?: string; price?: number })[];
+  template?: string;
 }
 
 export interface ItemSpec {
@@ -72,8 +83,8 @@ export interface ItemSpec {
   category: string;
   name: string;
   description?: string | undefined;
-  // One price for every variant, or a price per combination of axis values.
-  price: number | ((values: readonly string[]) => number);
+  // Base price in pesos
+  price: number;
   axes?: readonly AxisSpec[];
   groups?: readonly string[];
   pairs?: readonly string[];
@@ -82,6 +93,52 @@ export interface ItemSpec {
   featured?: boolean;
   isNew?: boolean;
   availability?: (values: readonly string[]) => Availability;
+  special?: (values: readonly string[]) => number | null;
+}
+
+export interface CustomTemplateSpec {
+  key: string;
+  name: string;
+  options: readonly string[];
+}
+
+export function templates(
+  prefix: string,
+  kind: ShopKind,
+  custom?: {
+    edits?: Record<string, { name?: string; options?: readonly string[] }>;
+    extra?: readonly CustomTemplateSpec[];
+  },
+): VariantTemplate[] {
+  const base = defaultVariantTemplates(kind, (key) => `${prefix}-t-${key}`);
+  const edited = base.map((t) => {
+    const key = t.id.replace(`${prefix}-t-`, '');
+    const edit = custom?.edits?.[key];
+    if (!edit) return t;
+    const name = edit.name ?? t.name;
+    const options = edit.options
+      ? edit.options.map((optName, idx) => ({
+          id: `${t.id}_opt_${idx + 1}`,
+          name: optName,
+        }))
+      : t.options;
+    return { ...t, name, options };
+  });
+
+  const extraTemplates: VariantTemplate[] = (custom?.extra ?? []).map((spec) => {
+    const id = `${prefix}-t-${spec.key}`;
+    return {
+      id,
+      name: spec.name,
+      options: spec.options.map((name, optIdx) => ({
+        id: `${id}_opt_${optIdx + 1}`,
+        name,
+      })),
+      sample: true,
+    };
+  });
+
+  return [...edited, ...extraTemplates];
 }
 
 function combinations(axes: readonly AxisSpec[]): string[][] {
@@ -107,25 +164,47 @@ export function makeItems(
   };
   return specs.map((spec) => {
     const id = `${prefix}-${spec.key}`;
-    const axes = (spec.axes ?? []).map((axis) => ({
+    const basePrice = peso(spec.price);
+    const axes: VariantAxis[] = (spec.axes ?? []).map((axis) => ({
       name: axis.name,
-      values: axis.values.map((v) =>
-        typeof v === 'string' ? { name: v, photo: null } : { name: v.name, photo: ref(v.photo) },
-      ),
+      templateId: axis.template ? `${prefix}-t-${axis.template}` : null,
+      values: axis.values.map((v) => {
+        if (typeof v === 'string') {
+          return { name: v, photo: null, priceDelta: 0 };
+        }
+        return {
+          name: v.name,
+          photo: v.photo ? ref(v.photo) : null,
+          priceDelta: peso(v.price ?? 0),
+        };
+      }),
     }));
-    const variants: Variant[] = combinations(spec.axes ?? []).map((values) => ({
-      id: values.length ? `${id}--${slugify(values.join('-'))}` : `${id}--base`,
-      values,
-      price: peso(typeof spec.price === 'number' ? spec.price : spec.price(values)),
-      availability: spec.availability?.(values) ?? 'available',
-      soldOutUntil: null,
-    }));
+
+    const combos = combinations(spec.axes ?? []);
+    const variants: Variant[] = combos.map((values) => {
+      const vId = values.length ? `${id}--${slugify(values.join('-'))}` : `${id}--base`;
+      const specialPrice = spec.special?.(values);
+      const priceOverride =
+        specialPrice !== undefined && specialPrice !== null ? peso(specialPrice) : null;
+      const price = computedVariantPrice(basePrice, axes, { values, priceOverride });
+
+      return {
+        id: vId,
+        values,
+        price,
+        priceOverride,
+        availability: spec.availability?.(values) ?? 'available',
+        soldOutUntil: null,
+      };
+    });
+
     return {
       id,
       categoryId: `${prefix}-c-${spec.category}`,
       name: spec.name,
       description: spec.description ?? null,
       photos: (spec.photos ?? []).map(ref),
+      basePrice,
       axes,
       variants,
       optionGroupIds: (spec.groups ?? []).map((g) => `${prefix}-g-${g}`),

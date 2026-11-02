@@ -1,5 +1,5 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
-import { ALL_SECTIONS_ON, category, days, group, makeItems, peso } from './build.js';
+import { ALL_SECTIONS_ON, category, days, group, makeItems, peso, templates } from './build.js';
 
 const P = 'lr';
 
@@ -20,7 +20,12 @@ const optionGroups = [
   group(P, 'wrap', 'Pasalubong wrap', 0, 1, [{ name: 'Banana-leaf and twine wrap', price: 20 }]),
 ];
 
-const CAKE_SIZE = { name: 'Size', values: ['6"', '8"'] } as const;
+const variantTemplates = templates(P, 'food', {
+  extra: [
+    { key: 'pack', name: 'Pack', options: ['1 pc', '10 pcs', '20 pcs'] },
+    { key: 'cake-size', name: 'Size', options: ['6"', '8"'] },
+  ],
+});
 
 const items = makeItems('lola-remy', P, [
   {
@@ -28,8 +33,14 @@ const items = makeItems('lola-remy', P, [
     category: 'bread',
     name: 'Classic Pandesal',
     description: 'Baked twice a day, at 5 AM and 3 PM.',
-    axes: [{ name: 'Pack', values: ['1 pc', '10 pcs', '20 pcs'] }],
-    price: (values) => ({ '1 pc': 5, '10 pcs': 50, '20 pcs': 95 })[values[0] ?? ''] ?? 0,
+    axes: [
+      {
+        name: 'Pack',
+        template: 'pack',
+        values: ['1 pc', { name: '10 pcs', price: 45 }, { name: '20 pcs', price: 90 }],
+      },
+    ],
+    price: 5,
     pairs: ['brewed-coffee', 'tsokolate'],
     photos: ['classic-pandesal'],
     featured: true,
@@ -38,8 +49,14 @@ const items = makeItems('lola-remy', P, [
     key: 'ube-cheese-pandesal',
     category: 'bread',
     name: 'Ube Cheese Pandesal',
-    axes: [{ name: 'Pack', values: ['1 pc', '10 pcs'] }],
-    price: (values) => (values[0] === '10 pcs' ? 140 : 15),
+    axes: [
+      {
+        name: 'Pack',
+        template: 'pack',
+        values: ['1 pc', { name: '10 pcs', price: 125 }],
+      },
+    ],
+    price: 15,
     pairs: ['brewed-coffee'],
     photos: ['ube-cheese-pandesal'],
     featured: true,
@@ -102,8 +119,14 @@ const items = makeItems('lola-remy', P, [
     key: 'chocolate-moist-cake',
     category: 'cakes',
     name: 'Chocolate Moist Cake',
-    axes: [CAKE_SIZE],
-    price: (values) => (values[0] === '8"' ? 650 : 450),
+    axes: [
+      {
+        name: 'Size',
+        template: 'cake-size',
+        values: ['6"', { name: '8"', price: 200 }],
+      },
+    ],
+    price: 450,
     groups: ['cake'],
     photos: ['chocolate-moist-cake'],
   },
@@ -111,8 +134,14 @@ const items = makeItems('lola-remy', P, [
     key: 'ube-macapuno-cake',
     category: 'cakes',
     name: 'Ube Macapuno Cake',
-    axes: [CAKE_SIZE],
-    price: (values) => (values[0] === '8"' ? 750 : 520),
+    axes: [
+      {
+        name: 'Size',
+        template: 'cake-size',
+        values: ['6"', { name: '8"', price: 230 }],
+      },
+    ],
+    price: 520,
     groups: ['cake'],
     photos: ['ube-macapuno-cake'],
     featured: true,
@@ -283,5 +312,5 @@ export const LOLA_REMY_PACK: ShopPack = {
     },
     membersCount: 503,
   },
-  catalog: { categories, items, optionGroups },
+  catalog: { categories, items, optionGroups, variantTemplates },
 };

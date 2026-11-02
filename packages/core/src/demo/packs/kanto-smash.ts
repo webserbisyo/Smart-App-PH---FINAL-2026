@@ -1,5 +1,5 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
-import { ALL_SECTIONS_ON, category, days, group, makeItems, peso } from './build.js';
+import { ALL_SECTIONS_ON, category, days, group, makeItems, peso, templates } from './build.js';
 
 const P = 'ks';
 
@@ -52,11 +52,9 @@ const optionGroups = [
   group(P, 'rice', 'Extra rice', 0, 2, [{ name: 'Extra rice', price: 20 }]),
 ];
 
-const PATTY = { name: 'Patty', values: ['Single', 'Double', 'Triple'] } as const;
-const byValue =
-  (prices: Record<string, number>) =>
-  (values: readonly string[]): number =>
-    prices[values[0] ?? ''] ?? 0;
+const variantTemplates = templates(P, 'food', {
+  extra: [{ key: 'pieces', name: 'Pieces', options: ['6 pcs', '10 pcs'] }],
+});
 
 const items = makeItems('kanto-smash', P, [
   {
@@ -65,8 +63,14 @@ const items = makeItems('kanto-smash', P, [
     name: 'Classic Smash',
     description:
       'Crispy-edged smashed beef patty, American cheese, pickles and Kanto sauce on a toasted potato bun.',
-    axes: [PATTY],
-    price: byValue({ Single: 149, Double: 209, Triple: 269 }),
+    axes: [
+      {
+        name: 'Patty',
+        template: 'patty',
+        values: ['Single', { name: 'Double', price: 60 }, { name: 'Triple', price: 120 }],
+      },
+    ],
+    price: 149,
     groups: ['extras', 'sauce', 'meal'],
     pairs: ['kanto-fries', 'house-iced-tea'],
     photos: ['classic-smash'],
@@ -77,8 +81,14 @@ const items = makeItems('kanto-smash', P, [
     category: 'burgers',
     name: 'Cheesy Bacon Smash',
     description: 'Double cheese and crispy bacon on our classic smash.',
-    axes: [{ name: 'Patty', values: ['Single', 'Double'] }],
-    price: byValue({ Single: 229, Double: 289 }),
+    axes: [
+      {
+        name: 'Patty',
+        template: 'patty',
+        values: ['Single', { name: 'Double', price: 60 }],
+      },
+    ],
+    price: 229,
     groups: ['extras', 'sauce', 'meal'],
     pairs: ['kanto-fries', 'thick-shake'],
     photos: ['cheesy-bacon-smash'],
@@ -127,8 +137,14 @@ const items = makeItems('kanto-smash', P, [
     key: 'chicken-nuggets',
     category: 'chicken-rice',
     name: 'Chicken Nuggets',
-    axes: [{ name: 'Pieces', values: ['6 pcs', '10 pcs'] }],
-    price: byValue({ '6 pcs': 119, '10 pcs': 179 }),
+    axes: [
+      {
+        name: 'Pieces',
+        template: 'pieces',
+        values: ['6 pcs', { name: '10 pcs', price: 60 }],
+      },
+    ],
+    price: 119,
     groups: ['dip'],
     photos: ['chicken-nuggets'],
     isNew: true,
@@ -145,8 +161,14 @@ const items = makeItems('kanto-smash', P, [
     key: 'kanto-fries',
     category: 'sides',
     name: 'Kanto Fries',
-    axes: [{ name: 'Size', values: ['Regular', 'Large'] }],
-    price: byValue({ Regular: 69, Large: 99 }),
+    axes: [
+      {
+        name: 'Size',
+        template: 'size',
+        values: ['Regular', { name: 'Large', price: 30 }],
+      },
+    ],
+    price: 69,
     groups: ['sauce'],
     photos: ['kanto-fries'],
   },
@@ -154,6 +176,13 @@ const items = makeItems('kanto-smash', P, [
     key: 'cheese-fries',
     category: 'sides',
     name: 'Cheese Fries',
+    axes: [
+      {
+        name: 'Size',
+        template: 'size',
+        values: ['Regular', { name: 'Large', price: 30 }],
+      },
+    ],
     price: 119,
     photos: ['cheese-fries'],
   },
@@ -199,8 +228,14 @@ const items = makeItems('kanto-smash', P, [
     key: 'house-iced-tea',
     category: 'drinks',
     name: 'House Iced Tea',
-    axes: [{ name: 'Size', values: ['16 oz', '22 oz'] }],
-    price: byValue({ '16 oz': 45, '22 oz': 65 }),
+    axes: [
+      {
+        name: 'Cup size',
+        template: 'cup-size',
+        values: ['16 oz', { name: '22 oz', price: 20 }],
+      },
+    ],
+    price: 45,
     photos: ['house-iced-tea'],
   },
   {
@@ -348,5 +383,5 @@ export const KANTO_SMASH_PACK: ShopPack = {
     },
     membersCount: 128,
   },
-  catalog: { categories, items, optionGroups },
+  catalog: { categories, items, optionGroups, variantTemplates },
 };

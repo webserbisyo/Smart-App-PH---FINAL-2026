@@ -1304,6 +1304,8 @@ export const words = {
       claim_not_pending: 'This claim was already handled. Refresh to see it.',
       category_not_empty: 'Move its items to another category first.',
       item_has_orders: 'This item has past orders. Hide it instead of removing.',
+      variant_is_reward:
+        'That option is your stamp card prize. Choose another prize first, then remove it.',
     },
   },
 } as const;

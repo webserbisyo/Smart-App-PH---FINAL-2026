@@ -20,12 +20,13 @@ describe('owner catalog schemas', () => {
       name: 'Classic Burger',
       description: 'Juicy patty with fresh lettuce',
       photos: ['demo:kanto-smash/items/classic'],
+      basePrice: 15000,
       axes: [
         {
           name: 'Size',
           values: [
-            { name: 'Regular', photo: null },
-            { name: 'Double', photo: null },
+            { name: 'Regular', photo: null, priceDelta: 0 },
+            { name: 'Double', photo: null, priceDelta: 7000 },
           ],
         },
       ],
@@ -82,6 +83,7 @@ describe('owner catalog schemas', () => {
       name: 'New Shake',
       description: null,
       photos: [],
+      basePrice: 9900,
       axes: [],
       variants: [
         {

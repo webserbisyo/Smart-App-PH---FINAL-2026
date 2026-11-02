@@ -30,6 +30,9 @@ export * from './rules/location.js';
 export * from './rules/home.js';
 export * from './rules/shop-info.js';
 export * from './rules/menu.js';
+export * from './rules/variant-limits.js';
+export * from './rules/variant-pricing.js';
+export * from './rules/variant-templates.js';
 export { SHOP_PACKS } from './demo/packs/index.js';
 export {
   TEST_SHOP_PACKS,

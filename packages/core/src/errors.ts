@@ -50,6 +50,7 @@ export const ErrorCode = [
   // Catalog (owner)
   'category_not_empty',
   'item_has_orders',
+  'variant_is_reward',
 ] as const;
 
 export const ErrorCodeEnum = z.enum(ErrorCode);

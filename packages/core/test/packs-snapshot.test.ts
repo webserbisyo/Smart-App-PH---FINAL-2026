@@ -37,6 +37,38 @@ const ALLOWED_NEW_VERSIONS: Record<string, string[]> = {
     'ta-wide-leg-trousers--xl-olive-regular',
     'ta-wide-leg-trousers--xl-olive-petite',
   ],
+  'test-stress': [
+    'ts-item-2--small-single-standard',
+    'ts-item-2--small-single-gift-box',
+    'ts-item-2--small-double-standard',
+    'ts-item-2--small-double-gift-box',
+    'ts-item-2--small-triple-standard',
+    'ts-item-2--small-triple-gift-box',
+    'ts-item-2--medium-single-standard',
+    'ts-item-2--medium-single-gift-box',
+    'ts-item-2--medium-double-standard',
+    'ts-item-2--medium-double-gift-box',
+    'ts-item-2--medium-triple-standard',
+    'ts-item-2--medium-triple-gift-box',
+    'ts-item-2--large-single-standard',
+    'ts-item-2--large-single-gift-box',
+    'ts-item-2--large-double-standard',
+    'ts-item-2--large-double-gift-box',
+    'ts-item-2--large-triple-standard',
+    'ts-item-2--large-triple-gift-box',
+    'ts-item-2--xl-single-standard',
+    'ts-item-2--xl-single-gift-box',
+    'ts-item-2--xl-double-standard',
+    'ts-item-2--xl-double-gift-box',
+    'ts-item-2--xl-triple-standard',
+    'ts-item-2--xl-triple-gift-box',
+    'ts-item-2--xxl-single-standard',
+    'ts-item-2--xxl-single-gift-box',
+    'ts-item-2--xxl-double-standard',
+    'ts-item-2--xxl-double-gift-box',
+    'ts-item-2--xxl-triple-standard',
+    'ts-item-2--xxl-triple-gift-box',
+  ],
 };
 
 describe('frozen pack versions snapshot', () => {
@@ -64,9 +96,19 @@ describe('frozen pack versions snapshot', () => {
 
       // Check that every frozen version exists with same id, price, and availability
       for (const [id, expected] of Object.entries(expectedVersions)) {
-        // Special case: Wide-leg Trousers in Tala Apparel may be expanded with Length in Part B
+        // Special case: Wide-leg Trousers in Tala Apparel, Cheese Fries in Kanto Smash,
+        // and Item 2 in Test Stress were upgraded to choices in Part B.
         if (slug === 'tala-apparel' && expected.itemId === 'ta-wide-leg-trousers') {
-          // If expanded to 3 axes, individual versions will be checked below
+          if (!currentVersions.has(id)) {
+            continue;
+          }
+        }
+        if (slug === 'kanto-smash' && expected.itemId === 'ks-cheese-fries') {
+          if (!currentVersions.has(id)) {
+            continue;
+          }
+        }
+        if (slug === 'test-stress' && expected.itemId === 'ts-item-2') {
           if (!currentVersions.has(id)) {
             continue;
           }
