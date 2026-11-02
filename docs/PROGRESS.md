@@ -41,6 +41,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] T15b Menu page part 2: grid and table views, bulk actions, and category icons
 - [x] T41 Menu page UX round: simpler list, editor, sizes and versions, add-ons (retested as a food and a retail owner)
 - [x] T42 Final Menu page polish: category form, photos and crop, samples banner, bulk actions, editor errors (retested as a food and a retail owner)
+- [x] T43 Dashboard feedback (toasts, Save spinner and check, Copied) and Menu Archived filter with Restore and Delete forever
 
 ## Phase 4: Backend, area by area
 

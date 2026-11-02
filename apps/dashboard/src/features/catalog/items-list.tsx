@@ -2,11 +2,11 @@ import * as React from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import {
   PlusIcon,
-  SearchIcon,
-  XIcon,
+  ArchiveIcon,
   ArrowUpDownIcon,
   RefreshCwIcon,
   WifiOffIcon,
+  SearchXIcon,
   SparklesIcon,
   ListIcon,
   LayoutGridIcon,
@@ -29,9 +29,19 @@ import {
 import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { useDockClearance } from '@/app/use-dock-clearance';
+import { Notice } from '@/app/notice';
+import { SearchField } from '@/app/search-field';
 import { Button } from '@smartapp/ui/components/button';
-import { Input } from '@smartapp/ui/components/input';
 import { Badge } from '@smartapp/ui/components/badge';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@smartapp/ui/components/empty';
+import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
 import {
@@ -54,10 +64,10 @@ import { FloatingAddButton } from './floating-add-button.js';
 import { isItemSoldOut, useItemActions } from './components/item-actions.js';
 import { cn } from 'cn';
 
-type FilterTab = 'all' | 'sold_out' | 'hidden';
+type FilterTab = 'all' | 'sold_out' | 'hidden' | 'archived';
 // Table view is hidden for launch (decision T41); it comes back for big menus.
 type CatalogView = 'list' | 'grid';
-const FILTERS: readonly FilterTab[] = ['all', 'sold_out', 'hidden'];
+const FILTERS: readonly FilterTab[] = ['all', 'sold_out', 'hidden', 'archived'];
 
 const LOCAL_STORAGE_VIEW_KEY = 'smartapp:catalog:view';
 
@@ -129,20 +139,30 @@ export function ItemsList() {
     [items],
   );
 
+  const archivedItems = React.useMemo(
+    () => (items ?? []).filter((item) => item.status === 'archived'),
+    [items],
+  );
+  const isArchived = filter === 'archived';
+
   const counts: Record<FilterTab, number> = {
     all: nonArchivedItems.length,
     sold_out: nonArchivedItems.filter(isItemSoldOut).length,
     hidden: nonArchivedItems.filter((item) => item.status === 'hidden').length,
+    archived: archivedItems.length,
   };
   const filterLabel: Record<FilterTab, string> = {
     all: catalogWords.filterAll,
     sold_out: catalogWords.filterSoldOut,
     hidden: catalogWords.filterHidden,
+    archived: catalogWords.filterArchived,
   };
 
   const filteredItems = React.useMemo(() => {
     const query = search.toLowerCase().trim();
-    return nonArchivedItems.filter((item) => {
+    // Archived items show only under their own filter (decision T43).
+    const source = filter === 'archived' ? archivedItems : nonArchivedItems;
+    return source.filter((item) => {
       if (filter === 'sold_out' && !isItemSoldOut(item)) return false;
       if (filter === 'hidden' && item.status !== 'hidden') return false;
       if (!query) return true;
@@ -151,7 +171,7 @@ export function ItemsList() {
         (item.description?.toLowerCase().includes(query) ?? false)
       );
     });
-  }, [nonArchivedItems, filter, search]);
+  }, [nonArchivedItems, archivedItems, filter, search]);
 
   const groupedSections = React.useMemo(() => {
     if (!categories || categories.length === 0) {
@@ -196,7 +216,16 @@ export function ItemsList() {
   };
 
   const handleReorder = (newItems: OwnerItem[]) => {
-    saveSortOrder.mutate({ kind: 'item', ids: newItems.map((i) => i.id) });
+    // The list moves at once; only a failed save speaks up (it rolls back on refetch).
+    saveSortOrder.mutate(
+      { kind: 'item', ids: newItems.map((i) => i.id) },
+      {
+        onError: () => {
+          notify({ title: catalogWords.reorderFailed, tone: 'error' });
+          void refetchItems();
+        },
+      },
+    );
   };
 
   const handleMove = (item: OwnerItem, delta: number) => {
@@ -372,26 +401,28 @@ export function ItemsList() {
   const error = itemsError ?? catsError;
   if (error) {
     return (
-      <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4 py-16 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-          <RefreshCwIcon className="size-6" />
-        </div>
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold text-foreground">{catalogWords.loadFailed}</h2>
-          <p className="text-sm text-muted-foreground">{errorWords(errorCodeOf(error))}</p>
-        </div>
-        <Button
-          variant="outline"
-          className="h-11 gap-1.5 md:h-9"
-          onClick={() => {
-            void refetchItems();
-            void refetchCats();
-          }}
-        >
-          <RefreshCwIcon className="size-4" />
-          {catalogWords.tryAgain}
-        </Button>
-      </div>
+      <Empty className="py-16">
+        <EmptyHeader>
+          <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
+            <RefreshCwIcon />
+          </EmptyMedia>
+          <EmptyTitle>{catalogWords.loadFailed}</EmptyTitle>
+          <EmptyDescription>{errorWords(errorCodeOf(error))}</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button
+            variant="outline"
+            className="h-11 gap-1.5 md:h-9"
+            onClick={() => {
+              void refetchItems();
+              void refetchCats();
+            }}
+          >
+            <RefreshCwIcon className="size-4" />
+            {catalogWords.tryAgain}
+          </Button>
+        </EmptyContent>
+      </Empty>
     );
   }
 
@@ -404,40 +435,26 @@ export function ItemsList() {
       </div>
 
       {!isOnline ? (
-        <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-sm text-warning-text">
-          <WifiOffIcon className="size-4 shrink-0" />
-          <span>{catalogWords.offlineNotice}</span>
-        </div>
+        <Notice tone="warning" icon={<WifiOffIcon />}>
+          {catalogWords.offlineNotice}
+        </Notice>
       ) : null}
 
-      {!selecting && !isReordering ? (
+      {!selecting && !isReordering && !isArchived ? (
         <SamplesBanner items={items ?? []} categories={categories ?? []} />
       ) : null}
 
-      {nonArchivedItems.length > 0 ? (
+      {(items ?? []).length > 0 ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="relative min-w-0 flex-1 md:max-w-md">
-              <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                autoComplete="off"
-                aria-label={catalogWords.searchPlaceholder(kind)}
-                placeholder={catalogWords.searchPlaceholder(kind)}
-                className="h-11 rounded-xl bg-card pr-11 pl-9 md:h-9"
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              {search ? (
-                <button
-                  type="button"
-                  aria-label={catalogWords.clearSearch}
-                  onClick={() => setSearch('')}
-                  className="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground md:size-9"
-                >
-                  <XIcon className="size-4" />
-                </button>
-              ) : null}
-            </div>
+            <SearchField
+              value={search}
+              onChange={setSearch}
+              ariaLabel={catalogWords.searchPlaceholder(kind)}
+              placeholder={catalogWords.searchPlaceholder(kind)}
+              clearLabel={catalogWords.clearSearch}
+              className="min-w-0 flex-1 md:max-w-md"
+            />
 
             <div className="flex shrink-0 items-center gap-2">
               {selecting ? (
@@ -452,7 +469,7 @@ export function ItemsList() {
                 </Button>
               ) : null}
 
-              {!isReordering ? (
+              {isArchived ? null : !isReordering ? (
                 <Button
                   type="button"
                   variant={selecting ? 'default' : 'outline'}
@@ -474,7 +491,7 @@ export function ItemsList() {
                 </Button>
               )}
 
-              {!isReordering && !selecting ? (
+              {!isReordering && !selecting && !isArchived ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
@@ -540,46 +557,53 @@ export function ItemsList() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div
-              role="group"
-              aria-label={catalogWords.filterAll}
-              className="flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1"
+            {/* The installed Toggle Group: one filter at a time, arrow keys move between them. */}
+            <ToggleGroup
+              value={[filter]}
+              onValueChange={(value) => {
+                const next = FILTERS.find((tab) => tab === value[0]);
+                if (!next) return;
+                setFilter(next);
+                if (next === 'archived') stopSelecting();
+              }}
+              aria-label={catalogWords.filterLabel}
+              spacing={1}
+              className="max-w-full flex-wrap rounded-xl border border-border/60 bg-muted/60 p-1"
             >
               {FILTERS.map((tab) => (
-                <button
+                <ToggleGroupItem
                   key={tab}
-                  type="button"
-                  aria-pressed={filter === tab}
-                  onClick={() => setFilter(tab)}
+                  value={tab}
                   className={cn(
-                    'flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors md:h-8',
-                    filter === tab
-                      ? 'bg-card text-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground',
+                    'h-11 gap-1 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground hover:bg-transparent hover:text-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs sm:gap-1.5 sm:px-3 md:h-8',
                     counts[tab] === 0 && filter !== tab && 'opacity-50',
                   )}
                 >
                   {filterLabel[tab]}
                   <span className="text-xs text-muted-foreground tabular">{counts[tab]}</span>
-                </button>
+                </ToggleGroupItem>
               ))}
-            </div>
+            </ToggleGroup>
           </div>
         </div>
       ) : null}
 
-      {nonArchivedItems.length === 0 ? (
-        <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4 py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <SparklesIcon className="size-6" />
-          </div>
-          <div className="space-y-1">
-            <h2 className="text-base font-semibold text-foreground">
-              {catalogWords.emptyItems(kind)}
-            </h2>
-            <p className="text-sm text-muted-foreground">{catalogWords.emptyItemsHint}</p>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-2">
+      {isArchived && archivedItems.length > 0 ? (
+        <Notice tone="info" icon={<ArchiveIcon />}>
+          {catalogWords.archivedHint}
+        </Notice>
+      ) : null}
+
+      {(items ?? []).length === 0 ? (
+        <Empty className="py-16">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <SparklesIcon />
+            </EmptyMedia>
+            <EmptyTitle>{catalogWords.emptyItems(kind)}</EmptyTitle>
+            <EmptyDescription>{catalogWords.emptyItemsHint}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent className="flex-row flex-wrap justify-center">
             <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={() => goNew()}>
               <PlusIcon className="size-4" />
               {catalogWords.addItem(kind)}
@@ -593,15 +617,24 @@ export function ItemsList() {
                 {catalogWords.startWithSamples}
               </Button>
             ) : null}
-          </div>
-        </div>
+          </EmptyContent>
+        </Empty>
       ) : filteredItems.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <p className="text-sm font-medium text-foreground">
-            {search ? catalogWords.noSearchResults(search) : catalogWords.noFilterMatch}
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {search.trim() ? (
+        <Empty className="py-12">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              {isArchived && !search ? <ArchiveIcon /> : <SearchXIcon />}
+            </EmptyMedia>
+            <EmptyDescription className="font-medium text-foreground">
+              {search
+                ? catalogWords.noSearchResults(search)
+                : isArchived
+                  ? catalogWords.emptyArchived
+                  : catalogWords.noFilterMatch}
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent className="flex-row flex-wrap justify-center">
+            {search.trim() && !isArchived ? (
               <Button
                 className="h-11 gap-1.5 font-semibold md:h-9"
                 onClick={() => goNew(search.trim())}
@@ -620,8 +653,8 @@ export function ItemsList() {
             >
               {search ? catalogWords.clearSearch : catalogWords.showAll}
             </Button>
-          </div>
-        </div>
+          </EmptyContent>
+        </Empty>
       ) : isReordering ? (
         <Sortable
           value={nonArchivedItems}
@@ -652,7 +685,7 @@ export function ItemsList() {
             ))}
           </div>
         </Sortable>
-      ) : view === 'grid' ? (
+      ) : view === 'grid' && !isArchived ? (
         <ItemsGrid
           items={filteredItems}
           categories={categories ?? []}
@@ -704,7 +737,7 @@ export function ItemsList() {
 
       {dialogs}
 
-      {nonArchivedItems.length > 0 && !selecting && !isReordering ? (
+      {nonArchivedItems.length > 0 && !selecting && !isReordering && !isArchived ? (
         <FloatingAddButton label={catalogWords.addItem(kind)} onClick={() => goNew()} />
       ) : null}
     </div>

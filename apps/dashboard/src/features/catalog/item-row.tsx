@@ -1,15 +1,18 @@
 import type * as React from 'react';
 import {
+  ArchiveIcon,
   BanIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   EyeOffIcon,
   GripVerticalIcon,
+  RotateCcwIcon,
 } from 'lucide-react';
 import { itemPriceLabel, catalogWords, type OwnerItem } from '@smartapp/core';
-import { Badge } from '@smartapp/ui/components/badge';
+import { Status, StatusLabel } from '@smartapp/ui/components/status';
 import { Button } from '@smartapp/ui/components/button';
 import { Checkbox } from '@smartapp/ui/components/checkbox';
+import { Item } from '@smartapp/ui/components/item';
 import { Switch } from '@smartapp/ui/components/switch';
 import { CatalogPhoto } from './catalog-photo.js';
 import { ItemMenu } from './components/item-menu.js';
@@ -32,24 +35,32 @@ export interface ItemRowProps {
   highlighted?: boolean | undefined;
 }
 
+const statusLook = 'gap-1 px-2 py-0.5 font-semibold';
+
+// Item states on the installed DiceUI Status (icon + word + colour), the same on every view (decision T43).
 export function ItemStatusBadges({ item }: { item: OwnerItem }) {
+  if (item.status === 'archived') {
+    return (
+      <Status className={cn(statusLook, 'border-border bg-muted text-muted-foreground')}>
+        <ArchiveIcon aria-hidden="true" className="size-3" />
+        <StatusLabel>{catalogWords.archivedBadge}</StatusLabel>
+      </Status>
+    );
+  }
   const soldOut = isItemSoldOut(item);
   return (
     <>
       {soldOut ? (
-        <Badge
-          variant="outline"
-          className="gap-1 border-warning/40 bg-warning-soft text-warning-text"
-        >
-          <BanIcon className="size-3" />
-          {catalogWords.soldOutBadge}
-        </Badge>
+        <Status className={cn(statusLook, 'border-warning/40 bg-warning-soft text-warning-text')}>
+          <BanIcon aria-hidden="true" className="size-3" />
+          <StatusLabel>{catalogWords.soldOutBadge}</StatusLabel>
+        </Status>
       ) : null}
       {item.status === 'hidden' ? (
-        <Badge variant="secondary" className="gap-1">
-          <EyeOffIcon className="size-3" />
-          {catalogWords.hiddenBadge}
-        </Badge>
+        <Status className={cn(statusLook, 'border-border bg-secondary text-secondary-foreground')}>
+          <EyeOffIcon aria-hidden="true" className="size-3" />
+          <StatusLabel>{catalogWords.hiddenBadge}</StatusLabel>
+        </Status>
       ) : null}
     </>
   );
@@ -102,8 +113,10 @@ export function ItemRow({
     else actions.edit(item);
   };
 
+  // The row is the installed shadcn Item (decision T43).
   return (
-    <div
+    <Item
+      variant="outline"
       role={isReordering ? undefined : 'button'}
       tabIndex={isReordering ? undefined : 0}
       onClick={handleOpen}
@@ -184,7 +197,23 @@ export function ItemRow({
       </div>
 
       {/* One quick switch per row (decision T42): Sold out. Hide and Show live in the ⋯ menu. */}
-      {!isReordering && !selecting ? (
+      {item.status === 'archived' && !selecting ? (
+        <div className="flex items-center gap-2 pl-17 md:pl-0">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 gap-1.5 md:h-9"
+            onClick={(e) => {
+              e.stopPropagation();
+              actions.restore(item);
+            }}
+          >
+            <RotateCcwIcon className="size-4" />
+            {catalogWords.restore}
+          </Button>
+          <ItemMenu item={item} actions={actions} className="hidden md:inline-flex" />
+        </div>
+      ) : !isReordering && !selecting ? (
         <div className="flex items-center gap-2 pl-17 md:pl-0">
           <LabeledSwitch
             label={catalogWords.soldOutSwitch}
@@ -194,6 +223,6 @@ export function ItemRow({
           <ItemMenu item={item} actions={actions} className="hidden md:inline-flex" />
         </div>
       ) : null}
-    </div>
+    </Item>
   );
 }

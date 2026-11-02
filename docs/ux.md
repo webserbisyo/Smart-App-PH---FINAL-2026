@@ -85,3 +85,15 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - Depth with `elevation-*`, at most two levels on screen; motion with `ease-enter` / `ease-exit` and the duration tokens, transform and opacity only; one 500 ms celebration (`duration-celebrate`) when a stamp card fills.
 - The stamp card is the one tactile part (decision T36): 2 px border, dashed empty slots, solid mint filled slots with a navy icon, a pop when a stamp fills.
 - No glass panels: blur only on the top bar and dock (`frost`). No animated backgrounds, count-up money or looping effects in the dashboard.
+
+## 8. Dashboard feedback rules (decision T43)
+
+Every dashboard page follows these, so an owner always knows what happened.
+
+- **Toasts:** one toaster for the whole dashboard (`AppToaster` in `App.tsx`), top centre on desktop, above the dock on phones. Show a toast for a change away from where the owner tapped (menu actions, bulk actions, archive, restore, hide, move, delete, duplicate), for any error not tied to a field, and whenever there is an Undo. No toast when the result already shows where they tapped (a switch, a drag, a button that turns into a check). Success closes after 3 s, errors stay until closed, at most 3 on screen, one action each.
+- **Buttons that wait for the server:** `AsyncButton` (c-button-44 pattern, `apps/dashboard/src/app/async-button.tsx`): the verb, then a spinner with "Saving", then a check with "Saved" for a moment, then the page moves on or the button returns. Same width in every state, disabled while busy, announced to screen readers. Used for every Save, Add, Delete, Remove, Move and crop.
+- **Copy:** `CopyButton` (c-button-41 pattern): copy icon, then a check and "Copied" for 1.5 s. No toast. If the browser refuses, say how to copy by hand.
+- **Confirm or Undo:** reversible actions (archive, hide, sold out, move, restore, bulk) happen at once with Undo in the toast. Actions that cannot be undone (delete, delete forever, remove samples, delete a category with items) ask first with a solid red button that names the action. Never both.
+- **States:** loading is a skeleton in the page's layout; empty and error use `PageEmpty` and `PageError` (shadcn Empty) with one line and one action (Add, Try again); offline, warnings and save errors use `Notice` (DiceUI Banner); field errors sit under the field (shadcn FieldError) and Save scrolls to the first one; item states use DiceUI Status (icon, word, colour).
+- **Words:** buttons are short verbs; while busy the same verb with -ing ("Deleting", never "Saving" on a delete); done in past tense with the name when short ("Saved Classic Smash", "1 item archived"). Errors say what to do next, worded from the error code. All in `words.ts` (`actionWords` for button states).
+- **Restore:** an archived item comes back hidden, with "Show now" in the toast, so it never reaches customers by surprise. Only an item nobody ever ordered can be deleted forever.

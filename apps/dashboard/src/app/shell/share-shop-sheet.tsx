@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { CheckIcon, CopyIcon } from 'lucide-react';
 import { words } from '@smartapp/core';
-import { Button } from '@smartapp/ui/components/button';
+import { FieldError } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
-
-type CopyState = 'idle' | 'copied' | 'failed';
+import { CopyButton } from '../copy-button.js';
 
 // Share my shop: Dialog on tablet and desktop, Drawer on phone.
 export function ShareShopSheet({
@@ -17,23 +15,14 @@ export function ShareShopSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [copyState, setCopyState] = useState<CopyState>('idle');
-
-  async function copy(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopyState('copied');
-    } catch {
-      setCopyState('failed');
-    }
-  }
+  const [copyFailed, setCopyFailed] = useState(false);
 
   return (
     <ResponsiveDialog
       open={open}
       onOpenChange={(next) => {
         onOpenChange(next);
-        if (!next) setCopyState('idle');
+        if (!next) setCopyFailed(false);
       }}
       title={words.nav.shareMyShop}
       description={words.share.description}
@@ -46,15 +35,13 @@ export function ShareShopSheet({
           className="h-11 text-base"
           onFocus={(event) => event.currentTarget.select()}
         />
-        <Button className="h-11" onClick={() => void copy()}>
-          {copyState === 'copied' ? <CheckIcon /> : <CopyIcon />}
-          {copyState === 'copied' ? words.share.copied : words.share.copy}
-        </Button>
-        {copyState === 'failed' ? (
-          <p role="alert" className="text-sm text-destructive">
-            {words.share.copyFailed}
-          </p>
-        ) : null}
+        <CopyButton
+          className="h-11"
+          value={url}
+          label={words.share.copy}
+          onCopyFailed={() => setCopyFailed(true)}
+        />
+        {copyFailed ? <FieldError>{words.share.copyFailed}</FieldError> : null}
       </div>
     </ResponsiveDialog>
   );

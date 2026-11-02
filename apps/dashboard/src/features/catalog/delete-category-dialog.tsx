@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { catalogWords, errorWords, type Category } from '@smartapp/core';
+import { actionWords, catalogWords, errorWords, type Category } from '@smartapp/core';
 import {
   useBulkMoveCategory,
   useOwnerCategories,
@@ -9,7 +9,6 @@ import {
 } from '@smartapp/data';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -26,6 +25,7 @@ import {
 } from '@smartapp/ui/components/select';
 import { Label } from '@smartapp/ui/components/label';
 import { notify } from '@smartapp/ui/compositions/notify';
+import { AsyncButton, useAsyncAction } from '@/app/async-button';
 
 export interface DeleteCategoryDialogProps {
   category: Category | null;
@@ -51,16 +51,18 @@ export function DeleteCategoryDialog({
   const target = targetId ?? others[0]?.id ?? null;
   const needsMove = inCategory.length > 0;
   const blocked = needsMove && others.length === 0;
-  const pending = moveItems.isPending || removeCategory.isPending;
+  const deleteAction = useAsyncAction();
   const visibleCount = inCategory.filter((item) => item.status !== 'archived').length;
 
   const handleDelete = async () => {
     if (!category || blocked) return;
     try {
-      if (needsMove && target) {
-        await moveItems.mutateAsync({ items: inCategory, targetCategoryId: target });
-      }
-      await removeCategory.mutateAsync({ id: category.id });
+      await deleteAction.run(async () => {
+        if (needsMove && target) {
+          await moveItems.mutateAsync({ items: inCategory, targetCategoryId: target });
+        }
+        await removeCategory.mutateAsync({ id: category.id });
+      });
       notify({ title: catalogWords.categoryDeleted(category.name), tone: 'success' });
       onOpenChange(false);
       onDeleted?.();
@@ -109,13 +111,16 @@ export function DeleteCategoryDialog({
         <AlertDialogFooter>
           <AlertDialogCancel className="h-11 md:h-9">{catalogWords.cancel}</AlertDialogCancel>
           {!blocked ? (
-            <AlertDialogAction
-              disabled={pending}
+            <AsyncButton
+              variant="destructive"
+              status={deleteAction.status}
+              busyLabel={needsMove ? actionWords.moving : actionWords.deleting}
+              doneLabel={actionWords.deleted}
               onClick={() => void handleDelete()}
-              className="h-11 bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90 md:h-9"
+              className="h-11 font-semibold md:h-9"
             >
               {needsMove ? catalogWords.moveAndDelete : catalogWords.delete}
-            </AlertDialogAction>
+            </AsyncButton>
           ) : null}
         </AlertDialogFooter>
       </AlertDialogContent>

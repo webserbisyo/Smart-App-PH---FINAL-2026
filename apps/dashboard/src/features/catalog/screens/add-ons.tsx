@@ -6,11 +6,16 @@ import {
   PlusIcon,
   CopyIcon,
   PencilIcon,
-  RefreshCwIcon,
   Trash2Icon,
   WifiOffIcon,
 } from 'lucide-react';
-import { catalogWords, groupRuleLabel, errorWords, type OwnerOptionGroup } from '@smartapp/core';
+import {
+  actionWords,
+  catalogWords,
+  groupRuleLabel,
+  errorWords,
+  type OwnerOptionGroup,
+} from '@smartapp/core';
 import {
   useOwnerOptionGroups,
   useRemoveOptionGroup,
@@ -32,7 +37,6 @@ import {
 } from '@smartapp/ui/components/dropdown-menu';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -42,6 +46,10 @@ import {
 } from '@smartapp/ui/components/alert-dialog';
 import { FloatingAddButton } from '../floating-add-button.js';
 import { notify } from '@smartapp/ui/compositions/notify';
+import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { Notice } from '@/app/notice';
+import { PageEmpty, PageError } from '@/app/page-state';
+
 import { cn } from 'cn';
 import { useCatalogTabs } from '../tabs.js';
 import { AddOnSheet } from '../add-on-sheet.js';
@@ -60,12 +68,13 @@ export function CatalogAddOnsScreen() {
 
   const saveGroup = useSaveOptionGroup();
   const removeGroup = useRemoveOptionGroup();
+  const deleteAction = useAsyncAction();
   const [deleteTarget, setDeleteTarget] = React.useState<OwnerOptionGroup | null>(null);
 
   async function handleDelete() {
     if (!deleteTarget) return;
     try {
-      await removeGroup.mutateAsync({ id: deleteTarget.id });
+      await deleteAction.run(() => removeGroup.mutateAsync({ id: deleteTarget.id }));
       notify({ title: catalogWords.groupDeleted(deleteTarget.name), tone: 'success' });
       setDeleteTarget(null);
     } catch (err: unknown) {
@@ -144,10 +153,9 @@ export function CatalogAddOnsScreen() {
 
         {/* Offline Banner */}
         {!isOnline && (
-          <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
-            <WifiOffIcon className="size-4 shrink-0" />
-            <span>{catalogWords.offlineNotice}</span>
-          </div>
+          <Notice tone="warning" icon={<WifiOffIcon />}>
+            {catalogWords.offlineNotice}
+          </Notice>
         )}
 
         {/* Loading Skeleton */}
@@ -168,41 +176,25 @@ export function CatalogAddOnsScreen() {
             ))}
           </div>
         ) : groupsError ? (
-          <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <ListPlusIcon className="size-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold text-foreground">{catalogWords.loadFailed}</h3>
-              <p className="text-xs text-muted-foreground">
-                {errorWords(errorCodeOf(groupsError))}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              className="h-11 gap-1.5 md:h-9"
-              onClick={() => void refetchGroups()}
-            >
-              <RefreshCwIcon className="size-4" />
-              {catalogWords.tryAgain}
-            </Button>
-          </div>
+          <PageError
+            title={catalogWords.loadFailed}
+            message={errorWords(errorCodeOf(groupsError))}
+            retryLabel={catalogWords.tryAgain}
+            onRetry={() => void refetchGroups()}
+          />
         ) : optionGroups.length === 0 ? (
-          <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 rounded-2xl border border-dashed border-border bg-card/50 p-8 py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <ListPlusIcon className="size-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold text-foreground">
-                {catalogWords.emptyAddOns}
-              </h3>
-              <p className="text-xs text-muted-foreground">{catalogWords.addOnsHint}</p>
-            </div>
-            <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={handleOpenAdd}>
-              <PlusIcon className="size-4" />
-              {catalogWords.addAddOnGroup}
-            </Button>
-          </div>
+          <PageEmpty
+            variant="box"
+            icon={<ListPlusIcon />}
+            title={catalogWords.emptyAddOns}
+            description={catalogWords.addOnsHint}
+            action={
+              <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={handleOpenAdd}>
+                <PlusIcon className="size-4" />
+                {catalogWords.addAddOnGroup}
+              </Button>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {optionGroups.map((group) => {
@@ -339,13 +331,16 @@ export function CatalogAddOnsScreen() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="h-11 md:h-9">{catalogWords.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={removeGroup.isPending}
+            <AsyncButton
+              variant="destructive"
+              status={deleteAction.status}
+              busyLabel={actionWords.deleting}
+              doneLabel={actionWords.deleted}
               onClick={() => void handleDelete()}
-              className="h-11 bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90 md:h-9"
+              className="h-11 font-semibold md:h-9"
             >
               {catalogWords.delete}
-            </AlertDialogAction>
+            </AsyncButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

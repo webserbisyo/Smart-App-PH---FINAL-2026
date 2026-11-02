@@ -4,16 +4,17 @@ import {
   CropIcon,
   Trash2Icon,
   RefreshCwIcon,
-  Loader2Icon,
+  CircleAlertIcon,
   GripVerticalIcon,
   StarIcon,
   PlusIcon,
 } from 'lucide-react';
-import { catalogWords } from '@smartapp/core';
+import { actionWords, catalogWords } from '@smartapp/core';
 import { useCreateUploadUrl, compressImage, cropImage } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Progress } from '@smartapp/ui/components/progress';
+import { Spinner } from '@smartapp/ui/components/spinner';
 import {
   Dialog,
   DialogContent,
@@ -28,8 +29,15 @@ import {
   CropperImage,
   type CropperAreaData,
 } from '@smartapp/ui/components/cropper';
+import {
+  FileUpload,
+  FileUploadDropzone,
+  FileUploadTrigger,
+} from '@smartapp/ui/components/file-upload';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
 import { notify } from '@smartapp/ui/compositions/notify';
+import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { Notice } from '@/app/notice';
 import { CatalogPhoto, catalogPhotoSrc } from './catalog-photo.js';
 import { cn } from 'cn';
 
@@ -40,6 +48,7 @@ export interface PhotoUploadSectionProps {
 }
 
 const MAX_PHOTOS = 5;
+const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,.jpg,.jpeg,.png,.webp,.heic';
 // Item photos are saved square (menu cards and the desktop item dialog are square).
 const PHOTO_SIDE = 1200;
 
@@ -58,10 +67,9 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
   const [cropTarget, setCropTarget] = React.useState<{ index: number; src: string } | null>(null);
   const [crop, setCrop] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [cropArea, setCropArea] = React.useState<CropperAreaData | null>(null);
-  const [isCropping, setIsCropping] = React.useState(false);
+  const cropAction = useAsyncAction();
 
   const createUpload = useCreateUploadUrl();
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const setUpload = (url: string, state: UploadState | null) =>
     setUploads((prev) => {
@@ -142,10 +150,9 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
 
   const handleApplyCrop = async () => {
     if (!cropTarget || !cropArea) return;
-    setIsCropping(true);
     try {
       const side = Math.min(PHOTO_SIDE, Math.round(cropArea.width));
-      const cropped = await cropImage(cropTarget.src, cropArea, side);
+      const cropped = await cropAction.run(() => cropImage(cropTarget.src, cropArea, side));
       const previous = photos[cropTarget.index];
       if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
       onChange(photos.map((p, i) => (i === cropTarget.index ? cropped : p)));
@@ -153,25 +160,32 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
     } catch {
       setCropTarget(null);
       notify({ title: catalogWords.photoCropFailed, tone: 'error' });
-    } finally {
-      setIsCropping(false);
     }
   };
 
-  const openPicker = () => fileInputRef.current?.click();
   const canAdd = photos.length < MAX_PHOTOS && !disabled;
 
+  // The installed DiceUI File Upload owns the file input, the empty drop zone and the Add photo
+  // trigger (decision T43). Once photos are listed, the whole section still takes a drop.
+  const listDrop = photos.length > 0;
+
   return (
-    <div
-      className="space-y-4"
+    <FileUpload
+      multiple
+      accept={ACCEPT}
+      label={catalogWords.photoDropzone}
+      disabled={!canAdd || isCompressing}
+      onAccept={(files) => void handleFiles(files)}
+      onFileReject={() => setErrorMsg(catalogWords.photoUnsupported)}
+      className="gap-4"
       onDragOver={(e) => {
-        if (!canAdd || !e.dataTransfer.types.includes('Files')) return;
+        if (!listDrop || !canAdd || !e.dataTransfer.types.includes('Files')) return;
         e.preventDefault();
         setIsDragOver(true);
       }}
       onDragLeave={() => setIsDragOver(false)}
       onDrop={(e) => {
-        if (!canAdd || !e.dataTransfer.files.length) return;
+        if (!listDrop || !canAdd || !e.dataTransfer.files.length) return;
         e.preventDefault();
         setIsDragOver(false);
         void handleFiles(e.dataTransfer.files);
@@ -188,46 +202,21 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
       </div>
 
       {errorMsg ? (
-        <p
-          role="alert"
-          className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
-        >
+        <Notice tone="error" icon={<CircleAlertIcon />}>
           {errorMsg}
-        </p>
+        </Notice>
       ) : null}
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept="image/jpeg,image/png,image/webp,image/heic,.jpg,.jpeg,.png,.webp,.heic"
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files) void handleFiles(e.target.files);
-          e.target.value = '';
-        }}
-      />
-
       {photos.length === 0 ? (
-        <button
-          type="button"
-          disabled={!canAdd || isCompressing}
-          onClick={openPicker}
-          className={cn(
-            'flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center transition-colors',
-            isDragOver
-              ? 'border-primary bg-primary/5'
-              : 'border-border/80 hover:border-primary/50 hover:bg-muted/20',
-          )}
-        >
+        <FileUploadDropzone className="cursor-pointer gap-2 rounded-2xl border-border/80 p-6 text-center hover:border-primary/50 hover:bg-muted/20 data-dragging:border-primary data-dragging:bg-primary/5">
           {isCompressing ? (
-            <Loader2Icon className="size-8 animate-spin text-primary" />
+            <Spinner className="size-8 text-primary" />
           ) : (
             <UploadCloudIcon className="size-8 text-muted-foreground" />
           )}
           <span className="text-sm font-medium text-foreground">{catalogWords.photoDropzone}</span>
           <span className="text-sm text-muted-foreground">{catalogWords.photoMaxMb}</span>
-        </button>
+        </FileUploadDropzone>
       ) : (
         <div className="space-y-2">
           {photos.length > 1 ? (
@@ -299,16 +288,17 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                       {state?.failed ? (
                         <span className="flex flex-wrap items-center gap-2 text-sm text-destructive">
                           {catalogWords.photoUploadFailed}
-                          <button
+                          <Button
                             type="button"
+                            variant="link"
+                            className="h-11 gap-1 px-0 font-semibold text-destructive md:h-9"
                             onClick={() => {
                               if (state.blob) void upload(photo, state.blob);
                             }}
-                            className="inline-flex min-h-11 items-center gap-1 font-semibold underline hover:no-underline md:min-h-9"
                           >
                             <RefreshCwIcon className="size-3.5" />
                             {catalogWords.photoRetry}
-                          </button>
+                          </Button>
                         </span>
                       ) : null}
                     </div>
@@ -342,20 +332,18 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
           </Sortable>
 
           {canAdd ? (
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full gap-1.5 border-dashed md:h-9"
-              disabled={isCompressing}
-              onClick={openPicker}
+            <FileUploadTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 w-full gap-1.5 border-dashed md:h-9"
+                />
+              }
             >
-              {isCompressing ? (
-                <Loader2Icon className="size-4 animate-spin" />
-              ) : (
-                <PlusIcon className="size-4" />
-              )}
+              {isCompressing ? <Spinner /> : <PlusIcon className="size-4" />}
               {catalogWords.photoAddMore}
-            </Button>
+            </FileUploadTrigger>
           ) : null}
         </div>
       )}
@@ -389,18 +377,20 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
             >
               {catalogWords.cancel}
             </Button>
-            <Button
+            <AsyncButton
               type="button"
               className="h-11 font-semibold md:h-9"
-              disabled={!cropArea || isCropping}
+              status={cropAction.status}
+              busyLabel={actionWords.applying}
+              doneLabel={actionWords.applied}
+              disabled={!cropArea}
               onClick={() => void handleApplyCrop()}
             >
-              {isCropping ? <Loader2Icon className="size-4 animate-spin" /> : null}
               {catalogWords.photoCropApply}
-            </Button>
+            </AsyncButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </FileUpload>
   );
 }

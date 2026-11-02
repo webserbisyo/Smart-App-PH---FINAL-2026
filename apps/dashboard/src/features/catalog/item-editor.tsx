@@ -4,16 +4,17 @@ import {
   ArchiveIcon,
   BanIcon,
   CheckCircle2Icon,
+  CircleAlertIcon,
   CopyIcon,
   EyeOffIcon,
   PlusIcon,
-  SearchIcon,
   SparklesIcon,
   Trash2Icon,
   WifiOffIcon,
   XIcon,
 } from 'lucide-react';
 import {
+  actionWords,
   formatPeso,
   itemPriceLabel,
   catalogWords,
@@ -37,12 +38,16 @@ import {
 import { env } from '@/app/env';
 import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
+import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { Notice } from '@/app/notice';
+import { SearchField } from '@/app/search-field';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
+import { FieldError as InstalledFieldError } from '@smartapp/ui/components/field';
 import {
   Select,
   SelectContent,
@@ -76,6 +81,7 @@ import { CategorySheet } from './category-sheet.js';
 import { CatalogPhoto } from './catalog-photo.js';
 import { ItemPreview } from './item-preview.js';
 import { PesoInput } from './components/peso-input.js';
+import { PickedChip, PickRow } from './pick-list.js';
 import { VariantsSection, type VariantsValue } from './variants-section.js';
 import { buildVariants, sharedPrice } from './variants.js';
 import { cn } from 'cn';
@@ -185,6 +191,9 @@ function ItemEditorForm({
   const saveItem = useSaveItem();
   const removeItem = useRemoveItem();
   const setStatus = useSetItemStatus();
+  const saveAction = useAsyncAction();
+  const deleteAction = useAsyncAction();
+  const archiveAction = useAsyncAction();
 
   const isCopy = !initialItem && copyFrom !== null;
   const [initial] = React.useState(() => initialForm(initialItem ?? copyFrom, isCopy));
@@ -198,7 +207,7 @@ function ItemEditorForm({
   const [categorySheetOpen, setCategorySheetOpen] = React.useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const leaving = React.useRef(false);
-  const errorRef = React.useRef<HTMLParagraphElement>(null);
+  const errorRef = React.useRef<HTMLDivElement>(null);
 
   const update = (patch: Partial<FormState>) => {
     setForm((prev) => ({ ...prev, ...patch }));
@@ -267,8 +276,8 @@ function ItemEditorForm({
     }
     try {
       leaving.current = true;
-      const saved = await saveItem.mutateAsync(
-        initialItem ? { id: initialItem.id, draft } : { draft },
+      const saved = await saveAction.run(() =>
+        saveItem.mutateAsync(initialItem ? { id: initialItem.id, draft } : { draft }),
       );
       notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
       void navigate({ to: '/catalog' });
@@ -290,7 +299,7 @@ function ItemEditorForm({
     if (!initialItem) return;
     try {
       leaving.current = true;
-      await removeItem.mutateAsync({ id: initialItem.id });
+      await deleteAction.run(() => removeItem.mutateAsync({ id: initialItem.id }));
       notify({ title: catalogWords.itemDeleted(initialItem.name), tone: 'success' });
       void navigate({ to: '/catalog' });
     } catch (err: unknown) {
@@ -304,8 +313,19 @@ function ItemEditorForm({
     if (!initialItem) return;
     try {
       leaving.current = true;
-      await setStatus.mutateAsync({ id: initialItem.id, status: 'archived' });
-      notify({ title: catalogWords.itemArchived(initialItem.name), tone: 'success' });
+      await archiveAction.run(() =>
+        setStatus.mutateAsync({ id: initialItem.id, status: 'archived' }),
+      );
+      const previous = initialItem.status;
+      const id = initialItem.id;
+      notify({
+        title: catalogWords.itemArchived(initialItem.name),
+        tone: 'success',
+        action: {
+          label: catalogWords.undo,
+          onClick: () => setStatus.mutate({ id, status: previous }),
+        },
+      });
       void navigate({ to: '/catalog' });
     } catch (err: unknown) {
       leaving.current = false;
@@ -373,27 +393,21 @@ function ItemEditorForm({
       </header>
 
       {!isOnline ? (
-        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-sm text-warning-text">
-          <WifiOffIcon className="size-4 shrink-0" />
-          <span>{catalogWords.offlineNotice}</span>
-        </div>
+        <Notice tone="warning" icon={<WifiOffIcon />} className="mb-4">
+          {catalogWords.offlineNotice}
+        </Notice>
       ) : null}
 
       {isCopy && copyFrom ? (
-        <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">
-          <CopyIcon className="mt-0.5 size-4 shrink-0 text-primary" />
-          <span>{catalogWords.copyNotice(copyFrom.name)}</span>
-        </div>
+        <Notice tone="brand" icon={<CopyIcon className="text-primary" />} className="mb-4">
+          {catalogWords.copyNotice(copyFrom.name)}
+        </Notice>
       ) : null}
 
       {errorMsg ? (
-        <p
-          ref={errorRef}
-          role="alert"
-          className="mb-4 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
-        >
+        <Notice ref={errorRef} tone="error" icon={<CircleAlertIcon />} className="mb-4">
           {errorMsg}
-        </p>
+        </Notice>
       ) : null}
 
       <div className="flex flex-col items-start gap-6 lg:flex-row">
@@ -604,15 +618,18 @@ function ItemEditorForm({
                 </p>
               </div>
               {initialItem.hasOrders ? (
-                <Button
+                <AsyncButton
                   type="button"
                   variant="outline"
+                  status={archiveAction.status}
+                  busyLabel={actionWords.archiving}
+                  doneLabel={actionWords.archived}
                   className="h-11 shrink-0 gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10 md:h-9"
                   onClick={() => void handleArchive()}
                 >
                   <ArchiveIcon className="size-4" />
                   {catalogWords.archive}
-                </Button>
+                </AsyncButton>
               ) : (
                 <Button
                   type="button"
@@ -653,7 +670,7 @@ function ItemEditorForm({
             aria-label={catalogWords.unsavedPill}
             className="animate-in fade-in-0 slide-in-from-bottom-4 pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-card p-1.5 pl-4 elevation-md duration-200 motion-reduce:animate-none"
           >
-            {isDirty ? (
+            {isDirty && saveAction.status === 'idle' ? (
               <span className="mr-1 flex items-center gap-2 text-sm font-medium text-foreground">
                 <span aria-hidden="true" className="size-2 rounded-full bg-warning" />
                 <span className={cn(!initialItem && 'sr-only sm:not-sr-only')}>
@@ -665,23 +682,22 @@ function ItemEditorForm({
               type="button"
               variant="ghost"
               className="h-11 rounded-full px-4 md:h-10"
-              disabled={saveItem.isPending}
+              disabled={saveAction.busy}
               onClick={handleDiscard}
             >
               {isDirty ? catalogWords.discard : catalogWords.cancel}
             </Button>
-            <Button
+            <AsyncButton
               type="submit"
               form="item-form"
-              disabled={saveItem.isPending || !isOnline}
-              className="h-11 min-w-24 rounded-full px-5 font-semibold md:h-10"
+              status={saveAction.status}
+              busyLabel={initialItem ? actionWords.saving : actionWords.adding}
+              doneLabel={initialItem ? actionWords.saved : actionWords.added}
+              disabled={!isOnline}
+              className="h-11 min-w-28 rounded-full px-5 font-semibold md:h-10"
             >
-              {saveItem.isPending
-                ? catalogWords.saving
-                : initialItem
-                  ? catalogWords.save
-                  : catalogWords.addItem(kind)}
-            </Button>
+              {initialItem ? catalogWords.save : catalogWords.addItem(kind)}
+            </AsyncButton>
           </div>
         </div>
       ) : null}
@@ -739,12 +755,15 @@ function ItemEditorForm({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            <AsyncButton
+              variant="destructive"
+              status={deleteAction.status}
+              busyLabel={actionWords.deleting}
+              doneLabel={actionWords.deleted}
               onClick={() => void handleDelete()}
             >
               {catalogWords.delete}
-            </AlertDialogAction>
+            </AsyncButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -830,13 +849,10 @@ function CategorySelect({
   );
 }
 
+// Field errors use the installed shadcn FieldError (decision T43).
 function FieldError({ id, message }: { id: string; message: string | undefined }) {
   if (!message) return null;
-  return (
-    <p id={id} className="text-sm text-destructive">
-      {message}
-    </p>
-  );
+  return <InstalledFieldError id={id}>{message}</InstalledFieldError>;
 }
 
 function CategoryOption({ category }: { category: Category }) {
@@ -996,21 +1012,13 @@ function PairingsSection({
       {picked.length > 0 ? (
         <ul className="flex flex-wrap gap-2">
           {picked.map((item) => (
-            <li
+            <PickedChip
               key={item.id}
-              className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 py-1 pr-1 pl-1.5"
-            >
-              <CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" className="size-8" />
-              <span className="max-w-40 truncate text-sm font-medium">{item.name}</span>
-              <button
-                type="button"
-                aria-label={catalogWords.removePairingAria(item.name)}
-                className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive"
-                onClick={() => onChange(pickedIds.filter((id) => id !== item.id))}
-              >
-                <XIcon className="size-4" />
-              </button>
-            </li>
+              media={<CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" className="size-8" />}
+              name={item.name}
+              removeLabel={catalogWords.removePairingAria(item.name)}
+              onRemove={() => onChange(pickedIds.filter((id) => id !== item.id))}
+            />
           ))}
         </ul>
       ) : null}
@@ -1019,52 +1027,28 @@ function PairingsSection({
         <p className="text-sm text-muted-foreground">{catalogWords.pairingsFull}</p>
       ) : (
         <div className="space-y-2">
-          <div className="relative">
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              aria-label={catalogWords.pairingsSearch}
-              placeholder={catalogWords.pairingsSearch}
-              autoComplete="off"
-              className="h-11 pr-11 pl-9 md:h-9"
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            {query ? (
-              <button
-                type="button"
-                aria-label={catalogWords.clearSearch}
-                onClick={() => setQuery('')}
-                className="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground md:size-9"
-              >
-                <XIcon className="size-4" />
-              </button>
-            ) : null}
-          </div>
+          <SearchField
+            value={query}
+            onChange={setQuery}
+            ariaLabel={catalogWords.pairingsSearch}
+            placeholder={catalogWords.pairingsSearch}
+            clearLabel={catalogWords.clearSearch}
+          />
           {matches.length === 0 ? (
             <p className="text-sm text-muted-foreground">{catalogWords.pairingsNoMatch}</p>
           ) : (
             <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {matches.map((item) => (
                 <li key={item.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
+                  <PickRow
+                    media={<CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" />}
+                    title={item.name}
+                    description={itemPriceLabel(item)}
+                    onPick={() => {
                       onChange([...pickedIds, item.id]);
                       setQuery('');
                     }}
-                    className="flex min-h-12 w-full items-center gap-2.5 rounded-xl border border-border/50 bg-card p-2 text-left transition-colors hover:border-primary/40 hover:bg-muted/40"
-                  >
-                    <CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-foreground">
-                        {item.name}
-                      </span>
-                      <span className="block text-sm text-muted-foreground tabular">
-                        {itemPriceLabel(item)}
-                      </span>
-                    </span>
-                    <PlusIcon className="size-4 shrink-0 text-muted-foreground" />
-                  </button>
+                  />
                 </li>
               ))}
             </ul>

@@ -1306,6 +1306,31 @@ export const words = {
   },
 } as const;
 
+// Dashboard-wide button states (docs/ux.md section 8): the verb, the verb while it runs, the result.
+export const actionWords = {
+  saving: 'Saving',
+  saved: 'Saved',
+  adding: 'Adding',
+  added: 'Added',
+  deleting: 'Deleting',
+  deleted: 'Deleted',
+  removing: 'Removing',
+  removed: 'Removed',
+  archiving: 'Archiving',
+  archived: 'Archived',
+  restoring: 'Restoring',
+  restored: 'Restored',
+  moving: 'Moving',
+  moved: 'Moved',
+  applying: 'Applying',
+  applied: 'Done',
+  uploading: 'Uploading',
+  uploaded: 'Uploaded',
+  copy: 'Copy',
+  copyLink: 'Copy link',
+  copied: 'Copied',
+} as const;
+
 export const catalogWords = {
   title: (kind: ShopKind) => vocab(kind).catalog,
   tabItems: 'Items',
@@ -1471,9 +1496,10 @@ export const catalogWords = {
   bulkMoveToCategory: 'Move to category',
   bulkArchive: 'Archive',
   selectCategory: 'Select category',
-  bulkUpdated: (count: number) => `${count} items updated`,
-  bulkArchived: (count: number) => `${count} items archived`,
-  bulkMoved: (count: number, catName: string) => `Moved ${count} items to ${catName}`,
+  bulkUpdated: (count: number) => `${count} ${count === 1 ? 'item' : 'items'} updated`,
+  bulkArchived: (count: number) => `${count} ${count === 1 ? 'item' : 'items'} archived`,
+  bulkMoved: (count: number, catName: string) =>
+    `Moved ${count} ${count === 1 ? 'item' : 'items'} to ${catName}`,
   colPhoto: 'Photo',
   colName: 'Name',
   colCategory: 'Category',
@@ -1702,4 +1728,24 @@ export const catalogWords = {
   categoryDeleted: (name: string) => `Deleted ${name}`,
   groupDeleted: (name: string) => `Deleted ${name}`,
   previewPhotoHint: 'Swipe to see all photos',
+
+  // Feedback and Archived round (decision T43).
+  filterArchived: 'Archived',
+  filterLabel: 'Show',
+  archivedHint: 'Archived items are off your shop. Restore one to sell it again.',
+  emptyArchived: 'Nothing archived. Items you archive show here.',
+  restore: 'Restore',
+  showNow: 'Show now',
+  itemRestored: (name: string) => `Restored ${name}. It is hidden until you show it.`,
+  bulkRestored: (count: number) =>
+    `Restored ${count} ${count === 1 ? 'item' : 'items'}. They stay hidden until you show them.`,
+  bulkRestore: 'Restore',
+  deleteForever: 'Delete forever',
+  deleteForeverTitle: (name: string) => `Delete ${name} forever?`,
+  deleteForeverDescription: 'It was never ordered, so nothing else changes. This cannot be undone.',
+  archivedBadge: 'Archived',
+  itemHidden: (name: string) => `${name} is hidden from customers`,
+  itemShown: (name: string) => `${name} is back on your shop`,
+  reorderFailed: 'Could not save the new order. Check your connection and try again.',
+  duplicatedCategory: (name: string) => `Copied ${name}`,
 } as const;

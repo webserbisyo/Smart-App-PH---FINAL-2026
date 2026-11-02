@@ -6,7 +6,6 @@ import {
   ChevronRightIcon,
   ChevronUpIcon,
   ChevronDownIcon,
-  RefreshCwIcon,
   WifiOffIcon,
   FolderIcon,
 } from 'lucide-react';
@@ -40,6 +39,9 @@ import {
   SelectValue,
 } from '@smartapp/ui/components/select';
 import { notify } from '@smartapp/ui/compositions/notify';
+import { Notice } from '@/app/notice';
+import { PageEmpty, PageError } from '@/app/page-state';
+
 import { FloatingAddButton } from '../floating-add-button.js';
 import { shopIconStyle } from '../icon-style.js';
 import { useCatalogTabs } from '../tabs.js';
@@ -116,9 +118,15 @@ export function CatalogCategoriesScreen() {
     setSheetOpen(true);
   }
 
+  // Moves show at once; only a failed save speaks up, then the list reloads the saved order.
+  function reorderFailed() {
+    notify({ title: catalogWords.reorderFailed, tone: 'error' });
+    void refetchCats();
+  }
+
   function handleReorder(newOrder: Category[]) {
     const ids = newOrder.map((c) => c.id);
-    saveSortOrder.mutate({ kind: 'category', ids });
+    saveSortOrder.mutate({ kind: 'category', ids }, { onError: reorderFailed });
   }
 
   function handleMove(cat: Category, direction: -1 | 1) {
@@ -133,7 +141,10 @@ export function CatalogCategoriesScreen() {
     reordered.splice(targetIndex, 0, moved);
 
     setAnnouncement(catalogWords.movedAnnouncement(cat.name, targetIndex + 1, categories.length));
-    saveSortOrder.mutate({ kind: 'category', ids: reordered.map((c) => c.id) });
+    saveSortOrder.mutate(
+      { kind: 'category', ids: reordered.map((c) => c.id) },
+      { onError: reorderFailed },
+    );
   }
 
   return (
@@ -214,10 +225,9 @@ export function CatalogCategoriesScreen() {
 
         {/* Offline Banner */}
         {!isOnline && (
-          <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
-            <WifiOffIcon className="size-4 shrink-0" />
-            <span>{catalogWords.offlineNotice}</span>
-          </div>
+          <Notice tone="warning" icon={<WifiOffIcon />}>
+            {catalogWords.offlineNotice}
+          </Notice>
         )}
 
         {/* Loading Skeleton */}
@@ -240,39 +250,25 @@ export function CatalogCategoriesScreen() {
             ))}
           </div>
         ) : catsError ? (
-          <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <FolderIcon className="size-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold text-foreground">{catalogWords.loadFailed}</h3>
-              <p className="text-xs text-muted-foreground">{errorWords(errorCodeOf(catsError))}</p>
-            </div>
-            <Button
-              variant="outline"
-              className="h-11 gap-1.5 md:h-9"
-              onClick={() => void refetchCats()}
-            >
-              <RefreshCwIcon className="size-4" />
-              {catalogWords.tryAgain}
-            </Button>
-          </div>
+          <PageError
+            title={catalogWords.loadFailed}
+            message={errorWords(errorCodeOf(catsError))}
+            retryLabel={catalogWords.tryAgain}
+            onRetry={() => void refetchCats()}
+          />
         ) : categories.length === 0 ? (
-          <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 rounded-2xl border border-dashed border-border bg-card/50 p-8 py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <FolderIcon className="size-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold text-foreground">
-                {catalogWords.emptyCategories}
-              </h3>
-              <p className="text-xs text-muted-foreground">{catalogWords.categoriesHint}</p>
-            </div>
-            <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={handleOpenAdd}>
-              <PlusIcon className="size-4" />
-              {catalogWords.addCategory}
-            </Button>
-          </div>
+          <PageEmpty
+            variant="box"
+            icon={<FolderIcon />}
+            title={catalogWords.emptyCategories}
+            description={catalogWords.categoriesHint}
+            action={
+              <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={handleOpenAdd}>
+                <PlusIcon className="size-4" />
+                {catalogWords.addCategory}
+              </Button>
+            }
+          />
         ) : isReordering ? (
           <Sortable value={categories} getItemValue={(cat) => cat.id} onValueChange={handleReorder}>
             <div className="space-y-2.5">

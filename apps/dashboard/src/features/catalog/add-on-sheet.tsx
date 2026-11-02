@@ -1,15 +1,15 @@
 import * as React from 'react';
 import {
   AlertTriangleIcon,
+  CircleAlertIcon,
   BanIcon,
   CheckIcon,
   MoreHorizontalIcon,
   PlusIcon,
-  SearchIcon,
   Trash2Icon,
-  XIcon,
 } from 'lucide-react';
 import {
+  actionWords,
   formatPeso,
   catalogWords,
   groupRuleLabel,
@@ -44,7 +44,6 @@ import {
 } from '@smartapp/ui/compositions/responsive-dialog';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -54,6 +53,10 @@ import {
 } from '@smartapp/ui/components/alert-dialog';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { PesoInput } from './components/peso-input.js';
+import { PickedChip, PickRow } from './pick-list.js';
+import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { Notice } from '@/app/notice';
+import { SearchField } from '@/app/search-field';
 import { CatalogPhoto } from './catalog-photo.js';
 
 export interface AddOnSheetProps {
@@ -144,6 +147,8 @@ function AddOnForm({
 
   const saveOptionGroup = useSaveOptionGroup();
   const removeOptionGroup = useRemoveOptionGroup();
+  const saveAction = useAsyncAction();
+  const deleteAction = useAsyncAction();
   const saveItem = useSaveItem();
 
   const pickAnyMax = (count: number) => Math.max(1, Math.min(MAX_PICKS, count));
@@ -225,36 +230,13 @@ function AddOnForm({
       })),
     };
     try {
-      const saved = await saveOptionGroup.mutateAsync(group ? { id: group.id, ...draft } : draft);
-      // "Used on": add the group to newly picked items and take it off unpicked ones.
-      if (usedOn !== null) {
-        const picked = new Set(usedOn);
-        const changed = items.filter(
-          (item) => item.optionGroupIds.includes(saved.id) !== picked.has(item.id),
+      const saved = await saveAction.run(async () => {
+        const result = await saveOptionGroup.mutateAsync(
+          group ? { id: group.id, ...draft } : draft,
         );
-        await Promise.all(
-          changed.map((item) =>
-            saveItem.mutateAsync({
-              id: item.id,
-              draft: {
-                categoryId: item.categoryId,
-                name: item.name,
-                description: item.description,
-                photos: item.photos,
-                axes: item.axes,
-                variants: item.variants,
-                optionGroupIds: picked.has(item.id)
-                  ? [...item.optionGroupIds, saved.id]
-                  : item.optionGroupIds.filter((id) => id !== saved.id),
-                pairingIds: item.pairingIds,
-                featured: item.featured,
-                isNew: item.isNew,
-                status: item.status,
-              },
-            }),
-          ),
-        );
-      }
+        await syncUsedOn(result);
+        return result;
+      });
       notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
       onSaved?.(saved);
       onClose();
@@ -263,10 +245,42 @@ function AddOnForm({
     }
   };
 
+  // "Used on": add the group to newly picked items and take it off unpicked ones.
+  const syncUsedOn = async (saved: OwnerOptionGroup) => {
+    if (usedOn === null) return;
+    const picked = new Set(usedOn);
+    const changed = items.filter(
+      (item) => item.optionGroupIds.includes(saved.id) !== picked.has(item.id),
+    );
+    await Promise.all(
+      changed.map((item) =>
+        saveItem.mutateAsync({
+          id: item.id,
+          draft: {
+            categoryId: item.categoryId,
+            name: item.name,
+            description: item.description,
+            photos: item.photos,
+            axes: item.axes,
+            variants: item.variants,
+            optionGroupIds: picked.has(item.id)
+              ? [...item.optionGroupIds, saved.id]
+              : item.optionGroupIds.filter((id) => id !== saved.id),
+            pairingIds: item.pairingIds,
+            featured: item.featured,
+            isNew: item.isNew,
+            status: item.status,
+          },
+        }),
+      ),
+    );
+  };
+
   const handleDelete = async () => {
     if (!group) return;
     try {
-      await removeOptionGroup.mutateAsync({ id: group.id });
+      await deleteAction.run(() => removeOptionGroup.mutateAsync({ id: group.id }));
+      notify({ title: catalogWords.groupDeleted(group.name), tone: 'success' });
       setDeleteConfirmOpen(false);
       onClose();
     } catch (err: unknown) {
@@ -331,19 +345,15 @@ function AddOnForm({
   return (
     <form onSubmit={handleSave} className="space-y-5">
       {group && group.usedBy > 0 ? (
-        <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-sm text-warning-text">
-          <AlertTriangleIcon className="size-4 shrink-0" />
-          <span>{catalogWords.groupWarningNotice(group.usedBy)}</span>
-        </div>
+        <Notice tone="warning" icon={<AlertTriangleIcon />}>
+          {catalogWords.groupWarningNotice(group.usedBy)}
+        </Notice>
       ) : null}
 
       {errorMsg ? (
-        <p
-          role="alert"
-          className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
-        >
+        <Notice tone="error" icon={<CircleAlertIcon />}>
           {errorMsg}
-        </p>
+        </Notice>
       ) : null}
 
       <div className="space-y-1.5">
@@ -537,7 +547,7 @@ function AddOnForm({
               type="button"
               variant="ghost"
               className="h-11 text-destructive hover:bg-destructive/10 hover:text-destructive md:h-9"
-              disabled={removeOptionGroup.isPending}
+              disabled={deleteAction.busy}
               onClick={() => setDeleteConfirmOpen(true)}
             >
               {catalogWords.delete}
@@ -549,13 +559,15 @@ function AddOnForm({
             <Button type="button" variant="outline" className="h-11 md:h-9" onClick={onClose}>
               {catalogWords.cancel}
             </Button>
-            <Button
+            <AsyncButton
               type="submit"
-              disabled={saveOptionGroup.isPending}
-              className="h-11 min-w-24 font-semibold md:h-9"
+              status={saveAction.status}
+              busyLabel={actionWords.saving}
+              doneLabel={actionWords.saved}
+              className="h-11 font-semibold md:h-9"
             >
-              {saveOptionGroup.isPending ? catalogWords.saving : catalogWords.save}
-            </Button>
+              {catalogWords.save}
+            </AsyncButton>
           </div>
         </div>
       </ResponsiveDialogFooter>
@@ -572,12 +584,16 @@ function AddOnForm({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
+            <AsyncButton
+              variant="destructive"
+              status={deleteAction.status}
+              busyLabel={actionWords.deleting}
+              doneLabel={actionWords.deleted}
+              className="font-semibold"
+              onClick={() => void handleDelete()}
             >
               {catalogWords.delete}
-            </AlertDialogAction>
+            </AsyncButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -611,65 +627,39 @@ function UsedOnPicker({
       {picked.length > 0 ? (
         <ul className="flex flex-wrap gap-2">
           {picked.map((item) => (
-            <li
+            <PickedChip
               key={item.id}
-              className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-0.5 pr-0.5 pl-1.5"
-            >
-              <CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" className="size-7" />
-              <span className="max-w-36 truncate text-sm font-medium">{item.name}</span>
-              <button
-                type="button"
-                aria-label={catalogWords.removePairingAria(item.name)}
-                className="flex size-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive md:size-8"
-                onClick={() => onChange(pickedIds.filter((id) => id !== item.id))}
-              >
-                <XIcon className="size-4" />
-              </button>
-            </li>
+              media={<CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" className="size-7" />}
+              name={item.name}
+              removeLabel={catalogWords.removePairingAria(item.name)}
+              onRemove={() => onChange(pickedIds.filter((id) => id !== item.id))}
+            />
           ))}
         </ul>
       ) : (
         <p className="text-sm text-muted-foreground">{catalogWords.usedOnNone}</p>
       )}
-      <div className="relative">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          id="used-on-search"
-          value={query}
-          autoComplete="off"
-          placeholder={catalogWords.usedOnSearch}
-          className="h-11 pr-11 pl-9 md:h-9"
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        {query ? (
-          <button
-            type="button"
-            aria-label={catalogWords.clearSearch}
-            onClick={() => setQuery('')}
-            className="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground md:size-9"
-          >
-            <XIcon className="size-4" />
-          </button>
-        ) : null}
-      </div>
+      <SearchField
+        id="used-on-search"
+        value={query}
+        onChange={setQuery}
+        placeholder={catalogWords.usedOnSearch}
+        clearLabel={catalogWords.clearSearch}
+      />
       {matches.length > 0 ? (
         <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {matches.map((item) => (
             <li key={item.id}>
-              <button
-                type="button"
-                onClick={() => {
+              <PickRow
+                media={
+                  <CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" className="size-8" />
+                }
+                title={item.name}
+                onPick={() => {
                   onChange([...pickedIds, item.id]);
                   setQuery('');
                 }}
-                className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-border/50 bg-card p-1.5 text-left text-sm transition-colors hover:border-primary/40 hover:bg-muted/40"
-              >
-                <CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" className="size-8" />
-                <span className="min-w-0 flex-1 truncate font-medium text-foreground">
-                  {item.name}
-                </span>
-                <PlusIcon className="size-4 shrink-0 text-muted-foreground" />
-              </button>
+              />
             </li>
           ))}
         </ul>

@@ -19,6 +19,7 @@ import {
 } from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
+import { FieldError } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import { Switch } from '@smartapp/ui/components/switch';
@@ -116,11 +117,7 @@ export function VariantsSection({
           {catalogWords.sectionVariantsTitle(kind)}
         </h2>
         <p className="text-sm text-muted-foreground">{catalogWords.sectionVariantsHelp(kind)}</p>
-        {error ? (
-          <p role="alert" className="text-sm font-medium text-destructive">
-            {error}
-          </p>
-        ) : null}
+        {error ? <FieldError className="font-medium">{error}</FieldError> : null}
       </div>
 
       {axes.map((axis, axisIndex) => (
@@ -524,21 +521,24 @@ function AxisEditor({
                     variant="outline"
                     className="h-11 gap-1 rounded-lg bg-card pr-1 pl-3 text-sm font-medium md:h-9"
                   >
-                    <button
+                    <Button
                       type="button"
-                      className="cursor-text"
+                      variant="ghost"
+                      className="h-auto cursor-text p-0 font-medium hover:bg-transparent"
                       onClick={() => setEditing({ from: value.name, text: value.name })}
                     >
                       {value.name}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       aria-label={catalogWords.removeOptionAria(value.name)}
-                      className="flex size-10 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive md:size-7"
+                      className="size-10 text-muted-foreground hover:text-destructive md:size-7"
                       onClick={() => onRemoveOption(value.name)}
                     >
                       <XIcon className="size-4" />
-                    </button>
+                    </Button>
                   </Badge>
                 )}
               </li>
@@ -576,11 +576,7 @@ function AxisEditor({
             </Button>
           </div>
         ) : null}
-        {error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
+        {error ? <FieldError>{error}</FieldError> : null}
       </div>
     </div>
   );

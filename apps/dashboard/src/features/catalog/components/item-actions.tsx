@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { catalogWords, errorWords, type OwnerItem } from '@smartapp/core';
+import { actionWords, catalogWords, errorWords, type OwnerItem } from '@smartapp/core';
 import { useBulkSetSoldOut, useRemoveItem, useSetItemStatus, errorCodeOf } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
+import { Item, ItemContent, ItemDescription, ItemTitle } from '@smartapp/ui/components/item';
+import { AsyncButton, useAsyncAction } from '@/app/async-button';
 import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -23,6 +24,7 @@ export interface ItemActions {
   setSoldOut: (item: OwnerItem, soldOut: boolean) => void;
   archive: (item: OwnerItem) => void;
   remove: (item: OwnerItem) => void;
+  restore: (item: OwnerItem) => void;
 }
 
 export function isItemSoldOut(item: OwnerItem): boolean {
@@ -46,6 +48,7 @@ export function useItemActions(): { actions: ItemActions; dialogs: React.ReactNo
   const removeItem = useRemoveItem();
   const [soldOutTarget, setSoldOutTarget] = React.useState<OwnerItem | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<OwnerItem | null>(null);
+  const deleteAction = useAsyncAction();
 
   const markSoldOut = (item: OwnerItem, soldOutUntil: string | null) => {
     setSoldOutMany.mutate(
@@ -68,9 +71,24 @@ export function useItemActions(): { actions: ItemActions; dialogs: React.ReactNo
       void navigate({ to: '/catalog/new', search: { from: item.id } });
     },
     setVisible: (item, visible) => {
+      const previous = item.status;
       setStatus.mutate(
         { id: item.id, status: visible ? 'active' : 'hidden' },
-        { onError: showError },
+        {
+          onError: showError,
+          // The change shows on the row, but Hide is in a menu, so the toast confirms it and offers Undo.
+          onSuccess: () =>
+            notify({
+              title: visible
+                ? catalogWords.itemShown(item.name)
+                : catalogWords.itemHidden(item.name),
+              tone: 'success',
+              action: {
+                label: catalogWords.undo,
+                onClick: () => setStatus.mutate({ id: item.id, status: previous }),
+              },
+            }),
+        },
       );
     },
     setSoldOut: (item, soldOut) => {
@@ -108,6 +126,39 @@ export function useItemActions(): { actions: ItemActions; dialogs: React.ReactNo
       );
     },
     remove: (item) => setDeleteTarget(item),
+    // A restored item comes back hidden, so it never reaches customers by surprise (decision T43).
+    restore: (item) => {
+      setStatus.mutate(
+        { id: item.id, status: 'hidden' },
+        {
+          onError: showError,
+          onSuccess: () =>
+            notify({
+              title: catalogWords.itemRestored(item.name),
+              tone: 'success',
+              action: {
+                label: catalogWords.showNow,
+                onClick: () =>
+                  setStatus.mutate({ id: item.id, status: 'active' }, { onError: showError }),
+              },
+            }),
+        },
+      );
+    },
+  };
+
+  const forever = deleteTarget?.status === 'archived';
+  const handleDelete = async () => {
+    const target = deleteTarget;
+    if (!target) return;
+    try {
+      await deleteAction.run(() => removeItem.mutateAsync({ id: target.id }));
+      setDeleteTarget(null);
+      notify({ title: catalogWords.itemDeleted(target.name), tone: 'success' });
+    } catch (err: unknown) {
+      setDeleteTarget(null);
+      showError(err);
+    }
   };
 
   const dialogs = (
@@ -135,23 +186,30 @@ export function useItemActions(): { actions: ItemActions; dialogs: React.ReactNo
               ],
             ] as const
           ).map(([choice, title, desc]) => (
-            <button
+            <Item
               key={choice}
-              type="button"
-              onClick={() => {
-                if (soldOutTarget) {
-                  markSoldOut(
-                    soldOutTarget,
-                    choice === 'today' ? new Date(Date.now() + DAY_MS).toISOString() : null,
-                  );
-                }
-                setSoldOutTarget(null);
-              }}
-              className="flex min-h-14 w-full flex-col items-start gap-0.5 rounded-xl border border-border/80 bg-card p-3.5 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
+              variant="outline"
+              render={
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (soldOutTarget) {
+                      markSoldOut(
+                        soldOutTarget,
+                        choice === 'today' ? new Date(Date.now() + DAY_MS).toISOString() : null,
+                      );
+                    }
+                    setSoldOutTarget(null);
+                  }}
+                />
+              }
+              className="min-h-14 w-full rounded-xl border-border/80 bg-card p-3.5 text-left hover:border-primary/50 hover:bg-muted/40"
             >
-              <span className="text-sm font-semibold text-foreground">{title}</span>
-              <span className="text-sm text-muted-foreground">{desc}</span>
-            </button>
+              <ItemContent>
+                <ItemTitle className="font-semibold">{title}</ItemTitle>
+                <ItemDescription>{desc}</ItemDescription>
+              </ItemContent>
+            </Item>
           ))}
           <Button
             type="button"
@@ -173,30 +231,26 @@ export function useItemActions(): { actions: ItemActions; dialogs: React.ReactNo
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {catalogWords.deleteItemTitle(deleteTarget?.name ?? '')}
+              {forever
+                ? catalogWords.deleteForeverTitle(deleteTarget?.name ?? '')
+                : catalogWords.deleteItemTitle(deleteTarget?.name ?? '')}
             </AlertDialogTitle>
-            <AlertDialogDescription>{catalogWords.deleteItemDescription}</AlertDialogDescription>
+            <AlertDialogDescription>
+              {forever ? catalogWords.deleteForeverDescription : catalogWords.deleteItemDescription}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                const target = deleteTarget;
-                setDeleteTarget(null);
-                if (!target) return;
-                removeItem.mutate(
-                  { id: target.id },
-                  {
-                    onError: showError,
-                    onSuccess: () =>
-                      notify({ title: catalogWords.itemDeleted(target.name), tone: 'success' }),
-                  },
-                );
-              }}
+            <AlertDialogCancel className="h-11 md:h-9">{catalogWords.cancel}</AlertDialogCancel>
+            <AsyncButton
+              variant="destructive"
+              className="h-11 font-semibold md:h-9"
+              status={deleteAction.status}
+              busyLabel={actionWords.deleting}
+              doneLabel={actionWords.deleted}
+              onClick={() => void handleDelete()}
             >
-              {catalogWords.delete}
-            </AlertDialogAction>
+              {forever ? catalogWords.deleteForever : catalogWords.delete}
+            </AsyncButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

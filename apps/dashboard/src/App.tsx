@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { DataProvider } from '@smartapp/data';
+import { AppToaster } from '@smartapp/ui/compositions/app-toaster';
 import { router } from './app/router.js';
 import { env } from './app/env.js';
 
@@ -25,7 +26,10 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <DataProvider source={env.VITE_DATA_SOURCE}>
-        <RouterProvider router={router} />
+        {/* One toaster for every page, so every notify() shows (Saved, errors, Undo). */}
+        <AppToaster>
+          <RouterProvider router={router} />
+        </AppToaster>
       </DataProvider>
       {ReactQueryDevtools && (
         <Suspense fallback={null}>

@@ -5,6 +5,7 @@ import { catalogWords, errorWords } from '@smartapp/core';
 import { useOwnerItem, errorCodeOf } from '@smartapp/data';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Button } from '@smartapp/ui/components/button';
+import { PageEmpty } from '@/app/page-state';
 import { ItemEditor } from '../item-editor.js';
 
 export function CatalogItemScreen() {
@@ -28,36 +29,33 @@ export function CatalogItemScreen() {
 
   if (error || !item) {
     return (
-      <div className="mx-auto flex min-h-80 max-w-sm flex-col items-center justify-center space-y-4 p-6 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-          <AlertCircleIcon className="size-6" />
-        </div>
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold text-foreground">
-            {error ? catalogWords.loadFailed : catalogWords.itemNotFound}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {error ? errorWords(errorCodeOf(error)) : catalogWords.itemNotFoundHint}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 pt-2">
-          {error && (
-            <Button variant="outline" size="sm" onClick={() => void refetch()}>
-              <RefreshCwIcon className="mr-1 size-3.5" />
-              {catalogWords.tryAgain}
+      <PageEmpty
+        className="min-h-80 p-6"
+        icon={<AlertCircleIcon className="text-destructive" />}
+        title={error ? catalogWords.loadFailed : catalogWords.itemNotFound}
+        description={error ? errorWords(errorCodeOf(error)) : catalogWords.itemNotFoundHint}
+        action={
+          <>
+            {error ? (
+              <Button
+                variant="outline"
+                className="h-11 gap-1.5 md:h-9"
+                onClick={() => void refetch()}
+              >
+                <RefreshCwIcon className="size-4" />
+                {catalogWords.tryAgain}
+              </Button>
+            ) : null}
+            <Button
+              className="h-11 gap-1.5 font-semibold md:h-9"
+              onClick={() => void navigate({ to: '/catalog' })}
+            >
+              <ArrowLeftIcon className="size-4" />
+              {catalogWords.backToList(kind)}
             </Button>
-          )}
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-            onClick={() => navigate({ to: '/catalog' })}
-          >
-            <ArrowLeftIcon className="mr-1 size-3.5" />
-            {catalogWords.backToList(kind)}
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
     );
   }
 

@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { ImageUpIcon, SearchIcon, SparklesIcon, XIcon } from 'lucide-react';
+import { CircleAlertIcon, ImageUpIcon, SparklesIcon } from 'lucide-react';
 import {
+  actionWords,
   catalogWords,
   errorWords,
   guessIconKey,
@@ -19,7 +20,9 @@ import { Button } from '@smartapp/ui/components/button';
 import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
+import { FieldError } from '@smartapp/ui/components/field';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
+import { FileUpload, FileUploadDropzone } from '@smartapp/ui/components/file-upload';
 import {
   Cropper,
   CropperArea,
@@ -33,6 +36,9 @@ import {
 } from '@smartapp/ui/compositions/responsive-dialog';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { useShop } from '@/app/shop';
+import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { Notice } from '@/app/notice';
+import { SearchField } from '@/app/search-field';
 import { env } from '@/app/env';
 import { DeleteCategoryDialog } from './delete-category-dialog.js';
 import { shopIconStyle } from './icon-style.js';
@@ -110,6 +116,7 @@ function CategoryForm({
   const [formError, setFormError] = React.useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const saveCategory = useSaveCategory();
+  const saveAction = useAsyncAction();
 
   const handleNameChange = (value: string) => {
     setName(value);
@@ -135,8 +142,10 @@ function CategoryForm({
       return;
     }
     try {
-      const saved = await saveCategory.mutateAsync(
-        category ? { id: category.id, name: trimmed, icon } : { name: trimmed, icon },
+      const saved = await saveAction.run(() =>
+        saveCategory.mutateAsync(
+          category ? { id: category.id, name: trimmed, icon } : { name: trimmed, icon },
+        ),
       );
       notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
       onSaved?.(saved);
@@ -155,12 +164,9 @@ function CategoryForm({
   return (
     <form onSubmit={handleSave} className="space-y-5" noValidate>
       {formError ? (
-        <p
-          role="alert"
-          className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
-        >
+        <Notice tone="error" icon={<CircleAlertIcon />}>
           {formError}
-        </p>
+        </Notice>
       ) : null}
 
       <div className="space-y-1.5">
@@ -196,9 +202,7 @@ function CategoryForm({
           />
         </div>
         {nameError ? (
-          <p id="category-name-error" className="text-sm text-destructive">
-            {nameError}
-          </p>
+          <FieldError id="category-name-error">{nameError}</FieldError>
         ) : autoPicked ? (
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <SparklesIcon className="size-3.5 text-primary" />
@@ -270,13 +274,15 @@ function CategoryForm({
             <Button type="button" variant="outline" className="h-11 md:h-9" onClick={onClose}>
               {catalogWords.cancel}
             </Button>
-            <Button
+            <AsyncButton
               type="submit"
-              disabled={saveCategory.isPending}
-              className="h-11 min-w-24 font-semibold md:h-9"
+              status={saveAction.status}
+              busyLabel={actionWords.saving}
+              doneLabel={actionWords.saved}
+              className="h-11 font-semibold md:h-9"
             >
-              {saveCategory.isPending ? catalogWords.saving : catalogWords.save}
-            </Button>
+              {catalogWords.save}
+            </AsyncButton>
           </div>
         </div>
       </ResponsiveDialogFooter>
@@ -318,67 +324,51 @@ function IconGrid({
 
   return (
     <div className="space-y-2.5">
-      <div className="relative">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          aria-label={catalogWords.iconSearchPlaceholder}
-          placeholder={catalogWords.iconSearchPlaceholder}
-          autoComplete="off"
-          className="h-11 pr-11 pl-9 md:h-9"
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        {query ? (
-          <button
-            type="button"
-            aria-label={catalogWords.clearSearch}
-            onClick={() => setQuery('')}
-            className="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground md:size-9"
-          >
-            <XIcon className="size-4" />
-          </button>
-        ) : null}
-      </div>
+      <SearchField
+        value={query}
+        onChange={setQuery}
+        ariaLabel={catalogWords.iconSearchPlaceholder}
+        placeholder={catalogWords.iconSearchPlaceholder}
+        clearLabel={catalogWords.clearSearch}
+      />
 
       {keys.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
           {catalogWords.iconNoMatch}
         </p>
       ) : (
-        <div
+        // The installed Toggle Group: one pick, arrow keys move between icons (decision T43).
+        <ToggleGroup
+          value={selected ? [selected] : []}
+          onValueChange={(value) => {
+            const next = IconKeyEnum.safeParse(value[0]);
+            if (next.success) onPick(next.data);
+          }}
+          aria-label={catalogWords.categoryIconLabel}
+          spacing={0}
           className={cn(
-            'grid grid-cols-6 gap-1.5 sm:grid-cols-8',
+            'grid w-full grid-cols-6 gap-1.5 sm:grid-cols-8',
             (showAll || trimmed) &&
               'max-h-64 overflow-y-auto rounded-xl border border-border/60 bg-muted/20 p-1.5',
           )}
         >
-          {keys.map((key) => {
-            const isSelected = selected === key;
-            return (
-              <button
-                key={key}
-                type="button"
-                aria-label={catalogWords.selectIconAria(key.replaceAll('_', ' '))}
-                aria-pressed={isSelected}
-                title={key.replaceAll('_', ' ')}
-                onClick={() => onPick(key)}
-                className={cn(
-                  'flex aspect-square min-h-11 items-center justify-center rounded-xl border p-1.5 transition-colors',
-                  isSelected
-                    ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
-                    : 'border-border/50 bg-card hover:bg-muted/60',
-                )}
-              >
-                <img
-                  src={`${origin}${iconPath({ kind: 'fluent', key, style }, style)}`}
-                  alt=""
-                  className="size-7 object-contain"
-                  loading="lazy"
-                />
-              </button>
-            );
-          })}
-        </div>
+          {keys.map((key) => (
+            <ToggleGroupItem
+              key={key}
+              value={key}
+              aria-label={catalogWords.selectIconAria(key.replaceAll('_', ' '))}
+              title={key.replaceAll('_', ' ')}
+              className="aspect-square h-auto min-h-11 rounded-xl border border-border/50 bg-card p-1.5 hover:bg-muted/60 aria-pressed:border-primary aria-pressed:bg-primary/10 aria-pressed:ring-2 aria-pressed:ring-primary/30"
+            >
+              <img
+                src={`${origin}${iconPath({ kind: 'fluent', key, style }, style)}`}
+                alt=""
+                className="size-7 object-contain"
+                loading="lazy"
+              />
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
       )}
 
       {!trimmed ? (
@@ -402,11 +392,10 @@ function IconUpload({
   current: string | null;
   onPick: (icon: CategoryIconType) => void;
 }) {
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
   const [source, setSource] = React.useState<string | null>(null);
   const [crop, setCrop] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [area, setArea] = React.useState<CropperAreaData | null>(null);
-  const [busy, setBusy] = React.useState(false);
+  const applyAction = useAsyncAction();
 
   React.useEffect(() => {
     return () => {
@@ -414,9 +403,7 @@ function IconUpload({
     };
   }, [source]);
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
+  const handleFile = (file: File | undefined) => {
     if (!file) return;
     setArea(null);
     setCrop({ x: 0, y: 0 });
@@ -425,27 +412,23 @@ function IconUpload({
 
   const handleUse = async () => {
     if (!source || !area) return;
-    setBusy(true);
     try {
-      const ref = await cropImage(source, area, 128);
+      const ref = await applyAction.run(() => cropImage(source, area, 128));
       onPick({ kind: 'image', ref });
       setSource(null);
     } catch {
       notify({ title: catalogWords.photoProcessFailed, tone: 'error' });
-    } finally {
-      setBusy(false);
     }
   };
 
   return (
-    <div className="space-y-3">
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        onChange={handleFile}
-        className="hidden"
-      />
+    <FileUpload
+      accept="image/png,image/jpeg,image/webp"
+      label={catalogWords.iconUploadChoose}
+      onAccept={(files) => handleFile(files[0])}
+      onFileReject={() => notify({ title: catalogWords.photoUnsupported, tone: 'error' })}
+      className="gap-3"
+    >
       {source ? (
         <>
           <div className="relative h-56 overflow-hidden rounded-xl border border-border bg-muted">
@@ -469,22 +452,21 @@ function IconUpload({
             >
               {catalogWords.cancel}
             </Button>
-            <Button
+            <AsyncButton
               type="button"
               className="h-11 font-semibold md:h-9"
-              disabled={!area || busy}
+              status={applyAction.status}
+              busyLabel={actionWords.applying}
+              doneLabel={actionWords.applied}
+              disabled={!area}
               onClick={() => void handleUse()}
             >
-              {busy ? catalogWords.saving : catalogWords.iconUploadUse}
-            </Button>
+              {catalogWords.iconUploadUse}
+            </AsyncButton>
           </div>
         </>
       ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-border/80 bg-muted/20 p-4 text-left transition-colors hover:border-primary/50"
-        >
+        <FileUploadDropzone className="cursor-pointer flex-row justify-start gap-3 rounded-xl border-border/80 bg-muted/20 p-4 text-left hover:border-primary/50 data-dragging:border-primary data-dragging:bg-primary/5">
           {current ? (
             <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
               <CategoryIcon
@@ -506,8 +488,8 @@ function IconUpload({
               {catalogWords.iconUploadHelp}
             </span>
           </span>
-        </button>
+        </FileUploadDropzone>
       )}
-    </div>
+    </FileUpload>
   );
 }
