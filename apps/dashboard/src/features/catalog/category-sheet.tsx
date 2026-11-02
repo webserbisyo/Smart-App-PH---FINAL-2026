@@ -50,6 +50,8 @@ export interface CategorySheetProps {
   category?: Category | null | undefined;
   // Called with the saved category, e.g. so the item editor can pick a category it just made.
   onSaved?: ((category: Category) => void) | undefined;
+  // Opened from inside the item editor, where the result shows in place: no success toast (ux.md s8).
+  quiet?: boolean | undefined;
 }
 
 type IconTab = 'icons' | 'emoji' | 'upload';
@@ -59,7 +61,13 @@ const SEARCH_LIMIT = 36;
 
 // Category form: one dialog on desktop, one bottom drawer on phone, with the icon picker inside it
 // (decision T42: no second dialog on top of the first).
-export function CategorySheet({ open, onOpenChange, category, onSaved }: CategorySheetProps) {
+export function CategorySheet({
+  open,
+  onOpenChange,
+  category,
+  onSaved,
+  quiet = false,
+}: CategorySheetProps) {
   return (
     <ResponsiveDialog
       open={open}
@@ -73,6 +81,7 @@ export function CategorySheet({ open, onOpenChange, category, onSaved }: Categor
           key={category ? category.id : 'new'}
           category={category}
           onSaved={onSaved}
+          quiet={quiet}
           onClose={() => onOpenChange(false)}
         />
       ) : null}
@@ -95,10 +104,12 @@ function initialIcon(
 function CategoryForm({
   category,
   onSaved,
+  quiet,
   onClose,
 }: {
   category?: Category | null | undefined;
   onSaved?: ((category: Category) => void) | undefined;
+  quiet: boolean;
   onClose: () => void;
 }) {
   const { kind } = useShop();
@@ -147,7 +158,7 @@ function CategoryForm({
           category ? { id: category.id, name: trimmed, icon } : { name: trimmed, icon },
         ),
       );
-      notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
+      if (!quiet) notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
       onSaved?.(saved);
       onClose();
     } catch (err: unknown) {

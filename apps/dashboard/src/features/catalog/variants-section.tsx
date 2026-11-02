@@ -471,6 +471,7 @@ export function VariantsSection({
         template={sheet.open ? sheet.template : null}
         initial={sheet.open ? sheet.initial : undefined}
         onSaved={handleSheetSaved}
+        quiet
         onDeleted={(deleted) =>
           commit({
             axes: axes.map((a) => (a.templateId === deleted.id ? unlinkChoice(a) : a)),

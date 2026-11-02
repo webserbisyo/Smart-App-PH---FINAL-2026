@@ -310,7 +310,12 @@ export function CatalogAddOnsScreen() {
         )}
       </div>
 
-      <AddOnSheet open={sheetOpen} onOpenChange={setSheetOpen} group={selectedGroup} />
+      <AddOnSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        group={selectedGroup}
+        onSaved={(saved) => setHighlightId(saved.id)}
+      />
 
       <AlertDialog
         open={deleteTarget !== null}

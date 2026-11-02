@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { cn } from 'cn';
 import { Outlet, useRouterState } from '@tanstack/react-router';
 import { words } from '@smartapp/core';
 import type { UserClaims } from '@smartapp/data';
@@ -37,6 +38,7 @@ function Shell({ claims }: { claims: UserClaims }) {
   usePageTitle(page.title);
 
   const isTablet = formFactor === 'tablet';
+  const showDock = formFactor === 'phone' && !page.hideDock;
 
   return (
     <div data-shell={formFactor} className="min-h-dvh bg-background">
@@ -67,7 +69,7 @@ function Shell({ claims }: { claims: UserClaims }) {
           <div
             id="main"
             tabIndex={-1}
-            className="flex flex-1 flex-col outline-none shell-phone:pb-dock"
+            className={cn('flex flex-1 flex-col outline-none', showDock && 'pb-dock')}
           >
             <Outlet />
           </div>
@@ -82,7 +84,7 @@ function Shell({ claims }: { claims: UserClaims }) {
         ) : null}
       </SidebarProvider>
 
-      {formFactor === 'phone' ? (
+      {showDock ? (
         <BottomDock
           label={words.shell.mainNav}
           items={nav.dock}

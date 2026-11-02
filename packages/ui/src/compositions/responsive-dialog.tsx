@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,13 @@ export function ResponsiveDialogFooter({ children }: { children: ReactNode }) {
   );
 }
 
+// A sheet opened from inside another form (a variant sheet in the item editor) renders in a portal, but
+// React still sends its submit event up to that outer form. Stopping it here means a sheet's Save only
+// ever saves the sheet.
+function keepSubmitInside(event: FormEvent) {
+  event.stopPropagation();
+}
+
 // Overlays: Dialog on tablet and desktop, bottom Drawer on phone, same content.
 export function ResponsiveDialog({
   open,
@@ -54,7 +61,10 @@ export function ResponsiveDialog({
 
   if (scroll) {
     const body = (
-      <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-6 has-data-[slot=responsive-dialog-footer]:pb-0 sm:px-6">
+      <div
+        onSubmit={keepSubmitInside}
+        className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-4 pb-6 has-data-[slot=responsive-dialog-footer]:pb-0 sm:px-6"
+      >
         {children}
       </div>
     );
@@ -92,7 +102,9 @@ export function ResponsiveDialog({
             <DrawerTitle>{title}</DrawerTitle>
             {description ? <DrawerDescription>{description}</DrawerDescription> : null}
           </DrawerHeader>
-          <div className="px-4 pb-4">{children}</div>
+          <div onSubmit={keepSubmitInside} className="px-4 pb-4">
+            {children}
+          </div>
         </DrawerContent>
       </Drawer>
     );
@@ -105,7 +117,9 @@ export function ResponsiveDialog({
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
-        {children}
+        <div onSubmit={keepSubmitInside} className="contents">
+          {children}
+        </div>
       </DialogContent>
     </Dialog>
   );
