@@ -58,18 +58,19 @@ Files: `apps/dashboard/src/features/orders/screens/orders.tsx`, `now-board.tsx`,
 
 **Layout by width (ux.md section 1):**
 
-| Width | Board |
-| --- | --- |
-| Phone below 768 px | A sticky **status strip** at the top (New 3 · Preparing 2 · Ready 1 · Out 1, DiceUI Scroller if it overflows). Tap a step to show that step's tickets as one full-width list. The strip remembers the step in the URL (`?step=ready`). After a step change, the ticket leaves the list with a 200 ms slide; the check state of the button says where it went ("Moved to Ready"). No drag. |
-| Tablet 768 to 1023 px | Three columns visible with scroll-snap sideways; tap buttons only; no drag. |
-| Laptop 1024 px and up | All columns side by side, each scrolls on its own. **ReUI Kanban** for drag with a mouse. A drop on the next column calls `advanceOrder`. Any other drop snaps back (`restoreOnCancel`) with a short toast saying why ("Orders move one step at a time"). |
-| Desktop 1280 px and up | Columns plus the **detail side panel** on the right (Part C) when an order is open. |
+| Width                  | Board                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phone below 768 px     | A sticky **status strip** at the top (New 3 · Preparing 2 · Ready 1 · Out 1, DiceUI Scroller if it overflows). Tap a step to show that step's tickets as one full-width list. The strip remembers the step in the URL (`?step=ready`). After a step change, the ticket leaves the list with a 200 ms slide; the check state of the button says where it went ("Moved to Ready"). No drag. |
+| Tablet 768 to 1023 px  | Three columns visible with scroll-snap sideways; tap buttons only; no drag.                                                                                                                                                                                                                                                                                                               |
+| Laptop 1024 px and up  | All columns side by side, each scrolls on its own. **ReUI Kanban** for drag with a mouse. A drop on the next column calls `advanceOrder`. Any other drop snaps back (`restoreOnCancel`) with a short toast saying why ("Orders move one step at a time").                                                                                                                                 |
+| Desktop 1280 px and up | Columns plus the **detail side panel** on the right (Part C) when an order is open.                                                                                                                                                                                                                                                                                                       |
 
 **Starting soon strip:** above the columns, collapsed to one line ("3 starting soon · next 2:30 PM"); tap to expand. Each item there has a **Start now** button.
 
 **Done today:** shows the last 10 with "Show all in History" (link to `?view=history`).
 
 **Speed (required, the cloud check measures it):**
+
 1. One shared clock: a `useNow(30_000)` hook for the page. No timers inside tickets.
 2. Tickets are `React.memo` and only re-render when that order's `status`, `paymentStatus`, `seenAt` or `scheduledAt` changes, or the clock ticks.
 3. Optimistic step changes through the O1 mutations; a failure rolls the card back and shows an error toast with Try again.
