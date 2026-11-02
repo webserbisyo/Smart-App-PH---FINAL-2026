@@ -453,7 +453,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           ? 2000 + rng() * 600 - 300
           : 400 + rng() * 300 - 150;
     if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
-    if (sc.offline) fail('unknown', 0);
+    if (sc.offline) fail('offline', 0);
     if (sc.fail === 'all' || sc.fail === area) fail('unknown', 500);
     return clone(fn());
   }
@@ -1181,6 +1181,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       const slug = await resolveOwnerShopSlug();
       return run('catalog', () => {
         const s = requireShop(slug);
+        // The dev Empty switch shows the first-run screens (decision T45).
+        if (scenario().empty) return [];
         return s.shop.catalog.categories
           .map((c) => CategorySchema.parse(c))
           .sort((a, b) => a.sort - b.sort);
@@ -1227,6 +1229,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       const slug = await resolveOwnerShopSlug();
       return run('catalog', () => {
         const s = requireShop(slug);
+        // The dev Empty switch shows the first-run screens (decision T45).
+        if (scenario().empty) return [];
         return s.shop.catalog.items.map((item) => {
           const hasOrders = s.orders.some((o) => o.receipt.lines.some((l) => l.itemId === item.id));
           return OwnerItemSchema.parse({ ...item, hasOrders });
@@ -1328,6 +1332,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       const slug = await resolveOwnerShopSlug();
       return run('catalog', () => {
         const s = requireShop(slug);
+        // The dev Empty switch shows the first-run screens (decision T45).
+        if (scenario().empty) return [];
         return s.shop.catalog.optionGroups.map((group) => {
           const usedBy = s.shop.catalog.items.filter((i) =>
             i.optionGroupIds.includes(group.id),

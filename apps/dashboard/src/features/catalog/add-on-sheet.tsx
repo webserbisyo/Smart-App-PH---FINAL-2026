@@ -37,7 +37,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
-import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+  FieldTitle,
+} from '@smartapp/ui/components/field';
+import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import {
   ResponsiveDialog,
   ResponsiveDialogFooter,
@@ -54,7 +61,7 @@ import {
 import { notify } from '@smartapp/ui/compositions/notify';
 import { PesoInput } from './components/peso-input.js';
 import { PickedChip, PickRow } from './pick-list.js';
-import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { Notice } from '@/app/notice';
 import { SearchField } from '@/app/search-field';
 import { CatalogPhoto } from './catalog-photo.js';
@@ -378,32 +385,37 @@ function AddOnForm({
           <Label>{catalogWords.ruleLabel}</Label>
           <p className="text-sm text-muted-foreground">{catalogWords.groupRuleHelp}</p>
         </div>
-        <ToggleGroup
-          value={[rulePreset]}
-          onValueChange={(vals) => {
-            const next = vals[vals.length - 1];
-            if (next && isRulePreset(next)) handlePresetChange(next);
+        {/* Radio cards, the kit c-radio-group-7 pattern: each rule with one line on what customers see
+            (decision T45). */}
+        <RadioGroup
+          value={rulePreset}
+          onValueChange={(next) => {
+            if (typeof next === 'string' && isRulePreset(next)) handlePresetChange(next);
           }}
-          variant="outline"
-          className="grid w-full grid-cols-2 gap-2"
+          aria-label={catalogWords.ruleLabel}
+          className="grid w-full gap-2 sm:grid-cols-2"
         >
-          {RULE_PRESETS.map((preset) => (
-            <ToggleGroupItem
-              key={preset}
-              value={preset}
-              className="h-11 justify-center aria-pressed:border-primary aria-pressed:bg-primary/5 aria-pressed:text-primary md:h-9"
-            >
-              {
-                {
-                  pick_1_req: catalogWords.rulePickOneRequired,
-                  pick_1_opt: catalogWords.rulePickOneOptional,
-                  pick_any: catalogWords.rulePickAny,
-                  custom: catalogWords.ruleCustom,
-                }[preset]
-              }
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+          {RULE_PRESETS.map((preset) => {
+            const [title, desc] = {
+              pick_1_req: [catalogWords.rulePickOneRequired, catalogWords.rulePickOneRequiredDesc],
+              pick_1_opt: [catalogWords.rulePickOneOptional, catalogWords.rulePickOneOptionalDesc],
+              pick_any: [catalogWords.rulePickAny, catalogWords.rulePickAnyDesc],
+              custom: [catalogWords.ruleCustom, catalogWords.ruleCustomDesc],
+            }[preset];
+            const id = `rule-${preset}`;
+            return (
+              <FieldLabel key={preset} htmlFor={id}>
+                <Field orientation="horizontal">
+                  <FieldContent>
+                    <FieldTitle>{title}</FieldTitle>
+                    <FieldDescription>{desc}</FieldDescription>
+                  </FieldContent>
+                  <RadioGroupItem value={preset} id={id} />
+                </Field>
+              </FieldLabel>
+            );
+          })}
+        </RadioGroup>
 
         {rulePreset === 'custom' ? (
           <div className="grid grid-cols-2 gap-3 rounded-xl border border-border/60 bg-muted/20 p-3">

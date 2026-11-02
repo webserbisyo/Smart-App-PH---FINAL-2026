@@ -94,7 +94,7 @@ export function BasketGoesWellWith({
                     size="icon-xs"
                     variant="outline"
                     className="size-7 rounded-full border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground"
-                    aria-label={`Add ${item.name}`}
+                    aria-label={words.storefrontShell.menu.addItem(item.name)}
                     onClick={() => handleAdd(item)}
                   >
                     <PlusIcon className="size-3.5" aria-hidden="true" />

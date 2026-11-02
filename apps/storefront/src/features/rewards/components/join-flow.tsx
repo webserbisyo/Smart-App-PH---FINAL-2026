@@ -29,6 +29,7 @@ import { MaskInput } from '@smartapp/ui/components/mask-input';
 import { Pending } from '@smartapp/ui/components/pending';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
 import { Spinner } from '@smartapp/ui/components/spinner';
+import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { stampBurst } from '@smartapp/ui/compositions/celebrate';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
@@ -81,8 +82,11 @@ export function JoinFlow() {
     if (isMember) router.replace(`/${slug}/${cardOn ? 'rewards' : 'account'}`);
   }, [isMember, router, slug, cardOn]);
 
+  // The code step puts the cursor in the code boxes, so the keyboard is ready (decision T45);
+  // the other steps move focus to their heading.
   useEffect(() => {
-    headingRef.current?.focus();
+    if (step === 'code') codeRef.current?.focus();
+    else headingRef.current?.focus();
   }, [step]);
 
   function send(onSent?: () => void) {
@@ -349,15 +353,16 @@ export function JoinFlow() {
             ) : null}
 
             <Pending isPending={sendCode.isPending}>
-              <Button
+              <AsyncButton
                 id="join-send-code"
                 type="submit"
-                disabled={sendCode.isPending}
+                status={sendCode.isPending ? 'loading' : 'idle'}
+                busyLabel={W.sending}
+                doneLabel={W.sendCode}
                 className="h-12 w-full rounded-full text-base font-semibold"
               >
-                {sendCode.isPending ? <Spinner aria-hidden="true" /> : null}
-                {sendCode.isPending ? W.sending : W.sendCode}
-              </Button>
+                {W.sendCode}
+              </AsyncButton>
             </Pending>
             <p className="text-center text-xs text-muted-foreground">
               {W.consent}{' '}
@@ -397,16 +402,18 @@ export function JoinFlow() {
             error={codeError}
             disabled={verifyCode.isPending || join.isPending}
           />
-          <Button
+          <AsyncButton
             id="join-verify"
             type="button"
             onClick={() => handleVerify(code)}
-            disabled={code.length < 6 || verifyCode.isPending || join.isPending}
+            status={verifyCode.isPending || join.isPending ? 'loading' : 'idle'}
+            busyLabel={W.verifying}
+            doneLabel={W.verify}
+            disabled={code.length < 6}
             className="h-12 w-full rounded-full text-base font-semibold"
           >
-            {verifyCode.isPending || join.isPending ? <Spinner aria-hidden="true" /> : null}
-            {verifyCode.isPending || join.isPending ? W.verifying : W.verify}
-          </Button>
+            {W.verify}
+          </AsyncButton>
           <Button
             type="button"
             variant="ghost"

@@ -25,7 +25,7 @@ import {
 } from '@smartapp/ui/components/select';
 import { Label } from '@smartapp/ui/components/label';
 import { notify } from '@smartapp/ui/compositions/notify';
-import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 
 export interface DeleteCategoryDialogProps {
   category: Category | null;

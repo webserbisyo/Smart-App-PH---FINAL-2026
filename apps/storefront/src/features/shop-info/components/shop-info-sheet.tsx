@@ -7,7 +7,7 @@ import { useNow } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
 import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
-import { CopyButton } from '../../checkout/components/copy-button';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { OpenState } from '../../shell/components/open-state';
 import { useShop } from '../../shell/components/shop-context';
 import { ContactTiles } from './contact-tiles';
@@ -97,7 +97,7 @@ function ShopInfoBody() {
           icon={<MapPinIcon />}
           action={
             <CopyButton
-              textToCopy={contact.address}
+              value={contact.address}
               label={words.storefrontShell.info.copyAddress}
               className="h-11 rounded-full px-4"
             />

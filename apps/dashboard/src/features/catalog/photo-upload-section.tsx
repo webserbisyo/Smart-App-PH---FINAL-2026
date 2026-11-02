@@ -36,7 +36,7 @@ import {
 } from '@smartapp/ui/components/file-upload';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
 import { notify } from '@smartapp/ui/compositions/notify';
-import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { Notice } from '@/app/notice';
 import { CatalogPhoto, catalogPhotoSrc } from './catalog-photo.js';
 import { cn } from 'cn';

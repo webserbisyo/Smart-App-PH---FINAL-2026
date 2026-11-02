@@ -21,7 +21,13 @@ export async function fetchApi<T>(
   schema: z.ZodType<T>,
   options?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(url, options);
+  let res: Response;
+  try {
+    res = await fetch(url, options);
+  } catch {
+    // The request never left the phone or got no answer: word it as offline, not a server error.
+    throw new ApiRequestError({ status: 0, code: 'offline', message: errorWords('offline') });
+  }
   if (!res.ok) {
     let errorJson: unknown = null;
     try {

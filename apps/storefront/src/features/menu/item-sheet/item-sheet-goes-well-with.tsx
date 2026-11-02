@@ -85,7 +85,7 @@ export function ItemSheetGoesWellWith({
                       size="icon"
                       variant="secondary"
                       className="size-6 rounded-full"
-                      aria-label={`Add ${item.name}`}
+                      aria-label={words.storefrontShell.menu.addItem(item.name)}
                       onClick={() => {
                         if (isQuick) {
                           onQuickAdd(item);

@@ -38,7 +38,7 @@ import {
 import { env } from '@/app/env';
 import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
-import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { Notice } from '@/app/notice';
 import { SearchField } from '@/app/search-field';
 import { Badge } from '@smartapp/ui/components/badge';

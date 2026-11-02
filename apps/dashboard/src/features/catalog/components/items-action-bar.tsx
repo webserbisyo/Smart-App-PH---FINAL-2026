@@ -15,7 +15,6 @@ import {
   ActionBarGroup,
   ActionBarItem,
   ActionBarSelection,
-  ActionBarSeparator,
 } from '@smartapp/ui/components/action-bar';
 import {
   DropdownMenu,
@@ -42,7 +41,9 @@ export interface ItemsActionBarProps {
   sideOffset?: number | undefined;
 }
 
-const action = 'h-11 justify-start gap-1.5 text-sm font-medium whitespace-nowrap md:h-9';
+// Phones: one row of icon-over-word buttons, so the bar stays short (decision T45). Desktop: one line.
+const action =
+  'h-14 min-w-0 flex-col justify-center gap-1 px-1 text-xs leading-tight font-medium whitespace-normal md:h-9 md:flex-row md:justify-start md:gap-1.5 md:px-3 md:text-sm md:whitespace-nowrap';
 
 // Bulk actions for the picked items. Only the actions that change something show (finding B3),
 // so the bar stays one line on desktop.
@@ -73,7 +74,9 @@ export function ItemsActionBar({
       }}
       side="bottom"
       sideOffset={sideOffset}
-      className="w-11/12 max-w-4xl flex-wrap border-border/80 bg-card px-3 py-2 text-card-foreground shadow-xl md:w-auto md:flex-nowrap"
+      // Lets globals.css move toasts to the top while this bar is open on phones.
+      data-bulk-bar=""
+      className="w-11/12 max-w-4xl flex-wrap gap-y-1.5 border-border/80 bg-card px-2 py-2 text-card-foreground shadow-xl md:w-auto md:flex-nowrap md:px-3"
     >
       <ActionBarSelection className="rounded-md border-primary/20 bg-primary/10 px-2.5 py-1 font-semibold whitespace-nowrap text-primary">
         <span>{catalogWords.selectedCount(selected.length)}</span>
@@ -87,9 +90,7 @@ export function ItemsActionBar({
         <XIcon className="size-4" />
       </ActionBarClose>
 
-      <ActionBarSeparator className="hidden md:order-last md:block" />
-
-      <ActionBarGroup className="grid w-full grid-cols-2 gap-1.5 md:flex md:w-auto md:items-center">
+      <ActionBarGroup className="grid w-full auto-cols-fr grid-flow-col gap-1 md:flex md:w-auto md:items-center md:gap-1.5">
         {anyAvailable ? (
           <ActionBarItem
             variant="secondary"
@@ -141,7 +142,7 @@ export function ItemsActionBar({
             >
               <FolderInputIcon className="size-4" />
               <span>{catalogWords.moveTo}</span>
-              <ChevronDownIcon className="size-4 text-muted-foreground" />
+              <ChevronDownIcon className="hidden size-4 text-muted-foreground md:block" />
             </DropdownMenuTrigger>
             <DropdownMenuContent
               side="top"

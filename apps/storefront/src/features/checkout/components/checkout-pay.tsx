@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import type { PaymentOption } from '../checkout-rules';
 import { CheckoutStep } from './checkout-step';
-import { CopyButton } from './copy-button';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 
 interface CheckoutPayProps {
   sf: Storefront;
@@ -72,7 +72,7 @@ function DetailRow({
         </span>
       </div>
       <CopyButton
-        textToCopy={copy}
+        value={copy}
         label={words.checkout.copyField(label)}
         iconOnly
         className="size-11 shrink-0 rounded-full"

@@ -20,7 +20,7 @@ import { QRCode, QRCodeSvg } from '@smartapp/ui/components/qr-code';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import { ShineBorder } from '@smartapp/ui/components/shine-border';
-import { Spinner } from '@smartapp/ui/components/spinner';
+import { AsyncButton } from '@smartapp/ui/compositions/async-button';
 import { ShopImage } from '@smartapp/ui/compositions/shop-image';
 import { rewardTypeLine } from '../rewards-rules';
 
@@ -143,15 +143,17 @@ export function RewardCard({
             </Alert>
           ) : null}
           <Pending isPending={claim.isPending}>
-            <Button
+            <AsyncButton
               id="rewards-claim"
               onClick={() => claim.mutate()}
-              disabled={claim.isPending}
+              status={claim.isPending ? 'loading' : 'idle'}
+              busyLabel={W.claiming}
+              doneLabel={W.claim}
               className="h-12 w-full rounded-full bg-member text-base font-semibold text-member-foreground hover:bg-member-hover"
             >
-              {claim.isPending ? <Spinner aria-hidden="true" /> : <GiftIcon aria-hidden="true" />}
-              {claim.isPending ? W.claiming : W.claim}
-            </Button>
+              <GiftIcon aria-hidden="true" />
+              {W.claim}
+            </AsyncButton>
           </Pending>
         </div>
       ) : ready ? (

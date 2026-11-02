@@ -22,6 +22,7 @@ import {
 } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
+import { notify } from '@smartapp/ui/compositions/notify';
 import { useShop } from '../../shell/components/shop-context';
 import { closedStateDecision } from '../basket-rules';
 import { BasketClosedAlert } from './basket-closed-alert';
@@ -181,10 +182,25 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
     );
   }
 
+  // Clear at once with Undo in the toast (decision T45). Undo adds the lines back, merged with
+  // anything added since.
+  function clearWithUndo() {
+    const saved = basket.lines;
+    const items = basket.count;
+    basket.clear();
+    notify({
+      title: words.basket.cleared(items),
+      action: {
+        label: words.basket.undo,
+        onClick: () => saved.forEach((line) => basket.add(line)),
+      },
+    });
+  }
+
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="shrink-0 px-4 pt-3">
-        <BasketHeader count={count} onClear={() => basket.clear()} />
+        <BasketHeader count={count} onClear={clearWithUndo} />
       </div>
 
       {/* One scroll area; the totals and the main button stay pinned below it (redesign I9). */}

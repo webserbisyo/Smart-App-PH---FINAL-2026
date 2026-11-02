@@ -79,7 +79,7 @@ export function ItemsTable({
               checked={allSelected}
               indeterminate={someSelected}
               onCheckedChange={(checked) => onSelectAll(Boolean(checked))}
-              aria-label="Select all rows"
+              aria-label={catalogWords.selectAll}
             />
           </div>
         ),
@@ -94,7 +94,7 @@ export function ItemsTable({
               <Checkbox
                 checked={isChecked}
                 onCheckedChange={() => onToggleSelect(item.id)}
-                aria-label={`Select ${item.name}`}
+                aria-label={catalogWords.selectItemAria(item.name)}
               />
             </div>
           );

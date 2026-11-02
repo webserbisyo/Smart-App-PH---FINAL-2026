@@ -4,7 +4,6 @@ import {
   PlusIcon,
   ArchiveIcon,
   ArrowUpDownIcon,
-  RefreshCwIcon,
   WifiOffIcon,
   SearchXIcon,
   SparklesIcon,
@@ -31,16 +30,9 @@ import { useOnlineStatus } from '@/app/use-online-status';
 import { useDockClearance } from '@/app/use-dock-clearance';
 import { Notice } from '@/app/notice';
 import { SearchField } from '@/app/search-field';
+import { PageEmpty, PageError } from '@/app/page-state';
 import { Button } from '@smartapp/ui/components/button';
 import { Badge } from '@smartapp/ui/components/badge';
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '@smartapp/ui/components/empty';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
@@ -401,28 +393,15 @@ export function ItemsList() {
   const error = itemsError ?? catsError;
   if (error) {
     return (
-      <Empty className="py-16">
-        <EmptyHeader>
-          <EmptyMedia variant="icon" className="bg-destructive/10 text-destructive">
-            <RefreshCwIcon />
-          </EmptyMedia>
-          <EmptyTitle>{catalogWords.loadFailed}</EmptyTitle>
-          <EmptyDescription>{errorWords(errorCodeOf(error))}</EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button
-            variant="outline"
-            className="h-11 gap-1.5 md:h-9"
-            onClick={() => {
-              void refetchItems();
-              void refetchCats();
-            }}
-          >
-            <RefreshCwIcon className="size-4" />
-            {catalogWords.tryAgain}
-          </Button>
-        </EmptyContent>
-      </Empty>
+      <PageError
+        title={catalogWords.loadFailed}
+        message={errorWords(errorCodeOf(error))}
+        retryLabel={catalogWords.tryAgain}
+        onRetry={() => {
+          void refetchItems();
+          void refetchCats();
+        }}
+      />
     );
   }
 
@@ -595,66 +574,63 @@ export function ItemsList() {
       ) : null}
 
       {(items ?? []).length === 0 ? (
-        <Empty className="py-16">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <SparklesIcon />
-            </EmptyMedia>
-            <EmptyTitle>{catalogWords.emptyItems(kind)}</EmptyTitle>
-            <EmptyDescription>{catalogWords.emptyItemsHint}</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent className="flex-row flex-wrap justify-center">
-            <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={() => goNew()}>
-              <PlusIcon className="size-4" />
-              {catalogWords.addItem(kind)}
-            </Button>
-            {ownerSamples ? (
+        <PageEmpty
+          className="py-16"
+          icon={<SparklesIcon />}
+          title={catalogWords.emptyItems(kind)}
+          description={catalogWords.emptyItemsHint}
+          action={
+            <>
+              <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={() => goNew()}>
+                <PlusIcon className="size-4" />
+                {catalogWords.addItem(kind)}
+              </Button>
+              {ownerSamples ? (
+                <Button
+                  variant="outline"
+                  className="h-11 md:h-9"
+                  onClick={() => void handlePopulateSamples()}
+                >
+                  {catalogWords.startWithSamples}
+                </Button>
+              ) : null}
+            </>
+          }
+        />
+      ) : filteredItems.length === 0 ? (
+        <PageEmpty
+          icon={isArchived && !search ? <ArchiveIcon /> : <SearchXIcon />}
+          description={
+            search
+              ? catalogWords.noSearchResults(search)
+              : isArchived
+                ? catalogWords.emptyArchived
+                : catalogWords.noFilterMatch
+          }
+          action={
+            <>
+              {search.trim() && !isArchived ? (
+                <Button
+                  className="h-11 gap-1.5 font-semibold md:h-9"
+                  onClick={() => goNew(search.trim())}
+                >
+                  <PlusIcon className="size-4" />
+                  {catalogWords.addNamed(search.trim())}
+                </Button>
+              ) : null}
               <Button
                 variant="outline"
                 className="h-11 md:h-9"
-                onClick={() => void handlePopulateSamples()}
+                onClick={() => {
+                  setSearch('');
+                  setFilter('all');
+                }}
               >
-                {catalogWords.startWithSamples}
+                {search ? catalogWords.clearSearch : catalogWords.showAll}
               </Button>
-            ) : null}
-          </EmptyContent>
-        </Empty>
-      ) : filteredItems.length === 0 ? (
-        <Empty className="py-12">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              {isArchived && !search ? <ArchiveIcon /> : <SearchXIcon />}
-            </EmptyMedia>
-            <EmptyDescription className="font-medium text-foreground">
-              {search
-                ? catalogWords.noSearchResults(search)
-                : isArchived
-                  ? catalogWords.emptyArchived
-                  : catalogWords.noFilterMatch}
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent className="flex-row flex-wrap justify-center">
-            {search.trim() && !isArchived ? (
-              <Button
-                className="h-11 gap-1.5 font-semibold md:h-9"
-                onClick={() => goNew(search.trim())}
-              >
-                <PlusIcon className="size-4" />
-                {catalogWords.addNamed(search.trim())}
-              </Button>
-            ) : null}
-            <Button
-              variant="outline"
-              className="h-11 md:h-9"
-              onClick={() => {
-                setSearch('');
-                setFilter('all');
-              }}
-            >
-              {search ? catalogWords.clearSearch : catalogWords.showAll}
-            </Button>
-          </EmptyContent>
-        </Empty>
+            </>
+          }
+        />
       ) : isReordering ? (
         <Sortable
           value={nonArchivedItems}

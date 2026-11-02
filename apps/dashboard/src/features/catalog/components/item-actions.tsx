@@ -4,7 +4,7 @@ import { actionWords, catalogWords, errorWords, type OwnerItem } from '@smartapp
 import { useBulkSetSoldOut, useRemoveItem, useSetItemStatus, errorCodeOf } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Item, ItemContent, ItemDescription, ItemTitle } from '@smartapp/ui/components/item';
-import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
 import {
   AlertDialog,

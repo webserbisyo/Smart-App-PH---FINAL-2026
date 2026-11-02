@@ -1,4 +1,4 @@
-import { cn } from '@smartapp/ui/lib/utils';
+import { cn } from 'cn';
 
 /**
  * A check mark that draws itself (the `draw-check` utility; whole at once under reduced motion). Mount it fresh to

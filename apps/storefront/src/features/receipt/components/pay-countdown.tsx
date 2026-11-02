@@ -18,7 +18,7 @@ import {
 } from '@smartapp/ui/components/circular-progress';
 import { ShopImage } from '@smartapp/ui/compositions/shop-image';
 import { cn } from '@smartapp/ui/lib/utils';
-import { CopyButton } from '@/features/checkout/components/copy-button';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { formatCountdown } from '../receipt-rules';
 
 export interface PayCountdownProps {
@@ -95,7 +95,7 @@ function DetailRow({
       </div>
       {copy && copyLabel ? (
         <CopyButton
-          textToCopy={copy}
+          value={copy}
           label={copyLabel}
           iconOnly
           className="size-11 shrink-0 rounded-full"

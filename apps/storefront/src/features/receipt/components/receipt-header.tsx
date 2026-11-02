@@ -33,8 +33,8 @@ import {
   WalletIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { CopyButton } from '@/features/checkout/components/copy-button';
-import { DrawnCheckIcon } from '@/features/checkout/components/drawn-check';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
+import { DrawnCheckIcon } from '@smartapp/ui/compositions/drawn-check';
 import {
   formatManilaDateTime,
   formatManilaTime,
@@ -252,7 +252,7 @@ export function ReceiptHeader({
                 {orderNo}
               </span>
               <CopyButton
-                textToCopy={orderNo}
+                value={orderNo}
                 label={words.receipt.copyNumber(orderNo)}
                 iconOnly
                 className="size-11 rounded-full"

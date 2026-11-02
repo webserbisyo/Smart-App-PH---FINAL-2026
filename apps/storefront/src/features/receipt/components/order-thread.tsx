@@ -13,6 +13,7 @@ import { useProofPreview } from '@smartapp/data';
 import {
   Attachment,
   AttachmentContent,
+  AttachmentDescription,
   AttachmentMedia,
   AttachmentTitle,
   AttachmentTrigger,
@@ -95,6 +96,7 @@ function ProofMessage({
           {preview ? null : (
             <AttachmentContent>
               <AttachmentTitle>{words.receipt.proof.photoSent}</AttachmentTitle>
+              <AttachmentDescription>{words.receipt.proof.photoElsewhere}</AttachmentDescription>
             </AttachmentContent>
           )}
           {preview ? (

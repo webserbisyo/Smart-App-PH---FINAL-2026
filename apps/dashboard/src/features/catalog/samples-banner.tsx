@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from '@smartapp/ui/components/alert-dialog';
 import { notify } from '@smartapp/ui/compositions/notify';
-import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { Notice } from '@/app/notice';
 
 export interface SamplesBannerProps {

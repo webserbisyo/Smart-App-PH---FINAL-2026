@@ -11,6 +11,8 @@ export const ErrorCode = [
   'not_signed_in',
   'invalid_input',
   'unknown',
+  // No connection (the request never reached the server).
+  'offline',
   // Storefront
   'shop_not_found',
   'shop_closed',

@@ -312,15 +312,17 @@
   }
 }
 
-/* Phones and tablets: while a drawer or sheet is open from the bottom, toasts drop in at the top of the
+/* Phones and tablets: while a drawer, sheet or the dashboard bulk bar is open at the bottom, toasts drop in at the top of the
    screen instead, so they never cover the sheet's choices (decision T44). Same mirrored transforms as
    desktop. Unlayered, so it outranks the dock spacing above. */
 @media (max-width: 1023px) {
-  body:has([data-slot='drawer-content'], [data-slot='sheet-content']) [data-slot='toast-viewport'] {
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content'], [data-bulk-bar])
+    [data-slot='toast-viewport'] {
     top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
     bottom: auto;
   }
-  body:has([data-slot='drawer-content'], [data-slot='sheet-content']) [data-slot='toast'] {
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content'], [data-bulk-bar])
+    [data-slot='toast'] {
     top: 0;
     bottom: auto;
     transform-origin: top;
@@ -333,11 +335,12 @@
       )
       scale(var(--scale));
   }
-  body:has([data-slot='drawer-content'], [data-slot='sheet-content']) [data-slot='toast']::after {
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content'], [data-bulk-bar])
+    [data-slot='toast']::after {
     top: auto;
     bottom: 100%;
   }
-  body:has([data-slot='drawer-content'], [data-slot='sheet-content'])
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content'], [data-bulk-bar])
     [data-slot='toast'][data-expanded] {
     transform: translateX(var(--toast-swipe-movement-x))
       translateY(
@@ -346,9 +349,9 @@
         )
       );
   }
-  body:has([data-slot='drawer-content'], [data-slot='sheet-content'])
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content'], [data-bulk-bar])
     [data-slot='toast'][data-starting-style],
-  body:has([data-slot='drawer-content'], [data-slot='sheet-content'])
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content'], [data-bulk-bar])
     [data-slot='toast'][data-ending-style]:not([data-limited]):not([data-swipe-direction]) {
     transform: translateY(-150%);
   }

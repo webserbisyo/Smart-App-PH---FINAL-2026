@@ -3,7 +3,7 @@ import { words } from '@smartapp/core';
 import { FieldError } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
-import { CopyButton } from '../copy-button.js';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 
 // Share my shop: Dialog on tablet and desktop, Drawer on phone.
 export function ShareShopSheet({

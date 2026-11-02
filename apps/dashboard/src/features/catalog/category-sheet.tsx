@@ -36,7 +36,7 @@ import {
 } from '@smartapp/ui/compositions/responsive-dialog';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { useShop } from '@/app/shop';
-import { AsyncButton, useAsyncAction } from '@/app/async-button';
+import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { Notice } from '@/app/notice';
 import { SearchField } from '@/app/search-field';
 import { env } from '@/app/env';
