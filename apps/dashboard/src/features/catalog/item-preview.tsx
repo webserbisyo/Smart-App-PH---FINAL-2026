@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { catalogWords, itemPriceLabel, type Variant } from '@smartapp/core';
+import { catalogWords, formatPeso, itemPriceLabel, type Variant, type VariantAxis } from '@smartapp/core';
 import { AspectRatio } from '@smartapp/ui/components/aspect-ratio';
 import { Badge as ShopBadge } from '@smartapp/ui/components/reui/badge';
 import {
@@ -18,6 +18,7 @@ export interface ItemPreviewProps {
   photos: readonly string[];
   variants: readonly Variant[];
   choiceNames: readonly string[];
+  axes?: readonly VariantAxis[] | undefined;
   featured: boolean;
   isNew: boolean;
 }
@@ -30,6 +31,7 @@ export function ItemPreview({
   photos,
   variants,
   choiceNames,
+  axes,
   featured,
   isNew,
 }: ItemPreviewProps) {
@@ -70,7 +72,32 @@ export function ItemPreview({
         <p className="line-clamp-3 text-sm text-muted-foreground">
           {description.trim() || catalogWords.previewDescription}
         </p>
-        {choiceNames.length > 0 ? (
+        {axes && axes.length > 0 ? (
+          <div className="space-y-2 pt-1 border-t border-border/40">
+            {axes.map((axis) => (
+              <div key={axis.id} className="space-y-1">
+                <span className="text-xs font-medium text-foreground">
+                  {axis.name || catalogWords.choiceUnnamed}
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {axis.values.map((v) => (
+                    <span
+                      key={v.name}
+                      className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                    >
+                      {v.name}
+                      {v.priceDelta > 0 && (
+                        <span className="font-semibold text-foreground">
+                          +{formatPeso(v.priceDelta)}
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : choiceNames.length > 0 ? (
           <p className="text-xs font-medium text-foreground">
             {catalogWords.previewChoices(choiceNames.join(', '))}
           </p>

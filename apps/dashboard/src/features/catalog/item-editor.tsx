@@ -20,6 +20,7 @@ import {
   catalogWords,
   errorWords,
   groupRuleLabel,
+  priceRange,
   type Category,
   type ItemDraft,
   type ItemStatus,
@@ -83,7 +84,7 @@ import { ItemPreview } from './item-preview.js';
 import { PesoInput } from './components/peso-input.js';
 import { PickedChip, PickRow } from './pick-list.js';
 import { VariantsSection, type VariantsValue } from './variants-section.js';
-import { buildVariants, sharedPrice } from './variants.js';
+import { buildVersions } from './variants.js';
 import { cn } from 'cn';
 
 export interface ItemEditorProps {
@@ -100,7 +101,6 @@ interface FormState {
   categoryId: string;
   photos: string[];
   basePrice: number;
-  samePrice: boolean;
   choices: VariantsValue;
   optionGroupIds: string[];
   pairingIds: string[];
@@ -116,16 +116,18 @@ interface FieldErrors {
 }
 
 function initialForm(source: OwnerItem | null, isCopy: boolean): FormState {
-  const variants = source?.variants ?? buildVariants([], [], 0);
-  const shared = sharedPrice(variants);
+  const axes = source?.axes ?? [];
+  const basePrice = source?.basePrice ?? source?.variants[0]?.price ?? 0;
+  const variants = source?.variants
+    ? buildVersions(axes, source.variants, basePrice)
+    : buildVersions([], [], 0);
   return {
     name: source ? (isCopy ? catalogWords.copyName(source.name) : source.name) : '',
     description: source?.description ?? '',
     categoryId: source?.categoryId ?? '',
     photos: source?.photos ?? [],
-    basePrice: shared ?? variants[0]?.price ?? 0,
-    samePrice: (source?.axes.length ?? 0) === 0 || shared !== null,
-    choices: { axes: source?.axes ?? [], variants },
+    basePrice,
+    choices: { axes, variants },
     optionGroupIds: source?.optionGroupIds ?? [],
     pairingIds: source?.pairingIds ?? [],
     featured: source?.featured ?? false,
@@ -136,17 +138,13 @@ function initialForm(source: OwnerItem | null, isCopy: boolean): FormState {
 
 function toDraft(form: FormState, categoryId: string): ItemDraft {
   const { axes, variants } = form.choices;
-  const finalVariants =
-    axes.length === 0
-      ? buildVariants([], variants, form.basePrice)
-      : form.samePrice
-        ? variants.map((v) => ({ ...v, price: form.basePrice }))
-        : variants;
+  const finalVariants = buildVersions(axes, variants, form.basePrice);
   return {
     categoryId,
     name: form.name.trim(),
     description: form.description.trim() || null,
     photos: form.photos,
+    basePrice: form.basePrice,
     axes: axes.map((axis) => ({ ...axis, name: axis.name.trim() })),
     variants: finalVariants,
     optionGroupIds: form.optionGroupIds,
@@ -343,10 +341,6 @@ function ItemEditorForm({
   );
   const draftForPreview = toDraft(form, categoryId);
   const soldOutEverywhere = draftForPreview.variants.every((v) => v.availability === 'sold_out');
-  const showPrice = form.choices.axes.length === 0 || form.samePrice;
-  const prices = draftForPreview.variants.map((v) => v.price);
-  const lowPrice = Math.min(...prices);
-  const highPrice = Math.max(...prices);
 
   const status = !initialItem
     ? {
@@ -465,39 +459,27 @@ function ItemEditorForm({
               <FieldError id="item-cat-error" message={fieldErrors.category} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="item-price">
-                {form.choices.axes.length > 0 && form.samePrice
-                  ? catalogWords.priceForAll
-                  : catalogWords.priceLabel}
-              </Label>
-              {showPrice ? (
-                <PesoInput
-                  id="item-price"
-                  className="max-w-48"
-                  value={form.basePrice}
-                  onChange={(basePrice) => update({ basePrice })}
-                />
-              ) : (
-                <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 md:min-h-9">
-                  <span className="text-base font-semibold text-foreground tabular">
-                    {lowPrice === highPrice
-                      ? formatPeso(lowPrice)
-                      : catalogWords.priceRange(formatPeso(lowPrice), formatPeso(highPrice))}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="h-11 px-0 md:h-9"
-                    onClick={() =>
-                      document
-                        .getElementById('variant-prices')
-                        ?.scrollIntoView({ block: 'start', behavior: 'smooth' })
-                    }
-                  >
-                    {catalogWords.editPrices}
-                  </Button>
-                </div>
-              )}
+              <Label htmlFor="item-price">{catalogWords.basePriceLabel}</Label>
+              <PesoInput
+                id="item-price"
+                className="max-w-48"
+                value={form.basePrice}
+                onChange={(basePrice) => {
+                  const nextVariants = buildVersions(form.choices.axes, form.choices.variants, basePrice);
+                  update({ basePrice, choices: { ...form.choices, variants: nextVariants } });
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                {form.choices.axes.length > 0
+                  ? catalogWords.computedPriceRange(
+                      priceRange({
+                        basePrice: form.basePrice,
+                        axes: form.choices.axes,
+                        variants: form.choices.variants,
+                      }),
+                    )
+                  : catalogWords.basePriceHelp}
+              </p>
             </div>
 
             <div className="space-y-1.5">
@@ -523,9 +505,11 @@ function ItemEditorForm({
             error={fieldErrors.choices}
             value={form.choices}
             onChange={(choices) => update({ choices })}
-            samePrice={form.samePrice}
-            onSamePriceChange={(samePrice) => update({ samePrice })}
             basePrice={form.basePrice}
+            onBasePriceChange={(basePrice) => {
+              const nextVariants = buildVersions(form.choices.axes, form.choices.variants, basePrice);
+              update({ basePrice, choices: { ...form.choices, variants: nextVariants } });
+            }}
             otherItems={otherItems}
             onCopied={(name) => notify({ title: catalogWords.copiedFrom(name), tone: 'success' })}
           />
@@ -656,6 +640,7 @@ function ItemEditorForm({
               photos={form.photos}
               variants={draftForPreview.variants}
               choiceNames={form.choices.axes.map((a) => a.name || catalogWords.choiceUnnamed)}
+              axes={form.choices.axes}
               featured={form.featured}
               isNew={form.isNew}
             />

@@ -7,6 +7,7 @@ const CATALOG_TABS: readonly PathTab[] = [
   { id: 'items', label: catalogWords.tabItems, to: '/catalog' },
   { id: 'categories', label: catalogWords.tabCategories, to: '/catalog/categories' },
   { id: 'add-ons', label: catalogWords.tabAddOns, to: '/catalog/add-ons' },
+  { id: 'variants', label: catalogWords.tabVariants, to: '/catalog/variants' },
 ];
 
 export function useCatalogTabs(): NavItem[] {

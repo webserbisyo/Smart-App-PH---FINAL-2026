@@ -12,6 +12,7 @@ import { CatalogAddOnsScreen } from '../features/catalog/screens/add-ons.js';
 import { CatalogCategoriesScreen } from '../features/catalog/screens/categories.js';
 import { CatalogItemScreen } from '../features/catalog/screens/item-detail.js';
 import { CatalogItemsScreen } from '../features/catalog/screens/items.js';
+import { CatalogVariantsScreen } from '../features/catalog/screens/variants.js';
 import { NewCatalogItemScreen } from '../features/catalog/screens/new-item.js';
 import { NewItemSearchSchema } from '../features/catalog/tabs.js';
 import { EditorScreen } from '../features/editor/screens/editor.js';
@@ -139,6 +140,11 @@ const catalogAddOnsRoute = shellPage(
   CatalogAddOnsScreen,
   page(s.catalog.title),
 );
+const catalogVariantsRoute = shellPage(
+  '/catalog/variants',
+  CatalogVariantsScreen,
+  page(s.catalog.title),
+);
 const catalogNewRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/catalog/new',
@@ -231,6 +237,7 @@ const baseRoutes = [
     catalogRoute,
     catalogCategoriesRoute,
     catalogAddOnsRoute,
+    catalogVariantsRoute,
     catalogNewRoute,
     catalogItemRoute,
     membersRoute,

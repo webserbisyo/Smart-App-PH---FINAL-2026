@@ -25,31 +25,7 @@ export interface ShopVocab {
   // The first icons the category form offers, and the emoji sections it opens on.
   iconSuggestions: readonly IconKey[];
   emojiCategories: readonly string[];
-  // Quick start choices for sizes, best fit first; the rest sit under "More".
-  presetLabels: readonly string[];
 }
-
-export interface VariantPreset {
-  label: string;
-  name: string;
-  values: readonly string[];
-}
-
-const VARIANT_PRESETS: readonly VariantPreset[] = [
-  { label: 'Regular, Large', name: 'Size', values: ['Regular', 'Large'] },
-  { label: 'Small, Medium, Large', name: 'Size', values: ['Small', 'Medium', 'Large'] },
-  { label: '12 oz, 16 oz, 22 oz', name: 'Cup size', values: ['12 oz', '16 oz', '22 oz'] },
-  { label: 'Single, Double, Triple', name: 'Patty', values: ['Single', 'Double', 'Triple'] },
-  { label: 'Hot, Iced', name: 'Temperature', values: ['Hot', 'Iced'] },
-  { label: 'S, M, L, XL', name: 'Size', values: ['S', 'M', 'L', 'XL'] },
-  { label: 'XS to XXL', name: 'Size', values: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
-  {
-    label: 'Shoe sizes 36 to 45',
-    name: 'Size',
-    values: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'],
-  },
-  { label: 'Colours', name: 'Colour', values: ['Black', 'White', 'Grey', 'Navy', 'Red'] },
-];
 
 const FOOD_VOCAB: ShopVocab = {
   catalog: 'Menu',
@@ -80,13 +56,6 @@ const FOOD_VOCAB: ShopVocab = {
     'bestseller',
   ],
   emojiCategories: ['recent', 'food', 'nature', 'objects', 'symbols', 'activities'],
-  presetLabels: [
-    'Regular, Large',
-    'Small, Medium, Large',
-    '12 oz, 16 oz, 22 oz',
-    'Single, Double, Triple',
-    'Hot, Iced',
-  ],
 };
 
 const RETAIL_VOCAB: ShopVocab = {
@@ -118,24 +87,11 @@ const RETAIL_VOCAB: ShopVocab = {
     'bestseller',
   ],
   emojiCategories: ['recent', 'objects', 'people', 'symbols', 'nature', 'activities'],
-  presetLabels: ['S, M, L, XL', 'XS to XXL', 'Shoe sizes 36 to 45', 'Colours'],
 };
 
 // The only place that looks at the shop kind.
 export function vocab(kind: ShopKind): ShopVocab {
   return kind === 'retail' ? RETAIL_VOCAB : FOOD_VOCAB;
-}
-
-// Size presets for the shop: the best fits first, then the rest.
-export function variantPresets(kind: ShopKind): {
-  main: VariantPreset[];
-  more: VariantPreset[];
-} {
-  const labels = vocab(kind).presetLabels;
-  return {
-    main: labels.flatMap((label) => VARIANT_PRESETS.filter((p) => p.label === label)),
-    more: VARIANT_PRESETS.filter((p) => !labels.includes(p.label)),
-  };
 }
 
 export const words = {
@@ -1197,9 +1153,11 @@ export const words = {
       tabItems: 'Items',
       tabCategories: 'Categories',
       tabAddOns: 'Add-ons',
+      tabVariants: 'Variants',
       emptyItems: (kind: ShopKind) => vocab(kind).emptyItems,
       emptyCategories: 'No categories yet. Group your items so customers find them fast.',
       emptyAddOns: 'No add-ons yet. Add extras like sauces, toppings or gift wrap.',
+      emptyVariants: 'No variants yet. Create choices like Size or Colour to reuse across items.',
       newTitle: (kind: ShopKind) => vocab(kind).newItem,
       newEmpty: 'The form for a new item will show here.',
       itemTitle: (kind: ShopKind) => vocab(kind).item,
@@ -1340,9 +1298,75 @@ export const catalogWords = {
   tabItems: 'Items',
   tabCategories: 'Categories',
   tabAddOns: 'Add-ons',
+  tabVariants: 'Variants',
   emptyItems: (kind: ShopKind) => vocab(kind).emptyItems,
   emptyCategories: 'No categories yet. Group your items so customers find them fast.',
-  emptyAddOns: 'No add-ons yet. Add extras like sizes, sauces or gift wrap.',
+  emptyAddOns: 'No add-ons yet. Add extras like sauces, toppings or gift wrap.',
+  emptyVariants: 'No variants yet. Create choices like Size or Colour to reuse across items.',
+  variantsSubtitle: 'Reusable choices like Size, Cup size or Colour that you can pick for any item.',
+  addVariant: 'New variant',
+  editVariant: 'Edit variant',
+  duplicateVariant: 'Duplicate',
+  deleteVariant: 'Delete',
+  variantNameLabel: 'Variant name',
+  variantNamePlaceholder: 'e.g. Size, Cup size, Colour',
+  variantOptionsLabel: 'Options',
+  addOption: 'Add option',
+  addOptionPlaceholder: 'Option name',
+  suggestionsLabel: 'Suggestions',
+  usedByCount: (count: number) => (count === 1 ? 'Used on 1 item' : `Used on ${count} items`),
+  notUsedYet: 'Not used yet',
+  deleteVariantTitle: 'Delete variant?',
+  deleteVariantDesc: (name: string, count: number) =>
+    count > 0
+      ? `${name} is used on ${count} ${count === 1 ? 'item' : 'items'}. Those items will keep their choices as custom choices.`
+      : `Are you sure you want to delete ${name}?`,
+  updateItemsTitle: 'Update items using this variant?',
+  updateItemsDesc: (count: number) =>
+    `This variant is used on ${count} ${count === 1 ? 'item' : 'items'}. Would you like to update those items with your changes, or only update the variant?`,
+  updateItemsBtn: (count: number) => `Update ${count} ${count === 1 ? 'item' : 'items'}`,
+  onlyVariantBtn: 'Only the variant',
+  variantSaved: 'Variant saved',
+  variantDeleted: 'Variant deleted',
+  variantDuplicated: (name: string) => `Created ${name}`,
+  itemsSoldOutNotice: (count: number) =>
+    `${count} ${count === 1 ? 'item has' : 'items have'} newly added options marked sold out because the choice has different prices.`,
+  itemsSkippedNotice: (count: number) =>
+    `${count} ${count === 1 ? 'item was' : 'items were'} not given newly added options because doing so would exceed the 30 combination limit.`,
+  unsavedChangesTitle: 'Discard unsaved changes?',
+  unsavedChangesDesc: 'You have unsaved changes. Leaving now will discard them.',
+  discard: 'Discard',
+  keepEditing: 'Keep editing',
+  variantsSectionTitle: 'Choices and pricing',
+  variantsSectionSubtitle:
+    'Add up to 3 choices like Size or Colour. Each option can add a price change.',
+  basePriceLabel: 'Base price',
+  basePriceHelp: 'Starting price before customer choices.',
+  computedPriceRange: (range: string) => `Price range: ${range}`,
+  samePriceForAll: 'Same price for all options',
+  differentPricesHelp: 'Each option can add a price change to the base price.',
+  addChoice: 'Add a choice',
+  yourVariants: 'Your variants',
+  noSavedVariants: 'No saved variants yet',
+  newVariant: 'New variant',
+  startEmptyChoice: 'Start empty (custom choice)',
+  choiceLinkedBadge: 'Linked',
+  choiceCustomBadge: 'Custom',
+  unlinkVariant: 'Unlink from variant',
+  editVariantTemplate: 'Edit variant',
+  saveAsNewVariant: 'Save as new variant',
+  priceDeltaPlaceholder: '+₱0',
+  combinationsTitle: (count: number) => `Combinations (${count})`,
+  combinationsHelp: 'Set a special price or mark specific combinations sold out.',
+  specialPriceLabel: 'Special price',
+  specialPricePlaceholder: 'Special price',
+  soldOut: 'Sold out',
+  someSoldOut: 'Some sold out',
+  maxChoicesReached: 'Maximum of 3 choices per item',
+  maxCombosReached: 'Maximum of 30 combinations per item',
+  duplicateOptionError: 'Option names must be unique.',
+  emptyOptionError: 'Give every option a name.',
+  emptyChoiceNameError: 'Choice name is required.',
   newTitle: (kind: ShopKind) => vocab(kind).newItem,
   newEmpty: 'The form for a new item will show here.',
   itemTitle: (kind: ShopKind) => vocab(kind).item,

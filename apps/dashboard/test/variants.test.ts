@@ -1,74 +1,90 @@
 import { describe, expect, it } from 'vitest';
 import type { VariantAxis } from '@smartapp/core';
 import {
-  buildVariants,
+  buildVersions,
   comboCount,
   copyChoices,
+  newVariantId,
   parsePeso,
   pesoText,
-  renameOption,
-  sharedPrice,
 } from '../src/features/catalog/variants.js';
 
-const axis = (name: string, values: string[]): VariantAxis => ({
+const axis = (name: string, values: { name: string; priceDelta?: number }[]): VariantAxis => ({
   name,
-  values: values.map((value) => ({ name: value, photo: null })),
+  templateId: null,
+  values: values.map((v) => ({
+    name: v.name,
+    photo: null,
+    priceDelta: v.priceDelta ?? 0,
+  })),
 });
 
-describe('variants helpers', () => {
-  it('builds every combination in axis order at the given price', () => {
-    const variants = buildVariants(
-      [axis('Size', ['S', 'M']), axis('Colour', ['Black', 'White'])],
+describe('dashboard variants helpers', () => {
+  it('builds every combination in axis order with base price and option deltas', () => {
+    const variants = buildVersions(
+      [
+        axis('Size', [{ name: 'Regular' }, { name: 'Large', priceDelta: 3000 }]),
+        axis('Ice', [{ name: 'Less' }, { name: 'Normal' }]),
+      ],
       [],
-      49900,
+      10000,
     );
     expect(variants.map((v) => v.values)).toEqual([
-      ['S', 'Black'],
-      ['S', 'White'],
-      ['M', 'Black'],
-      ['M', 'White'],
+      ['Regular', 'Less'],
+      ['Regular', 'Normal'],
+      ['Large', 'Less'],
+      ['Large', 'Normal'],
     ]);
-    expect(variants.every((v) => v.price === 49900 && v.availability === 'available')).toBe(true);
+    expect(variants.map((v) => v.price)).toEqual([10000, 10000, 13000, 13000]);
+    expect(variants.every((v) => v.availability === 'available')).toBe(true);
   });
 
-  it('keeps id, price and stock of combinations that still exist', () => {
-    const first = buildVariants([axis('Size', ['S', 'M'])], [], 10000);
-    const changed = first.map((v) => (v.values[0] === 'M' ? { ...v, price: 12000 } : v));
-    const next = buildVariants([axis('Size', ['S', 'M', 'L'])], changed, 10000);
-    expect(next[1]).toEqual(changed[1]);
+  it('keeps id, priceOverride and stock of combinations that still exist', () => {
+    const axes = [axis('Size', [{ name: 'S' }, { name: 'M' }])];
+    const first = buildVersions(axes, [], 10000);
+    const changed = first.map((v) =>
+      v.values[0] === 'M' ? { ...v, priceOverride: 15000, price: 15000, availability: 'sold_out' as const } : v,
+    );
+    const nextAxes = [axis('Size', [{ name: 'S' }, { name: 'M' }, { name: 'L' }])];
+    const next = buildVersions(nextAxes, changed, 10000);
+    expect(next[1]?.id).toBe(changed[1]?.id);
+    expect(next[1]?.price).toBe(15000);
+    expect(next[1]?.priceOverride).toBe(15000);
+    expect(next[1]?.availability).toBe('sold_out');
     expect(next[2]?.price).toBe(10000);
+    expect(next[2]?.availability).toBe('available');
   });
 
   it('gives an item without choices one variant with no values', () => {
-    const [only, ...rest] = buildVariants([], [], 14900);
+    const [only, ...rest] = buildVersions([], [], 14900);
     expect(rest).toHaveLength(0);
     expect(only?.values).toEqual([]);
     expect(only?.price).toBe(14900);
   });
 
-  it('renames an option without losing its combinations', () => {
-    const axes = [axis('Size', ['S', 'M'])];
-    const variants = buildVariants(axes, [], 100).map((v) => ({ ...v, price: 250 }));
-    const next = renameOption(axes, variants, 0, 'M', 'Medium');
-    expect(next.axes[0]?.values.map((v) => v.name)).toEqual(['S', 'Medium']);
-    expect(next.variants[1]).toEqual({ ...variants[1], values: ['Medium'] });
+  it('counts combinations correctly', () => {
+    expect(comboCount([])).toBe(1);
+    expect(
+      comboCount([
+        axis('Size', [{ name: 'S' }, { name: 'M' }, { name: 'L' }]),
+        axis('Colour', [{ name: 'A' }, { name: 'B' }]),
+      ]),
+    ).toBe(6);
   });
 
-  it('counts combinations and finds a shared price', () => {
-    expect(comboCount([])).toBe(1);
-    expect(comboCount([axis('Size', ['S', 'M', 'L']), axis('Colour', ['A', 'B'])])).toBe(6);
-    const variants = buildVariants([axis('Size', ['S', 'M'])], [], 500);
-    expect(sharedPrice(variants)).toBe(500);
-    expect(sharedPrice(variants.map((v, i) => ({ ...v, price: 500 + i })))).toBeNull();
+  it('generates unique variant IDs', () => {
+    const id1 = newVariantId();
+    const id2 = newVariantId();
+    expect(id1).not.toBe(id2);
   });
 
   it('copies choices with fresh ids and everything back in stock', () => {
-    const axes = [axis('Size', ['S'])];
-    const variants = buildVariants(axes, [], 100).map((v) => ({
+    const axes = [axis('Size', [{ name: 'S' }])];
+    const variants = buildVersions(axes, [], 10000).map((v) => ({
       ...v,
       availability: 'sold_out' as const,
     }));
-    const copy = copyChoices(axes, variants);
+    const copy = copyChoices(axes, variants, 10000);
     expect(copy.variants[0]?.id).not.toBe(variants[0]?.id);
     expect(copy.variants[0]?.availability).toBe('available');
   });
