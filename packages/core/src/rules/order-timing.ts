@@ -24,7 +24,7 @@ export function dueTimes(input: DueTimesInput): DueTimes {
   if (input.scheduledAt) {
     const dueMs = new Date(input.scheduledAt).getTime();
     return {
-      dueAt: input.scheduledAt,
+      dueAt: new Date(dueMs).toISOString(),
       startBy: new Date(dueMs - prepMs).toISOString(),
     };
   }

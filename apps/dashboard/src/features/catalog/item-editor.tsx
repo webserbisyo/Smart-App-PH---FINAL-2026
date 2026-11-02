@@ -105,6 +105,9 @@ interface FormState {
   pairingIds: string[];
   featured: boolean;
   isNew: boolean;
+  // Advance-order notice and daily limit (decision T48); kept as saved until the editor shows them.
+  noticeDays: number;
+  dailyLimit: number | null;
   status: ItemStatus;
 }
 
@@ -130,6 +133,8 @@ function initialForm(source: OwnerItem | null, isCopy: boolean): FormState {
     pairingIds: source?.pairingIds ?? [],
     featured: source?.featured ?? false,
     isNew: source?.isNew ?? false,
+    noticeDays: source?.noticeDays ?? 0,
+    dailyLimit: source?.dailyLimit ?? null,
     status: source && source.status !== 'archived' ? source.status : 'active',
   };
 }
@@ -150,6 +155,8 @@ function toDraft(form: FormState, categoryId: string): ItemDraft {
     pairingIds: form.pairingIds,
     featured: form.featured,
     isNew: form.isNew,
+    noticeDays: form.noticeDays,
+    dailyLimit: form.dailyLimit,
     status: form.status,
   };
 }

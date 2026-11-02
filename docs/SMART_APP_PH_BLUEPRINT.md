@@ -582,7 +582,7 @@ flowchart TD
     C --> D{"Owner setting: Take orders while closed"}
     D -- on --> E["Checkout: Walk-in hidden; Pickup or Delivery with slots from opening + lead time"]
     D -- off --> F["Basket bar: Opens at 5:00 AM; Place order off"]
-    E --> G{"Next opening within today or tomorrow?"}
+    E --> G{"Next opening within the shop's days ahead?"}
     G -- yes --> H["Customer picks 5:20 AM; quote; place"]
     G -- no --> F
     H --> I["Order placed with scheduled time"]
@@ -592,7 +592,7 @@ flowchart TD
 
 Rules:
 
-- Slots start at opening time plus the shop's lead time (default 20 minutes) and stay inside hours; today or tomorrow only.
+- Slots start at opening time plus the shop's lead time (default 20 minutes) and stay inside hours; up to the shop's days ahead (default today and tomorrow, T48).
 - A paused or busy shop offers only slots after `busy_until`.
 - Transfer orders still need a proof within the unpaid time limit (the customer can upload while the shop is closed); cash and COD wait for the owner.
 - If the owner changes hours after the order, the order keeps its time; the owner can cancel with a reason.
@@ -795,7 +795,7 @@ Lines with photo, name, variant, options summary, note, quantity stepper and rem
 
 One column, max 640 px, three groups:
 
-1. **How:** order types the shop allows right now; pickup time (ASAP, or slots today or tomorrow from 20 minutes out, inside hours; only slots when closed); delivery zone (fee and ETA), "Use my location" to suggest the nearest zone, address line, landmark, optional pin ("Use my current location", removable).
+1. **How:** order types the shop allows right now; pickup time (ASAP, or slots up to the shop's days ahead from 20 minutes out, T48; inside hours; only slots when closed); delivery zone (fee and ETA), "Use my location" to suggest the nearest zone, address line, landmark, optional pin ("Use my current location", removable).
 2. **Who:** name, mobile (accepts 0917…, 917…, +63…), email optional (prefilled for members); "Remember me on this phone" (on).
 3. **Pay:** methods the order type allows (COD only for delivery, pay on pickup only if allowed); transfer shows the account, QR, "Send exactly ₱345" with Copy. Reward switch for members with a ready reward.
 
@@ -904,15 +904,15 @@ Food example (Kapé Juan Spanish Latte): axis Size (12 oz, 16 oz); groups "Sugar
 
 ### 8.2 Basket, closed shop and offline (N1, N2)
 
-| Situation                                            | Basket                    | Checkout                                                     | Owner sees                           |
-| ---------------------------------------------------- | ------------------------- | ------------------------------------------------------------ | ------------------------------------ |
-| Open                                                 | On the phone per shop     | All allowed types; ASAP or a time                            | New order                            |
-| Busy (paused for a time)                             | Kept                      | Slots after the pause only; walk-in hidden                   | Scheduled order                      |
-| Closed, scheduling on, opens today or tomorrow       | Kept                      | Pickup or delivery at next-opening slots only                | Scheduled group; email with the time |
-| Closed, scheduling off, or opens later than tomorrow | Kept                      | Place order off: "Opens Tue 10:00 AM. Your basket is saved." | Nothing                              |
-| Paused indefinitely ("until I resume")               | Kept                      | Place order off: "Not taking orders right now"               | Nothing                              |
-| Phone offline                                        | Kept; checkout draft kept | Place order off until online; re-quote on reconnect          | Nothing until placed                 |
-| Shop suspended or not found                          | Kept but hidden           | Not found page                                               | n/a                                  |
+| Situation                                        | Basket                    | Checkout                                                     | Owner sees                           |
+| ------------------------------------------------ | ------------------------- | ------------------------------------------------------------ | ------------------------------------ |
+| Open                                             | On the phone per shop     | All allowed types; ASAP or a time                            | New order                            |
+| Busy (paused for a time)                         | Kept                      | Slots after the pause only; walk-in hidden                   | Scheduled order                      |
+| Closed, scheduling on, opens within days ahead   | Kept                      | Pickup or delivery at next-opening slots only                | Scheduled group; email with the time |
+| Closed, scheduling off, or opens past days ahead | Kept                      | Place order off: "Opens Tue 10:00 AM. Your basket is saved." | Nothing                              |
+| Paused indefinitely ("until I resume")           | Kept                      | Place order off: "Not taking orders right now"               | Nothing                              |
+| Phone offline                                    | Kept; checkout draft kept | Place order off until online; re-quote on reconnect          | Nothing until placed                 |
+| Shop suspended or not found                      | Kept but hidden           | Not found page                                               | n/a                                  |
 
 Storage: one `deviceStorage` in `packages/data` (versioned keys per shop: basket, favourites, checkout draft, guest order tokens, area choice). Only data the customer typed or chose; no payment proofs.
 
@@ -1501,7 +1501,7 @@ Screens, Data, API rows, Rules, Edge cases, Done when: _to fill_.
 ### M11 Advance orders
 
 Status: Not started · Switch: `advance_orders` · Depends on: none
-Goal: a calendar beyond tomorrow, lead days per item, deposits (several payments per order).
+Goal: deposits (several payments per order), recurring orders, occasion reminders. Days ahead, item notice, daily limits and the owner calendar moved to A (T48).
 Rules: builds on MVP A scheduled orders (`scheduled_at`) · Screens, Data, API rows, Edge cases, Done when: _to fill_.
 
 ### M12 Marketing

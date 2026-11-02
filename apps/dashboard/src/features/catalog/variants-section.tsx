@@ -104,6 +104,8 @@ function asDraft(value: ChoicesValue, basePrice: number): ItemDraft {
     pairingIds: [],
     featured: false,
     isNew: false,
+    noticeDays: 0,
+    dailyLimit: null,
     status: 'active',
   };
 }

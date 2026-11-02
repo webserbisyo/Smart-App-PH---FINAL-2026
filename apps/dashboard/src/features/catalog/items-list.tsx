@@ -346,6 +346,8 @@ export function ItemsList() {
               pairingIds: item.pairingIds,
               featured: item.featured,
               isNew: item.isNew,
+              noticeDays: item.noticeDays,
+              dailyLimit: item.dailyLimit,
               status: item.status,
             },
           });

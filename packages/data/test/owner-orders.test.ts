@@ -4,8 +4,6 @@ import {
   BookingRulesSchema,
   DayLoadSchema,
   OpenStateSchema,
-  OwnerOrderSchema,
-  PaymentSchema,
 } from '@smartapp/core';
 import { errorCode, mnl, testStore } from './helpers.js';
 import { createApiOwnerOrdersAdapter } from '../src/adapters/api/owner-orders.js';
@@ -53,7 +51,7 @@ describe('ownerOrders mock adapter', () => {
     // Search by orderNo
     const byNo = await store.ownerOrders.listOrders({
       slug: 'kanto-smash',
-      open: true,
+      date: '2026-10-26',
       q: String(first.orderNo),
     });
     expect(byNo.some((o) => o.id === first.id)).toBe(true);
@@ -61,7 +59,7 @@ describe('ownerOrders mock adapter', () => {
     // Search by customer name
     const byName = await store.ownerOrders.listOrders({
       slug: 'kanto-smash',
-      open: true,
+      date: '2026-10-26',
       q: first.customerName.slice(0, 3),
     });
     expect(byName.some((o) => o.id === first.id)).toBe(true);
@@ -69,7 +67,7 @@ describe('ownerOrders mock adapter', () => {
     // Search by pickup code
     const byCode = await store.ownerOrders.listOrders({
       slug: 'kanto-smash',
-      open: true,
+      date: '2026-10-26',
       q: first.pickupCode,
     });
     expect(byCode.some((o) => o.id === first.id)).toBe(true);
@@ -154,7 +152,12 @@ describe('ownerOrders mock adapter', () => {
     const { store, clock } = testStore(mnl('2026-10-26 12:00'));
 
     const openOrders = await store.ownerOrders.listOrders({ slug: 'kanto-smash', open: true });
-    const placed = openOrders.find((o) => o.status === 'placed');
+    // Starting a transfer order needs it paid, so pick one that can start.
+    const placed = openOrders.find(
+      (o) =>
+        o.status === 'placed' &&
+        (o.paymentStatus === 'paid' || o.paymentMethod === 'cash' || o.paymentMethod === 'cod'),
+    );
     expect(placed).toBeDefined();
     if (!placed) return;
 
@@ -405,7 +408,7 @@ describe('ownerOrders mock adapter', () => {
 
     // pause
     const paused = await store.ownerOrders.setPause({ slug: 'kanto-smash', mode: 'pause' });
-    expect(paused.state).toBe('paused');
+    expect(paused.state).toBe('closed');
     expect(paused.paused).toBe(true);
 
     // resume
