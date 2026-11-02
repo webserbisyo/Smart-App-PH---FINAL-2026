@@ -2,6 +2,7 @@ import * as React from 'react';
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import { actionWords } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
+import { copyText } from '@smartapp/ui/lib/copy-text';
 
 const COPIED_MS = 1500;
 
@@ -29,12 +30,8 @@ export function CopyButton({ value, label, onCopyFailed, ...props }: CopyButtonP
   }, [copied]);
 
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-    } catch {
-      onCopyFailed?.();
-    }
+    if (await copyText(value)) setCopied(true);
+    else onCopyFailed?.();
   };
 
   return (

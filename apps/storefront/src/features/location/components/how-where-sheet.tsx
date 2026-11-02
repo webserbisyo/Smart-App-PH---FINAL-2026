@@ -63,6 +63,7 @@ import {
 import { useShop } from '../../shell/components/shop-context';
 import { ORDER_TYPE_ICON } from './order-type-icons';
 import { useLocationChoice } from './use-location-choice';
+import { notify } from '@smartapp/ui/compositions/notify';
 
 const TYPE_COLS: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' };
 
@@ -389,7 +390,8 @@ function HowWhereForm({ now, onDone }: { now: string; onDone: () => void }) {
                           const clip = await navigator.clipboard.readText();
                           if (clip) void handleMapsInputChange(clip);
                         } catch {
-                          // Clipboard access denied
+                          // Reading the clipboard was refused: say how to paste by hand (decision T44).
+                          notify({ title: words.location.pasteFailed, tone: 'error' });
                         }
                       }}
                     >

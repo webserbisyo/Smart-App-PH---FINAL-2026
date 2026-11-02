@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@smartapp/ui/components/button';
 import { cn } from '@smartapp/ui/lib/utils';
+import { copyText } from '@smartapp/ui/lib/copy-text';
+import { notify } from '@smartapp/ui/compositions/notify';
 import { CopyIcon } from 'lucide-react';
 import { words } from '@smartapp/core';
 import { DrawnCheckIcon } from './drawn-check';
@@ -33,10 +35,9 @@ export function CopyButton({ textToCopy, label, className, iconOnly = false }: C
   );
 
   async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(textToCopy);
-    } catch {
-      // Clipboard write failed: nothing to show.
+    if (!(await copyText(textToCopy))) {
+      // Never fail silently: say how to copy by hand (decision T44).
+      notify({ title: words.checkout.copyFailed, tone: 'error' });
       return;
     }
     if (timer.current) clearTimeout(timer.current);

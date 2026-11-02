@@ -5,6 +5,7 @@ import { formatPeso, words, type OrderReceipt, type Storefront } from '@smartapp
 import { Button } from '@smartapp/ui/components/button';
 import { MessageCircle, Check, Copy } from 'lucide-react';
 import { buildMessengerOrderText, buildMessengerUrl } from '../receipt-rules';
+import { copyText } from '@smartapp/ui/lib/copy-text';
 
 export interface MessengerHandoffProps {
   readonly order: OrderReceipt;
@@ -34,15 +35,7 @@ export function MessengerHandoff({ order, storefront, receiptUrl }: MessengerHan
   const messengerUrl = buildMessengerUrl(messengerUsername, orderText);
 
   async function handleHandoff() {
-    let succeeded = false;
-    try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(orderText);
-        succeeded = true;
-      }
-    } catch {
-      succeeded = false;
-    }
+    const succeeded = await copyText(orderText);
 
     if (succeeded) {
       setCopied(true);
@@ -103,12 +96,10 @@ export function MessengerHandoff({ order, storefront, receiptUrl }: MessengerHan
               type="button"
               variant="outline"
               onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(orderText);
+                // On failure the box stays for copying by hand.
+                if (await copyText(orderText)) {
                   setCopied(true);
                   setCopyFailed(false);
-                } catch {
-                  // The box stays for copying by hand.
                 }
               }}
               className="h-11 shrink-0 gap-1.5 rounded-full px-4"

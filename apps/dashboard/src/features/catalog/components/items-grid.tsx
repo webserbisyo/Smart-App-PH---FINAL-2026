@@ -102,6 +102,7 @@ export function ItemsGrid({
               <div className="flex items-center border-t border-border/60 px-2.5 md:px-3">
                 <LabeledSwitch
                   label={catalogWords.soldOutSwitch}
+                  ariaLabel={catalogWords.soldOutSwitchAria(item.name)}
                   checked={soldOut}
                   onCheckedChange={(checked) => actions.setSoldOut(item, checked)}
                 />

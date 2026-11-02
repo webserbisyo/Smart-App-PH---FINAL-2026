@@ -68,10 +68,13 @@ export function ItemStatusBadges({ item }: { item: OwnerItem }) {
 
 export function LabeledSwitch({
   label,
+  ariaLabel,
   checked,
   onCheckedChange,
 }: {
   label: string;
+  // Names the item for screen readers, since every row has the same visible word.
+  ariaLabel?: string | undefined;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }) {
@@ -80,7 +83,7 @@ export function LabeledSwitch({
       className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted-foreground md:min-h-9"
       onClick={(e) => e.stopPropagation()}
     >
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={ariaLabel} />
       {label}
     </label>
   );
@@ -128,7 +131,8 @@ export function ItemRow({
         }
       }}
       className={cn(
-        'group flex flex-col gap-2 rounded-2xl border bg-card p-3 transition-all duration-180 md:flex-row md:items-center md:gap-4',
+        // items-stretch: the installed Item centres its children, which centred short rows on phones.
+        'group flex flex-col items-stretch gap-2 rounded-2xl border bg-card p-3 transition-all duration-180 md:flex-row md:items-center md:gap-4',
         !isReordering && 'cursor-pointer hover:border-primary/40 hover:shadow-xs',
         selected ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border/80',
         highlighted && 'ring-2 ring-primary/40',
@@ -217,6 +221,7 @@ export function ItemRow({
         <div className="flex items-center gap-2 pl-17 md:pl-0">
           <LabeledSwitch
             label={catalogWords.soldOutSwitch}
+            ariaLabel={catalogWords.soldOutSwitchAria(item.name)}
             checked={soldOut}
             onCheckedChange={(checked) => actions.setSoldOut(item, checked)}
           />

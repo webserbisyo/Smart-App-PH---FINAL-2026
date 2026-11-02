@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
 import { notify } from '@smartapp/ui/compositions/notify';
+import { copyText } from '@smartapp/ui/lib/copy-text';
 import { Copy, Download, MoreVertical, Printer, Share2 } from 'lucide-react';
 import { useFocusOnArrival } from '../../shell/use-when-idle';
 import { buildMessengerOrderText, formatOrderNumber } from '../receipt-rules';
@@ -53,13 +54,9 @@ export function ReceiptMoreMenu({
       totalFormatted: formatPeso(order.totals.total),
       receiptUrl,
     });
-    try {
-      await navigator.clipboard.writeText(text);
-      // The menu closes on tap, so the toast is the feedback.
-      notify({ title: W.copied, tone: 'success' });
-    } catch {
-      // Copy is not allowed here; Share still works.
-    }
+    // The menu closes on tap, so the toast is the feedback, both ways (decision T44).
+    if (await copyText(text)) notify({ title: W.copied, tone: 'success' });
+    else notify({ title: words.checkout.copyFailed, tone: 'error' });
   }
 
   // The image is fetched and checked first: an error answer is text, and handing it over as a file left
@@ -117,12 +114,8 @@ export function ReceiptMoreMenu({
         // Closed or not allowed: copy the link instead.
       }
     }
-    try {
-      await navigator.clipboard.writeText(receiptUrl);
-      notify({ title: W.linkCopied, tone: 'success' });
-    } catch {
-      // Nothing else to try.
-    }
+    if (await copyText(receiptUrl)) notify({ title: W.linkCopied, tone: 'success' });
+    else notify({ title: words.checkout.copyFailed, tone: 'error' });
   }
 
   return (

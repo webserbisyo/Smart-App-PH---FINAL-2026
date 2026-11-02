@@ -220,3 +220,22 @@ describe('Shop palette contrast (5 demo brands and the presets)', () => {
     });
   }
 });
+
+// tokens.css owns every colour token. A CLI install once appended raw-palette copies of them to
+// globals.css, which won over tokens.css and made the dark Best seller pill unreadable (decision T28).
+describe('globals.css never redefines a token from tokens.css', () => {
+  const stylesDir = resolve(import.meta.dirname ?? __dirname, '../src/styles');
+  const tokensCss = readFileSync(resolve(stylesDir, 'tokens.css'), 'utf-8');
+  const globalsCss = readFileSync(resolve(stylesDir, 'globals.css'), 'utf-8');
+  // Colour tokens only (values in oklch); fonts and sizes are mapped on purpose in globals.css.
+  const owned = new Set(
+    [...tokensCss.matchAll(/^\s*(--[a-z0-9-]+):\s*oklch\(/gm)].map((m) => m[1]),
+  );
+  const redefined = [...globalsCss.matchAll(/^\s*(--[a-z0-9-]+):/gm)]
+    .map((m) => m[1])
+    .filter((name) => name !== undefined && owned.has(name));
+
+  it('has no colour token definitions that shadow tokens.css', () => {
+    expect(redefined).toEqual([]);
+  });
+});

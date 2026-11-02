@@ -302,6 +302,58 @@
   }
 }
 
+/* Dashboard desktop: toasts sit at the top right, so they never cover the page title or tabs
+   (decision T44). */
+@media (min-width: 1024px) {
+  :root[data-app='dashboard'] [data-slot='toast-viewport'] {
+    left: auto;
+    right: 1.5rem;
+    margin-inline: 0;
+  }
+}
+
+/* Phones and tablets: while a drawer or sheet is open from the bottom, toasts drop in at the top of the
+   screen instead, so they never cover the sheet's choices (decision T44). Same mirrored transforms as
+   desktop. Unlayered, so it outranks the dock spacing above. */
+@media (max-width: 1023px) {
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content']) [data-slot='toast-viewport'] {
+    top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+    bottom: auto;
+  }
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content']) [data-slot='toast'] {
+    top: 0;
+    bottom: auto;
+    transform-origin: top;
+    transform: translateX(var(--toast-swipe-movement-x))
+      translateY(
+        calc(
+          var(--toast-swipe-movement-y) + (var(--toast-index) * var(--peek)) +
+            (var(--shrink) * var(--height))
+        )
+      )
+      scale(var(--scale));
+  }
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content']) [data-slot='toast']::after {
+    top: auto;
+    bottom: 100%;
+  }
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content'])
+    [data-slot='toast'][data-expanded] {
+    transform: translateX(var(--toast-swipe-movement-x))
+      translateY(
+        calc(
+          var(--toast-offset-y) + (var(--toast-index) * var(--gap)) + var(--toast-swipe-movement-y)
+        )
+      );
+  }
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content'])
+    [data-slot='toast'][data-starting-style],
+  body:has([data-slot='drawer-content'], [data-slot='sheet-content'])
+    [data-slot='toast'][data-ending-style]:not([data-limited]):not([data-swipe-direction]) {
+    transform: translateY(-150%);
+  }
+}
+
 /* The touch rail is wider (44 px targets), so the collapsed header matches it. */
 @media (pointer: coarse) {
   [data-shell='tablet'] {
@@ -905,28 +957,10 @@
 
 :root {
   color-scheme: light;
-  --destructive-foreground: var(--color-red-800);
-  --success: var(--color-emerald-500);
-  --success-foreground: var(--color-emerald-900);
-  --info: var(--color-violet-500);
-  --info-foreground: var(--color-violet-900);
-  --warning: var(--color-yellow-500);
-  --warning-foreground: var(--color-yellow-900);
-  --invert: var(--color-zinc-900);
-  --invert-foreground: var(--color-zinc-50);
 }
 
 .dark {
   color-scheme: dark;
-  --destructive-foreground: var(--color-red-600);
-  --success: var(--color-emerald-500);
-  --success-foreground: var(--color-emerald-600);
-  --info: var(--color-violet-500);
-  --info-foreground: var(--color-violet-600);
-  --warning: var(--color-yellow-500);
-  --warning-foreground: var(--color-yellow-600);
-  --invert: var(--color-zinc-700);
-  --invert-foreground: var(--color-zinc-50);
 }
 
 @layer base {

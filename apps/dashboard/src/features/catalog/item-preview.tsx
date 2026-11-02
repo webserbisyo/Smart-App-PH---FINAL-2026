@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { catalogWords, itemPriceLabel, type Variant } from '@smartapp/core';
 import { AspectRatio } from '@smartapp/ui/components/aspect-ratio';
-import { Badge } from '@smartapp/ui/components/badge';
+import { Badge as ShopBadge } from '@smartapp/ui/components/reui/badge';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   type CarouselApi,
 } from '@smartapp/ui/components/carousel';
+import { FlameIcon, SparklesIcon } from 'lucide-react';
 import { CatalogPhoto } from './catalog-photo.js';
 import { cn } from 'cn';
 
@@ -37,8 +38,19 @@ export function ItemPreview({
       <div className="relative">
         <PreviewPhotos photos={photos} />
         <div className="absolute top-2 left-2 flex gap-1">
-          {featured ? <Badge>{catalogWords.previewFeatured}</Badge> : null}
-          {isNew ? <Badge variant="secondary">{catalogWords.previewNew}</Badge> : null}
+          {/* The same badges customers see on the storefront card (decision T44). */}
+          {featured ? (
+            <ShopBadge variant="warning" radius="full" className="gap-1 pr-2 pl-1.5">
+              <FlameIcon aria-hidden="true" strokeWidth={2.5} />
+              {catalogWords.previewFeatured}
+            </ShopBadge>
+          ) : null}
+          {isNew ? (
+            <ShopBadge variant="default" radius="full" className="gap-1 pr-2 pl-1.5">
+              <SparklesIcon aria-hidden="true" strokeWidth={2.5} />
+              {catalogWords.previewNew}
+            </ShopBadge>
+          ) : null}
         </div>
       </div>
       <div className="space-y-1.5 p-3">

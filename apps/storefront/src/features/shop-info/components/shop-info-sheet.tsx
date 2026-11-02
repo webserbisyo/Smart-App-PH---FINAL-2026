@@ -99,8 +99,7 @@ function ShopInfoBody() {
             <CopyButton
               textToCopy={contact.address}
               label={words.storefrontShell.info.copyAddress}
-              iconOnly
-              className="size-11 rounded-full"
+              className="h-11 rounded-full px-4"
             />
           }
         >
