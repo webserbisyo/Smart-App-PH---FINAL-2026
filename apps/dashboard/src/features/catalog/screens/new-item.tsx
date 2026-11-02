@@ -4,7 +4,7 @@ import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { ItemEditor } from '../item-editor.js';
 
 export function NewCatalogItemScreen() {
-  const { from } = useSearch({ strict: false });
+  const { from, name } = useSearch({ strict: false });
   const { data: source, isLoading } = useOwnerItem(from);
 
   if (from && isLoading) {
@@ -16,5 +16,7 @@ export function NewCatalogItemScreen() {
     );
   }
   // A copy of an item that is gone falls back to an empty new item.
-  return <ItemEditor key={source?.id ?? 'new'} initialItem={null} copyFrom={source} />;
+  return (
+    <ItemEditor key={source?.id ?? 'new'} initialItem={null} copyFrom={source} initialName={name} />
+  );
 }

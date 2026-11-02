@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-02 T42 final menu page polish: one category form with the icon picker inside (name picks the icon, Filipino search), one shop icon style, samples banner with Remove samples, Sold out as the only row switch, View menu, smart bulk bar with one-tap Move to, real square photo crop and vertical photo list, desktop preview carousel with dots, inline editor errors, ₱0 confirm, attached add-ons only, Used on picker, delete category moves items first (decision T42, pushed to main)
 - 2026-11-02 T41 menu page UX round: list and grid only (no stat cards or table), filter chips, Select mode, labeled Visible and Sold out switches, one item menu with Duplicate and Archive or Delete, editor with floating Save bar and leave guard, sizes and versions with presets and Copy from another item, category and add-on dialogs from the editor, neutral words for food and retail (decision T41, pushed to main)
 - 2026-11-01 T15b menu page part 2: grid and table views, bulk action bar with undo, category icons (Flat, Color, 3D WebP, local emoji picker, and custom image crop); review fixes: table crash, menu photo sizes, sheet padding, inline emoji panel (#24, pushed to main)
 - 2026-11-01 T15a menu page part 1: items list, categories, add-on groups, and item editor with photo upload and variant matrix (#23)

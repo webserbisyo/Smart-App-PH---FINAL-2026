@@ -7,10 +7,16 @@ import {
   CopyIcon,
   PencilIcon,
   RefreshCwIcon,
+  Trash2Icon,
   WifiOffIcon,
 } from 'lucide-react';
 import { catalogWords, groupRuleLabel, errorWords, type OwnerOptionGroup } from '@smartapp/core';
-import { useOwnerOptionGroups, useSaveOptionGroup, errorCodeOf } from '@smartapp/data';
+import {
+  useOwnerOptionGroups,
+  useRemoveOptionGroup,
+  useSaveOptionGroup,
+  errorCodeOf,
+} from '@smartapp/data';
 import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
@@ -21,8 +27,20 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@smartapp/ui/components/alert-dialog';
+import { FloatingAddButton } from '../floating-add-button.js';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
 import { useCatalogTabs } from '../tabs.js';
@@ -41,6 +59,20 @@ export function CatalogAddOnsScreen() {
   } = useOwnerOptionGroups();
 
   const saveGroup = useSaveOptionGroup();
+  const removeGroup = useRemoveOptionGroup();
+  const [deleteTarget, setDeleteTarget] = React.useState<OwnerOptionGroup | null>(null);
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    try {
+      await removeGroup.mutateAsync({ id: deleteTarget.id });
+      notify({ title: catalogWords.groupDeleted(deleteTarget.name), tone: 'success' });
+      setDeleteTarget(null);
+    } catch (err: unknown) {
+      setDeleteTarget(null);
+      notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
+    }
+  }
 
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [selectedGroup, setSelectedGroup] = React.useState<OwnerOptionGroup | null>(null);
@@ -90,25 +122,26 @@ export function CatalogAddOnsScreen() {
   }
 
   return (
-    <div className="flex min-h-full flex-col pb-16">
-      <PageHeader
-        title={catalogWords.title(kind)}
-        tabs={useCatalogTabs()}
-        actions={
-          <Button
-            type="button"
-            variant="default"
-            size="sm"
-            className="h-11 rounded-xl font-semibold md:h-9"
-            onClick={handleOpenAdd}
-          >
-            <PlusIcon className="mr-1.5 size-4" />
-            {catalogWords.addAddOnGroup}
-          </Button>
-        }
-      />
+    <div className="flex min-h-full flex-col">
+      <PageHeader title={catalogWords.title(kind)} tabs={useCatalogTabs()} />
 
-      <div className="mx-auto w-full max-w-6xl flex-1 space-y-4 p-4 md:p-6">
+      <div className="mx-auto w-full max-w-6xl flex-1 space-y-4 p-4 pb-40 md:p-6 md:pb-16">
+        {optionGroups.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="min-w-0 flex-1 basis-60 text-sm text-muted-foreground">
+              {catalogWords.addOnsHint}
+            </p>
+            <Button
+              type="button"
+              className="hidden h-9 gap-1.5 font-semibold md:inline-flex"
+              onClick={handleOpenAdd}
+            >
+              <PlusIcon className="size-4" />
+              {catalogWords.addAddOnGroup}
+            </Button>
+          </div>
+        ) : null}
+
         {/* Offline Banner */}
         {!isOnline && (
           <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
@@ -147,11 +180,10 @@ export function CatalogAddOnsScreen() {
             </div>
             <Button
               variant="outline"
-              size="sm"
-              className="gap-1.5 text-xs"
+              className="h-11 gap-1.5 md:h-9"
               onClick={() => void refetchGroups()}
             >
-              <RefreshCwIcon className="size-3.5" />
+              <RefreshCwIcon className="size-4" />
               {catalogWords.tryAgain}
             </Button>
           </div>
@@ -166,19 +198,15 @@ export function CatalogAddOnsScreen() {
               </h3>
               <p className="text-xs text-muted-foreground">{catalogWords.addOnsHint}</p>
             </div>
-            <Button
-              size="sm"
-              className="bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-              onClick={handleOpenAdd}
-            >
-              <PlusIcon className="mr-1 size-3.5" />
+            <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={handleOpenAdd}>
+              <PlusIcon className="size-4" />
               {catalogWords.addAddOnGroup}
             </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {optionGroups.map((group) => {
-              const ruleLabel = groupRuleLabel(group.min, group.max);
+              const ruleLabel = groupRuleLabel(group.min, group.max, group.options.length);
               const usedByCount = group.usedBy;
 
               return (
@@ -271,6 +299,14 @@ export function CatalogAddOnsScreen() {
                             <CopyIcon className="size-4" />
                             {catalogWords.duplicate}
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setDeleteTarget(group)}
+                          >
+                            <Trash2Icon className="size-4" />
+                            {catalogWords.delete}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </span>
@@ -283,6 +319,40 @@ export function CatalogAddOnsScreen() {
       </div>
 
       <AddOnSheet open={sheetOpen} onOpenChange={setSheetOpen} group={selectedGroup} />
+
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {catalogWords.deleteGroupTitle(deleteTarget?.name ?? '')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget && deleteTarget.usedBy > 0
+                ? catalogWords.deleteGroupUsed(deleteTarget.usedBy)
+                : catalogWords.confirmDeleteDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11 md:h-9">{catalogWords.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={removeGroup.isPending}
+              onClick={() => void handleDelete()}
+              className="h-11 bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90 md:h-9"
+            >
+              {catalogWords.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {optionGroups.length > 0 ? (
+        <FloatingAddButton label={catalogWords.addAddOnGroup} onClick={handleOpenAdd} />
+      ) : null}
 
       <DevScenarioPanel />
     </div>

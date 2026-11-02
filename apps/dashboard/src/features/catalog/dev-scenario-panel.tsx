@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   setMockScenario,
   getMockScenario,
@@ -13,12 +14,15 @@ import { cn } from 'cn';
 export function DevScenarioPanel() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [scenario, setScenario] = React.useState<MockScenario>(getMockScenario);
+  const queryClient = useQueryClient();
 
+  // A toggle refetches the page's data, so its effect shows at once (finding G1).
   React.useEffect(() => {
     return subscribeMockScenario(() => {
       setScenario(getMockScenario());
+      void queryClient.resetQueries();
     });
-  }, []);
+  }, [queryClient]);
 
   if (!import.meta.env.DEV) return null;
 
@@ -53,7 +57,7 @@ export function DevScenarioPanel() {
     scenario.latency !== 'none' || scenario.fail !== null || scenario.empty || scenario.offline;
 
   return (
-    <div className="fixed right-4 bottom-4 z-50">
+    <div className="fixed bottom-28 left-2 z-50 md:right-4 md:bottom-4 md:left-auto">
       {!isOpen ? (
         <Button
           type="button"

@@ -1,19 +1,42 @@
 import * as React from 'react';
-import { AlertTriangleIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import {
+  AlertTriangleIcon,
+  BanIcon,
+  CheckIcon,
+  MoreHorizontalIcon,
+  PlusIcon,
+  SearchIcon,
+  Trash2Icon,
+  XIcon,
+} from 'lucide-react';
 import {
   formatPeso,
   catalogWords,
   groupRuleLabel,
   errorWords,
+  type OwnerItem,
   type OwnerOptionGroup,
   type OptionDraft,
 } from '@smartapp/core';
-import { useSaveOptionGroup, useRemoveOptionGroup, errorCodeOf } from '@smartapp/data';
+import {
+  useOwnerItems,
+  useSaveItem,
+  useSaveOptionGroup,
+  useRemoveOptionGroup,
+  errorCodeOf,
+} from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
-import { Switch } from '@smartapp/ui/components/switch';
-import { Checkbox } from '@smartapp/ui/components/checkbox';
+import { Badge } from '@smartapp/ui/components/badge';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@smartapp/ui/components/dropdown-menu';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import {
   ResponsiveDialog,
@@ -31,6 +54,7 @@ import {
 } from '@smartapp/ui/components/alert-dialog';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { PesoInput } from './components/peso-input.js';
+import { CatalogPhoto } from './catalog-photo.js';
 
 export interface AddOnSheetProps {
   open: boolean;
@@ -44,6 +68,8 @@ const RULE_PRESETS = ['pick_1_req', 'pick_1_opt', 'pick_any', 'custom'] as const
 type RulePreset = (typeof RULE_PRESETS)[number];
 const MAX_PICKS = 10;
 const MAX_OPTIONS = 20;
+// The preview near the top stays short; the full list is right below it.
+const PREVIEW_OPTIONS = 3;
 
 function isRulePreset(val: string): val is RulePreset {
   return RULE_PRESETS.some((preset) => preset === val);
@@ -109,9 +135,16 @@ function AddOnForm({
   );
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const { data: allItems = [] } = useOwnerItems();
+  const items = allItems.filter((item) => item.status !== 'archived');
+  const [usedOn, setUsedOn] = React.useState<string[] | null>(null);
+  const usedOnIds =
+    usedOn ??
+    (group ? items.filter((i) => i.optionGroupIds.includes(group.id)).map((i) => i.id) : []);
 
   const saveOptionGroup = useSaveOptionGroup();
   const removeOptionGroup = useRemoveOptionGroup();
+  const saveItem = useSaveItem();
 
   const pickAnyMax = (count: number) => Math.max(1, Math.min(MAX_PICKS, count));
 
@@ -193,6 +226,35 @@ function AddOnForm({
     };
     try {
       const saved = await saveOptionGroup.mutateAsync(group ? { id: group.id, ...draft } : draft);
+      // "Used on": add the group to newly picked items and take it off unpicked ones.
+      if (usedOn !== null) {
+        const picked = new Set(usedOn);
+        const changed = items.filter(
+          (item) => item.optionGroupIds.includes(saved.id) !== picked.has(item.id),
+        );
+        await Promise.all(
+          changed.map((item) =>
+            saveItem.mutateAsync({
+              id: item.id,
+              draft: {
+                categoryId: item.categoryId,
+                name: item.name,
+                description: item.description,
+                photos: item.photos,
+                axes: item.axes,
+                variants: item.variants,
+                optionGroupIds: picked.has(item.id)
+                  ? [...item.optionGroupIds, saved.id]
+                  : item.optionGroupIds.filter((id) => id !== saved.id),
+                pairingIds: item.pairingIds,
+                featured: item.featured,
+                isNew: item.isNew,
+                status: item.status,
+              },
+            }),
+          ),
+        );
+      }
       notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
       onSaved?.(saved);
       onClose();
@@ -213,7 +275,58 @@ function AddOnForm({
     }
   };
 
-  const ruleText = groupRuleLabel(minPicks, maxPicks);
+  const namedCount = options.filter((opt) => opt.name.trim()).length;
+  const ruleText = groupRuleLabel(
+    minPicks,
+    rulePreset === 'pick_any' ? pickAnyMax(namedCount) : maxPicks,
+    rulePreset === 'pick_any' ? namedCount : undefined,
+  );
+
+  const preview = (
+    <div className="space-y-2">
+      <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        {catalogWords.customerPreview}
+      </span>
+      <div className="space-y-2 rounded-xl border border-border/60 bg-muted/20 p-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-sm font-semibold text-foreground">
+            {name || catalogWords.addGroup}
+          </span>
+          <span className="shrink-0 text-xs text-muted-foreground">{ruleText}</span>
+        </div>
+        <ul className="space-y-1.5">
+          {options.slice(0, PREVIEW_OPTIONS).map((opt, i) => (
+            <li
+              key={opt.id ?? i}
+              className="flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-card px-2.5 py-1.5 text-sm"
+            >
+              <span
+                className={
+                  opt.soldOut
+                    ? 'truncate text-muted-foreground line-through'
+                    : 'truncate text-foreground'
+                }
+              >
+                {opt.name || catalogWords.optionNamePlaceholder(i + 1)}
+              </span>
+              <span className="shrink-0 text-muted-foreground tabular">
+                {opt.soldOut
+                  ? catalogWords.optionSoldOut
+                  : opt.priceDelta > 0
+                    ? `+${formatPeso(opt.priceDelta)}`
+                    : catalogWords.optionFree}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {options.length > PREVIEW_OPTIONS ? (
+          <p className="text-xs text-muted-foreground">
+            {catalogWords.moreOptions(options.length - PREVIEW_OPTIONS)}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
 
   return (
     <form onSubmit={handleSave} className="space-y-5">
@@ -316,14 +429,13 @@ function AddOnForm({
         ) : null}
       </div>
 
+      {preview}
+
       <div className="space-y-2">
         <Label>{catalogWords.optionsLabel}</Label>
         <ul className="space-y-2">
           {options.map((opt, index) => (
-            <li
-              key={opt.id ?? index}
-              className="space-y-2 rounded-xl border border-border/70 bg-card p-3 shadow-xs"
-            >
+            <li key={opt.id ?? index} className="space-y-1">
               <div className="flex items-center gap-2">
                 <Input
                   value={opt.name}
@@ -334,40 +446,74 @@ function AddOnForm({
                   onChange={(e) => updateOption(index, { name: e.target.value })}
                 />
                 <PesoInput
-                  className="w-28 shrink-0"
+                  className="w-24 shrink-0 sm:w-28"
                   aria-label={catalogWords.optionPriceDelta}
                   value={opt.priceDelta}
                   onChange={(priceDelta) => updateOption(index, { priceDelta })}
                 />
-              </div>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted-foreground md:min-h-8">
-                  <Checkbox
-                    checked={opt.isDefault}
-                    onCheckedChange={(checked) =>
-                      updateOption(index, { isDefault: Boolean(checked) })
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-11 shrink-0 text-muted-foreground md:size-9"
+                        aria-label={catalogWords.optionMoreAria(
+                          opt.name || catalogWords.optionNamePlaceholder(index + 1),
+                        )}
+                      />
                     }
-                  />
-                  {catalogWords.optionPreselected}
-                </label>
-                <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted-foreground md:min-h-8">
-                  <Switch
-                    checked={opt.soldOut}
-                    onCheckedChange={(checked) => updateOption(index, { soldOut: checked })}
-                  />
-                  {catalogWords.optionSoldOut}
-                </label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="ml-auto h-11 gap-1.5 text-muted-foreground hover:text-destructive md:h-8"
-                  onClick={() => handleRemoveOption(index)}
-                  disabled={options.length <= 1}
-                >
-                  <Trash2Icon className="size-4" />
-                  {catalogWords.optionRemove}
-                </Button>
+                  >
+                    <MoreHorizontalIcon className="size-5" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuCheckboxItem
+                      className="min-h-11 md:min-h-8"
+                      checked={opt.isDefault}
+                      onCheckedChange={(checked) => updateOption(index, { isDefault: checked })}
+                    >
+                      {catalogWords.optionPreselected}
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem
+                      className="min-h-11 md:min-h-8"
+                      checked={opt.soldOut}
+                      onCheckedChange={(checked) => updateOption(index, { soldOut: checked })}
+                    >
+                      {catalogWords.optionSoldOut}
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      className="min-h-11 md:min-h-8"
+                      disabled={options.length <= 1}
+                      onClick={() => handleRemoveOption(index)}
+                    >
+                      <Trash2Icon className="size-4" />
+                      {catalogWords.optionRemove}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
+              {opt.isDefault || opt.soldOut ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {opt.isDefault ? (
+                    <Badge variant="secondary" className="gap-1">
+                      <CheckIcon className="size-3" />
+                      {catalogWords.optionPreselected}
+                    </Badge>
+                  ) : null}
+                  {opt.soldOut ? (
+                    <Badge
+                      variant="outline"
+                      className="gap-1 border-warning/40 bg-warning-soft text-warning-text"
+                    >
+                      <BanIcon className="size-3" />
+                      {catalogWords.optionSoldOut}
+                    </Badge>
+                  ) : null}
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -382,40 +528,7 @@ function AddOnForm({
         </Button>
       </div>
 
-      <div className="space-y-2">
-        <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          {catalogWords.customerPreview}
-        </span>
-        <div className="space-y-2 rounded-xl border border-border/60 bg-muted/20 p-3">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-sm font-semibold text-foreground">
-              {name || catalogWords.addGroup}
-            </span>
-            <span className="shrink-0 text-xs text-muted-foreground">{ruleText}</span>
-          </div>
-          <ul className="space-y-1.5">
-            {options.map((opt, i) => (
-              <li
-                key={opt.id ?? i}
-                className="flex items-center justify-between rounded-lg border border-border/40 bg-card px-2.5 py-1.5 text-sm"
-              >
-                <span
-                  className={opt.soldOut ? 'text-muted-foreground line-through' : 'text-foreground'}
-                >
-                  {opt.name || catalogWords.optionNamePlaceholder(i + 1)}
-                </span>
-                <span className="text-muted-foreground tabular">
-                  {opt.soldOut
-                    ? catalogWords.optionSoldOut
-                    : opt.priceDelta > 0
-                      ? `+${formatPeso(opt.priceDelta)}`
-                      : catalogWords.optionFree}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      <UsedOnPicker items={items} pickedIds={usedOnIds} onChange={setUsedOn} />
 
       <ResponsiveDialogFooter>
         <div className="flex items-center justify-between gap-2">
@@ -469,5 +582,100 @@ function AddOnForm({
         </AlertDialogContent>
       </AlertDialog>
     </form>
+  );
+}
+
+function UsedOnPicker({
+  items,
+  pickedIds,
+  onChange,
+}: {
+  items: readonly OwnerItem[];
+  pickedIds: readonly string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [query, setQuery] = React.useState('');
+  const picked = items.filter((item) => pickedIds.includes(item.id));
+  const q = query.trim().toLowerCase();
+  const matches = items
+    .filter((item) => !pickedIds.includes(item.id))
+    .filter((item) => !q || item.name.toLowerCase().includes(q))
+    .slice(0, 6);
+
+  return (
+    <div className="space-y-2">
+      <div className="space-y-0.5">
+        <Label htmlFor="used-on-search">{catalogWords.usedOnLabel}</Label>
+        <p className="text-sm text-muted-foreground">{catalogWords.usedOnHelp}</p>
+      </div>
+      {picked.length > 0 ? (
+        <ul className="flex flex-wrap gap-2">
+          {picked.map((item) => (
+            <li
+              key={item.id}
+              className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 py-0.5 pr-0.5 pl-1.5"
+            >
+              <CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" className="size-7" />
+              <span className="max-w-36 truncate text-sm font-medium">{item.name}</span>
+              <button
+                type="button"
+                aria-label={catalogWords.removePairingAria(item.name)}
+                className="flex size-10 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-destructive md:size-8"
+                onClick={() => onChange(pickedIds.filter((id) => id !== item.id))}
+              >
+                <XIcon className="size-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">{catalogWords.usedOnNone}</p>
+      )}
+      <div className="relative">
+        <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          id="used-on-search"
+          value={query}
+          autoComplete="off"
+          placeholder={catalogWords.usedOnSearch}
+          className="h-11 pr-11 pl-9 md:h-9"
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {query ? (
+          <button
+            type="button"
+            aria-label={catalogWords.clearSearch}
+            onClick={() => setQuery('')}
+            className="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground md:size-9"
+          >
+            <XIcon className="size-4" />
+          </button>
+        ) : null}
+      </div>
+      {matches.length > 0 ? (
+        <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+          {matches.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange([...pickedIds, item.id]);
+                  setQuery('');
+                }}
+                className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-border/50 bg-card p-1.5 text-left text-sm transition-colors hover:border-primary/40 hover:bg-muted/40"
+              >
+                <CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" className="size-8" />
+                <span className="min-w-0 flex-1 truncate font-medium text-foreground">
+                  {item.name}
+                </span>
+                <PlusIcon className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : q ? (
+        <p className="text-sm text-muted-foreground">{catalogWords.pairingsNoMatch}</p>
+      ) : null}
+    </div>
   );
 }

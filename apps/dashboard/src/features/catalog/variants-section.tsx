@@ -10,7 +10,9 @@ import {
 } from 'lucide-react';
 import {
   catalogWords,
+  variantPresets,
   type OwnerItem,
+  type VariantPreset,
   type ShopKind,
   type Variant,
   type VariantAxis,
@@ -41,6 +43,7 @@ import {
   copyChoices,
   renameOption,
 } from './variants.js';
+import { cn } from 'cn';
 
 export interface VariantsValue {
   axes: VariantAxis[];
@@ -58,9 +61,11 @@ export interface VariantsSectionProps {
   // Items whose choices can be copied (this item left out).
   otherItems: readonly OwnerItem[];
   onCopied: (name: string) => void;
+  // A save problem with the choices, shown under the heading.
+  error?: string | undefined;
 }
 
-type Preset = (typeof catalogWords.variantPresets)[number];
+type Preset = VariantPreset;
 
 export function VariantsSection({
   kind,
@@ -71,6 +76,7 @@ export function VariantsSection({
   basePrice,
   otherItems,
   onCopied,
+  error,
 }: VariantsSectionProps) {
   const { axes, variants } = value;
   const copySources = otherItems.filter((item) => item.axes.length > 0);
@@ -97,12 +103,24 @@ export function VariantsSection({
   const groups = axes.length === 2 ? (axes[0]?.values ?? []) : [];
 
   return (
-    <section className="space-y-4 rounded-2xl border border-border/60 bg-card p-4 shadow-xs md:p-5">
+    <section
+      id="item-variants"
+      tabIndex={-1}
+      className={cn(
+        'scroll-mt-24 space-y-4 rounded-2xl border bg-card p-4 shadow-xs outline-none md:p-5',
+        error ? 'border-destructive/50' : 'border-border/60',
+      )}
+    >
       <div className="space-y-1">
         <h2 className="text-base font-semibold text-foreground">
           {catalogWords.sectionVariantsTitle(kind)}
         </h2>
         <p className="text-sm text-muted-foreground">{catalogWords.sectionVariantsHelp(kind)}</p>
+        {error ? (
+          <p role="alert" className="text-sm font-medium text-destructive">
+            {error}
+          </p>
+        ) : null}
       </div>
 
       {axes.map((axis, axisIndex) => (
@@ -137,6 +155,7 @@ export function VariantsSection({
 
       {axes.length < VARIANT_LIMITS.axes ? (
         <AddChoiceMenu
+          kind={kind}
           label={axes.length === 0 ? catalogWords.addFirstChoice : catalogWords.addSecondChoice}
           copySources={axes.length === 0 ? copySources : []}
           maxValues={Math.floor(VARIANT_LIMITS.combos / Math.max(1, count))}
@@ -146,7 +165,7 @@ export function VariantsSection({
       ) : null}
 
       {axes.length > 0 && count > 0 ? (
-        <div className="space-y-3 border-t border-border/60 pt-4">
+        <div id="variant-prices" className="scroll-mt-24 space-y-3 border-t border-border/60 pt-4">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-0.5">
               <Label htmlFor="same-price" className="text-sm font-semibold">
@@ -294,13 +313,16 @@ function AddChoiceMenu({
   maxValues,
   onPreset,
   onCopy,
+  kind,
 }: {
+  kind: ShopKind;
   label: string;
   copySources: readonly OwnerItem[];
   maxValues: number;
   onPreset: (preset: Preset | null) => void;
   onCopy: (item: OwnerItem) => void;
 }) {
+  const presets = variantPresets(kind);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -313,19 +335,32 @@ function AddChoiceMenu({
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuGroup>
           <DropdownMenuLabel>{catalogWords.quickStart}</DropdownMenuLabel>
-          {catalogWords.variantPresets.map((preset) => (
-            <DropdownMenuItem
+          {presets.main.map((preset) => (
+            <PresetItem
               key={preset.label}
-              disabled={preset.values.length > maxValues}
-              onClick={() => onPreset(preset)}
-            >
-              <SparklesIcon className="size-4 text-muted-foreground" />
-              <span className="flex min-w-0 flex-col">
-                <span className="truncate">{preset.label}</span>
-                <span className="text-xs text-muted-foreground">{preset.name}</span>
-              </span>
-            </DropdownMenuItem>
+              preset={preset}
+              maxValues={maxValues}
+              onPreset={onPreset}
+            />
           ))}
+          {presets.more.length > 0 ? (
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <SparklesIcon className="size-4 text-muted-foreground" />
+                {catalogWords.morePresets}
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="max-h-72 w-60 overflow-y-auto">
+                {presets.more.map((preset) => (
+                  <PresetItem
+                    key={preset.label}
+                    preset={preset}
+                    maxValues={maxValues}
+                    onPreset={onPreset}
+                  />
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+          ) : null}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onPreset(null)}>
@@ -354,6 +389,26 @@ function AddChoiceMenu({
         ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function PresetItem({
+  preset,
+  maxValues,
+  onPreset,
+}: {
+  preset: Preset;
+  maxValues: number;
+  onPreset: (preset: Preset) => void;
+}) {
+  return (
+    <DropdownMenuItem disabled={preset.values.length > maxValues} onClick={() => onPreset(preset)}>
+      <SparklesIcon className="size-4 text-muted-foreground" />
+      <span className="flex min-w-0 flex-col">
+        <span className="truncate">{preset.label}</span>
+        <span className="text-xs text-muted-foreground">{preset.name}</span>
+      </span>
+    </DropdownMenuItem>
   );
 }
 
@@ -479,7 +534,7 @@ function AxisEditor({
                     <button
                       type="button"
                       aria-label={catalogWords.removeOptionAria(value.name)}
-                      className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive"
+                      className="flex size-10 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive md:size-7"
                       onClick={() => onRemoveOption(value.name)}
                     >
                       <XIcon className="size-4" />

@@ -5,6 +5,13 @@ import { env } from '@/app/env';
 import { useShop } from '@/app/shop';
 import { cn } from 'cn';
 
+/** The address to draw a saved photo ref (or a just-picked blob/data photo) at about this width. */
+export function catalogPhotoSrc(photoRef: string | null | undefined, width: number): string | null {
+  if (!photoRef) return null;
+  if (/^(blob:|data:|https?:\/\/)/.test(photoRef)) return photoRef;
+  return imageUrl(photoRef, width, env.VITE_STOREFRONT_URL);
+}
+
 export interface CatalogPhotoProps {
   photoRef: string | null | undefined;
   alt: string;
@@ -27,19 +34,10 @@ export function CatalogPhoto({ photoRef, alt, size = 'md', className }: CatalogP
     lg: 'size-8',
   }[size];
 
-  const src = React.useMemo(() => {
-    if (!photoRef) return null;
-    if (
-      photoRef.startsWith('blob:') ||
-      photoRef.startsWith('data:') ||
-      photoRef.startsWith('http://') ||
-      photoRef.startsWith('https://')
-    ) {
-      return photoRef;
-    }
-    const width = size === 'sm' ? 128 : size === 'md' ? 256 : 512;
-    return imageUrl(photoRef, width, env.VITE_STOREFRONT_URL);
-  }, [photoRef, size]);
+  const src = React.useMemo(
+    () => catalogPhotoSrc(photoRef, size === 'sm' ? 128 : size === 'md' ? 256 : 512),
+    [photoRef, size],
+  );
 
   if (!src) {
     return (

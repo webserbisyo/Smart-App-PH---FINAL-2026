@@ -232,6 +232,7 @@
 @custom-variant state-completed (&[data-state="completed"]);
 @custom-variant state-inactive (&[data-state="inactive"]);
 @custom-variant orientation-vertical (&[data-orientation="vertical"]);
+@custom-variant data-size-default (&[data-size="default"]);
 /* The installed shadcn parts (separator, tabs, scroll area, toggle group) style orientation
    with data-horizontal: and data-vertical:, which shadcn defines in its own tailwind.css.
    Base UI sets data-orientation, so these copy shadcn's definitions. */

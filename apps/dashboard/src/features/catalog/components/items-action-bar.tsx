@@ -1,14 +1,14 @@
-import * as React from 'react';
 import {
+  ArchiveIcon,
   BanIcon,
   CheckCircle2Icon,
-  EyeOffIcon,
+  ChevronDownIcon,
   EyeIcon,
+  EyeOffIcon,
   FolderInputIcon,
-  ArchiveIcon,
   XIcon,
 } from 'lucide-react';
-import { catalogWords, type Category } from '@smartapp/core';
+import { catalogWords, type Category, type OwnerItem } from '@smartapp/core';
 import {
   ActionBar,
   ActionBarClose,
@@ -17,18 +17,19 @@ import {
   ActionBarSelection,
   ActionBarSeparator,
 } from '@smartapp/ui/components/action-bar';
-import { Popover, PopoverContent, PopoverTrigger } from '@smartapp/ui/components/popover';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@smartapp/ui/components/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@smartapp/ui/components/dropdown-menu';
 import { Button } from '@smartapp/ui/components/button';
+import { isItemSoldOut } from './item-actions.js';
 
 export interface ItemsActionBarProps {
-  selectedIds: string[];
+  selected: OwnerItem[];
   categories: Category[];
   onClearSelection: () => void;
   onBulkSoldOutToday: (itemIds: string[]) => void;
@@ -41,8 +42,12 @@ export interface ItemsActionBarProps {
   sideOffset?: number | undefined;
 }
 
+const action = 'h-11 justify-start gap-1.5 text-sm font-medium whitespace-nowrap md:h-9';
+
+// Bulk actions for the picked items. Only the actions that change something show (finding B3),
+// so the bar stays one line on desktop.
 export function ItemsActionBar({
-  selectedIds,
+  selected,
   categories,
   onClearSelection,
   onBulkSoldOutToday,
@@ -53,159 +58,121 @@ export function ItemsActionBar({
   onBulkArchive,
   sideOffset = 24,
 }: ItemsActionBarProps) {
-  const [popoverOpen, setPopoverOpen] = React.useState(false);
-  const [selectedCatId, setSelectedCatId] = React.useState<string | null>(null);
-
-  const open = selectedIds.length > 0;
-
-  const handleMoveConfirm = () => {
-    if (selectedCatId) {
-      onBulkMoveCategory(selectedIds, selectedCatId);
-      setPopoverOpen(false);
-      setSelectedCatId(null);
-    }
-  };
+  const ids = selected.map((item) => item.id);
+  const anyAvailable = selected.some((item) => !isItemSoldOut(item));
+  const anySoldOut = selected.some(isItemSoldOut);
+  const anyVisible = selected.some((item) => item.status !== 'hidden');
+  const anyHidden = selected.some((item) => item.status === 'hidden');
+  const moveTargets = categories.filter((c) => selected.some((item) => item.categoryId !== c.id));
 
   return (
     <ActionBar
-      open={open}
+      open={selected.length > 0}
       onOpenChange={(isOpen) => {
         if (!isOpen) onClearSelection();
       }}
       side="bottom"
       sideOffset={sideOffset}
-      className="w-11/12 max-w-3xl flex-wrap justify-between border-border/80 bg-card px-3 py-2 text-card-foreground shadow-xl md:w-auto"
+      className="w-11/12 max-w-4xl flex-wrap border-border/80 bg-card px-3 py-2 text-card-foreground shadow-xl md:w-auto md:flex-nowrap"
     >
-      <ActionBarSelection className="rounded-md border-primary/20 bg-primary/10 px-2.5 py-1 font-semibold text-primary">
-        <span>{catalogWords.selectedCount(selectedIds.length)}</span>
+      <ActionBarSelection className="rounded-md border-primary/20 bg-primary/10 px-2.5 py-1 font-semibold whitespace-nowrap text-primary">
+        <span>{catalogWords.selectedCount(selected.length)}</span>
       </ActionBarSelection>
 
-      <ActionBarSeparator className="hidden md:block" />
-
-      <ActionBarGroup className="order-last grid w-full grid-cols-2 gap-1.5 sm:grid-cols-3 md:order-none md:flex md:w-auto md:flex-wrap md:items-center">
-        {/* Sold out today */}
-        <ActionBarItem
-          variant="secondary"
-          size="sm"
-          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
-          onClick={() => onBulkSoldOutToday(selectedIds)}
-        >
-          <BanIcon className="size-3.5 text-warning" />
-          <span>{catalogWords.bulkSoldOutToday}</span>
-        </ActionBarItem>
-
-        {/* Back on */}
-        <ActionBarItem
-          variant="secondary"
-          size="sm"
-          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
-          onClick={() => onBulkBackOn(selectedIds)}
-        >
-          <CheckCircle2Icon className="size-3.5 text-success" />
-          <span>{catalogWords.bulkBackOn}</span>
-        </ActionBarItem>
-
-        {/* Hide */}
-        <ActionBarItem
-          variant="secondary"
-          size="sm"
-          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
-          onClick={() => onBulkHide(selectedIds)}
-        >
-          <EyeOffIcon className="size-3.5" />
-          <span>{catalogWords.bulkHide}</span>
-        </ActionBarItem>
-
-        {/* Show */}
-        <ActionBarItem
-          variant="secondary"
-          size="sm"
-          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
-          onClick={() => onBulkShow(selectedIds)}
-        >
-          <EyeIcon className="size-3.5 text-primary" />
-          <span>{catalogWords.bulkShow}</span>
-        </ActionBarItem>
-
-        {/* Move to category (select in a popover) */}
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger
-            render={
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
-              />
-            }
-          >
-            <FolderInputIcon className="size-3.5" />
-            <span>{catalogWords.bulkMoveToCategory}</span>
-          </PopoverTrigger>
-          <PopoverContent align="center" side="top" className="w-64 gap-3 p-3">
-            <span className="text-xs font-semibold text-foreground">
-              {catalogWords.selectCategory}
-            </span>
-            <Select
-              value={selectedCatId ?? ''}
-              onValueChange={(val) => setSelectedCatId(val ?? null)}
-            >
-              <SelectTrigger className="h-8 w-full text-xs">
-                <SelectValue placeholder={catalogWords.selectCategory} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id} className="text-xs">
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex justify-end gap-2 pt-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => setPopoverOpen(false)}
-              >
-                {catalogWords.cancel}
-              </Button>
-              <Button
-                type="button"
-                variant="default"
-                size="sm"
-                disabled={!selectedCatId}
-                className="h-7 text-xs"
-                onClick={handleMoveConfirm}
-              >
-                {catalogWords.confirm}
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        {/* Archive */}
-        <ActionBarItem
-          variant="secondary"
-          size="sm"
-          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
-          onClick={() => onBulkArchive(selectedIds)}
-        >
-          <ArchiveIcon className="size-3.5" />
-          <span>{catalogWords.bulkArchive}</span>
-        </ActionBarItem>
-      </ActionBarGroup>
-
-      <ActionBarSeparator className="hidden md:block" />
-
       <ActionBarClose
-        className="flex size-11 items-center justify-center rounded-md hover:bg-muted md:size-8"
+        className="ml-auto flex size-11 items-center justify-center rounded-md hover:bg-muted md:order-last md:ml-0 md:size-9"
         onClick={onClearSelection}
         aria-label={catalogWords.clearSelection}
       >
-        <XIcon className="size-3.5" />
+        <XIcon className="size-4" />
       </ActionBarClose>
+
+      <ActionBarSeparator className="hidden md:order-last md:block" />
+
+      <ActionBarGroup className="grid w-full grid-cols-2 gap-1.5 md:flex md:w-auto md:items-center">
+        {anyAvailable ? (
+          <ActionBarItem
+            variant="secondary"
+            size="sm"
+            className={action}
+            onClick={() => onBulkSoldOutToday(ids)}
+          >
+            <BanIcon className="size-4 text-warning" />
+            <span>{catalogWords.bulkSoldOutToday}</span>
+          </ActionBarItem>
+        ) : null}
+        {anySoldOut ? (
+          <ActionBarItem
+            variant="secondary"
+            size="sm"
+            className={action}
+            onClick={() => onBulkBackOn(ids)}
+          >
+            <CheckCircle2Icon className="size-4 text-success" />
+            <span>{catalogWords.bulkBackOn}</span>
+          </ActionBarItem>
+        ) : null}
+        {anyVisible ? (
+          <ActionBarItem
+            variant="secondary"
+            size="sm"
+            className={action}
+            onClick={() => onBulkHide(ids)}
+          >
+            <EyeOffIcon className="size-4" />
+            <span>{catalogWords.bulkHide}</span>
+          </ActionBarItem>
+        ) : null}
+        {anyHidden ? (
+          <ActionBarItem
+            variant="secondary"
+            size="sm"
+            className={action}
+            onClick={() => onBulkShow(ids)}
+          >
+            <EyeIcon className="size-4 text-primary" />
+            <span>{catalogWords.bulkShow}</span>
+          </ActionBarItem>
+        ) : null}
+        {moveTargets.length > 0 ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={<Button type="button" variant="secondary" size="sm" className={action} />}
+            >
+              <FolderInputIcon className="size-4" />
+              <span>{catalogWords.moveTo}</span>
+              <ChevronDownIcon className="size-4 text-muted-foreground" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="top"
+              align="center"
+              className="max-h-72 w-56 overflow-y-auto"
+            >
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>{catalogWords.bulkMoveToCategory}</DropdownMenuLabel>
+                {moveTargets.map((c) => (
+                  <DropdownMenuItem
+                    key={c.id}
+                    className="min-h-11 md:min-h-8"
+                    onClick={() => onBulkMoveCategory(ids, c.id)}
+                  >
+                    {c.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
+        <ActionBarItem
+          variant="secondary"
+          size="sm"
+          className={action}
+          onClick={() => onBulkArchive(ids)}
+        >
+          <ArchiveIcon className="size-4" />
+          <span>{catalogWords.bulkArchive}</span>
+        </ActionBarItem>
+      </ActionBarGroup>
     </ActionBar>
   );
 }

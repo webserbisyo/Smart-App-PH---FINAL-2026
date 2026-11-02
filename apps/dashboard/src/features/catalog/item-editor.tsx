@@ -10,9 +10,11 @@ import {
   SearchIcon,
   SparklesIcon,
   Trash2Icon,
+  WifiOffIcon,
   XIcon,
 } from 'lucide-react';
 import {
+  formatPeso,
   itemPriceLabel,
   catalogWords,
   errorWords,
@@ -37,7 +39,6 @@ import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
-import { Checkbox } from '@smartapp/ui/components/checkbox';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import { Switch } from '@smartapp/ui/components/switch';
@@ -46,9 +47,17 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@smartapp/ui/components/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@smartapp/ui/components/dropdown-menu';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,6 +74,7 @@ import { PhotoUploadSection } from './photo-upload-section.js';
 import { AddOnSheet } from './add-on-sheet.js';
 import { CategorySheet } from './category-sheet.js';
 import { CatalogPhoto } from './catalog-photo.js';
+import { ItemPreview } from './item-preview.js';
 import { PesoInput } from './components/peso-input.js';
 import { VariantsSection, type VariantsValue } from './variants-section.js';
 import { buildVariants, sharedPrice } from './variants.js';
@@ -74,6 +84,8 @@ export interface ItemEditorProps {
   initialItem?: OwnerItem | null | undefined;
   // Duplicate: a new item that starts as a copy of this one and is saved only on Save.
   copyFrom?: OwnerItem | null | undefined;
+  // A new item's starting name (from "Add 'x'" on a search with no match).
+  initialName?: string | undefined;
 }
 
 interface FormState {
@@ -89,6 +101,12 @@ interface FormState {
   featured: boolean;
   isNew: boolean;
   status: ItemStatus;
+}
+
+interface FieldErrors {
+  name?: string | undefined;
+  category?: string | undefined;
+  choices?: string | undefined;
 }
 
 function initialForm(source: OwnerItem | null, isCopy: boolean): FormState {
@@ -133,7 +151,7 @@ function toDraft(form: FormState, categoryId: string): ItemDraft {
   };
 }
 
-export function ItemEditor({ initialItem, copyFrom }: ItemEditorProps) {
+export function ItemEditor({ initialItem, copyFrom, initialName }: ItemEditorProps) {
   // Discard on an existing item starts the form again from what is saved.
   const [resetKey, setResetKey] = React.useState(0);
   return (
@@ -141,6 +159,7 @@ export function ItemEditor({ initialItem, copyFrom }: ItemEditorProps) {
       key={resetKey}
       initialItem={initialItem ?? null}
       copyFrom={copyFrom ?? null}
+      initialName={initialName}
       onReset={() => setResetKey((k) => k + 1)}
     />
   );
@@ -149,10 +168,12 @@ export function ItemEditor({ initialItem, copyFrom }: ItemEditorProps) {
 function ItemEditorForm({
   initialItem,
   copyFrom,
+  initialName,
   onReset,
 }: {
   initialItem: OwnerItem | null;
   copyFrom: OwnerItem | null;
+  initialName: string | undefined;
   onReset: () => void;
 }) {
   const navigate = useNavigate();
@@ -167,16 +188,28 @@ function ItemEditorForm({
 
   const isCopy = !initialItem && copyFrom !== null;
   const [initial] = React.useState(() => initialForm(initialItem ?? copyFrom, isCopy));
-  const [form, setForm] = React.useState<FormState>(initial);
+  const [form, setForm] = React.useState<FormState>(() =>
+    !initialItem && !copyFrom && initialName ? { ...initial, name: initialName } : initial,
+  );
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
-  const [nameInvalid, setNameInvalid] = React.useState(false);
+  const [fieldErrors, setFieldErrors] = React.useState<FieldErrors>({});
+  const [freeConfirmOpen, setFreeConfirmOpen] = React.useState(false);
   const [addOnSheetOpen, setAddOnSheetOpen] = React.useState(false);
   const [categorySheetOpen, setCategorySheetOpen] = React.useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const leaving = React.useRef(false);
   const errorRef = React.useRef<HTMLParagraphElement>(null);
 
-  const update = (patch: Partial<FormState>) => setForm((prev) => ({ ...prev, ...patch }));
+  const update = (patch: Partial<FormState>) => {
+    setForm((prev) => ({ ...prev, ...patch }));
+    // Fixing a field clears its message.
+    if (patch.name !== undefined && fieldErrors.name)
+      setFieldErrors((e) => ({ ...e, name: undefined }));
+    if (patch.categoryId !== undefined && fieldErrors.category)
+      setFieldErrors((e) => ({ ...e, category: undefined }));
+    if (patch.choices !== undefined && fieldErrors.choices)
+      setFieldErrors((e) => ({ ...e, choices: undefined }));
+  };
   const categoryId = form.categoryId || (categories[0]?.id ?? '');
   const isDirty =
     isCopy ||
@@ -199,21 +232,37 @@ function ItemEditorForm({
     requestAnimationFrame(() => errorRef.current?.scrollIntoView({ block: 'center' }));
   };
 
-  const handleSave = async (e?: React.FormEvent) => {
+  const handleSave = async (e?: React.FormEvent, allowFree = false) => {
     e?.preventDefault();
     const draft = toDraft(form, categoryId);
-    const problem = !draft.name
-      ? catalogWords.nameRequired
-      : !draft.categoryId
-        ? catalogWords.categoryRequired
-        : draft.axes.some((axis) => !axis.name)
-          ? catalogWords.choiceNeedsName
-          : draft.axes.some((axis) => axis.values.length === 0)
-            ? catalogWords.choiceNeedsOption
-            : null;
-    setNameInvalid(!draft.name);
-    if (problem) {
-      showError(problem);
+    const errors: FieldErrors = {
+      name: draft.name ? undefined : catalogWords.nameRequired,
+      category: draft.categoryId ? undefined : catalogWords.categoryRequired,
+      choices: draft.axes.some((axis) => !axis.name)
+        ? catalogWords.choiceNeedsName
+        : draft.axes.some((axis) => axis.values.length === 0)
+          ? catalogWords.choiceNeedsOption
+          : undefined,
+    };
+    setFieldErrors(errors);
+    // Errors show under their field; the page scrolls to the first one.
+    const firstInvalid = errors.name
+      ? 'item-name'
+      : errors.category
+        ? 'item-cat'
+        : errors.choices
+          ? 'item-variants'
+          : null;
+    if (firstInvalid) {
+      setErrorMsg(null);
+      const el = document.getElementById(firstInvalid);
+      el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (el instanceof HTMLInputElement || el instanceof HTMLButtonElement)
+        el.focus({ preventScroll: true });
+      return;
+    }
+    if (!allowFree && draft.variants.some((v) => v.price === 0)) {
+      setFreeConfirmOpen(true);
       return;
     }
     try {
@@ -264,12 +313,10 @@ function ItemEditorForm({
     }
   };
 
-  const toggleOptionGroup = (groupId: string) =>
-    update({
-      optionGroupIds: form.optionGroupIds.includes(groupId)
-        ? form.optionGroupIds.filter((id) => id !== groupId)
-        : [...form.optionGroupIds, groupId],
-    });
+  const attachedGroups = form.optionGroupIds
+    .map((id) => optionGroups.find((group) => group.id === id))
+    .filter((group): group is OwnerOptionGroup => group !== undefined);
+  const unattachedGroups = optionGroups.filter((group) => !form.optionGroupIds.includes(group.id));
 
   const otherItems = allItems.filter(
     (item) => item.id !== initialItem?.id && item.status !== 'archived',
@@ -277,6 +324,9 @@ function ItemEditorForm({
   const draftForPreview = toDraft(form, categoryId);
   const soldOutEverywhere = draftForPreview.variants.every((v) => v.availability === 'sold_out');
   const showPrice = form.choices.axes.length === 0 || form.samePrice;
+  const prices = draftForPreview.variants.map((v) => v.price);
+  const lowPrice = Math.min(...prices);
+  const highPrice = Math.max(...prices);
 
   const status = !initialItem
     ? {
@@ -307,10 +357,11 @@ function ItemEditorForm({
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pt-4 pb-6 md:px-6 md:pt-6">
       <header className="mb-5 space-y-1.5">
+        {/* The top bar already says "New menu item"; the heading only shows once there is a name. */}
         <h1
           className={cn(
             'line-clamp-2 text-xl font-bold text-foreground md:text-2xl',
-            !form.name.trim() && 'text-muted-foreground',
+            !form.name.trim() && 'sr-only',
           )}
         >
           {form.name.trim() || catalogWords.newTitle(kind)}
@@ -320,6 +371,13 @@ function ItemEditorForm({
           {status.text}
         </p>
       </header>
+
+      {!isOnline ? (
+        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-sm text-warning-text">
+          <WifiOffIcon className="size-4 shrink-0" />
+          <span>{catalogWords.offlineNotice}</span>
+        </div>
+      ) : null}
 
       {isCopy && copyFrom ? (
         <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">
@@ -339,7 +397,12 @@ function ItemEditorForm({
       ) : null}
 
       <div className="flex flex-col items-start gap-6 lg:flex-row">
-        <form id="item-form" onSubmit={handleSave} className="w-full min-w-0 flex-1 space-y-4">
+        <form
+          id="item-form"
+          noValidate
+          onSubmit={(e) => void handleSave(e)}
+          className="w-full min-w-0 flex-1 space-y-4"
+        >
           <section className={card}>
             <PhotoUploadSection
               photos={form.photos}
@@ -367,35 +430,25 @@ function ItemEditorForm({
                 id="item-name"
                 value={form.name}
                 maxLength={80}
-                aria-invalid={nameInvalid ? true : undefined}
-                placeholder={catalogWords.namePlaceholder}
+                aria-invalid={fieldErrors.name ? true : undefined}
+                aria-describedby={fieldErrors.name ? 'item-name-error' : undefined}
+                placeholder={catalogWords.namePlaceholderFor(kind)}
                 className="h-11 md:h-9"
-                onChange={(e) => {
-                  update({ name: e.target.value });
-                  if (nameInvalid) setNameInvalid(false);
-                }}
+                onChange={(e) => update({ name: e.target.value })}
               />
+              <FieldError id="item-name-error" message={fieldErrors.name} />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="item-cat">{catalogWords.categoryLabel}</Label>
-              <div className="flex gap-2">
-                <CategorySelect
-                  categories={categories}
-                  value={categoryId}
-                  onChange={(id) => update({ categoryId: id })}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-11 shrink-0 gap-1 px-3 md:h-9"
-                  onClick={() => setCategorySheetOpen(true)}
-                  aria-label={catalogWords.newCategory}
-                >
-                  <PlusIcon className="size-4" />
-                  <span className="hidden sm:inline">{catalogWords.newCategory}</span>
-                </Button>
-              </div>
+              <CategorySelect
+                categories={categories}
+                value={categoryId}
+                invalid={Boolean(fieldErrors.category)}
+                onChange={(id) => update({ categoryId: id })}
+                onNew={() => setCategorySheetOpen(true)}
+              />
+              <FieldError id="item-cat-error" message={fieldErrors.category} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="item-price">
@@ -411,9 +464,25 @@ function ItemEditorForm({
                   onChange={(basePrice) => update({ basePrice })}
                 />
               ) : (
-                <p className="flex min-h-11 items-center text-sm text-muted-foreground md:min-h-9">
-                  {catalogWords.pricePerSize}
-                </p>
+                <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 md:min-h-9">
+                  <span className="text-base font-semibold text-foreground tabular">
+                    {lowPrice === highPrice
+                      ? formatPeso(lowPrice)
+                      : catalogWords.priceRange(formatPeso(lowPrice), formatPeso(highPrice))}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-11 px-0 md:h-9"
+                    onClick={() =>
+                      document
+                        .getElementById('variant-prices')
+                        ?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+                    }
+                  >
+                    {catalogWords.editPrices}
+                  </Button>
+                </div>
               )}
             </div>
 
@@ -429,7 +498,7 @@ function ItemEditorForm({
                 value={form.description}
                 maxLength={300}
                 rows={3}
-                placeholder={catalogWords.descPlaceholder}
+                placeholder={catalogWords.descPlaceholderFor(kind)}
                 onChange={(e) => update({ description: e.target.value })}
               />
             </div>
@@ -437,6 +506,7 @@ function ItemEditorForm({
 
           <VariantsSection
             kind={kind}
+            error={fieldErrors.choices}
             value={form.choices}
             onChange={(choices) => update({ choices })}
             samePrice={form.samePrice}
@@ -452,32 +522,37 @@ function ItemEditorForm({
                 <h2 className="text-base font-semibold text-foreground">
                   {catalogWords.sectionAddOns}
                 </h2>
-                <p className="text-sm text-muted-foreground">{catalogWords.sectionAddOnsHelp}</p>
+                <p className="text-sm text-muted-foreground">
+                  {catalogWords.sectionAddOnsHelp(kind)}
+                </p>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 gap-1.5 md:h-9"
-                onClick={() => setAddOnSheetOpen(true)}
-              >
-                <PlusIcon className="size-4" />
-                {catalogWords.newAddOnGroup}
-              </Button>
             </div>
-            {optionGroups.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{catalogWords.noAddOnGroupsYet}</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {optionGroups.map((group) => (
-                  <AddOnChoice
+            {attachedGroups.length > 0 ? (
+              <ul className="space-y-2">
+                {attachedGroups.map((group) => (
+                  <AttachedAddOn
                     key={group.id}
                     group={group}
-                    checked={form.optionGroupIds.includes(group.id)}
-                    onToggle={() => toggleOptionGroup(group.id)}
+                    onRemove={() =>
+                      update({
+                        optionGroupIds: form.optionGroupIds.filter((id) => id !== group.id),
+                      })
+                    }
                   />
                 ))}
-              </div>
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {optionGroups.length === 0
+                  ? catalogWords.noAddOnGroupsYet
+                  : catalogWords.attachAddOnNone}
+              </p>
             )}
+            <AttachAddOnMenu
+              groups={unattachedGroups}
+              onAttach={(id) => update({ optionGroupIds: [...form.optionGroupIds, id] })}
+              onCreate={() => setAddOnSheetOpen(true)}
+            />
           </section>
 
           <section className={card}>
@@ -558,55 +633,34 @@ function ItemEditorForm({
             <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               {catalogWords.customerPreview}
             </span>
-            <div className="overflow-hidden rounded-xl border border-border/60 bg-background">
-              <div className="relative h-44 w-full bg-muted">
-                <CatalogPhoto
-                  photoRef={form.photos[0]}
-                  alt=""
-                  size="lg"
-                  className="size-full rounded-none"
-                />
-                <div className="absolute top-2 left-2 flex gap-1">
-                  {form.featured ? <Badge>{catalogWords.previewFeatured}</Badge> : null}
-                  {form.isNew ? <Badge variant="secondary">{catalogWords.previewNew}</Badge> : null}
-                </div>
-              </div>
-              <div className="space-y-1.5 p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {form.name.trim() || catalogWords.previewName}
-                  </h3>
-                  <span className="shrink-0 text-sm font-bold tabular">
-                    {itemPriceLabel({ variants: draftForPreview.variants })}
-                  </span>
-                </div>
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {form.description.trim() || catalogWords.previewDescription}
-                </p>
-                {form.choices.axes.length > 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    {catalogWords.previewChoices(
-                      form.choices.axes.map((a) => a.name || catalogWords.choiceUnnamed).join(', '),
-                    )}
-                  </p>
-                ) : null}
-              </div>
-            </div>
+            <ItemPreview
+              name={form.name}
+              description={form.description}
+              photos={form.photos}
+              variants={draftForPreview.variants}
+              choiceNames={form.choices.axes.map((a) => a.name || catalogWords.choiceUnnamed)}
+              featured={form.featured}
+              isNew={form.isNew}
+            />
           </div>
         </aside>
       </div>
 
-      {isDirty ? (
+      {isDirty || !initialItem ? (
         <div className="pointer-events-none sticky bottom-4 z-30 mt-6 flex justify-center shell-phone:above-dock">
           <div
             role="region"
             aria-label={catalogWords.unsavedPill}
             className="animate-in fade-in-0 slide-in-from-bottom-4 pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-card p-1.5 pl-4 elevation-md duration-200 motion-reduce:animate-none"
           >
-            <span className="mr-1 flex items-center gap-2 text-sm font-medium text-foreground">
-              <span aria-hidden="true" className="size-2 rounded-full bg-warning" />
-              <span>{catalogWords.unsavedPill}</span>
-            </span>
+            {isDirty ? (
+              <span className="mr-1 flex items-center gap-2 text-sm font-medium text-foreground">
+                <span aria-hidden="true" className="size-2 rounded-full bg-warning" />
+                <span className={cn(!initialItem && 'sr-only sm:not-sr-only')}>
+                  {catalogWords.unsavedPill}
+                </span>
+              </span>
+            ) : null}
             <Button
               type="button"
               variant="ghost"
@@ -614,7 +668,7 @@ function ItemEditorForm({
               disabled={saveItem.isPending}
               onClick={handleDiscard}
             >
-              {catalogWords.discard}
+              {isDirty ? catalogWords.discard : catalogWords.cancel}
             </Button>
             <Button
               type="submit"
@@ -622,11 +676,43 @@ function ItemEditorForm({
               disabled={saveItem.isPending || !isOnline}
               className="h-11 min-w-24 rounded-full px-5 font-semibold md:h-10"
             >
-              {saveItem.isPending ? catalogWords.saving : catalogWords.save}
+              {saveItem.isPending
+                ? catalogWords.saving
+                : initialItem
+                  ? catalogWords.save
+                  : catalogWords.addItem(kind)}
             </Button>
           </div>
         </div>
       ) : null}
+
+      <AlertDialog open={freeConfirmOpen} onOpenChange={setFreeConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{catalogWords.freeTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{catalogWords.freeDescription}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                const el = document.getElementById(showPrice ? 'item-price' : 'variant-prices');
+                el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                if (el instanceof HTMLInputElement) el.focus({ preventScroll: true });
+              }}
+            >
+              {catalogWords.setPrice}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setFreeConfirmOpen(false);
+                void handleSave(undefined, true);
+              }}
+            >
+              {catalogWords.saveAsFree}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AddOnSheet
         open={addOnSheetOpen}
@@ -691,24 +777,36 @@ function ItemEditorForm({
   );
 }
 
+const NEW_CATEGORY = '__new__';
+
 function CategorySelect({
   categories,
   value,
+  invalid,
   onChange,
+  onNew,
 }: {
   categories: readonly Category[];
   value: string;
+  invalid: boolean;
   onChange: (id: string) => void;
+  onNew: () => void;
 }) {
   const find = (id: unknown) => categories.find((c) => c.id === id);
   return (
     <Select
       value={value || null}
       onValueChange={(next) => {
-        if (typeof next === 'string') onChange(next);
+        if (next === NEW_CATEGORY) onNew();
+        else if (typeof next === 'string') onChange(next);
       }}
     >
-      <SelectTrigger id="item-cat" className="h-11 w-full min-w-0 flex-1 bg-card md:h-9">
+      <SelectTrigger
+        id="item-cat"
+        aria-invalid={invalid ? true : undefined}
+        aria-describedby={invalid ? 'item-cat-error' : undefined}
+        className="w-full min-w-0 bg-card data-size-default:h-11 md:data-size-default:h-9"
+      >
         <SelectValue placeholder={catalogWords.categorySelect}>
           {(selected: unknown) => {
             const category = find(selected);
@@ -722,8 +820,22 @@ function CategorySelect({
             <CategoryOption category={category} />
           </SelectItem>
         ))}
+        {categories.length > 0 ? <SelectSeparator /> : null}
+        <SelectItem value={NEW_CATEGORY} className="min-h-11 font-medium text-primary md:min-h-9">
+          <PlusIcon className="size-4" />
+          {catalogWords.newCategory}
+        </SelectItem>
       </SelectContent>
     </Select>
+  );
+}
+
+function FieldError({ id, message }: { id: string; message: string | undefined }) {
+  if (!message) return null;
+  return (
+    <p id={id} className="text-sm text-destructive">
+      {message}
+    </p>
   );
 }
 
@@ -742,30 +854,80 @@ function CategoryOption({ category }: { category: Category }) {
   );
 }
 
-function AddOnChoice({
-  group,
-  checked,
-  onToggle,
-}: {
-  group: OwnerOptionGroup;
-  checked: boolean;
-  onToggle: () => void;
-}) {
+function AttachedAddOn({ group, onRemove }: { group: OwnerOptionGroup; onRemove: () => void }) {
   return (
-    <label
-      className={cn(
-        'flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors select-none',
-        checked ? 'border-primary/50 bg-primary/5' : 'border-border/60 bg-card hover:bg-muted/30',
-      )}
-    >
-      <Checkbox checked={checked} onCheckedChange={onToggle} className="mt-0.5" />
+    <li className="flex min-h-14 items-center gap-3 rounded-xl border border-border/60 bg-muted/20 py-2 pr-1 pl-3">
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-semibold text-foreground">{group.name}</span>
-        <span className="block text-sm text-muted-foreground">
-          {catalogWords.groupSummary(group.options.length, groupRuleLabel(group.min, group.max))}
+        <span className="block truncate text-sm text-muted-foreground">
+          {catalogWords.groupSummary(
+            group.options.length,
+            groupRuleLabel(group.min, group.max, group.options.length),
+          )}
         </span>
       </span>
-    </label>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label={catalogWords.removeAddOnAria(group.name)}
+        className="size-11 shrink-0 text-muted-foreground hover:text-destructive md:size-9"
+        onClick={onRemove}
+      >
+        <XIcon className="size-4" />
+      </Button>
+    </li>
+  );
+}
+
+function AttachAddOnMenu({
+  groups,
+  onAttach,
+  onCreate,
+}: {
+  groups: readonly OwnerOptionGroup[];
+  onAttach: (id: string) => void;
+  onCreate: () => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button type="button" variant="outline" className="h-11 gap-1.5 md:h-9" />}
+      >
+        <PlusIcon className="size-4" />
+        {catalogWords.attachAddOn}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-80 w-72 overflow-y-auto">
+        {groups.length === 0 ? (
+          <p className="px-2 py-1.5 text-sm text-muted-foreground">
+            {catalogWords.addOnsAllAttached}
+          </p>
+        ) : (
+          groups.map((group) => (
+            <DropdownMenuItem
+              key={group.id}
+              className="min-h-11 md:min-h-9"
+              onClick={() => onAttach(group.id)}
+            >
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate font-medium">{group.name}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {catalogWords.groupSummary(
+                    group.options.length,
+                    groupRuleLabel(group.min, group.max, group.options.length),
+                  )}
+                </span>
+              </span>
+            </DropdownMenuItem>
+          ))
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="min-h-11 text-primary md:min-h-9" onClick={onCreate}>
+          <PlusIcon className="size-4" />
+          {catalogWords.attachAddOnCreate}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -860,13 +1022,23 @@ function PairingsSection({
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              type="search"
               value={query}
               aria-label={catalogWords.pairingsSearch}
               placeholder={catalogWords.pairingsSearch}
-              className="h-11 pl-9 md:h-9"
+              autoComplete="off"
+              className="h-11 pr-11 pl-9 md:h-9"
               onChange={(e) => setQuery(e.target.value)}
             />
+            {query ? (
+              <button
+                type="button"
+                aria-label={catalogWords.clearSearch}
+                onClick={() => setQuery('')}
+                className="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground md:size-9"
+              >
+                <XIcon className="size-4" />
+              </button>
+            ) : null}
           </div>
           {matches.length === 0 ? (
             <p className="text-sm text-muted-foreground">{catalogWords.pairingsNoMatch}</p>

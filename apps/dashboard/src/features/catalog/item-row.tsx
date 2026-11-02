@@ -51,7 +51,6 @@ export function ItemStatusBadges({ item }: { item: OwnerItem }) {
           {catalogWords.hiddenBadge}
         </Badge>
       ) : null}
-      {item.sample ? <Badge variant="outline">{catalogWords.sampleBadge}</Badge> : null}
     </>
   );
 }
@@ -179,18 +178,14 @@ export function ItemRow({
               <ChevronDownIcon className="size-4" />
             </Button>
           </div>
-        ) : (
+        ) : selecting ? null : (
           <ItemMenu item={item} actions={actions} className="shrink-0 md:hidden" />
         )}
       </div>
 
-      {!isReordering ? (
-        <div className="flex items-center gap-4 pl-17 md:pl-0">
-          <LabeledSwitch
-            label={catalogWords.visibleSwitch}
-            checked={item.status !== 'hidden'}
-            onCheckedChange={(checked) => actions.setVisible(item, checked)}
-          />
+      {/* One quick switch per row (decision T42): Sold out. Hide and Show live in the ⋯ menu. */}
+      {!isReordering && !selecting ? (
+        <div className="flex items-center gap-2 pl-17 md:pl-0">
           <LabeledSwitch
             label={catalogWords.soldOutSwitch}
             checked={soldOut}

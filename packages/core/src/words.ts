@@ -1,4 +1,5 @@
 import type { ShopKind } from './schemas/demo-shop.js';
+import type { IconKey } from './icons.js';
 
 // Icon keys for the catalog nav item; apps map each key to a lucide icon.
 export const CATALOG_ICONS = ['utensils', 'package'] as const;
@@ -16,7 +17,39 @@ export interface ShopVocab {
   // The receipt's preparing step and its headline.
   prepStep: string;
   prepHero: string;
+  // Item and category form examples that fit the shop.
+  namePlaceholder: string;
+  descPlaceholder: string;
+  categoryPlaceholder: string;
+  addOnExamples: string;
+  // The first icons the category form offers, and the emoji sections it opens on.
+  iconSuggestions: readonly IconKey[];
+  emojiCategories: readonly string[];
+  // Quick start choices for sizes, best fit first; the rest sit under "More".
+  presetLabels: readonly string[];
 }
+
+export interface VariantPreset {
+  label: string;
+  name: string;
+  values: readonly string[];
+}
+
+const VARIANT_PRESETS: readonly VariantPreset[] = [
+  { label: 'Regular, Large', name: 'Size', values: ['Regular', 'Large'] },
+  { label: 'Small, Medium, Large', name: 'Size', values: ['Small', 'Medium', 'Large'] },
+  { label: '12 oz, 16 oz, 22 oz', name: 'Cup size', values: ['12 oz', '16 oz', '22 oz'] },
+  { label: 'Single, Double, Triple', name: 'Patty', values: ['Single', 'Double', 'Triple'] },
+  { label: 'Hot, Iced', name: 'Temperature', values: ['Hot', 'Iced'] },
+  { label: 'S, M, L, XL', name: 'Size', values: ['S', 'M', 'L', 'XL'] },
+  { label: 'XS to XXL', name: 'Size', values: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+  {
+    label: 'Shoe sizes 36 to 45',
+    name: 'Size',
+    values: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'],
+  },
+  { label: 'Colours', name: 'Colour', values: ['Black', 'White', 'Grey', 'Navy', 'Red'] },
+];
 
 const FOOD_VOCAB: ShopVocab = {
   catalog: 'Menu',
@@ -28,6 +61,32 @@ const FOOD_VOCAB: ShopVocab = {
   variantsExample: 'like Size, or Patty: Single, Double, Triple',
   prepStep: 'In the kitchen',
   prepHero: 'Your order is being made',
+  namePlaceholder: 'e.g. Classic Smash',
+  descPlaceholder: 'What is in it and how it tastes',
+  categoryPlaceholder: 'e.g. Burgers, Drinks, Desserts',
+  addOnExamples: 'like sauces or extra cheese',
+  iconSuggestions: [
+    'burger',
+    'chicken',
+    'rice',
+    'noodles',
+    'fries',
+    'combo',
+    'soda',
+    'coffee',
+    'milk_tea',
+    'cake',
+    'ice_cream',
+    'bestseller',
+  ],
+  emojiCategories: ['recent', 'food', 'nature', 'objects', 'symbols', 'activities'],
+  presetLabels: [
+    'Regular, Large',
+    'Small, Medium, Large',
+    '12 oz, 16 oz, 22 oz',
+    'Single, Double, Triple',
+    'Hot, Iced',
+  ],
 };
 
 const RETAIL_VOCAB: ShopVocab = {
@@ -40,11 +99,43 @@ const RETAIL_VOCAB: ShopVocab = {
   variantsExample: 'like Size: S, M, L and Colour: Black, White',
   prepStep: 'Packing',
   prepHero: 'Your order is being packed',
+  namePlaceholder: 'e.g. Oversized cotton tee',
+  descPlaceholder: 'Material, fit and how to care for it',
+  categoryPlaceholder: 'e.g. Tops, Bottoms, Bags',
+  addOnExamples: 'like gift wrap or a name print',
+  iconSuggestions: [
+    'tshirt',
+    'trousers',
+    'dress',
+    'sneakers',
+    'hat',
+    'accessories',
+    'backpack',
+    'water_gallon',
+    'package',
+    'gift',
+    'new',
+    'bestseller',
+  ],
+  emojiCategories: ['recent', 'objects', 'people', 'symbols', 'nature', 'activities'],
+  presetLabels: ['S, M, L, XL', 'XS to XXL', 'Shoe sizes 36 to 45', 'Colours'],
 };
 
 // The only place that looks at the shop kind.
 export function vocab(kind: ShopKind): ShopVocab {
   return kind === 'retail' ? RETAIL_VOCAB : FOOD_VOCAB;
+}
+
+// Size presets for the shop: the best fits first, then the rest.
+export function variantPresets(kind: ShopKind): {
+  main: VariantPreset[];
+  more: VariantPreset[];
+} {
+  const labels = vocab(kind).presetLabels;
+  return {
+    main: labels.flatMap((label) => VARIANT_PRESETS.filter((p) => p.label === label)),
+    more: VARIANT_PRESETS.filter((p) => !labels.includes(p.label)),
+  };
 }
 
 export const words = {
@@ -1107,7 +1198,7 @@ export const words = {
       tabAddOns: 'Add-ons',
       emptyItems: (kind: ShopKind) => vocab(kind).emptyItems,
       emptyCategories: 'No categories yet. Group your items so customers find them fast.',
-      emptyAddOns: 'No add-ons yet. Add extras like sizes, sauces or gift wrap.',
+      emptyAddOns: 'No add-ons yet. Add extras like sauces, toppings or gift wrap.',
       newTitle: (kind: ShopKind) => vocab(kind).newItem,
       newEmpty: 'The form for a new item will show here.',
       itemTitle: (kind: ShopKind) => vocab(kind).item,
@@ -1272,14 +1363,25 @@ export const catalogWords = {
   selectVariantsSoldOut: 'Select which choices are sold out',
   markAvailable: 'Mark available',
   sectionPhotos: 'Photos',
-  sectionPhotosDesc: 'Add up to 5 photos. The first photo is the cover.',
+  sectionPhotosDesc: 'Up to 5 photos. The first one is the cover on your menu.',
   photoDropzone: 'Drag photos here or tap to upload',
   photoMaxMb: 'JPG, PNG, WebP up to 15 MB',
   photoTooLarge: 'Please pick an image under 15 MB.',
   photoUnsupported: 'Save it as JPG and try again.',
   photoCover: 'Cover',
   photoCrop: 'Crop photo',
-  photoCropSquare: 'Crop square',
+  photoCropSquare: 'Crop photo',
+  photoCropHelp: 'Menu cards show photos square. Drag and zoom to choose what customers see.',
+  photoCropApply: 'Use this crop',
+  photoCropFailed: 'We could not crop this photo. Upload it again, then crop it.',
+  photoCropAria: (n: number) => `Crop photo ${n}`,
+  photoRemoveAria: (n: number) => `Remove photo ${n}`,
+  photoDragAria: (n: number) => `Drag photo ${n}`,
+  photoMakeCover: 'Make cover',
+  photoMakeCoverAria: (n: number) => `Make photo ${n} the cover`,
+  photoUploading: 'Uploading…',
+  photoAddMore: 'Add photo',
+  photoShow: (n: number) => `Show photo ${n}`,
   photoRetry: 'Retry',
   photoRemove: 'Remove',
   photoCount: (count: number) => `${count} of 5`,
@@ -1287,7 +1389,7 @@ export const catalogWords = {
   photoProcessFailed: 'We could not read that photo. Try another one.',
   photoAlt: (n: number) => `Photo ${n}`,
   photoCoverHint: 'Customers see this one first',
-  photoReorderHint: 'Drag a photo to the first spot to make it the cover.',
+  photoReorderHint: 'Drag to change the order. The first photo is the cover.',
   photoGalleryHint: (n: number) => `Photo ${n}`,
   photoUploadFailed: 'Upload failed',
   sectionBasics: 'Basics',
@@ -1338,9 +1440,10 @@ export const catalogWords = {
   ruleCustom: 'Custom',
   minPicksLabel: 'Minimum picks',
   maxPicksLabel: 'Maximum picks',
-  ruleWording: (min: number, max: number) => {
+  ruleWording: (min: number, max: number, optionCount?: number) => {
     if (min === 1 && max === 1) return 'Pick 1, required';
     if (min === 0 && max === 1) return 'Pick 1, optional';
+    if (min === 0 && optionCount !== undefined && max >= optionCount) return 'Pick any';
     if (min === 0) return `Pick up to ${max}`;
     if (min === max) return `Pick exactly ${min}`;
     return `Pick ${min} to ${max}`;
@@ -1463,7 +1566,7 @@ export const catalogWords = {
   choiceNameLabel: 'Choice name',
   choiceNamePlaceholder: 'e.g. Size, Colour, Patty',
   choiceOptionsLabel: 'Options',
-  addOptionPlaceholder: 'Type an option, then press Enter',
+  addOptionPlaceholder: 'Add an option',
   addOptionButton: 'Add',
   removeChoice: 'Remove choice',
   removeOptionAria: (name: string) => `Remove ${name}`,
@@ -1471,8 +1574,8 @@ export const catalogWords = {
   optionTooLong: 'Keep options to 30 letters or fewer.',
   maxOptionsReached: '10 options is the most for one choice.',
   comboLimit: (count: number) =>
-    `That makes ${count} combinations. The most is 30, so remove some options first.`,
-  comboCount: (count: number) => `${count} ${count === 1 ? 'combination' : 'combinations'}`,
+    `That makes ${count} versions. The most is 30, so remove some options first.`,
+  comboCount: (count: number) => `${count} ${count === 1 ? 'version' : 'versions'}`,
   samePriceLabel: 'Same price for all',
   samePriceHelp: 'Turn off to set a different price for each one.',
   setAllPrice: (name: string) => `All ${name}`,
@@ -1481,22 +1584,8 @@ export const catalogWords = {
   choiceNeedsName: 'Give each choice a name, like Size.',
   choiceNeedsOption: 'Add at least one option to each choice, or remove the choice.',
   choiceUnnamed: 'Choice',
-  variantPresets: [
-    { label: 'Small, Medium, Large', name: 'Size', values: ['Small', 'Medium', 'Large'] },
-    { label: 'Regular, Large', name: 'Size', values: ['Regular', 'Large'] },
-    { label: '12 oz, 16 oz, 22 oz', name: 'Cup size', values: ['12 oz', '16 oz', '22 oz'] },
-    { label: 'Single, Double, Triple', name: 'Patty', values: ['Single', 'Double', 'Triple'] },
-    { label: 'Hot, Iced', name: 'Temperature', values: ['Hot', 'Iced'] },
-    { label: 'XS to XXL', name: 'Size', values: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
-    {
-      label: 'Shoe sizes 36 to 45',
-      name: 'Size',
-      values: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'],
-    },
-    { label: 'Colours', name: 'Colour', values: ['Black', 'White', 'Grey', 'Navy', 'Red'] },
-  ],
-  sectionAddOnsHelp:
-    'Extras customers can add, like sauces or gift wrap. Set them up once, use them on any item.',
+  sectionAddOnsHelp: (kind: ShopKind) =>
+    `Extras customers can add, ${vocab(kind).addOnExamples}. Set them up once, use them on any item.`,
   newAddOnGroup: 'New add-on group',
   noAddOnGroupsYet: 'No add-on groups yet. Make one for extras like sauces or gift wrap.',
   groupSummary: (count: number, rule: string) =>
@@ -1531,7 +1620,7 @@ export const catalogWords = {
   groupRuleHelp: 'How many can customers pick?',
   groupAtLeast: 'At least',
   groupAtMost: 'At most',
-  optionPreselected: 'Pre-selected',
+  optionPreselected: 'Picked by default',
   optionRemove: 'Remove',
   optionFree: 'Free',
   optionNamePlaceholder: (n: number) => `Option ${n}, e.g. Extra cheese`,
@@ -1549,4 +1638,68 @@ export const catalogWords = {
   moreOptions: (count: number) => `+${count} more`,
   notUsedYet: 'Not on any item yet',
   addOnsHint: 'Set up extras once, then add them to any item from its edit page.',
+
+  // Final menu polish (decision T42).
+  namePlaceholderFor: (kind: ShopKind) => vocab(kind).namePlaceholder,
+  descPlaceholderFor: (kind: ShopKind) => vocab(kind).descPlaceholder,
+  categoryPlaceholderFor: (kind: ShopKind) => vocab(kind).categoryPlaceholder,
+  iconTabIcons: 'Icons',
+  iconTabEmoji: 'Emoji',
+  iconTabUpload: 'Upload',
+  iconSearchPlaceholder: 'Search, like kape, drinks or shirt',
+  iconShowAll: 'Show all icons',
+  iconShowFewer: 'Show fewer',
+  iconNoMatch: 'No icon for that word. Try another, or pick an emoji.',
+  iconPickedFromName: 'Picked from the name. Tap another to change it.',
+  iconUploadHelp: 'A square picture works best. You can crop it next.',
+  iconUploadChoose: 'Choose a picture',
+  iconUploadUse: 'Use this picture',
+  iconStyleLabel: 'Icon style',
+  iconStyleHelp: 'One look for every category icon in your shop.',
+  iconStyleSaved: 'Icon style updated',
+  morePresets: 'More presets',
+  samplesBannerTitle: 'You are looking at sample items',
+  samplesBannerHint: (count: number) =>
+    `${count} ${count === 1 ? 'item is a sample' : 'items are samples'}. Edit them, or remove them once you add your own.`,
+  removeSamples: 'Remove samples',
+  removeSamplesTitle: 'Remove all sample items?',
+  removeSamplesDescription:
+    'This deletes the sample items, and the sample categories and add-ons nothing else uses. Your own items stay.',
+  samplesRemoved: (count: number) => `Removed ${count} sample ${count === 1 ? 'item' : 'items'}`,
+  selectAll: 'Select all',
+  selectNone: 'Clear',
+  moveTo: 'Move to',
+  viewMenu: 'View',
+  viewAsList: 'List',
+  viewAsGrid: 'Grid',
+  addNamed: (name: string) => `Add "${name}"`,
+  itemHiddenTag: 'Hidden',
+  editPrices: 'Edit prices',
+  priceRange: (low: string, high: string) => `${low} to ${high}`,
+  freeTitle: 'Save it as free?',
+  freeDescription:
+    'The price is ₱0, so customers can order it for free. Set a price, or save it as free.',
+  setPrice: 'Set a price',
+  saveAsFree: 'Save as free',
+  fixErrors: 'Fix the highlighted fields, then save.',
+  attachAddOn: 'Add an add-on group',
+  attachAddOnNone: 'No add-on groups on this one yet.',
+  attachAddOnCreate: 'Make a new group',
+  removeAddOnAria: (name: string) => `Remove ${name} from this item`,
+  addOnsAllAttached: 'All your add-on groups are on this item.',
+  usedOnLabel: 'Used on',
+  usedOnHelp: 'Pick the items that offer these extras.',
+  usedOnSearch: 'Search items',
+  usedOnPicked: (count: number) => `${count} ${count === 1 ? 'item' : 'items'} picked`,
+  usedOnNone: 'Not on any item yet. Pick some below.',
+  optionMoreAria: (name: string) => `More for ${name}`,
+  deleteCategoryTitle: (name: string) => `Delete ${name}?`,
+  deleteCategoryEmpty: 'It has no items, so nothing else changes.',
+  deleteCategoryMove: (count: number) =>
+    `It has ${count} ${count === 1 ? 'item' : 'items'}. Pick where ${count === 1 ? 'it goes' : 'they go'} first.`,
+  deleteCategoryOnly: 'Add another category first, then move these items there.',
+  moveAndDelete: 'Move and delete',
+  categoryDeleted: (name: string) => `Deleted ${name}`,
+  groupDeleted: (name: string) => `Deleted ${name}`,
+  previewPhotoHint: 'Swipe to see all photos',
 } as const;

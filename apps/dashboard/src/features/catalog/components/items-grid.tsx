@@ -57,7 +57,7 @@ export function ItemsGrid({
             )}
           >
             <div className="relative bg-muted/60">
-              <AspectRatio ratio={4 / 3} className="overflow-hidden">
+              <AspectRatio ratio={1} className="overflow-hidden">
                 <CatalogPhoto
                   photoRef={item.photos[0] ?? null}
                   alt=""
@@ -76,18 +76,20 @@ export function ItemsGrid({
                   />
                 </div>
               ) : null}
-              <div className="absolute top-2 right-2 z-10 rounded-xl bg-background/90">
-                <ItemMenu item={item} actions={actions} />
-              </div>
+              {selecting ? null : (
+                <div className="absolute top-2 right-2 z-10 rounded-xl bg-background/90">
+                  <ItemMenu item={item} actions={actions} />
+                </div>
+              )}
               <div className="absolute bottom-2 left-2 z-10 flex flex-wrap gap-1 empty:hidden">
                 <ItemStatusBadges item={item} />
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col gap-1 p-3">
+            <div className="flex flex-1 flex-col gap-0.5 p-2.5 md:gap-1 md:p-3">
               <p className="line-clamp-2 text-sm font-semibold text-foreground">{item.name}</p>
               <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="truncate text-muted-foreground">
+                <span className="hidden truncate text-muted-foreground md:inline">
                   {category?.name ?? catalogWords.categoryGeneral}
                 </span>
                 <span className="shrink-0 font-semibold text-foreground tabular">
@@ -96,18 +98,15 @@ export function ItemsGrid({
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-4 border-t border-border/60 px-3">
-              <LabeledSwitch
-                label={catalogWords.visibleSwitch}
-                checked={item.status !== 'hidden'}
-                onCheckedChange={(checked) => actions.setVisible(item, checked)}
-              />
-              <LabeledSwitch
-                label={catalogWords.soldOutSwitch}
-                checked={soldOut}
-                onCheckedChange={(checked) => actions.setSoldOut(item, checked)}
-              />
-            </div>
+            {selecting ? null : (
+              <div className="flex items-center border-t border-border/60 px-2.5 md:px-3">
+                <LabeledSwitch
+                  label={catalogWords.soldOutSwitch}
+                  checked={soldOut}
+                  onCheckedChange={(checked) => actions.setSoldOut(item, checked)}
+                />
+              </div>
+            )}
           </div>
         );
       })}

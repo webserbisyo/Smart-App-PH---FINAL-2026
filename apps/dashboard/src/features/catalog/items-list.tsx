@@ -34,11 +34,23 @@ import { Input } from '@smartapp/ui/components/input';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
-import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@smartapp/ui/components/dropdown-menu';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { ItemRow } from './item-row.js';
 import { ItemsGrid } from './components/items-grid.js';
 import { ItemsActionBar } from './components/items-action-bar.js';
+import { SamplesBanner } from './samples-banner.js';
+import { FloatingAddButton } from './floating-add-button.js';
 import { isItemSoldOut, useItemActions } from './components/item-actions.js';
 import { cn } from 'cn';
 
@@ -320,9 +332,20 @@ export function ItemsList() {
     }
   };
 
-  const goNew = () => {
-    void navigate({ to: '/catalog/new' });
+  const goNew = (name?: string) => {
+    void navigate({ to: '/catalog/new', search: name ? { name } : {} });
   };
+
+  const startReorder = () => {
+    // Reorder works on the list, so grid switches to it first (finding B9).
+    if (view !== 'list') handleViewChange('list');
+    setSearch('');
+    setFilter('all');
+    setIsReordering(true);
+  };
+
+  const visibleIds = filteredItems.map((item) => item.id);
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
 
   if (itemsLoading || catsLoading) {
     return (
@@ -375,7 +398,7 @@ export function ItemsList() {
   const toolbarButton = 'h-11 shrink-0 gap-1.5 md:h-9';
 
   return (
-    <div className="space-y-4 pb-24 md:pb-12">
+    <div className="space-y-4 pb-40 md:pb-12">
       <div aria-live="polite" className="sr-only">
         {announcement}
       </div>
@@ -387,6 +410,10 @@ export function ItemsList() {
         </div>
       ) : null}
 
+      {!selecting && !isReordering ? (
+        <SamplesBanner items={items ?? []} categories={categories ?? []} />
+      ) : null}
+
       {nonArchivedItems.length > 0 ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -394,7 +421,7 @@ export function ItemsList() {
               <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
-                type="search"
+                autoComplete="off"
                 aria-label={catalogWords.searchPlaceholder(kind)}
                 placeholder={catalogWords.searchPlaceholder(kind)}
                 className="h-11 rounded-xl bg-card pr-11 pl-9 md:h-9"
@@ -412,10 +439,100 @@ export function ItemsList() {
               ) : null}
             </div>
 
+            <div className="flex shrink-0 items-center gap-2">
+              {selecting ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={toolbarButton}
+                  disabled={visibleIds.length === 0}
+                  onClick={() => setSelectedIds(allSelected ? [] : visibleIds)}
+                >
+                  {allSelected ? catalogWords.selectNone : catalogWords.selectAll}
+                </Button>
+              ) : null}
+
+              {!isReordering ? (
+                <Button
+                  type="button"
+                  variant={selecting ? 'default' : 'outline'}
+                  className={toolbarButton}
+                  onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
+                >
+                  <ListChecksIcon className="size-4" />
+                  <span className={cn(!selecting && 'sr-only sm:not-sr-only')}>
+                    {selecting ? catalogWords.selectDone : catalogWords.select}
+                  </span>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  className={toolbarButton}
+                  onClick={() => setIsReordering(false)}
+                >
+                  {catalogWords.doneReordering}
+                </Button>
+              )}
+
+              {!isReordering && !selecting ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={toolbarButton}
+                        aria-label={catalogWords.viewMenu}
+                      />
+                    }
+                  >
+                    {view === 'grid' ? (
+                      <LayoutGridIcon className="size-4" />
+                    ) : (
+                      <ListIcon className="size-4" />
+                    )}
+                    <span className="hidden sm:inline">{catalogWords.viewMenu}</span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel>{catalogWords.viewMenu}</DropdownMenuLabel>
+                      <DropdownMenuRadioGroup value={view} onValueChange={handleViewChange}>
+                        <DropdownMenuRadioItem
+                          value="list"
+                          closeOnClick
+                          className="min-h-11 md:min-h-8"
+                        >
+                          <ListIcon className="size-4" />
+                          {catalogWords.viewAsList}
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem
+                          value="grid"
+                          closeOnClick
+                          className="min-h-11 md:min-h-8"
+                        >
+                          <LayoutGridIcon className="size-4" />
+                          {catalogWords.viewAsGrid}
+                        </DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuGroup>
+                    {nonArchivedItems.length > 1 ? (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="min-h-11 md:min-h-8" onClick={startReorder}>
+                          <ArrowUpDownIcon className="size-4" />
+                          {catalogWords.reorder}
+                        </DropdownMenuItem>
+                      </>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
+            </div>
+
             <Button
               type="button"
               className={cn(toolbarButton, 'ml-auto hidden font-semibold md:inline-flex')}
-              onClick={goNew}
+              onClick={() => goNew()}
             >
               <PlusIcon className="size-4" />
               {catalogWords.addItem(kind)}
@@ -435,68 +552,17 @@ export function ItemsList() {
                   aria-pressed={filter === tab}
                   onClick={() => setFilter(tab)}
                   className={cn(
-                    'flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors md:h-7',
+                    'flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors md:h-8',
                     filter === tab
                       ? 'bg-card text-foreground shadow-xs'
                       : 'text-muted-foreground hover:text-foreground',
+                    counts[tab] === 0 && filter !== tab && 'opacity-50',
                   )}
                 >
                   {filterLabel[tab]}
                   <span className="text-xs text-muted-foreground tabular">{counts[tab]}</span>
                 </button>
               ))}
-            </div>
-
-            <div className="ml-auto flex items-center gap-2">
-              {!isReordering && !selecting ? (
-                <ToggleGroup
-                  value={[view]}
-                  onValueChange={(val) => {
-                    const v = val[0];
-                    if (v) handleViewChange(v);
-                  }}
-                  className="shrink-0 rounded-xl border border-border/80 bg-muted/50 p-0.5"
-                >
-                  <ToggleGroupItem
-                    value="list"
-                    aria-label={catalogWords.viewList}
-                    className="size-10 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs md:size-8"
-                  >
-                    <ListIcon className="size-4" />
-                  </ToggleGroupItem>
-                  <ToggleGroupItem
-                    value="grid"
-                    aria-label={catalogWords.viewGrid}
-                    className="size-10 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs md:size-8"
-                  >
-                    <LayoutGridIcon className="size-4" />
-                  </ToggleGroupItem>
-                </ToggleGroup>
-              ) : null}
-
-              {!isReordering ? (
-                <Button
-                  type="button"
-                  variant={selecting ? 'default' : 'outline'}
-                  className={toolbarButton}
-                  onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
-                >
-                  <ListChecksIcon className="size-4" />
-                  {selecting ? catalogWords.selectDone : catalogWords.select}
-                </Button>
-              ) : null}
-
-              {view === 'list' && !selecting && nonArchivedItems.length > 1 ? (
-                <Button
-                  type="button"
-                  variant={isReordering ? 'default' : 'outline'}
-                  className={toolbarButton}
-                  onClick={() => setIsReordering(!isReordering)}
-                >
-                  <ArrowUpDownIcon className="size-4" />
-                  {isReordering ? catalogWords.doneReordering : catalogWords.reorder}
-                </Button>
-              ) : null}
             </div>
           </div>
         </div>
@@ -514,7 +580,7 @@ export function ItemsList() {
             <p className="text-sm text-muted-foreground">{catalogWords.emptyItemsHint}</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={goNew}>
+            <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={() => goNew()}>
               <PlusIcon className="size-4" />
               {catalogWords.addItem(kind)}
             </Button>
@@ -534,16 +600,27 @@ export function ItemsList() {
           <p className="text-sm font-medium text-foreground">
             {search ? catalogWords.noSearchResults(search) : catalogWords.noFilterMatch}
           </p>
-          <Button
-            variant="outline"
-            className="h-11 md:h-9"
-            onClick={() => {
-              setSearch('');
-              setFilter('all');
-            }}
-          >
-            {search ? catalogWords.clearSearch : catalogWords.showAll}
-          </Button>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {search.trim() ? (
+              <Button
+                className="h-11 gap-1.5 font-semibold md:h-9"
+                onClick={() => goNew(search.trim())}
+              >
+                <PlusIcon className="size-4" />
+                {catalogWords.addNamed(search.trim())}
+              </Button>
+            ) : null}
+            <Button
+              variant="outline"
+              className="h-11 md:h-9"
+              onClick={() => {
+                setSearch('');
+                setFilter('all');
+              }}
+            >
+              {search ? catalogWords.clearSearch : catalogWords.showAll}
+            </Button>
+          </div>
         </div>
       ) : isReordering ? (
         <Sortable
@@ -613,7 +690,7 @@ export function ItemsList() {
       )}
 
       <ItemsActionBar
-        selectedIds={selectedIds}
+        selected={nonArchivedItems.filter((item) => selectedIds.includes(item.id))}
         categories={categories ?? []}
         sideOffset={dockClearance}
         onClearSelection={stopSelecting}
@@ -628,16 +705,7 @@ export function ItemsList() {
       {dialogs}
 
       {nonArchivedItems.length > 0 && !selecting && !isReordering ? (
-        <div className="pointer-events-none fixed inset-x-0 above-dock z-30 flex justify-end px-4 md:hidden">
-          <Button
-            type="button"
-            className="pointer-events-auto h-12 gap-2 rounded-full px-5 font-semibold shadow-lg"
-            onClick={goNew}
-          >
-            <PlusIcon className="size-5" />
-            {catalogWords.addItem(kind)}
-          </Button>
-        </div>
+        <FloatingAddButton label={catalogWords.addItem(kind)} onClick={() => goNew()} />
       ) : null}
     </div>
   );

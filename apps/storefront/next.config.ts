@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
   // The service worker is checked for updates on every visit (never served from the HTTP cache).
   async headers() {
     return [
+      // Demo photos are public; the owner dashboard (another address) reads them to crop a photo.
+      {
+        source: '/demo/:path*',
+        headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }],
+      },
       {
         source: '/serwist/:path*',
         headers: [{ key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' }],

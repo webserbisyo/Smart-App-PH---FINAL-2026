@@ -204,6 +204,8 @@ describe('owner catalog schemas', () => {
     expect(groupRuleLabel(0, 3)).toBe('Pick up to 3');
     expect(groupRuleLabel(2, 2)).toBe('Pick exactly 2');
     expect(groupRuleLabel(1, 3)).toBe('Pick 1 to 3');
+    expect(groupRuleLabel(0, 4, 4)).toBe('Pick any');
+    expect(groupRuleLabel(0, 3, 6)).toBe('Pick up to 3');
   });
 
   it('validates CategoryIconSchema across 3 kinds and transforms legacy IconKey strings', () => {

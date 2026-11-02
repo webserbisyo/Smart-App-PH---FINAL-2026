@@ -137,6 +137,9 @@ export function cropImage(src: string, area: PixelArea, size = 256): Promise<str
       resolve(webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', 0.82));
     };
     img.onerror = () => reject(new Error('unreadable_image'));
+    // A photo from another address (the shop's saved photos) can only be read back from the canvas when
+    // it is loaded for CORS; blob: and data: pictures don't need it.
+    if (/^https?:/.test(src)) img.crossOrigin = 'anonymous';
     img.src = src;
   });
 }

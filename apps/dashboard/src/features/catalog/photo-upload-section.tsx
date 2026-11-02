@@ -6,15 +6,18 @@ import {
   RefreshCwIcon,
   Loader2Icon,
   GripVerticalIcon,
+  StarIcon,
+  PlusIcon,
 } from 'lucide-react';
 import { catalogWords } from '@smartapp/core';
-import { useCreateUploadUrl, compressImage } from '@smartapp/data';
+import { useCreateUploadUrl, compressImage, cropImage } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Progress } from '@smartapp/ui/components/progress';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -26,7 +29,8 @@ import {
   type CropperAreaData,
 } from '@smartapp/ui/components/cropper';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
-import { CatalogPhoto } from './catalog-photo.js';
+import { notify } from '@smartapp/ui/compositions/notify';
+import { CatalogPhoto, catalogPhotoSrc } from './catalog-photo.js';
 import { cn } from 'cn';
 
 export interface PhotoUploadSectionProps {
@@ -35,10 +39,11 @@ export interface PhotoUploadSectionProps {
   disabled?: boolean | undefined;
 }
 
-interface PhotoMeta {
-  format: string;
-  originalBytes: number;
-  compressedBytes: number;
+const MAX_PHOTOS = 5;
+// Item photos are saved square (menu cards and the desktop item dialog are square).
+const PHOTO_SIDE = 1200;
+
+interface UploadState {
   uploading: boolean;
   progress: number;
   failed: boolean;
@@ -46,163 +51,151 @@ interface PhotoMeta {
 }
 
 export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSectionProps) {
-  const [photoMeta, setPhotoMeta] = React.useState<Map<string, PhotoMeta>>(new Map());
+  const [uploads, setUploads] = React.useState<Map<string, UploadState>>(new Map());
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [isCompressing, setIsCompressing] = React.useState(false);
-  const [cropTarget, setCropTarget] = React.useState<{ index: number; url: string } | null>(null);
+  const [isDragOver, setIsDragOver] = React.useState(false);
+  const [cropTarget, setCropTarget] = React.useState<{ index: number; src: string } | null>(null);
   const [crop, setCrop] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [cropArea, setCropArea] = React.useState<CropperAreaData | null>(null);
+  const [isCropping, setIsCropping] = React.useState(false);
 
   const createUpload = useCreateUploadUrl();
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const setUpload = (url: string, state: UploadState | null) =>
+    setUploads((prev) => {
+      const next = new Map(prev);
+      if (state) next.set(url, state);
+      else next.delete(url);
+      return next;
+    });
+
+  const upload = async (url: string, blob: Blob) => {
+    setUpload(url, { uploading: true, progress: 30, failed: false, blob });
+    try {
+      await createUpload.mutateAsync({ kind: 'item' });
+      setUpload(url, null);
+    } catch {
+      setUpload(url, { uploading: false, progress: 0, failed: true, blob });
+    }
+  };
 
   const handleFiles = async (files: FileList | File[]) => {
     if (disabled) return;
     setErrorMsg(null);
     const list = Array.from(files);
     if (!list.length) return;
-
-    if (photos.length + list.length > 5) {
+    if (photos.length + list.length > MAX_PHOTOS) {
       setErrorMsg(catalogWords.photoLimit);
       return;
     }
 
     setIsCompressing(true);
-    const newPhotos = [...photos];
-    const newMeta = new Map(photoMeta);
-
+    const added: { url: string; blob: Blob }[] = [];
     for (const file of list) {
       if (file.size > 15 * 1024 * 1024) {
         setErrorMsg(catalogWords.photoTooLarge);
         continue;
       }
-
       const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-      if (!validTypes.includes(file.type) && !file.name.match(/\.(jpg|jpeg|png|webp|heic)$/i)) {
+      if (!validTypes.includes(file.type) && !/\.(jpg|jpeg|png|webp|heic)$/i.test(file.name)) {
         setErrorMsg(catalogWords.photoUnsupported);
         continue;
       }
-
       try {
-        const compressed = await compressImage(file, {
-          maxSide: 1200,
-          quality: 0.85,
-        });
-
-        const objectUrl = URL.createObjectURL(compressed);
-        newPhotos.push(objectUrl);
-
-        newMeta.set(objectUrl, {
-          format: compressed.type.replace('image/', '').toUpperCase(),
-          originalBytes: file.size,
-          compressedBytes: compressed.size,
-          uploading: true,
-          progress: 30,
-          failed: false,
-          blob: compressed,
-        });
-
-        try {
-          await createUpload.mutateAsync({
-            kind: 'item',
-          });
-
-          newMeta.set(objectUrl, {
-            format: compressed.type.replace('image/', '').toUpperCase(),
-            originalBytes: file.size,
-            compressedBytes: compressed.size,
-            uploading: false,
-            progress: 100,
-            failed: false,
-            blob: compressed,
-          });
-        } catch {
-          newMeta.set(objectUrl, {
-            format: compressed.type.replace('image/', '').toUpperCase(),
-            originalBytes: file.size,
-            compressedBytes: compressed.size,
-            uploading: false,
-            progress: 0,
-            failed: true,
-            blob: compressed,
-          });
-        }
+        const compressed = await compressImage(file, { maxSide: PHOTO_SIDE, quality: 0.85 });
+        added.push({ url: URL.createObjectURL(compressed), blob: compressed });
       } catch {
         setErrorMsg(catalogWords.photoProcessFailed);
       }
     }
-
-    setPhotoMeta(newMeta);
-    onChange(newPhotos);
     setIsCompressing(false);
+    if (!added.length) return;
+    onChange([...photos, ...added.map((a) => a.url)]);
+    for (const a of added) void upload(a.url, a.blob);
   };
 
-  const handleRetryUpload = async (url: string) => {
-    if (disabled) return;
-    const meta = photoMeta.get(url);
-    if (!meta || !meta.blob) return;
-
-    const newMeta = new Map(photoMeta);
-    newMeta.set(url, { ...meta, uploading: true, failed: false, progress: 20 });
-    setPhotoMeta(newMeta);
-
-    try {
-      await createUpload.mutateAsync({
-        kind: 'item',
-      });
-
-      newMeta.set(url, { ...meta, uploading: false, failed: false, progress: 100 });
-      setPhotoMeta(newMeta);
-    } catch {
-      newMeta.set(url, { ...meta, uploading: false, failed: true, progress: 0 });
-      setPhotoMeta(newMeta);
+  const handleRemove = (index: number) => {
+    const target = photos[index];
+    if (target) {
+      setUpload(target, null);
+      if (target.startsWith('blob:')) URL.revokeObjectURL(target);
     }
+    onChange(photos.filter((_, i) => i !== index));
   };
 
-  const handleRemovePhoto = (index: number) => {
-    const targetUrl = photos[index];
-    const next = photos.filter((_, i) => i !== index);
-    if (targetUrl) {
-      const newMeta = new Map(photoMeta);
-      newMeta.delete(targetUrl);
-      setPhotoMeta(newMeta);
-      if (targetUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(targetUrl);
-      }
-    }
-    onChange(next);
+  const handleMakeCover = (index: number) => {
+    const target = photos[index];
+    if (!target || index === 0) return;
+    onChange([target, ...photos.filter((_, i) => i !== index)]);
   };
 
-  const handleApplyCrop = () => {
+  const openCrop = (index: number) => {
+    const ref = photos[index];
+    const src = catalogPhotoSrc(ref, PHOTO_SIDE);
+    if (!src) return;
+    setCrop({ x: 0, y: 0 });
+    setCropArea(null);
+    setCropTarget({ index, src });
+  };
+
+  const handleApplyCrop = async () => {
     if (!cropTarget || !cropArea) return;
-    setCropTarget(null);
+    setIsCropping(true);
+    try {
+      const side = Math.min(PHOTO_SIDE, Math.round(cropArea.width));
+      const cropped = await cropImage(cropTarget.src, cropArea, side);
+      const previous = photos[cropTarget.index];
+      if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
+      onChange(photos.map((p, i) => (i === cropTarget.index ? cropped : p)));
+      setCropTarget(null);
+    } catch {
+      setCropTarget(null);
+      notify({ title: catalogWords.photoCropFailed, tone: 'error' });
+    } finally {
+      setIsCropping(false);
+    }
   };
 
-  const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
+  const openPicker = () => fileInputRef.current?.click();
+  const canAdd = photos.length < MAX_PHOTOS && !disabled;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+    <div
+      className="space-y-4"
+      onDragOver={(e) => {
+        if (!canAdd || !e.dataTransfer.types.includes('Files')) return;
+        e.preventDefault();
+        setIsDragOver(true);
+      }}
+      onDragLeave={() => setIsDragOver(false)}
+      onDrop={(e) => {
+        if (!canAdd || !e.dataTransfer.files.length) return;
+        e.preventDefault();
+        setIsDragOver(false);
+        void handleFiles(e.dataTransfer.files);
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="text-base font-semibold text-foreground">{catalogWords.sectionPhotos}</h2>
           <p className="text-sm text-muted-foreground">{catalogWords.sectionPhotosDesc}</p>
         </div>
-        <span className="text-sm text-muted-foreground tabular">
+        <span className="shrink-0 text-sm whitespace-nowrap text-muted-foreground tabular">
           {catalogWords.photoCount(photos.length)}
         </span>
       </div>
 
-      {errorMsg && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
+      {errorMsg ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
+        >
           {errorMsg}
-        </div>
-      )}
+        </p>
+      ) : null}
 
-      {/* Hidden File Input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -215,27 +208,16 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
         }}
       />
 
-      {/* Dropzone */}
-      {photos.length < 5 && (
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => fileInputRef.current?.click()}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              fileInputRef.current?.click();
-            }
-          }}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            if (e.dataTransfer.files) void handleFiles(e.dataTransfer.files);
-          }}
+      {photos.length === 0 ? (
+        <button
+          type="button"
+          disabled={!canAdd || isCompressing}
+          onClick={openPicker}
           className={cn(
-            'flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border/80 p-6',
-            'cursor-pointer space-y-2 text-center transition-all hover:border-primary/50 hover:bg-muted/20',
-            isCompressing && 'pointer-events-none opacity-60',
+            'flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center transition-colors',
+            isDragOver
+              ? 'border-primary bg-primary/5'
+              : 'border-border/80 hover:border-primary/50 hover:bg-muted/20',
           )}
         >
           {isCompressing ? (
@@ -243,166 +225,178 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
           ) : (
             <UploadCloudIcon className="size-8 text-muted-foreground" />
           )}
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">{catalogWords.photoDropzone}</p>
-            <p className="text-xs text-muted-foreground">{catalogWords.photoMaxMb}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Uploaded Photos Grid with Sortable Reorder */}
-      {photos.length > 0 && (
+          <span className="text-sm font-medium text-foreground">{catalogWords.photoDropzone}</span>
+          <span className="text-sm text-muted-foreground">{catalogWords.photoMaxMb}</span>
+        </button>
+      ) : (
         <div className="space-y-2">
-          {photos.length > 1 && (
+          {photos.length > 1 ? (
             <p className="text-sm text-muted-foreground">{catalogWords.photoReorderHint}</p>
-          )}
+          ) : null}
 
-          <Sortable value={photos} getItemValue={(photo) => photo} onValueChange={onChange}>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {photos.map((photo, index) => {
-                const meta = photoMeta.get(photo);
-                const isCover = index === 0;
-
-                return (
-                  <SortableItem key={photo} value={photo}>
-                    <div
-                      className={cn(
-                        'relative flex items-center gap-3 rounded-xl border bg-card p-3 shadow-xs transition-shadow hover:shadow-sm',
-                        isCover ? 'border-primary/50 bg-primary/5' : 'border-border/80',
-                      )}
+          <Sortable
+            value={photos}
+            getItemValue={(photo) => photo}
+            onValueChange={onChange}
+            strategy="vertical"
+            className={cn(
+              'flex flex-col gap-2 rounded-2xl transition-colors',
+              isDragOver && 'bg-primary/5 ring-2 ring-primary/40',
+            )}
+          >
+            {photos.map((photo, index) => {
+              const state = uploads.get(photo);
+              const isCover = index === 0;
+              return (
+                <SortableItem key={photo} value={photo}>
+                  <div
+                    className={cn(
+                      'flex items-center gap-2 rounded-xl border bg-card p-2 pr-1 sm:gap-3',
+                      isCover ? 'border-primary/50' : 'border-border/80',
+                    )}
+                  >
+                    <SortableItemHandle
+                      className="flex h-11 w-7 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground active:cursor-grabbing"
+                      aria-label={catalogWords.photoDragAria(index + 1)}
                     >
-                      {/* Drag Handle */}
-                      <SortableItemHandle
-                        className="cursor-grab p-1 text-muted-foreground hover:text-foreground"
-                        aria-label={`Drag photo ${index + 1}`}
-                      >
-                        <GripVerticalIcon className="size-4" />
-                      </SortableItemHandle>
+                      <GripVerticalIcon className="size-4" />
+                    </SortableItemHandle>
 
-                      {/* Photo Thumbnail */}
-                      <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-border/60">
-                        <CatalogPhoto
-                          photoRef={photo}
-                          alt={catalogWords.photoAlt(index + 1)}
-                          size="md"
-                          className="size-full rounded-lg"
-                        />
-                        {isCover && (
-                          <Badge
-                            variant="default"
-                            className="absolute -top-1.5 -left-1.5 px-1.5 py-0 text-xs font-bold tracking-wider uppercase"
-                          >
+                    <CatalogPhoto
+                      photoRef={photo}
+                      alt={catalogWords.photoAlt(index + 1)}
+                      size="md"
+                      className="size-14 rounded-lg"
+                    />
+
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      {isCover ? (
+                        <>
+                          <Badge className="w-fit gap-1">
+                            <StarIcon className="size-3 fill-current" />
                             {catalogWords.photoCover}
                           </Badge>
-                        )}
-                      </div>
-
-                      {/* Meta & Status */}
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {meta && (
-                            <>
-                              <Badge variant="secondary" className="px-1 py-0 text-xs tabular">
-                                {meta.format}
-                              </Badge>
-                              <Badge variant="outline" className="px-1 py-0 text-xs tabular">
-                                {formatSize(meta.originalBytes)} →{' '}
-                                {formatSize(meta.compressedBytes)}
-                              </Badge>
-                            </>
-                          )}
-                        </div>
-
-                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                          {isCover
-                            ? catalogWords.photoCoverHint
-                            : catalogWords.photoGalleryHint(index + 1)}
-                        </p>
-
-                        {/* Progress bar */}
-                        {meta?.uploading && (
-                          <div className="pt-1">
-                            <Progress value={meta.progress} className="h-1.5" />
-                          </div>
-                        )}
-
-                        {meta?.failed && (
-                          <div className="flex items-center gap-2 pt-1 text-xs text-destructive">
-                            <span>{catalogWords.photoUploadFailed}</span>
-                            <button
-                              type="button"
-                              onClick={() => void handleRetryUpload(photo)}
-                              className="flex items-center gap-1 font-semibold underline hover:no-underline"
-                            >
-                              <RefreshCwIcon className="size-3" />
-                              Retry
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Photo Actions */}
-                      <div className="flex shrink-0 items-center gap-1">
+                          <span className="hidden text-sm text-muted-foreground sm:block">
+                            {catalogWords.photoCoverHint}
+                          </span>
+                        </>
+                      ) : (
                         <Button
                           type="button"
                           variant="ghost"
-                          size="icon"
-                          className="size-8 text-muted-foreground hover:text-foreground"
-                          title={catalogWords.photoCrop}
-                          onClick={() => setCropTarget({ index, url: photo })}
+                          size="sm"
+                          className="h-11 w-fit gap-1.5 px-2 text-muted-foreground hover:text-foreground md:h-9"
+                          aria-label={catalogWords.photoMakeCoverAria(index + 1)}
+                          onClick={() => handleMakeCover(index)}
                         >
-                          <CropIcon className="size-4" />
+                          <StarIcon className="size-4" />
+                          {catalogWords.photoMakeCover}
                         </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-muted-foreground hover:text-destructive"
-                          title={catalogWords.photoRemove}
-                          onClick={() => handleRemovePhoto(index)}
-                        >
-                          <Trash2Icon className="size-4" />
-                        </Button>
-                      </div>
+                      )}
+                      {state?.uploading ? (
+                        <Progress value={state.progress} className="h-1.5" />
+                      ) : null}
+                      {state?.failed ? (
+                        <span className="flex flex-wrap items-center gap-2 text-sm text-destructive">
+                          {catalogWords.photoUploadFailed}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (state.blob) void upload(photo, state.blob);
+                            }}
+                            className="inline-flex min-h-11 items-center gap-1 font-semibold underline hover:no-underline md:min-h-9"
+                          >
+                            <RefreshCwIcon className="size-3.5" />
+                            {catalogWords.photoRetry}
+                          </button>
+                        </span>
+                      ) : null}
                     </div>
-                  </SortableItem>
-                );
-              })}
-            </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-11 shrink-0 text-muted-foreground hover:text-foreground md:size-9"
+                      aria-label={catalogWords.photoCropAria(index + 1)}
+                      title={catalogWords.photoCrop}
+                      onClick={() => openCrop(index)}
+                    >
+                      <CropIcon className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-11 shrink-0 text-muted-foreground hover:text-destructive md:size-9"
+                      aria-label={catalogWords.photoRemoveAria(index + 1)}
+                      title={catalogWords.photoRemove}
+                      onClick={() => handleRemove(index)}
+                    >
+                      <Trash2Icon className="size-4" />
+                    </Button>
+                  </div>
+                </SortableItem>
+              );
+            })}
           </Sortable>
+
+          {canAdd ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full gap-1.5 border-dashed md:h-9"
+              disabled={isCompressing}
+              onClick={openPicker}
+            >
+              {isCompressing ? (
+                <Loader2Icon className="size-4 animate-spin" />
+              ) : (
+                <PlusIcon className="size-4" />
+              )}
+              {catalogWords.photoAddMore}
+            </Button>
+          ) : null}
         </div>
       )}
 
-      {/* Crop Dialog */}
       <Dialog open={cropTarget !== null} onOpenChange={(open) => !open && setCropTarget(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>{catalogWords.photoCropSquare}</DialogTitle>
+            <DialogDescription>{catalogWords.photoCropHelp}</DialogDescription>
           </DialogHeader>
-          {cropTarget && (
-            <div className="relative flex h-64 w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+          {cropTarget ? (
+            <div className="relative h-72 w-full overflow-hidden rounded-lg border border-border bg-muted">
               <Cropper
                 aspectRatio={1}
                 crop={crop}
                 onCropChange={setCrop}
                 onCropAreaChange={(_, pixels) => setCropArea(pixels)}
-                className="h-full w-full"
+                className="size-full"
               >
-                <CropperImage src={cropTarget.url} alt="Crop preview" />
+                <CropperImage src={cropTarget.src} alt="" crossOrigin="anonymous" />
                 <CropperArea />
               </Cropper>
             </div>
-          )}
+          ) : null}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setCropTarget(null)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 md:h-9"
+              onClick={() => setCropTarget(null)}
+            >
               {catalogWords.cancel}
             </Button>
             <Button
               type="button"
-              className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-              onClick={handleApplyCrop}
+              className="h-11 font-semibold md:h-9"
+              disabled={!cropArea || isCropping}
+              onClick={() => void handleApplyCrop()}
             >
-              {catalogWords.confirm}
+              {isCropping ? <Loader2Icon className="size-4 animate-spin" /> : null}
+              {catalogWords.photoCropApply}
             </Button>
           </DialogFooter>
         </DialogContent>
