@@ -5,10 +5,9 @@ const STORAGE_KEY = 'smartapp:order-sound-enabled';
 
 function playChime() {
   try {
-    const AudioContextClass =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) return;
+    // Safari has had the unprefixed AudioContext since 14.1.
+    const AudioContextClass = window.AudioContext;
+    if (typeof AudioContextClass !== 'function') return;
 
     const ctx = new AudioContextClass();
     const osc = ctx.createOscillator();

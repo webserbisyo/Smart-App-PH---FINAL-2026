@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import {
   CalendarIcon,
   HistoryIcon,
@@ -9,8 +9,8 @@ import {
   WifiOffIcon,
 } from 'lucide-react';
 import type { BoardOrder } from '@smartapp/core';
-import { ordersWords, words } from '@smartapp/core';
-import { useOpenOrders } from '@smartapp/data';
+import { errorWords, ordersWords, words } from '@smartapp/core';
+import { errorCodeOf, useOpenOrders } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
@@ -22,21 +22,28 @@ import { useOrderSound } from '@/app/orders/use-order-sound';
 import { PageEmpty, PageError } from '@/app/page-state';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { useShop } from '@/app/shop';
-import { BusyMenu } from '../components/busy-menu.js';
-import { NowBoard } from '../components/now-board.js';
-import { OrdersDevScenarioPanel } from '../components/orders-dev-scenario-panel.js';
-import { useOrdersTabs, type OrdersSearch } from '../tabs.js';
+import { storefrontUrl } from '@/app/use-nav-items';
+import { BusyMenu } from '../busy-menu.js';
+import { NowBoard } from '../now-board.js';
+import { OrdersDevScenarioPanel } from '../orders-dev-scenario-panel.js';
+import { useOrdersSearch, useOrdersTabs } from '../tabs.js';
 
 export function OrdersScreen() {
   const shop = useShop();
-  const search = useSearch({ strict: false }) as OrdersSearch;
+  const search = useOrdersSearch();
   const currentView = search.view ?? 'now';
   const navigate = useNavigate();
 
   const isOnline = useOnlineStatus();
   const now = useNow(30_000);
 
-  const { data: orders = [], isLoading, isError, refetch } = useOpenOrders(shop.slug, search.q);
+  const {
+    data: orders = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useOpenOrders(shop.slug, search.q);
 
   const { soundEnabled, enableSound } = useOrderSound(orders);
 
@@ -50,7 +57,7 @@ export function OrdersScreen() {
   const tabs = useOrdersTabs();
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/${shop.slug}`;
+    const url = storefrontUrl(shop.slug);
     if (navigator.share) {
       try {
         await navigator.share({ title: shop.name, url });
@@ -61,10 +68,7 @@ export function OrdersScreen() {
     }
     const ok = await copyText(url);
     if (ok) {
-      notify({
-        title: 'Shop link copied to clipboard',
-        tone: 'success',
-      });
+      notify({ title: words.share.copied, tone: 'success' });
     }
   };
 
@@ -72,7 +76,7 @@ export function OrdersScreen() {
     void navigate({
       to: '/orders/$orderId',
       params: { orderId: order.id },
-      search: (prev) => prev,
+      search,
     });
   };
 
@@ -146,7 +150,7 @@ export function OrdersScreen() {
         ) : isError ? (
           <PageError
             title={ordersWords.states.errorBoard}
-            message="Could not load live orders. Check your connection and try again."
+            message={errorWords(errorCodeOf(error))}
             retryLabel={ordersWords.states.tryAgain}
             onRetry={() => {
               void refetch();

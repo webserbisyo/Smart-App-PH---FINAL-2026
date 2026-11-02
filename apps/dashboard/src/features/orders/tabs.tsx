@@ -20,8 +20,19 @@ export const OrdersSearchSchema = z.object({
 });
 export type OrdersSearch = z.infer<typeof OrdersSearchSchema>;
 
+/** The Orders page's search params from the address, typed (no casts). */
+export function useOrdersSearch(): OrdersSearch {
+  const search = useSearch({ strict: false });
+  return { view: search.view, type: search.type, step: search.step, q: search.q };
+}
+
+/** The same page state with some params changed, for links and navigate(). */
+export function withSearch(search: OrdersSearch, patch: OrdersSearch): OrdersSearch {
+  return { ...search, ...patch };
+}
+
 export function useOrdersTabs(): NavItem[] {
-  const search = useSearch({ strict: false }) as OrdersSearch;
+  const search = useOrdersSearch();
   const currentView = search.view ?? 'now';
   const type = search.type ?? 'all';
   const step = search.step;

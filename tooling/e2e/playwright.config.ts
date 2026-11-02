@@ -36,11 +36,5 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
     },
-    {
-      command: 'pnpm --filter @smartapp/dashboard dev',
-      url: 'http://localhost:5173',
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
-    },
   ],
 });

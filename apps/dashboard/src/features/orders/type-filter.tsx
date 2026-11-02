@@ -1,8 +1,8 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { ordersWords } from '@smartapp/core';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { cn } from 'cn';
-import { ORDER_TYPES, type OrderTypeFilter, type OrdersSearch } from '../tabs.js';
+import { ORDER_TYPES, useOrdersSearch, withSearch, type OrderTypeFilter } from './tabs.js';
 
 export interface TypeFilterCounts {
   all: number;
@@ -17,17 +17,16 @@ export interface TypeFilterProps {
 }
 
 export function TypeFilter({ counts, className }: TypeFilterProps) {
-  const search = useSearch({ strict: false }) as OrdersSearch;
+  const search = useOrdersSearch();
   const currentType = search.type ?? 'all';
   const navigate = useNavigate();
 
   const handleSelect = (val: string[]) => {
     const next = ORDER_TYPES.find((t) => t === val[0]) ?? 'all';
     void navigate({
-      search: (prev: Record<string, unknown>) => ({
-        ...prev,
-        type: next === 'all' ? undefined : next,
-      }),
+      to: '/orders',
+      search: withSearch(search, { type: next === 'all' ? undefined : next }),
+      replace: true,
     });
   };
 
@@ -57,7 +56,7 @@ export function TypeFilter({ counts, className }: TypeFilterProps) {
             )}
           >
             <span>{labels[type]}</span>
-            <span className="text-[0.6875rem] font-medium text-muted-foreground tabular-nums">
+            <span className="text-xs font-medium text-muted-foreground tabular-nums">
               {counts[type]}
             </span>
           </ToggleGroupItem>

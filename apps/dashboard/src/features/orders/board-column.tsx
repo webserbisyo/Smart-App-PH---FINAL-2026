@@ -62,6 +62,59 @@ function getButtonLabels(order: BoardOrder, kind: ShopKind) {
   }
 }
 
+export interface BoardTicketProps {
+  order: BoardOrder;
+  now: Date;
+  kind?: ShopKind;
+  onAdvance: (order: BoardOrder) => Promise<void>;
+  onSelectOrder: (order: BoardOrder) => void;
+  className?: string | undefined;
+}
+
+/** One board card: the ticket plus its one next-step button (from nextActions, so unpaid transfers get none). */
+export function BoardTicket({
+  order,
+  now,
+  kind = 'food',
+  onAdvance,
+  onSelectOrder,
+  className,
+}: BoardTicketProps) {
+  const [advancing, setAdvancing] = React.useState(false);
+  const btn = getButtonLabels(order, kind);
+  const actionSlot = btn ? (
+    <AsyncButton
+      variant="secondary"
+      size="sm"
+      status={advancing ? 'loading' : 'idle'}
+      busyLabel={btn.pending}
+      doneLabel={btn.done}
+      onClick={async () => {
+        try {
+          setAdvancing(true);
+          await onAdvance(order);
+        } finally {
+          setAdvancing(false);
+        }
+      }}
+      className="w-full text-xs font-semibold"
+    >
+      {btn.idle}
+    </AsyncButton>
+  ) : undefined;
+
+  return (
+    <OrderTicket
+      order={order}
+      size="card"
+      now={now}
+      onClick={() => onSelectOrder(order)}
+      actionSlot={actionSlot}
+      {...(className ? { className } : {})}
+    />
+  );
+}
+
 export function BoardColumnView({
   columnId,
   title,
@@ -79,44 +132,17 @@ export function BoardColumnView({
   const displayOrders = isDoneColumn ? orders.slice(0, 10) : orders;
   const useContentVisibility = orders.length > 30;
 
-  const [advancingId, setAdvancingId] = React.useState<string | null>(null);
-
-  const renderCard = (order: BoardOrder) => {
-    const btn = getButtonLabels(order, kind);
-    const isAdvancing = advancingId === order.id;
-    const actionSlot = btn ? (
-      <AsyncButton
-        variant="secondary"
-        size="sm"
-        status={isAdvancing ? 'loading' : 'idle'}
-        busyLabel={btn.pending}
-        doneLabel={btn.done}
-        onClick={async () => {
-          try {
-            setAdvancingId(order.id);
-            await onAdvance(order);
-          } finally {
-            setAdvancingId(null);
-          }
-        }}
-        className="h-8.5 w-full text-xs font-semibold"
-      >
-        {btn.idle}
-      </AsyncButton>
-    ) : undefined;
-
-    return (
-      <OrderTicket
-        key={order.id}
-        order={order}
-        size="card"
-        now={now}
-        onClick={() => onSelectOrder(order)}
-        actionSlot={actionSlot}
-        className={cn(useContentVisibility && 'content-visibility-auto')}
-      />
-    );
-  };
+  const renderCard = (order: BoardOrder) => (
+    <BoardTicket
+      key={order.id}
+      order={order}
+      now={now}
+      kind={kind}
+      onAdvance={onAdvance}
+      onSelectOrder={onSelectOrder}
+      className={cn(useContentVisibility && 'content-visibility-auto')}
+    />
+  );
 
   const columnHeader = (
     <div className="mb-1 flex items-center justify-between border-b border-border/40 px-2 py-2">
@@ -156,7 +182,7 @@ export function BoardColumnView({
         {columnHeader}
         <KanbanColumnContent
           value={columnId}
-          className="min-h-[150px] flex-1 space-y-2.5 overflow-y-auto px-0.5 py-1"
+          className="min-h-36 flex-1 space-y-2.5 overflow-y-auto px-0.5 py-1"
         >
           {displayOrders.map((order) => (
             <KanbanItem key={order.id} value={order.id}>

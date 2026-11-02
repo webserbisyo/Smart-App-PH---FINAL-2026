@@ -19,15 +19,9 @@ function makeInitials(name: string): string {
 
 // The owner's demo shop until shops come from the API; a food shop by default.
 export function resolveShop(claims: UserClaims): CurrentShop {
-  const urlShop =
-    typeof window !== 'undefined'
-      ? (new URLSearchParams(window.location.search).get('shop') ??
-        new URLSearchParams(window.location.search).get('as'))
-      : null;
-  const targetSlug = urlShop ?? claims.demoShop;
-  const found = DEMO_SHOPS.find((shop) => shop.slug === targetSlug) ?? DEMO_SHOPS[0];
+  const found = DEMO_SHOPS.find((shop) => shop.slug === claims.demoShop);
   const name = found?.name ?? words.shell.myShop;
-  const slug = found?.slug ?? 'kanto-smash';
+  const slug = found?.slug ?? '';
   if (slug) {
     setMockOwnerSlug(slug);
   }

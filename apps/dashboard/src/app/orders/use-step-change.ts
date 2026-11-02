@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import type { BoardOrder, OrderStatus, OwnerOrder, ShopKind } from '@smartapp/core';
-import { canAdvance, nextActions, ordersWords } from '@smartapp/core';
-import { useAdvanceOrder, useRecallOrder } from '@smartapp/data';
+import { canAdvance, errorWords, nextActions, ordersWords } from '@smartapp/core';
+import { errorCodeOf, useAdvanceOrder, useRecallOrder } from '@smartapp/data';
 import { notify } from '@smartapp/ui/compositions/notify';
+import { orderNoLabel } from './order-ticket.js';
 
 export interface UseStepChangeOptions {
   slug: string;
@@ -46,36 +47,28 @@ export function useStepChange({ slug, kind = 'food' }: UseStepChangeOptions) {
                 ? ordersWords.columns.out
                 : ordersWords.columns.completed;
 
+        // T51: Recall shows for 5 s (the info toast's timeout); the server allows 10 s.
+        let recalled = false;
         notify({
-          title: ordersWords.recall.moved(order.orderNo, stepName),
+          title: ordersWords.recall.moved(orderNoLabel(order.orderNo), stepName),
           tone: 'info',
           action: {
             label: ordersWords.recall.action,
-            onClick: async () => {
-              try {
-                await recallMutation.mutateAsync({ orderId: order.id });
-              } catch (err: unknown) {
-                const message = err instanceof Error ? err.message : '';
-                if (message.includes('recall_expired')) {
-                  notify({
-                    title: ordersWords.recall.expired,
-                    tone: 'error',
-                  });
-                } else {
-                  notify({
-                    title: ordersWords.recall.expired,
-                    tone: 'error',
-                  });
-                }
-              }
+            onClick: () => {
+              if (recalled) return;
+              recalled = true;
+              recallMutation.mutateAsync({ orderId: order.id }).catch((err: unknown) => {
+                const code = errorCodeOf(err);
+                notify({
+                  title: code === 'recall_expired' ? ordersWords.recall.expired : errorWords(code),
+                  tone: 'error',
+                });
+              });
             },
           },
         });
-      } catch (_err) {
-        notify({
-          title: 'Could not update order status. Try again.',
-          tone: 'error',
-        });
+      } catch (err) {
+        notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
       }
     },
     [advanceMutation, recallMutation, kind],

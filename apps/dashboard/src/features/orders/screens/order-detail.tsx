@@ -1,38 +1,22 @@
 import * as React from 'react';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
-import { ReceiptTextIcon } from 'lucide-react';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import type { BoardOrder } from '@smartapp/core';
-import { ordersWords, words } from '@smartapp/core';
-import { useOrderDetail, useOpenOrders } from '@smartapp/data';
+import { errorWords, ordersWords, words } from '@smartapp/core';
+import { errorCodeOf, useOrderDetail, useOpenOrders } from '@smartapp/data';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { useNow } from '@/app/orders/use-now';
 import { PageError } from '@/app/page-state';
 import { useShop } from '@/app/shop';
-import { BusyMenu } from '../components/busy-menu.js';
-import { NowBoard } from '../components/now-board.js';
-import { OrderDetailContent } from '../components/order-detail-content.js';
-import { useOrdersTabs, type OrdersSearch } from '../tabs.js';
-
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = React.useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia(query).matches;
-  });
-
-  React.useEffect(() => {
-    const m = window.matchMedia(query);
-    const handler = () => setMatches(m.matches);
-    m.addEventListener('change', handler);
-    return () => m.removeEventListener('change', handler);
-  }, [query]);
-
-  return matches;
-}
+import { useMediaQuery } from '@/app/use-media-query';
+import { BusyMenu } from '../busy-menu.js';
+import { NowBoard } from '../now-board.js';
+import { OrderDetailContent } from '../order-detail-content.js';
+import { useOrdersSearch, useOrdersTabs } from '../tabs.js';
 
 export function OrderDetailScreen() {
-  const { orderId } = useParams({ strict: false }) as { orderId: string };
-  const search = useSearch({ strict: false }) as OrdersSearch;
+  const orderId = useParams({ strict: false }).orderId ?? '';
+  const search = useOrdersSearch();
   const shop = useShop();
   const navigate = useNavigate();
   const now = useNow(30_000);
@@ -44,6 +28,7 @@ export function OrderDetailScreen() {
     data: order,
     isLoading: isOrderLoading,
     isError: isOrderError,
+    error: orderError,
     refetch: refetchOrder,
   } = useOrderDetail(shop.slug, orderId);
 
@@ -87,8 +72,8 @@ export function OrderDetailScreen() {
     return (
       <div className="p-4 md:p-6">
         <PageError
-          title="Order not found"
-          message="Could not load the details for this order. It may have been completed or removed."
+          title={ordersWords.states.errorDetail}
+          message={errorWords(errorCodeOf(orderError))}
           retryLabel={ordersWords.states.tryAgain}
           onRetry={() => {
             void refetchOrder();
@@ -131,7 +116,7 @@ export function OrderDetailScreen() {
           </div>
 
           {/* Right: Side panel detail view */}
-          <aside className="w-[440px] shrink-0 overflow-y-auto border-l border-border/80 bg-background">
+          <aside className="w-110 shrink-0 overflow-y-auto border-l border-border/80 bg-background">
             <OrderDetailContent
               order={order}
               slug={shop.slug}
@@ -147,13 +132,7 @@ export function OrderDetailScreen() {
   // Below 1280px: Full-page view with Back navigation
   return (
     <div className="min-h-full pb-16 md:pb-8">
-      <OrderDetailContent
-        order={order}
-        slug={shop.slug}
-        kind={shop.kind}
-        isFullPage={true}
-        onBack={handleBack}
-      />
+      <OrderDetailContent order={order} slug={shop.slug} kind={shop.kind} onBack={handleBack} />
     </div>
   );
 }
