@@ -57,9 +57,7 @@ describe('variant-pricing rules', () => {
     );
     expect(lRedLong?.price).toBe(14500);
 
-    expect(versionPrice({ basePrice, axes, variants: versions }, ['L', 'Red', 'Long'])).toBe(
-      14500,
-    );
+    expect(versionPrice({ basePrice, axes, variants: versions }, ['L', 'Red', 'Long'])).toBe(14500);
   });
 
   it('a special price (priceOverride) wins over automatic computed price', () => {
@@ -112,9 +110,7 @@ describe('variant-pricing rules', () => {
 
     // M has a special price and is sold out
     const modified: Variant[] = initial.map((v) =>
-      v.values[0] === 'M'
-        ? { ...v, priceOverride: 3500, availability: 'sold_out' as const }
-        : v,
+      v.values[0] === 'M' ? { ...v, priceOverride: 3500, availability: 'sold_out' as const } : v,
     );
 
     // Add 'L' option
@@ -133,10 +129,7 @@ describe('variant-pricing rules', () => {
   });
 
   it('sold out on an option marks all its versions', () => {
-    const axes = [
-      axis('Size', ['S', 'M']),
-      axis('Color', ['Red', 'Blue']),
-    ];
+    const axes = [axis('Size', ['S', 'M']), axis('Color', ['Red', 'Blue'])];
     const basePrice = 1000;
     const versions = buildVersions(axes, [], basePrice);
     const item = { basePrice, axes, variants: versions };
@@ -153,10 +146,7 @@ describe('variant-pricing rules', () => {
   });
 
   it('reports the some or all option sold out state', () => {
-    const axes = [
-      axis('Size', ['S', 'M']),
-      axis('Color', ['Red', 'Blue']),
-    ];
+    const axes = [axis('Size', ['S', 'M']), axis('Color', ['Red', 'Blue'])];
     const basePrice = 1000;
     const versions = buildVersions(axes, [], basePrice);
     const item = { basePrice, axes, variants: versions };

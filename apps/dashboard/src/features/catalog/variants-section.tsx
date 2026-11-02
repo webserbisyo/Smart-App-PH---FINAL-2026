@@ -331,22 +331,23 @@ export function VariantsSection({
   const computedRange = priceRange({ basePrice, axes, variants });
 
   return (
-    <section className="space-y-6 rounded-2xl border border-border/80 bg-card p-4 md:p-6 shadow-xs">
+    <section className="space-y-6 rounded-2xl border border-border/80 bg-card p-4 shadow-xs md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/50 pb-4">
         <div className="space-y-1">
           <h2 className="text-base font-semibold text-foreground">
             {catalogWords.variantsSectionTitle}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {catalogWords.variantsSectionSubtitle}
-          </p>
+          <p className="text-sm text-muted-foreground">{catalogWords.variantsSectionSubtitle}</p>
         </div>
 
         {/* Base price & computed price range */}
         <div className="flex flex-col items-end gap-1">
           {onBasePriceChange && (
             <div className="flex items-center gap-2">
-              <Label htmlFor="base-price" className="text-xs font-semibold uppercase text-muted-foreground">
+              <Label
+                htmlFor="base-price"
+                className="text-xs font-semibold text-muted-foreground uppercase"
+              >
                 {catalogWords.basePriceLabel}:
               </Label>
               <PesoInput
@@ -385,9 +386,7 @@ export function VariantsSection({
                   </Badge>
 
                   {isLinked ? (
-                    <span className="text-base font-bold text-foreground">
-                      {axis.name}
-                    </span>
+                    <span className="text-base font-bold text-foreground">{axis.name}</span>
                   ) : (
                     <Input
                       value={axis.name}
@@ -469,7 +468,7 @@ export function VariantsSection({
               {/* Options list */}
               <div className="space-y-2 border-t border-border/40 pt-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                     {catalogWords.choiceOptionsLabel}
                   </Label>
                   <span className="text-xs text-muted-foreground">
@@ -524,7 +523,7 @@ export function VariantsSection({
 
                               <div className="flex items-center gap-1.5">
                                 {soldOutStatus === 'some' && (
-                                  <span className="text-xs text-warning-text font-medium">
+                                  <span className="text-xs font-medium text-warning-text">
                                     {catalogWords.someSoldOut}
                                   </span>
                                 )}
@@ -579,16 +578,14 @@ export function VariantsSection({
 
                             <div className="flex items-center gap-1.5">
                               {soldOutStatus === 'some' && (
-                                <span className="text-xs text-warning-text font-medium">
+                                <span className="text-xs font-medium text-warning-text">
                                   {catalogWords.someSoldOut}
                                 </span>
                               )}
                               <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
                                 <Switch
                                   checked={soldOutStatus === 'all'}
-                                  onCheckedChange={() =>
-                                    handleToggleOptionSoldOut(axisIdx, v.name)
-                                  }
+                                  onCheckedChange={() => handleToggleOptionSoldOut(axisIdx, v.name)}
                                 />
                                 <span>{catalogWords.soldOut}</span>
                               </label>
@@ -704,11 +701,9 @@ export function VariantsSection({
           </CollapsibleTrigger>
 
           <CollapsibleContent className="space-y-3 pt-3">
-            <p className="text-xs text-muted-foreground">
-              {catalogWords.combinationsHelp}
-            </p>
+            <p className="text-xs text-muted-foreground">{catalogWords.combinationsHelp}</p>
 
-            <div className="space-y-1.5 max-h-80 overflow-y-auto">
+            <div className="max-h-80 space-y-1.5 overflow-y-auto">
               {variants.map((v) => {
                 const label = v.values.join(' · ') || 'Default';
                 const isSoldOut = v.availability !== 'available';
@@ -721,7 +716,7 @@ export function VariantsSection({
                     <span className="font-medium text-foreground">{label}</span>
 
                     <div className="flex items-center gap-3">
-                      <span className="text-xs tabular text-muted-foreground">
+                      <span className="text-xs text-muted-foreground tabular">
                         {formatPeso(v.price)}
                       </span>
 
@@ -797,7 +792,7 @@ function CustomOptionAdder({ onAdd }: { onAdd: (name: string) => void }) {
           }
         }}
         placeholder={catalogWords.addOptionPlaceholder}
-        className="h-8 text-xs flex-1"
+        className="h-8 flex-1 text-xs"
         maxLength={30}
       />
       <Button

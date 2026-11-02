@@ -465,7 +465,11 @@ function ItemEditorForm({
                 className="max-w-48"
                 value={form.basePrice}
                 onChange={(basePrice) => {
-                  const nextVariants = buildVersions(form.choices.axes, form.choices.variants, basePrice);
+                  const nextVariants = buildVersions(
+                    form.choices.axes,
+                    form.choices.variants,
+                    basePrice,
+                  );
                   update({ basePrice, choices: { ...form.choices, variants: nextVariants } });
                 }}
               />
@@ -507,7 +511,11 @@ function ItemEditorForm({
             onChange={(choices) => update({ choices })}
             basePrice={form.basePrice}
             onBasePriceChange={(basePrice) => {
-              const nextVariants = buildVersions(form.choices.axes, form.choices.variants, basePrice);
+              const nextVariants = buildVersions(
+                form.choices.axes,
+                form.choices.variants,
+                basePrice,
+              );
               update({ basePrice, choices: { ...form.choices, variants: nextVariants } });
             }}
             otherItems={otherItems}

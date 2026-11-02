@@ -43,7 +43,9 @@ describe('dashboard variants helpers', () => {
     const axes = [axis('Size', [{ name: 'S' }, { name: 'M' }])];
     const first = buildVersions(axes, [], 10000);
     const changed = first.map((v) =>
-      v.values[0] === 'M' ? { ...v, priceOverride: 15000, price: 15000, availability: 'sold_out' as const } : v,
+      v.values[0] === 'M'
+        ? { ...v, priceOverride: 15000, price: 15000, availability: 'sold_out' as const }
+        : v,
     );
     const nextAxes = [axis('Size', [{ name: 'S' }, { name: 'M' }, { name: 'L' }])];
     const next = buildVersions(nextAxes, changed, 10000);

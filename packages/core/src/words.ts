@@ -1303,7 +1303,8 @@ export const catalogWords = {
   emptyCategories: 'No categories yet. Group your items so customers find them fast.',
   emptyAddOns: 'No add-ons yet. Add extras like sauces, toppings or gift wrap.',
   emptyVariants: 'No variants yet. Create choices like Size or Colour to reuse across items.',
-  variantsSubtitle: 'Reusable choices like Size, Cup size or Colour that you can pick for any item.',
+  variantsSubtitle:
+    'Reusable choices like Size, Cup size or Colour that you can pick for any item.',
   addVariant: 'New variant',
   editVariant: 'Edit variant',
   duplicateVariant: 'Duplicate',

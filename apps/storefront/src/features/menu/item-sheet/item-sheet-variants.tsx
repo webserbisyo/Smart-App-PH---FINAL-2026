@@ -173,7 +173,7 @@ export function ItemSheetVariants({
                     key={v.name}
                     value={v.name}
                     disabled={isDisabled ? true : undefined}
-                    className={`h-9 rounded-md px-3 text-xs font-medium gap-1 ${
+                    className={`h-9 gap-1 rounded-md px-3 text-xs font-medium ${
                       isDisabled ? 'line-through opacity-40' : ''
                     }`}
                     title={isDisabled ? words.menu.itemSheet.notAvailable : v.name}

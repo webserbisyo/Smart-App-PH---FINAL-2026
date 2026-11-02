@@ -1,5 +1,14 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
-import { ALL_SECTIONS_ON, category, DAILY, days, group, makeItems, peso, templates } from './build.js';
+import {
+  ALL_SECTIONS_ON,
+  category,
+  DAILY,
+  days,
+  group,
+  makeItems,
+  peso,
+  templates,
+} from './build.js';
 
 const P = 'kj';
 

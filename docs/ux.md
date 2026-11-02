@@ -56,7 +56,7 @@ Loading skeleton · empty with one line and one action · error with Try again �
 
 - Home: banners (up to 3), announcement, reward card or "Join and get 1 free stamp", categories, best sellers, About, hours and contact. A closed shop says so and add buttons say why.
 - Menu: sticky search and categories; "+" adds at once when there is one variant and no required add-ons, otherwise opens the item; sold-out items stay, greyed; `?item=<id>` opens an item.
-- Item: required choices first; a missing one scrolls to it and the button says what to choose; note up to 120 characters.
+- Item: required choices first; a missing one scrolls to it and the button says what to choose; single choice shows radio rows with "+₱", 2 or 3 choices use toggle group chips per axis with "+₱<delta>" (T46); note up to 120 characters.
 - Cart: saved on the device per shop; missing or sold-out lines are flagged and left out of the total.
 - Checkout: one page (how, who, pay); re-quoted before Place order; pickup slots start 20 min out, today or tomorrow, inside hours; a closed shop with "Take orders while closed" on offers next-opening slots for pickup and delivery (N1); offline keeps the cart and details and Place order waits for the connection (N2); transfers show "Send exactly ₱345" with Copy.
 - Receipt: big order number, live status (15 s poll fallback), upload proof → "Checking your payment" → rejected reason with Upload again; Save receipt (image) and Print or Save as PDF (N11); "ORDER SLIP · NOT AN OFFICIAL RECEIPT" on slips; install card after the first order.
@@ -68,7 +68,7 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - Orders: open-order count in the nav and tab title; "Turn on order sound" until the first tap; order age amber at 10 min, red at 20; one next-step button from core `nextActions()`; Cancel needs a reason.
 - Order detail: proof zoom, reference with Copy, "Check this reference in your own GCash app", Approve or Reject with a reason.
 - Home: setup checklist until done; attention items hidden at 0; today's numbers; no % comparisons or date pickers (an empty new day looks calm).
-- Menu or Products: Visible and Sold out switches inline; variants up to 2 choices, shared add-on groups with min and max, "Goes well with" up to 4 items (N4); up to 5 photos; an item with orders is archived, not deleted; leave guard on unsaved edits.
+- Menu or Products: 4 tabs (Items, Categories, Add-ons, Variants); Visible and Sold out switches inline; reusable variant templates per shop; items link to a variant template or use custom choices; up to 3 choices and 30 combinations (T46); each choice priced independently (item base price + option price changes) with a "Same price for all options" switch; combinations computed in background with optional overrides and sold-out per combo; shared add-on groups with min and max, "Goes well with" up to 4 items; up to 5 photos; an item with orders is archived, not deleted; leave guard on unsaved edits.
 - Members: list with segments, member detail with stamp history, manual stamp ±1 with a reason (at most 3 per member per day), stamp card, claims (N5).
 - Editor: opens full screen outside the shell (N13); the shop look and content edited on a live preview of the real storefront, Draft and Publish, contrast warning, logo colour helper (N7, N8).
 - Insights: simple blocks for 7 or 30 days, no % comparisons.

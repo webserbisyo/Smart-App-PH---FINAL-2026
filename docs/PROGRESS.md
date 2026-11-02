@@ -42,6 +42,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] T41 Menu page UX round: simpler list, editor, sizes and versions, add-ons (retested as a food and a retail owner)
 - [x] T42 Final Menu page polish: category form, photos and crop, samples banner, bulk actions, editor errors (retested as a food and a retail owner)
 - [x] T43 Dashboard feedback (toasts, Save spinner and check, Copied) and Menu Archived filter with Restore and Delete forever
+- [x] T46 Reusable variants and independent choice pricing: Variants tab, templates, option deltas, and 3-choice support (decision T46, pushed to main)
 
 ## Phase 4: Backend, area by area
 

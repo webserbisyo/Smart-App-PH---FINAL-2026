@@ -1,5 +1,14 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
-import { ALL_SECTIONS_ON, category, DAILY, days, group, makeItems, peso, templates } from './build.js';
+import {
+  ALL_SECTIONS_ON,
+  category,
+  DAILY,
+  days,
+  group,
+  makeItems,
+  peso,
+  templates,
+} from './build.js';
 
 const P = 'ta';
 
@@ -22,16 +31,7 @@ const optionGroups = [
 const variantTemplates = templates(P, 'retail', {
   edits: {
     colour: {
-      options: [
-        'Black',
-        'White',
-        'Sand',
-        'Natural',
-        'Indigo',
-        'Cream',
-        'Terracotta',
-        'Olive',
-      ],
+      options: ['Black', 'White', 'Sand', 'Natural', 'Indigo', 'Cream', 'Terracotta', 'Olive'],
     },
   },
   extra: [{ key: 'length', name: 'Length', options: ['Regular', 'Petite'] }],

@@ -8,11 +8,7 @@ import {
   Trash2Icon,
   WifiOffIcon,
 } from 'lucide-react';
-import {
-  catalogWords,
-  errorWords,
-  type OwnerVariantTemplate,
-} from '@smartapp/core';
+import { catalogWords, errorWords, type OwnerVariantTemplate } from '@smartapp/core';
 import {
   useOwnerVariantTemplates,
   useRemoveVariantTemplate,

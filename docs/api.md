@@ -46,15 +46,15 @@ Codes: `slug_taken`, `slug_reserved`, `slug_invalid`, `already_has_shop`, `not_a
 
 ## Catalog (owner)
 
-| Method                                                                   | HTTP                             | Input → Output                                                                                  |
-| ------------------------------------------------------------------------ | -------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `listCategories` / `saveCategory` / `removeCategory`                     | `/owner/categories`              | `Category` (with `icon`)                                                                        |
-| `listItems`                                                              | GET `/owner/items`               | → `CatalogItem[]` (photos, variants, add-on groups, every status)                               |
-| `saveItem`                                                               | PUT `/owner/items/:id`           | `ItemDraft` → `CatalogItem` (one transaction)                                                   |
-| `setItemStatus`                                                          | PATCH `/owner/items/:id/status`  | `active\|hidden\|archived`                                                                      |
-| `setSoldOut` / `setStock`                                                | PATCH `/owner/variants/:id`      | `{ isSoldOut }` / `{ stockOnHand }` (logged)                                                    |
-| `listOptionGroups` / `saveOptionGroup` / `removeOptionGroup`             | `/owner/option-groups`           | `OptionGroup`                                                                                   |
-| `listVariantTemplates` / `saveVariantTemplate` / `removeVariantTemplate` | `/owner/variant-templates`       | `VariantTemplate` (reusable choices across items)                                               |
+| Method                                                                   | HTTP                            | Input → Output                                                    |
+| ------------------------------------------------------------------------ | ------------------------------- | ----------------------------------------------------------------- |
+| `listCategories` / `saveCategory` / `removeCategory`                     | `/owner/categories`             | `Category` (with `icon`)                                          |
+| `listItems`                                                              | GET `/owner/items`              | → `CatalogItem[]` (photos, variants, add-on groups, every status) |
+| `saveItem`                                                               | PUT `/owner/items/:id`          | `ItemDraft` → `CatalogItem` (one transaction)                     |
+| `setItemStatus`                                                          | PATCH `/owner/items/:id/status` | `active\|hidden\|archived`                                        |
+| `setSoldOut` / `setStock`                                                | PATCH `/owner/variants/:id`     | `{ isSoldOut }` / `{ stockOnHand }` (logged)                      |
+| `listOptionGroups` / `saveOptionGroup` / `removeOptionGroup`             | `/owner/option-groups`          | `OptionGroup`                                                     |
+| `listVariantTemplates` / `saveVariantTemplate` / `removeVariantTemplate` | `/owner/variant-templates`      | `VariantTemplate` (reusable choices across items)                 |
 
 Codes: `category_not_empty`, `item_has_orders` (archive instead), `variant_is_reward` (protects stamp card prize).
 

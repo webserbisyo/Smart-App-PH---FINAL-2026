@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { catalogWords, formatPeso, itemPriceLabel, type Variant, type VariantAxis } from '@smartapp/core';
+import {
+  catalogWords,
+  formatPeso,
+  itemPriceLabel,
+  type Variant,
+  type VariantAxis,
+} from '@smartapp/core';
 import { AspectRatio } from '@smartapp/ui/components/aspect-ratio';
 import { Badge as ShopBadge } from '@smartapp/ui/components/reui/badge';
 import {
@@ -73,7 +79,7 @@ export function ItemPreview({
           {description.trim() || catalogWords.previewDescription}
         </p>
         {axes && axes.length > 0 ? (
-          <div className="space-y-2 pt-1 border-t border-border/40">
+          <div className="space-y-2 border-t border-border/40 pt-1">
             {axes.map((axis) => (
               <div key={axis.id} className="space-y-1">
                 <span className="text-xs font-medium text-foreground">

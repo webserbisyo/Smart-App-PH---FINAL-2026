@@ -21,13 +21,7 @@ describe('variant-templates rules', () => {
   it('defaultVariantTemplates generates default templates for food and retail', () => {
     const food = defaultVariantTemplates('food');
     expect(food.length).toBe(5);
-    expect(food.map((t) => t.name)).toEqual([
-      'Size',
-      'Size',
-      'Cup size',
-      'Patty',
-      'Temperature',
-    ]);
+    expect(food.map((t) => t.name)).toEqual(['Size', 'Size', 'Cup size', 'Patty', 'Temperature']);
 
     const retail = defaultVariantTemplates('retail');
     expect(retail.length).toBe(4);
@@ -180,11 +174,7 @@ describe('variant-templates rules', () => {
     const after = {
       id: 't_size',
       name: 'Size',
-      options: [
-        before.options[0]!,
-        before.options[1]!,
-        { id: undefined, name: 'Extra Large' },
-      ],
+      options: [before.options[0]!, before.options[1]!, { id: undefined, name: 'Extra Large' }],
     };
 
     const axis = linkTemplate(before);
@@ -216,11 +206,7 @@ describe('variant-templates rules', () => {
     const after = {
       id: 't_size',
       name: 'Size',
-      options: [
-        before.options[0]!,
-        before.options[1]!,
-        { id: undefined, name: 'Extra Large' },
-      ],
+      options: [before.options[0]!, before.options[1]!, { id: undefined, name: 'Extra Large' }],
     };
 
     const axis: VariantAxis = {
@@ -262,11 +248,7 @@ describe('variant-templates rules', () => {
     const after = {
       id: 't_color',
       name: 'Colour',
-      options: [
-        ...before.options,
-        { id: undefined, name: 'C6' },
-        { id: undefined, name: 'C7' },
-      ],
+      options: [...before.options, { id: undefined, name: 'C6' }, { id: undefined, name: 'C7' }],
     };
 
     const sizeAxis: VariantAxis = {

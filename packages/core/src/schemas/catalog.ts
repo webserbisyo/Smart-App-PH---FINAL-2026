@@ -168,9 +168,13 @@ export const ItemBaseSchema = z.object({
 
 function applyItemRefinements<T extends z.ZodTypeAny>(schema: T) {
   return schema
-    .refine((item: z.infer<typeof ItemBaseSchema>) => item.variants.every((v) => v.values.length === item.axes.length), {
-      message: 'Every variant needs one value per axis',
-    })
+    .refine(
+      (item: z.infer<typeof ItemBaseSchema>) =>
+        item.variants.every((v) => v.values.length === item.axes.length),
+      {
+        message: 'Every variant needs one value per axis',
+      },
+    )
     .refine((item: z.infer<typeof ItemBaseSchema>) => !item.pairingIds.includes(item.id), {
       message: 'An item cannot pair with itself',
     })
@@ -198,16 +202,18 @@ function applyItemRefinements<T extends z.ZodTypeAny>(schema: T) {
       },
       { message: 'A template can only be linked once per item' },
     )
-    .refine((item: z.infer<typeof ItemBaseSchema>) => item.variants.length <= VARIANT_LIMITS.combos, {
-      message: `An item can have at most ${VARIANT_LIMITS.combos} combinations`,
-    })
+    .refine(
+      (item: z.infer<typeof ItemBaseSchema>) => item.variants.length <= VARIANT_LIMITS.combos,
+      {
+        message: `An item can have at most ${VARIANT_LIMITS.combos} combinations`,
+      },
+    )
     .refine(
       (item: z.infer<typeof ItemBaseSchema>) =>
-        item.variants.every(
-          (v) => v.price === computedVariantPrice(item.basePrice, item.axes, v),
-        ),
+        item.variants.every((v) => v.price === computedVariantPrice(item.basePrice, item.axes, v)),
       {
-        message: 'Every variant price must equal basePrice + option price changes, or its priceOverride',
+        message:
+          'Every variant price must equal basePrice + option price changes, or its priceOverride',
       },
     );
 }
@@ -261,9 +267,7 @@ export const ItemDraftSchema = z
   )
   .refine(
     (item) => {
-      const tids = item.axes
-        .map((a) => a.templateId)
-        .filter((tid): tid is string => Boolean(tid));
+      const tids = item.axes.map((a) => a.templateId).filter((tid): tid is string => Boolean(tid));
       return new Set(tids).size === tids.length;
     },
     { message: 'A template can only be linked once per item' },

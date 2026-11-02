@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-02 T46 reusable variants and choice pricing: Variants tab on Menu/Products with reusable templates, independent choice pricing (base price + option deltas), Same price for all switch, background combination calculation with overrides and sold out per combo, up to 3 choices and 30 combinations max, storefront sheet up to 3 choices with +₱ option deltas (decision T46, pushed to main)
 - 2026-11-02 T45 kit cross-check Batches 2 and 3: basket Clear button with Undo (no ⋯ menu or dialog), one shared Copy and busy button for both apps, add-on Rule radio cards, Items empty, error and offline states, phone bulk bar in one row, storefront code autofocus and clearer labels
 - 2026-11-02 T44 kit cross-check Batch 1: readable Best seller pill and toast icons on dark shops (removed CLI colour leftovers, guard test), owner switch renamed Best seller with the customer badge in the preview, Menu rows aligned with named Sold out switches, toasts clear of open sheets and desktop tabs, copy never fails silently and the address button says Copied
 - 2026-11-02 T43 dashboard feedback: toasts now show on every dashboard page (the toaster was only on /kit), Save and Delete buttons show a spinner then a check, Copy shows Copied, installed File Upload, Empty, Item, Field, Banner, Status, Input Group and Toggle Group replace hand-written parts on the Menu page, and an Archived filter with Restore and Delete forever

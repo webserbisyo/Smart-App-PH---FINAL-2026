@@ -146,11 +146,10 @@ export function createApiOwnerCatalogAdapter({
 
     async listVariantTemplates() {
       const headers = await authHeaders();
-      return fetchApi(
-        `${baseUrl}/owner/variant-templates`,
-        z.array(OwnerVariantTemplateSchema),
-        { method: 'GET', headers },
-      );
+      return fetchApi(`${baseUrl}/owner/variant-templates`, z.array(OwnerVariantTemplateSchema), {
+        method: 'GET',
+        headers,
+      });
     },
 
     async saveVariantTemplate(input) {
@@ -168,11 +167,10 @@ export function createApiOwnerCatalogAdapter({
 
     async removeVariantTemplate({ id }) {
       const headers = await authHeaders();
-      await fetchApi(
-        `${baseUrl}/owner/variant-templates/${encodeURIComponent(id)}`,
-        z.unknown(),
-        { method: 'DELETE', headers },
-      );
+      await fetchApi(`${baseUrl}/owner/variant-templates/${encodeURIComponent(id)}`, z.unknown(), {
+        method: 'DELETE',
+        headers,
+      });
     },
 
     async saveSortOrder(input) {

@@ -18,12 +18,7 @@ import {
   type OwnerVariantTemplate,
   type VariantTemplateOption,
 } from '@smartapp/core';
-import {
-  useOwnerItems,
-  useSaveVariantTemplate,
-  useSaveItem,
-  errorCodeOf,
-} from '@smartapp/data';
+import { useOwnerItems, useSaveVariantTemplate, useSaveItem, errorCodeOf } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
@@ -410,7 +405,7 @@ function VariantTemplateForm({
         {/* Quick start suggestions */}
         {!template && defaultSpecs.length > 0 && (
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
               {catalogWords.suggestionsLabel}
             </Label>
             <div className="flex flex-wrap gap-1.5">
@@ -458,11 +453,7 @@ function VariantTemplateForm({
             </span>
           </div>
 
-          <Sortable
-            value={options}
-            getItemValue={(opt) => opt.id}
-            onValueChange={setOptions}
-          >
+          <Sortable value={options} getItemValue={(opt) => opt.id} onValueChange={setOptions}>
             <div className="space-y-2">
               {options.map((opt, idx) => (
                 <SortableItem key={opt.id} value={opt.id}>
@@ -536,9 +527,7 @@ function VariantTemplateForm({
         {activeItems.length > 0 && (
           <div className="space-y-3 border-t border-border/60 pt-4">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold">
-                {catalogWords.usedByCount(usedCount)}
-              </Label>
+              <Label className="text-sm font-semibold">{catalogWords.usedByCount(usedCount)}</Label>
               {usedCount > 0 && (
                 <Badge variant="secondary" className="text-xs">
                   {usedCount}

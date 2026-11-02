@@ -2,41 +2,31 @@
   "kanto-smash": {
     "ks-classic-smash--single": {
       "itemId": "ks-classic-smash",
-      "values": [
-        "Single"
-      ],
+      "values": ["Single"],
       "price": 14900,
       "availability": "available"
     },
     "ks-classic-smash--double": {
       "itemId": "ks-classic-smash",
-      "values": [
-        "Double"
-      ],
+      "values": ["Double"],
       "price": 20900,
       "availability": "available"
     },
     "ks-classic-smash--triple": {
       "itemId": "ks-classic-smash",
-      "values": [
-        "Triple"
-      ],
+      "values": ["Triple"],
       "price": 26900,
       "availability": "available"
     },
     "ks-cheesy-bacon-smash--single": {
       "itemId": "ks-cheesy-bacon-smash",
-      "values": [
-        "Single"
-      ],
+      "values": ["Single"],
       "price": 22900,
       "availability": "available"
     },
     "ks-cheesy-bacon-smash--double": {
       "itemId": "ks-cheesy-bacon-smash",
-      "values": [
-        "Double"
-      ],
+      "values": ["Double"],
       "price": 28900,
       "availability": "available"
     },
@@ -66,17 +56,13 @@
     },
     "ks-chicken-nuggets--6-pcs": {
       "itemId": "ks-chicken-nuggets",
-      "values": [
-        "6 pcs"
-      ],
+      "values": ["6 pcs"],
       "price": 11900,
       "availability": "available"
     },
     "ks-chicken-nuggets--10-pcs": {
       "itemId": "ks-chicken-nuggets",
-      "values": [
-        "10 pcs"
-      ],
+      "values": ["10 pcs"],
       "price": 17900,
       "availability": "available"
     },
@@ -88,17 +74,13 @@
     },
     "ks-kanto-fries--regular": {
       "itemId": "ks-kanto-fries",
-      "values": [
-        "Regular"
-      ],
+      "values": ["Regular"],
       "price": 6900,
       "availability": "available"
     },
     "ks-kanto-fries--large": {
       "itemId": "ks-kanto-fries",
-      "values": [
-        "Large"
-      ],
+      "values": ["Large"],
       "price": 9900,
       "availability": "available"
     },
@@ -134,17 +116,13 @@
     },
     "ks-house-iced-tea--16-oz": {
       "itemId": "ks-house-iced-tea",
-      "values": [
-        "16 oz"
-      ],
+      "values": ["16 oz"],
       "price": 4500,
       "availability": "available"
     },
     "ks-house-iced-tea--22-oz": {
       "itemId": "ks-house-iced-tea",
-      "values": [
-        "22 oz"
-      ],
+      "values": ["22 oz"],
       "price": 6500,
       "availability": "available"
     },
@@ -162,25 +140,19 @@
     },
     "ks-thick-shake--vanilla": {
       "itemId": "ks-thick-shake",
-      "values": [
-        "Vanilla"
-      ],
+      "values": ["Vanilla"],
       "price": 12900,
       "availability": "available"
     },
     "ks-thick-shake--chocolate": {
       "itemId": "ks-thick-shake",
-      "values": [
-        "Chocolate"
-      ],
+      "values": ["Chocolate"],
       "price": 12900,
       "availability": "available"
     },
     "ks-thick-shake--ube": {
       "itemId": "ks-thick-shake",
-      "values": [
-        "Ube"
-      ],
+      "values": ["Ube"],
       "price": 12900,
       "availability": "available"
     }
@@ -188,55 +160,37 @@
   "aqualinis": {
     "aq-five-gallon-refill--purified-round": {
       "itemId": "aq-five-gallon-refill",
-      "values": [
-        "Purified",
-        "Round"
-      ],
+      "values": ["Purified", "Round"],
       "price": 3000,
       "availability": "available"
     },
     "aq-five-gallon-refill--purified-slim-with-faucet": {
       "itemId": "aq-five-gallon-refill",
-      "values": [
-        "Purified",
-        "Slim with faucet"
-      ],
+      "values": ["Purified", "Slim with faucet"],
       "price": 3000,
       "availability": "available"
     },
     "aq-five-gallon-refill--alkaline-round": {
       "itemId": "aq-five-gallon-refill",
-      "values": [
-        "Alkaline",
-        "Round"
-      ],
+      "values": ["Alkaline", "Round"],
       "price": 4500,
       "availability": "available"
     },
     "aq-five-gallon-refill--alkaline-slim-with-faucet": {
       "itemId": "aq-five-gallon-refill",
-      "values": [
-        "Alkaline",
-        "Slim with faucet"
-      ],
+      "values": ["Alkaline", "Slim with faucet"],
       "price": 4500,
       "availability": "available"
     },
     "aq-five-gallon-refill--mineral-round": {
       "itemId": "aq-five-gallon-refill",
-      "values": [
-        "Mineral",
-        "Round"
-      ],
+      "values": ["Mineral", "Round"],
       "price": 4000,
       "availability": "available"
     },
     "aq-five-gallon-refill--mineral-slim-with-faucet": {
       "itemId": "aq-five-gallon-refill",
-      "values": [
-        "Mineral",
-        "Slim with faucet"
-      ],
+      "values": ["Mineral", "Slim with faucet"],
       "price": 4000,
       "availability": "available"
     },
@@ -272,41 +226,31 @@
     },
     "aq-bottled-water-case--350-ml-24": {
       "itemId": "aq-bottled-water-case",
-      "values": [
-        "350 mL × 24"
-      ],
+      "values": ["350 mL × 24"],
       "price": 16000,
       "availability": "available"
     },
     "aq-bottled-water-case--500-ml-24": {
       "itemId": "aq-bottled-water-case",
-      "values": [
-        "500 mL × 24"
-      ],
+      "values": ["500 mL × 24"],
       "price": 18000,
       "availability": "available"
     },
     "aq-bottled-water-case--1-l-12": {
       "itemId": "aq-bottled-water-case",
-      "values": [
-        "1 L × 12"
-      ],
+      "values": ["1 L × 12"],
       "price": 18000,
       "availability": "available"
     },
     "aq-tube-ice--2-kg": {
       "itemId": "aq-tube-ice",
-      "values": [
-        "2 kg"
-      ],
+      "values": ["2 kg"],
       "price": 5000,
       "availability": "available"
     },
     "aq-tube-ice--5-kg": {
       "itemId": "aq-tube-ice",
-      "values": [
-        "5 kg"
-      ],
+      "values": ["5 kg"],
       "price": 11000,
       "availability": "available"
     }
@@ -314,485 +258,337 @@
   "tala-apparel": {
     "ta-tala-basic-tee--s-black": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "S",
-        "Black"
-      ],
+      "values": ["S", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--s-white": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "S",
-        "White"
-      ],
+      "values": ["S", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--s-sand": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "S",
-        "Sand"
-      ],
+      "values": ["S", "Sand"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--m-black": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "M",
-        "Black"
-      ],
+      "values": ["M", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--m-white": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "M",
-        "White"
-      ],
+      "values": ["M", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--m-sand": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "M",
-        "Sand"
-      ],
+      "values": ["M", "Sand"],
       "price": 45000,
       "availability": "sold_out"
     },
     "ta-tala-basic-tee--l-black": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "L",
-        "Black"
-      ],
+      "values": ["L", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--l-white": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "L",
-        "White"
-      ],
+      "values": ["L", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--l-sand": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "L",
-        "Sand"
-      ],
+      "values": ["L", "Sand"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--xl-black": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "XL",
-        "Black"
-      ],
+      "values": ["XL", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--xl-white": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "XL",
-        "White"
-      ],
+      "values": ["XL", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ta-tala-basic-tee--xl-sand": {
       "itemId": "ta-tala-basic-tee",
-      "values": [
-        "XL",
-        "Sand"
-      ],
+      "values": ["XL", "Sand"],
       "price": 45000,
       "availability": "available"
     },
     "ta-linen-button-down--s-natural": {
       "itemId": "ta-linen-button-down",
-      "values": [
-        "S",
-        "Natural"
-      ],
+      "values": ["S", "Natural"],
       "price": 89900,
       "availability": "available"
     },
     "ta-linen-button-down--s-indigo": {
       "itemId": "ta-linen-button-down",
-      "values": [
-        "S",
-        "Indigo"
-      ],
+      "values": ["S", "Indigo"],
       "price": 89900,
       "availability": "available"
     },
     "ta-linen-button-down--m-natural": {
       "itemId": "ta-linen-button-down",
-      "values": [
-        "M",
-        "Natural"
-      ],
+      "values": ["M", "Natural"],
       "price": 89900,
       "availability": "available"
     },
     "ta-linen-button-down--m-indigo": {
       "itemId": "ta-linen-button-down",
-      "values": [
-        "M",
-        "Indigo"
-      ],
+      "values": ["M", "Indigo"],
       "price": 89900,
       "availability": "available"
     },
     "ta-linen-button-down--l-natural": {
       "itemId": "ta-linen-button-down",
-      "values": [
-        "L",
-        "Natural"
-      ],
+      "values": ["L", "Natural"],
       "price": 89900,
       "availability": "available"
     },
     "ta-linen-button-down--l-indigo": {
       "itemId": "ta-linen-button-down",
-      "values": [
-        "L",
-        "Indigo"
-      ],
+      "values": ["L", "Indigo"],
       "price": 89900,
       "availability": "available"
     },
     "ta-linen-button-down--xl-natural": {
       "itemId": "ta-linen-button-down",
-      "values": [
-        "XL",
-        "Natural"
-      ],
+      "values": ["XL", "Natural"],
       "price": 89900,
       "availability": "available"
     },
     "ta-linen-button-down--xl-indigo": {
       "itemId": "ta-linen-button-down",
-      "values": [
-        "XL",
-        "Indigo"
-      ],
+      "values": ["XL", "Indigo"],
       "price": 89900,
       "availability": "available"
     },
     "ta-cropped-knit-top--s-cream": {
       "itemId": "ta-cropped-knit-top",
-      "values": [
-        "S",
-        "Cream"
-      ],
+      "values": ["S", "Cream"],
       "price": 59900,
       "availability": "available"
     },
     "ta-cropped-knit-top--s-terracotta": {
       "itemId": "ta-cropped-knit-top",
-      "values": [
-        "S",
-        "Terracotta"
-      ],
+      "values": ["S", "Terracotta"],
       "price": 59900,
       "availability": "available"
     },
     "ta-cropped-knit-top--m-cream": {
       "itemId": "ta-cropped-knit-top",
-      "values": [
-        "M",
-        "Cream"
-      ],
+      "values": ["M", "Cream"],
       "price": 59900,
       "availability": "available"
     },
     "ta-cropped-knit-top--m-terracotta": {
       "itemId": "ta-cropped-knit-top",
-      "values": [
-        "M",
-        "Terracotta"
-      ],
+      "values": ["M", "Terracotta"],
       "price": 59900,
       "availability": "available"
     },
     "ta-cropped-knit-top--l-cream": {
       "itemId": "ta-cropped-knit-top",
-      "values": [
-        "L",
-        "Cream"
-      ],
+      "values": ["L", "Cream"],
       "price": 59900,
       "availability": "available"
     },
     "ta-cropped-knit-top--l-terracotta": {
       "itemId": "ta-cropped-knit-top",
-      "values": [
-        "L",
-        "Terracotta"
-      ],
+      "values": ["L", "Terracotta"],
       "price": 59900,
       "availability": "available"
     },
     "ta-cropped-knit-top--xl-cream": {
       "itemId": "ta-cropped-knit-top",
-      "values": [
-        "XL",
-        "Cream"
-      ],
+      "values": ["XL", "Cream"],
       "price": 59900,
       "availability": "available"
     },
     "ta-cropped-knit-top--xl-terracotta": {
       "itemId": "ta-cropped-knit-top",
-      "values": [
-        "XL",
-        "Terracotta"
-      ],
+      "values": ["XL", "Terracotta"],
       "price": 59900,
       "availability": "available"
     },
     "ta-terno-sleeve-blouse--s": {
       "itemId": "ta-terno-sleeve-blouse",
-      "values": [
-        "S"
-      ],
+      "values": ["S"],
       "price": 119900,
       "availability": "available"
     },
     "ta-terno-sleeve-blouse--m": {
       "itemId": "ta-terno-sleeve-blouse",
-      "values": [
-        "M"
-      ],
+      "values": ["M"],
       "price": 119900,
       "availability": "available"
     },
     "ta-terno-sleeve-blouse--l": {
       "itemId": "ta-terno-sleeve-blouse",
-      "values": [
-        "L"
-      ],
+      "values": ["L"],
       "price": 119900,
       "availability": "available"
     },
     "ta-terno-sleeve-blouse--xl": {
       "itemId": "ta-terno-sleeve-blouse",
-      "values": [
-        "XL"
-      ],
+      "values": ["XL"],
       "price": 119900,
       "availability": "available"
     },
     "ta-wide-leg-trousers--s-black": {
       "itemId": "ta-wide-leg-trousers",
-      "values": [
-        "S",
-        "Black"
-      ],
+      "values": ["S", "Black"],
       "price": 109900,
       "availability": "available"
     },
     "ta-wide-leg-trousers--s-olive": {
       "itemId": "ta-wide-leg-trousers",
-      "values": [
-        "S",
-        "Olive"
-      ],
+      "values": ["S", "Olive"],
       "price": 109900,
       "availability": "available"
     },
     "ta-wide-leg-trousers--m-black": {
       "itemId": "ta-wide-leg-trousers",
-      "values": [
-        "M",
-        "Black"
-      ],
+      "values": ["M", "Black"],
       "price": 109900,
       "availability": "available"
     },
     "ta-wide-leg-trousers--m-olive": {
       "itemId": "ta-wide-leg-trousers",
-      "values": [
-        "M",
-        "Olive"
-      ],
+      "values": ["M", "Olive"],
       "price": 109900,
       "availability": "available"
     },
     "ta-wide-leg-trousers--l-black": {
       "itemId": "ta-wide-leg-trousers",
-      "values": [
-        "L",
-        "Black"
-      ],
+      "values": ["L", "Black"],
       "price": 109900,
       "availability": "available"
     },
     "ta-wide-leg-trousers--l-olive": {
       "itemId": "ta-wide-leg-trousers",
-      "values": [
-        "L",
-        "Olive"
-      ],
+      "values": ["L", "Olive"],
       "price": 109900,
       "availability": "available"
     },
     "ta-wide-leg-trousers--xl-black": {
       "itemId": "ta-wide-leg-trousers",
-      "values": [
-        "XL",
-        "Black"
-      ],
+      "values": ["XL", "Black"],
       "price": 109900,
       "availability": "available"
     },
     "ta-wide-leg-trousers--xl-olive": {
       "itemId": "ta-wide-leg-trousers",
-      "values": [
-        "XL",
-        "Olive"
-      ],
+      "values": ["XL", "Olive"],
       "price": 109900,
       "availability": "available"
     },
     "ta-pleated-midi-skirt--s": {
       "itemId": "ta-pleated-midi-skirt",
-      "values": [
-        "S"
-      ],
+      "values": ["S"],
       "price": 89900,
       "availability": "available"
     },
     "ta-pleated-midi-skirt--m": {
       "itemId": "ta-pleated-midi-skirt",
-      "values": [
-        "M"
-      ],
+      "values": ["M"],
       "price": 89900,
       "availability": "available"
     },
     "ta-pleated-midi-skirt--l": {
       "itemId": "ta-pleated-midi-skirt",
-      "values": [
-        "L"
-      ],
+      "values": ["L"],
       "price": 89900,
       "availability": "available"
     },
     "ta-pleated-midi-skirt--xl": {
       "itemId": "ta-pleated-midi-skirt",
-      "values": [
-        "XL"
-      ],
+      "values": ["XL"],
       "price": 89900,
       "availability": "available"
     },
     "ta-denim-shorts--s": {
       "itemId": "ta-denim-shorts",
-      "values": [
-        "S"
-      ],
+      "values": ["S"],
       "price": 69900,
       "availability": "available"
     },
     "ta-denim-shorts--m": {
       "itemId": "ta-denim-shorts",
-      "values": [
-        "M"
-      ],
+      "values": ["M"],
       "price": 69900,
       "availability": "available"
     },
     "ta-denim-shorts--l": {
       "itemId": "ta-denim-shorts",
-      "values": [
-        "L"
-      ],
+      "values": ["L"],
       "price": 69900,
       "availability": "available"
     },
     "ta-denim-shorts--xl": {
       "itemId": "ta-denim-shorts",
-      "values": [
-        "XL"
-      ],
+      "values": ["XL"],
       "price": 69900,
       "availability": "available"
     },
     "ta-habi-print-midi-dress--s": {
       "itemId": "ta-habi-print-midi-dress",
-      "values": [
-        "S"
-      ],
+      "values": ["S"],
       "price": 129900,
       "availability": "available"
     },
     "ta-habi-print-midi-dress--m": {
       "itemId": "ta-habi-print-midi-dress",
-      "values": [
-        "M"
-      ],
+      "values": ["M"],
       "price": 129900,
       "availability": "available"
     },
     "ta-habi-print-midi-dress--l": {
       "itemId": "ta-habi-print-midi-dress",
-      "values": [
-        "L"
-      ],
+      "values": ["L"],
       "price": 129900,
       "availability": "available"
     },
     "ta-habi-print-midi-dress--xl": {
       "itemId": "ta-habi-print-midi-dress",
-      "values": [
-        "XL"
-      ],
+      "values": ["XL"],
       "price": 129900,
       "availability": "available"
     },
     "ta-weekend-set--s": {
       "itemId": "ta-weekend-set",
-      "values": [
-        "S"
-      ],
+      "values": ["S"],
       "price": 179900,
       "availability": "available"
     },
     "ta-weekend-set--m": {
       "itemId": "ta-weekend-set",
-      "values": [
-        "M"
-      ],
+      "values": ["M"],
       "price": 179900,
       "availability": "available"
     },
     "ta-weekend-set--l": {
       "itemId": "ta-weekend-set",
-      "values": [
-        "L"
-      ],
+      "values": ["L"],
       "price": 179900,
       "availability": "available"
     },
     "ta-weekend-set--xl": {
       "itemId": "ta-weekend-set",
-      "values": [
-        "XL"
-      ],
+      "values": ["XL"],
       "price": 179900,
       "availability": "available"
     },
@@ -830,145 +626,97 @@
   "kape-juan": {
     "kj-americano--12-oz-hot": {
       "itemId": "kj-americano",
-      "values": [
-        "12 oz",
-        "Hot"
-      ],
+      "values": ["12 oz", "Hot"],
       "price": 11000,
       "availability": "available"
     },
     "kj-americano--12-oz-iced": {
       "itemId": "kj-americano",
-      "values": [
-        "12 oz",
-        "Iced"
-      ],
+      "values": ["12 oz", "Iced"],
       "price": 11000,
       "availability": "available"
     },
     "kj-americano--16-oz-hot": {
       "itemId": "kj-americano",
-      "values": [
-        "16 oz",
-        "Hot"
-      ],
+      "values": ["16 oz", "Hot"],
       "price": 13000,
       "availability": "available"
     },
     "kj-americano--16-oz-iced": {
       "itemId": "kj-americano",
-      "values": [
-        "16 oz",
-        "Iced"
-      ],
+      "values": ["16 oz", "Iced"],
       "price": 13000,
       "availability": "available"
     },
     "kj-cafe-latte--12-oz-hot": {
       "itemId": "kj-cafe-latte",
-      "values": [
-        "12 oz",
-        "Hot"
-      ],
+      "values": ["12 oz", "Hot"],
       "price": 14000,
       "availability": "available"
     },
     "kj-cafe-latte--12-oz-iced": {
       "itemId": "kj-cafe-latte",
-      "values": [
-        "12 oz",
-        "Iced"
-      ],
+      "values": ["12 oz", "Iced"],
       "price": 14000,
       "availability": "available"
     },
     "kj-cafe-latte--16-oz-hot": {
       "itemId": "kj-cafe-latte",
-      "values": [
-        "16 oz",
-        "Hot"
-      ],
+      "values": ["16 oz", "Hot"],
       "price": 16000,
       "availability": "available"
     },
     "kj-cafe-latte--16-oz-iced": {
       "itemId": "kj-cafe-latte",
-      "values": [
-        "16 oz",
-        "Iced"
-      ],
+      "values": ["16 oz", "Iced"],
       "price": 16000,
       "availability": "available"
     },
     "kj-spanish-latte--12-oz-hot": {
       "itemId": "kj-spanish-latte",
-      "values": [
-        "12 oz",
-        "Hot"
-      ],
+      "values": ["12 oz", "Hot"],
       "price": 16000,
       "availability": "available"
     },
     "kj-spanish-latte--12-oz-iced": {
       "itemId": "kj-spanish-latte",
-      "values": [
-        "12 oz",
-        "Iced"
-      ],
+      "values": ["12 oz", "Iced"],
       "price": 16000,
       "availability": "available"
     },
     "kj-spanish-latte--16-oz-hot": {
       "itemId": "kj-spanish-latte",
-      "values": [
-        "16 oz",
-        "Hot"
-      ],
+      "values": ["16 oz", "Hot"],
       "price": 18000,
       "availability": "available"
     },
     "kj-spanish-latte--16-oz-iced": {
       "itemId": "kj-spanish-latte",
-      "values": [
-        "16 oz",
-        "Iced"
-      ],
+      "values": ["16 oz", "Iced"],
       "price": 18000,
       "availability": "available"
     },
     "kj-caramel-macchiato--12-oz-hot": {
       "itemId": "kj-caramel-macchiato",
-      "values": [
-        "12 oz",
-        "Hot"
-      ],
+      "values": ["12 oz", "Hot"],
       "price": 17000,
       "availability": "available"
     },
     "kj-caramel-macchiato--12-oz-iced": {
       "itemId": "kj-caramel-macchiato",
-      "values": [
-        "12 oz",
-        "Iced"
-      ],
+      "values": ["12 oz", "Iced"],
       "price": 17000,
       "availability": "available"
     },
     "kj-caramel-macchiato--16-oz-hot": {
       "itemId": "kj-caramel-macchiato",
-      "values": [
-        "16 oz",
-        "Hot"
-      ],
+      "values": ["16 oz", "Hot"],
       "price": 19000,
       "availability": "available"
     },
     "kj-caramel-macchiato--16-oz-iced": {
       "itemId": "kj-caramel-macchiato",
-      "values": [
-        "16 oz",
-        "Iced"
-      ],
+      "values": ["16 oz", "Iced"],
       "price": 19000,
       "availability": "available"
     },
@@ -1052,25 +800,19 @@
     },
     "kj-barako-beans-250g--whole-bean": {
       "itemId": "kj-barako-beans-250g",
-      "values": [
-        "Whole bean"
-      ],
+      "values": ["Whole bean"],
       "price": 38000,
       "availability": "available"
     },
     "kj-barako-beans-250g--drip": {
       "itemId": "kj-barako-beans-250g",
-      "values": [
-        "Drip"
-      ],
+      "values": ["Drip"],
       "price": 38000,
       "availability": "available"
     },
     "kj-barako-beans-250g--espresso": {
       "itemId": "kj-barako-beans-250g",
-      "values": [
-        "Espresso"
-      ],
+      "values": ["Espresso"],
       "price": 38000,
       "availability": "available"
     }
@@ -1078,41 +820,31 @@
   "lola-remy": {
     "lr-classic-pandesal--1-pc": {
       "itemId": "lr-classic-pandesal",
-      "values": [
-        "1 pc"
-      ],
+      "values": ["1 pc"],
       "price": 500,
       "availability": "available"
     },
     "lr-classic-pandesal--10-pcs": {
       "itemId": "lr-classic-pandesal",
-      "values": [
-        "10 pcs"
-      ],
+      "values": ["10 pcs"],
       "price": 5000,
       "availability": "available"
     },
     "lr-classic-pandesal--20-pcs": {
       "itemId": "lr-classic-pandesal",
-      "values": [
-        "20 pcs"
-      ],
+      "values": ["20 pcs"],
       "price": 9500,
       "availability": "available"
     },
     "lr-ube-cheese-pandesal--1-pc": {
       "itemId": "lr-ube-cheese-pandesal",
-      "values": [
-        "1 pc"
-      ],
+      "values": ["1 pc"],
       "price": 1500,
       "availability": "available"
     },
     "lr-ube-cheese-pandesal--10-pcs": {
       "itemId": "lr-ube-cheese-pandesal",
-      "values": [
-        "10 pcs"
-      ],
+      "values": ["10 pcs"],
       "price": 14000,
       "availability": "available"
     },
@@ -1166,33 +898,25 @@
     },
     "lr-chocolate-moist-cake--6": {
       "itemId": "lr-chocolate-moist-cake",
-      "values": [
-        "6\""
-      ],
+      "values": ["6\""],
       "price": 45000,
       "availability": "available"
     },
     "lr-chocolate-moist-cake--8": {
       "itemId": "lr-chocolate-moist-cake",
-      "values": [
-        "8\""
-      ],
+      "values": ["8\""],
       "price": 65000,
       "availability": "available"
     },
     "lr-ube-macapuno-cake--6": {
       "itemId": "lr-ube-macapuno-cake",
-      "values": [
-        "6\""
-      ],
+      "values": ["6\""],
       "price": 52000,
       "availability": "available"
     },
     "lr-ube-macapuno-cake--8": {
       "itemId": "lr-ube-macapuno-cake",
-      "values": [
-        "8\""
-      ],
+      "values": ["8\""],
       "price": 75000,
       "availability": "available"
     },
@@ -1255,271 +979,181 @@
     },
     "ts-item-3--xs-black": {
       "itemId": "ts-item-3",
-      "values": [
-        "XS",
-        "Black"
-      ],
+      "values": ["XS", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xs-white": {
       "itemId": "ts-item-3",
-      "values": [
-        "XS",
-        "White"
-      ],
+      "values": ["XS", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xs-sand": {
       "itemId": "ts-item-3",
-      "values": [
-        "XS",
-        "Sand"
-      ],
+      "values": ["XS", "Sand"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xs-olive": {
       "itemId": "ts-item-3",
-      "values": [
-        "XS",
-        "Olive"
-      ],
+      "values": ["XS", "Olive"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xs-indigo": {
       "itemId": "ts-item-3",
-      "values": [
-        "XS",
-        "Indigo"
-      ],
+      "values": ["XS", "Indigo"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--s-black": {
       "itemId": "ts-item-3",
-      "values": [
-        "S",
-        "Black"
-      ],
+      "values": ["S", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--s-white": {
       "itemId": "ts-item-3",
-      "values": [
-        "S",
-        "White"
-      ],
+      "values": ["S", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--s-sand": {
       "itemId": "ts-item-3",
-      "values": [
-        "S",
-        "Sand"
-      ],
+      "values": ["S", "Sand"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--s-olive": {
       "itemId": "ts-item-3",
-      "values": [
-        "S",
-        "Olive"
-      ],
+      "values": ["S", "Olive"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--s-indigo": {
       "itemId": "ts-item-3",
-      "values": [
-        "S",
-        "Indigo"
-      ],
+      "values": ["S", "Indigo"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--m-black": {
       "itemId": "ts-item-3",
-      "values": [
-        "M",
-        "Black"
-      ],
+      "values": ["M", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--m-white": {
       "itemId": "ts-item-3",
-      "values": [
-        "M",
-        "White"
-      ],
+      "values": ["M", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--m-sand": {
       "itemId": "ts-item-3",
-      "values": [
-        "M",
-        "Sand"
-      ],
+      "values": ["M", "Sand"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--m-olive": {
       "itemId": "ts-item-3",
-      "values": [
-        "M",
-        "Olive"
-      ],
+      "values": ["M", "Olive"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--m-indigo": {
       "itemId": "ts-item-3",
-      "values": [
-        "M",
-        "Indigo"
-      ],
+      "values": ["M", "Indigo"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--l-black": {
       "itemId": "ts-item-3",
-      "values": [
-        "L",
-        "Black"
-      ],
+      "values": ["L", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--l-white": {
       "itemId": "ts-item-3",
-      "values": [
-        "L",
-        "White"
-      ],
+      "values": ["L", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--l-sand": {
       "itemId": "ts-item-3",
-      "values": [
-        "L",
-        "Sand"
-      ],
+      "values": ["L", "Sand"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--l-olive": {
       "itemId": "ts-item-3",
-      "values": [
-        "L",
-        "Olive"
-      ],
+      "values": ["L", "Olive"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--l-indigo": {
       "itemId": "ts-item-3",
-      "values": [
-        "L",
-        "Indigo"
-      ],
+      "values": ["L", "Indigo"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xl-black": {
       "itemId": "ts-item-3",
-      "values": [
-        "XL",
-        "Black"
-      ],
+      "values": ["XL", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xl-white": {
       "itemId": "ts-item-3",
-      "values": [
-        "XL",
-        "White"
-      ],
+      "values": ["XL", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xl-sand": {
       "itemId": "ts-item-3",
-      "values": [
-        "XL",
-        "Sand"
-      ],
+      "values": ["XL", "Sand"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xl-olive": {
       "itemId": "ts-item-3",
-      "values": [
-        "XL",
-        "Olive"
-      ],
+      "values": ["XL", "Olive"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xl-indigo": {
       "itemId": "ts-item-3",
-      "values": [
-        "XL",
-        "Indigo"
-      ],
+      "values": ["XL", "Indigo"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xxl-black": {
       "itemId": "ts-item-3",
-      "values": [
-        "XXL",
-        "Black"
-      ],
+      "values": ["XXL", "Black"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xxl-white": {
       "itemId": "ts-item-3",
-      "values": [
-        "XXL",
-        "White"
-      ],
+      "values": ["XXL", "White"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xxl-sand": {
       "itemId": "ts-item-3",
-      "values": [
-        "XXL",
-        "Sand"
-      ],
+      "values": ["XXL", "Sand"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xxl-olive": {
       "itemId": "ts-item-3",
-      "values": [
-        "XXL",
-        "Olive"
-      ],
+      "values": ["XXL", "Olive"],
       "price": 45000,
       "availability": "available"
     },
     "ts-item-3--xxl-indigo": {
       "itemId": "ts-item-3",
-      "values": [
-        "XXL",
-        "Indigo"
-      ],
+      "values": ["XXL", "Indigo"],
       "price": 45000,
       "availability": "available"
     },

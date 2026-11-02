@@ -104,9 +104,7 @@ export function templateChanges(
   }
 
   // Check reordering: order of surviving common option ids
-  const survivingBefore = before.options
-    .map((o) => o.id)
-    .filter((id) => afterById.has(id));
+  const survivingBefore = before.options.map((o) => o.id).filter((id) => afterById.has(id));
   const survivingAfter = after.options
     .map((o) => o.id)
     .filter((id): id is string => Boolean(id && beforeById.has(id)));
@@ -221,9 +219,7 @@ export function applyTemplateToItem<T extends Item | OwnerItem | ItemDraft>(
 
     if (nameChanged || usesRenamedOpt || usesRemovedOpt) {
       // Unlink choice
-      const updatedAxes = item.axes.map((a, i) =>
-        i === axisIndex ? unlinkChoice(a) : a,
-      );
+      const updatedAxes = item.axes.map((a, i) => (i === axisIndex ? unlinkChoice(a) : a));
       return {
         item: { ...item, axes: updatedAxes },
         outcome: 'unlinked',
@@ -246,9 +242,7 @@ export function applyTemplateToItem<T extends Item | OwnerItem | ItemDraft>(
 
   // If every option was removed, unlink choice
   if (survivingOptions.length === 0) {
-    const updatedAxes = item.axes.map((a, i) =>
-      i === axisIndex ? unlinkChoice(a) : a,
-    );
+    const updatedAxes = item.axes.map((a, i) => (i === axisIndex ? unlinkChoice(a) : a));
     return {
       item: { ...item, axes: updatedAxes },
       outcome: 'unlinked',
