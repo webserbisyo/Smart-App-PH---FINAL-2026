@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-03 O2 Orders installs and kit: ReUI Kanban, ReUI Event Calendar, shadcn Calendar, Opensource UI Week Strip and Booking Slot Calendars installed and verified on /kit with demo data, snap-back drag handling, and scoped lint rules (decision T50, pushed to main)
 - 2026-11-03 O1 Orders data and rules: pure rules (orderTiming, dueTimes, Crockford pickupCode, scheduleDays, dayLoads), booking rules schemas, BoardOrder card contract with startBy and 8-line cap, 10s recall window, shop packs booking rules and activity drafts, ordersWords, ownerOrders and storefront schedule hooks and mock adapters (decisions T48 to T53, pushed to main)
 - 2026-11-02 T47 Menu flows: Save stays on the item, a variant made inside an item no longer saves the item behind the owner, new items open on their own page, Enter moves to the next field, the Items list keeps search, filter and scroll, Back returns to the tab you came from, saved rows highlighted on every tab, no phone dock on item pages, Discard and icon style with Undo (decision T47, pushed to main)
 - 2026-11-02 T46 cloud check and fixes: main did not build (duplicate words, type errors), mock save now recomputes prices and blocks out-of-sync links, Keep mode unlinks on reorder, variant sheet and item choices rebuilt on installed parts with the Part G wording, Combinations table, snapshot test tightened, test-stress Barong restored with a new 30-version item, Cheese Fries sizes and Trousers Length in the docs (pushed to main)

@@ -90,6 +90,55 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'off',
     },
   },
+  // Scope @typescript-eslint/no-explicit-any: off to installed kanban.tsx (decision T39)
+  {
+    files: ['packages/ui/src/components/reui/kanban.tsx'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  // Scope react-hooks/purity: off to installed event-calendar-event.tsx (decision T39)
+  {
+    files: ['packages/ui/src/components/reui/event-calendar/event-calendar-event.tsx'],
+    rules: {
+      'react-hooks/purity': 'off',
+    },
+  },
+  // Scope @typescript-eslint/no-unused-vars: off to installed event-calendar-lib.tsx (decision T39)
+  {
+    files: ['packages/ui/src/components/reui/event-calendar/event-calendar-lib.tsx'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
+  // Scope @typescript-eslint/no-unused-vars: off to installed event-calendar-month-view.tsx (decision T39)
+  {
+    files: ['packages/ui/src/components/reui/event-calendar/event-calendar-month-view.tsx'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
+  // Scope @typescript-eslint/no-unused-vars: off to installed event-calendar-resource-view.tsx (decision T39)
+  {
+    files: ['packages/ui/src/components/reui/event-calendar/event-calendar-resource-view.tsx'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
+  // Scope @typescript-eslint/no-unused-vars: off to installed event-calendar-time-grid.tsx (decision T39)
+  {
+    files: ['packages/ui/src/components/reui/event-calendar/event-calendar-time-grid.tsx'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
+  // Scope @typescript-eslint/no-unused-vars: off to installed event-calendar.tsx (decision T39)
+  {
+    files: ['packages/ui/src/components/reui/event-calendar/event-calendar.tsx'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+    },
+  },
   // Storefront Next.js plugin
   {
     files: ['apps/storefront/**/*.{ts,tsx}'],

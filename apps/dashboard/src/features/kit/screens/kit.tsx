@@ -26,6 +26,7 @@ import { ReuiPrimitiveSections } from '../reui-primitives.js';
 import { StorefrontPatterns } from '../storefront-patterns.js';
 import { StorefrontSections } from '../storefront-sections.js';
 import { CatalogPrimitiveSections } from '../catalog-primitives.js';
+import { OrdersPrimitiveSections } from '../orders-primitives.js';
 
 interface TokenSwatch {
   name: string;
@@ -40,6 +41,7 @@ const KIT_GROUPS = [
   { id: 'kit-storefront', label: 'Storefront' },
   { id: 'kit-reui', label: 'ReUI' },
   { id: 'kit-catalog', label: 'Catalog' },
+  { id: 'kit-orders', label: 'Orders' },
   { id: 'kit-patterns', label: 'Library references' },
 ] as const;
 
@@ -344,6 +346,11 @@ export default function KitPage() {
 
         <div id="kit-catalog" className="scroll-mt-20" />
         <CatalogPrimitiveSections />
+
+        <Separator />
+
+        <div id="kit-orders" className="scroll-mt-20" />
+        <OrdersPrimitiveSections />
 
         <Separator />
 
