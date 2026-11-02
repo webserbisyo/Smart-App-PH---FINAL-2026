@@ -13,6 +13,7 @@ import { CatalogCategoriesScreen } from '../features/catalog/screens/categories.
 import { CatalogItemScreen } from '../features/catalog/screens/item-detail.js';
 import { CatalogItemsScreen } from '../features/catalog/screens/items.js';
 import { NewCatalogItemScreen } from '../features/catalog/screens/new-item.js';
+import { NewItemSearchSchema } from '../features/catalog/tabs.js';
 import { EditorScreen } from '../features/editor/screens/editor.js';
 import { HomeScreen } from '../features/home/screens/home.js';
 import { InsightsScreen } from '../features/insights/screens/insights.js';
@@ -138,11 +139,13 @@ const catalogAddOnsRoute = shellPage(
   CatalogAddOnsScreen,
   page(s.catalog.title),
 );
-const catalogNewRoute = shellPage(
-  '/catalog/new',
-  NewCatalogItemScreen,
-  page(s.catalog.newTitle, catalog),
-);
+const catalogNewRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/catalog/new',
+  validateSearch: NewItemSearchSchema,
+  component: NewCatalogItemScreen,
+  staticData: page(s.catalog.newTitle, catalog),
+});
 const catalogItemRoute = shellPage(
   '/catalog/$itemId',
   CatalogItemScreen,

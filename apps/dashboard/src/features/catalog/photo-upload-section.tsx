@@ -63,7 +63,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
     if (!list.length) return;
 
     if (photos.length + list.length > 5) {
-      setErrorMsg('You can upload up to 5 photos.');
+      setErrorMsg(catalogWords.photoLimit);
       return;
     }
 
@@ -128,7 +128,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
           });
         }
       } catch {
-        setErrorMsg('Failed to process image. Please try another file.');
+        setErrorMsg(catalogWords.photoProcessFailed);
       }
     }
 
@@ -188,10 +188,12 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-foreground">{catalogWords.sectionPhotos}</h3>
-          <p className="text-xs text-muted-foreground">{catalogWords.sectionPhotosDesc}</p>
+          <h2 className="text-base font-semibold text-foreground">{catalogWords.sectionPhotos}</h2>
+          <p className="text-sm text-muted-foreground">{catalogWords.sectionPhotosDesc}</p>
         </div>
-        <span className="font-mono text-xs text-muted-foreground">{photos.length}/5 photos</span>
+        <span className="text-sm text-muted-foreground tabular">
+          {catalogWords.photoCount(photos.length)}
+        </span>
       </div>
 
       {errorMsg && (
@@ -252,9 +254,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
       {photos.length > 0 && (
         <div className="space-y-2">
           {photos.length > 1 && (
-            <p className="text-xs text-muted-foreground">
-              Drag handles to set cover image (first photo):
-            </p>
+            <p className="text-sm text-muted-foreground">{catalogWords.photoReorderHint}</p>
           )}
 
           <Sortable value={photos} getItemValue={(photo) => photo} onValueChange={onChange}>
@@ -283,7 +283,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                       <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-border/60">
                         <CatalogPhoto
                           photoRef={photo}
-                          alt={`Photo ${index + 1}`}
+                          alt={catalogWords.photoAlt(index + 1)}
                           size="md"
                           className="size-full rounded-lg"
                         />
@@ -292,7 +292,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                             variant="default"
                             className="absolute -top-1.5 -left-1.5 px-1.5 py-0 text-xs font-bold tracking-wider uppercase"
                           >
-                            Cover
+                            {catalogWords.photoCover}
                           </Badge>
                         )}
                       </div>
@@ -302,10 +302,10 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                         <div className="flex flex-wrap items-center gap-1.5">
                           {meta && (
                             <>
-                              <Badge variant="secondary" className="px-1 py-0 font-mono text-xs">
+                              <Badge variant="secondary" className="px-1 py-0 text-xs tabular">
                                 {meta.format}
                               </Badge>
-                              <Badge variant="outline" className="px-1 py-0 font-mono text-xs">
+                              <Badge variant="outline" className="px-1 py-0 text-xs tabular">
                                 {formatSize(meta.originalBytes)} →{' '}
                                 {formatSize(meta.compressedBytes)}
                               </Badge>
@@ -315,8 +315,8 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
 
                         <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {isCover
-                            ? 'Cover photo for customer view'
-                            : `Gallery photo #${index + 1}`}
+                            ? catalogWords.photoCoverHint
+                            : catalogWords.photoGalleryHint(index + 1)}
                         </p>
 
                         {/* Progress bar */}
@@ -328,7 +328,7 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
 
                         {meta?.failed && (
                           <div className="flex items-center gap-2 pt-1 text-xs text-destructive">
-                            <span>Upload failed</span>
+                            <span>{catalogWords.photoUploadFailed}</span>
                             <button
                               type="button"
                               onClick={() => void handleRetryUpload(photo)}

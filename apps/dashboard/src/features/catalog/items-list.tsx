@@ -10,24 +10,16 @@ import {
   SparklesIcon,
   ListIcon,
   LayoutGridIcon,
-  TableIcon,
+  ListChecksIcon,
+  GripVerticalIcon,
 } from 'lucide-react';
-import {
-  catalogWords,
-  errorWords,
-  type OwnerItem,
-  type Category,
-  type Availability,
-} from '@smartapp/core';
+import { catalogWords, errorWords, type OwnerItem, type Category } from '@smartapp/core';
 import {
   useOwnerItems,
   useOwnerCategories,
-  useOwnerOptionGroups,
   useSaveSortOrder,
   useSaveItem,
-  useRemoveItem,
   useSetItemStatus,
-  useSetSoldOut,
   useBulkSetSoldOut,
   useBulkSetItemStatus,
   useBulkMoveCategory,
@@ -36,40 +28,24 @@ import {
 } from '@smartapp/data';
 import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
+import { useDockClearance } from '@/app/use-dock-clearance';
 import { Button } from '@smartapp/ui/components/button';
 import { Input } from '@smartapp/ui/components/input';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { Stat, StatLabel, StatValue } from '@smartapp/ui/components/stat';
-import { Sortable, SortableItem } from '@smartapp/ui/components/reui/sortable';
+import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@smartapp/ui/components/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@smartapp/ui/components/alert-dialog';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { ItemRow } from './item-row.js';
 import { ItemsGrid } from './components/items-grid.js';
-import { ItemsTable } from './components/items-table.js';
 import { ItemsActionBar } from './components/items-action-bar.js';
+import { isItemSoldOut, useItemActions } from './components/item-actions.js';
 import { cn } from 'cn';
 
 type FilterTab = 'all' | 'sold_out' | 'hidden';
-type CatalogView = 'list' | 'grid' | 'table';
+// Table view is hidden for launch (decision T41); it comes back for big menus.
+type CatalogView = 'list' | 'grid';
+const FILTERS: readonly FilterTab[] = ['all', 'sold_out', 'hidden'];
 
 const LOCAL_STORAGE_VIEW_KEY = 'smartapp:catalog:view';
 
@@ -77,12 +53,12 @@ const FALLBACK_GENERAL_CATEGORY: Category = {
   id: 'uncategorized',
   name: catalogWords.categoryGeneral,
   sort: 0,
-  icon: { kind: 'fluent', key: 'burger', style: 'flat' },
+  icon: { kind: 'fluent', key: 'other', style: 'flat' },
 };
 
 const FALLBACK_OTHER_CATEGORY: Category = {
   id: 'other',
-  name: 'Other',
+  name: catalogWords.categoryOther,
   sort: 999,
   icon: { kind: 'fluent', key: 'other', style: 'flat' },
 };
@@ -91,7 +67,7 @@ function getDefaultView(): CatalogView {
   if (typeof window === 'undefined') return 'grid';
   try {
     const saved = localStorage.getItem(LOCAL_STORAGE_VIEW_KEY);
-    if (saved === 'list' || saved === 'grid' || saved === 'table') {
+    if (saved === 'list' || saved === 'grid') {
       return saved;
     }
   } catch {
@@ -104,7 +80,9 @@ export function ItemsList() {
   const navigate = useNavigate();
   const { kind, slug } = useShop();
   const isOnline = useOnlineStatus();
+  const dockClearance = useDockClearance();
   const { ownerSamples } = useAdapters();
+  const { actions, dialogs } = useItemActions();
 
   const {
     data: items,
@@ -112,7 +90,6 @@ export function ItemsList() {
     error: itemsError,
     refetch: refetchItems,
   } = useOwnerItems();
-
   const {
     data: categories,
     isLoading: catsLoading,
@@ -120,399 +97,216 @@ export function ItemsList() {
     refetch: refetchCats,
   } = useOwnerCategories();
 
-  const { data: optionGroups = [] } = useOwnerOptionGroups();
   const saveSortOrder = useSaveSortOrder();
   const saveItem = useSaveItem();
-  const removeItem = useRemoveItem();
   const setStatus = useSetItemStatus();
-  const setSoldOut = useSetSoldOut();
   const bulkSetSoldOut = useBulkSetSoldOut();
   const bulkSetStatus = useBulkSetItemStatus();
   const bulkMoveCategory = useBulkMoveCategory();
 
   const [view, setView] = React.useState<CatalogView>(getDefaultView);
+  const [selecting, setSelecting] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [search, setSearch] = React.useState('');
   const [filter, setFilter] = React.useState<FilterTab>('all');
   const [isReordering, setIsReordering] = React.useState(false);
   const [announcement, setAnnouncement] = React.useState('');
 
-  // Single-item action dialog states (for triggers from Grid and Table)
-  const [soldOutTargetItem, setSoldOutTargetItem] = React.useState<OwnerItem | null>(null);
-  const [deleteTargetItem, setDeleteTargetItem] = React.useState<OwnerItem | null>(null);
+  const nonArchivedItems = React.useMemo(
+    () => (items ?? []).filter((item) => item.status !== 'archived'),
+    [items],
+  );
 
-  const nonArchivedItems = React.useMemo(() => {
-    return (items ?? []).filter((item) => item.status !== 'archived');
-  }, [items]);
+  const counts: Record<FilterTab, number> = {
+    all: nonArchivedItems.length,
+    sold_out: nonArchivedItems.filter(isItemSoldOut).length,
+    hidden: nonArchivedItems.filter((item) => item.status === 'hidden').length,
+  };
+  const filterLabel: Record<FilterTab, string> = {
+    all: catalogWords.filterAll,
+    sold_out: catalogWords.filterSoldOut,
+    hidden: catalogWords.filterHidden,
+  };
 
-  // Statistics
-  const totalCount = nonArchivedItems.length;
-  const soldOutCount = React.useMemo(() => {
-    return nonArchivedItems.filter((item) =>
-      item.variants.every((v) => v.availability === 'sold_out'),
-    ).length;
-  }, [nonArchivedItems]);
-
-  const hiddenCount = React.useMemo(() => {
-    return nonArchivedItems.filter((item) => item.status === 'hidden').length;
-  }, [nonArchivedItems]);
-
-  // Filtered items
   const filteredItems = React.useMemo(() => {
+    const query = search.toLowerCase().trim();
     return nonArchivedItems.filter((item) => {
-      // Filter tab
-      if (filter === 'sold_out') {
-        const itemSoldOut = item.variants.every((v) => v.availability === 'sold_out');
-        if (!itemSoldOut) return false;
-      } else if (filter === 'hidden') {
-        if (item.status !== 'hidden') return false;
-      }
-
-      // Search query
-      if (search.trim()) {
-        const query = search.toLowerCase().trim();
-        const matchesName = item.name.toLowerCase().includes(query);
-        const matchesDesc = item.description?.toLowerCase().includes(query) ?? false;
-        if (!matchesName && !matchesDesc) return false;
-      }
-
-      return true;
+      if (filter === 'sold_out' && !isItemSoldOut(item)) return false;
+      if (filter === 'hidden' && item.status !== 'hidden') return false;
+      if (!query) return true;
+      return (
+        item.name.toLowerCase().includes(query) ||
+        (item.description?.toLowerCase().includes(query) ?? false)
+      );
     });
   }, [nonArchivedItems, filter, search]);
 
-  // Grouped by Category in order
   const groupedSections = React.useMemo(() => {
     if (!categories || categories.length === 0) {
-      if (filteredItems.length === 0) return [];
-      return [
-        {
-          category: FALLBACK_GENERAL_CATEGORY,
-          items: filteredItems,
-        },
-      ];
+      return filteredItems.length === 0
+        ? []
+        : [{ category: FALLBACK_GENERAL_CATEGORY, items: filteredItems }];
     }
-
-    const sections: { category: Category; items: OwnerItem[] }[] = [];
-    const catMap = new Map<string, OwnerItem[]>();
-
+    const byCategory = new Map<string, OwnerItem[]>();
     for (const item of filteredItems) {
-      const list = catMap.get(item.categoryId) ?? [];
+      const list = byCategory.get(item.categoryId) ?? [];
       list.push(item);
-      catMap.set(item.categoryId, list);
+      byCategory.set(item.categoryId, list);
     }
-
+    const sections: { category: Category; items: OwnerItem[] }[] = [];
     for (const cat of categories) {
-      const catItems = catMap.get(cat.id);
-      if (catItems && catItems.length > 0) {
-        sections.push({
-          category: cat,
-          items: catItems,
-        });
-      }
+      const catItems = byCategory.get(cat.id);
+      if (catItems && catItems.length > 0) sections.push({ category: cat, items: catItems });
     }
-
-    // Catch items with non-matching categoryId
     const listedIds = new Set(categories.map((c) => c.id));
     const orphans = filteredItems.filter((i) => !listedIds.has(i.categoryId));
-    if (orphans.length > 0) {
-      sections.push({
-        category: FALLBACK_OTHER_CATEGORY,
-        items: orphans,
-      });
-    }
-
+    if (orphans.length > 0) sections.push({ category: FALLBACK_OTHER_CATEGORY, items: orphans });
     return sections;
   }, [categories, filteredItems]);
 
-  // View switch handler
   const handleViewChange = (nextView: string) => {
-    if (nextView !== 'list' && nextView !== 'grid' && nextView !== 'table') return;
+    if (nextView !== 'list' && nextView !== 'grid') return;
     setView(nextView);
     try {
       localStorage.setItem(LOCAL_STORAGE_VIEW_KEY, nextView);
     } catch {
-      // Ignore
+      // Private mode: the view is only remembered for this visit.
     }
   };
 
-  // Selection handlers
+  const stopSelecting = () => {
+    setSelecting(false);
+    setSelectedIds([]);
+  };
+
   const handleToggleSelect = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
-  const handleSelectAll = (all: boolean) => {
-    if (all) {
-      setSelectedIds(filteredItems.map((i) => i.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  // Reorder handlers
   const handleReorder = (newItems: OwnerItem[]) => {
-    const ids = newItems.map((i) => i.id);
-    saveSortOrder.mutate({
-      kind: 'item',
-      ids,
-    });
-  };
-
-  const handleReorderFromTable = (ids: string[]) => {
-    saveSortOrder.mutate({
-      kind: 'item',
-      ids,
-    });
+    saveSortOrder.mutate({ kind: 'item', ids: newItems.map((i) => i.id) });
   };
 
   const handleMove = (item: OwnerItem, delta: number) => {
     const idx = nonArchivedItems.findIndex((i) => i.id === item.id);
-    if (idx < 0) return;
     const targetIdx = idx + delta;
-    if (targetIdx < 0 || targetIdx >= nonArchivedItems.length) return;
-
+    if (idx < 0 || targetIdx < 0 || targetIdx >= nonArchivedItems.length) return;
     const list = [...nonArchivedItems];
     const [moved] = list.splice(idx, 1);
-    if (moved) {
-      list.splice(targetIdx, 0, moved);
-      handleReorder(list);
-      setAnnouncement(catalogWords.movedAnnouncement(item.name, targetIdx + 1, list.length));
-    }
+    if (!moved) return;
+    list.splice(targetIdx, 0, moved);
+    handleReorder(list);
+    setAnnouncement(catalogWords.movedAnnouncement(item.name, targetIdx + 1, list.length));
   };
 
-  // Single-item action handlers
-  const handleEdit = (item: OwnerItem) => {
-    navigate({ to: '/catalog/$id', params: { id: item.id } });
-  };
+  const addOnCount = (item: OwnerItem) => item.optionGroupIds.length;
 
-  const handleDuplicate = (item: OwnerItem) => {
-    saveItem.mutate({
-      draft: {
-        categoryId: item.categoryId,
-        name: `${item.name} (Copy)`,
-        description: item.description,
-        photos: item.photos,
-        axes: item.axes,
-        variants: item.variants.map((v, i) => ({
-          id: `var_${Math.random().toString(36).slice(2, 9)}_${i}`,
-          values: v.values,
-          price: v.price,
+  // Bulk actions: each one can be undone from its toast.
+  const restoreVariants = (previous: OwnerItem[]) =>
+    bulkSetSoldOut.mutate({
+      items: previous.flatMap((i) =>
+        i.variants.map((v) => ({
+          variantId: v.id,
           availability: v.availability,
           soldOutUntil: v.soldOutUntil,
         })),
-        optionGroupIds: item.optionGroupIds,
-        pairingIds: item.pairingIds,
-        featured: item.featured,
-        isNew: item.isNew,
-        status: 'hidden',
-      },
+      ),
     });
+  const restoreStatus = (previous: OwnerItem[]) => {
+    for (const item of previous) setStatus.mutate({ id: item.id, status: item.status });
   };
-
-  const handleToggleStatus = (item: OwnerItem) => {
-    const nextStatus = item.status === 'hidden' ? 'active' : 'hidden';
-    setStatus.mutate({ id: item.id, status: nextStatus });
-  };
-
-  const handleSetSoldOut = (item: OwnerItem) => {
-    const isSoldOut = item.variants.every((v) => v.availability === 'sold_out');
-    if (isSoldOut) {
-      // Mark available
-      for (const v of item.variants) {
-        setSoldOut.mutate({ variantId: v.id, availability: 'available' });
-      }
-    } else {
-      if (item.variants.length > 1) {
-        setSoldOutTargetItem(item);
-      } else {
-        const first = item.variants[0];
-        if (first) {
-          setSoldOut.mutate({ variantId: first.id, availability: 'sold_out' });
-        }
-      }
+  const runBulk = async (
+    ids: string[],
+    run: (previous: OwnerItem[]) => Promise<unknown>,
+    title: string,
+    undo: (previous: OwnerItem[]) => void,
+  ) => {
+    const previous = (items ?? []).filter((i) => ids.includes(i.id));
+    try {
+      await run(previous);
+      stopSelecting();
+      notify({
+        title,
+        tone: 'success',
+        action: { label: catalogWords.undo, onClick: () => undo(previous) },
+      });
+    } catch (err: unknown) {
+      notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
     }
   };
 
-  const handleApplySoldOutChoice = (type: 'today' | 'indefinite') => {
-    if (!soldOutTargetItem) return;
-    const availability: Availability = 'sold_out';
-    const soldOutUntil =
-      type === 'today' ? new Date(Date.now() + 24 * 3600 * 1000).toISOString() : null;
-
-    for (const v of soldOutTargetItem.variants) {
-      setSoldOut.mutate({ variantId: v.id, availability, soldOutUntil });
-    }
-    setSoldOutTargetItem(null);
-  };
-
-  const handleArchive = (item: OwnerItem) => {
-    setStatus.mutate({ id: item.id, status: 'archived' });
-  };
-
-  const handleDelete = (item: OwnerItem) => {
-    setDeleteTargetItem(item);
-  };
-
-  const handleConfirmDelete = () => {
-    if (deleteTargetItem) {
-      removeItem.mutate({ id: deleteTargetItem.id });
-      setDeleteTargetItem(null);
-    }
-  };
-
-  // Bulk action handlers
-  const handleBulkSoldOutToday = async (ids: string[]) => {
-    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
+  const handleBulkSoldOutToday = (ids: string[]) => {
     const until = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
-    const variants = previousState.flatMap((i) =>
-      i.variants.map((v) => ({
-        variantId: v.id,
-        availability: 'sold_out' as const,
-        soldOutUntil: until,
-      })),
-    );
-    await bulkSetSoldOut.mutateAsync({ items: variants });
-    setSelectedIds([]);
-
-    notify({
-      title: catalogWords.bulkUpdated(ids.length),
-      tone: 'success',
-      action: {
-        label: catalogWords.undo,
-        onClick: () => {
-          const rollback = previousState.flatMap((i) =>
+    void runBulk(
+      ids,
+      (previous) =>
+        bulkSetSoldOut.mutateAsync({
+          items: previous.flatMap((i) =>
             i.variants.map((v) => ({
               variantId: v.id,
-              availability: v.availability,
-              soldOutUntil: v.soldOutUntil,
+              availability: 'sold_out' as const,
+              soldOutUntil: until,
             })),
-          );
-          bulkSetSoldOut.mutate({ items: rollback });
-        },
-      },
-    });
-  };
-
-  const handleBulkBackOn = async (ids: string[]) => {
-    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
-    const variants = previousState.flatMap((i) =>
-      i.variants.map((v) => ({
-        variantId: v.id,
-        availability: 'available' as const,
-        soldOutUntil: null,
-      })),
+          ),
+        }),
+      catalogWords.bulkUpdated(ids.length),
+      restoreVariants,
     );
-    await bulkSetSoldOut.mutateAsync({ items: variants });
-    setSelectedIds([]);
-
-    notify({
-      title: catalogWords.bulkUpdated(ids.length),
-      tone: 'success',
-      action: {
-        label: catalogWords.undo,
-        onClick: () => {
-          const rollback = previousState.flatMap((i) =>
+  };
+  const handleBulkBackOn = (ids: string[]) => {
+    void runBulk(
+      ids,
+      (previous) =>
+        bulkSetSoldOut.mutateAsync({
+          items: previous.flatMap((i) =>
             i.variants.map((v) => ({
               variantId: v.id,
-              availability: v.availability,
-              soldOutUntil: v.soldOutUntil,
+              availability: 'available' as const,
+              soldOutUntil: null,
             })),
-          );
-          bulkSetSoldOut.mutate({ items: rollback });
-        },
-      },
-    });
+          ),
+        }),
+      catalogWords.bulkUpdated(ids.length),
+      restoreVariants,
+    );
   };
-
-  const handleBulkHide = async (ids: string[]) => {
-    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
-    await bulkSetStatus.mutateAsync({ itemIds: ids, status: 'hidden' });
-    setSelectedIds([]);
-
-    notify({
-      title: catalogWords.bulkUpdated(ids.length),
-      tone: 'success',
-      action: {
-        label: catalogWords.undo,
-        onClick: () => {
-          previousState.forEach((item) => {
-            setStatus.mutate({ id: item.id, status: item.status });
-          });
-        },
-      },
-    });
+  const handleBulkStatus = (ids: string[], status: 'hidden' | 'active' | 'archived') => {
+    void runBulk(
+      ids,
+      () => bulkSetStatus.mutateAsync({ itemIds: ids, status }),
+      status === 'archived'
+        ? catalogWords.bulkArchived(ids.length)
+        : catalogWords.bulkUpdated(ids.length),
+      restoreStatus,
+    );
   };
-
-  const handleBulkShow = async (ids: string[]) => {
-    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
-    await bulkSetStatus.mutateAsync({ itemIds: ids, status: 'active' });
-    setSelectedIds([]);
-
-    notify({
-      title: catalogWords.bulkUpdated(ids.length),
-      tone: 'success',
-      action: {
-        label: catalogWords.undo,
-        onClick: () => {
-          previousState.forEach((item) => {
-            setStatus.mutate({ id: item.id, status: item.status });
+  const handleBulkMoveCategory = (ids: string[], targetCategoryId: string) => {
+    const catName = categories?.find((c) => c.id === targetCategoryId)?.name ?? '';
+    void runBulk(
+      ids,
+      (previous) => bulkMoveCategory.mutateAsync({ items: previous, targetCategoryId }),
+      catalogWords.bulkMoved(ids.length, catName),
+      (previous) => {
+        for (const item of previous) {
+          saveItem.mutate({
+            id: item.id,
+            draft: {
+              categoryId: item.categoryId,
+              name: item.name,
+              description: item.description,
+              photos: item.photos,
+              axes: item.axes,
+              variants: item.variants,
+              optionGroupIds: item.optionGroupIds,
+              pairingIds: item.pairingIds,
+              featured: item.featured,
+              isNew: item.isNew,
+              status: item.status,
+            },
           });
-        },
+        }
       },
-    });
-  };
-
-  const handleBulkMoveCategory = async (ids: string[], targetCategoryId: string) => {
-    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
-    const catName = categories?.find((c) => c.id === targetCategoryId)?.name ?? 'Category';
-    await bulkMoveCategory.mutateAsync({ items: previousState, targetCategoryId });
-    setSelectedIds([]);
-
-    notify({
-      title: catalogWords.bulkMoved(ids.length, catName),
-      tone: 'success',
-      action: {
-        label: catalogWords.undo,
-        onClick: () => {
-          previousState.forEach((item) => {
-            saveItem.mutate({
-              id: item.id,
-              draft: {
-                categoryId: item.categoryId,
-                name: item.name,
-                description: item.description,
-                photos: item.photos,
-                axes: item.axes,
-                variants: item.variants,
-                optionGroupIds: item.optionGroupIds,
-                pairingIds: item.pairingIds,
-                featured: item.featured,
-                isNew: item.isNew,
-                status: item.status,
-              },
-            });
-          });
-        },
-      },
-    });
-  };
-
-  const handleBulkArchive = async (ids: string[]) => {
-    const previousState = items?.filter((i) => ids.includes(i.id)) ?? [];
-    await bulkSetStatus.mutateAsync({ itemIds: ids, status: 'archived' });
-    setSelectedIds([]);
-
-    notify({
-      title: catalogWords.bulkArchived(ids.length),
-      tone: 'success',
-      action: {
-        label: catalogWords.undo,
-        onClick: () => {
-          previousState.forEach((item) => {
-            setStatus.mutate({ id: item.id, status: item.status });
-          });
-        },
-      },
-    });
+    );
   };
 
   const handlePopulateSamples = async () => {
@@ -522,37 +316,29 @@ export function ItemsList() {
       void refetchItems();
       void refetchCats();
     } catch (err: unknown) {
-      notify({
-        title: errorWords(errorCodeOf(err)),
-        tone: 'error',
-      });
+      notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
     }
   };
 
-  const isLoading = itemsLoading || catsLoading;
-  const error = itemsError || catsError;
+  const goNew = () => {
+    void navigate({ to: '/catalog/new' });
+  };
 
-  if (isLoading) {
+  if (itemsLoading || catsLoading) {
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-3 gap-3">
-          <Skeleton className="h-20 rounded-xl" />
-          <Skeleton className="h-20 rounded-xl" />
-          <Skeleton className="h-20 rounded-xl" />
-        </div>
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-72 rounded-xl" />
-          <Skeleton className="h-10 w-32 rounded-xl" />
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Skeleton className="h-11 w-full rounded-xl sm:w-72" />
+          <Skeleton className="h-11 w-56 rounded-xl" />
         </div>
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-3.5 rounded-2xl border bg-card p-3.5">
+            <div key={i} className="flex items-center gap-3 rounded-2xl border bg-card p-3">
               <Skeleton className="size-14 shrink-0 rounded-xl" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-48" />
                 <Skeleton className="h-3 w-28" />
               </div>
-              <Skeleton className="h-8 w-20" />
             </div>
           ))}
         </div>
@@ -560,285 +346,206 @@ export function ItemsList() {
     );
   }
 
+  const error = itemsError ?? catsError;
   if (error) {
     return (
-      <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 py-16 text-center">
+      <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4 py-16 text-center">
         <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
           <RefreshCwIcon className="size-6" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-base font-semibold text-foreground">Failed to load catalog</h3>
-          <p className="text-xs text-muted-foreground">{errorWords(errorCodeOf(error))}</p>
+          <h2 className="text-base font-semibold text-foreground">{catalogWords.loadFailed}</h2>
+          <p className="text-sm text-muted-foreground">{errorWords(errorCodeOf(error))}</p>
         </div>
         <Button
           variant="outline"
-          size="sm"
-          className="gap-1.5 text-xs"
+          className="h-11 gap-1.5 md:h-9"
           onClick={() => {
             void refetchItems();
             void refetchCats();
           }}
         >
-          <RefreshCwIcon className="size-3.5" />
+          <RefreshCwIcon className="size-4" />
           {catalogWords.tryAgain}
         </Button>
       </div>
     );
   }
 
+  const toolbarButton = 'h-11 shrink-0 gap-1.5 md:h-9';
+
   return (
-    <div className="space-y-6 pb-12">
-      {/* Screen Reader Announcement for Drag */}
+    <div className="space-y-4 pb-24 md:pb-12">
       <div aria-live="polite" className="sr-only">
         {announcement}
       </div>
 
-      {/* Offline Banner */}
-      {!isOnline && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-xs text-warning-text">
+      {!isOnline ? (
+        <div className="flex items-center gap-2.5 rounded-xl border border-warning/20 bg-warning-soft p-3 text-sm text-warning-text">
           <WifiOffIcon className="size-4 shrink-0" />
           <span>{catalogWords.offlineNotice}</span>
         </div>
-      )}
+      ) : null}
 
-      {/* Top Stats Row */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <button
-          type="button"
-          onClick={() => setFilter('all')}
-          className="cursor-pointer text-left transition-opacity active:opacity-90"
-        >
-          <Stat
-            className={cn(
-              'rounded-2xl border p-3.5 shadow-xs transition-colors',
-              filter === 'all'
-                ? 'border-primary/50 bg-primary/5 ring-1 ring-primary/20'
-                : 'border-border/80 bg-card hover:bg-muted/40',
-            )}
-          >
-            <StatLabel>{catalogWords.statTotalItems(kind)}</StatLabel>
-            <StatValue className="font-mono text-2xl font-bold tracking-tight text-foreground">
-              {totalCount}
-            </StatValue>
-          </Stat>
-        </button>
+      {nonArchivedItems.length > 0 ? (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1 md:max-w-md">
+              <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                type="search"
+                aria-label={catalogWords.searchPlaceholder(kind)}
+                placeholder={catalogWords.searchPlaceholder(kind)}
+                className="h-11 rounded-xl bg-card pr-11 pl-9 md:h-9"
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search ? (
+                <button
+                  type="button"
+                  aria-label={catalogWords.clearSearch}
+                  onClick={() => setSearch('')}
+                  className="absolute top-1/2 right-0 flex size-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground md:size-9"
+                >
+                  <XIcon className="size-4" />
+                </button>
+              ) : null}
+            </div>
 
-        <button
-          type="button"
-          onClick={() => setFilter(filter === 'sold_out' ? 'all' : 'sold_out')}
-          className="cursor-pointer text-left transition-opacity active:opacity-90"
-        >
-          <Stat
-            className={cn(
-              'rounded-2xl border p-3.5 shadow-xs transition-colors',
-              filter === 'sold_out'
-                ? 'border-warning/50 bg-warning-soft ring-1 ring-warning/30'
-                : 'border-border/80 bg-card hover:bg-muted/40',
-            )}
-          >
-            <StatLabel>{catalogWords.statSoldOut}</StatLabel>
-            <StatValue className="font-mono text-2xl font-bold tracking-tight text-warning-text">
-              {soldOutCount}
-            </StatValue>
-          </Stat>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setFilter(filter === 'hidden' ? 'all' : 'hidden')}
-          className="cursor-pointer text-left transition-opacity active:opacity-90"
-        >
-          <Stat
-            className={cn(
-              'rounded-2xl border p-3.5 shadow-xs transition-colors',
-              filter === 'hidden'
-                ? 'border-primary/50 bg-muted ring-1 ring-primary/20'
-                : 'border-border/80 bg-card hover:bg-muted/40',
-            )}
-          >
-            <StatLabel>{catalogWords.statHidden}</StatLabel>
-            <StatValue className="font-mono text-2xl font-bold tracking-tight text-muted-foreground">
-              {hiddenCount}
-            </StatValue>
-          </Stat>
-        </button>
-      </div>
-
-      {/* Search & Filter Toolbar */}
-      <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center">
-        {/* Search Input with Clear Button */}
-        <div className="relative max-w-md flex-1">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            placeholder={catalogWords.searchPlaceholder(kind)}
-            className="h-10 rounded-xl border-border/80 bg-card pr-9 pl-9 text-sm"
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {search ? (
-            <button
-              type="button"
-              aria-label={catalogWords.clearSearch}
-              onClick={() => setSearch('')}
-              className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground"
-            >
-              <XIcon className="size-4" />
-            </button>
-          ) : null}
-        </div>
-
-        {/* Filter Pills, View Switch & Actions */}
-        <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1 sm:flex-nowrap sm:pb-0">
-          {/* Status Filters */}
-          <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1">
-            <button
-              type="button"
-              onClick={() => setFilter('all')}
-              className={cn(
-                'rounded-lg px-2.5 py-1 text-xs font-semibold transition-all',
-                filter === 'all'
-                  ? 'bg-primary text-primary-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {catalogWords.filterAll}
-              <span className="ml-1 font-mono text-xs opacity-80">{totalCount}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilter('sold_out')}
-              className={cn(
-                'rounded-lg px-2.5 py-1 text-xs font-semibold transition-all',
-                filter === 'sold_out'
-                  ? 'bg-primary text-primary-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {catalogWords.filterSoldOut}
-              <span className="ml-1 font-mono text-xs opacity-80">{soldOutCount}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setFilter('hidden')}
-              className={cn(
-                'rounded-lg px-2.5 py-1 text-xs font-semibold transition-all',
-                filter === 'hidden'
-                  ? 'bg-primary text-primary-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {catalogWords.filterHidden}
-              <span className="ml-1 font-mono text-xs opacity-80">{hiddenCount}</span>
-            </button>
-          </div>
-
-          {/* View Toggle: List / Grid / Table (Table hidden on phone) */}
-          <ToggleGroup
-            value={[view]}
-            onValueChange={(val) => {
-              const v = val[0];
-              if (v) handleViewChange(v);
-            }}
-            className="h-8 shrink-0 rounded-xl border border-border/80 bg-muted/50 p-0.5"
-          >
-            <ToggleGroupItem
-              value="list"
-              aria-label={catalogWords.viewList}
-              className="size-7 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs data-checked:bg-card data-checked:text-foreground data-checked:shadow-xs"
-            >
-              <ListIcon className="size-3.5" />
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="grid"
-              aria-label={catalogWords.viewGrid}
-              className="size-7 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs data-checked:bg-card data-checked:text-foreground data-checked:shadow-xs"
-            >
-              <LayoutGridIcon className="size-3.5" />
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="table"
-              aria-label={catalogWords.viewTable}
-              className="hidden size-7 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs data-checked:bg-card data-checked:text-foreground data-checked:shadow-xs md:inline-flex"
-            >
-              <TableIcon className="size-3.5" />
-            </ToggleGroupItem>
-          </ToggleGroup>
-
-          {/* Reorder Mode Button (in list view) */}
-          {view === 'list' && nonArchivedItems.length > 1 && (
             <Button
               type="button"
-              variant={isReordering ? 'default' : 'outline'}
-              size="sm"
-              className="h-8 shrink-0 text-xs"
-              onClick={() => setIsReordering(!isReordering)}
+              className={cn(toolbarButton, 'ml-auto hidden font-semibold md:inline-flex')}
+              onClick={goNew}
             >
-              <ArrowUpDownIcon className="mr-1.5 size-3.5" />
-              {isReordering ? catalogWords.doneReordering : catalogWords.reorder}
+              <PlusIcon className="size-4" />
+              {catalogWords.addItem(kind)}
             </Button>
-          )}
+          </div>
 
-          {/* Desktop Add Item Button */}
-          <Button
-            type="button"
-            size="sm"
-            className="hidden h-8 shrink-0 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90 sm:inline-flex"
-            onClick={() => navigate({ to: '/catalog/new' })}
-          >
-            <PlusIcon className="mr-1.5 size-3.5" />
-            {catalogWords.addItem(kind)}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              role="group"
+              aria-label={catalogWords.filterAll}
+              className="flex items-center gap-1 rounded-xl border border-border/60 bg-muted/60 p-1"
+            >
+              {FILTERS.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  aria-pressed={filter === tab}
+                  onClick={() => setFilter(tab)}
+                  className={cn(
+                    'flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors md:h-7',
+                    filter === tab
+                      ? 'bg-card text-foreground shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {filterLabel[tab]}
+                  <span className="text-xs text-muted-foreground tabular">{counts[tab]}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="ml-auto flex items-center gap-2">
+              {!isReordering && !selecting ? (
+                <ToggleGroup
+                  value={[view]}
+                  onValueChange={(val) => {
+                    const v = val[0];
+                    if (v) handleViewChange(v);
+                  }}
+                  className="shrink-0 rounded-xl border border-border/80 bg-muted/50 p-0.5"
+                >
+                  <ToggleGroupItem
+                    value="list"
+                    aria-label={catalogWords.viewList}
+                    className="size-10 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs md:size-8"
+                  >
+                    <ListIcon className="size-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="grid"
+                    aria-label={catalogWords.viewGrid}
+                    className="size-10 rounded-lg p-0 text-muted-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs md:size-8"
+                  >
+                    <LayoutGridIcon className="size-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              ) : null}
+
+              {!isReordering ? (
+                <Button
+                  type="button"
+                  variant={selecting ? 'default' : 'outline'}
+                  className={toolbarButton}
+                  onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
+                >
+                  <ListChecksIcon className="size-4" />
+                  {selecting ? catalogWords.selectDone : catalogWords.select}
+                </Button>
+              ) : null}
+
+              {view === 'list' && !selecting && nonArchivedItems.length > 1 ? (
+                <Button
+                  type="button"
+                  variant={isReordering ? 'default' : 'outline'}
+                  className={toolbarButton}
+                  onClick={() => setIsReordering(!isReordering)}
+                >
+                  <ArrowUpDownIcon className="size-4" />
+                  {isReordering ? catalogWords.doneReordering : catalogWords.reorder}
+                </Button>
+              ) : null}
+            </div>
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      {/* Main Content Area */}
       {nonArchivedItems.length === 0 ? (
-        <div className="mx-auto flex max-w-sm flex-col items-center justify-center space-y-4 py-16 text-center">
+        <div className="mx-auto flex max-w-sm flex-col items-center justify-center gap-4 py-16 text-center">
           <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <SparklesIcon className="size-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-base font-semibold text-foreground">
+            <h2 className="text-base font-semibold text-foreground">
               {catalogWords.emptyItems(kind)}
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Add your first item or populate with standard samples.
-            </p>
+            </h2>
+            <p className="text-sm text-muted-foreground">{catalogWords.emptyItemsHint}</p>
           </div>
-          <div className="flex items-center gap-2 pt-2">
-            <Button
-              size="sm"
-              className="bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
-              onClick={() => navigate({ to: '/catalog/new' })}
-            >
-              <PlusIcon className="mr-1 size-3.5" />
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={goNew}>
+              <PlusIcon className="size-4" />
               {catalogWords.addItem(kind)}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs font-medium"
-              onClick={() => void handlePopulateSamples()}
-            >
-              {catalogWords.startWithSamples}
-            </Button>
+            {ownerSamples ? (
+              <Button
+                variant="outline"
+                className="h-11 md:h-9"
+                onClick={() => void handlePopulateSamples()}
+              >
+                {catalogWords.startWithSamples}
+              </Button>
+            ) : null}
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="space-y-3 py-12 text-center">
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
           <p className="text-sm font-medium text-foreground">
-            {search ? catalogWords.noSearchResults(search) : 'No items match this filter.'}
+            {search ? catalogWords.noSearchResults(search) : catalogWords.noFilterMatch}
           </p>
-          {search && (
-            <Button variant="outline" size="sm" onClick={() => setSearch('')}>
-              {catalogWords.clearSearch}
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            className="h-11 md:h-9"
+            onClick={() => {
+              setSearch('');
+              setFilter('all');
+            }}
+          >
+            {search ? catalogWords.clearSearch : catalogWords.showAll}
+          </Button>
         </div>
       ) : isReordering ? (
-        /* Reorder Mode with Sortable */
         <Sortable
           value={nonArchivedItems}
           getItemValue={(item) => item.id}
@@ -849,172 +556,93 @@ export function ItemsList() {
               <SortableItem key={item.id} value={item.id}>
                 <ItemRow
                   item={item}
-                  optionGroups={optionGroups}
+                  actions={actions}
                   isReordering
                   canMoveUp={index > 0}
                   canMoveDown={index < nonArchivedItems.length - 1}
                   onMoveUp={() => handleMove(item, -1)}
                   onMoveDown={() => handleMove(item, 1)}
-                  dragHandleProps={{ className: 'cursor-grab' }}
+                  dragHandle={
+                    <SortableItemHandle
+                      className="flex size-11 cursor-grab items-center justify-center rounded-lg text-muted-foreground hover:bg-muted active:cursor-grabbing md:size-9"
+                      aria-label={catalogWords.reorder}
+                    >
+                      <GripIcon />
+                    </SortableItemHandle>
+                  }
                 />
               </SortableItem>
             ))}
           </div>
         </Sortable>
-      ) : view === 'table' ? (
-        /* TABLE VIEW (ReUI Data Grid) */
-        <ItemsTable
-          items={filteredItems}
-          categories={categories ?? []}
-          optionGroups={optionGroups}
-          selectedIds={selectedIds}
-          onToggleSelect={handleToggleSelect}
-          onSelectAll={handleSelectAll}
-          onReorder={handleReorderFromTable}
-          onEdit={handleEdit}
-          onDuplicate={handleDuplicate}
-          onToggleStatus={handleToggleStatus}
-          onSetSoldOut={handleSetSoldOut}
-          onArchive={handleArchive}
-          onDelete={handleDelete}
-        />
       ) : view === 'grid' ? (
-        /* GRID VIEW (4:3 Photo Cards) */
         <ItemsGrid
           items={filteredItems}
           categories={categories ?? []}
+          actions={actions}
+          selecting={selecting}
           selectedIds={selectedIds}
           onToggleSelect={handleToggleSelect}
-          onEdit={handleEdit}
-          onDuplicate={handleDuplicate}
-          onToggleStatus={handleToggleStatus}
-          onSetSoldOut={handleSetSoldOut}
-          onArchive={handleArchive}
-          onDelete={handleDelete}
         />
       ) : (
-        /* LIST VIEW (Grouped Category Sections) */
-        <div className="space-y-8">
-          {groupedSections.map(({ category, items }) => (
-            <div key={category.id} className="space-y-3">
-              <div className="flex items-center justify-between border-b border-border/50 pb-2">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-bold tracking-tight text-foreground">
-                    {category.name}
-                  </h2>
-                  <Badge variant="secondary" className="px-1.5 py-0 font-mono text-xs">
-                    {catalogWords.itemCount(items.length)}
-                  </Badge>
-                </div>
+        <div className="space-y-6">
+          {groupedSections.map(({ category, items: sectionItems }) => (
+            <section key={category.id} className="space-y-2.5">
+              <div className="flex items-center gap-2 border-b border-border/50 pb-2">
+                <h2 className="text-sm font-bold text-foreground">{category.name}</h2>
+                <Badge variant="secondary" className="tabular">
+                  {catalogWords.itemCount(sectionItems.length)}
+                </Badge>
               </div>
-
-              <div className="space-y-2.5">
-                {items.map((item) => (
+              <div className="space-y-2">
+                {sectionItems.map((item) => (
                   <ItemRow
                     key={item.id}
                     item={item}
-                    optionGroups={optionGroups}
-                    onMoveUp={() => {}}
-                    onMoveDown={() => {}}
+                    actions={actions}
+                    addOnCount={addOnCount(item)}
+                    selecting={selecting}
+                    selected={selectedIds.includes(item.id)}
+                    onToggleSelect={() => handleToggleSelect(item.id)}
                   />
                 ))}
               </div>
-            </div>
+            </section>
           ))}
         </div>
       )}
 
-      {/* Floating Action Bar when rows are selected */}
       <ItemsActionBar
         selectedIds={selectedIds}
         categories={categories ?? []}
-        onClearSelection={() => setSelectedIds([])}
+        sideOffset={dockClearance}
+        onClearSelection={stopSelecting}
         onBulkSoldOutToday={handleBulkSoldOutToday}
         onBulkBackOn={handleBulkBackOn}
-        onBulkHide={handleBulkHide}
-        onBulkShow={handleBulkShow}
+        onBulkHide={(ids) => handleBulkStatus(ids, 'hidden')}
+        onBulkShow={(ids) => handleBulkStatus(ids, 'active')}
         onBulkMoveCategory={handleBulkMoveCategory}
-        onBulkArchive={handleBulkArchive}
+        onBulkArchive={(ids) => handleBulkStatus(ids, 'archived')}
       />
 
-      {/* Sold Out Options Dialog */}
-      <Dialog
-        open={soldOutTargetItem !== null}
-        onOpenChange={(open) => !open && setSoldOutTargetItem(null)}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{catalogWords.soldOutTitle}</DialogTitle>
-            <DialogDescription>{catalogWords.soldOutDescription}</DialogDescription>
-          </DialogHeader>
+      {dialogs}
 
-          <div className="space-y-3 py-3">
-            <button
-              type="button"
-              onClick={() => handleApplySoldOutChoice('today')}
-              className="flex w-full flex-col items-start gap-1 rounded-xl border border-border/80 bg-card p-3.5 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
-            >
-              <span className="text-sm font-semibold text-foreground">
-                {catalogWords.soldOutToday}
-              </span>
-              <span className="text-xs text-muted-foreground">{catalogWords.soldOutTodayDesc}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleApplySoldOutChoice('indefinite')}
-              className="flex w-full flex-col items-start gap-1 rounded-xl border border-border/80 bg-card p-3.5 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
-            >
-              <span className="text-sm font-semibold text-foreground">
-                {catalogWords.soldOutIndefinitely}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {catalogWords.soldOutIndefinitelyDesc}
-              </span>
-            </button>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setSoldOutTargetItem(null)}>
-              {catalogWords.cancel}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Alert Dialog */}
-      <AlertDialog
-        open={deleteTargetItem !== null}
-        onOpenChange={(open) => !open && setDeleteTargetItem(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{catalogWords.confirmDelete}</AlertDialogTitle>
-            <AlertDialogDescription>{catalogWords.confirmDeleteDescription}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
-            >
-              {catalogWords.delete}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Sticky Mobile Add Item Button */}
-      <div className="fixed right-0 bottom-16 left-0 z-30 border-t border-border/40 bg-background/80 p-3 backdrop-blur-md sm:hidden">
-        <Button
-          type="button"
-          className="h-11 w-full bg-primary text-sm font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
-          onClick={() => navigate({ to: '/catalog/new' })}
-        >
-          <PlusIcon className="mr-1.5 size-4" />
-          {catalogWords.addItem(kind)}
-        </Button>
-      </div>
+      {nonArchivedItems.length > 0 && !selecting && !isReordering ? (
+        <div className="pointer-events-none fixed inset-x-0 above-dock z-30 flex justify-end px-4 md:hidden">
+          <Button
+            type="button"
+            className="pointer-events-auto h-12 gap-2 rounded-full px-5 font-semibold shadow-lg"
+            onClick={goNew}
+          >
+            <PlusIcon className="size-5" />
+            {catalogWords.addItem(kind)}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function GripIcon() {
+  return <GripVerticalIcon className="size-5" />;
 }

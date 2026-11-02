@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { UtensilsIcon } from 'lucide-react';
-import { imageUrl } from '@smartapp/core';
+import { PackageIcon, UtensilsIcon } from 'lucide-react';
+import { imageUrl, vocab } from '@smartapp/core';
 import { env } from '@/app/env';
+import { useShop } from '@/app/shop';
 import { cn } from 'cn';
 
 export interface CatalogPhotoProps {
@@ -12,6 +13,8 @@ export interface CatalogPhotoProps {
 }
 
 export function CatalogPhoto({ photoRef, alt, size = 'md', className }: CatalogPhotoProps) {
+  const { kind } = useShop();
+  const PlaceholderIcon = vocab(kind).catalogIcon === 'package' ? PackageIcon : UtensilsIcon;
   const sizeClasses = {
     sm: 'size-10 rounded-lg',
     md: 'size-14 rounded-xl',
@@ -48,7 +51,7 @@ export function CatalogPhoto({ photoRef, alt, size = 'md', className }: CatalogP
         )}
         aria-hidden="true"
       >
-        <UtensilsIcon className={iconSizes} />
+        <PlaceholderIcon className={iconSizes} />
       </div>
     );
   }

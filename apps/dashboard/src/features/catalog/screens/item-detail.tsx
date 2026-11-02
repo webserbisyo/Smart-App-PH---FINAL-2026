@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from '@tanstack/react-router';
+import { useShop } from '@/app/shop';
 import { AlertCircleIcon, ArrowLeftIcon, RefreshCwIcon } from 'lucide-react';
 import { catalogWords, errorWords } from '@smartapp/core';
 import { useOwnerItem, errorCodeOf } from '@smartapp/data';
@@ -9,6 +10,7 @@ import { ItemEditor } from '../item-editor.js';
 export function CatalogItemScreen() {
   const { itemId } = useParams({ strict: false });
   const navigate = useNavigate();
+  const { kind } = useShop();
 
   const { data: item, isLoading, error, refetch } = useOwnerItem(itemId ?? '');
 
@@ -32,12 +34,10 @@ export function CatalogItemScreen() {
         </div>
         <div className="space-y-1">
           <h2 className="text-base font-semibold text-foreground">
-            {error ? 'Failed to load item' : 'Item not found'}
+            {error ? catalogWords.loadFailed : catalogWords.itemNotFound}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {error
-              ? errorWords(errorCodeOf(error))
-              : 'The item you are looking for does not exist or has been removed.'}
+            {error ? errorWords(errorCodeOf(error)) : catalogWords.itemNotFoundHint}
           </p>
         </div>
         <div className="flex items-center gap-2 pt-2">
@@ -54,12 +54,12 @@ export function CatalogItemScreen() {
             onClick={() => navigate({ to: '/catalog' })}
           >
             <ArrowLeftIcon className="mr-1 size-3.5" />
-            Back to catalog
+            {catalogWords.backToList(kind)}
           </Button>
         </div>
       </div>
     );
   }
 
-  return <ItemEditor initialItem={item} />;
+  return <ItemEditor key={item.id} initialItem={item} />;
 }

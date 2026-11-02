@@ -130,7 +130,7 @@ describe('orders', () => {
     const { store } = testStore(OPEN_MONDAY);
     const bucket = item(store, 'kanto-smash', 'Barkada Bucket');
     const dip =
-      store.inspect('kanto-smash')?.shop.catalog.optionGroups.find((g) => g.name === 'Dips')
+      store.inspect('kanto-smash')?.shop.catalog.optionGroups.find((g) => g.name === 'Bucket dips')
         ?.options[0]?.id ?? '';
     const pin = store.inspect('kanto-smash')?.shop.storefront.info.contact.pin ?? {
       lat: 0,

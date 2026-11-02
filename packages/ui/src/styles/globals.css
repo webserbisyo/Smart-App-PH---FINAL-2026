@@ -420,6 +420,11 @@
   );
 }
 
+/* Floating bars (save pill, add button) that sit just above the dashboard's phone dock. */
+@utility above-dock {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2);
+}
+
 /* Sticky top under the storefront top bar: the phone's safe area plus a spacing step. */
 @utility sticky-top-* {
   top: calc(env(safe-area-inset-top, 0px) + var(--spacing) * --value(number));

@@ -1,3 +1,4 @@
+// Hidden from the Menu page for launch (decision T41); it comes back for shops with big menus.
 import * as React from 'react';
 import { Columns3Icon } from 'lucide-react';
 import {
@@ -25,7 +26,8 @@ import { Switch } from '@smartapp/ui/components/switch';
 import { Checkbox } from '@smartapp/ui/components/checkbox';
 import { BadgeOverflow } from '@smartapp/ui/components/badge-overflow';
 import { CatalogPhoto } from '../catalog-photo.js';
-import { ItemActionGroup } from './item-action-group.js';
+import { ItemMenu } from './item-menu.js';
+import { isItemSoldOut, type ItemActions } from './item-actions.js';
 
 export interface ItemsTableProps {
   items: OwnerItem[];
@@ -35,12 +37,7 @@ export interface ItemsTableProps {
   onToggleSelect: (id: string) => void;
   onSelectAll: (all: boolean) => void;
   onReorder: (ids: string[]) => void;
-  onEdit: (item: OwnerItem) => void;
-  onDuplicate: (item: OwnerItem) => void;
-  onToggleStatus: (item: OwnerItem) => void;
-  onSetSoldOut: (item: OwnerItem) => void;
-  onArchive: (item: OwnerItem) => void;
-  onDelete: (item: OwnerItem) => void;
+  actions: ItemActions;
 }
 
 export function ItemsTable({
@@ -51,12 +48,7 @@ export function ItemsTable({
   onToggleSelect,
   onSelectAll,
   onReorder,
-  onEdit,
-  onDuplicate,
-  onToggleStatus,
-  onSetSoldOut,
-  onArchive,
-  onDelete,
+  actions,
 }: ItemsTableProps) {
   const categoryMap = React.useMemo(() => {
     return new Map(categories.map((c) => [c.id, c]));
@@ -142,7 +134,7 @@ export function ItemsTable({
           return (
             <div className="flex min-w-0 items-center gap-2 pr-2">
               <span
-                onClick={() => onEdit(item)}
+                onClick={() => actions.edit(item)}
                 className="cursor-pointer truncate text-sm font-medium text-foreground hover:text-primary"
               >
                 {item.name}
@@ -245,7 +237,7 @@ export function ItemsTable({
             >
               <Switch
                 checked={isVisible}
-                onCheckedChange={() => onToggleStatus(item)}
+                onCheckedChange={() => actions.setVisible(item, item.status === 'hidden')}
                 aria-label={`${catalogWords.colVisible} ${item.name}`}
               />
             </div>
@@ -269,7 +261,7 @@ export function ItemsTable({
             >
               <Switch
                 checked={isSoldOut}
-                onCheckedChange={() => onSetSoldOut(item)}
+                onCheckedChange={() => actions.setSoldOut(item, !isItemSoldOut(item))}
                 aria-label={`${catalogWords.colSoldOut} ${item.name}`}
               />
             </div>
@@ -285,19 +277,11 @@ export function ItemsTable({
         header: () => <span className="text-xs font-semibold">{catalogWords.colActions}</span>,
         cell: ({ row }) => (
           <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-            <ItemActionGroup
-              item={row.original}
-              onEdit={onEdit}
-              onDuplicate={onDuplicate}
-              onToggleStatus={onToggleStatus}
-              onSetSoldOut={onSetSoldOut}
-              onArchive={onArchive}
-              onDelete={onDelete}
-            />
+            <ItemMenu item={row.original} actions={actions} />
           </div>
         ),
         enableSorting: false,
-        size: 210,
+        size: 64,
       },
     ];
   }, [
@@ -308,12 +292,7 @@ export function ItemsTable({
     optionGroups,
     onSelectAll,
     onToggleSelect,
-    onEdit,
-    onDuplicate,
-    onToggleStatus,
-    onSetSoldOut,
-    onArchive,
-    onDelete,
+    actions,
   ]);
 
   const table = useTable({

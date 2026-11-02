@@ -1,469 +1,204 @@
-import * as React from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import type * as React from 'react';
 import {
-  MoreVerticalIcon,
-  PencilIcon,
-  CopyIcon,
-  EyeOffIcon,
-  EyeIcon,
-  ChevronUpIcon,
-  ChevronDownIcon,
-  ArchiveIcon,
-  Trash2Icon,
-  GripVerticalIcon,
   BanIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  EyeOffIcon,
+  GripVerticalIcon,
 } from 'lucide-react';
-import {
-  itemPriceLabel,
-  catalogWords,
-  type OwnerItem,
-  type OwnerOptionGroup,
-  type Availability,
-} from '@smartapp/core';
-import { useSetItemStatus, useSetSoldOut, useSaveItem, useRemoveItem } from '@smartapp/data';
-import { Button } from '@smartapp/ui/components/button';
+import { itemPriceLabel, catalogWords, type OwnerItem } from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/badge';
+import { Button } from '@smartapp/ui/components/button';
+import { Checkbox } from '@smartapp/ui/components/checkbox';
 import { Switch } from '@smartapp/ui/components/switch';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@smartapp/ui/components/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@smartapp/ui/components/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@smartapp/ui/components/alert-dialog';
-import { BadgeOverflow } from '@smartapp/ui/components/badge-overflow';
 import { CatalogPhoto } from './catalog-photo.js';
+import { ItemMenu } from './components/item-menu.js';
+import { isItemSoldOut, type ItemActions } from './components/item-actions.js';
 import { cn } from 'cn';
 
 export interface ItemRowProps {
   item: OwnerItem;
-  optionGroups?: OwnerOptionGroup[];
-  isReordering?: boolean;
-  canMoveUp?: boolean;
-  canMoveDown?: boolean;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
+  actions: ItemActions;
+  addOnCount?: number | undefined;
+  selecting?: boolean | undefined;
+  selected?: boolean | undefined;
+  onToggleSelect?: (() => void) | undefined;
+  isReordering?: boolean | undefined;
+  canMoveUp?: boolean | undefined;
+  canMoveDown?: boolean | undefined;
+  onMoveUp?: (() => void) | undefined;
+  onMoveDown?: (() => void) | undefined;
+  dragHandle?: React.ReactNode | undefined;
+  highlighted?: boolean | undefined;
 }
 
-function computeSoldOutUntil(type: 'today' | 'indefinite'): string | null {
-  if (type === 'today') {
-    return new Date(Date.now() + 24 * 3600 * 1000).toISOString();
-  }
-  return null;
+export function ItemStatusBadges({ item }: { item: OwnerItem }) {
+  const soldOut = isItemSoldOut(item);
+  return (
+    <>
+      {soldOut ? (
+        <Badge
+          variant="outline"
+          className="gap-1 border-warning/40 bg-warning-soft text-warning-text"
+        >
+          <BanIcon className="size-3" />
+          {catalogWords.soldOutBadge}
+        </Badge>
+      ) : null}
+      {item.status === 'hidden' ? (
+        <Badge variant="secondary" className="gap-1">
+          <EyeOffIcon className="size-3" />
+          {catalogWords.hiddenBadge}
+        </Badge>
+      ) : null}
+      {item.sample ? <Badge variant="outline">{catalogWords.sampleBadge}</Badge> : null}
+    </>
+  );
+}
+
+export function LabeledSwitch({
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <label
+      className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted-foreground md:min-h-9"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      {label}
+    </label>
+  );
 }
 
 export function ItemRow({
   item,
-  optionGroups = [],
+  actions,
+  addOnCount = 0,
+  selecting = false,
+  selected = false,
+  onToggleSelect,
   isReordering = false,
   canMoveUp = false,
   canMoveDown = false,
   onMoveUp,
   onMoveDown,
-  dragHandleProps,
+  dragHandle,
+  highlighted = false,
 }: ItemRowProps) {
-  const navigate = useNavigate();
-  const setStatus = useSetItemStatus();
-  const setSoldOut = useSetSoldOut();
-  const saveItem = useSaveItem();
-  const removeItem = useRemoveItem();
+  const soldOut = isItemSoldOut(item);
+  const meta = [
+    item.axes.length > 0 ? catalogWords.versionCount(item.variants.length) : null,
+    addOnCount > 0 ? catalogWords.addOnGroupCount(addOnCount) : null,
+  ].filter((part) => part !== null);
 
-  const [soldOutModalOpen, setSoldOutModalOpen] = React.useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
-
-  const isSoldOut = item.variants.every((v) => v.availability === 'sold_out');
-  const isHidden = item.status === 'hidden';
-  const isSample = item.sample;
-
-  // Attached option groups
-  const attachedGroups = React.useMemo(() => {
-    return optionGroups.filter((g) => item.optionGroupIds.includes(g.id));
-  }, [optionGroups, item.optionGroupIds]);
-
-  const handleToggleSoldOut = (checked: boolean) => {
-    if (checked) {
-      if (item.variants.length > 1) {
-        setSoldOutModalOpen(true);
-      } else {
-        const firstVar = item.variants[0];
-        if (firstVar) {
-          setSoldOut.mutate({
-            variantId: firstVar.id,
-            availability: 'sold_out',
-            soldOutUntil: null,
-          });
-        }
-      }
-    } else {
-      for (const v of item.variants) {
-        setSoldOut.mutate({
-          variantId: v.id,
-          availability: 'available',
-        });
-      }
-    }
-  };
-
-  const handleApplySoldOutChoice = (type: 'today' | 'indefinite', variantId?: string) => {
-    const availability: Availability = 'sold_out';
-    const soldOutUntil = computeSoldOutUntil(type);
-
-    if (variantId) {
-      setSoldOut.mutate({ variantId, availability, soldOutUntil });
-    } else {
-      for (const v of item.variants) {
-        setSoldOut.mutate({ variantId: v.id, availability, soldOutUntil });
-      }
-    }
-    setSoldOutModalOpen(false);
-  };
-
-  const handleToggleVisible = (checked: boolean) => {
-    setStatus.mutate({
-      id: item.id,
-      status: checked ? 'active' : 'hidden',
-    });
-  };
-
-  const handleDuplicate = () => {
-    saveItem.mutate({
-      draft: {
-        categoryId: item.categoryId,
-        name: `${item.name} (Copy)`,
-        description: item.description,
-        photos: item.photos,
-        axes: item.axes,
-        variants: item.variants.map((v, i) => ({
-          id: `var_${Math.random().toString(36).slice(2, 9)}_${i}`,
-          values: v.values,
-          price: v.price,
-          availability: v.availability,
-          soldOutUntil: v.soldOutUntil,
-        })),
-        optionGroupIds: item.optionGroupIds,
-        pairingIds: item.pairingIds,
-        featured: item.featured,
-        isNew: item.isNew,
-        status: 'hidden',
-      },
-    });
-  };
-
-  const handleArchive = () => {
-    setStatus.mutate({
-      id: item.id,
-      status: 'archived',
-    });
-  };
-
-  const handleDelete = () => {
-    removeItem.mutate({ id: item.id });
-    setDeleteConfirmOpen(false);
+  const handleOpen = () => {
+    if (isReordering) return;
+    if (selecting) onToggleSelect?.();
+    else actions.edit(item);
   };
 
   return (
-    <>
-      <div
-        className={cn(
-          'group relative flex items-center justify-between gap-3 rounded-2xl border bg-card p-3.5 transition-all duration-180',
-          isSoldOut
-            ? 'border-border/50 opacity-65'
-            : 'border-border/80 hover:border-primary/40 hover:shadow-xs',
+    <div
+      role={isReordering ? undefined : 'button'}
+      tabIndex={isReordering ? undefined : 0}
+      onClick={handleOpen}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleOpen();
+        }
+      }}
+      className={cn(
+        'group flex flex-col gap-2 rounded-2xl border bg-card p-3 transition-all duration-180 md:flex-row md:items-center md:gap-4',
+        !isReordering && 'cursor-pointer hover:border-primary/40 hover:shadow-xs',
+        selected ? 'border-primary bg-primary/5 ring-2 ring-primary/20' : 'border-border/80',
+        highlighted && 'ring-2 ring-primary/40',
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {selecting ? (
+          <Checkbox
+            checked={selected}
+            onCheckedChange={() => onToggleSelect?.()}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={catalogWords.selectItemAria(item.name)}
+            className="size-5"
+          />
+        ) : null}
+        {isReordering
+          ? (dragHandle ?? <GripVerticalIcon className="size-5 text-muted-foreground" />)
+          : null}
+
+        <CatalogPhoto
+          photoRef={item.photos[0] ?? null}
+          alt=""
+          size="md"
+          className={cn('size-14 shrink-0 rounded-xl', soldOut && 'grayscale')}
+        />
+
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="line-clamp-2 text-sm font-semibold text-foreground">{item.name}</p>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground tabular">{itemPriceLabel(item)}</span>
+            {meta.length > 0 ? <span className="truncate">{meta.join(' · ')}</span> : null}
+          </div>
+          <div className="flex flex-wrap gap-1 empty:hidden">
+            <ItemStatusBadges item={item} />
+          </div>
+        </div>
+
+        {isReordering ? (
+          <div className="flex shrink-0 items-center">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-11 md:size-9"
+              disabled={!canMoveUp}
+              aria-label={catalogWords.moveUp}
+              onClick={onMoveUp}
+            >
+              <ChevronUpIcon className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-11 md:size-9"
+              disabled={!canMoveDown}
+              aria-label={catalogWords.moveDown}
+              onClick={onMoveDown}
+            >
+              <ChevronDownIcon className="size-4" />
+            </Button>
+          </div>
+        ) : (
+          <ItemMenu item={item} actions={actions} className="shrink-0 md:hidden" />
         )}
-      >
-        {/* Left: Reorder Handle or Item Thumbnail & Name */}
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          {isReordering ? (
-            <div
-              {...dragHandleProps}
-              className="cursor-grab p-1 text-muted-foreground hover:text-foreground"
-            >
-              <GripVerticalIcon className="size-5" />
-            </div>
-          ) : null}
-
-          {/* 56px square photo */}
-          <div className="relative shrink-0">
-            <CatalogPhoto
-              photoRef={item.photos[0] ?? null}
-              alt={item.name}
-              size="md"
-              className={cn('size-14 rounded-xl', isSoldOut && 'grayscale')}
-            />
-            {isSample && (
-              <Badge
-                variant="outline"
-                className="absolute -top-1.5 -left-1.5 bg-background px-1 py-0 text-xs font-semibold uppercase shadow-xs"
-              >
-                {catalogWords.sampleBadge}
-              </Badge>
-            )}
-          </div>
-
-          {/* Details */}
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="line-clamp-2 text-sm font-semibold tracking-tight text-foreground">
-                {item.name}
-              </h3>
-              {item.featured && (
-                <Badge variant="secondary" className="px-1.5 py-0 text-xs font-medium">
-                  {catalogWords.featuredLabel}
-                </Badge>
-              )}
-              {item.isNew && (
-                <Badge variant="outline" className="px-1.5 py-0 text-xs text-muted-foreground">
-                  {catalogWords.newLabel}
-                </Badge>
-              )}
-              {isSoldOut && (
-                <Badge variant="destructive" className="px-1.5 py-0 text-xs font-medium">
-                  <BanIcon className="mr-1 size-3" />
-                  {catalogWords.statSoldOut}
-                </Badge>
-              )}
-            </div>
-
-            {/* Add-on groups badge-overflow */}
-            {attachedGroups.length > 0 && (
-              <div className="pt-0.5">
-                <BadgeOverflow
-                  items={attachedGroups}
-                  getBadgeLabel={(g) => g.name}
-                  lineCount={1}
-                  className="max-w-44 sm:max-w-64"
-                  renderBadge={(g) => (
-                    <Badge
-                      key={g.id}
-                      variant="outline"
-                      className="px-1 py-0 text-xs font-normal text-muted-foreground"
-                    >
-                      {g.name}
-                    </Badge>
-                  )}
-                  renderOverflow={(count) => (
-                    <Badge variant="secondary" className="px-1 py-0 font-mono text-xs">
-                      +{count}
-                    </Badge>
-                  )}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Price & Status Controls */}
-        <div className="flex shrink-0 items-center gap-4">
-          {/* Right-aligned tabular price */}
-          <div className="text-right">
-            <span className="font-mono text-sm font-bold tracking-tight text-foreground">
-              {itemPriceLabel(item)}
-            </span>
-          </div>
-
-          {/* Sold Out Switch with 44px touch area */}
-          <div className="flex items-center gap-1.5">
-            <label htmlFor={`sold-out-${item.id}`} className="sr-only">
-              {catalogWords.statSoldOut}
-            </label>
-            <div className="flex size-11 items-center justify-center">
-              <Switch
-                id={`sold-out-${item.id}`}
-                checked={isSoldOut}
-                onCheckedChange={handleToggleSoldOut}
-                aria-label={catalogWords.statSoldOut}
-              />
-            </div>
-          </div>
-
-          {/* Visible Switch with 44px touch area */}
-          <div className="hidden size-11 items-center justify-center sm:flex">
-            <Switch
-              id={`visible-${item.id}`}
-              checked={!isHidden}
-              onCheckedChange={handleToggleVisible}
-              aria-label={catalogWords.visibleLabel}
-            />
-          </div>
-        </div>
-
-        {/* More Menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 text-muted-foreground hover:text-foreground"
-                aria-label={catalogWords.moreActions}
-              />
-            }
-          >
-            <MoreVerticalIcon className="size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onClick={() => navigate({ to: `/catalog/$itemId`, params: { itemId: item.id } })}
-            >
-              <PencilIcon className="mr-2 size-4" />
-              {catalogWords.edit}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDuplicate}>
-              <CopyIcon className="mr-2 size-4" />
-              {catalogWords.duplicate}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleToggleVisible(isHidden)}>
-              {isHidden ? (
-                <EyeIcon className="mr-2 size-4" />
-              ) : (
-                <EyeOffIcon className="mr-2 size-4" />
-              )}
-              {isHidden ? catalogWords.show : catalogWords.hide}
-            </DropdownMenuItem>
-
-            {canMoveUp && onMoveUp && (
-              <DropdownMenuItem onClick={onMoveUp}>
-                <ChevronUpIcon className="mr-2 size-4" />
-                {catalogWords.moveUp}
-              </DropdownMenuItem>
-            )}
-            {canMoveDown && onMoveDown && (
-              <DropdownMenuItem onClick={onMoveDown}>
-                <ChevronDownIcon className="mr-2 size-4" />
-                {catalogWords.moveDown}
-              </DropdownMenuItem>
-            )}
-
-            <DropdownMenuSeparator />
-
-            {item.hasOrders ? (
-              <DropdownMenuItem onClick={handleArchive}>
-                <ArchiveIcon className="mr-2 size-4 text-warning-text" />
-                {catalogWords.archive}
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                onClick={() => setDeleteConfirmOpen(true)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2Icon className="mr-2 size-4" />
-                {catalogWords.delete}
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
-      {/* Sold Out Modal Choice (Back tomorrow vs Until turned on) */}
-      <Dialog open={soldOutModalOpen} onOpenChange={setSoldOutModalOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{catalogWords.soldOutTitle}</DialogTitle>
-            <DialogDescription>{catalogWords.soldOutDescription}</DialogDescription>
-          </DialogHeader>
-
-          {item.variants.length > 1 ? (
-            <div className="space-y-3 py-2">
-              <span className="text-xs font-semibold text-muted-foreground">
-                {catalogWords.selectVariantsSoldOut}
-              </span>
-              <div className="space-y-2">
-                {item.variants.map((v) => {
-                  const varSoldOut = v.availability === 'sold_out';
-                  return (
-                    <div
-                      key={v.id}
-                      className="flex items-center justify-between rounded-lg border border-border/60 p-2"
-                    >
-                      <span className="text-sm font-medium">{v.values.join(' / ')}</span>
-                      <Button
-                        size="sm"
-                        variant={varSoldOut ? 'destructive' : 'outline'}
-                        className="h-7 text-xs"
-                        onClick={() =>
-                          handleApplySoldOutChoice(varSoldOut ? 'indefinite' : 'today', v.id)
-                        }
-                      >
-                        {varSoldOut ? 'Mark Available' : 'Mark Sold Out'}
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2.5 py-3">
-              <button
-                type="button"
-                onClick={() => handleApplySoldOutChoice('today')}
-                className="w-full rounded-xl border border-border/80 p-3 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
-              >
-                <p className="text-sm font-semibold text-foreground">{catalogWords.soldOutToday}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {catalogWords.soldOutTodayDesc}
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleApplySoldOutChoice('indefinite')}
-                className="w-full rounded-xl border border-border/80 p-3 text-left transition-colors hover:border-primary/50 hover:bg-muted/40"
-              >
-                <p className="text-sm font-semibold text-foreground">
-                  {catalogWords.soldOutIndefinitely}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {catalogWords.soldOutIndefinitelyDesc}
-                </p>
-              </button>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setSoldOutModalOpen(false)}>
-              {catalogWords.cancel}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Alert Dialog */}
-      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{catalogWords.confirmDelete}</AlertDialogTitle>
-            <AlertDialogDescription>{catalogWords.confirmDeleteDescription}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive font-semibold text-destructive-foreground hover:bg-destructive/90"
-            >
-              {catalogWords.delete}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      {!isReordering ? (
+        <div className="flex items-center gap-4 pl-17 md:pl-0">
+          <LabeledSwitch
+            label={catalogWords.visibleSwitch}
+            checked={item.status !== 'hidden'}
+            onCheckedChange={(checked) => actions.setVisible(item, checked)}
+          />
+          <LabeledSwitch
+            label={catalogWords.soldOutSwitch}
+            checked={soldOut}
+            onCheckedChange={(checked) => actions.setSoldOut(item, checked)}
+          />
+          <ItemMenu item={item} actions={actions} className="hidden md:inline-flex" />
+        </div>
+      ) : null}
+    </div>
   );
 }

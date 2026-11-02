@@ -37,6 +37,8 @@ export interface ItemsActionBarProps {
   onBulkShow: (itemIds: string[]) => void;
   onBulkMoveCategory: (itemIds: string[], targetCategoryId: string) => void;
   onBulkArchive: (itemIds: string[]) => void;
+  // Pixels from the bottom, so the bar clears the phone dock.
+  sideOffset?: number | undefined;
 }
 
 export function ItemsActionBar({
@@ -49,6 +51,7 @@ export function ItemsActionBar({
   onBulkShow,
   onBulkMoveCategory,
   onBulkArchive,
+  sideOffset = 24,
 }: ItemsActionBarProps) {
   const [popoverOpen, setPopoverOpen] = React.useState(false);
   const [selectedCatId, setSelectedCatId] = React.useState<string | null>(null);
@@ -70,21 +73,21 @@ export function ItemsActionBar({
         if (!isOpen) onClearSelection();
       }}
       side="bottom"
-      sideOffset={24}
-      className="mx-4 max-w-full flex-wrap border-border/80 bg-card px-3 py-2 text-card-foreground shadow-xl"
+      sideOffset={sideOffset}
+      className="w-11/12 max-w-3xl flex-wrap justify-between border-border/80 bg-card px-3 py-2 text-card-foreground shadow-xl md:w-auto"
     >
       <ActionBarSelection className="rounded-md border-primary/20 bg-primary/10 px-2.5 py-1 font-semibold text-primary">
         <span>{catalogWords.selectedCount(selectedIds.length)}</span>
       </ActionBarSelection>
 
-      <ActionBarSeparator />
+      <ActionBarSeparator className="hidden md:block" />
 
-      <ActionBarGroup className="flex flex-wrap items-center gap-1.5">
+      <ActionBarGroup className="order-last grid w-full grid-cols-2 gap-1.5 sm:grid-cols-3 md:order-none md:flex md:w-auto md:flex-wrap md:items-center">
         {/* Sold out today */}
         <ActionBarItem
           variant="secondary"
           size="sm"
-          className="h-8 gap-1.5 text-xs font-medium"
+          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
           onClick={() => onBulkSoldOutToday(selectedIds)}
         >
           <BanIcon className="size-3.5 text-warning" />
@@ -95,7 +98,7 @@ export function ItemsActionBar({
         <ActionBarItem
           variant="secondary"
           size="sm"
-          className="h-8 gap-1.5 text-xs font-medium"
+          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
           onClick={() => onBulkBackOn(selectedIds)}
         >
           <CheckCircle2Icon className="size-3.5 text-success" />
@@ -106,7 +109,7 @@ export function ItemsActionBar({
         <ActionBarItem
           variant="secondary"
           size="sm"
-          className="h-8 gap-1.5 text-xs font-medium"
+          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
           onClick={() => onBulkHide(selectedIds)}
         >
           <EyeOffIcon className="size-3.5" />
@@ -117,7 +120,7 @@ export function ItemsActionBar({
         <ActionBarItem
           variant="secondary"
           size="sm"
-          className="h-8 gap-1.5 text-xs font-medium"
+          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
           onClick={() => onBulkShow(selectedIds)}
         >
           <EyeIcon className="size-3.5 text-primary" />
@@ -132,7 +135,7 @@ export function ItemsActionBar({
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="h-8 gap-1.5 text-xs font-medium"
+                className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
               />
             }
           >
@@ -186,7 +189,7 @@ export function ItemsActionBar({
         <ActionBarItem
           variant="secondary"
           size="sm"
-          className="h-8 gap-1.5 text-xs font-medium"
+          className="h-11 justify-start gap-1.5 text-sm font-medium md:h-8 md:text-xs"
           onClick={() => onBulkArchive(selectedIds)}
         >
           <ArchiveIcon className="size-3.5" />
@@ -194,10 +197,10 @@ export function ItemsActionBar({
         </ActionBarItem>
       </ActionBarGroup>
 
-      <ActionBarSeparator />
+      <ActionBarSeparator className="hidden md:block" />
 
       <ActionBarClose
-        className="flex size-7 min-w-7 items-center justify-center rounded-md p-1 hover:bg-muted"
+        className="flex size-11 items-center justify-center rounded-md hover:bg-muted md:size-8"
         onClick={onClearSelection}
         aria-label={catalogWords.clearSelection}
       >

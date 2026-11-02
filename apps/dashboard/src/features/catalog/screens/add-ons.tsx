@@ -1,33 +1,30 @@
 import * as React from 'react';
 import {
+  BanIcon,
   ListPlusIcon,
+  MoreHorizontalIcon,
   PlusIcon,
   CopyIcon,
-  EditIcon,
+  PencilIcon,
   RefreshCwIcon,
   WifiOffIcon,
 } from 'lucide-react';
-import {
-  catalogWords,
-  groupRuleLabel,
-  errorWords,
-  type OwnerOptionGroup,
-  type OwnerItem,
-} from '@smartapp/core';
-import {
-  useOwnerOptionGroups,
-  useOwnerItems,
-  useSaveOptionGroup,
-  errorCodeOf,
-} from '@smartapp/data';
+import { catalogWords, groupRuleLabel, errorWords, type OwnerOptionGroup } from '@smartapp/core';
+import { useOwnerOptionGroups, useSaveOptionGroup, errorCodeOf } from '@smartapp/data';
 import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { Button } from '@smartapp/ui/components/button';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
-import { AvatarGroup } from '@smartapp/ui/components/avatar-group';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@smartapp/ui/components/dropdown-menu';
+import { notify } from '@smartapp/ui/compositions/notify';
+import { cn } from 'cn';
 import { useCatalogTabs } from '../tabs.js';
 import { AddOnSheet } from '../add-on-sheet.js';
 import { DevScenarioPanel } from '../dev-scenario-panel.js';
@@ -43,25 +40,20 @@ export function CatalogAddOnsScreen() {
     refetch: refetchGroups,
   } = useOwnerOptionGroups();
 
-  const { data: items = [] } = useOwnerItems();
   const saveGroup = useSaveOptionGroup();
 
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const [selectedGroup, setSelectedGroup] = React.useState<OwnerOptionGroup | null>(null);
+  const [highlightId, setHighlightId] = React.useState<string | null>(null);
 
-  // Map each option group to the items using it
-  const itemsUsingGroup = React.useMemo(() => {
-    const map = new Map<string, OwnerItem[]>();
-    for (const item of items) {
-      if (item.status === 'archived') continue;
-      for (const gid of item.optionGroupIds) {
-        const list = map.get(gid) ?? [];
-        list.push(item);
-        map.set(gid, list);
-      }
-    }
-    return map;
-  }, [items]);
+  React.useEffect(() => {
+    if (!highlightId) return;
+    document
+      .getElementById(`group-${highlightId}`)
+      ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const timer = window.setTimeout(() => setHighlightId(null), 2400);
+    return () => window.clearTimeout(timer);
+  }, [highlightId]);
 
   function handleOpenAdd() {
     setSelectedGroup(null);
@@ -73,19 +65,28 @@ export function CatalogAddOnsScreen() {
     setSheetOpen(true);
   }
 
-  function handleDuplicate(e: React.MouseEvent, group: OwnerOptionGroup) {
-    e.stopPropagation();
-    saveGroup.mutate({
-      name: `${group.name} (Copy)`,
-      min: group.min,
-      max: group.max,
-      options: group.options.map((opt) => ({
-        name: opt.name,
-        priceDelta: opt.priceDelta,
-        isDefault: opt.isDefault,
-        soldOut: opt.soldOut,
-      })),
-    });
+  async function handleDuplicate(group: OwnerOptionGroup) {
+    try {
+      const copy = await saveGroup.mutateAsync({
+        name: catalogWords.groupCopyName(group.name).slice(0, 40),
+        min: group.min,
+        max: group.max,
+        options: group.options.map((opt) => ({
+          name: opt.name,
+          priceDelta: opt.priceDelta,
+          isDefault: opt.isDefault,
+          soldOut: opt.soldOut,
+        })),
+      });
+      setHighlightId(copy.id);
+      notify({
+        title: catalogWords.groupCopied(group.name),
+        tone: 'success',
+        action: { label: catalogWords.edit, onClick: () => handleOpenEdit(copy) },
+      });
+    } catch (err: unknown) {
+      notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
+    }
   }
 
   return (
@@ -98,7 +99,7 @@ export function CatalogAddOnsScreen() {
             type="button"
             variant="default"
             size="sm"
-            className="h-9 rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+            className="h-11 rounded-xl font-semibold md:h-9"
             onClick={handleOpenAdd}
           >
             <PlusIcon className="mr-1.5 size-4" />
@@ -139,9 +140,7 @@ export function CatalogAddOnsScreen() {
               <ListPlusIcon className="size-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-semibold text-foreground">
-                Failed to load add-on groups
-              </h3>
+              <h3 className="text-base font-semibold text-foreground">{catalogWords.loadFailed}</h3>
               <p className="text-xs text-muted-foreground">
                 {errorWords(errorCodeOf(groupsError))}
               </p>
@@ -165,9 +164,7 @@ export function CatalogAddOnsScreen() {
               <h3 className="text-base font-semibold text-foreground">
                 {catalogWords.emptyAddOns}
               </h3>
-              <p className="text-xs text-muted-foreground">
-                Create options like toppings, sugar levels, or extras for your items.
-              </p>
+              <p className="text-xs text-muted-foreground">{catalogWords.addOnsHint}</p>
             </div>
             <Button
               size="sm"
@@ -182,12 +179,12 @@ export function CatalogAddOnsScreen() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {optionGroups.map((group) => {
               const ruleLabel = groupRuleLabel(group.min, group.max);
-              const usingItems = itemsUsingGroup.get(group.id) ?? [];
-              const usedByCount = group.usedBy ?? usingItems.length;
+              const usedByCount = group.usedBy;
 
               return (
                 <div
                   key={group.id}
+                  id={`group-${group.id}`}
                   role="button"
                   tabIndex={0}
                   onClick={() => handleOpenEdit(group)}
@@ -197,7 +194,10 @@ export function CatalogAddOnsScreen() {
                       handleOpenEdit(group);
                     }
                   }}
-                  className="group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-border/80 bg-card p-5 text-left shadow-xs transition-all duration-180 hover:border-primary/40 hover:shadow-sm"
+                  className={cn(
+                    'group relative flex cursor-pointer flex-col justify-between rounded-2xl border border-border/80 bg-card p-4 text-left shadow-xs transition-all duration-180 hover:border-primary/40 hover:shadow-sm md:p-5',
+                    highlightId === group.id && 'border-primary ring-2 ring-primary/30',
+                  )}
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
@@ -210,7 +210,7 @@ export function CatalogAddOnsScreen() {
                         </p>
                       </div>
 
-                      <Badge variant="outline" className="shrink-0 font-mono text-xs">
+                      <Badge variant="outline" className="shrink-0 tabular">
                         {catalogWords.optionCount(group.options.length)}
                       </Badge>
                     </div>
@@ -223,74 +223,57 @@ export function CatalogAddOnsScreen() {
                           className="inline-flex items-center rounded-md border border-border/40 bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground"
                         >
                           {opt.name}
-                          {opt.soldOut && (
-                            <span className="ml-1 text-xs font-bold text-warning-text uppercase">
-                              (Out)
+                          {opt.soldOut ? (
+                            <span className="ml-1 inline-flex items-center gap-0.5 text-warning-text">
+                              <BanIcon className="size-3" />
+                              {catalogWords.optionSoldOut}
                             </span>
-                          )}
+                          ) : null}
                         </span>
                       ))}
                       {group.options.length > 5 && (
                         <span className="inline-flex items-center rounded-md bg-muted/30 px-1.5 py-0.5 text-xs text-muted-foreground">
-                          +{group.options.length - 5} more
+                          {catalogWords.moreOptions(group.options.length - 5)}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-5 flex items-center justify-between gap-3 border-t border-border/50 pt-4">
-                    {/* Used By Thumbnails */}
-                    <div className="flex min-w-0 items-center gap-2">
-                      {usingItems.length > 0 ? (
-                        <div className="flex items-center gap-2">
-                          <AvatarGroup size={24} max={3}>
-                            {usingItems.map((item) => (
-                              <Avatar key={item.id} className="size-6 border border-background">
-                                <AvatarFallback className="text-xs font-bold">
-                                  {item.name.slice(0, 1)}
-                                </AvatarFallback>
-                              </Avatar>
-                            ))}
-                          </AvatarGroup>
-                          <span className="truncate font-mono text-xs text-muted-foreground">
-                            {catalogWords.usedByCount(usedByCount)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {catalogWords.usedByCount(0)}
-                        </span>
-                      )}
-                    </div>
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/50 pt-2">
+                    <span className="truncate text-sm text-muted-foreground">
+                      {usedByCount > 0
+                        ? catalogWords.usedByCount(usedByCount)
+                        : catalogWords.notUsedYet}
+                    </span>
 
-                    {/* Card Actions */}
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-muted-foreground hover:text-foreground"
-                        title={catalogWords.duplicate}
-                        aria-label={`Duplicate ${group.name}`}
-                        onClick={(e) => handleDuplicate(e, group)}
-                      >
-                        <CopyIcon className="size-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 text-muted-foreground hover:text-foreground"
-                        title={catalogWords.edit}
-                        aria-label={`Edit ${group.name}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenEdit(group);
-                        }}
-                      >
-                        <EditIcon className="size-3.5" />
-                      </Button>
-                    </div>
+                    <span className="contents" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-11 shrink-0 text-muted-foreground hover:text-foreground md:size-9"
+                              aria-label={catalogWords.groupActionsAria(group.name)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          }
+                        >
+                          <MoreHorizontalIcon className="size-5" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuItem onClick={() => handleOpenEdit(group)}>
+                            <PencilIcon className="size-4" />
+                            {catalogWords.edit}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => void handleDuplicate(group)}>
+                            <CopyIcon className="size-4" />
+                            {catalogWords.duplicate}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </span>
                   </div>
                 </div>
               );

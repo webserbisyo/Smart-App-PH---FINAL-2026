@@ -206,7 +206,9 @@ describe('options', () => {
       { variantId: nuggets.variants[0]?.id ?? '', optionIds: [] },
       now,
     );
-    expect(problems).toEqual([{ code: 'required_missing', groupId: 'ks-g-dip', groupName: 'Dip' }]);
+    expect(problems).toEqual([
+      { code: 'required_missing', groupId: 'ks-g-dip', groupName: 'Choose a dip' },
+    ]);
   });
 
   it('over max', () => {

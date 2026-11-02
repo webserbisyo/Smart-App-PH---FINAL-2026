@@ -9,14 +9,14 @@ import {
   WifiOffIcon,
   FolderIcon,
 } from 'lucide-react';
-import { catalogWords, iconPath, errorWords, type Category } from '@smartapp/core';
+import { catalogWords, errorWords, type Category } from '@smartapp/core';
 import { useOwnerCategories, useOwnerItems, useSaveSortOrder, errorCodeOf } from '@smartapp/data';
 import { useShop } from '@/app/shop';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { env } from '@/app/env';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { Button } from '@smartapp/ui/components/button';
-import { Badge } from '@smartapp/ui/components/badge';
+import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
 import { useCatalogTabs } from '../tabs.js';
@@ -80,7 +80,7 @@ export function CatalogCategoriesScreen() {
     if (!moved) return;
     reordered.splice(targetIndex, 0, moved);
 
-    setAnnouncement(`Moved ${cat.name} to position ${targetIndex + 1} of ${categories.length}`);
+    setAnnouncement(catalogWords.movedAnnouncement(cat.name, targetIndex + 1, categories.length));
     saveSortOrder.mutate({ kind: 'category', ids: reordered.map((c) => c.id) });
   }
 
@@ -96,7 +96,7 @@ export function CatalogCategoriesScreen() {
                 type="button"
                 variant={isReordering ? 'default' : 'outline'}
                 size="sm"
-                className="h-9 text-xs"
+                className="h-11 md:h-9"
                 onClick={() => setIsReordering(!isReordering)}
               >
                 {isReordering ? catalogWords.doneReordering : catalogWords.reorder}
@@ -106,7 +106,7 @@ export function CatalogCategoriesScreen() {
               type="button"
               variant="default"
               size="sm"
-              className="h-9 rounded-xl bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+              className="h-11 rounded-xl font-semibold md:h-9"
               onClick={handleOpenAdd}
             >
               <PlusIcon className="mr-1.5 size-4" />
@@ -116,11 +116,15 @@ export function CatalogCategoriesScreen() {
         }
       />
 
-      <div className="mx-auto w-full max-w-4xl flex-1 space-y-4 p-4 md:p-6">
+      <div className="mx-auto w-full max-w-3xl flex-1 space-y-4 p-4 md:p-6">
         {/* Screen Reader Announcement */}
         <div aria-live="polite" className="sr-only">
           {announcement}
         </div>
+
+        {categories.length > 0 ? (
+          <p className="text-sm text-muted-foreground">{catalogWords.categoriesHint}</p>
+        ) : null}
 
         {/* Offline Banner */}
         {!isOnline && (
@@ -155,7 +159,7 @@ export function CatalogCategoriesScreen() {
               <FolderIcon className="size-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-semibold text-foreground">Failed to load categories</h3>
+              <h3 className="text-base font-semibold text-foreground">{catalogWords.loadFailed}</h3>
               <p className="text-xs text-muted-foreground">{errorWords(errorCodeOf(catsError))}</p>
             </div>
             <Button
@@ -177,9 +181,7 @@ export function CatalogCategoriesScreen() {
               <h3 className="text-base font-semibold text-foreground">
                 {catalogWords.emptyCategories}
               </h3>
-              <p className="text-xs text-muted-foreground">
-                Organize dishes or merchandise into customer-facing sections.
-              </p>
+              <p className="text-xs text-muted-foreground">{catalogWords.categoriesHint}</p>
             </div>
             <Button
               size="sm"
@@ -195,25 +197,25 @@ export function CatalogCategoriesScreen() {
             <div className="space-y-2.5">
               {categories.map((cat, index) => {
                 const count = itemCounts.get(cat.id) ?? 0;
-                const iconSrc = `${env.VITE_STOREFRONT_URL.replace(/\/+$/, '')}${iconPath(cat.icon)}`;
 
                 return (
                   <SortableItem key={cat.id} value={cat.id}>
-                    <div className="flex items-center justify-between rounded-xl border border-border/80 bg-card p-3.5 shadow-xs transition-shadow hover:shadow-sm">
+                    <div className="flex items-center justify-between rounded-xl border border-border/80 bg-card p-3 shadow-xs transition-shadow hover:shadow-sm">
                       <div className="flex min-w-0 items-center gap-3">
                         <SortableItemHandle
                           className="cursor-grab rounded-md p-1.5 text-muted-foreground hover:bg-muted/50 hover:text-foreground active:cursor-grabbing"
-                          aria-label={`Drag to reorder ${cat.name}`}
+                          aria-label={catalogWords.reorder}
                         >
                           <GripVerticalIcon className="size-4" />
                         </SortableItemHandle>
 
                         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/50 bg-muted/30 p-1.5">
-                          <img
-                            src={iconSrc}
-                            alt=""
+                          <CategoryIcon
+                            icon={cat.icon}
+                            size={24}
+                            assetOrigin={env.VITE_STOREFRONT_URL}
                             className="pointer-events-none size-6 object-contain"
-                            loading="lazy"
+                            textClassName="text-xl leading-none"
                           />
                         </div>
 
@@ -221,7 +223,7 @@ export function CatalogCategoriesScreen() {
                           <p className="truncate text-sm font-semibold text-foreground">
                             {cat.name}
                           </p>
-                          <p className="font-mono text-xs text-muted-foreground">
+                          <p className="text-sm text-muted-foreground tabular">
                             {catalogWords.itemCount(count)}
                           </p>
                         </div>
@@ -232,9 +234,9 @@ export function CatalogCategoriesScreen() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="size-8 text-muted-foreground hover:text-foreground"
+                          className="size-11 text-muted-foreground hover:text-foreground md:size-9"
                           disabled={index === 0}
-                          aria-label={`Move ${cat.name} up`}
+                          aria-label={catalogWords.moveUp}
                           onClick={() => handleMove(cat, -1)}
                         >
                           <ChevronUpIcon className="size-4" />
@@ -243,9 +245,9 @@ export function CatalogCategoriesScreen() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="size-8 text-muted-foreground hover:text-foreground"
+                          className="size-11 text-muted-foreground hover:text-foreground md:size-9"
                           disabled={index === categories.length - 1}
-                          aria-label={`Move ${cat.name} down`}
+                          aria-label={catalogWords.moveDown}
                           onClick={() => handleMove(cat, 1)}
                         >
                           <ChevronDownIcon className="size-4" />
@@ -259,9 +261,8 @@ export function CatalogCategoriesScreen() {
           </Sortable>
         ) : (
           <div className="space-y-2.5">
-            {categories.map((cat, index) => {
+            {categories.map((cat) => {
               const count = itemCounts.get(cat.id) ?? 0;
-              const iconSrc = `${env.VITE_STOREFRONT_URL.replace(/\/+$/, '')}${iconPath(cat.icon)}`;
 
               return (
                 <div
@@ -276,17 +277,18 @@ export function CatalogCategoriesScreen() {
                     }
                   }}
                   className={cn(
-                    'group flex items-center justify-between rounded-xl border border-border/80 bg-card p-3.5 shadow-xs',
+                    'group flex items-center justify-between rounded-xl border border-border/80 bg-card p-3 shadow-xs',
                     'cursor-pointer text-left transition-all duration-180 select-none hover:border-primary/40 hover:shadow-sm',
                   )}
                 >
                   <div className="flex min-w-0 items-center gap-3.5">
                     <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/40 p-1.5 transition-transform group-hover:scale-105">
-                      <img
-                        src={iconSrc}
-                        alt=""
+                      <CategoryIcon
+                        icon={cat.icon}
+                        size={24}
+                        assetOrigin={env.VITE_STOREFRONT_URL}
                         className="pointer-events-none size-6 object-contain"
-                        loading="lazy"
+                        textClassName="text-xl leading-none"
                       />
                     </div>
 
@@ -294,16 +296,13 @@ export function CatalogCategoriesScreen() {
                       <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
                         {cat.name}
                       </p>
-                      <p className="font-mono text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground tabular">
                         {catalogWords.itemCount(count)}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="font-mono text-xs">
-                      #{index + 1}
-                    </Badge>
                     <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
                   </div>
                 </div>

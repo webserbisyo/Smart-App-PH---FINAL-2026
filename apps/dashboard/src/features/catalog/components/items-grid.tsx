@@ -1,173 +1,111 @@
 import * as React from 'react';
-import { UtensilsIcon } from 'lucide-react';
-import {
-  itemPriceLabel,
-  catalogWords,
-  imageUrl,
-  type OwnerItem,
-  type Category,
-} from '@smartapp/core';
-import { env } from '@/app/env';
+import { itemPriceLabel, catalogWords, type OwnerItem, type Category } from '@smartapp/core';
 import { AspectRatio } from '@smartapp/ui/components/aspect-ratio';
-import { Badge } from '@smartapp/ui/components/badge';
 import { Checkbox } from '@smartapp/ui/components/checkbox';
-import { ItemActionGroup } from './item-action-group.js';
+import { CatalogPhoto } from '../catalog-photo.js';
+import { ItemStatusBadges, LabeledSwitch } from '../item-row.js';
+import { ItemMenu } from './item-menu.js';
+import { isItemSoldOut, type ItemActions } from './item-actions.js';
 import { cn } from 'cn';
 
 export interface ItemsGridProps {
   items: OwnerItem[];
   categories: Category[];
+  actions: ItemActions;
+  selecting: boolean;
   selectedIds: string[];
   onToggleSelect: (id: string) => void;
-  onEdit: (item: OwnerItem) => void;
-  onDuplicate: (item: OwnerItem) => void;
-  onToggleStatus: (item: OwnerItem) => void;
-  onSetSoldOut: (item: OwnerItem) => void;
-  onArchive: (item: OwnerItem) => void;
-  onDelete: (item: OwnerItem) => void;
 }
 
 export function ItemsGrid({
   items,
   categories,
+  actions,
+  selecting,
   selectedIds,
   onToggleSelect,
-  onEdit,
-  onDuplicate,
-  onToggleStatus,
-  onSetSoldOut,
-  onArchive,
-  onDelete,
 }: ItemsGridProps) {
-  const categoryMap = React.useMemo(() => {
-    return new Map(categories.map((c) => [c.id, c]));
-  }, [categories]);
-
+  const categoryMap = React.useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const selectedSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-4">
       {items.map((item) => {
         const isSelected = selectedSet.has(item.id);
-        const isSoldOut = item.variants.every((v) => v.availability === 'sold_out');
-        const isHidden = item.status === 'hidden';
+        const soldOut = isItemSoldOut(item);
         const category = categoryMap.get(item.categoryId);
-        const photoRef = item.photos[0];
-
-        const photoSrc = photoRef
-          ? photoRef.startsWith('blob:') ||
-            photoRef.startsWith('data:') ||
-            photoRef.startsWith('http://') ||
-            photoRef.startsWith('https://')
-            ? photoRef
-            : imageUrl(photoRef, 512, env.VITE_STOREFRONT_URL)
-          : null;
+        const open = () => (selecting ? onToggleSelect(item.id) : actions.edit(item));
 
         return (
           <div
             key={item.id}
-            onClick={() => onEdit(item)}
+            role="button"
+            tabIndex={0}
+            onClick={open}
+            onKeyDown={(e) => {
+              if (e.target !== e.currentTarget) return;
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                open();
+              }
+            }}
             className={cn(
-              'group relative flex cursor-pointer flex-col justify-between overflow-hidden rounded-xl border bg-card p-2.5 transition-all duration-180 sm:p-3',
-              isSoldOut && 'opacity-65',
+              'group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border bg-card transition-all duration-180',
               isSelected
-                ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                ? 'border-primary ring-2 ring-primary/20'
                 : 'border-border/80 hover:border-primary/40 hover:shadow-xs',
             )}
           >
-            {/* Selection checkbox */}
-            <div
-              className={cn(
-                'absolute top-4 left-4 z-20 transition-opacity',
-                isSelected || selectedIds.length > 0
-                  ? 'opacity-100'
-                  : 'opacity-0 group-hover:opacity-100',
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleSelect(item.id);
-              }}
-            >
-              <Checkbox
-                checked={isSelected}
-                onCheckedChange={() => onToggleSelect(item.id)}
-                className="size-4 bg-background/90 backdrop-blur-xs"
-                aria-label={`Select ${item.name}`}
-              />
-            </div>
-
-            {/* Top: 4:3 Photo */}
-            <div className="relative overflow-hidden rounded-lg bg-muted/60">
+            <div className="relative bg-muted/60">
               <AspectRatio ratio={4 / 3} className="overflow-hidden">
-                {photoSrc ? (
-                  <img
-                    src={photoSrc}
-                    alt={item.name}
-                    loading="lazy"
-                    className="size-full object-cover transition-transform duration-180 group-hover:scale-105 motion-reduce:transform-none"
-                  />
-                ) : (
-                  <div
-                    className="flex size-full items-center justify-center bg-muted text-muted-foreground"
-                    aria-hidden="true"
-                  >
-                    <UtensilsIcon className="size-8" />
-                  </div>
-                )}
+                <CatalogPhoto
+                  photoRef={item.photos[0] ?? null}
+                  alt=""
+                  size="lg"
+                  className={cn('size-full rounded-none', soldOut && 'grayscale')}
+                />
               </AspectRatio>
-
-              {/* Status badges overlaid on photo */}
-              <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
-                {isSoldOut && (
-                  <Badge
-                    variant="destructive"
-                    className="px-1.5 py-0 text-xs font-semibold shadow-xs"
-                  >
-                    {catalogWords.statSoldOut}
-                  </Badge>
-                )}
-                {isHidden && (
-                  <Badge variant="secondary" className="px-1.5 py-0 text-xs font-medium shadow-xs">
-                    {catalogWords.statHidden}
-                  </Badge>
-                )}
-                {item.sample && (
-                  <Badge
-                    variant="outline"
-                    className="bg-card/80 px-1.5 py-0 text-xs font-medium shadow-xs"
-                  >
-                    {catalogWords.sampleBadge}
-                  </Badge>
-                )}
+              {selecting ? (
+                <div className="absolute top-2 left-2 z-10 flex size-11 items-center justify-center rounded-xl bg-background/90">
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => onToggleSelect(item.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={catalogWords.selectItemAria(item.name)}
+                    className="size-5"
+                  />
+                </div>
+              ) : null}
+              <div className="absolute top-2 right-2 z-10 rounded-xl bg-background/90">
+                <ItemMenu item={item} actions={actions} />
+              </div>
+              <div className="absolute bottom-2 left-2 z-10 flex flex-wrap gap-1 empty:hidden">
+                <ItemStatusBadges item={item} />
               </div>
             </div>
 
-            {/* Middle: Details */}
-            <div className="flex flex-col gap-1 pt-2.5 pb-2">
-              <span className="line-clamp-1 text-sm leading-snug font-semibold transition-colors group-hover:text-primary">
-                {item.name}
-              </span>
-              <div className="flex items-center justify-between gap-1 text-xs text-muted-foreground">
-                <span className="truncate">{category?.name ?? catalogWords.categoryGeneral}</span>
-                <span className="text-sm font-bold text-foreground tabular">
+            <div className="flex flex-1 flex-col gap-1 p-3">
+              <p className="line-clamp-2 text-sm font-semibold text-foreground">{item.name}</p>
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="truncate text-muted-foreground">
+                  {category?.name ?? catalogWords.categoryGeneral}
+                </span>
+                <span className="shrink-0 font-semibold text-foreground tabular">
                   {itemPriceLabel(item)}
                 </span>
               </div>
             </div>
 
-            {/* Bottom: Action strip */}
-            <div
-              className="flex items-center justify-between border-t border-border/40 pt-1"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ItemActionGroup
-                item={item}
-                onEdit={onEdit}
-                onDuplicate={onDuplicate}
-                onToggleStatus={onToggleStatus}
-                onSetSoldOut={onSetSoldOut}
-                onArchive={onArchive}
-                onDelete={onDelete}
+            <div className="flex flex-wrap items-center gap-x-4 border-t border-border/60 px-3">
+              <LabeledSwitch
+                label={catalogWords.visibleSwitch}
+                checked={item.status !== 'hidden'}
+                onCheckedChange={(checked) => actions.setVisible(item, checked)}
+              />
+              <LabeledSwitch
+                label={catalogWords.soldOutSwitch}
+                checked={soldOut}
+                onCheckedChange={(checked) => actions.setSoldOut(item, checked)}
               />
             </div>
           </div>

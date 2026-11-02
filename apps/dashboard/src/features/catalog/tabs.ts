@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { catalogWords } from '@smartapp/core';
 import type { NavItem } from '@smartapp/ui/lib/nav';
 import { usePathTabs, type PathTab } from '@/app/tabs';
@@ -11,3 +12,8 @@ const CATALOG_TABS: readonly PathTab[] = [
 export function useCatalogTabs(): NavItem[] {
   return usePathTabs(CATALOG_TABS);
 }
+
+// /catalog/new?from=<item id> opens the editor as an unsaved copy of that item (Duplicate).
+export const NewItemSearchSchema = z.object({
+  from: z.string().min(1).max(64).optional().catch(undefined),
+});

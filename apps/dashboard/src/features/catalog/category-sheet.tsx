@@ -12,13 +12,10 @@ import { CategoryIcon } from '@smartapp/ui/compositions/category-icon';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@smartapp/ui/components/sheet';
+  ResponsiveDialog,
+  ResponsiveDialogFooter,
+} from '@smartapp/ui/compositions/responsive-dialog';
+import { notify } from '@smartapp/ui/compositions/notify';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,35 +33,47 @@ export interface CategorySheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   category?: Category | null | undefined;
+  // Called with the saved category, e.g. so the item editor can pick a category it just made.
+  onSaved?: ((category: Category) => void) | undefined;
 }
 
-export function CategorySheet({ open, onOpenChange, category }: CategorySheetProps) {
+// Category form: a dialog on tablet and desktop, a bottom drawer on phone.
+export function CategorySheet({ open, onOpenChange, category, onSaved }: CategorySheetProps) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={category ? catalogWords.editCategory : catalogWords.addCategory}
+      description={catalogWords.categorySheetDesc}
+      scroll
+    >
       {open ? (
-        <CategorySheetForm
+        <CategoryForm
           key={category ? category.id : 'new'}
           category={category}
+          onSaved={onSaved}
           onClose={() => onOpenChange(false)}
         />
       ) : null}
-    </Sheet>
+    </ResponsiveDialog>
   );
 }
 
-function CategorySheetForm({
+function CategoryForm({
   category,
+  onSaved,
   onClose,
 }: {
   category?: Category | null | undefined;
+  onSaved?: ((category: Category) => void) | undefined;
   onClose: () => void;
 }) {
   const [name, setName] = React.useState(category?.name ?? '');
   const [selectedIcon, setSelectedIcon] = React.useState<CategoryIconType>(() => {
-    if (!category?.icon) return { kind: 'fluent', key: 'burger', style: 'flat' };
+    if (!category?.icon) return { kind: 'fluent', key: 'other', style: 'flat' };
     if (typeof category.icon === 'string') {
       const parsed = IconKeyEnum.safeParse(category.icon);
-      return { kind: 'fluent', key: parsed.success ? parsed.data : 'burger', style: 'flat' };
+      return { kind: 'fluent', key: parsed.success ? parsed.data : 'other', style: 'flat' };
     }
     return category.icon;
   });
@@ -79,23 +88,17 @@ function CategorySheetForm({
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
-      setErrorMsg('Category name cannot be empty.');
+      setErrorMsg(catalogWords.categoryNameRequired);
       return;
     }
-
     try {
-      if (category) {
-        await saveCategory.mutateAsync({
-          id: category.id,
-          name: trimmed,
-          icon: selectedIcon,
-        });
-      } else {
-        await saveCategory.mutateAsync({
-          name: trimmed,
-          icon: selectedIcon,
-        });
-      }
+      const saved = await saveCategory.mutateAsync(
+        category
+          ? { id: category.id, name: trimmed, icon: selectedIcon }
+          : { name: trimmed, icon: selectedIcon },
+      );
+      notify({ title: catalogWords.savedToast(saved.name), tone: 'success' });
+      onSaved?.(saved);
       onClose();
     } catch (err: unknown) {
       setErrorMsg(errorWords(errorCodeOf(err)));
@@ -114,113 +117,103 @@ function CategorySheetForm({
     }
   };
 
+  const iconName =
+    selectedIcon.kind === 'fluent'
+      ? catalogWords.fluentIconLabel(
+          selectedIcon.key,
+          {
+            flat: catalogWords.styleFlat,
+            color: catalogWords.styleColor,
+            '3d': catalogWords.style3d,
+          }[selectedIcon.style],
+        )
+      : selectedIcon.kind === 'emoji'
+        ? catalogWords.emojiLabel(selectedIcon.char)
+        : catalogWords.customImage;
+
   return (
-    <>
-      <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>{category ? catalogWords.editCategory : catalogWords.addCategory}</SheetTitle>
-          <SheetDescription>{catalogWords.categorySheetDesc}</SheetDescription>
-        </SheetHeader>
+    <form onSubmit={handleSave} className="space-y-5">
+      {errorMsg ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"
+        >
+          {errorMsg}
+        </p>
+      ) : null}
 
-        <form onSubmit={handleSave} className="flex flex-1 flex-col justify-between space-y-6 px-4">
-          <div className="space-y-5">
-            {errorMsg && (
-              <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-2.5 text-xs text-destructive">
-                {errorMsg}
-              </div>
-            )}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="category-name">{catalogWords.categoryNameLabel}</Label>
+          <span className="text-xs text-muted-foreground tabular">
+            {catalogWords.charCount(name.length, 40)}
+          </span>
+        </div>
+        <Input
+          id="category-name"
+          value={name}
+          maxLength={40}
+          className="h-11 md:h-9"
+          placeholder={catalogWords.categoryNamePlaceholder}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
 
-            {/* Name */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="category-name">{catalogWords.categoryNameLabel}</Label>
-                <span className="font-mono text-xs text-muted-foreground">{name.length}/40</span>
-              </div>
-              <Input
-                id="category-name"
-                value={name}
-                maxLength={40}
-                placeholder={catalogWords.categoryNamePlaceholder}
-                onChange={(e) => setName(e.target.value)}
-                autoFocus
-              />
-            </div>
+      <div className="space-y-1.5">
+        <Label>{catalogWords.categoryIconLabel}</Label>
+        <button
+          type="button"
+          onClick={() => setIconDialogOpen(true)}
+          className="flex w-full items-center gap-3 rounded-xl border border-border/80 bg-muted/20 p-3 text-left transition-colors hover:border-primary/40 hover:bg-muted/40"
+        >
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-card shadow-xs">
+            <CategoryIcon
+              icon={selectedIcon}
+              size={32}
+              assetOrigin={env.VITE_STOREFRONT_URL}
+              className="size-8 object-contain"
+              textClassName="text-3xl"
+            />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="truncate text-sm font-semibold text-foreground capitalize">
+              {iconName}
+            </span>
+            <span className="text-sm text-primary">{catalogWords.changeIcon}</span>
+          </span>
+        </button>
+      </div>
 
-            {/* Icon Picker */}
-            <div className="space-y-2">
-              <Label>{catalogWords.categoryIconLabel}</Label>
-              <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-muted/20 p-3">
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-border/80 bg-card shadow-xs">
-                  <CategoryIcon
-                    icon={selectedIcon}
-                    size={32}
-                    assetOrigin={env.VITE_STOREFRONT_URL}
-                    className="size-8 object-contain"
-                  />
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <span className="truncate text-xs font-semibold text-foreground">
-                    {selectedIcon.kind === 'fluent'
-                      ? catalogWords.fluentIconLabel(
-                          selectedIcon.key,
-                          {
-                            flat: catalogWords.styleFlat,
-                            color: catalogWords.styleColor,
-                            '3d': catalogWords.style3d,
-                          }[selectedIcon.style],
-                        )
-                      : selectedIcon.kind === 'emoji'
-                        ? catalogWords.emojiLabel(selectedIcon.char)
-                        : catalogWords.customImage}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-fit text-xs font-medium"
-                    onClick={() => setIconDialogOpen(true)}
-                  >
-                    {catalogWords.iconDialogTitle}
-                  </Button>
-                </div>
-              </div>
-            </div>
+      <ResponsiveDialogFooter>
+        <div className="flex items-center justify-between gap-2">
+          {category ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-11 text-destructive hover:bg-destructive/10 hover:text-destructive md:h-9"
+              disabled={removeCategory.isPending}
+              onClick={() => setDeleteConfirmOpen(true)}
+            >
+              {catalogWords.delete}
+            </Button>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" className="h-11 md:h-9" onClick={onClose}>
+              {catalogWords.cancel}
+            </Button>
+            <Button
+              type="submit"
+              disabled={saveCategory.isPending}
+              className="h-11 min-w-24 font-semibold md:h-9"
+            >
+              {saveCategory.isPending ? catalogWords.saving : catalogWords.save}
+            </Button>
           </div>
+        </div>
+      </ResponsiveDialogFooter>
 
-          <SheetFooter className="-mx-4 flex flex-row items-center justify-between gap-2 border-t border-border pt-4">
-            {category ? (
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                className="text-xs font-semibold"
-                disabled={removeCategory.isPending}
-                onClick={() => setDeleteConfirmOpen(true)}
-              >
-                {catalogWords.delete}
-              </Button>
-            ) : (
-              <span />
-            )}
-
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={onClose}>
-                {catalogWords.cancel}
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={saveCategory.isPending}
-                className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                {saveCategory.isPending ? catalogWords.saving : catalogWords.save}
-              </Button>
-            </div>
-          </SheetFooter>
-        </form>
-      </SheetContent>
-
-      {/* Delete Confirmation Alert Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -239,13 +232,12 @@ function CategorySheetForm({
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Category Icon Dialog */}
       <CategoryIconDialog
         open={iconDialogOpen}
         onOpenChange={setIconDialogOpen}
         selectedIcon={selectedIcon}
         onSelect={setSelectedIcon}
       />
-    </>
+    </form>
   );
 }

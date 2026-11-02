@@ -37,13 +37,13 @@ const optionGroups = [
     { name: 'Calamansi juice', price: 10 },
     { name: 'Soda in can', price: 10 },
   ]),
-  group(P, 'dip', 'Dip', 1, 1, [
+  group(P, 'dip', 'Choose a dip', 1, 1, [
     { name: 'BBQ' },
     { name: 'Honey mustard' },
     { name: 'Sweet chili' },
     { name: 'Garlic aioli' },
   ]),
-  group(P, 'dip-bucket', 'Dips', 1, 4, [
+  group(P, 'dip-bucket', 'Bucket dips', 1, 4, [
     { name: 'BBQ' },
     { name: 'Honey mustard' },
     { name: 'Sweet chili' },
