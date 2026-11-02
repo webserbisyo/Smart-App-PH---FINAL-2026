@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { Variant, VariantAxis } from '../src/index.js';
 import {
   buildVersions,
-  computedPrice,
   isSamePrice,
   optionSoldOutState,
   priceRange,

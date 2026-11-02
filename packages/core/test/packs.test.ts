@@ -169,7 +169,7 @@ describe('test shops', () => {
   it('test-stress pushes every limit', () => {
     const { storefront, catalog } = TEST_SHOP_PACKS['test-stress'];
     expect(storefront.info.name).toHaveLength(60);
-    expect(catalog.items).toHaveLength(60);
+    expect(catalog.items).toHaveLength(61);
     expect(catalog.categories).toHaveLength(8);
     expect(catalog.items.some((i) => i.name.length > 40)).toBe(true);
     expect(catalog.items.some((i) => i.variants.some((v) => v.price === 1234550))).toBe(true);

@@ -138,40 +138,12 @@ function stressSpecs(): ItemSpec[] {
       ...(cat === 'sold-out' ? { availability: () => 'sold_out' as const } : {}),
     });
   }
-  // Exactly 30 combinations (5 × 3 × 2), base ₱12,345.50, one choice with price changes,
-  // one linked and one custom choice, one special price and one sold-out combination.
+  // A big amount that must still fit: ₱12,345.50.
   specs[1] = {
     key: 'item-2',
     category: 'tops',
-    name: 'Made-to-measure Barong Tagalog in Thirty Choices',
+    name: 'Made-to-measure Barong Tagalog',
     price: 12345.5,
-    axes: [
-      {
-        name: 'Portion',
-        values: [
-          'Small',
-          { name: 'Medium', price: 100 },
-          { name: 'Large', price: 200 },
-          { name: 'XL', price: 300 },
-          { name: 'XXL', price: 400 },
-        ],
-      },
-      {
-        name: 'Patty',
-        template: 'patty',
-        values: ['Single', 'Double', 'Triple'],
-      },
-      {
-        name: 'Packaging',
-        values: ['Standard', 'Gift Box'],
-      },
-    ],
-    special: (values) =>
-      values[0] === 'XXL' && values[1] === 'Triple' && values[2] === 'Gift Box' ? 20000 : null,
-    availability: (values) =>
-      values[0] === 'Small' && values[1] === 'Single' && values[2] === 'Standard'
-        ? 'sold_out'
-        : 'available',
   };
   // 30 variants: 6 sizes × 5 colours.
   specs[2] = {
@@ -185,6 +157,34 @@ function stressSpecs(): ItemSpec[] {
     price: 450,
     groups: ['ten'],
   };
+  // Exactly 30 combinations (5 × 3 × 2), base ₱12,345.50, one choice with price changes,
+  // one linked and one custom choice, one special price and one sold-out combination (T46).
+  specs.push({
+    key: 'item-combos',
+    category: 'tops',
+    name: 'Made-to-measure Barong in Thirty Versions',
+    price: 12345.5,
+    axes: [
+      {
+        name: 'Portion',
+        values: [
+          'Small',
+          { name: 'Medium', price: 100 },
+          { name: 'Large', price: 200 },
+          { name: 'XL', price: 300 },
+          { name: 'XXL', price: 400 },
+        ],
+      },
+      { name: 'Patty', template: 'patty', values: ['Single', 'Double', 'Triple'] },
+      { name: 'Packaging', values: ['Standard', 'Gift Box'] },
+    ],
+    special: (values) =>
+      values[0] === 'XXL' && values[1] === 'Triple' && values[2] === 'Gift Box' ? 20000 : null,
+    availability: (values) =>
+      values[0] === 'Small' && values[1] === 'Single' && values[2] === 'Standard'
+        ? 'sold_out'
+        : 'available',
+  });
   return specs;
 }
 

@@ -25,6 +25,7 @@ import type {
   PublicShop,
   Quote,
   RewardClaim,
+  RemoveVariantTemplateResult,
   SaveVariantTemplateInput,
   SaveVariantTemplateResult,
   SendCodeResult,
@@ -146,7 +147,7 @@ export interface OwnerCatalogAdapter {
   removeOptionGroup(input: { id: string }): Promise<void>;
   listVariantTemplates(): Promise<OwnerVariantTemplate[]>;
   saveVariantTemplate(input: SaveVariantTemplateInput): Promise<SaveVariantTemplateResult>;
-  removeVariantTemplate(input: { id: string }): Promise<void>;
+  removeVariantTemplate(input: { id: string }): Promise<RemoveVariantTemplateResult>;
   saveSortOrder(input: SortOrderInput): Promise<void>;
   createUploadUrl(input: { kind: UploadKind }): Promise<UploadResult>;
 }

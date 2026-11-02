@@ -1,33 +1,30 @@
 import * as React from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { ChevronRightIcon, CircleAlertIcon, GripVerticalIcon, XIcon } from 'lucide-react';
 import {
-  AlertTriangleIcon,
-  CheckIcon,
-  GripVerticalIcon,
-  PlusIcon,
-  SparklesIcon,
-  Trash2Icon,
-  XIcon,
-} from 'lucide-react';
-import {
+  actionWords,
   catalogWords,
   errorWords,
-  FOOD_DEFAULT_TEMPLATES,
-  RETAIL_DEFAULT_TEMPLATES,
+  templateChanges,
+  VARIANT_DEFAULTS,
   VARIANT_LIMITS,
-  type OwnerItem,
   type OwnerVariantTemplate,
-  type VariantTemplateOption,
+  type SaveVariantTemplateResult,
+  type VariantTemplateDraft,
 } from '@smartapp/core';
-import { useOwnerItems, useSaveVariantTemplate, useSaveItem, errorCodeOf } from '@smartapp/data';
+import {
+  errorCodeOf,
+  useOwnerItems,
+  useOwnerVariantTemplates,
+  useRemoveVariantTemplate,
+  useSaveVariantTemplate,
+} from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
-import { Badge } from '@smartapp/ui/components/badge';
 import { FieldError } from '@smartapp/ui/components/field';
-import {
-  ResponsiveDialog,
-  ResponsiveDialogFooter,
-} from '@smartapp/ui/compositions/responsive-dialog';
+import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from '@smartapp/ui/components/item';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@smartapp/ui/components/tooltip';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -38,93 +35,122 @@ import {
   AlertDialogTitle,
 } from '@smartapp/ui/components/alert-dialog';
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
+import {
+  ResponsiveDialog,
+  ResponsiveDialogFooter,
+} from '@smartapp/ui/compositions/responsive-dialog';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
+import { Notice } from '@/app/notice';
 import { useShop } from '@/app/shop';
-import { SearchField } from '@/app/search-field';
-import { PickRow } from './pick-list.js';
-import { cn } from 'cn';
+import { useOnlineStatus } from '@/app/use-online-status';
+import { CatalogPhoto } from './catalog-photo.js';
+
+// What a save did, so the item editor can make the same change to its unsaved form.
+export interface VariantSaved {
+  result: SaveVariantTemplateResult;
+  before: OwnerVariantTemplate | null;
+  draft: VariantTemplateDraft;
+  applyToItems: boolean;
+}
 
 export interface VariantTemplateSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  template?: OwnerVariantTemplate | null | undefined;
-  onSaved?: ((template: OwnerVariantTemplate) => void) | undefined;
+  // null opens a new variant.
+  template: OwnerVariantTemplate | null;
+  // Fills a new variant, e.g. "Save as variant" from an item.
+  initial?: { name: string; options: readonly string[] } | undefined;
+  onSaved?: ((saved: VariantSaved) => void) | undefined;
+  onDeleted?: ((template: OwnerVariantTemplate) => void) | undefined;
 }
 
 interface DraftOption {
-  id: string;
+  key: string;
+  // The saved option's id; a new option has none.
+  id: string | null;
   name: string;
 }
 
-let optSeq = 0;
-function newDraftOption(name = ''): DraftOption {
-  optSeq += 1;
-  return { id: `opt_draft_${Date.now()}_${optSeq}`, name };
+let optionSeq = 0;
+function draftOption(name: string, id: string | null = null): DraftOption {
+  optionSeq += 1;
+  return { key: id ?? `new-${optionSeq}`, id, name };
 }
 
+const USED_ON_SHOWN = 5;
+
+// Variant form (decision T46): a dialog on desktop, a bottom drawer on phone, built like the add-on sheet.
 export function VariantTemplateSheet({
   open,
   onOpenChange,
   template,
+  initial,
   onSaved,
+  onDeleted,
 }: VariantTemplateSheetProps) {
-  const [confirmDiscardOpen, setConfirmDiscardOpen] = React.useState(false);
-  const isDirtyRef = React.useRef(false);
+  const dirty = React.useRef(false);
+  const [leaveOpen, setLeaveOpen] = React.useState(false);
 
-  function handleRequestClose() {
-    if (isDirtyRef.current) {
-      setConfirmDiscardOpen(true);
-    } else {
-      onOpenChange(false);
-    }
-  }
+  const close = () => {
+    dirty.current = false;
+    onOpenChange(false);
+  };
 
   return (
     <>
       <ResponsiveDialog
         open={open}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) {
-            handleRequestClose();
-          } else {
-            onOpenChange(true);
-          }
+        onOpenChange={(next) => {
+          if (next) onOpenChange(true);
+          else if (dirty.current) setLeaveOpen(true);
+          else close();
         }}
-        title={template ? catalogWords.editVariant : catalogWords.addVariant}
-        description={catalogWords.variantsSubtitle}
+        title={template ? catalogWords.editVariantTitle : catalogWords.newVariantTitle}
+        description={catalogWords.variantSheetDesc}
         scroll
       >
         {open ? (
-          <VariantTemplateForm
-            key={template ? template.id : 'new'}
+          <VariantForm
+            key={template?.id ?? 'new'}
             template={template}
-            onSaved={onSaved}
-            onClose={() => onOpenChange(false)}
-            onDirtyChange={(dirty) => {
-              isDirtyRef.current = dirty;
+            initial={initial}
+            onDirty={(value) => {
+              dirty.current = value;
             }}
+            onSaved={(saved) => {
+              onSaved?.(saved);
+              close();
+            }}
+            onDeleted={(deleted) => {
+              onDeleted?.(deleted);
+              close();
+            }}
+            onCancel={() => (dirty.current ? setLeaveOpen(true) : close())}
           />
         ) : null}
       </ResponsiveDialog>
 
-      <AlertDialog open={confirmDiscardOpen} onOpenChange={setConfirmDiscardOpen}>
+      <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{catalogWords.unsavedChangesTitle}</AlertDialogTitle>
-            <AlertDialogDescription>{catalogWords.unsavedChangesDesc}</AlertDialogDescription>
+            <AlertDialogTitle>{catalogWords.leaveTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{catalogWords.leaveDescription}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{catalogWords.keepEditing}</AlertDialogCancel>
+            <AlertDialogCancel className="h-11 md:h-9">
+              {catalogWords.keepEditing}
+            </AlertDialogCancel>
             <Button
+              type="button"
               variant="destructive"
+              className="h-11 md:h-9"
               onClick={() => {
-                setConfirmDiscardOpen(false);
-                isDirtyRef.current = false;
-                onOpenChange(false);
+                setLeaveOpen(false);
+                close();
               }}
             >
-              {catalogWords.discard}
+              {catalogWords.discardChanges}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -133,493 +159,547 @@ export function VariantTemplateSheet({
   );
 }
 
-function VariantTemplateForm({
+function VariantForm({
   template,
+  initial,
+  onDirty,
   onSaved,
-  onClose,
-  onDirtyChange,
+  onDeleted,
+  onCancel,
 }: {
-  template?: OwnerVariantTemplate | null | undefined;
-  onSaved?: ((template: OwnerVariantTemplate) => void) | undefined;
-  onClose: () => void;
-  onDirtyChange: (dirty: boolean) => void;
+  template: OwnerVariantTemplate | null;
+  initial: { name: string; options: readonly string[] } | undefined;
+  onDirty: (dirty: boolean) => void;
+  onSaved: (saved: VariantSaved) => void;
+  onDeleted: (template: OwnerVariantTemplate) => void;
+  onCancel: () => void;
 }) {
   const { kind } = useShop();
-  const [name, setName] = React.useState(template?.name ?? '');
-  const [options, setOptions] = React.useState<DraftOption[]>(() => {
-    if (template && template.options.length > 0) {
-      return template.options.map((o) => ({ id: o.id, name: o.name }));
-    }
-    return [newDraftOption(), newDraftOption()];
-  });
-  const [newOptionInput, setNewOptionInput] = React.useState('');
-  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
-
-  // For existing templates with usedBy > 0, saving with changes prompts update-items dialog
-  const [showApplyConfirm, setShowApplyConfirm] = React.useState(false);
-  const saveVariant = useSaveVariantTemplate();
-  const saveAction = useAsyncAction();
-
-  // Linked items
+  const isOnline = useOnlineStatus();
+  const navigate = useNavigate();
+  const { data: templates = [] } = useOwnerVariantTemplates();
   const { data: allItems = [] } = useOwnerItems();
-  const activeItems = React.useMemo(
-    () => allItems.filter((i) => i.status !== 'archived'),
-    [allItems],
-  );
+  const saveTemplate = useSaveVariantTemplate();
+  const removeTemplate = useRemoveVariantTemplate();
+  const saveAction = useAsyncAction();
+  const keepAction = useAsyncAction();
+  const deleteAction = useAsyncAction();
 
-  // Which items currently link this template
-  const initialUsedOnIds = React.useMemo(() => {
-    if (!template) return [];
-    return activeItems
-      .filter((item) => item.axes.some((axis) => axis.templateId === template.id))
-      .map((item) => item.id);
-  }, [activeItems, template]);
+  const startName = template?.name ?? initial?.name ?? '';
+  const startOptions = template
+    ? template.options.map((o) => draftOption(o.name, o.id))
+    : (initial?.options ?? []).map((name) => draftOption(name));
+  const [name, setName] = React.useState(startName);
+  const [options, setOptions] = React.useState<DraftOption[]>(startOptions);
+  const [newOption, setNewOption] = React.useState('');
+  const [nameError, setNameError] = React.useState<string | null>(null);
+  const [optionError, setOptionError] = React.useState<string | null>(null);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
 
-  const [usedOn, setUsedOn] = React.useState<string[]>(initialUsedOnIds);
-  const [itemSearch, setItemSearch] = React.useState('');
+  const isDirty =
+    name !== startName ||
+    options.map((o) => `${o.id}:${o.name}`).join('|') !==
+      startOptions.map((o) => `${o.id}:${o.name}`).join('|');
+  React.useEffect(() => onDirty(isDirty), [isDirty, onDirty]);
 
-  const saveItemMutation = useSaveItem();
+  const usedOn = template
+    ? allItems.filter(
+        (item) => item.status !== 'archived' && item.axes.some((a) => a.templateId === template.id),
+      )
+    : [];
 
-  // Quick start suggestions for templates
-  const defaultSpecs = kind === 'retail' ? RETAIL_DEFAULT_TEMPLATES : FOOD_DEFAULT_TEMPLATES;
+  // Quick start: the shop type's defaults that the shop no longer has.
+  const suggestions = template
+    ? []
+    : VARIANT_DEFAULTS[kind].filter(
+        (d) =>
+          !templates.some(
+            (t) => t.name === d.name && t.options.map((o) => o.name).join() === d.options.join(),
+          ),
+      );
 
-  // Track dirtiness
-  const isDirty = React.useMemo(() => {
-    if (!template) {
-      return name.trim().length > 0 || options.some((o) => o.name.trim().length > 0);
-    }
-    if (name !== template.name) return true;
-    if (options.length !== template.options.length) return true;
-    for (let i = 0; i < options.length; i++) {
-      if (options[i]?.name !== template.options[i]?.name) return true;
-    }
-    // Also check if usedOn changed
-    const usedOnSet = new Set(usedOn);
-    const initialSet = new Set(initialUsedOnIds);
-    if (usedOnSet.size !== initialSet.size) return true;
-    for (const id of usedOnSet) {
-      if (!initialSet.has(id)) return true;
-    }
-    return false;
-  }, [template, name, options, usedOn, initialUsedOnIds]);
+  const optionProblem = (text: string, exceptKey?: string): string | null => {
+    if (!text) return catalogWords.optionNameRequired;
+    if (text.length > VARIANT_LIMITS.valueLength) return catalogWords.optionTooLong;
+    if (
+      options.some((o) => o.key !== exceptKey && o.name.trim().toLowerCase() === text.toLowerCase())
+    )
+      return catalogWords.optionExists;
+    return null;
+  };
 
-  React.useEffect(() => {
-    onDirtyChange(isDirty);
-  }, [isDirty, onDirtyChange]);
-
-  function handleAddOption(val?: string) {
-    const trimmed = (val ?? newOptionInput).trim();
-    if (!trimmed) return;
-    if (options.some((o) => o.name.toLowerCase() === trimmed.toLowerCase())) {
-      setErrorMsg(catalogWords.duplicateOptionError);
-      return;
-    }
-    if (options.length >= VARIANT_LIMITS.options) {
-      setErrorMsg(catalogWords.maxOptionsReached);
-      return;
-    }
-    setOptions((prev) => [...prev, newDraftOption(trimmed)]);
-    setNewOptionInput('');
-    setErrorMsg(null);
-  }
-
-  function handleRemoveOption(id: string) {
-    if (options.length <= 1) {
-      setErrorMsg('A variant needs at least one option.');
-      return;
-    }
-    setOptions((prev) => prev.filter((o) => o.id !== id));
-    setErrorMsg(null);
-  }
-
-  function handleOptionRename(id: string, newName: string) {
-    setOptions((prev) => prev.map((o) => (o.id === id ? { ...o, name: newName } : o)));
-    setErrorMsg(null);
-  }
-
-  function handleApplyPreset(spec: { name: string; options: readonly string[] }) {
-    setName(spec.name);
-    setOptions(spec.options.map((opt) => newDraftOption(opt)));
-    setErrorMsg(null);
-  }
-
-  function validate(): boolean {
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      setErrorMsg(catalogWords.emptyChoiceNameError);
-      return false;
-    }
-    if (options.length === 0) {
-      setErrorMsg('A variant needs at least one option.');
-      return false;
-    }
-    for (const opt of options) {
-      if (!opt.name.trim()) {
-        setErrorMsg(catalogWords.emptyOptionError);
-        return false;
+  const addOptions = (raw: string) => {
+    const names = raw
+      .split(',')
+      .map((n) => n.trim())
+      .filter(Boolean);
+    if (names.length === 0) return;
+    let next = options;
+    for (const n of names) {
+      if (next.length >= VARIANT_LIMITS.values) {
+        setOptionError(catalogWords.variantMaxOptions);
+        break;
       }
+      if (next.some((o) => o.name.trim().toLowerCase() === n.toLowerCase())) {
+        setOptionError(catalogWords.optionExists);
+        continue;
+      }
+      if (n.length > VARIANT_LIMITS.valueLength) {
+        setOptionError(catalogWords.optionTooLong);
+        continue;
+      }
+      next = [...next, draftOption(n)];
     }
-    const names = options.map((o) => o.name.trim().toLowerCase());
-    const unique = new Set(names);
-    if (unique.size !== names.length) {
-      setErrorMsg(catalogWords.duplicateOptionError);
-      return false;
-    }
-    setErrorMsg(null);
-    return true;
-  }
+    setOptions(next);
+    setNewOption('');
+  };
 
-  async function performSave(applyToItems: boolean) {
-    if (!validate()) return;
+  const draft = (): VariantTemplateDraft => ({
+    ...(template ? { id: template.id } : {}),
+    name: name.trim(),
+    options: options.map((o) => ({ ...(o.id ? { id: o.id } : {}), name: o.name.trim() })),
+  });
+
+  const validate = (): boolean => {
+    const trimmed = name.trim();
+    const nameProblem = !trimmed
+      ? catalogWords.variantNameRequired
+      : trimmed.length > VARIANT_LIMITS.nameLength
+        ? catalogWords.optionTooLong
+        : null;
+    const firstOptionProblem =
+      options.length === 0
+        ? catalogWords.variantKeepOne
+        : (options.map((o) => optionProblem(o.name.trim(), o.key)).find(Boolean) ?? null);
+    setNameError(nameProblem);
+    setOptionError(firstOptionProblem);
+    return !nameProblem && !firstOptionProblem;
+  };
+
+  const changes = template ? templateChanges(template, draft()) : null;
+  const touchesItems =
+    changes !== null &&
+    (changes.renamedTo !== null ||
+      changes.renamedOptions.length > 0 ||
+      changes.removed.length > 0 ||
+      changes.added.length > 0 ||
+      changes.reordered);
+  const unlinksOnKeep =
+    changes !== null &&
+    (changes.renamedTo !== null ||
+      changes.renamedOptions.length > 0 ||
+      changes.removed.length > 0 ||
+      changes.reordered);
+
+  const save = async (applyToItems: boolean, action: ReturnType<typeof useAsyncAction>) => {
+    const next = draft();
+    setSaveError(null);
     try {
-      await saveAction.run(async () => {
-        const cleanOptions = options.map((o) => ({
-          ...(template && template.options.some((to) => to.id === o.id) ? { id: o.id } : {}),
-          name: o.name.trim(),
-        }));
-
-        const result = await saveVariant.mutateAsync({
-          draft: {
-            ...(template ? { id: template.id } : {}),
-            name: name.trim(),
-            options: cleanOptions,
-          },
-          applyToItems,
-        });
-
-        // Sync usedOn item changes (linking newly picked items or unlinking unpicked items)
-        const newlyLinkedItemIds = usedOn.filter((id) => !initialUsedOnIds.includes(id));
-        const unlinkedItemIds = initialUsedOnIds.filter((id) => !usedOn.includes(id));
-
-        for (const itemId of newlyLinkedItemIds) {
-          const item = activeItems.find((i) => i.id === itemId);
-          if (item) {
-            // Check if item already has 3 choices
-            if (item.axes.length < VARIANT_LIMITS.axes) {
-              const newAxis = {
-                name: result.template.name,
-                templateId: result.template.id,
-                values: result.template.options.map((o) => ({
-                  name: o.name,
-                  photo: null,
-                  priceDelta: 0,
-                })),
-              };
-              await saveItemMutation.mutateAsync({
-                id: item.id,
-                draft: {
-                  categoryId: item.categoryId,
-                  name: item.name,
-                  description: item.description,
-                  photos: item.photos,
-                  basePrice: item.basePrice,
-                  axes: [...item.axes, newAxis],
-                  variants: item.variants,
-                  optionGroupIds: item.optionGroupIds,
-                  pairingIds: item.pairingIds,
-                  featured: item.featured,
-                  isNew: item.isNew,
-                  status: item.status,
-                },
-              });
-            }
-          }
-        }
-
-        for (const itemId of unlinkedItemIds) {
-          const item = activeItems.find((i) => i.id === itemId);
-          if (item) {
-            const updatedAxes = item.axes.map((a) =>
-              a.templateId === (template?.id ?? result.template.id)
-                ? { ...a, templateId: null }
-                : a,
-            );
-            await saveItemMutation.mutateAsync({
-              id: item.id,
-              draft: {
-                categoryId: item.categoryId,
-                name: item.name,
-                description: item.description,
-                photos: item.photos,
-                basePrice: item.basePrice,
-                axes: updatedAxes,
-                variants: item.variants,
-                optionGroupIds: item.optionGroupIds,
-                pairingIds: item.pairingIds,
-                featured: item.featured,
-                isNew: item.isNew,
-                status: item.status,
-              },
-            });
-          }
-        }
-
-        // Show warnings if any
-        if (result.soldOutItemIds.length > 0) {
-          notify({
-            title: catalogWords.itemsSoldOutNotice(result.soldOutItemIds.length),
-            tone: 'warning',
-          });
-        }
-        if (result.skippedItemIds.length > 0) {
-          notify({
-            title: catalogWords.itemsSkippedNotice(result.skippedItemIds.length),
-            tone: 'warning',
-          });
-        }
-
-        notify({ title: catalogWords.variantSaved, tone: 'success' });
-        onDirtyChange(false);
-        onSaved?.(result.template);
-        onClose();
+      const result = await action.run(() =>
+        saveTemplate.mutateAsync({ draft: next, applyToItems }),
+      );
+      const saved = result.template;
+      const updated = result.updatedItemIds.length;
+      notify({
+        title:
+          applyToItems && updated > 0
+            ? catalogWords.variantSavedUpdated(saved.name, updated)
+            : catalogWords.savedToast(saved.name),
+        tone: 'success',
       });
+      const firstSoldOut = result.soldOutItemIds[0];
+      if (firstSoldOut && changes) {
+        notify({
+          title: catalogWords.variantSoldOutWarning(
+            changes.added.join(', '),
+            result.soldOutItemIds.length,
+          ),
+          tone: 'warning',
+          persist: true,
+          action: {
+            label: catalogWords.openItem,
+            onClick: () =>
+              void navigate({ to: '/catalog/$itemId', params: { itemId: firstSoldOut } }),
+          },
+        });
+      }
+      if (result.skippedItemIds.length > 0) {
+        notify({
+          title: catalogWords.variantSkippedWarning(result.skippedItemIds.length),
+          tone: 'warning',
+          persist: true,
+        });
+      }
+      setConfirmOpen(false);
+      onSaved({ result, before: template, draft: next, applyToItems });
     } catch (err: unknown) {
-      notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
+      setConfirmOpen(false);
+      setSaveError(errorWords(errorCodeOf(err)));
     }
-  }
+  };
 
-  function handleSaveClick(e: React.FormEvent) {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-
-    // If existing template has items linking it, prompt with update-items dialog
-    if (template && (template.usedBy > 0 || initialUsedOnIds.length > 0)) {
-      setShowApplyConfirm(true);
-    } else {
-      void performSave(false);
+    if (!template && templates.length >= VARIANT_LIMITS.templates) {
+      setSaveError(catalogWords.variantLimit);
+      return;
     }
-  }
+    if (template && template.usedBy > 0 && touchesItems) {
+      setConfirmOpen(true);
+      return;
+    }
+    void save(false, saveAction);
+  };
 
-  // Filter items for search
-  const filteredItems = React.useMemo(() => {
-    const q = itemSearch.trim().toLowerCase();
-    if (!q) return activeItems;
-    return activeItems.filter((i) => i.name.toLowerCase().includes(q));
-  }, [activeItems, itemSearch]);
+  const handleDelete = async () => {
+    if (!template) return;
+    try {
+      await deleteAction.run(() => removeTemplate.mutateAsync({ id: template.id }));
+      notify({ title: catalogWords.variantDeleted(template.name), tone: 'success' });
+      setDeleteOpen(false);
+      onDeleted(template);
+    } catch (err: unknown) {
+      setDeleteOpen(false);
+      setSaveError(errorWords(errorCodeOf(err)));
+    }
+  };
 
-  const usedCount = usedOn.length;
+  const changeLines = changes
+    ? [
+        ...changes.added.map((n) => catalogWords.changeAdds(n)),
+        ...changes.renamedOptions.map((r) => catalogWords.changeRenamesOption(r.from, r.to)),
+        ...changes.removed.map((n) => catalogWords.changeRemoves(n)),
+        ...(changes.renamedTo ? [catalogWords.changeRenames(changes.renamedTo)] : []),
+        ...(changes.reordered ? [catalogWords.changeOrder] : []),
+      ]
+    : [];
 
   return (
-    <form onSubmit={handleSaveClick} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto px-4 py-5 md:px-6">
-        {/* Quick start suggestions */}
-        {!template && defaultSpecs.length > 0 && (
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              {catalogWords.suggestionsLabel}
-            </Label>
-            <div className="flex flex-wrap gap-1.5">
-              {defaultSpecs.map((spec) => (
-                <button
-                  key={spec.key}
-                  type="button"
-                  onClick={() => handleApplyPreset(spec)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-muted/40 px-3 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary/50 hover:bg-primary/5"
-                >
-                  <SparklesIcon className="size-3 text-primary" />
-                  <span>{spec.name}</span>
-                  <span className="text-muted-foreground">({spec.options.join(', ')})</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {saveError ? (
+        <Notice tone="error" icon={<CircleAlertIcon />}>
+          {saveError}
+        </Notice>
+      ) : null}
 
-        {/* Variant Name */}
+      {suggestions.length > 0 ? (
         <div className="space-y-2">
-          <Label htmlFor="variant-name" className="text-sm font-semibold">
-            {catalogWords.variantNameLabel}
-          </Label>
-          <Input
-            id="variant-name"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setErrorMsg(null);
-            }}
-            placeholder={catalogWords.variantNamePlaceholder}
-            className="h-11 md:h-10"
-            maxLength={40}
-            required
-          />
-        </div>
-
-        {/* Options list with Sortable */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-semibold">{catalogWords.variantOptionsLabel}</Label>
-            <span className="text-xs text-muted-foreground">
-              {options.length}/{VARIANT_LIMITS.options}
-            </span>
-          </div>
-
-          <Sortable value={options} getItemValue={(opt) => opt.id} onValueChange={setOptions}>
-            <div className="space-y-2">
-              {options.map((opt, idx) => (
-                <SortableItem key={opt.id} value={opt.id}>
-                  <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/20 p-1.5 transition-colors focus-within:border-primary/50 focus-within:bg-background">
-                    <SortableItemHandle
-                      className="flex size-9 cursor-grab items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/60 hover:text-foreground active:cursor-grabbing"
-                      aria-label={catalogWords.reorder}
-                    >
-                      <GripVerticalIcon className="size-4" />
-                    </SortableItemHandle>
-
-                    <Input
-                      value={opt.name}
-                      onChange={(e) => handleOptionRename(opt.id, e.target.value)}
-                      placeholder={catalogWords.addOptionPlaceholder}
-                      className="h-9 flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
-                      maxLength={30}
-                    />
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveOption(opt.id)}
-                      disabled={options.length <= 1}
-                      className="size-8 text-muted-foreground hover:text-destructive"
-                      aria-label={`Remove option ${opt.name || idx + 1}`}
-                    >
-                      <XIcon className="size-4" />
-                    </Button>
-                  </div>
-                </SortableItem>
-              ))}
-            </div>
-          </Sortable>
-
-          {/* Quick add new option row */}
-          {options.length < VARIANT_LIMITS.options && (
-            <div className="flex items-center gap-2 pt-1">
-              <Input
-                value={newOptionInput}
-                onChange={(e) => setNewOptionInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddOption();
-                  }
-                }}
-                placeholder={catalogWords.addOptionPlaceholder}
-                className="h-10 flex-1"
-                maxLength={30}
-              />
+          <Label>{catalogWords.variantSuggestions}</Label>
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((s) => (
               <Button
+                key={s.key}
                 type="button"
                 variant="outline"
-                className="h-10 shrink-0 gap-1"
-                onClick={() => handleAddOption()}
-                disabled={!newOptionInput.trim()}
+                className="h-11 max-w-full gap-1.5 md:h-9"
+                onClick={() => {
+                  setName(s.name);
+                  setOptions(s.options.map((o) => draftOption(o)));
+                  setNameError(null);
+                  setOptionError(null);
+                }}
               >
-                <PlusIcon className="size-4" />
-                {catalogWords.addOption}
+                <span className="font-semibold">{s.name}</span>
+                <span className="truncate text-muted-foreground">{s.options.join(', ')}</span>
               </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Error message */}
-        {errorMsg && <FieldError>{errorMsg}</FieldError>}
-
-        {/* Used On Items Section */}
-        {activeItems.length > 0 && (
-          <div className="space-y-3 border-t border-border/60 pt-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold">{catalogWords.usedByCount(usedCount)}</Label>
-              {usedCount > 0 && (
-                <Badge variant="secondary" className="text-xs">
-                  {usedCount}
-                </Badge>
-              )}
-            </div>
-
-            {activeItems.length > 6 && (
-              <SearchField
-                value={itemSearch}
-                onChange={setItemSearch}
-                placeholder="Search items to link..."
-                className="h-9 text-xs"
-              />
-            )}
-
-            <div className="max-h-52 space-y-1.5 overflow-y-auto rounded-xl border border-border/50 p-2">
-              {filteredItems.map((item) => {
-                const isLinked = usedOn.includes(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setUsedOn((prev) =>
-                        isLinked ? prev.filter((id) => id !== item.id) : [...prev, item.id],
-                      );
-                    }}
-                    className={cn(
-                      'flex w-full items-center justify-between rounded-lg p-2 text-left text-sm transition-colors hover:bg-muted/50',
-                      isLinked && 'bg-primary/5 font-medium text-primary',
-                    )}
-                  >
-                    <span className="truncate">{item.name}</span>
-                    <div className="flex size-5 shrink-0 items-center justify-center rounded-md border border-border">
-                      {isLinked && <CheckIcon className="size-3.5 text-primary" />}
-                    </div>
-                  </button>
-                );
-              })}
-              {filteredItems.length === 0 && (
-                <p className="p-3 text-center text-xs text-muted-foreground">No items match</p>
-              )}
-            </div>
+            ))}
           </div>
-        )}
+        </div>
+      ) : null}
+
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="variant-name">{catalogWords.variantNameLabel}</Label>
+          <span className="text-xs text-muted-foreground tabular">
+            {catalogWords.charCount(name.length, VARIANT_LIMITS.nameLength)}
+          </span>
+        </div>
+        <Input
+          id="variant-name"
+          value={name}
+          maxLength={VARIANT_LIMITS.nameLength}
+          aria-invalid={nameError ? true : undefined}
+          placeholder={catalogWords.variantNamePlaceholder(kind)}
+          className="h-11 text-base md:h-9 md:text-sm"
+          onChange={(e) => {
+            setName(e.target.value);
+            setNameError(null);
+          }}
+        />
+        {nameError ? <FieldError>{nameError}</FieldError> : null}
       </div>
 
-      {/* Footer */}
-      <ResponsiveDialogFooter className="flex-row items-center justify-end gap-2 border-t border-border/60 bg-muted/20 p-4">
-        <Button type="button" variant="outline" onClick={onClose} className="h-10">
-          {catalogWords.cancel}
-        </Button>
-        <AsyncButton
-          type="submit"
-          loading={saveAction.isPending}
-          className="h-10 min-w-24 font-semibold"
-        >
-          {catalogWords.save}
-        </AsyncButton>
-      </ResponsiveDialogFooter>
+      <div className="space-y-2">
+        <div className="space-y-0.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="variant-new-option">{catalogWords.variantOptionsLabel}</Label>
+            <span className="text-xs text-muted-foreground tabular">
+              {catalogWords.charCount(options.length, VARIANT_LIMITS.values)}
+            </span>
+          </div>
+          {options.length > 1 ? (
+            <p className="text-sm text-muted-foreground">{catalogWords.variantOptionsHelp}</p>
+          ) : null}
+        </div>
 
-      {/* Confirm update linked items dialog */}
-      <AlertDialog open={showApplyConfirm} onOpenChange={setShowApplyConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{catalogWords.updateItemsTitle}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {catalogWords.updateItemsDesc(template?.usedBy ?? initialUsedOnIds.length)}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
-            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
+        <Sortable
+          value={options}
+          getItemValue={(o) => o.key}
+          onValueChange={setOptions}
+          strategy="vertical"
+          className="flex flex-col gap-2"
+        >
+          {options.map((opt, index) => {
+            const last = options.length <= 1;
+            return (
+              <SortableItem key={opt.key} value={opt.key}>
+                <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-card p-1">
+                  <SortableItemHandle
+                    className="flex h-11 w-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground active:cursor-grabbing md:h-9"
+                    aria-label={catalogWords.variantDragAria(opt.name || String(index + 1))}
+                  >
+                    <GripVerticalIcon className="size-4" />
+                  </SortableItemHandle>
+                  <Input
+                    value={opt.name}
+                    maxLength={VARIANT_LIMITS.valueLength}
+                    aria-label={catalogWords.variantOptionAria(index + 1)}
+                    className="h-11 min-w-0 flex-1 border-transparent bg-transparent text-base shadow-none md:h-9 md:text-sm"
+                    onChange={(e) => {
+                      const text = e.target.value;
+                      setOptions((prev) =>
+                        prev.map((o) => (o.key === opt.key ? { ...o, name: text } : o)),
+                      );
+                      setOptionError(null);
+                    }}
+                  />
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={
+                            last
+                              ? catalogWords.variantKeepOne
+                              : catalogWords.removeOptionAria(opt.name || String(index + 1))
+                          }
+                          aria-disabled={last ? true : undefined}
+                          className="size-11 shrink-0 text-muted-foreground hover:text-destructive md:size-9"
+                          onClick={() => {
+                            if (last) {
+                              setOptionError(catalogWords.variantKeepOne);
+                              return;
+                            }
+                            setOptions((prev) => prev.filter((o) => o.key !== opt.key));
+                          }}
+                        />
+                      }
+                    >
+                      <XIcon className="size-4" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {last
+                        ? catalogWords.variantKeepOne
+                        : catalogWords.removeOptionAria(opt.name || String(index + 1))}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </SortableItem>
+            );
+          })}
+        </Sortable>
+
+        {options.length < VARIANT_LIMITS.values ? (
+          <div className="flex gap-2">
+            <Input
+              id="variant-new-option"
+              value={newOption}
+              maxLength={VARIANT_LIMITS.valueLength * 3}
+              placeholder={catalogWords.variantOptionPlaceholder}
+              aria-invalid={optionError ? true : undefined}
+              className="h-11 min-w-0 flex-1 text-base md:h-9 md:text-sm"
+              onChange={(e) => {
+                const text = e.target.value;
+                setOptionError(null);
+                if (text.includes(',')) addOptions(text);
+                else setNewOption(text);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addOptions(newOption);
+                }
+              }}
+            />
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                setShowApplyConfirm(false);
-                void performSave(false);
-              }}
+              className="h-11 shrink-0 md:h-9"
+              disabled={!newOption.trim()}
+              onClick={() => addOptions(newOption)}
             >
-              {catalogWords.onlyVariantBtn}
+              {catalogWords.addOptionButton}
             </Button>
+          </div>
+        ) : null}
+        {optionError ? <FieldError>{optionError}</FieldError> : null}
+      </div>
+
+      {template ? (
+        <div className="space-y-2">
+          <Label>{catalogWords.variantUsedOnLabel}</Label>
+          {usedOn.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{catalogWords.variantUsedOnNone}</p>
+          ) : (
+            <ItemGroup className="gap-1.5">
+              {usedOn.slice(0, USED_ON_SHOWN).map((item) => (
+                <Item
+                  key={item.id}
+                  variant="outline"
+                  size="sm"
+                  render={
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void navigate({ to: '/catalog/$itemId', params: { itemId: item.id } })
+                      }
+                    />
+                  }
+                  className="min-h-11 cursor-pointer text-left hover:bg-muted/50"
+                >
+                  <CatalogPhoto photoRef={item.photos[0]} alt="" size="sm" className="size-8" />
+                  <ItemContent className="min-w-0">
+                    <ItemTitle className="truncate">{item.name}</ItemTitle>
+                  </ItemContent>
+                  <ItemActions>
+                    <ChevronRightIcon className="size-4 text-muted-foreground" />
+                  </ItemActions>
+                </Item>
+              ))}
+              {usedOn.length > USED_ON_SHOWN ? (
+                <p className="text-sm text-muted-foreground">
+                  {catalogWords.variantUsedOnMore(usedOn.length - USED_ON_SHOWN)}
+                </p>
+              ) : null}
+            </ItemGroup>
+          )}
+        </div>
+      ) : null}
+
+      <ResponsiveDialogFooter>
+        {!isOnline ? (
+          <p className="text-sm text-muted-foreground">{catalogWords.offlineNotice}</p>
+        ) : null}
+        <div className="flex items-center justify-between gap-2">
+          {template ? (
             <Button
               type="button"
-              onClick={() => {
-                setShowApplyConfirm(false);
-                void performSave(true);
-              }}
+              variant="ghost"
+              className="h-11 text-destructive hover:bg-destructive/10 hover:text-destructive md:h-9"
+              disabled={deleteAction.busy}
+              onClick={() => setDeleteOpen(true)}
             >
-              {catalogWords.updateItemsBtn(template?.usedBy ?? initialUsedOnIds.length)}
+              {catalogWords.delete}
             </Button>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" className="h-11 md:h-9" onClick={onCancel}>
+              {catalogWords.cancel}
+            </Button>
+            <AsyncButton
+              type="submit"
+              status={saveAction.status}
+              busyLabel={actionWords.saving}
+              doneLabel={actionWords.saved}
+              disabled={!isOnline}
+              className="h-11 font-semibold md:h-9"
+            >
+              {catalogWords.save}
+            </AsyncButton>
+          </div>
+        </div>
+      </ResponsiveDialogFooter>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {catalogWords.updateItemsTitle(template?.usedBy ?? 0, template?.name ?? '')}
+            </AlertDialogTitle>
+            <AlertDialogDescription render={<div />} className="text-left">
+              <ul className="list-disc space-y-1 pl-5">
+                {changeLines.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+              {changes && changes.added.length > 0 ? (
+                <p className="mt-2">
+                  {catalogWords.changeAddedNote(changes.added.join(', '), name.trim())}
+                </p>
+              ) : null}
+              {unlinksOnKeep ? <p className="mt-2">{catalogWords.changeKeepNote}</p> : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11 md:h-9">{catalogWords.cancel}</AlertDialogCancel>
+            <AsyncButton
+              type="button"
+              variant="outline"
+              status={keepAction.status}
+              busyLabel={actionWords.saving}
+              doneLabel={actionWords.saved}
+              disabled={saveAction.busy}
+              className="h-11 md:h-9"
+              onClick={() => void save(false, keepAction)}
+            >
+              {catalogWords.onlyVariantButton}
+            </AsyncButton>
+            <AsyncButton
+              type="button"
+              status={saveAction.status}
+              busyLabel={actionWords.saving}
+              doneLabel={actionWords.saved}
+              disabled={keepAction.busy}
+              className="h-11 font-semibold md:h-9"
+              onClick={() => void save(true, saveAction)}
+            >
+              {catalogWords.updateItemsButton(template?.usedBy ?? 0)}
+            </AsyncButton>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {catalogWords.deleteVariantTitle(template?.name ?? '')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {template && template.usedBy > 0
+                ? catalogWords.deleteVariantUsed(template.usedBy, template.name)
+                : catalogWords.confirmDeleteDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11 md:h-9">{catalogWords.cancel}</AlertDialogCancel>
+            <AsyncButton
+              variant="destructive"
+              status={deleteAction.status}
+              busyLabel={actionWords.deleting}
+              doneLabel={actionWords.deleted}
+              className="h-11 font-semibold md:h-9"
+              onClick={() => void handleDelete()}
+            >
+              {catalogWords.deleteVariantButton}
+            </AsyncButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

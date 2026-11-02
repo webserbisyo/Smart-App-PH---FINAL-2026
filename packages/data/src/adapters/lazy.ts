@@ -66,6 +66,10 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     listOptionGroups: async () => (await real()).ownerCatalog.listOptionGroups(),
     saveOptionGroup: async (input) => (await real()).ownerCatalog.saveOptionGroup(input),
     removeOptionGroup: async (input) => (await real()).ownerCatalog.removeOptionGroup(input),
+    listVariantTemplates: async () => (await real()).ownerCatalog.listVariantTemplates(),
+    saveVariantTemplate: async (input) => (await real()).ownerCatalog.saveVariantTemplate(input),
+    removeVariantTemplate: async (input) =>
+      (await real()).ownerCatalog.removeVariantTemplate(input),
     saveSortOrder: async (input) => (await real()).ownerCatalog.saveSortOrder(input),
     createUploadUrl: async (input) => (await real()).ownerCatalog.createUploadUrl(input),
   };

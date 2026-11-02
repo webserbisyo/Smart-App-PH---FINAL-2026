@@ -166,27 +166,25 @@ export const ItemBaseSchema = z.object({
   sample: z.boolean(),
 });
 
-function applyItemRefinements<T extends z.ZodTypeAny>(schema: T) {
+type ItemShape = z.infer<typeof ItemBaseSchema>;
+
+function applyItemRefinements<T extends z.ZodType<ItemShape>>(schema: T) {
   return schema
-    .refine(
-      (item: z.infer<typeof ItemBaseSchema>) =>
-        item.variants.every((v) => v.values.length === item.axes.length),
-      {
-        message: 'Every variant needs one value per axis',
-      },
-    )
-    .refine((item: z.infer<typeof ItemBaseSchema>) => !item.pairingIds.includes(item.id), {
+    .refine((item: ItemShape) => item.variants.every((v) => v.values.length === item.axes.length), {
+      message: 'Every variant needs one value per axis',
+    })
+    .refine((item: ItemShape) => !item.pairingIds.includes(item.id), {
       message: 'An item cannot pair with itself',
     })
     .refine(
-      (item: z.infer<typeof ItemBaseSchema>) => {
+      (item: ItemShape) => {
         const names = item.axes.map((a) => a.name.toLowerCase());
         return new Set(names).size === names.length;
       },
       { message: 'Choice names must be unique' },
     )
     .refine(
-      (item: z.infer<typeof ItemBaseSchema>) =>
+      (item: ItemShape) =>
         item.axes.every((axis) => {
           const vals = axis.values.map((v) => v.name.toLowerCase());
           return new Set(vals).size === vals.length;
@@ -194,7 +192,7 @@ function applyItemRefinements<T extends z.ZodTypeAny>(schema: T) {
       { message: 'Option names must be unique per choice' },
     )
     .refine(
-      (item: z.infer<typeof ItemBaseSchema>) => {
+      (item: ItemShape) => {
         const tids = item.axes
           .map((a) => a.templateId)
           .filter((tid): tid is string => Boolean(tid));
@@ -202,14 +200,11 @@ function applyItemRefinements<T extends z.ZodTypeAny>(schema: T) {
       },
       { message: 'A template can only be linked once per item' },
     )
+    .refine((item: ItemShape) => item.variants.length <= VARIANT_LIMITS.combos, {
+      message: `An item can have at most ${VARIANT_LIMITS.combos} combinations`,
+    })
     .refine(
-      (item: z.infer<typeof ItemBaseSchema>) => item.variants.length <= VARIANT_LIMITS.combos,
-      {
-        message: `An item can have at most ${VARIANT_LIMITS.combos} combinations`,
-      },
-    )
-    .refine(
-      (item: z.infer<typeof ItemBaseSchema>) =>
+      (item: ItemShape) =>
         item.variants.every((v) => v.price === computedVariantPrice(item.basePrice, item.axes, v)),
       {
         message:
@@ -345,6 +340,12 @@ export const SaveVariantTemplateResultSchema = z.object({
   soldOutItemIds: z.array(IdSchema),
 });
 export type SaveVariantTemplateResult = z.infer<typeof SaveVariantTemplateResultSchema>;
+
+export const RemoveVariantTemplateResultSchema = z.object({
+  // Items that keep the variant's options and price changes as their own choice.
+  unlinkedItemIds: z.array(IdSchema),
+});
+export type RemoveVariantTemplateResult = z.infer<typeof RemoveVariantTemplateResultSchema>;
 
 export const UploadResultSchema = z.object({
   uploadUrl: z.string(),

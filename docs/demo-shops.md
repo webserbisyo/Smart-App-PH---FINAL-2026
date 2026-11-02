@@ -48,7 +48,7 @@ Menu:
 | Chicken and Rice | Chicken Nuggets         | Pieces: 6 pcs ₱119, 10 pcs ₱179                               | Dip (required)                       | New             |
 | Chicken and Rice | Burger Steak with Rice  | ₱129                                                          | Extra rice                           |                 |
 | Sides            | Kanto Fries             | Size: Regular ₱69, Large ₱99                                  | Sauce                                |                 |
-| Sides            | Cheese Fries            | ₱119                                                          |                                      |                 |
+| Sides            | Cheese Fries            | Size: Regular ₱119, Large ₱149                                |                                      |                 |
 | Sides            | Onion Rings             | ₱99                                                           | Sauce                                |                 |
 | Sides            | Loaded Bacon Fries      | ₱149                                                          |                                      | New             |
 | Combos           | Smash Combo             | ₱219: Classic Smash, regular fries, iced tea                  | Upgrade your side, Choose your drink |                 |
@@ -117,22 +117,22 @@ Add-on groups (shared library):
 
 Menu:
 
-| Category    | Item                  | Choices and price                                     | Add-on groups      | Note             |
-| ----------- | --------------------- | ----------------------------------------------------- | ------------------ | ---------------- |
-| Tops        | Tala Basic Tee        | Size: S, M, L, XL × Colour: Black, White, Sand · ₱450 | Gift wrap          | Photo per colour |
-| Tops        | Linen Button-down     | Size: S to XL × Colour: Natural, Indigo · ₱899        | Gift wrap          | Photo per colour |
-| Tops        | Cropped Knit Top      | Size: S to XL × Colour: Cream, Terracotta · ₱599      | Gift wrap          |                  |
-| Tops        | Terno-sleeve Blouse   | Size: S to XL · ₱1,199                                | Gift wrap          | New              |
-| Bottoms     | Wide-leg Trousers     | Size: S to XL × Colour: Black, Olive · ₱1,099         | Hemming, Gift wrap |                  |
-| Bottoms     | Pleated Midi Skirt    | Size: S to XL · ₱899                                  | Gift wrap          |                  |
-| Bottoms     | Denim Shorts          | Size: S to XL · ₱699                                  | Gift wrap          |                  |
-| Dresses     | Habi-print Midi Dress | Size: S to XL · ₱1,299                                | Gift wrap          |                  |
-| Sets        | Weekend Set           | Linen Button-down and Wide-leg Trousers · ₱1,799      | Hemming, Gift wrap | New bundle       |
-| Accessories | Abaca Tote Bag        | ₱650                                                  | Gift wrap          |                  |
-| Accessories | Capiz Shell Earrings  | ₱350                                                  | Gift wrap          |                  |
-| Accessories | Woven Bucket Hat      | ₱450                                                  | Gift wrap          |                  |
-| Accessories | Beaded Phone Strap    | ₱199                                                  | Gift wrap          |                  |
-| Accessories | Piña-blend Scarf      | ₱799                                                  | Gift wrap          | New              |
+| Category    | Item                  | Choices and price                                                                                     | Add-on groups      | Note             |
+| ----------- | --------------------- | ----------------------------------------------------------------------------------------------------- | ------------------ | ---------------- |
+| Tops        | Tala Basic Tee        | Size: S, M, L, XL × Colour: Black, White, Sand · ₱450                                                 | Gift wrap          | Photo per colour |
+| Tops        | Linen Button-down     | Size: S to XL × Colour: Natural, Indigo · ₱899                                                        | Gift wrap          | Photo per colour |
+| Tops        | Cropped Knit Top      | Size: S to XL × Colour: Cream, Terracotta · ₱599                                                      | Gift wrap          |                  |
+| Tops        | Terno-sleeve Blouse   | Size: S to XL · ₱1,199                                                                                | Gift wrap          | New              |
+| Bottoms     | Wide-leg Trousers     | Size: S to XL × Colour: Black, Olive × Length: Regular, Petite · ₱1,099 (L · Olive · Petite sold out) | Hemming, Gift wrap |                  |
+| Bottoms     | Pleated Midi Skirt    | Size: S to XL · ₱899                                                                                  | Gift wrap          |                  |
+| Bottoms     | Denim Shorts          | Size: S to XL · ₱699                                                                                  | Gift wrap          |                  |
+| Dresses     | Habi-print Midi Dress | Size: S to XL · ₱1,299                                                                                | Gift wrap          |                  |
+| Sets        | Weekend Set           | Linen Button-down and Wide-leg Trousers · ₱1,799                                                      | Hemming, Gift wrap | New bundle       |
+| Accessories | Abaca Tote Bag        | ₱650                                                                                                  | Gift wrap          |                  |
+| Accessories | Capiz Shell Earrings  | ₱350                                                                                                  | Gift wrap          |                  |
+| Accessories | Woven Bucket Hat      | ₱450                                                                                                  | Gift wrap          |                  |
+| Accessories | Beaded Phone Strap    | ₱199                                                                                                  | Gift wrap          |                  |
+| Accessories | Piña-blend Scarf      | ₱799                                                                                                  | Gift wrap          | New              |
 
 Add-on groups (shared library):
 

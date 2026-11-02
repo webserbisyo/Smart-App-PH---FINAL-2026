@@ -78,7 +78,14 @@ describe('menu rules and helpers', () => {
     it('returns true when item has exactly 1 variant and no required option groups', () => {
       const item: Pick<Item, 'variants' | 'optionGroupIds'> = {
         variants: [
-          { id: 'v1', values: [], price: 15000, availability: 'available', soldOutUntil: null },
+          {
+            id: 'v1',
+            values: [],
+            price: 15000,
+            priceOverride: null,
+            availability: 'available',
+            soldOutUntil: null,
+          },
         ],
         optionGroupIds: ['grp-optional'],
       };
@@ -88,7 +95,14 @@ describe('menu rules and helpers', () => {
     it('returns true when item has 1 variant and no option groups at all', () => {
       const item: Pick<Item, 'variants' | 'optionGroupIds'> = {
         variants: [
-          { id: 'v1', values: [], price: 15000, availability: 'available', soldOutUntil: null },
+          {
+            id: 'v1',
+            values: [],
+            price: 15000,
+            priceOverride: null,
+            availability: 'available',
+            soldOutUntil: null,
+          },
         ],
         optionGroupIds: [],
       };
@@ -98,8 +112,22 @@ describe('menu rules and helpers', () => {
     it('returns false when item has multiple variants', () => {
       const item: Pick<Item, 'variants' | 'optionGroupIds'> = {
         variants: [
-          { id: 'v1', values: ['S'], price: 15000, availability: 'available', soldOutUntil: null },
-          { id: 'v2', values: ['M'], price: 17000, availability: 'available', soldOutUntil: null },
+          {
+            id: 'v1',
+            values: ['S'],
+            price: 15000,
+            priceOverride: null,
+            availability: 'available',
+            soldOutUntil: null,
+          },
+          {
+            id: 'v2',
+            values: ['M'],
+            price: 17000,
+            priceOverride: null,
+            availability: 'available',
+            soldOutUntil: null,
+          },
         ],
         optionGroupIds: [],
       };
@@ -109,7 +137,14 @@ describe('menu rules and helpers', () => {
     it('returns false when item has any required option group', () => {
       const item: Pick<Item, 'variants' | 'optionGroupIds'> = {
         variants: [
-          { id: 'v1', values: [], price: 15000, availability: 'available', soldOutUntil: null },
+          {
+            id: 'v1',
+            values: [],
+            price: 15000,
+            priceOverride: null,
+            availability: 'available',
+            soldOutUntil: null,
+          },
         ],
         optionGroupIds: ['grp-required', 'grp-optional'],
       };

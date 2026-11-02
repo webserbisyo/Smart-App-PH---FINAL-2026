@@ -9,32 +9,13 @@ import type {
   VariantTemplateDraft,
 } from '../schemas/catalog.js';
 import { VARIANT_LIMITS } from './variant-limits.js';
+import { VARIANT_DEFAULTS, type VariantDefault } from '../words.js';
 import { buildVersions, isSamePrice } from './variant-pricing.js';
 
-export interface DefaultTemplateSpec {
-  key: string;
-  name: string;
-  options: readonly string[];
-}
+export type DefaultTemplateSpec = VariantDefault;
 
-export const FOOD_DEFAULT_TEMPLATES: readonly DefaultTemplateSpec[] = [
-  { key: 'size', name: 'Size', options: ['Regular', 'Large'] },
-  { key: 'size-3', name: 'Size', options: ['Small', 'Medium', 'Large'] },
-  { key: 'cup-size', name: 'Cup size', options: ['12 oz', '16 oz', '22 oz'] },
-  { key: 'patty', name: 'Patty', options: ['Single', 'Double', 'Triple'] },
-  { key: 'temperature', name: 'Temperature', options: ['Hot', 'Iced'] },
-];
-
-export const RETAIL_DEFAULT_TEMPLATES: readonly DefaultTemplateSpec[] = [
-  { key: 'size', name: 'Size', options: ['S', 'M', 'L', 'XL'] },
-  { key: 'size-extended', name: 'Size', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
-  {
-    key: 'shoe-size',
-    name: 'Shoe size',
-    options: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'],
-  },
-  { key: 'colour', name: 'Colour', options: ['Black', 'White', 'Grey', 'Navy', 'Red'] },
-];
+export const FOOD_DEFAULT_TEMPLATES: readonly DefaultTemplateSpec[] = VARIANT_DEFAULTS.food;
+export const RETAIL_DEFAULT_TEMPLATES: readonly DefaultTemplateSpec[] = VARIANT_DEFAULTS.retail;
 
 /**
  * Returns the default variant templates for a new shop of the given kind.
@@ -44,7 +25,7 @@ export function defaultVariantTemplates(
   kind: ShopKind,
   makeId: (key: string, index: number) => string = (key) => `t_${key}`,
 ): VariantTemplate[] {
-  const specs = kind === 'retail' ? RETAIL_DEFAULT_TEMPLATES : FOOD_DEFAULT_TEMPLATES;
+  const specs = VARIANT_DEFAULTS[kind];
   return specs.map((spec, i) => {
     const templateId = makeId(spec.key, i);
     return {
@@ -129,7 +110,7 @@ export function templateChanges(
  */
 export function isInSync(
   axis: Pick<VariantAxis, 'name' | 'values'>,
-  template: Pick<VariantTemplate, 'name' | 'options'>,
+  template: { name: string; options: readonly { name: string }[] },
 ): boolean {
   if (axis.name !== template.name) return false;
   if (axis.values.length === 0) return false;
@@ -210,23 +191,11 @@ export function applyTemplateToItem<T extends Item | OwnerItem | ItemDraft>(
   }
 
   if (mode === 'keep') {
-    // Check if what the item uses was affected
-    const usesRenamedOpt = axis.values.some((v) =>
-      diff.renamedOptions.some((r) => r.from === v.name),
-    );
-    const usesRemovedOpt = axis.values.some((v) => diff.removed.includes(v.name));
-    const nameChanged = Boolean(diff.renamedTo);
-
-    if (nameChanged || usesRenamedOpt || usesRemovedOpt) {
-      // Unlink choice
+    // Added options never touch items. Anything else that leaves the choice out of step unlinks it.
+    if (!isInSync(axis, after)) {
       const updatedAxes = item.axes.map((a, i) => (i === axisIndex ? unlinkChoice(a) : a));
-      return {
-        item: { ...item, axes: updatedAxes },
-        outcome: 'unlinked',
-        soldOut: false,
-      };
+      return { item: { ...item, axes: updatedAxes }, outcome: 'unlinked', soldOut: false };
     }
-
     return { item, outcome: 'unchanged', soldOut: false };
   }
 

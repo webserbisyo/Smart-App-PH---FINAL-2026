@@ -6,6 +6,7 @@ import {
   OwnerItemSchema,
   OwnerOptionGroupSchema,
   OwnerVariantTemplateSchema,
+  RemoveVariantTemplateResultSchema,
   SaveVariantTemplateResultSchema,
   UploadResultSchema,
 } from '@smartapp/core';
@@ -167,10 +168,11 @@ export function createApiOwnerCatalogAdapter({
 
     async removeVariantTemplate({ id }) {
       const headers = await authHeaders();
-      await fetchApi(`${baseUrl}/owner/variant-templates/${encodeURIComponent(id)}`, z.unknown(), {
-        method: 'DELETE',
-        headers,
-      });
+      return fetchApi(
+        `${baseUrl}/owner/variant-templates/${encodeURIComponent(id)}`,
+        RemoveVariantTemplateResultSchema,
+        { method: 'DELETE', headers },
+      );
     },
 
     async saveSortOrder(input) {

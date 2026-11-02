@@ -298,6 +298,7 @@ describe('options', () => {
       .flatMap((g) => g.options)
       .filter((o) => picks.optionIds.includes(o.id))
       .map((o) => o.name);
+    expect(names.sort()).toEqual(['100%', 'Regular ice']);
     expect(canQuickAdd(item('Loaded Bacon Fries'), groups)).toBe(true);
     expect(canQuickAdd(item('Cheese Fries'), groups)).toBe(false);
     expect(canQuickAdd(nuggets, groups)).toBe(false);

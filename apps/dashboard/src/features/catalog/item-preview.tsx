@@ -80,8 +80,8 @@ export function ItemPreview({
         </p>
         {axes && axes.length > 0 ? (
           <div className="space-y-2 border-t border-border/40 pt-1">
-            {axes.map((axis) => (
-              <div key={axis.id} className="space-y-1">
+            {axes.map((axis, axisIndex) => (
+              <div key={axisIndex} className="space-y-1">
                 <span className="text-xs font-medium text-foreground">
                   {axis.name || catalogWords.choiceUnnamed}
                 </span>

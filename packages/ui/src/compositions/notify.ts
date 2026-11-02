@@ -11,6 +11,8 @@ export interface NotifyInput {
   tone?: NotifyTone | undefined;
   // At most one action (docs/ux.md section 5), e.g. Undo.
   action?: { label: string; onClick: () => void } | undefined;
+  // Stays until closed, like an error: for a warning the owner must act on.
+  persist?: boolean | undefined;
 }
 
 const SUCCESS_MS = 3000;
@@ -48,14 +50,20 @@ export function connectToasts(next: ToastManager): () => void {
  * The one way to show a toast (docs/components.md): success closes after 3 s, errors stay until closed.
  * Placement (above the storefront dock on phones, bottom right on desktop) lives in globals.css.
  */
-export function notify({ title, description, tone = 'info', action }: NotifyInput): string {
+export function notify({
+  title,
+  description,
+  tone = 'info',
+  action,
+  persist = false,
+}: NotifyInput): string {
   count += 1;
   const options: ToastOptions = {
     id: `notify-${count}`,
     title,
     description,
     type: tone,
-    timeout: tone === 'error' ? 0 : tone === 'success' ? SUCCESS_MS : INFO_MS,
+    timeout: tone === 'error' || persist ? 0 : tone === 'success' ? SUCCESS_MS : INFO_MS,
     priority: tone === 'error' ? 'high' : 'low',
     actionProps: action ? { children: action.label, onClick: action.onClick } : undefined,
   };

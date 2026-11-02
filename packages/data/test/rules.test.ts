@@ -330,8 +330,11 @@ describe('samples', () => {
     const { store } = testStore(OPEN_MONDAY);
     const cleared = await store.ownerSamples.clearSamples({ slug: 'kanto-smash' });
     const blank = TEST_SHOP_PACKS['test-blank'];
-    const { variantTemplates: _unused, ...blankCatalog } = blank.catalog;
-    expect(cleared.catalog).toEqual(blankCatalog);
+    expect(cleared.catalog).toEqual({
+      categories: blank.catalog.categories,
+      items: blank.catalog.items,
+      optionGroups: blank.catalog.optionGroups,
+    });
     expect(cleared.storefront.look.banners).toEqual(blank.storefront.look.banners);
     expect(cleared.storefront.look.announcement).toBeNull();
     expect(cleared.storefront.info.logo).toBeNull();
@@ -396,6 +399,6 @@ describe('scenario switch', () => {
     const { store } = testStore(OPEN_MONDAY);
     expect(
       (await store.storefront.getStorefront({ slug: 'test-stress' }))?.catalog.items,
-    ).toHaveLength(60);
+    ).toHaveLength(61);
   });
 });

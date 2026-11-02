@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  catalogWords,
   findVariant,
   formatPeso,
   possibleValues,
@@ -32,7 +31,7 @@ export interface ItemSheetVariantsProps {
  * Variants section for the item sheet:
  * - Single axis with prices -> radio rows (c-radio-group-17 pattern)
  * - 2 or 3 axes -> chips per axis (c-toggle-group-4 pattern, controlled)
- * - Impossible or sold-out combinations greyed with words.menu.itemSheet.notAvailable
+ * - Impossible or sold-out combinations greyed with words.storefrontShell.menu.itemSheet.notAvailable
  * - Choosing an option with a photo notifies parent to show that photo first
  */
 export function ItemSheetVariants({
@@ -49,8 +48,10 @@ export function ItemSheetVariants({
 
   // Single axis (common in food or simple options) -> c-radio-group-17 pattern
   if (item.axes.length <= 1) {
-    const axisName = item.axes[0]?.name ?? catalogWords.choiceUnnamed;
-    const basePrice = item.basePrice ?? item.variants[0]?.price ?? 0;
+    const axis = item.axes[0];
+    if (!axis) return null;
+    const axisName = axis.name;
+    const basePrice = item.basePrice;
 
     return (
       <div className="flex flex-col gap-2">
@@ -94,8 +95,8 @@ export function ItemSheetVariants({
                       {isSoldOut ? (
                         <FieldDescription className="text-xs text-destructive">
                           {avail === 'sold_out_today'
-                            ? words.menu.badges.soldOutToday
-                            : words.menu.badges.soldOut}
+                            ? words.storefrontShell.menu.badges.soldOutToday
+                            : words.storefrontShell.menu.badges.soldOut}
                         </FieldDescription>
                       ) : null}
                     </FieldContent>
@@ -176,7 +177,7 @@ export function ItemSheetVariants({
                     className={`h-9 gap-1 rounded-md px-3 text-xs font-medium ${
                       isDisabled ? 'line-through opacity-40' : ''
                     }`}
-                    title={isDisabled ? words.menu.itemSheet.notAvailable : v.name}
+                    title={isDisabled ? words.storefrontShell.menu.itemSheet.notAvailable : v.name}
                   >
                     <span>{v.name}</span>
                     {v.priceDelta > 0 && (

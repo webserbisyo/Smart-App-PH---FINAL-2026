@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { VariantAxis } from '@smartapp/core';
+import { buildVersions, copyChoices, type VariantAxis } from '@smartapp/core';
 import {
-  buildVersions,
+  choicesFrom,
   comboCount,
-  copyChoices,
   newVariantId,
   parsePeso,
   pesoText,
+  pricedAxes,
+  withVersions,
 } from '../src/features/catalog/variants.js';
 
 const axis = (name: string, values: { name: string; priceDelta?: number }[]): VariantAxis => ({
@@ -86,9 +87,26 @@ describe('dashboard variants helpers', () => {
       ...v,
       availability: 'sold_out' as const,
     }));
-    const copy = copyChoices(axes, variants, 10000);
+    const copy = copyChoices(axes, variants);
     expect(copy.variants[0]?.id).not.toBe(variants[0]?.id);
     expect(copy.variants[0]?.availability).toBe('available');
+  });
+
+  it('keeps typed price changes while a choice is Same price, but prices them at +0', () => {
+    const size = axis('Size', [{ name: 'Regular' }, { name: 'Large', priceDelta: 3000 }]);
+    const colour = axis('Colour', [{ name: 'Black' }, { name: 'White' }]);
+    const start = withVersions(choicesFrom([size, colour], []), 10000);
+    expect(start.samePrice).toEqual([false, true]);
+    expect(start.variants.map((v) => v.price)).toEqual([10000, 10000, 13000, 13000]);
+
+    const on = withVersions({ ...start, samePrice: [true, true] }, 10000);
+    expect(on.axes[0]?.values[1]?.priceDelta).toBe(3000);
+    expect(pricedAxes(on)[0]?.values[1]?.priceDelta).toBe(0);
+    expect(on.variants.every((v) => v.price === 10000)).toBe(true);
+
+    const offAgain = withVersions({ ...on, samePrice: [false, true] }, 10000);
+    expect(offAgain.variants.map((v) => v.price)).toEqual([10000, 10000, 13000, 13000]);
+    expect(offAgain.variants.map((v) => v.id)).toEqual(start.variants.map((v) => v.id));
   });
 
   it('reads and writes peso text as centavos', () => {

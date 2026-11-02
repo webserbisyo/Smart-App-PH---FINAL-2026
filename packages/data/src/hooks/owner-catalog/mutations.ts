@@ -386,6 +386,7 @@ export function useBulkMoveCategory() {
               name: item.name,
               description: item.description,
               photos: item.photos,
+              basePrice: item.basePrice,
               axes: item.axes,
               variants: item.variants,
               optionGroupIds: item.optionGroupIds,

@@ -5,8 +5,6 @@ import {
   defaultVariantTemplates,
   isInSync,
   linkTemplate,
-  templateChanges,
-  unlinkChoice,
 } from '../src/rules/variant-templates.js';
 import { buildVersions } from '../src/rules/variant-pricing.js';
 

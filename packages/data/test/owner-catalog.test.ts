@@ -4,7 +4,7 @@ import {
   OwnerItemSchema,
   OwnerOptionGroupSchema,
   OwnerVariantTemplateSchema,
-  SaveVariantTemplateResultSchema,
+  type OwnerItem,
   UploadResultSchema,
 } from '@smartapp/core';
 import { testStore, errorCode, mnl } from './helpers.js';
@@ -264,6 +264,132 @@ describe('ownerCatalog mock adapter', () => {
   });
 });
 
+describe('ownerCatalog variants (T46)', () => {
+  function draftOf(item: OwnerItem) {
+    return {
+      categoryId: item.categoryId,
+      name: item.name,
+      description: item.description,
+      photos: item.photos,
+      basePrice: item.basePrice,
+      axes: item.axes,
+      variants: item.variants,
+      optionGroupIds: item.optionGroupIds,
+      pairingIds: item.pairingIds,
+      featured: item.featured,
+      isNew: item.isNew,
+      status: item.status,
+    };
+  }
+
+  async function kanto() {
+    setMockOwnerSlug('kanto-smash');
+    const { store } = testStore(mnl('2026-10-26 12:00'));
+    const templates = await store.ownerCatalog.listVariantTemplates();
+    const items = await store.ownerCatalog.listItems();
+    const size = templates.find((t) => t.options.map((o) => o.name).join() === 'Regular,Large');
+    const patty = templates.find((t) => t.name === 'Patty');
+    if (!size || !patty) throw new Error('Kanto variants missing');
+    return { store, templates, items, size, patty };
+  }
+
+  it('saveItem recomputes prices it was sent wrong', async () => {
+    const { store, items } = await kanto();
+    const fries = items.find((i) => i.id === 'ks-kanto-fries');
+    if (!fries) throw new Error('fries missing');
+    const saved = await store.ownerCatalog.saveItem({
+      id: fries.id,
+      draft: { ...draftOf(fries), variants: fries.variants.map((v) => ({ ...v, price: 1 })) },
+    });
+    expect(saved.variants.map((v) => v.price)).toEqual([6900, 9900]);
+  });
+
+  it('counts usedBy without archived items', async () => {
+    const { store, size } = await kanto();
+    expect(size.usedBy).toBe(2);
+    await store.ownerCatalog.setItemStatus({ id: 'ks-cheese-fries', status: 'archived' });
+    const after = await store.ownerCatalog.listVariantTemplates();
+    expect(after.find((t) => t.id === size.id)?.usedBy).toBe(1);
+  });
+
+  it('Update N items adds a new option at +0, sold out where the choice is priced', async () => {
+    const { store, size } = await kanto();
+    const result = await store.ownerCatalog.saveVariantTemplate({
+      draft: { id: size.id, name: size.name, options: [...size.options, { name: 'Jumbo' }] },
+      applyToItems: true,
+    });
+    expect(result.updatedItemIds.sort()).toEqual(['ks-cheese-fries', 'ks-kanto-fries']);
+    expect(result.soldOutItemIds.sort()).toEqual(['ks-cheese-fries', 'ks-kanto-fries']);
+    const fries = (await store.ownerCatalog.listItems()).find((i) => i.id === 'ks-kanto-fries');
+    const jumbo = fries?.variants.find((v) => v.values[0] === 'Jumbo');
+    expect(jumbo?.price).toBe(6900);
+    expect(jumbo?.availability).toBe('sold_out');
+    expect(fries?.variants.find((v) => v.id === 'ks-kanto-fries--large')?.price).toBe(9900);
+  });
+
+  it('Only the variant leaves items alone, and unlinks items a rename breaks', async () => {
+    const { store, size } = await kanto();
+    const added = await store.ownerCatalog.saveVariantTemplate({
+      draft: { id: size.id, name: size.name, options: [...size.options, { name: 'Jumbo' }] },
+      applyToItems: false,
+    });
+    expect(added.updatedItemIds).toEqual([]);
+    expect(added.unlinkedItemIds).toEqual([]);
+    const renamed = await store.ownerCatalog.saveVariantTemplate({
+      draft: { id: size.id, name: 'Fries size', options: added.template.options },
+      applyToItems: false,
+    });
+    expect(renamed.unlinkedItemIds.sort()).toEqual(['ks-cheese-fries', 'ks-kanto-fries']);
+    const fries = (await store.ownerCatalog.listItems()).find((i) => i.id === 'ks-kanto-fries');
+    expect(fries?.axes[0]).toMatchObject({ name: 'Size', templateId: null });
+    expect(fries?.variants.map((v) => v.price)).toEqual([6900, 9900]);
+  });
+
+  it('blocks removing the stamp card prize option', async () => {
+    const { store, patty } = await kanto();
+    const err = await errorCode(
+      store.ownerCatalog.saveVariantTemplate({
+        draft: { id: patty.id, name: patty.name, options: patty.options.slice(1) },
+        applyToItems: true,
+      }),
+    );
+    expect(err).toBe('variant_is_reward');
+    const classic = (await store.ownerCatalog.listItems()).find((i) => i.id === 'ks-classic-smash');
+    expect(classic?.variants).toHaveLength(3);
+  });
+
+  it('delete unlinks every item, which keep their options and prices', async () => {
+    const { store, patty } = await kanto();
+    const result = await store.ownerCatalog.removeVariantTemplate({ id: patty.id });
+    expect(result.unlinkedItemIds.sort()).toEqual(['ks-cheesy-bacon-smash', 'ks-classic-smash']);
+    const classic = (await store.ownerCatalog.listItems()).find((i) => i.id === 'ks-classic-smash');
+    expect(classic?.axes[0]?.templateId).toBeNull();
+    expect(classic?.variants.map((v) => v.price)).toEqual([14900, 20900, 26900]);
+  });
+
+  it('rejects a linked choice that is out of step with its variant', async () => {
+    const { store, items } = await kanto();
+    const fries = items.find((i) => i.id === 'ks-kanto-fries');
+    if (!fries) throw new Error('fries missing');
+    const err = await errorCode(
+      store.ownerCatalog.saveItem({
+        id: fries.id,
+        draft: { ...draftOf(fries), axes: fries.axes.map((a) => ({ ...a, name: 'Fry size' })) },
+      }),
+    );
+    expect(err).toBe('invalid_input');
+  });
+
+  it('clearSamples keeps the defaults, and the storefront payload has no variants', async () => {
+    const { store } = await kanto();
+    await store.ownerSamples.clearSamples({ slug: 'kanto-smash' });
+    const names = (await store.ownerCatalog.listVariantTemplates()).map((t) => t.name);
+    expect(names).toEqual(['Size', 'Size', 'Cup size', 'Patty', 'Temperature']);
+    const shop = await store.storefront.getStorefront({ slug: 'kanto-smash' });
+    expect(shop && 'variantTemplates' in shop.catalog).toBe(false);
+  });
+});
+
 describe('ownerCatalog HTTP API adapter', () => {
   it('calls correct endpoints with bearer token and parses schema', async () => {
     const fetchMock = vi.fn();
@@ -387,7 +513,7 @@ describe('ownerCatalog HTTP API adapter', () => {
     // Test removeVariantTemplate (DELETE)
     fetchMock.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({}),
+      json: async () => ({ unlinkedItemIds: [] }),
     });
     await adapter.removeVariantTemplate({ id: 't_new' });
     expect(fetchMock).toHaveBeenCalledWith(

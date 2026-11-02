@@ -20,7 +20,6 @@ import {
   catalogWords,
   errorWords,
   groupRuleLabel,
-  priceRange,
   type Category,
   type ItemDraft,
   type ItemStatus,
@@ -84,7 +83,7 @@ import { ItemPreview } from './item-preview.js';
 import { PesoInput } from './components/peso-input.js';
 import { PickedChip, PickRow } from './pick-list.js';
 import { VariantsSection, type VariantsValue } from './variants-section.js';
-import { buildVersions } from './variants.js';
+import { choicesFrom, pricedAxes, withVersions } from './variants.js';
 import { cn } from 'cn';
 
 export interface ItemEditorProps {
@@ -116,18 +115,17 @@ interface FieldErrors {
 }
 
 function initialForm(source: OwnerItem | null, isCopy: boolean): FormState {
-  const axes = source?.axes ?? [];
-  const basePrice = source?.basePrice ?? source?.variants[0]?.price ?? 0;
-  const variants = source?.variants
-    ? buildVersions(axes, source.variants, basePrice)
-    : buildVersions([], [], 0);
+  const basePrice = source?.basePrice ?? 0;
+  const choices = source
+    ? choicesFrom(source.axes, source.variants)
+    : withVersions({ axes: [], variants: [], samePrice: [] }, 0);
   return {
     name: source ? (isCopy ? catalogWords.copyName(source.name) : source.name) : '',
     description: source?.description ?? '',
     categoryId: source?.categoryId ?? '',
     photos: source?.photos ?? [],
     basePrice,
-    choices: { axes, variants },
+    choices,
     optionGroupIds: source?.optionGroupIds ?? [],
     pairingIds: source?.pairingIds ?? [],
     featured: source?.featured ?? false,
@@ -137,8 +135,9 @@ function initialForm(source: OwnerItem | null, isCopy: boolean): FormState {
 }
 
 function toDraft(form: FormState, categoryId: string): ItemDraft {
-  const { axes, variants } = form.choices;
-  const finalVariants = buildVersions(axes, variants, form.basePrice);
+  // A choice whose "Same price for all" is on saves +₱0 for every option.
+  const { variants } = withVersions(form.choices, form.basePrice);
+  const axes = pricedAxes(form.choices);
   return {
     categoryId,
     name: form.name.trim(),
@@ -146,7 +145,7 @@ function toDraft(form: FormState, categoryId: string): ItemDraft {
     photos: form.photos,
     basePrice: form.basePrice,
     axes: axes.map((axis) => ({ ...axis, name: axis.name.trim() })),
-    variants: finalVariants,
+    variants,
     optionGroupIds: form.optionGroupIds,
     pairingIds: form.pairingIds,
     featured: form.featured,
@@ -341,6 +340,9 @@ function ItemEditorForm({
   );
   const draftForPreview = toDraft(form, categoryId);
   const soldOutEverywhere = draftForPreview.variants.every((v) => v.availability === 'sold_out');
+  const prices = draftForPreview.variants.map((v) => v.price);
+  const lowPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  const highPrice = prices.length > 0 ? Math.max(...prices) : 0;
 
   const status = !initialItem
     ? {
@@ -459,31 +461,32 @@ function ItemEditorForm({
               <FieldError id="item-cat-error" message={fieldErrors.category} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="item-price">{catalogWords.basePriceLabel}</Label>
+              <Label htmlFor="item-price">
+                {form.choices.axes.length > 0
+                  ? catalogWords.basePriceLabel
+                  : catalogWords.priceLabel}
+              </Label>
               <PesoInput
                 id="item-price"
                 className="max-w-48"
                 value={form.basePrice}
-                onChange={(basePrice) => {
-                  const nextVariants = buildVersions(
-                    form.choices.axes,
-                    form.choices.variants,
-                    basePrice,
-                  );
-                  update({ basePrice, choices: { ...form.choices, variants: nextVariants } });
-                }}
+                onChange={(basePrice) =>
+                  update({ basePrice, choices: withVersions(form.choices, basePrice) })
+                }
               />
-              <p className="text-xs text-muted-foreground">
-                {form.choices.axes.length > 0
-                  ? catalogWords.computedPriceRange(
-                      priceRange({
-                        basePrice: form.basePrice,
-                        axes: form.choices.axes,
-                        variants: form.choices.variants,
-                      }),
-                    )
-                  : catalogWords.basePriceHelp}
-              </p>
+              {form.choices.axes.length > 0 ? (
+                <div className="space-y-0.5 text-sm text-muted-foreground">
+                  <p>{catalogWords.basePriceHelp}</p>
+                  <p className="font-medium text-foreground tabular">
+                    {catalogWords.priceLine(
+                      lowPrice === highPrice
+                        ? formatPeso(lowPrice)
+                        : catalogWords.priceRange(formatPeso(lowPrice), formatPeso(highPrice)),
+                      draftForPreview.variants.length,
+                    )}
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             <div className="space-y-1.5">
@@ -510,14 +513,6 @@ function ItemEditorForm({
             value={form.choices}
             onChange={(choices) => update({ choices })}
             basePrice={form.basePrice}
-            onBasePriceChange={(basePrice) => {
-              const nextVariants = buildVersions(
-                form.choices.axes,
-                form.choices.variants,
-                basePrice,
-              );
-              update({ basePrice, choices: { ...form.choices, variants: nextVariants } });
-            }}
             otherItems={otherItems}
             onCopied={(name) => notify({ title: catalogWords.copiedFrom(name), tone: 'success' })}
           />
@@ -648,7 +643,7 @@ function ItemEditorForm({
               photos={form.photos}
               variants={draftForPreview.variants}
               choiceNames={form.choices.axes.map((a) => a.name || catalogWords.choiceUnnamed)}
-              axes={form.choices.axes}
+              axes={draftForPreview.axes}
               featured={form.featured}
               isNew={form.isNew}
             />
@@ -704,7 +699,7 @@ function ItemEditorForm({
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => {
-                const el = document.getElementById(showPrice ? 'item-price' : 'variant-prices');
+                const el = document.getElementById('item-price');
                 el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
                 if (el instanceof HTMLInputElement) el.focus({ preventScroll: true });
               }}

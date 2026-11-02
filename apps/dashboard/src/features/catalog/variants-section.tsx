@@ -3,35 +3,46 @@ import {
   BanIcon,
   ChevronDownIcon,
   CopyIcon,
-  ExternalLinkIcon,
-  Link2OffIcon,
+  LinkIcon,
   MoreHorizontalIcon,
+  PencilIcon,
   PlusIcon,
   SparklesIcon,
   Trash2Icon,
+  UnlinkIcon,
   XIcon,
 } from 'lucide-react';
 import {
+  applyTemplateToItem,
   catalogWords,
+  computedPrice,
+  copyChoices,
+  errorWords,
   formatPeso,
   isSamePrice,
   linkTemplate,
-  priceRange,
+  optionSoldOutState,
+  renameOption,
   unlinkChoice,
   VARIANT_LIMITS,
+  type ItemDraft,
   type OwnerItem,
   type OwnerVariantTemplate,
   type ShopKind,
   type Variant,
   type VariantAxis,
 } from '@smartapp/core';
+import { errorCodeOf, useOwnerVariantTemplates, useSaveVariantTemplate } from '@smartapp/data';
 import { Badge } from '@smartapp/ui/components/badge';
+import { Badge as StatusBadge } from '@smartapp/ui/components/reui/badge';
 import { Button } from '@smartapp/ui/components/button';
 import { Checkbox } from '@smartapp/ui/components/checkbox';
 import { FieldError } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import { Switch } from '@smartapp/ui/components/switch';
+import { Toggle } from '@smartapp/ui/components/toggle';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@smartapp/ui/components/tooltip';
 import {
   Collapsible,
   CollapsibleContent,
@@ -49,762 +60,839 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
-import { useOwnerVariantTemplates } from '@smartapp/data';
+import { notify } from '@smartapp/ui/compositions/notify';
 import { PesoInput } from './components/peso-input.js';
-import { VariantTemplateSheet } from './variant-template-sheet.js';
-import { buildVersions, comboCount, copyChoices } from './variants.js';
+import { VariantTemplateSheet, type VariantSaved } from './variant-template-sheet.js';
+import { comboCount, pesoText, pricedAxes, withVersions, type ChoicesValue } from './variants.js';
 import { cn } from 'cn';
 
-export interface VariantsValue {
-  axes: VariantAxis[];
-  variants: Variant[];
-}
+export type { ChoicesValue as VariantsValue } from './variants.js';
 
 export interface VariantsSectionProps {
   kind: ShopKind;
-  value: VariantsValue;
-  onChange: (next: VariantsValue) => void;
+  value: ChoicesValue;
   basePrice: number;
-  onBasePriceChange?: ((nextPrice: number) => void) | undefined;
+  onChange: (next: ChoicesValue) => void;
+  // Items whose choices can be copied (this item left out).
   otherItems: readonly OwnerItem[];
   onCopied: (name: string) => void;
+  // A save problem with the choices, shown under the heading.
   error?: string | undefined;
 }
 
+type SheetState =
+  | { open: false }
+  | {
+      open: true;
+      template: OwnerVariantTemplate | null;
+      initial?: { name: string; options: string[] } | undefined;
+      // The custom choice that "Save as variant" turns into a linked one.
+      linkAxis?: number | undefined;
+    };
+
+// A stand-in item so the editor can run the same rule as the server on its unsaved form.
+function asDraft(value: ChoicesValue, basePrice: number): ItemDraft {
+  return {
+    categoryId: 'draft',
+    name: 'draft',
+    description: null,
+    photos: [],
+    basePrice,
+    axes: value.axes,
+    variants: value.variants,
+    optionGroupIds: [],
+    pairingIds: [],
+    featured: false,
+    isNew: false,
+    status: 'active',
+  };
+}
+
+/**
+ * The item editor's choices (decision T46): one card per choice with its own "Same price for all"
+ * switch and "+₱" option prices, plus an optional Combinations table for special prices and sold out.
+ */
 export function VariantsSection({
   kind,
   value,
-  onChange,
   basePrice,
-  onBasePriceChange,
+  onChange,
   otherItems,
   onCopied,
   error,
 }: VariantsSectionProps) {
-  const { axes, variants } = value;
+  const { axes, variants, samePrice } = value;
   const { data: templates = [] } = useOwnerVariantTemplates();
+  const saveTemplate = useSaveVariantTemplate();
+  const [sheet, setSheet] = React.useState<SheetState>({ open: false });
+  const [combosOpen, setCombosOpen] = React.useState(false);
+  const [cardErrors, setCardErrors] = React.useState<Record<number, string>>({});
 
-  // Template sheet state
-  const [sheetOpen, setSheetOpen] = React.useState(false);
-  const [sheetTemplate, setSheetTemplate] = React.useState<OwnerVariantTemplate | null | undefined>(
-    null,
-  );
-  const [targetAxisIdx, setTargetAxisIdx] = React.useState<number | null>(null);
+  const commit = (next: Pick<ChoicesValue, 'axes' | 'samePrice'> & { variants?: Variant[] }) =>
+    onChange(
+      withVersions(
+        { axes: next.axes, samePrice: next.samePrice, variants: next.variants ?? variants },
+        basePrice,
+      ),
+    );
 
-  const copySources = otherItems.filter((item) => item.axes.length > 0);
-  const totalCombos = comboCount(axes);
-  const isAtComboLimit = totalCombos >= VARIANT_LIMITS.combos;
+  const setCardError = (index: number, message: string | null) =>
+    setCardErrors((prev) => {
+      const next = { ...prev };
+      if (message) next[index] = message;
+      else delete next[index];
+      return next;
+    });
 
-  function updateAxes(nextAxes: VariantAxis[]) {
-    const nextVariants = buildVersions(nextAxes, variants, basePrice);
-    onChange({ axes: nextAxes, variants: nextVariants });
-  }
-
-  function handleAddLinkedChoice(template: OwnerVariantTemplate) {
-    if (axes.length >= VARIANT_LIMITS.axes) return;
-    const newAxis = linkTemplate(template);
-    const candidateAxes = [...axes, newAxis];
-    if (comboCount(candidateAxes) > VARIANT_LIMITS.combos) {
-      return;
+  // Changes one choice; refuses anything past 30 combinations with the limit message.
+  const updateAxis = (index: number, nextAxis: VariantAxis): boolean => {
+    const nextAxes = axes.map((a, i) => (i === index ? nextAxis : a));
+    const count = comboCount(nextAxes.filter((a) => a.values.length > 0));
+    if (count > VARIANT_LIMITS.combos) {
+      setCardError(index, catalogWords.comboLimit(count));
+      return false;
     }
-    updateAxes(candidateAxes);
-  }
+    setCardError(index, null);
+    commit({ axes: nextAxes, samePrice });
+    return true;
+  };
 
-  function handleAddCustomChoice() {
+  const addAxis = (axis: VariantAxis) => {
     if (axes.length >= VARIANT_LIMITS.axes) return;
-    const newAxis: VariantAxis = {
-      name: '',
-      templateId: null,
-      values: [
-        { name: 'Option 1', photo: null, priceDelta: 0 },
-        { name: 'Option 2', photo: null, priceDelta: 0 },
-      ],
-    };
-    const candidateAxes = [...axes, newAxis];
-    if (comboCount(candidateAxes) > VARIANT_LIMITS.combos) {
-      return;
-    }
-    updateAxes(candidateAxes);
-  }
+    commit({ axes: [...axes, axis], samePrice: [...samePrice, true] });
+  };
 
-  function handleCopyFrom(item: OwnerItem) {
-    const copied = copyChoices(item.axes, item.variants, basePrice);
-    onChange(copied);
+  const removeAxis = (index: number) => {
+    setCardErrors({});
+    commit({
+      axes: axes.filter((_, i) => i !== index),
+      samePrice: samePrice.filter((_, i) => i !== index),
+    });
+  };
+
+  const setSoldOut = (match: (v: Variant) => boolean, soldOut: boolean) =>
+    onChange({
+      ...value,
+      variants: variants.map((v) =>
+        match(v)
+          ? { ...v, availability: soldOut ? 'sold_out' : 'available', soldOutUntil: null }
+          : v,
+      ),
+    });
+
+  const copyFrom = (item: OwnerItem) => {
+    const copied = copyChoices(item.axes, item.variants);
+    onChange(
+      withVersions(
+        { axes: copied.axes, variants: copied.variants, samePrice: copied.axes.map(isSamePrice) },
+        basePrice,
+      ),
+    );
     onCopied(item.name);
-  }
+  };
 
-  function handleOpenNewTemplate() {
-    setSheetTemplate(null);
-    setTargetAxisIdx(null);
-    setSheetOpen(true);
-  }
-
-  function handleEditLinkedTemplate(axisIdx: number) {
-    const axis = axes[axisIdx];
-    if (!axis?.templateId) return;
-    const found = templates.find((t) => t.id === axis.templateId);
-    if (!found) return;
-    setSheetTemplate(found);
-    setTargetAxisIdx(axisIdx);
-    setSheetOpen(true);
-  }
-
-  function handleSaveAsTemplate(axisIdx: number) {
-    const axis = axes[axisIdx];
+  const saveAsVariant = async (index: number) => {
+    const axis = axes[index];
     if (!axis) return;
-    const mockTemplate: OwnerVariantTemplate = {
-      id: '',
-      name: axis.name,
-      options: axis.values.map((v, i) => ({ id: `opt_${i + 1}`, name: v.name })),
-      sample: false,
-      usedBy: 0,
-    };
-    setSheetTemplate(mockTemplate);
-    setTargetAxisIdx(axisIdx);
-    setSheetOpen(true);
-  }
-
-  function handleUnlinkChoice(axisIdx: number) {
-    const nextAxes = axes.map((a, i) => (i === axisIdx ? unlinkChoice(a) : a));
-    updateAxes(nextAxes);
-  }
-
-  function handleRemoveChoice(axisIdx: number) {
-    const nextAxes = axes.filter((_, i) => i !== axisIdx);
-    updateAxes(nextAxes);
-  }
-
-  function handleToggleSamePrice(axisIdx: number, same: boolean) {
-    const nextAxes = axes.map((axis, i) => {
-      if (i !== axisIdx) return axis;
-      if (same) {
-        return {
-          ...axis,
-          values: axis.values.map((v) => ({ ...v, priceDelta: 0 })),
-        };
-      }
-      return axis;
-    });
-    updateAxes(nextAxes);
-  }
-
-  // Toggling an option on a linked axis (tick/untick)
-  function handleToggleLinkedOption(axisIdx: number, optName: string, checked: boolean) {
-    const axis = axes[axisIdx];
-    if (!axis) return;
-    if (checked) {
-      // Add option with template order
-      const template = templates.find((t) => t.id === axis.templateId);
-      const templateOrder = template?.options.map((o) => o.name) ?? [];
-      const newValues = [...axis.values, { name: optName, photo: null, priceDelta: 0 }];
-      newValues.sort((a, b) => {
-        const idxA = templateOrder.indexOf(a.name);
-        const idxB = templateOrder.indexOf(b.name);
-        return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
-      });
-      const candidateAxes = axes.map((a, i) => (i === axisIdx ? { ...a, values: newValues } : a));
-      if (comboCount(candidateAxes) > VARIANT_LIMITS.combos) return;
-      updateAxes(candidateAxes);
-    } else {
-      // Cannot uncheck if only 1 value left
-      if (axis.values.length <= 1) return;
-      const nextValues = axis.values.filter((v) => v.name !== optName);
-      const nextAxes = axes.map((a, i) => (i === axisIdx ? { ...a, values: nextValues } : a));
-      updateAxes(nextAxes);
+    if (!axis.name.trim() || axis.values.length === 0) {
+      setCardError(
+        index,
+        axis.name.trim() ? catalogWords.choiceNeedsOption : catalogWords.choiceNeedsName,
+      );
+      return;
     }
-  }
+    try {
+      const { template } = await saveTemplate.mutateAsync({
+        draft: { name: axis.name.trim(), options: axis.values.map((v) => ({ name: v.name })) },
+        applyToItems: false,
+      });
+      updateAxis(index, { ...axis, name: template.name, templateId: template.id });
+      notify({ title: catalogWords.savedToVariants(template.name), tone: 'success' });
+    } catch (err: unknown) {
+      setCardError(index, errorWords(errorCodeOf(err)));
+    }
+  };
 
-  function handleCustomOptionNameChange(axisIdx: number, valIdx: number, name: string) {
-    const nextAxes = axes.map((axis, i) => {
-      if (i !== axisIdx) return axis;
-      return {
-        ...axis,
-        values: axis.values.map((v, vi) => (vi === valIdx ? { ...v, name } : v)),
-      };
-    });
-    // Also rename in variants values
-    const oldName = axes[axisIdx]!.values[valIdx]!.name;
-    const nextVariants = variants.map((v) => {
-      if (v.values[axisIdx] === oldName) {
-        const nextVals = [...v.values];
-        nextVals[axisIdx] = name;
-        return { ...v, values: nextVals };
+  // After the variant sheet saves, make the same change to this unsaved form.
+  const handleSheetSaved = ({ result, before, applyToItems }: VariantSaved) => {
+    if (sheet.open && sheet.linkAxis !== undefined) {
+      const axis = axes[sheet.linkAxis];
+      if (axis) {
+        updateAxis(sheet.linkAxis, {
+          ...axis,
+          name: result.template.name,
+          templateId: result.template.id,
+        });
       }
-      return v;
-    });
-    onChange({ axes: nextAxes, variants: buildVersions(nextAxes, nextVariants, basePrice) });
-  }
+      return;
+    }
+    if (!before) {
+      const linked = linkTemplate(result.template);
+      if (comboCount([...axes, linked]) <= VARIANT_LIMITS.combos) addAxis(linked);
+      return;
+    }
+    const applied = applyTemplateToItem(
+      asDraft(value, basePrice),
+      before,
+      result.template,
+      applyToItems ? 'update' : 'keep',
+    );
+    commit({ axes: applied.item.axes, samePrice, variants: applied.item.variants });
+  };
 
-  function handleOptionPriceDeltaChange(axisIdx: number, optName: string, delta: number) {
-    const nextAxes = axes.map((axis, i) => {
-      if (i !== axisIdx) return axis;
-      return {
-        ...axis,
-        values: axis.values.map((v) => (v.name === optName ? { ...v, priceDelta: delta } : v)),
-      };
-    });
-    updateAxes(nextAxes);
-  }
-
-  function handleRemoveCustomOption(axisIdx: number, valIdx: number) {
-    const axis = axes[axisIdx];
-    if (!axis || axis.values.length <= 1) return;
-    const nextAxes = axes.map((a, i) => {
-      if (i !== axisIdx) return a;
-      return { ...a, values: a.values.filter((_, vi) => vi !== valIdx) };
-    });
-    updateAxes(nextAxes);
-  }
-
-  function handleAddCustomOption(axisIdx: number, name: string) {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    const axis = axes[axisIdx];
-    if (!axis || axis.values.length >= VARIANT_LIMITS.options) return;
-    if (axis.values.some((v) => v.name.toLowerCase() === trimmed.toLowerCase())) return;
-
-    const candidateAxes = axes.map((a, i) => {
-      if (i !== axisIdx) return a;
-      return {
-        ...a,
-        values: [...a.values, { name: trimmed, photo: null, priceDelta: 0 }],
-      };
-    });
-    if (comboCount(candidateAxes) > VARIANT_LIMITS.combos) return;
-    updateAxes(candidateAxes);
-  }
-
-  // Sold out state for an option across combinations
-  function getOptionSoldOutStatus(axisIdx: number, optName: string): 'none' | 'some' | 'all' {
-    const matchingCombos = variants.filter((v) => v.values[axisIdx] === optName);
-    if (matchingCombos.length === 0) return 'none';
-    const soldOutCount = matchingCombos.filter((v) => v.availability !== 'available').length;
-    if (soldOutCount === 0) return 'none';
-    if (soldOutCount === matchingCombos.length) return 'all';
-    return 'some';
-  }
-
-  function handleToggleOptionSoldOut(axisIdx: number, optName: string) {
-    const currentStatus = getOptionSoldOutStatus(axisIdx, optName);
-    const targetAvail = currentStatus === 'all' ? 'available' : 'sold_out';
-    const nextVariants = variants.map((v) => {
-      if (v.values[axisIdx] === optName) {
-        return {
-          ...v,
-          availability: targetAvail,
-          soldOutUntil: targetAvail === 'available' ? null : v.soldOutUntil,
-        };
-      }
-      return v;
-    });
-    onChange({ axes, variants: nextVariants });
-  }
-
-  function handleCombinationSpecialPrice(varId: string, specialPrice: number) {
-    const nextVariants = variants.map((v) => {
-      if (v.id === varId) {
-        const override = specialPrice > 0 ? specialPrice : null;
-        return {
-          ...v,
-          priceOverride: override,
-        };
-      }
-      return v;
-    });
-    onChange({ axes, variants: buildVersions(axes, nextVariants, basePrice) });
-  }
-
-  function handleCombinationSoldOut(varId: string, soldOut: boolean) {
-    const nextVariants = variants.map((v) => {
-      if (v.id === varId) {
-        return {
-          ...v,
-          availability: soldOut ? ('sold_out' as const) : ('available' as const),
-          soldOutUntil: soldOut ? v.soldOutUntil : null,
-        };
-      }
-      return v;
-    });
-    onChange({ axes, variants: nextVariants });
-  }
-
-  const computedRange = priceRange({ basePrice, axes, variants });
+  const count = comboCount(axes.filter((a) => a.values.length > 0));
+  const specialCount = variants.filter((v) => v.priceOverride !== null).length;
+  const soldOutCount = variants.filter((v) => v.availability !== 'available').length;
+  const priced = pricedAxes(value);
+  const available = templates.filter((t) => !axes.some((a) => a.templateId === t.id));
+  const copySources = otherItems.filter((item) => item.axes.length > 0);
 
   return (
-    <section className="space-y-6 rounded-2xl border border-border/80 bg-card p-4 shadow-xs md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border/50 pb-4">
-        <div className="space-y-1">
-          <h2 className="text-base font-semibold text-foreground">
-            {catalogWords.variantsSectionTitle}
-          </h2>
-          <p className="text-sm text-muted-foreground">{catalogWords.variantsSectionSubtitle}</p>
-        </div>
-
-        {/* Base price & computed price range */}
-        <div className="flex flex-col items-end gap-1">
-          {onBasePriceChange && (
-            <div className="flex items-center gap-2">
-              <Label
-                htmlFor="base-price"
-                className="text-xs font-semibold text-muted-foreground uppercase"
-              >
-                {catalogWords.basePriceLabel}:
-              </Label>
-              <PesoInput
-                id="base-price"
-                value={basePrice}
-                onChange={onBasePriceChange}
-                className="h-9 w-28 text-right font-semibold"
-              />
-            </div>
-          )}
-          <span className="text-xs font-medium text-muted-foreground">
-            {catalogWords.computedPriceRange(computedRange)}
-          </span>
-        </div>
+    <section
+      id="item-variants"
+      tabIndex={-1}
+      className={cn(
+        'scroll-mt-24 space-y-4 rounded-2xl border bg-card p-4 shadow-xs outline-none md:p-5',
+        error ? 'border-destructive/50' : 'border-border/60',
+      )}
+    >
+      <div className="space-y-1">
+        <h2 className="text-base font-semibold text-foreground">
+          {catalogWords.sectionVariantsTitle(kind)}
+        </h2>
+        <p className="text-sm text-muted-foreground">{catalogWords.sectionVariantsHelp(kind)}</p>
+        {error ? <FieldError className="font-medium">{error}</FieldError> : null}
       </div>
 
-      {error && <FieldError>{error}</FieldError>}
+      {axes.map((axis, index) => (
+        <ChoiceCard
+          key={`${index}-${axis.templateId ?? 'custom'}`}
+          axis={axis}
+          index={index}
+          template={templates.find((t) => t.id === axis.templateId)}
+          samePrice={samePrice[index] !== false}
+          variants={variants}
+          error={cardErrors[index]}
+          onAxis={(next) => updateAxis(index, next)}
+          onRename={(from, to) => {
+            const renamed = renameOption(axes, variants, index, from, to);
+            commit({ axes: renamed.axes, samePrice, variants: renamed.variants });
+          }}
+          onSamePrice={(on) =>
+            commit({ axes, samePrice: samePrice.map((s, i) => (i === index ? on : s)) })
+          }
+          onSoldOut={(name, soldOut) => setSoldOut((v) => v.values[index] === name, soldOut)}
+          onShowCombos={() => {
+            setCombosOpen(true);
+            requestAnimationFrame(() =>
+              document
+                .getElementById('item-combinations')
+                ?.scrollIntoView({ block: 'start', behavior: 'smooth' }),
+            );
+          }}
+          onError={(message) => setCardError(index, message)}
+          onEditVariant={(template) => setSheet({ open: true, template })}
+          onUnlink={() => updateAxis(index, unlinkChoice(axis))}
+          onSaveAsVariant={() => void saveAsVariant(index)}
+          onRemove={() => removeAxis(index)}
+        />
+      ))}
 
-      {/* Choice cards */}
-      <div className="space-y-4">
-        {axes.map((axis, axisIdx) => {
-          const isLinked = Boolean(axis.templateId);
-          const linkedTemplate = isLinked ? templates.find((t) => t.id === axis.templateId) : null;
-          const samePrice = isSamePrice(axis);
-
-          return (
-            <div
-              key={axis.templateId ?? `axis-${axisIdx}`}
-              className="space-y-4 rounded-xl border border-border/70 bg-muted/20 p-4 transition-colors focus-within:border-primary/40"
-            >
-              {/* Choice header */}
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex flex-1 items-center gap-2.5">
-                  <Badge variant={isLinked ? 'secondary' : 'outline'} className="text-xs">
-                    {isLinked ? catalogWords.choiceLinkedBadge : catalogWords.choiceCustomBadge}
-                  </Badge>
-
-                  {isLinked ? (
-                    <span className="text-base font-bold text-foreground">{axis.name}</span>
-                  ) : (
-                    <Input
-                      value={axis.name}
-                      onChange={(e) => {
-                        const nextAxes = axes.map((a, i) =>
-                          i === axisIdx ? { ...a, name: e.target.value } : a,
-                        );
-                        updateAxes(nextAxes);
-                      }}
-                      placeholder="Choice name (e.g. Size)"
-                      className="h-9 max-w-64 font-semibold"
-                      maxLength={30}
-                    />
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-muted-foreground hover:text-foreground"
-                          aria-label={`Choice actions`}
-                        />
-                      }
-                    >
-                      <MoreHorizontalIcon className="size-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      {isLinked ? (
-                        <>
-                          <DropdownMenuItem onClick={() => handleEditLinkedTemplate(axisIdx)}>
-                            <ExternalLinkIcon className="size-4" />
-                            {catalogWords.editVariantTemplate}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUnlinkChoice(axisIdx)}>
-                            <Link2OffIcon className="size-4" />
-                            {catalogWords.unlinkVariant}
-                          </DropdownMenuItem>
-                        </>
-                      ) : (
-                        <DropdownMenuItem onClick={() => handleSaveAsTemplate(axisIdx)}>
-                          <SparklesIcon className="size-4" />
-                          {catalogWords.saveAsNewVariant}
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => handleRemoveChoice(axisIdx)}
-                      >
-                        <Trash2Icon className="size-4" />
-                        {catalogWords.removeChoice}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-
-              {/* Choice-level same price switch */}
-              <div className="flex items-center justify-between gap-4 border-t border-border/40 pt-3">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">{catalogWords.samePriceForAll}</Label>
-                  {!samePrice && (
-                    <p className="text-xs text-muted-foreground">
-                      {catalogWords.differentPricesHelp}
-                    </p>
-                  )}
-                </div>
-                <Switch
-                  checked={samePrice}
-                  onCheckedChange={(val) => handleToggleSamePrice(axisIdx, val)}
-                />
-              </div>
-
-              {/* Options list */}
-              <div className="space-y-2 border-t border-border/40 pt-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                    {catalogWords.choiceOptionsLabel}
-                  </Label>
-                  <span className="text-xs text-muted-foreground">
-                    {axis.values.length}/{VARIANT_LIMITS.options}
-                  </span>
-                </div>
-
-                {isLinked && linkedTemplate ? (
-                  // Linked options from template
-                  <div className="space-y-1.5">
-                    {linkedTemplate.options.map((opt) => {
-                      const isTicked = axis.values.some((v) => v.name === opt.name);
-                      const currentVal = axis.values.find((v) => v.name === opt.name);
-                      const soldOutStatus = getOptionSoldOutStatus(axisIdx, opt.name);
-
-                      return (
-                        <div
-                          key={opt.id}
-                          className={cn(
-                            'flex items-center justify-between gap-3 rounded-lg border p-2 transition-colors',
-                            isTicked
-                              ? 'border-border/60 bg-card'
-                              : 'border-transparent bg-muted/10 opacity-60',
-                          )}
-                        >
-                          <label className="flex flex-1 cursor-pointer items-center gap-2.5 text-sm font-medium">
-                            <Checkbox
-                              checked={isTicked}
-                              onCheckedChange={(checked) =>
-                                handleToggleLinkedOption(axisIdx, opt.name, Boolean(checked))
-                              }
-                            />
-                            <span className={cn(!isTicked && 'text-muted-foreground')}>
-                              {opt.name}
-                            </span>
-                          </label>
-
-                          {isTicked && (
-                            <div className="flex items-center gap-3">
-                              {!samePrice && (
-                                <div className="flex items-center gap-1">
-                                  <PesoInput
-                                    value={currentVal?.priceDelta ?? 0}
-                                    onChange={(delta) =>
-                                      handleOptionPriceDeltaChange(axisIdx, opt.name, delta)
-                                    }
-                                    placeholder={catalogWords.priceDeltaPlaceholder}
-                                    className="h-8 w-24 text-right text-xs"
-                                  />
-                                </div>
-                              )}
-
-                              <div className="flex items-center gap-1.5">
-                                {soldOutStatus === 'some' && (
-                                  <span className="text-xs font-medium text-warning-text">
-                                    {catalogWords.someSoldOut}
-                                  </span>
-                                )}
-                                <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
-                                  <Switch
-                                    checked={soldOutStatus === 'all'}
-                                    onCheckedChange={() =>
-                                      handleToggleOptionSoldOut(axisIdx, opt.name)
-                                    }
-                                  />
-                                  <span>{catalogWords.soldOut}</span>
-                                </label>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  // Custom options
-                  <div className="space-y-2">
-                    {axis.values.map((v, valIdx) => {
-                      const soldOutStatus = getOptionSoldOutStatus(axisIdx, v.name);
-
-                      return (
-                        <div
-                          key={`custom-${axisIdx}-${valIdx}`}
-                          className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card p-2"
-                        >
-                          <Input
-                            value={v.name}
-                            onChange={(e) =>
-                              handleCustomOptionNameChange(axisIdx, valIdx, e.target.value)
-                            }
-                            placeholder="Option name"
-                            className="h-8 flex-1 text-sm"
-                            maxLength={30}
-                          />
-
-                          <div className="flex items-center gap-3">
-                            {!samePrice && (
-                              <PesoInput
-                                value={v.priceDelta}
-                                onChange={(delta) =>
-                                  handleOptionPriceDeltaChange(axisIdx, v.name, delta)
-                                }
-                                placeholder={catalogWords.priceDeltaPlaceholder}
-                                className="h-8 w-24 text-right text-xs"
-                              />
-                            )}
-
-                            <div className="flex items-center gap-1.5">
-                              {soldOutStatus === 'some' && (
-                                <span className="text-xs font-medium text-warning-text">
-                                  {catalogWords.someSoldOut}
-                                </span>
-                              )}
-                              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
-                                <Switch
-                                  checked={soldOutStatus === 'all'}
-                                  onCheckedChange={() => handleToggleOptionSoldOut(axisIdx, v.name)}
-                                />
-                                <span>{catalogWords.soldOut}</span>
-                              </label>
-                            </div>
-
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveCustomOption(axisIdx, valIdx)}
-                              disabled={axis.values.length <= 1}
-                              className="size-7 text-muted-foreground hover:text-destructive"
-                            >
-                              <XIcon className="size-3.5" />
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {axis.values.length < VARIANT_LIMITS.options && !isAtComboLimit && (
-                      <CustomOptionAdder
-                        onAdd={(optName) => handleAddCustomOption(axisIdx, optName)}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Add a choice menu */}
-      {axes.length < VARIANT_LIMITS.axes && !isAtComboLimit && (
+      {axes.length < VARIANT_LIMITS.axes ? (
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={
-              <Button type="button" variant="outline" className="h-10 gap-2 font-semibold">
-                <PlusIcon className="size-4" />
-                {catalogWords.addChoice}
-              </Button>
-            }
-          />
-          <DropdownMenuContent align="start" className="w-56">
-            {templates.length > 0 && (
-              <>
+            render={<Button type="button" variant="outline" className="h-11 gap-1.5 md:h-9" />}
+          >
+            <PlusIcon className="size-4" />
+            {catalogWords.addChoice}
+            <ChevronDownIcon className="size-4 text-muted-foreground" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-72">
+            {available.length > 0 ? (
+              <DropdownMenuGroup>
                 <DropdownMenuLabel>{catalogWords.yourVariants}</DropdownMenuLabel>
-                {templates.map((tmpl) => {
-                  const alreadyUsed = axes.some((a) => a.templateId === tmpl.id);
+                {available.map((t) => {
+                  const next = count * t.options.length;
+                  const tooMany = next > VARIANT_LIMITS.combos;
                   return (
                     <DropdownMenuItem
-                      key={tmpl.id}
-                      disabled={alreadyUsed}
-                      onClick={() => handleAddLinkedChoice(tmpl)}
+                      key={t.id}
+                      disabled={tooMany}
+                      className="min-h-11 md:min-h-8"
+                      onClick={() => addAxis(linkTemplate(t))}
                     >
-                      <SparklesIcon className="size-4 text-primary" />
-                      <span className="truncate">{tmpl.name}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        ({tmpl.options.length})
+                      <LinkIcon className="size-4 text-muted-foreground" />
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate font-medium">{t.name}</span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {tooMany
+                            ? catalogWords.choiceDisabledCombos(next)
+                            : t.options.map((o) => o.name).join(', ')}
+                        </span>
                       </span>
                     </DropdownMenuItem>
                   );
                 })}
-                <DropdownMenuSeparator />
-              </>
-            )}
-
-            <DropdownMenuItem onClick={handleAddCustomChoice}>
-              <PlusIcon className="size-4" />
-              {catalogWords.startEmptyChoice}
+              </DropdownMenuGroup>
+            ) : null}
+            {available.length > 0 ? <DropdownMenuSeparator /> : null}
+            <DropdownMenuItem
+              className="min-h-11 md:min-h-8"
+              onClick={() => addAxis({ name: '', templateId: null, values: [] })}
+            >
+              <PlusIcon className="size-4 text-muted-foreground" />
+              {catalogWords.startEmpty}
             </DropdownMenuItem>
-
-            {copySources.length > 0 && (
+            {copySources.length > 0 && axes.length === 0 ? (
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <CopyIcon className="size-4" />
+                <DropdownMenuSubTrigger className="min-h-11 md:min-h-8">
+                  <CopyIcon className="size-4 text-muted-foreground" />
                   {catalogWords.copyFromItem}
                 </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="w-48">
+                <DropdownMenuSubContent className="max-h-72 w-60 overflow-y-auto">
                   {copySources.map((item) => (
-                    <DropdownMenuItem key={item.id} onClick={() => handleCopyFrom(item)}>
-                      <span className="truncate">{item.name}</span>
+                    <DropdownMenuItem key={item.id} onClick={() => copyFrom(item)}>
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate">{item.name}</span>
+                        <span className="truncate text-xs text-muted-foreground">
+                          {item.axes.map((a) => a.name).join(' · ')}
+                        </span>
+                      </span>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
-            )}
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem onClick={handleOpenNewTemplate}>
-              <SparklesIcon className="size-4" />
+            ) : null}
+            <DropdownMenuItem
+              className="min-h-11 md:min-h-8"
+              onClick={() => setSheet({ open: true, template: null })}
+            >
+              <SparklesIcon className="size-4 text-muted-foreground" />
               {catalogWords.newVariant}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
+      ) : null}
 
-      {/* Combinations section */}
-      {axes.length > 0 && variants.length > 0 && (
-        <Collapsible className="rounded-xl border border-border/70 bg-muted/10 p-3">
+      {axes.length >= 2 && variants.length > 0 ? (
+        <Collapsible
+          id="item-combinations"
+          open={combosOpen}
+          onOpenChange={setCombosOpen}
+          className="scroll-mt-24 rounded-xl border border-border/60"
+        >
           <CollapsibleTrigger
             render={
-              <button
+              <Button
                 type="button"
-                className="flex w-full items-center justify-between py-1 text-sm font-semibold text-foreground"
+                variant="ghost"
+                className="h-auto min-h-11 w-full justify-between gap-2 rounded-xl px-3 py-2 text-left"
               />
             }
           >
-            <span>{catalogWords.combinationsTitle(variants.length)}</span>
-            <ChevronDownIcon className="size-4 text-muted-foreground transition-transform duration-200" />
+            <span className="flex min-w-0 flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">
+                {catalogWords.combinationsTitle(variants.length)}
+              </span>
+              {specialCount > 0 || soldOutCount > 0 ? (
+                <Badge variant="outline" className="tabular">
+                  {[
+                    specialCount > 0 ? catalogWords.specialPrices(specialCount) : null,
+                    soldOutCount > 0 ? catalogWords.soldOutCount(soldOutCount) : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </Badge>
+              ) : null}
+            </span>
+            <ChevronDownIcon
+              className={cn(
+                'size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none',
+                combosOpen && 'rotate-180',
+              )}
+            />
           </CollapsibleTrigger>
-
-          <CollapsibleContent className="space-y-3 pt-3">
-            <p className="text-xs text-muted-foreground">{catalogWords.combinationsHelp}</p>
-
-            <div className="max-h-80 space-y-1.5 overflow-y-auto">
-              {variants.map((v) => {
-                const label = v.values.join(' · ') || 'Default';
-                const isSoldOut = v.availability !== 'available';
-
+          <CollapsibleContent className="space-y-2 border-t border-border/60 p-3">
+            <p className="text-sm text-muted-foreground">{catalogWords.combinationsHelp}</p>
+            <ul className="space-y-2">
+              {variants.map((variant) => {
+                const label = variant.values.join(' · ');
+                const auto = computedPrice(basePrice, priced, {
+                  values: variant.values,
+                  priceOverride: null,
+                });
+                const soldOut = variant.availability !== 'available';
                 return (
-                  <div
-                    key={v.id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-card p-2 text-sm"
+                  <li
+                    key={variant.id}
+                    className="flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-card p-2"
                   >
-                    <span className="font-medium text-foreground">{label}</span>
-
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground tabular">
-                        {formatPeso(v.price)}
-                      </span>
-
-                      <PesoInput
-                        value={v.priceOverride ?? 0}
-                        onChange={(price) => handleCombinationSpecialPrice(v.id, price)}
-                        placeholder={catalogWords.specialPricePlaceholder}
-                        className="h-8 w-28 text-right text-xs"
-                      />
-
-                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
-                        <Switch
-                          checked={isSoldOut}
-                          onCheckedChange={(checked) => handleCombinationSoldOut(v.id, checked)}
-                        />
-                        <span>{catalogWords.soldOut}</span>
-                      </label>
-                    </div>
-                  </div>
+                    <span className="min-w-0 basis-full truncate text-sm font-medium text-foreground sm:flex-1 sm:basis-auto">
+                      {label}
+                    </span>
+                    <span className="text-sm whitespace-nowrap text-muted-foreground tabular">
+                      {formatPeso(auto)}
+                    </span>
+                    <PesoInput
+                      className="w-32 flex-1 sm:flex-none"
+                      aria-label={catalogWords.specialPriceAria(label)}
+                      placeholder={pesoText(auto)}
+                      value={variant.priceOverride ?? 0}
+                      onChange={(price) =>
+                        commit({
+                          axes,
+                          samePrice,
+                          variants: variants.map((v) =>
+                            v.id === variant.id
+                              ? { ...v, priceOverride: price > 0 ? price : null }
+                              : v,
+                          ),
+                        })
+                      }
+                    />
+                    <SoldOutToggle
+                      label={label}
+                      pressed={soldOut}
+                      onPressedChange={(pressed) => setSoldOut((v) => v.id === variant.id, pressed)}
+                    />
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </CollapsibleContent>
         </Collapsible>
-      )}
+      ) : null}
 
-      {/* Sheet for editing / creating variant templates */}
       <VariantTemplateSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        template={sheetTemplate}
-        onSaved={(savedTemplate) => {
-          if (targetAxisIdx !== null) {
-            // Update linked axis
-            const nextAxes = axes.map((a, i) =>
-              i === targetAxisIdx
-                ? {
-                    ...a,
-                    name: savedTemplate.name,
-                    templateId: savedTemplate.id,
-                  }
-                : a,
-            );
-            updateAxes(nextAxes);
-          } else {
-            // Newly created template from "New variant" -> add as linked choice!
-            handleAddLinkedChoice(savedTemplate);
-          }
+        open={sheet.open}
+        onOpenChange={(open) => {
+          if (!open) setSheet({ open: false });
         }}
+        template={sheet.open ? sheet.template : null}
+        initial={sheet.open ? sheet.initial : undefined}
+        onSaved={handleSheetSaved}
+        onDeleted={(deleted) =>
+          commit({
+            axes: axes.map((a) => (a.templateId === deleted.id ? unlinkChoice(a) : a)),
+            samePrice,
+          })
+        }
       />
     </section>
   );
 }
 
-function CustomOptionAdder({ onAdd }: { onAdd: (name: string) => void }) {
-  const [name, setName] = React.useState('');
+function SoldOutToggle({
+  label,
+  pressed,
+  onPressedChange,
+}: {
+  label: string;
+  pressed: boolean;
+  onPressedChange: (pressed: boolean) => void;
+}) {
+  return (
+    <Toggle
+      variant="outline"
+      aria-label={`${catalogWords.comboSoldOut}: ${label}`}
+      pressed={pressed}
+      onPressedChange={onPressedChange}
+      className="h-11 shrink-0 px-2.5 text-xs aria-pressed:border-warning/50 aria-pressed:bg-warning-soft aria-pressed:text-warning-text md:h-9"
+    >
+      <BanIcon />
+      {catalogWords.comboSoldOut}
+    </Toggle>
+  );
+}
 
-  function handleSubmit() {
-    if (!name.trim()) return;
-    onAdd(name.trim());
-    setName('');
-  }
+function ChoiceCard({
+  axis,
+  index,
+  template,
+  samePrice,
+  variants,
+  error,
+  onAxis,
+  onRename,
+  onSamePrice,
+  onSoldOut,
+  onShowCombos,
+  onError,
+  onEditVariant,
+  onUnlink,
+  onSaveAsVariant,
+  onRemove,
+}: {
+  axis: VariantAxis;
+  index: number;
+  template: OwnerVariantTemplate | undefined;
+  samePrice: boolean;
+  variants: readonly Variant[];
+  error: string | undefined;
+  onAxis: (next: VariantAxis) => boolean;
+  onRename: (from: string, to: string) => void;
+  onSamePrice: (on: boolean) => void;
+  onSoldOut: (option: string, soldOut: boolean) => void;
+  onShowCombos: () => void;
+  onError: (message: string | null) => void;
+  onEditVariant: (template: OwnerVariantTemplate) => void;
+  onUnlink: () => void;
+  onSaveAsVariant: () => void;
+  onRemove: () => void;
+}) {
+  const nameId = React.useId();
+  const switchId = React.useId();
+  const linked = axis.templateId !== null && template !== undefined;
+  const displayName = axis.name.trim() || catalogWords.choiceUnnamed;
+
+  // A linked choice lists every option of its variant; a tick says the item sells it.
+  const rows = linked
+    ? template.options.map((o) => ({
+        name: o.name,
+        value: axis.values.find((v) => v.name === o.name),
+      }))
+    : axis.values.map((v) => ({ name: v.name, value: v }));
+  const tickedCount = axis.values.length;
+
+  const tick = (name: string, on: boolean) => {
+    if (!template) return;
+    if (on) {
+      const order = template.options.map((o) => o.name);
+      const values = [...axis.values, { name, photo: null, priceDelta: 0 }].sort(
+        (a, b) => order.indexOf(a.name) - order.indexOf(b.name),
+      );
+      onAxis({ ...axis, values });
+    } else if (tickedCount > 1) {
+      onAxis({ ...axis, values: axis.values.filter((v) => v.name !== name) });
+    }
+  };
+
+  const setDelta = (name: string, priceDelta: number) =>
+    onAxis({
+      ...axis,
+      values: axis.values.map((v) => (v.name === name ? { ...v, priceDelta } : v)),
+    });
 
   return (
-    <div className="flex items-center gap-2 pt-1">
+    <div className="space-y-3 rounded-xl border border-border/60 bg-muted/20 p-3">
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          {linked ? (
+            <div className="flex min-h-11 flex-wrap items-center gap-2 md:min-h-9">
+              <span className="truncate text-base font-semibold text-foreground">{axis.name}</span>
+              <Tooltip>
+                <TooltipTrigger render={<span tabIndex={0} className="inline-flex rounded-md" />}>
+                  <StatusBadge variant="primary-light" className="gap-1">
+                    <LinkIcon className="size-3" />
+                    {catalogWords.choiceLinked}
+                  </StatusBadge>
+                </TooltipTrigger>
+                <TooltipContent>{catalogWords.choiceLinkedTip(template.name)}</TooltipContent>
+              </Tooltip>
+            </div>
+          ) : (
+            <>
+              <Label htmlFor={nameId}>{catalogWords.choiceNameLabel}</Label>
+              <Input
+                id={nameId}
+                value={axis.name}
+                maxLength={VARIANT_LIMITS.nameLength}
+                placeholder={catalogWords.choiceNamePlaceholder}
+                className="h-11 bg-card text-base md:h-9 md:text-sm"
+                onChange={(e) => onAxis({ ...axis, name: e.target.value })}
+              />
+            </>
+          )}
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'size-11 shrink-0 text-muted-foreground md:size-9',
+                  !linked && 'mt-6',
+                )}
+                aria-label={catalogWords.choiceActionsAria(displayName)}
+              />
+            }
+          >
+            <MoreHorizontalIcon className="size-5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            {linked ? (
+              <>
+                <DropdownMenuItem
+                  className="min-h-11 md:min-h-8"
+                  onClick={() => onEditVariant(template)}
+                >
+                  <PencilIcon className="size-4" />
+                  {catalogWords.editVariant}
+                </DropdownMenuItem>
+                <DropdownMenuItem className="min-h-11 md:min-h-8" onClick={onUnlink}>
+                  <UnlinkIcon className="size-4" />
+                  {catalogWords.unlinkChoice}
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <DropdownMenuItem className="min-h-11 md:min-h-8" onClick={onSaveAsVariant}>
+                <SparklesIcon className="size-4" />
+                {catalogWords.saveAsVariant}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              className="min-h-11 md:min-h-8"
+              onClick={onRemove}
+            >
+              <Trash2Icon className="size-4" />
+              {catalogWords.removeChoice}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 rounded-lg bg-card px-3 py-2">
+        <Label htmlFor={switchId} className="text-sm font-medium">
+          {catalogWords.samePriceForAll}
+        </Label>
+        <Switch id={switchId} checked={samePrice} onCheckedChange={onSamePrice} />
+      </div>
+
+      {rows.length > 0 ? (
+        <ul className="space-y-2">
+          {rows.map(({ name, value }) => {
+            const ticked = value !== undefined;
+            const state = ticked
+              ? optionSoldOutState({ variants: [...variants] }, index, name)
+              : 'none';
+            const lastTicked = ticked && tickedCount <= 1;
+            return (
+              <li
+                key={name}
+                className={cn(
+                  'flex flex-wrap items-center gap-2 rounded-lg border bg-card p-2',
+                  ticked ? 'border-border/60' : 'border-dashed border-border/60',
+                )}
+              >
+                <div className="flex min-w-0 basis-full items-center gap-2 sm:flex-1 sm:basis-auto">
+                  {linked ? (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <span className="inline-flex size-11 items-center justify-center md:size-9" />
+                        }
+                      >
+                        <Checkbox
+                          checked={ticked}
+                          disabled={lastTicked}
+                          aria-label={catalogWords.useOptionAria(name)}
+                          onCheckedChange={(on) => tick(name, on)}
+                        />
+                      </TooltipTrigger>
+                      {lastTicked ? (
+                        <TooltipContent>{catalogWords.variantKeepOne}</TooltipContent>
+                      ) : null}
+                    </Tooltip>
+                  ) : null}
+                  {linked ? (
+                    <span
+                      className={cn(
+                        'min-w-0 truncate text-sm font-medium',
+                        ticked ? 'text-foreground' : 'text-muted-foreground',
+                      )}
+                    >
+                      {name}
+                    </span>
+                  ) : (
+                    <OptionName
+                      name={name}
+                      others={axis.values.map((v) => v.name).filter((n) => n !== name)}
+                      onRename={(to) => onRename(name, to)}
+                      onError={onError}
+                    />
+                  )}
+                </div>
+                {ticked ? (
+                  <div className="flex flex-1 items-center justify-end gap-2 sm:flex-none">
+                    {state === 'some' ? (
+                      <span className="flex items-center gap-1 text-xs text-warning-text">
+                        <BanIcon className="size-3.5" />
+                        {catalogWords.someSoldOut}
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-11 px-1 text-xs md:h-9"
+                          onClick={onShowCombos}
+                        >
+                          {catalogWords.openCombinations}
+                        </Button>
+                      </span>
+                    ) : null}
+                    {samePrice ? null : (
+                      <PesoInput
+                        className="w-28"
+                        aria-label={catalogWords.priceDeltaAria(name)}
+                        placeholder="+0"
+                        value={value.priceDelta}
+                        onChange={(delta) => setDelta(name, delta)}
+                      />
+                    )}
+                    <SoldOutToggle
+                      label={name}
+                      pressed={state === 'all'}
+                      onPressedChange={(pressed) => onSoldOut(name, pressed)}
+                    />
+                    {linked ? null : (
+                      <Tooltip>
+                        <TooltipTrigger
+                          render={
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={catalogWords.removeOptionAria(name)}
+                              className="size-11 shrink-0 text-muted-foreground hover:text-destructive md:size-9"
+                              onClick={() =>
+                                onAxis({
+                                  ...axis,
+                                  values: axis.values.filter((v) => v.name !== name),
+                                })
+                              }
+                            />
+                          }
+                        >
+                          <XIcon className="size-4" />
+                        </TooltipTrigger>
+                        <TooltipContent>{catalogWords.removeOptionAria(name)}</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+
+      {linked ? null : (
+        <AddOption
+          values={axis.values.map((v) => v.name)}
+          onAdd={(name) =>
+            onAxis({ ...axis, values: [...axis.values, { name, photo: null, priceDelta: 0 }] })
+          }
+          onError={onError}
+        />
+      )}
+
+      {error ? <FieldError>{error}</FieldError> : null}
+    </div>
+  );
+}
+
+function optionProblem(text: string, others: readonly string[]): string | null {
+  if (text.length > VARIANT_LIMITS.valueLength) return catalogWords.optionTooLong;
+  if (others.some((o) => o.toLowerCase() === text.toLowerCase())) return catalogWords.optionExists;
+  return null;
+}
+
+// A custom option's name, renamed in place; the rename keeps its versions' ids, prices and stock.
+function OptionName({
+  name,
+  others,
+  onRename,
+  onError,
+}: {
+  name: string;
+  others: readonly string[];
+  onRename: (to: string) => void;
+  onError: (message: string | null) => void;
+}) {
+  const [text, setText] = React.useState(name);
+  const finish = () => {
+    const to = text.trim();
+    const problem = to ? optionProblem(to, others) : null;
+    if (!to || problem) {
+      onError(problem);
+      setText(name);
+      return;
+    }
+    if (to !== name) onRename(to);
+  };
+  return (
+    <Input
+      value={text}
+      maxLength={VARIANT_LIMITS.valueLength}
+      aria-label={catalogWords.choiceOptionsLabel}
+      className="h-11 min-w-0 flex-1 text-base md:h-9 md:text-sm"
+      onChange={(e) => setText(e.target.value)}
+      onBlur={finish}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          finish();
+        }
+        if (e.key === 'Escape') setText(name);
+      }}
+    />
+  );
+}
+
+function AddOption({
+  values,
+  onAdd,
+  onError,
+}: {
+  values: readonly string[];
+  onAdd: (name: string) => boolean;
+  onError: (message: string | null) => void;
+}) {
+  const id = React.useId();
+  const [draft, setDraft] = React.useState('');
+  if (values.length >= VARIANT_LIMITS.values) return null;
+
+  const tryAdd = () => {
+    const name = draft.trim();
+    if (!name) return;
+    const problem = optionProblem(name, values);
+    if (problem) {
+      onError(problem);
+      return;
+    }
+    if (onAdd(name)) setDraft('');
+  };
+
+  return (
+    <div className="flex gap-2">
       <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        id={id}
+        value={draft}
+        maxLength={VARIANT_LIMITS.valueLength}
+        aria-label={catalogWords.addOptionPlaceholder}
+        placeholder={catalogWords.addOptionPlaceholder}
+        className="h-11 min-w-0 flex-1 bg-card text-base md:h-9 md:text-sm"
+        onChange={(e) => {
+          setDraft(e.target.value);
+          onError(null);
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            handleSubmit();
+            tryAdd();
           }
         }}
-        placeholder={catalogWords.addOptionPlaceholder}
-        className="h-8 flex-1 text-xs"
-        maxLength={30}
       />
       <Button
         type="button"
         variant="outline"
-        size="sm"
-        className="h-8 gap-1 text-xs"
-        onClick={handleSubmit}
-        disabled={!name.trim()}
+        className="h-11 shrink-0 md:h-9"
+        disabled={!draft.trim()}
+        onClick={tryAdd}
       >
-        <PlusIcon className="size-3" />
-        {catalogWords.addOption}
+        {catalogWords.addOptionButton}
       </Button>
     </div>
   );

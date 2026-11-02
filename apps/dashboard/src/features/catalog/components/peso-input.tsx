@@ -11,6 +11,8 @@ export interface PesoInputProps {
   className?: string | undefined;
   'aria-label'?: string | undefined;
   disabled?: boolean | undefined;
+  // Shown while empty, e.g. the automatic price behind a special price field.
+  placeholder?: string | undefined;
 }
 
 // A price field in pesos that hands back integer centavos; half-typed text ("12.") stays on screen.
@@ -20,6 +22,7 @@ export function PesoInput({
   onChange,
   className,
   disabled,
+  placeholder,
   'aria-label': ariaLabel,
 }: PesoInputProps) {
   const [text, setText] = React.useState(() => pesoText(value));
@@ -40,7 +43,7 @@ export function PesoInput({
         autoComplete="off"
         aria-label={ariaLabel}
         disabled={disabled}
-        placeholder={catalogWords.pricePlaceholder}
+        placeholder={placeholder ?? catalogWords.pricePlaceholder}
         className="tabular"
         value={text}
         onChange={(e) => {

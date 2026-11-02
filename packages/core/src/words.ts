@@ -14,6 +14,8 @@ export interface ShopVocab {
   // The item editor's sizes section and its example ("like Size and Colour").
   variantsTitle: string;
   variantsExample: string;
+  // The Variants sheet name placeholder.
+  variantNameExample: string;
   // The receipt's preparing step and its headline.
   prepStep: string;
   prepHero: string;
@@ -35,6 +37,7 @@ const FOOD_VOCAB: ShopVocab = {
   emptyItems: 'No menu items yet. Add your first dish so customers can order.',
   variantsTitle: 'Sizes and versions',
   variantsExample: 'like Size, or Patty: Single, Double, Triple',
+  variantNameExample: 'Size',
   prepStep: 'In the kitchen',
   prepHero: 'Your order is being made',
   namePlaceholder: 'e.g. Classic Smash',
@@ -66,6 +69,7 @@ const RETAIL_VOCAB: ShopVocab = {
   emptyItems: 'No products yet. Add your first product so customers can order.',
   variantsTitle: 'Sizes and colours',
   variantsExample: 'like Size: S, M, L and Colour: Black, White',
+  variantNameExample: 'Colour',
   prepStep: 'Packing',
   prepHero: 'Your order is being packed',
   namePlaceholder: 'e.g. Oversized cotton tee',
@@ -87,6 +91,33 @@ const RETAIL_VOCAB: ShopVocab = {
     'bestseller',
   ],
   emojiCategories: ['recent', 'objects', 'people', 'symbols', 'nature', 'activities'],
+};
+
+// The variants a new shop starts with (decision T46); owners can rename, edit or delete them.
+export interface VariantDefault {
+  key: string;
+  name: string;
+  options: readonly string[];
+}
+
+export const VARIANT_DEFAULTS: Record<ShopKind, readonly VariantDefault[]> = {
+  food: [
+    { key: 'size', name: 'Size', options: ['Regular', 'Large'] },
+    { key: 'size-3', name: 'Size', options: ['Small', 'Medium', 'Large'] },
+    { key: 'cup-size', name: 'Cup size', options: ['12 oz', '16 oz', '22 oz'] },
+    { key: 'patty', name: 'Patty', options: ['Single', 'Double', 'Triple'] },
+    { key: 'temperature', name: 'Temperature', options: ['Hot', 'Iced'] },
+  ],
+  retail: [
+    { key: 'size', name: 'Size', options: ['S', 'M', 'L', 'XL'] },
+    { key: 'size-extended', name: 'Size', options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+    {
+      key: 'shoe-size',
+      name: 'Shoe size',
+      options: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'],
+    },
+    { key: 'colour', name: 'Colour', options: ['Black', 'White', 'Grey', 'Navy', 'Red'] },
+  ],
 };
 
 // The only place that looks at the shop kind.
@@ -1302,72 +1333,85 @@ export const catalogWords = {
   emptyItems: (kind: ShopKind) => vocab(kind).emptyItems,
   emptyCategories: 'No categories yet. Group your items so customers find them fast.',
   emptyAddOns: 'No add-ons yet. Add extras like sauces, toppings or gift wrap.',
-  emptyVariants: 'No variants yet. Create choices like Size or Colour to reuse across items.',
-  variantsSubtitle:
-    'Reusable choices like Size, Cup size or Colour that you can pick for any item.',
-  addVariant: 'New variant',
-  editVariant: 'Edit variant',
-  duplicateVariant: 'Duplicate',
-  deleteVariant: 'Delete',
-  variantNameLabel: 'Variant name',
-  variantNamePlaceholder: 'e.g. Size, Cup size, Colour',
+  // Variants tab and per-option prices (decision T46).
+  emptyVariants: 'No variants yet. Add one for sizes, cup sizes or colours.',
+  variantsHint:
+    'Set up sizes and colours once, then use them on any item. Prices stay on each item.',
+  addVariant: 'Add variant',
+  newVariantTitle: 'New variant',
+  editVariantTitle: 'Edit variant',
+  variantSheetDesc: 'A list of options, like Regular and Large. Prices are set on each item.',
+  variantNameLabel: 'Name customers see',
+  variantNamePlaceholder: (kind: ShopKind) => `e.g. ${vocab(kind).variantNameExample}`,
+  variantNameRequired: 'Add a name customers see, like Size.',
   variantOptionsLabel: 'Options',
-  addOption: 'Add option',
-  addOptionPlaceholder: 'Option name',
-  suggestionsLabel: 'Suggestions',
-  usedByCount: (count: number) => (count === 1 ? 'Used on 1 item' : `Used on ${count} items`),
-  notUsedYet: 'Not used yet',
-  deleteVariantTitle: 'Delete variant?',
-  deleteVariantDesc: (name: string, count: number) =>
-    count > 0
-      ? `${name} is used on ${count} ${count === 1 ? 'item' : 'items'}. Those items will keep their choices as custom choices.`
-      : `Are you sure you want to delete ${name}?`,
-  updateItemsTitle: 'Update items using this variant?',
-  updateItemsDesc: (count: number) =>
-    `This variant is used on ${count} ${count === 1 ? 'item' : 'items'}. Would you like to update those items with your changes, or only update the variant?`,
-  updateItemsBtn: (count: number) => `Update ${count} ${count === 1 ? 'item' : 'items'}`,
-  onlyVariantBtn: 'Only the variant',
-  variantSaved: 'Variant saved',
-  variantDeleted: 'Variant deleted',
-  variantDuplicated: (name: string) => `Created ${name}`,
-  itemsSoldOutNotice: (count: number) =>
-    `${count} ${count === 1 ? 'item has' : 'items have'} newly added options marked sold out because the choice has different prices.`,
-  itemsSkippedNotice: (count: number) =>
-    `${count} ${count === 1 ? 'item was' : 'items were'} not given newly added options because doing so would exceed the 30 combination limit.`,
-  unsavedChangesTitle: 'Discard unsaved changes?',
-  unsavedChangesDesc: 'You have unsaved changes. Leaving now will discard them.',
-  discard: 'Discard',
-  keepEditing: 'Keep editing',
-  variantsSectionTitle: 'Choices and pricing',
-  variantsSectionSubtitle:
-    'Add up to 3 choices like Size or Colour. Each option can add a price change.',
+  variantOptionsHelp: 'Drag to change the order customers see.',
+  variantOptionPlaceholder: 'Add option',
+  variantOptionAria: (n: number) => `Option ${n}`,
+  variantDragAria: (name: string) => `Drag ${name}`,
+  variantKeepOne: 'Keep at least one option',
+  variantMaxOptions: '10 options is the most for one variant.',
+  variantSuggestions: 'Quick start',
+  variantUsedOnLabel: 'Used on',
+  variantUsedOnNone: "No items use this yet. Pick it from an item's choices.",
+  variantUsedOnMore: (count: number) => `and ${count} more`,
+  variantUsedOn: (count: number) => (count === 1 ? 'Used on 1 item' : `Used on ${count} items`),
+  variantNotUsed: 'Not used yet',
+  variantActionsAria: (name: string) => `More actions for ${name}`,
+  variantLimit: 'You have 30 variants, the most for now. Delete one to add another.',
+  variantCopyName: (name: string) => `${name} copy`,
+  variantCopied: (name: string) => `Copied ${name}`,
+  variantDeleted: (name: string) => `Deleted ${name}`,
+  deleteVariantTitle: (name: string) => `Delete ${name}?`,
+  deleteVariantUsed: (count: number, name: string) =>
+    `${count} ${count === 1 ? 'item keeps' : 'items keep'} ${name} as ${count === 1 ? 'its' : 'their'} own options.`,
+  deleteVariantButton: 'Delete variant',
+  updateItemsTitle: (count: number, name: string) =>
+    `Also update the ${count} ${count === 1 ? 'item' : 'items'} that use ${name}?`,
+  changeAdds: (name: string) => `Adds ${name}`,
+  changeRenamesOption: (from: string, to: string) => `Renames ${from} to ${to}`,
+  changeRemoves: (name: string) => `Removes ${name}`,
+  changeRenames: (name: string) => `Renames to ${name}`,
+  changeOrder: 'Changes the order',
+  changeAddedNote: (names: string, choice: string) =>
+    `${names} is added at +₱0. On items where ${choice} changes the price, it starts Sold out so you can set its price first.`,
+  changeKeepNote: 'Items keep their own options and prices and stop following this variant.',
+  updateItemsButton: (count: number) => `Update ${count} ${count === 1 ? 'item' : 'items'}`,
+  onlyVariantButton: 'Only the variant',
+  variantSavedUpdated: (name: string, count: number) =>
+    `Saved ${name} · Updated ${count} ${count === 1 ? 'item' : 'items'}`,
+  variantSoldOutWarning: (names: string, count: number) =>
+    `${names} is Sold out on ${count} ${count === 1 ? 'item' : 'items'} until you set its price`,
+  variantSkippedWarning: (count: number) =>
+    `${count} ${count === 1 ? 'item' : 'items'} skipped: it would pass 30 combinations`,
+  openItem: 'Open item',
   basePriceLabel: 'Base price',
-  basePriceHelp: 'Starting price before customer choices.',
-  computedPriceRange: (range: string) => `Price range: ${range}`,
-  samePriceForAll: 'Same price for all options',
-  differentPricesHelp: 'Each option can add a price change to the base price.',
+  basePriceHelp: 'Price before choices. Option prices add to it.',
+  priceLine: (range: string, count: number) =>
+    `${range} · ${count} ${count === 1 ? 'version' : 'versions'}`,
+  samePriceForAll: 'Same price for all',
+  priceDeltaAria: (name: string) => `Price change for ${name}`,
   addChoice: 'Add a choice',
   yourVariants: 'Your variants',
-  noSavedVariants: 'No saved variants yet',
   newVariant: 'New variant',
-  startEmptyChoice: 'Start empty (custom choice)',
-  choiceLinkedBadge: 'Linked',
-  choiceCustomBadge: 'Custom',
-  unlinkVariant: 'Unlink from variant',
-  editVariantTemplate: 'Edit variant',
-  saveAsNewVariant: 'Save as new variant',
-  priceDeltaPlaceholder: '+₱0',
+  choiceDisabledFourth: 'An item can have 3 choices at most.',
+  choiceDisabledCombos: (count: number) => `That makes ${count} versions. The most is 30.`,
+  choiceInUse: 'Already on this item',
+  choiceLinked: 'Linked',
+  choiceLinkedTip: (name: string) => `Follows ${name} in the Variants tab`,
+  choiceActionsAria: (name: string) => `More actions for ${name}`,
+  editVariant: 'Edit variant',
+  unlinkChoice: 'Unlink',
+  saveAsVariant: 'Save as variant',
+  savedToVariants: (name: string) => `${name} saved to Variants`,
+  useOptionAria: (name: string) => `Use ${name} on this item`,
   combinationsTitle: (count: number) => `Combinations (${count})`,
-  combinationsHelp: 'Set a special price or mark specific combinations sold out.',
-  specialPriceLabel: 'Special price',
-  specialPricePlaceholder: 'Special price',
-  soldOut: 'Sold out',
+  combinationsHelp: 'Give one combination a special price, or mark it sold out.',
+  specialPrices: (count: number) => `${count} special ${count === 1 ? 'price' : 'prices'}`,
+  soldOutCount: (count: number) => `${count} sold out`,
+  specialPriceAria: (label: string) => `Special price for ${label}`,
   someSoldOut: 'Some sold out',
-  maxChoicesReached: 'Maximum of 3 choices per item',
-  maxCombosReached: 'Maximum of 30 combinations per item',
-  duplicateOptionError: 'Option names must be unique.',
-  emptyOptionError: 'Give every option a name.',
-  emptyChoiceNameError: 'Choice name is required.',
+  openCombinations: 'See which',
   newTitle: (kind: ShopKind) => vocab(kind).newItem,
   newEmpty: 'The form for a new item will show here.',
   itemTitle: (kind: ShopKind) => vocab(kind).item,
@@ -1616,7 +1660,7 @@ export const catalogWords = {
   previewNew: 'New',
   sectionVariantsTitle: (kind: ShopKind) => vocab(kind).variantsTitle,
   sectionVariantsHelp: (kind: ShopKind) =>
-    `Only if it comes in versions with different names or prices, ${vocab(kind).variantsExample}. Up to 2 choices, 10 options each.`,
+    `Only if it comes in versions with different names or prices, ${vocab(kind).variantsExample}. Up to 3 choices, 10 options each.`,
   addFirstChoice: 'Add sizes or versions',
   addSecondChoice: 'Add a second choice',
   quickStart: 'Quick start',

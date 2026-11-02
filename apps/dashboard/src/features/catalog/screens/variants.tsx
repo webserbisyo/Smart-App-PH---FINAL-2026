@@ -8,7 +8,13 @@ import {
   Trash2Icon,
   WifiOffIcon,
 } from 'lucide-react';
-import { catalogWords, errorWords, type OwnerVariantTemplate } from '@smartapp/core';
+import {
+  actionWords,
+  catalogWords,
+  errorWords,
+  VARIANT_LIMITS,
+  type OwnerVariantTemplate,
+} from '@smartapp/core';
 import {
   useOwnerVariantTemplates,
   useRemoveVariantTemplate,
@@ -45,6 +51,7 @@ import { PageEmpty, PageError } from '@/app/page-state';
 import { cn } from 'cn';
 import { useCatalogTabs } from '../tabs.js';
 import { VariantTemplateSheet } from '../variant-template-sheet.js';
+import { DevScenarioPanel } from '../dev-scenario-panel.js';
 
 export function CatalogVariantsScreen() {
   const { kind } = useShop();
@@ -87,7 +94,13 @@ export function CatalogVariantsScreen() {
 
   async function handleDuplicate(template: OwnerVariantTemplate) {
     try {
-      const copyName = `${template.name} (copy)`.slice(0, 40);
+      if (variantTemplates.length >= VARIANT_LIMITS.templates) {
+        notify({ title: catalogWords.variantLimit, tone: 'error' });
+        return;
+      }
+      const copyName = catalogWords
+        .variantCopyName(template.name)
+        .slice(0, VARIANT_LIMITS.nameLength);
       const res = await saveTemplate.mutateAsync({
         draft: {
           name: copyName,
@@ -97,7 +110,7 @@ export function CatalogVariantsScreen() {
       });
       setHighlightId(res.template.id);
       notify({
-        title: catalogWords.variantDuplicated(copyName),
+        title: catalogWords.variantCopied(template.name),
         tone: 'success',
         action: { label: catalogWords.edit, onClick: () => handleOpenEdit(res.template) },
       });
@@ -110,7 +123,7 @@ export function CatalogVariantsScreen() {
     if (!deleteTarget) return;
     try {
       await deleteAction.run(() => removeTemplate.mutateAsync({ id: deleteTarget.id }));
-      notify({ title: catalogWords.variantDeleted, tone: 'success' });
+      notify({ title: catalogWords.variantDeleted(deleteTarget.name), tone: 'success' });
       setDeleteTarget(null);
     } catch (err: unknown) {
       setDeleteTarget(null);
@@ -126,7 +139,7 @@ export function CatalogVariantsScreen() {
         {variantTemplates.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
             <p className="min-w-0 flex-1 basis-60 text-sm text-muted-foreground">
-              {catalogWords.variantsSubtitle}
+              {catalogWords.variantsHint}
             </p>
             <Button
               type="button"
@@ -165,7 +178,7 @@ export function CatalogVariantsScreen() {
           </div>
         ) : templatesError ? (
           <PageError
-            title="Failed to load variants"
+            title={catalogWords.loadFailed}
             message={errorWords(errorCodeOf(templatesError))}
             retryLabel={catalogWords.tryAgain}
             onRetry={() => void refetchTemplates()}
@@ -175,7 +188,7 @@ export function CatalogVariantsScreen() {
             variant="box"
             icon={<LayersIcon />}
             title={catalogWords.emptyVariants}
-            description={catalogWords.variantsSubtitle}
+            description={catalogWords.variantsHint}
             action={
               <Button className="h-11 gap-1.5 font-semibold md:h-9" onClick={handleOpenAdd}>
                 <PlusIcon className="size-4" />
@@ -221,7 +234,7 @@ export function CatalogVariantsScreen() {
 
                     {/* Options Preview Pills */}
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {template.options.slice(0, 5).map((opt) => (
+                      {template.options.slice(0, 6).map((opt) => (
                         <span
                           key={opt.id}
                           className="inline-flex items-center rounded-md border border-border/40 bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground"
@@ -229,9 +242,9 @@ export function CatalogVariantsScreen() {
                           {opt.name}
                         </span>
                       ))}
-                      {template.options.length > 5 && (
+                      {template.options.length > 6 && (
                         <span className="inline-flex items-center rounded-md bg-muted/30 px-1.5 py-0.5 text-xs text-muted-foreground">
-                          +{template.options.length - 5} more
+                          {catalogWords.moreOptions(template.options.length - 6)}
                         </span>
                       )}
                     </div>
@@ -240,8 +253,8 @@ export function CatalogVariantsScreen() {
                   <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/50 pt-2">
                     <span className="truncate text-sm text-muted-foreground">
                       {usedByCount > 0
-                        ? catalogWords.usedByCount(usedByCount)
-                        : catalogWords.notUsedYet}
+                        ? catalogWords.variantUsedOn(usedByCount)
+                        : catalogWords.variantNotUsed}
                     </span>
 
                     <span className="contents" onClick={(e) => e.stopPropagation()}>
@@ -253,7 +266,7 @@ export function CatalogVariantsScreen() {
                               variant="ghost"
                               size="icon"
                               className="size-11 shrink-0 text-muted-foreground hover:text-foreground md:size-9"
-                              aria-label={`Actions for ${template.name}`}
+                              aria-label={catalogWords.variantActionsAria(template.name)}
                               onClick={(e) => e.stopPropagation()}
                             />
                           }
@@ -288,15 +301,15 @@ export function CatalogVariantsScreen() {
         )}
       </div>
 
-      <FloatingAddButton label={catalogWords.addVariant} onClick={handleOpenAdd} />
+      {variantTemplates.length > 0 ? (
+        <FloatingAddButton label={catalogWords.addVariant} onClick={handleOpenAdd} />
+      ) : null}
 
       <VariantTemplateSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         template={selectedTemplate}
-        onSaved={(saved) => {
-          setHighlightId(saved.id);
-        }}
+        onSaved={({ result }) => setHighlightId(result.template.id)}
       />
 
       <AlertDialog
@@ -307,24 +320,32 @@ export function CatalogVariantsScreen() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{catalogWords.deleteVariantTitle}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {catalogWords.deleteVariantTitle(deleteTarget?.name ?? '')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteTarget &&
-                catalogWords.deleteVariantDesc(deleteTarget.name, deleteTarget.usedBy)}
+              {deleteTarget && deleteTarget.usedBy > 0
+                ? catalogWords.deleteVariantUsed(deleteTarget.usedBy, deleteTarget.name)
+                : catalogWords.confirmDeleteDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{catalogWords.cancel}</AlertDialogCancel>
+            <AlertDialogCancel className="h-11 md:h-9">{catalogWords.cancel}</AlertDialogCancel>
             <AsyncButton
               variant="destructive"
-              loading={deleteAction.isPending}
-              onClick={handleDelete}
+              status={deleteAction.status}
+              busyLabel={actionWords.deleting}
+              doneLabel={actionWords.deleted}
+              onClick={() => void handleDelete()}
+              className="h-11 font-semibold md:h-9"
             >
-              {catalogWords.deleteVariantConfirm ?? catalogWords.delete}
+              {catalogWords.deleteVariantButton}
             </AsyncButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DevScenarioPanel />
     </div>
   );
 }
