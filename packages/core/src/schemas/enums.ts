@@ -79,9 +79,34 @@ export const CLAIM_STATUSES = ['pending', 'given', 'cancelled'] as const;
 export const ClaimStatusEnum = z.enum(CLAIM_STATUSES);
 export type ClaimStatus = z.infer<typeof ClaimStatusEnum>;
 
-export const MESSAGE_KINDS = ['proof', 'status', 'rider', 'tracking'] as const;
+export const MESSAGE_KINDS = ['proof', 'status', 'rider', 'tracking', 'schedule'] as const;
 export const MessageKindEnum = z.enum(MESSAGE_KINDS);
 export type MessageKind = z.infer<typeof MessageKindEnum>;
+
+// Time slot lengths for advance orders and pickup scheduling (T48).
+export const SLOT_LENGTHS = [15, 30, 60] as const;
+export const SlotLengthSchema = z.union([z.literal(15), z.literal(30), z.literal(60)]);
+export type SlotLength = (typeof SLOT_LENGTHS)[number];
+
+export const SCHEDULE_SLOT_STATES = ['open', 'full'] as const;
+export const ScheduleSlotStateEnum = z.enum(SCHEDULE_SLOT_STATES);
+export type ScheduleSlotState = z.infer<typeof ScheduleSlotStateEnum>;
+
+export const SCHEDULE_DAY_STATES = ['open', 'closed', 'full', 'too_soon'] as const;
+export const ScheduleDayStateEnum = z.enum(SCHEDULE_DAY_STATES);
+export type ScheduleDayState = z.infer<typeof ScheduleDayStateEnum>;
+
+export const PAUSE_MODES = ['busy_15', 'busy_30', 'pause', 'resume'] as const;
+export const PauseModeEnum = z.enum(PAUSE_MODES);
+export type PauseMode = z.infer<typeof PauseModeEnum>;
+
+export const ORDER_TIMING_PHASES = ['scheduled', 'upcoming', 'active', 'done'] as const;
+export const OrderTimingPhaseEnum = z.enum(ORDER_TIMING_PHASES);
+export type OrderTimingPhase = z.infer<typeof OrderTimingPhaseEnum>;
+
+export const AGE_TONES = ['calm', 'amber', 'red'] as const;
+export const AgeToneEnum = z.enum(AGE_TONES);
+export type AgeTone = z.infer<typeof AgeToneEnum>;
 
 export const ANNOUNCEMENT_TONES = ['info', 'warning', 'success'] as const;
 export const AnnouncementToneEnum = z.enum(ANNOUNCEMENT_TONES);

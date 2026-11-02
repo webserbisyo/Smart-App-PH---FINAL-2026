@@ -47,6 +47,11 @@ export const ErrorCode = [
   'stamp_cap_reached',
   'stamp_daily_cap',
   'claim_not_pending',
+  'recall_expired',
+  'reschedule_not_allowed',
+  'slot_full',
+  'notice_too_short',
+  'daily_limit_reached',
   // Catalog (owner)
   'category_not_empty',
   'item_has_orders',

@@ -238,6 +238,9 @@ export const OrderReceiptSchema = z.object({
   // Unpaid transfers only: pay before this time or the order expires.
   expiresAt: IsoDateTimeSchema.nullable(),
   note: z.string().nullable(),
+  dueAt: IsoDateTimeSchema,
+  startBy: IsoDateTimeSchema,
+  pickupCode: z.string().length(4),
 });
 export type OrderReceipt = z.infer<typeof OrderReceiptSchema>;
 

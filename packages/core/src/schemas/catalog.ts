@@ -162,6 +162,8 @@ export const ItemBaseSchema = z.object({
   featured: z.boolean(),
   isNew: z.boolean(),
   status: ItemStatusEnum,
+  noticeDays: z.number().int().min(0).max(30).default(0),
+  dailyLimit: z.number().int().min(1).max(500).nullable().default(null),
   // Sample data from a pack; customers of a real shop never see it, demo shops show it.
   sample: z.boolean(),
 });
@@ -238,6 +240,8 @@ export const ItemDraftSchema = z
     featured: z.boolean(),
     isNew: z.boolean(),
     status: ItemStatusEnum,
+    noticeDays: z.number().int().min(0).max(30).default(0),
+    dailyLimit: z.number().int().min(1).max(500).nullable().default(null),
   })
   .refine((item) => item.variants.every((v) => v.values.length === item.axes.length), {
     message: 'Every variant needs one value per axis',

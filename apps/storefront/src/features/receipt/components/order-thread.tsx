@@ -32,6 +32,7 @@ import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { cn } from '@smartapp/ui/lib/utils';
 import {
   Bike,
+  CalendarClock,
   CircleCheckIcon,
   ExternalLink,
   HourglassIcon,
@@ -186,6 +187,19 @@ export function OrderThread({ order }: OrderThreadProps) {
                   <Icon />
                 </MarkerIcon>
                 <MarkerContent className="tabular">{T.statusAt(chip.label, time)}</MarkerContent>
+              </Marker>
+            );
+          }
+
+          if (msg.kind === 'schedule') {
+            return (
+              <Marker key={msg.id} variant="separator">
+                <MarkerIcon>
+                  <CalendarClock />
+                </MarkerIcon>
+                <MarkerContent className="tabular">
+                  {msg.text ?? T.scheduleChanged(time)}
+                </MarkerContent>
               </Marker>
             );
           }

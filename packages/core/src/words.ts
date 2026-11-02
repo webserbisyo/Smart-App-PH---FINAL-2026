@@ -685,6 +685,7 @@ export const words = {
       callRider: (name: string) => `Call ${name}`,
       track: 'Track',
       statusAt: (status: string, time: string) => `${status} · ${time}`,
+      scheduleChanged: (timeText: string) => `Time changed to ${timeText}`,
       // Under a proof bubble: where the shop's check stands.
       proofState: { pending: 'Checking', approved: 'Approved', rejected: 'Not approved' },
     },
@@ -1291,6 +1292,12 @@ export const words = {
         'You already changed this member’s stamps 3 times today. Try again tomorrow.',
       stamp_daily_cap: 'You already earned today’s stamp.',
       claim_not_pending: 'This claim was already handled. Refresh to see it.',
+      recall_expired: 'The recall window passed. You can still update or cancel the order if needed.',
+      reschedule_not_allowed:
+        'This order cannot be rescheduled. Only placed or preparing pickup and delivery orders can be moved.',
+      slot_full: 'That time slot is full. Pick another time.',
+      notice_too_short: 'An item needs more notice. Pick a later date.',
+      daily_limit_reached: 'This item reached its daily limit for that date. Pick another date.',
       category_not_empty: 'Move its items to another category first.',
       item_has_orders: 'This item has past orders. Hide it instead of removing.',
       variant_is_reward:

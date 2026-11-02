@@ -3,6 +3,16 @@ import { CentavosSchema, IdSchema, IsoDateTimeSchema } from './common.js';
 import { OrderStatusEnum, OrderTypeEnum, PaymentMethodEnum, PaymentStatusEnum } from './enums.js';
 import { OrderReceiptSchema, ProofSchema } from './order.js';
 
+// One line on the kitchen / packing ticket (up to 8 on the card).
+export const TicketLineSchema = z.object({
+  qty: z.number().int().positive(),
+  name: z.string().min(1),
+  variantLabel: z.string().nullable(),
+  optionLabels: z.array(z.string()),
+  note: z.string().nullable(),
+});
+export type TicketLine = z.infer<typeof TicketLineSchema>;
+
 // One card on the owner's board.
 export const BoardOrderSchema = z.object({
   id: IdSchema,
@@ -20,6 +30,16 @@ export const BoardOrderSchema = z.object({
   hasReward: z.boolean(),
   itemsSummary: z.string(),
   total: CentavosSchema,
+  dueAt: IsoDateTimeSchema,
+  startBy: IsoDateTimeSchema,
+  pickupCode: z.string().length(4),
+  seenAt: IsoDateTimeSchema.nullable(),
+  lines: z.array(TicketLineSchema).max(8),
+  moreLines: z.number().int().nonnegative(),
+  note: z.string().nullable(),
+  ownerNote: z.string().nullable(),
+  deliveryArea: z.string().nullable(),
+  lastStepAt: IsoDateTimeSchema,
 });
 export type BoardOrder = z.infer<typeof BoardOrderSchema>;
 
@@ -31,6 +51,9 @@ export const OwnerOrderSchema = OrderReceiptSchema.extend({
   isFirstOrder: z.boolean(),
   isMember: z.boolean(),
   proofs: z.array(ProofSchema),
+  seenAt: IsoDateTimeSchema.nullable(),
+  ownerNote: z.string().nullable(),
+  lastStepAt: IsoDateTimeSchema,
 });
 export type OwnerOrder = z.infer<typeof OwnerOrderSchema>;
 

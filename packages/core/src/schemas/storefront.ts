@@ -15,6 +15,7 @@ import {
   OrderTypeEnum,
   PaymentMethodEnum,
   ShopSurfaceEnum,
+  SlotLengthSchema,
   StampCardStatusEnum,
   WeekdaySchema,
 } from './enums.js';
@@ -173,6 +174,9 @@ export const StorefrontSchema = z.object({
   orderTypes: z.array(OrderTypeEnum).min(1),
   prepMinutes: z.number().int().min(5).max(180).default(20),
   takeOrdersWhileClosed: z.boolean(),
+  daysAhead: z.number().int().min(1).max(60).default(1),
+  slotMinutes: SlotLengthSchema.default(30),
+  ordersPerSlot: z.number().int().min(1).max(50).nullable().default(null),
   payments: z.array(PaymentAccountSchema).min(1),
   codMaxTotal: CentavosSchema.nullable(),
   delivery: DeliverySettingsSchema,
@@ -180,6 +184,16 @@ export const StorefrontSchema = z.object({
   membersCount: z.number().int().min(0),
 });
 export type Storefront = z.infer<typeof StorefrontSchema>;
+
+// Booking rules that the owner reads and saves (T48).
+export const BookingRulesSchema = z.object({
+  daysAhead: z.number().int().min(1).max(60),
+  slotMinutes: SlotLengthSchema,
+  ordersPerSlot: z.number().int().min(1).max(50).nullable(),
+  prepMinutes: z.number().int().min(5).max(180),
+  takeOrdersWhileClosed: z.boolean(),
+});
+export type BookingRules = z.infer<typeof BookingRulesSchema>;
 
 // What the storefront reads for one shop: the public shop and what it sells.
 export const PublicShopSchema = z.object({
