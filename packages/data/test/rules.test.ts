@@ -330,7 +330,8 @@ describe('samples', () => {
     const { store } = testStore(OPEN_MONDAY);
     const cleared = await store.ownerSamples.clearSamples({ slug: 'kanto-smash' });
     const blank = TEST_SHOP_PACKS['test-blank'];
-    expect(cleared.catalog).toEqual(blank.catalog);
+    const { variantTemplates: _unused, ...blankCatalog } = blank.catalog;
+    expect(cleared.catalog).toEqual(blankCatalog);
     expect(cleared.storefront.look.banners).toEqual(blank.storefront.look.banners);
     expect(cleared.storefront.look.announcement).toBeNull();
     expect(cleared.storefront.info.logo).toBeNull();

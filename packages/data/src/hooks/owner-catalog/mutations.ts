@@ -7,6 +7,7 @@ import type {
   ItemStatus,
   OptionGroupDraft,
   OwnerItem,
+  SaveVariantTemplateInput,
   SortOrderInput,
   UploadKind,
 } from '@smartapp/core';
@@ -183,6 +184,32 @@ export function useRemoveOptionGroup() {
     mutationFn: (input: { id: string }) => ownerCatalog.removeOptionGroup(input),
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.optionGroups() });
+      qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+    },
+  });
+}
+
+export function useSaveVariantTemplate() {
+  const { ownerCatalog } = useAdapters();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: SaveVariantTemplateInput) => ownerCatalog.saveVariantTemplate(input),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ownerCatalogQk.variantTemplates() });
+      qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+    },
+  });
+}
+
+export function useRemoveVariantTemplate() {
+  const { ownerCatalog } = useAdapters();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { id: string }) => ownerCatalog.removeVariantTemplate(input),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ownerCatalogQk.variantTemplates() });
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
     },
   });

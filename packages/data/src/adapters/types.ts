@@ -19,11 +19,14 @@ import type {
   OwnerItem,
   OwnerOptionGroup,
   OwnerOrder,
+  OwnerVariantTemplate,
   Payment,
   PaymentMethod,
   PublicShop,
   Quote,
   RewardClaim,
+  SaveVariantTemplateInput,
+  SaveVariantTemplateResult,
   SendCodeResult,
   SortOrderInput,
   UploadKind,
@@ -141,6 +144,9 @@ export interface OwnerCatalogAdapter {
   listOptionGroups(): Promise<OwnerOptionGroup[]>;
   saveOptionGroup(input: OptionGroupDraft): Promise<OwnerOptionGroup>;
   removeOptionGroup(input: { id: string }): Promise<void>;
+  listVariantTemplates(): Promise<OwnerVariantTemplate[]>;
+  saveVariantTemplate(input: SaveVariantTemplateInput): Promise<SaveVariantTemplateResult>;
+  removeVariantTemplate(input: { id: string }): Promise<void>;
   saveSortOrder(input: SortOrderInput): Promise<void>;
   createUploadUrl(input: { kind: UploadKind }): Promise<UploadResult>;
 }

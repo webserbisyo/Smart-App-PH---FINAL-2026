@@ -37,3 +37,17 @@ export function useOwnerOptionGroup(id: string | null | undefined) {
   const group = id && groups ? (groups.find((g) => g.id === id) ?? null) : null;
   return { data: group, isLoading, error, refetch };
 }
+
+export function useOwnerVariantTemplates() {
+  const { ownerCatalog } = useAdapters();
+  return useQuery({
+    queryKey: ownerCatalogQk.variantTemplates(),
+    queryFn: () => ownerCatalog.listVariantTemplates(),
+  });
+}
+
+export function useOwnerVariantTemplate(id: string | null | undefined) {
+  const { data: templates, isLoading, error, refetch } = useOwnerVariantTemplates();
+  const template = id && templates ? (templates.find((t) => t.id === id) ?? null) : null;
+  return { data: template, isLoading, error, refetch };
+}

@@ -3,6 +3,8 @@ import {
   CategorySchema,
   OwnerItemSchema,
   OwnerOptionGroupSchema,
+  OwnerVariantTemplateSchema,
+  SaveVariantTemplateResultSchema,
   UploadResultSchema,
 } from '@smartapp/core';
 import { testStore, errorCode, mnl } from './helpers.js';
@@ -77,6 +79,7 @@ describe('ownerCatalog mock adapter', () => {
         name: 'Crispy Onion Rings',
         description: 'Golden battered onion rings',
         photos: [],
+        basePrice: 8900,
         axes: [],
         variants: [
           {
@@ -175,6 +178,90 @@ describe('ownerCatalog mock adapter', () => {
     expect(UploadResultSchema.safeParse(upload).success).toBe(true);
     expect(upload.path).toContain('uploads/item/');
   });
+
+  it('manages variant templates, calculates usedBy, applies diffs, and unlinks on delete', async () => {
+    setMockOwnerSlug('kanto-smash');
+    const { store } = testStore(mnl('2026-10-26 12:00'));
+
+    const templates = await store.ownerCatalog.listVariantTemplates();
+    expect(templates.length).toBeGreaterThan(0);
+    for (const t of templates) {
+      expect(OwnerVariantTemplateSchema.safeParse(t).success).toBe(true);
+      expect(t.usedBy).toBeGreaterThanOrEqual(0);
+    }
+
+    // Create a new variant template
+    const created = await store.ownerCatalog.saveVariantTemplate({
+      draft: {
+        name: 'Spice Level',
+        options: [{ name: 'Mild' }, { name: 'Hot' }],
+      },
+      applyToItems: false,
+    });
+    expect(created.template.name).toBe('Spice Level');
+    expect(created.template.usedBy).toBe(0);
+    expect(created.updatedItemIds).toEqual([]);
+
+    // Save with applyToItems: true
+    const updated = await store.ownerCatalog.saveVariantTemplate({
+      draft: {
+        id: created.template.id,
+        name: 'Spice Level Extra',
+        options: [
+          { id: created.template.options[0]!.id, name: 'Mild' },
+          { id: created.template.options[1]!.id, name: 'Extra Hot' },
+        ],
+      },
+      applyToItems: true,
+    });
+    expect(updated.template.name).toBe('Spice Level Extra');
+    expect(updated.template.options[1]!.name).toBe('Extra Hot');
+
+    // Remove template unlinks from items and deletes template
+    await store.ownerCatalog.removeVariantTemplate({ id: created.template.id });
+    const afterDelete = await store.ownerCatalog.listVariantTemplates();
+    expect(afterDelete.some((t) => t.id === created.template.id)).toBe(false);
+  });
+
+  it('protects stamp card reward variant from being deleted or modified (variant_is_reward)', async () => {
+    setMockOwnerSlug('kanto-smash');
+    const { store } = testStore(mnl('2026-10-26 12:00'));
+
+    // In kanto-smash, ks-classic-smash with variant ks-classic-smash--single is the reward.
+    const items = await store.ownerCatalog.listItems();
+    const rewardItem = items.find((i) => i.id === 'ks-classic-smash')!;
+    expect(rewardItem).toBeDefined();
+
+    // Trying to save the reward item with variants omitting ks-classic-smash--single fails
+    const err = await errorCode(
+      store.ownerCatalog.saveItem({
+        id: rewardItem.id,
+        draft: {
+          categoryId: rewardItem.categoryId,
+          name: rewardItem.name,
+          description: rewardItem.description,
+          photos: rewardItem.photos,
+          basePrice: rewardItem.basePrice,
+          axes: [],
+          variants: [
+            {
+              id: 'different-variant-id',
+              values: [],
+              price: 15000,
+              availability: 'available',
+              soldOutUntil: null,
+            },
+          ],
+          optionGroupIds: rewardItem.optionGroupIds,
+          pairingIds: rewardItem.pairingIds,
+          featured: rewardItem.featured,
+          isNew: rewardItem.isNew,
+          status: rewardItem.status,
+        },
+      }),
+    );
+    expect(err).toBe('variant_is_reward');
+  });
 });
 
 describe('ownerCatalog HTTP API adapter', () => {
@@ -223,6 +310,7 @@ describe('ownerCatalog HTTP API adapter', () => {
         name: 'Burger',
         description: null,
         photos: [],
+        basePrice: 10000,
         axes: [],
         variants: [
           { id: 'var_1', values: [], price: 10000, availability: 'available', soldOutUntil: null },
@@ -241,6 +329,70 @@ describe('ownerCatalog HTTP API adapter', () => {
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example.com/owner/items/item_1/status',
       expect.objectContaining({ method: 'PATCH' }),
+    );
+
+    // Test listVariantTemplates
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [
+        {
+          id: 't_size',
+          name: 'Size',
+          options: [{ id: 'opt_1', name: 'Regular' }],
+          usedBy: 2,
+          sample: false,
+        },
+      ],
+    });
+    const variantTemplates = await adapter.listVariantTemplates();
+    expect(variantTemplates.length).toBe(1);
+    expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/owner/variant-templates', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer test-bearer-token',
+      },
+    });
+
+    // Test saveVariantTemplate (POST)
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        template: {
+          id: 't_new',
+          name: 'Colour',
+          options: [{ id: 'opt_c1', name: 'Red' }],
+          usedBy: 0,
+          sample: false,
+        },
+        updatedItemIds: [],
+        unlinkedItemIds: [],
+        skippedItemIds: [],
+        soldOutItemIds: [],
+      }),
+    });
+    const saveRes = await adapter.saveVariantTemplate({
+      draft: {
+        name: 'Colour',
+        options: [{ name: 'Red' }],
+      },
+      applyToItems: false,
+    });
+    expect(saveRes.template.id).toBe('t_new');
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example.com/owner/variant-templates',
+      expect.objectContaining({ method: 'POST' }),
+    );
+
+    // Test removeVariantTemplate (DELETE)
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}),
+    });
+    await adapter.removeVariantTemplate({ id: 't_new' });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example.com/owner/variant-templates/t_new',
+      expect.objectContaining({ method: 'DELETE' }),
     );
   });
 });

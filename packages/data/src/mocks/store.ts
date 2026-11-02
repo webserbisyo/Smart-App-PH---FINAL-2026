@@ -34,12 +34,18 @@ import {
   SHOP_PACKS,
   TEST_SHOP_PACKS,
   words,
+  applyTemplateToItem,
+  isInSync,
+  unlinkChoice,
   CategoryDraftSchema,
   CategorySchema,
   ItemDraftSchema,
   OptionGroupDraftSchema,
   OwnerItemSchema,
   OwnerOptionGroupSchema,
+  OwnerVariantTemplateSchema,
+  SaveVariantTemplateInputSchema,
+  SaveVariantTemplateResultSchema,
   SortOrderInputSchema,
   UploadKindEnum,
   UploadResultSchema,
@@ -47,9 +53,13 @@ import {
   type MemberAccount,
   type OrderPayload,
   type OrderStatus,
+  type OwnerVariantTemplate,
   type PublicShop,
   type QuoteProblem,
+  type SaveVariantTemplateInput,
+  type SaveVariantTemplateResult,
   type ShopPack,
+  type VariantTemplate,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
 import { getAuthClient, getClaims } from '../auth';
@@ -227,6 +237,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       shop,
       orders: generateOrders(shop, now(), shopRng),
       members: generateMembers(shop, now()),
+      variantTemplates: clone(pack.catalog.variantTemplates ?? []),
     };
   }
 
@@ -1146,6 +1157,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const pack = packFor(packSlug, true);
         if (!pack) fail('not_found', 404);
         s.shop.catalog = clone(pack.catalog);
+        s.variantTemplates = clone(pack.catalog.variantTemplates ?? []);
         s.shop.storefront.look = {
           ...clone(pack.storefront.look),
           brandColor: s.shop.storefront.look.brandColor,
@@ -1166,6 +1178,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           categories: s.shop.catalog.categories.filter((c) => usedCategories.has(c.id)),
           optionGroups: s.shop.catalog.optionGroups.filter((g) => usedGroups.has(g.id)),
         };
+        s.variantTemplates = (s.variantTemplates ?? []).filter((t) => !t.sample);
         s.shop.storefront.info.logo = null;
         s.shop.storefront.info.tagline = null;
         s.shop.storefront.info.about = null;
@@ -1243,6 +1256,20 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       const parsed = ItemDraftSchema.parse(draft);
       return run('catalog', () => {
         const s = requireShop(slug);
+        const reward = s.shop.storefront.stampCard.reward;
+        if (reward.kind === 'free_item' && reward.itemId === id && reward.variantId) {
+          if (!parsed.variants.some((v) => v.id === reward.variantId)) {
+            fail('variant_is_reward', 400);
+          }
+        }
+        for (const axis of parsed.axes) {
+          if (axis.templateId) {
+            const tmpl = s.variantTemplates?.find((t) => t.id === axis.templateId);
+            if (tmpl && !isInSync(axis, tmpl)) {
+              fail('invalid_payload', 400);
+            }
+          }
+        }
         if (id) {
           const existing = s.shop.catalog.items.find((i) => i.id === id);
           if (!existing) fail('not_found', 404);
@@ -1251,6 +1278,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           existing.description = parsed.description;
           existing.categoryId = parsed.categoryId;
           existing.photos = parsed.photos;
+          existing.basePrice = parsed.basePrice;
           existing.axes = parsed.axes;
           existing.variants = parsed.variants;
           existing.optionGroupIds = parsed.optionGroupIds;
@@ -1271,6 +1299,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           name: parsed.name,
           description: parsed.description,
           photos: parsed.photos,
+          basePrice: parsed.basePrice,
           axes: parsed.axes,
           variants,
           optionGroupIds: parsed.optionGroupIds,
@@ -1294,6 +1323,10 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const hasOrders = s.orders.some((o) => o.receipt.lines.some((l) => l.itemId === id));
         if (hasOrders) {
           fail('item_has_orders', 400);
+        }
+        const reward = s.shop.storefront.stampCard.reward;
+        if (reward.kind === 'free_item' && reward.itemId === id) {
+          fail('variant_is_reward', 400);
         }
         s.shop.catalog.items = s.shop.catalog.items.filter((i) => i.id !== id);
       });
@@ -1384,6 +1417,139 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           item.optionGroupIds = item.optionGroupIds.filter((gid) => gid !== id);
         }
         s.shop.catalog.optionGroups = s.shop.catalog.optionGroups.filter((g) => g.id !== id);
+      });
+    },
+
+    listVariantTemplates: async () => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        if (scenario().empty) return [];
+        const templates = s.variantTemplates ?? [];
+        return templates.map((template) => {
+          const usedBy = s.shop.catalog.items.filter((item) =>
+            item.axes.some((axis) => axis.templateId === template.id),
+          ).length;
+          return OwnerVariantTemplateSchema.parse({ ...template, usedBy });
+        });
+      });
+    },
+
+    saveVariantTemplate: async (input) => {
+      const slug = await resolveOwnerShopSlug();
+      const parsed = SaveVariantTemplateInputSchema.parse(input);
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        if (!s.variantTemplates) s.variantTemplates = [];
+
+        const draft = parsed.draft;
+        const options = draft.options.map((opt, i) => ({
+          ...opt,
+          id: opt.id ?? `opt_${Math.random().toString(36).slice(2, 9)}_${i}`,
+        }));
+
+        if (draft.id) {
+          const existingIdx = s.variantTemplates.findIndex((t) => t.id === draft.id);
+          if (existingIdx === -1) fail('not_found', 404);
+          const before = s.variantTemplates[existingIdx]!;
+          const after = {
+            id: draft.id,
+            name: draft.name,
+            options,
+            sample: false,
+          };
+
+          const updatedItemIds: string[] = [];
+          const unlinkedItemIds: string[] = [];
+          const skippedItemIds: string[] = [];
+          const soldOutItemIds: string[] = [];
+
+          if (parsed.applyToItems) {
+            const reward = s.shop.storefront.stampCard.reward;
+            if (reward.kind === 'free_item' && reward.itemId && reward.variantId) {
+              const rewardItem = s.shop.catalog.items.find((i) => i.id === reward.itemId);
+              if (rewardItem && rewardItem.axes.some((a) => a.templateId === before.id)) {
+                const testRes = applyTemplateToItem(rewardItem, before, after, 'update');
+                if (!testRes.item.variants.some((v) => v.id === reward.variantId)) {
+                  fail('variant_is_reward', 400);
+                }
+              }
+            }
+
+            for (let i = 0; i < s.shop.catalog.items.length; i++) {
+              const item = s.shop.catalog.items[i]!;
+              if (item.axes.some((a) => a.templateId === before.id)) {
+                const res = applyTemplateToItem(item, before, after, 'update');
+                s.shop.catalog.items[i] = res.item;
+                if (res.outcome === 'updated') {
+                  updatedItemIds.push(item.id);
+                  if (res.soldOut) soldOutItemIds.push(item.id);
+                } else if (res.outcome === 'unlinked') {
+                  unlinkedItemIds.push(item.id);
+                } else if (res.outcome === 'skipped') {
+                  skippedItemIds.push(item.id);
+                }
+              }
+            }
+          } else {
+            for (let i = 0; i < s.shop.catalog.items.length; i++) {
+              const item = s.shop.catalog.items[i]!;
+              if (item.axes.some((a) => a.templateId === before.id)) {
+                const res = applyTemplateToItem(item, before, after, 'keep');
+                s.shop.catalog.items[i] = res.item;
+                if (res.outcome === 'unlinked') {
+                  unlinkedItemIds.push(item.id);
+                }
+              }
+            }
+          }
+
+          s.variantTemplates[existingIdx] = after;
+          const usedBy = s.shop.catalog.items.filter((item) =>
+            item.axes.some((axis) => axis.templateId === after.id),
+          ).length;
+
+          const template = OwnerVariantTemplateSchema.parse({ ...after, usedBy });
+          return SaveVariantTemplateResultSchema.parse({
+            template,
+            updatedItemIds,
+            unlinkedItemIds,
+            skippedItemIds,
+            soldOutItemIds,
+          });
+        }
+
+        const newTemplateId = `t_${Math.random().toString(36).slice(2, 9)}`;
+        const newTemplate = {
+          id: newTemplateId,
+          name: draft.name,
+          options,
+          sample: false,
+        };
+        s.variantTemplates.push(newTemplate);
+        const template = OwnerVariantTemplateSchema.parse({ ...newTemplate, usedBy: 0 });
+        return SaveVariantTemplateResultSchema.parse({
+          template,
+          updatedItemIds: [],
+          unlinkedItemIds: [],
+          skippedItemIds: [],
+          soldOutItemIds: [],
+        });
+      });
+    },
+
+    removeVariantTemplate: async ({ id }) => {
+      const slug = await resolveOwnerShopSlug();
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        if (!s.variantTemplates) s.variantTemplates = [];
+        const existing = s.variantTemplates.find((t) => t.id === id);
+        if (!existing) fail('not_found', 404);
+
+        for (const item of s.shop.catalog.items) {
+          item.axes = item.axes.map((a) => (a.templateId === id ? unlinkChoice(a) : a));
+        }
+        s.variantTemplates = s.variantTemplates.filter((t) => t.id !== id);
       });
     },
 

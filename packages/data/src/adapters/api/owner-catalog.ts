@@ -5,6 +5,8 @@ import {
   CategorySchema,
   OwnerItemSchema,
   OwnerOptionGroupSchema,
+  OwnerVariantTemplateSchema,
+  SaveVariantTemplateResultSchema,
   UploadResultSchema,
 } from '@smartapp/core';
 import type { OwnerCatalogAdapter } from '../types';
@@ -140,6 +142,37 @@ export function createApiOwnerCatalogAdapter({
         method: 'DELETE',
         headers,
       });
+    },
+
+    async listVariantTemplates() {
+      const headers = await authHeaders();
+      return fetchApi(
+        `${baseUrl}/owner/variant-templates`,
+        z.array(OwnerVariantTemplateSchema),
+        { method: 'GET', headers },
+      );
+    },
+
+    async saveVariantTemplate(input) {
+      const headers = await authHeaders();
+      const url = input.draft.id
+        ? `${baseUrl}/owner/variant-templates/${encodeURIComponent(input.draft.id)}`
+        : `${baseUrl}/owner/variant-templates`;
+      const method = input.draft.id ? 'PUT' : 'POST';
+      return fetchApi(url, SaveVariantTemplateResultSchema, {
+        method,
+        headers,
+        body: JSON.stringify(input),
+      });
+    },
+
+    async removeVariantTemplate({ id }) {
+      const headers = await authHeaders();
+      await fetchApi(
+        `${baseUrl}/owner/variant-templates/${encodeURIComponent(id)}`,
+        z.unknown(),
+        { method: 'DELETE', headers },
+      );
     },
 
     async saveSortOrder(input) {

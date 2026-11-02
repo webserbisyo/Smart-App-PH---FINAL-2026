@@ -23,6 +23,7 @@ import {
   type ReceiptLine,
   type RewardClaim,
   type Rider,
+  type VariantTemplate,
 } from '@smartapp/core';
 
 export interface OrderRecord {
@@ -60,6 +61,7 @@ export interface ShopState {
   shop: PublicShop;
   orders: OrderRecord[];
   members: MemberRecord[];
+  variantTemplates?: VariantTemplate[];
 }
 
 export interface CodeRecord {
