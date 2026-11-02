@@ -1838,3 +1838,45 @@ export const catalogWords = {
   reorderFailed: 'Could not save the new order. Check your connection and try again.',
   duplicatedCategory: (name: string) => `Copied ${name}`,
 } as const;
+
+export const ordersWords = {
+  tabs: {
+    now: 'Now',
+    scheduled: 'Scheduled',
+    history: 'History',
+  },
+  columns: {
+    scheduled: 'Starting soon',
+    new: 'New',
+    preparing: (kind: ShopKind) => (kind === 'retail' ? 'Packing' : 'Preparing'),
+    ready: 'Ready',
+    out: 'Out',
+    completed: 'Done today',
+  },
+  types: {
+    walk_in: 'Walk-in',
+    pickup: 'Pickup',
+    delivery: 'Delivery',
+  },
+  timing: {
+    age: (minutes: number) => `${minutes} min`,
+    late: (minutes: number) => `Late ${minutes} min`,
+    dueTime: (time: string) => `Due ${time}`,
+    dueDateTime: (date: string, time: string) => `${date}, ${time}`,
+  },
+  schedule: {
+    threadLine: (prev: string, next: string) => `Rescheduled from ${prev} to ${next}`,
+    notice: (item: string, days: number, earliest: string) =>
+      `${item} needs ${days} ${days === 1 ? 'day' : 'days'}’ notice. Earliest pickup: ${earliest}.`,
+    full: 'Full',
+    closed: 'Closed',
+    tooSoon: 'Too soon',
+  },
+  actions: {
+    recall: 'Undo',
+    reschedule: 'Reschedule',
+    saveNote: 'Save note',
+    override: 'Override limits',
+  },
+} as const;
+
