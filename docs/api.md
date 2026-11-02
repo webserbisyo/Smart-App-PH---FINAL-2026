@@ -76,29 +76,38 @@ Codes: `category_not_empty`, `item_has_orders` (archive instead), `variant_is_re
 | `getStorefrontPreview`                 | GET `/s/:slug/preview`    | preview token → `Storefront` built from the draft                                                                                          |
 | `listMyOrders`                         | GET `/s/:slug/orders`     | `{ tokens }` (guest order tokens kept on the phone) → `OrderRow[]` (newest first; up to 3 item photos, payment method, pay-by time, stars) |
 | `resolveMapsLink`                      | POST `/maps/resolve`      | `{ url }` → `{ lat, lng }`; the server follows short links (maps.app.goo.gl); the mock reads full links only (`parseMapsLink`)             |
+| `getSchedule`                          | GET `/s/:slug/schedule`   | `{ type, lines }` → `Schedule` (available days and slots, taking into account prep time, notice items, and slot/daily capacity)             |
 
-Every storefront method also takes the `slug` from the route (`getOrder` and the receipt methods too: the storefront route is `/[shop]/o/[token]`; a real token alone identifies the order). The cart lives on the device (`deviceStorage`, per slug). Pickup slots and open/closed text come from core (`pickupSlots`, `openState`), but the database decides.
+Every storefront method also takes the `slug` from the route (`getOrder` and the receipt methods too: the storefront route is `/[shop]/o/[token]`; a real token alone identifies the order). The cart lives on the device (`deviceStorage`, per slug). Pickup slots and open/closed text come from core (`pickupSlots`, `openState`), but the database decides. Slot and daily counts are locked in the SQL `place_order` function so two phones cannot take the last slot.
 
-Codes: `shop_not_found`, `shop_closed`, `shop_busy`, `fulfillment_unavailable`, `payment_unavailable`, `cod_not_allowed`, `cod_limit`, `pickup_time_invalid`, `zone_required`, `out_of_range`, `item_unavailable`, `out_of_stock`, `invalid_options`, `reward_unavailable`, `reward_all_claimed`, `reward_paused`, `order_not_payable`, `duplicate_reference`, `too_many_proofs`, `phone_in_use`, `rate_limited`, `slot_unavailable`, `stamps_insufficient`, `preview_expired`, `thread_rate_limited`, `code_expired`, `stamp_daily_cap`.
+Codes: `shop_not_found`, `shop_closed`, `shop_busy`, `fulfillment_unavailable`, `payment_unavailable`, `cod_not_allowed`, `cod_limit`, `pickup_time_invalid`, `zone_required`, `out_of_range`, `item_unavailable`, `out_of_stock`, `invalid_options`, `reward_unavailable`, `reward_all_claimed`, `reward_paused`, `order_not_payable`, `duplicate_reference`, `too_many_proofs`, `phone_in_use`, `rate_limited`, `slot_unavailable`, `stamps_insufficient`, `preview_expired`, `thread_rate_limited`, `code_expired`, `stamp_daily_cap`, `slot_full`, `notice_too_short`, `daily_limit_reached`.
 
-Closed lists used by these rows (core `schemas/enums.ts`): payment status `unpaid`, `pending`, `paid`, `refunded`; payment methods `cash`, `cod`, `gcash`, `maya`, `bank`, `qr_ph`; order thread message kinds `proof`, `status`, `rider`, `tracking`.
+Closed lists used by these rows (core `schemas/enums.ts`): payment status `unpaid`, `pending`, `paid`, `refunded`; payment methods `cash`, `cod`, `gcash`, `maya`, `bank`, `qr_ph`; order thread message kinds `proof`, `status`, `rider`, `tracking`, `schedule`.
 
 ## Orders (owner)
 
-| Method             | HTTP                               | Input → Output                                                                                        |
-| ------------------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `listOrders`       | GET `/owner/orders`                | `{ open } \| { date }` → `BoardOrder[]` (with `scheduledAt`, `isFirstOrder`, `isMember`, `hasReward`) |
-| `getOrderDetail`   | GET `/owner/orders/:id`            | → `OrderReceipt`                                                                                      |
-| `getProofUrl`      | GET `/owner/proofs/:path`          | → signed URL, 5 minutes                                                                               |
-| `reviewPayment`    | POST `/owner/payments/:id/review`  | `{ approve, rejectReason? }` → `Payment`                                                              |
-| `recordPayment`    | POST `/owner/orders/:id/payments`  | `{ method }` → `Payment` (cash, COD)                                                                  |
-| `advanceOrder`     | POST `/owner/orders/:id/advance`   | `{ toStatus, trackingUrl? }` → `Order` (optimistic on screen)                                         |
-| `cancelOrder`      | POST `/owner/orders/:id/cancel`    | `{ reason }` → `Order`                                                                                |
-| `saveDeliveryInfo` | PATCH `/owner/orders/:id/delivery` | `{ provider?, trackingUrl?, riderName?, riderPhone? }` → `Order`                                      |
+| Method                                       | HTTP                               | Input → Output                                                                                                          |
+| -------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `listOrders`                                 | GET `/owner/orders`                | `{ open?, date?, q? }` → `BoardOrder[]` (with `scheduledAt`, `dueAt`, `startBy`, `pickupCode`, `isFirstOrder`, `isMember`, `hasReward`) |
+| `listScheduled`                              | GET `/owner/orders/scheduled`      | `{ from, to }` → `{ orders: BoardOrder[], days: DayLoad[] }` (Manila YYYY-MM-DD, at most 62 days)                     |
+| `findOrder`                                  | GET `/owner/orders/find`           | `{ code }` → `BoardOrder[]` (pickup code or order number, open orders and today's)                                     |
+| `markSeen`                                   | POST `/owner/orders/:id/seen`      | → `BoardOrder`                                                                                                          |
+| `getOrderDetail`                             | GET `/owner/orders/:id`            | → `OrderReceipt`                                                                                                        |
+| `getProofUrl`                                | GET `/owner/proofs/:path`          | → signed URL, 5 minutes                                                                                                 |
+| `reviewPayment`                              | POST `/owner/payments/:id/review`  | `{ approve, rejectReason? }` → `Payment`                                                                                |
+| `recordPayment`                              | POST `/owner/orders/:id/payments`  | `{ method }` → `Payment` (cash, COD)                                                                                    |
+| `advanceOrder`                               | POST `/owner/orders/:id/advance`   | `{ toStatus, trackingUrl? }` → `Order` (optimistic on screen)                                                           |
+| `recallOrder`                                | POST `/owner/orders/:id/recall`    | → `OwnerOrder` (removes last status step and message within 10s grace period)                                           |
+| `rescheduleOrder`                            | POST `/owner/orders/:id/reschedule`| `{ scheduledAt, override? }` → `OwnerOrder` (override allows capacity override, not closed days/hours)                 |
+| `saveOwnerNote`                              | PATCH `/owner/orders/:id/note`     | `{ note }` → `OwnerOrder` (up to 300 characters, internal only)                                                         |
+| `cancelOrder`                                | POST `/owner/orders/:id/cancel`    | `{ reason }` → `Order`                                                                                                  |
+| `saveDeliveryInfo`                           | PATCH `/owner/orders/:id/delivery` | `{ provider?, trackingUrl?, riderName?, riderPhone? }` → `Order`                                                        |
+| `getBookingRules` / `saveBookingRules`       | GET/PUT `/owner/booking-rules`     | `BookingRules` (`daysAhead`, `slotMinutes`, `ordersPerSlot`)                                                            |
+| `setPause`                                   | POST `/owner/pause`                | `{ mode }` (`busy_15`, `busy_30`, `pause`, `resume`) → `OpenState`                                                      |
 
-Core helpers that screens use instead of comparing statuses: `boardColumn`, `nextActions`, `canCancel`, `timelineSteps`, `isLate`. They share one test table with the SQL.
+Core helpers that screens use instead of comparing statuses: `boardColumn`, `nextActions`, `canCancel`, `timelineSteps`, `orderTiming`. They share one test table with the SQL.
 
-Codes: `not_found`, `invalid_transition`, `not_paid`, `payment_not_pending`, `already_paid`.
+Codes: `not_found`, `invalid_transition`, `not_paid`, `payment_not_pending`, `already_paid`, `recall_expired`, `reschedule_not_allowed`, `slot_full`, `notice_too_short`, `daily_limit_reached`.
 
 ## Samples (owner)
 
@@ -137,14 +146,9 @@ Codes: `stamp_cap_reached`, `stamps_insufficient`, `claim_not_pending`.
 
 Codes: `draft_conflict`.
 
-## Live updates (from NestJS, never Supabase Realtime)
+## Live updates
 
-| Channel                                   | Who          | Payload                                  |
-| ----------------------------------------- | ------------ | ---------------------------------------- |
-| `order:<token>` (public)                  | receipt page | `{ status, paymentStatus }`              |
-| `shop:<tenantId>` (private, shop members) | dashboard    | `{ orderId, op, status, paymentStatus }` |
-
-A payload only triggers a refetch through the normal methods. If the channel isn't joined, the page polls every 15 s.
+Live updates: polling every 15 s now; server-sent events from NestJS in phase 4 (T34).
 
 ## Mock adapters
 

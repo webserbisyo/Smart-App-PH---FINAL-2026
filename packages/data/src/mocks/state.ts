@@ -24,6 +24,8 @@ import {
   type RewardClaim,
   type Rider,
   type VariantTemplate,
+  dueTimes,
+  pickupCode,
 } from '@smartapp/core';
 
 export interface OrderRecord {
@@ -42,6 +44,8 @@ export interface OrderRecord {
   stamp: 'none' | 'pending' | 'earned' | 'reversed';
   // Created on this phone: kept in device storage (decision N29).
   byCustomer: boolean;
+  seenAt: string | null;
+  ownerNote: string | null;
 }
 
 export interface MemberRecord {
@@ -156,6 +160,11 @@ export interface OrderSpec {
   redeemed?: number;
   stamp?: OrderRecord['stamp'];
   byCustomer?: boolean;
+  seenAt?: string | null;
+  ownerNote?: string | null;
+  dueAt?: string;
+  startBy?: string;
+  pickupCode?: string;
 }
 
 export function threadFor(spec: OrderSpec, events: OrderEvent[]): OrderMessage[] {
@@ -234,6 +243,12 @@ export function buildOrder(shop: PublicShop, spec: OrderSpec): OrderRecord {
   const endedAt = spec.status === 'expired' ? (spec.expiresAt ?? undefined) : undefined;
   const events = eventsFor(spec.type, spec.status, spec.placedAt, endedAt);
   const account = shop.storefront.payments.find((p) => p.method === spec.paymentMethod);
+  const times = dueTimes({
+    placedAt: spec.placedAt,
+    scheduledAt: spec.scheduledAt ?? null,
+    prepMinutes: shop.storefront.prepMinutes ?? 20,
+  });
+  const code = spec.pickupCode ?? pickupCode(spec.token);
   const refund =
     spec.paymentStatus === 'refunded'
       ? {
@@ -275,6 +290,9 @@ export function buildOrder(shop: PublicShop, spec: OrderSpec): OrderRecord {
     cancelReason: spec.cancelReason ?? null,
     expiresAt: spec.expiresAt ?? null,
     note: spec.note ?? null,
+    dueAt: spec.dueAt ?? times.dueAt,
+    startBy: spec.startBy ?? times.startBy,
+    pickupCode: code,
   };
   if (refund) {
     receipt.messages.push({
@@ -300,6 +318,8 @@ export function buildOrder(shop: PublicShop, spec: OrderSpec): OrderRecord {
     redeemed: spec.redeemed ?? 0,
     stamp: spec.stamp ?? 'none',
     byCustomer: spec.byCustomer ?? false,
+    seenAt: spec.seenAt ?? null,
+    ownerNote: spec.ownerNote ?? null,
   };
 }
 

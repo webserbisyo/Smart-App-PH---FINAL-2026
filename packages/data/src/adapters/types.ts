@@ -3,23 +3,28 @@
 import type {
   Availability,
   BoardOrder,
+  BookingRules,
   Category,
   CategoryDraft,
   CustomerAddress,
+  DayLoad,
   ItemDraft,
   ItemStatus,
   LatLng,
   MemberAccount,
+  OpenState,
   OptionGroupDraft,
   OrderPayload,
   OrderRating,
   OrderReceipt,
   OrderRow,
   OrderStatus,
+  OrderType,
   OwnerItem,
   OwnerOptionGroup,
   OwnerOrder,
   OwnerVariantTemplate,
+  PauseMode,
   Payment,
   PaymentMethod,
   PublicShop,
@@ -28,6 +33,7 @@ import type {
   RemoveVariantTemplateResult,
   SaveVariantTemplateInput,
   SaveVariantTemplateResult,
+  Schedule,
   SendCodeResult,
   SortOrderInput,
   UploadKind,
@@ -86,6 +92,11 @@ export interface StorefrontAdapter {
   saveAddress(input: { slug: string; address: CustomerAddress }): Promise<CustomerAddress[]>;
   removeAddress(input: { slug: string; id: string }): Promise<CustomerAddress[]>;
   claimReward(input: { slug: string }): Promise<RewardClaim>;
+  getSchedule(input: {
+    slug: string;
+    type: OrderType;
+    lines: readonly { itemId: string; qty: number }[];
+  }): Promise<Schedule>;
 }
 
 export interface CustomerAuthAdapter {
@@ -96,8 +107,17 @@ export interface CustomerAuthAdapter {
 
 export interface OwnerOrdersAdapter {
   listOrders(
-    input: { slug: string; open: true } | { slug: string; date: string },
+    input:
+      | { slug: string; open: true; q?: string | undefined }
+      | { slug: string; date: string; q?: string | undefined },
   ): Promise<BoardOrder[]>;
+  listScheduled(input: {
+    slug: string;
+    from: string;
+    to: string;
+  }): Promise<{ orders: BoardOrder[]; days: DayLoad[] }>;
+  findOrder(input: { slug: string; code: string }): Promise<BoardOrder[]>;
+  markSeen(input: { slug: string; orderId: string }): Promise<BoardOrder>;
   getOrderDetail(input: { slug: string; orderId: string }): Promise<OwnerOrder>;
   getProofUrl(input: { slug: string; path: string }): Promise<string>;
   reviewPayment(input: {
@@ -113,6 +133,18 @@ export interface OwnerOrdersAdapter {
     toStatus: OrderStatus;
     trackingUrl?: string | undefined;
   }): Promise<OwnerOrder>;
+  recallOrder(input: { slug: string; orderId: string }): Promise<OwnerOrder>;
+  rescheduleOrder(input: {
+    slug: string;
+    orderId: string;
+    scheduledAt: string;
+    override?: boolean | undefined;
+  }): Promise<OwnerOrder>;
+  saveOwnerNote(input: {
+    slug: string;
+    orderId: string;
+    note: string | null;
+  }): Promise<OwnerOrder>;
   cancelOrder(input: { slug: string; orderId: string; reason: string }): Promise<OwnerOrder>;
   saveDeliveryInfo(input: {
     slug: string;
@@ -122,6 +154,9 @@ export interface OwnerOrdersAdapter {
     riderName?: string | undefined;
     riderPhone?: string | undefined;
   }): Promise<OwnerOrder>;
+  getBookingRules(input: { slug: string }): Promise<BookingRules>;
+  saveBookingRules(input: { slug: string; rules: BookingRules }): Promise<BookingRules>;
+  setPause(input: { slug: string; mode: PauseMode }): Promise<OpenState>;
 }
 
 export interface OwnerSamplesAdapter {

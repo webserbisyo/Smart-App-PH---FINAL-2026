@@ -30,6 +30,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     saveAddress: async (input) => (await real()).storefront.saveAddress(input),
     removeAddress: async (input) => (await real()).storefront.removeAddress(input),
     claimReward: async (input) => (await real()).storefront.claimReward(input),
+    getSchedule: async (input) => (await real()).storefront.getSchedule(input),
   };
 
   const customerAuth: CustomerAuthAdapter = {
@@ -40,13 +41,22 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
 
   const ownerOrders: OwnerOrdersAdapter = {
     listOrders: async (input) => (await real()).ownerOrders.listOrders(input),
+    listScheduled: async (input) => (await real()).ownerOrders.listScheduled(input),
+    findOrder: async (input) => (await real()).ownerOrders.findOrder(input),
+    markSeen: async (input) => (await real()).ownerOrders.markSeen(input),
     getOrderDetail: async (input) => (await real()).ownerOrders.getOrderDetail(input),
     getProofUrl: async (input) => (await real()).ownerOrders.getProofUrl(input),
     reviewPayment: async (input) => (await real()).ownerOrders.reviewPayment(input),
     recordPayment: async (input) => (await real()).ownerOrders.recordPayment(input),
     advanceOrder: async (input) => (await real()).ownerOrders.advanceOrder(input),
+    recallOrder: async (input) => (await real()).ownerOrders.recallOrder(input),
+    rescheduleOrder: async (input) => (await real()).ownerOrders.rescheduleOrder(input),
+    saveOwnerNote: async (input) => (await real()).ownerOrders.saveOwnerNote(input),
     cancelOrder: async (input) => (await real()).ownerOrders.cancelOrder(input),
     saveDeliveryInfo: async (input) => (await real()).ownerOrders.saveDeliveryInfo(input),
+    getBookingRules: async (input) => (await real()).ownerOrders.getBookingRules(input),
+    saveBookingRules: async (input) => (await real()).ownerOrders.saveBookingRules(input),
+    setPause: async (input) => (await real()).ownerOrders.setPause(input),
   };
 
   const ownerSamples: OwnerSamplesAdapter = {

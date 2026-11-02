@@ -4,11 +4,18 @@ import { z } from 'zod';
 import {
   canAdvance,
   canCancel,
+  canRecall,
+  canReschedule,
   CustomerAddressSchema,
   CustomerSessionSchema,
+  dayLoads,
+  dueTimes,
   earnsStamp,
   errorWords,
+  formatClock,
+  formatManila,
   formatPeso,
+  intervalsForDate,
   isFinal,
   isTransfer,
   LatLngSchema,
@@ -17,12 +24,17 @@ import {
   MemberAccountSchema,
   nextOpening,
   normalisePhPhone,
+  openState,
   OrderPayloadSchema,
   OrderRatingSchema,
   OrderReceiptSchema,
   OrderRowSchema,
   OwnerOrderSchema,
   BoardOrderSchema,
+  BookingRulesSchema,
+  OpenStateSchema,
+  pickupCode,
+  scheduleDays,
   parseMapsLink,
   PaymentSchema,
   periodStart,
@@ -509,7 +521,67 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     return order;
   }
 
+  function toBoardOrder(s: ShopState, o: OrderRecord) {
+    const linesCount = o.receipt.lines.length;
+    const ticketLines = o.receipt.lines.slice(0, 8).map((l) => ({
+      qty: l.qty,
+      name: l.name,
+      variantLabel: l.variantLabel,
+      optionLabels: l.optionLabels,
+      note: l.note || null,
+    }));
+    const lastStepAt = o.receipt.events[o.receipt.events.length - 1]?.at ?? o.receipt.placedAt;
+    return BoardOrderSchema.parse({
+      id: o.id,
+      token: o.receipt.token,
+      orderNo: o.receipt.orderNo,
+      type: o.receipt.type,
+      status: o.receipt.status,
+      paymentStatus: o.receipt.paymentStatus,
+      paymentMethod: o.receipt.paymentMethod,
+      scheduledAt: o.receipt.scheduledAt,
+      placedAt: o.receipt.placedAt,
+      customerName: o.receipt.customerName,
+      isFirstOrder: o.isFirstOrder,
+      isMember: memberOf(s, o.memberEmail ?? o.customerEmail) !== null,
+      hasReward: o.receipt.rewardTitle !== null,
+      itemsSummary: o.receipt.lines.map((l) => `${l.qty} × ${l.name}`).join(', '),
+      total: o.receipt.totals.total,
+      dueAt: o.receipt.dueAt,
+      startBy: o.receipt.startBy,
+      pickupCode: o.receipt.pickupCode,
+      seenAt: o.seenAt ?? null,
+      lines: ticketLines,
+      moreLines: Math.max(0, linesCount - 8),
+      note: o.receipt.note ?? null,
+      ownerNote: o.ownerNote ?? null,
+      deliveryArea:
+        o.receipt.type === 'delivery'
+          ? (o.receipt.deliveryAddress?.split(',')[0]?.trim() ?? null)
+          : null,
+      lastStepAt,
+    });
+  }
+
+  function computeBookings(s: ShopState) {
+    const slotCounts: Record<string, number> = {};
+    const itemCounts: Record<string, Record<string, number>> = {};
+    for (const o of s.orders) {
+      if (o.receipt.status === 'cancelled') continue;
+      if (o.receipt.scheduledAt) {
+        slotCounts[o.receipt.scheduledAt] = (slotCounts[o.receipt.scheduledAt] ?? 0) + 1;
+      }
+      const date = manilaDate(o.receipt.dueAt);
+      const dayItems = (itemCounts[date] ??= {});
+      for (const l of o.receipt.lines) {
+        dayItems[l.itemId] = (dayItems[l.itemId] ?? 0) + l.qty;
+      }
+    }
+    return { slotCounts, itemCounts };
+  }
+
   function ownerOrder(s: ShopState, o: OrderRecord) {
+    const lastStepAt = o.receipt.events[o.receipt.events.length - 1]?.at ?? o.receipt.placedAt;
     return OwnerOrderSchema.parse({
       ...o.receipt,
       id: o.id,
@@ -518,6 +590,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       isFirstOrder: o.isFirstOrder,
       isMember: memberOf(s, o.memberEmail ?? o.customerEmail) !== null,
       proofs: o.proofs,
+      seenAt: o.seenAt ?? null,
+      ownerNote: o.ownerNote ?? null,
+      lastStepAt,
     });
   }
 
@@ -569,9 +644,36 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return publicShop(requireShop(slug));
       }),
 
+    getSchedule: ({ slug, type, lines }) =>
+      run('storefront', () => {
+        const s = requireShop(slug);
+        const bookings = computeBookings(s);
+        return scheduleDays(
+          s.shop.storefront,
+          lines,
+          s.shop.catalog.items,
+          bookings,
+          now(),
+        );
+      }),
+
     quoteOrder: ({ slug, payload }) =>
       run('storefront', () => {
         const s = requireShop(slug);
+        if (payload.scheduledAt) {
+          const sched = scheduleDays(
+            s.shop.storefront,
+            payload.lines,
+            s.shop.catalog.items,
+            computeBookings(s),
+            now(),
+          );
+          const day = sched.days.find((d) => d.date === manilaDate(payload.scheduledAt));
+          const slot = day?.slots.find((sl) => sl.at === payload.scheduledAt);
+          if (!day || day.state !== 'open' || !slot || slot.state !== 'open') {
+            fail('slot_unavailable', 409);
+          }
+        }
         const member = currentMember(s);
         return QuoteSchema.parse(
           quote(
@@ -593,6 +695,21 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const body: OrderPayload = parsed.data;
         const phone = normalisePhPhone(body.customer.phone);
         if (!phone.ok) fail('invalid_input', 422, { phone: [words.shop.phoneInvalid] });
+
+        if (body.scheduledAt) {
+          const sched = scheduleDays(
+            s.shop.storefront,
+            body.lines,
+            s.shop.catalog.items,
+            computeBookings(s),
+            now(),
+          );
+          const day = sched.days.find((d) => d.date === manilaDate(body.scheduledAt));
+          const slot = day?.slots.find((sl) => sl.at === body.scheduledAt);
+          if (!day || day.state !== 'open' || !slot || slot.state !== 'open') {
+            fail('slot_unavailable', 409);
+          }
+        }
 
         const member = currentMember(s);
         const account = member ? accountFor(s, member) : null;
@@ -966,31 +1083,75 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     listOrders: (input) =>
       run('orders', () => {
         const s = requireShop(input.slug);
-        const list =
+        let list =
           'open' in input
             ? s.orders.filter((o) => !isFinal(o.receipt.status))
             : s.orders.filter((o) => o.businessDate === input.date);
+        if (input.q) {
+          const query = input.q.trim().toLowerCase();
+          list = list.filter((o) => {
+            const matchesNo = String(o.receipt.orderNo).includes(query);
+            const matchesName = o.receipt.customerName.toLowerCase().includes(query);
+            const matchesPhone = o.customerPhone.toLowerCase().includes(query);
+            const matchesCode = o.receipt.pickupCode.toLowerCase().includes(query);
+            return matchesNo || matchesName || matchesPhone || matchesCode;
+          });
+        }
         return list
           .sort((a, b) => a.receipt.placedAt.localeCompare(b.receipt.placedAt))
-          .map((o) =>
-            BoardOrderSchema.parse({
-              id: o.id,
-              token: o.receipt.token,
-              orderNo: o.receipt.orderNo,
-              type: o.receipt.type,
-              status: o.receipt.status,
-              paymentStatus: o.receipt.paymentStatus,
-              paymentMethod: o.receipt.paymentMethod,
-              scheduledAt: o.receipt.scheduledAt,
-              placedAt: o.receipt.placedAt,
-              customerName: o.receipt.customerName,
-              isFirstOrder: o.isFirstOrder,
-              isMember: memberOf(s, o.memberEmail ?? o.customerEmail) !== null,
-              hasReward: o.receipt.rewardTitle !== null,
-              itemsSummary: o.receipt.lines.map((l) => `${l.qty} × ${l.name}`).join(', '),
-              total: o.receipt.totals.total,
-            }),
-          );
+          .map((o) => toBoardOrder(s, o));
+      }),
+
+    listScheduled: ({ slug, from, to }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const scheduled = s.orders
+          .filter(
+            (o) =>
+              !isFinal(o.receipt.status) &&
+              o.receipt.scheduledAt !== null &&
+              manilaDate(o.receipt.dueAt) >= from &&
+              manilaDate(o.receipt.dueAt) <= to,
+          )
+          .sort((a, b) => a.receipt.dueAt.localeCompare(b.receipt.dueAt))
+          .map((o) => toBoardOrder(s, o));
+        const days = dayLoads(
+          s.orders.map((o) => ({
+            dueAt: o.receipt.dueAt,
+            status: o.receipt.status,
+            lines: o.receipt.lines,
+          })),
+          s.shop.catalog.items,
+          from,
+          to,
+        );
+        return { orders: scheduled, days };
+      }),
+
+    findOrder: ({ slug, code }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const q = code.trim().toUpperCase();
+        const todayDate = manilaDate(now());
+        const matches = s.orders.filter((o) => {
+          const codeMatch =
+            o.receipt.pickupCode.toUpperCase() === q ||
+            String(o.receipt.orderNo) === code.trim();
+          if (!codeMatch) return false;
+          return !isFinal(o.receipt.status) || o.businessDate === todayDate;
+        });
+        return matches.map((o) => toBoardOrder(s, o));
+      }),
+
+    markSeen: ({ slug, orderId }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const order = orderById(s, orderId);
+        if (!order.seenAt) {
+          order.seenAt = now().toISOString();
+          persist();
+        }
+        return toBoardOrder(s, order);
       }),
 
     getOrderDetail: ({ slug, orderId }) =>
@@ -1103,6 +1264,99 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return ownerOrder(s, order);
       }),
 
+    recallOrder: ({ slug, orderId }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const order = orderById(s, orderId);
+        const lastStepAt =
+          order.receipt.events[order.receipt.events.length - 1]?.at ?? order.receipt.placedAt;
+        if (!canRecall({ status: order.receipt.status, lastStepAt }, now())) {
+          fail('recall_expired', 409);
+        }
+        if (order.receipt.events.length <= 1) {
+          fail('invalid_transition', 409);
+        }
+        order.receipt.events.pop();
+        const prevEvent = order.receipt.events[order.receipt.events.length - 1]!;
+        order.receipt.status = prevEvent.status;
+        const lastStatusMsgIdx = order.receipt.messages
+          .map((m) => m.kind)
+          .lastIndexOf('status');
+        if (lastStatusMsgIdx >= 0) {
+          order.receipt.messages.splice(lastStatusMsgIdx, 1);
+        }
+        persist();
+        return ownerOrder(s, order);
+      }),
+
+    rescheduleOrder: ({ slug, orderId, scheduledAt, override }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const order = orderById(s, orderId);
+        if (!canReschedule(order.receipt)) {
+          fail('reschedule_not_allowed', 409);
+        }
+        const date = manilaDate(scheduledAt);
+        const intervals = intervalsForDate(s.shop.storefront, date);
+        const isClosure = s.shop.storefront.closures.some((c) => c.date === date);
+        if (isClosure || intervals.length === 0) {
+          fail('reschedule_not_allowed', 409, {
+            scheduledAt: ['Shop is closed on that day'],
+          });
+        }
+        const slotTime = new Date(scheduledAt).getTime();
+        const inside = intervals.some(
+          (inv) => slotTime >= inv.start.getTime() && slotTime < inv.end.getTime(),
+        );
+        if (!inside) {
+          fail('reschedule_not_allowed', 409, {
+            scheduledAt: ['Time is outside opening hours'],
+          });
+        }
+        if (!override) {
+          const sched = scheduleDays(
+            s.shop.storefront,
+            order.receipt.lines,
+            s.shop.catalog.items,
+            computeBookings(s),
+            now(),
+          );
+          const day = sched.days.find((d) => d.date === date);
+          const slot = day?.slots.find((sl) => sl.at === scheduledAt);
+          if (!day || day.state !== 'open' || !slot || slot.state !== 'open') {
+            fail('slot_full', 409);
+          }
+        }
+        const times = dueTimes({
+          placedAt: order.receipt.placedAt,
+          scheduledAt,
+          prepMinutes: s.shop.storefront.prepMinutes ?? 20,
+        });
+        order.receipt.scheduledAt = scheduledAt;
+        order.receipt.dueAt = times.dueAt;
+        order.receipt.startBy = times.startBy;
+        const formattedDate = `${formatManila(scheduledAt, 'day')} ${formatClock(scheduledAt)}`;
+        order.receipt.messages.push({
+          id: `${order.id}-schedule-${Date.now()}`,
+          kind: 'schedule',
+          at: now().toISOString(),
+          status: null,
+          proof: null,
+          text: words.receipt.thread.scheduleChanged(formattedDate),
+        });
+        persist();
+        return ownerOrder(s, order);
+      }),
+
+    saveOwnerNote: ({ slug, orderId, note }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const order = orderById(s, orderId);
+        order.ownerNote = note ? note.trim().slice(0, 300) : null;
+        persist();
+        return ownerOrder(s, order);
+      }),
+
     cancelOrder: ({ slug, orderId, reason }) =>
       run('orders', () => {
         const s = requireShop(slug);
@@ -1175,6 +1429,58 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         }
         persist();
         return ownerOrder(s, order);
+      }),
+
+    getBookingRules: ({ slug }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const sf = s.shop.storefront;
+        return BookingRulesSchema.parse({
+          daysAhead: sf.daysAhead ?? 1,
+          slotMinutes: sf.slotMinutes ?? 30,
+          ordersPerSlot: sf.ordersPerSlot ?? null,
+          prepMinutes: sf.prepMinutes ?? 20,
+          takeOrdersWhileClosed: sf.takeOrdersWhileClosed ?? false,
+        });
+      }),
+
+    saveBookingRules: ({ slug, rules }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const parsed = BookingRulesSchema.parse(rules);
+        s.shop.storefront.daysAhead = parsed.daysAhead;
+        s.shop.storefront.slotMinutes = parsed.slotMinutes;
+        s.shop.storefront.ordersPerSlot = parsed.ordersPerSlot;
+        s.shop.storefront.prepMinutes = parsed.prepMinutes;
+        s.shop.storefront.takeOrdersWhileClosed = parsed.takeOrdersWhileClosed;
+        persist();
+        return parsed;
+      }),
+
+    setPause: ({ slug, mode }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const t = now();
+        switch (mode) {
+          case 'busy_15':
+            s.shop.storefront.pause.paused = false;
+            s.shop.storefront.pause.busyUntil = addMinutes(t.toISOString(), 15);
+            break;
+          case 'busy_30':
+            s.shop.storefront.pause.paused = false;
+            s.shop.storefront.pause.busyUntil = addMinutes(t.toISOString(), 30);
+            break;
+          case 'pause':
+            s.shop.storefront.pause.paused = true;
+            s.shop.storefront.pause.busyUntil = null;
+            break;
+          case 'resume':
+            s.shop.storefront.pause.paused = false;
+            s.shop.storefront.pause.busyUntil = null;
+            break;
+        }
+        persist();
+        return OpenStateSchema.parse(openState(s.shop.storefront, t));
       }),
   };
 

@@ -7,6 +7,7 @@ import {
   type CustomerAddress,
   type OrderPayload,
   type OrderReceipt,
+  type OrderType,
   type PaymentMethod,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
@@ -266,3 +267,17 @@ export function useSaveAddress(slug: string) {
     onSuccess: () => void client.invalidateQueries({ queryKey: qk.account(slug) }),
   });
 }
+
+export function useSchedule(
+  slug: string,
+  type: OrderType,
+  lines: readonly { itemId: string; qty: number }[],
+) {
+  const { storefront } = useAdapters();
+  return useQuery({
+    queryKey: qk.schedule(slug, type, lines),
+    queryFn: () => storefront.getSchedule({ slug, type, lines }),
+    enabled: Boolean(slug && type),
+  });
+}
+
