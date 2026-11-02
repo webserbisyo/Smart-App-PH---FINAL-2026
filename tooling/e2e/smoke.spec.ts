@@ -311,7 +311,7 @@ test.describe('menu and item sheet (T07)', () => {
 });
 
 test.describe('basket (T08)', () => {
-  test('clear basket with confirm dialog', async ({ page }) => {
+  test('clear basket at once with Undo', async ({ page }) => {
     const problems = watch(page);
     await page.addInitScript(() => {
       localStorage.setItem(
@@ -343,22 +343,15 @@ test.describe('basket (T08)', () => {
       timeout: 15_000,
     });
 
-    // Open More menu
-    const moreBtn = basket.getByRole('button', { name: 'More options' });
-    await expect(moreBtn).toBeVisible();
-    await moreBtn.click();
+    // One Clear button, no menu or confirm (decision T45): it empties at once, Undo brings it back.
+    await expect(basket.getByRole('button', { name: 'More options' })).toHaveCount(0);
+    await basket.getByRole('button', { name: 'Clear basket' }).click();
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
+    await expect(basket.getByText('Your basket is empty')).toBeVisible();
 
-    // Click Clear basket menu item
-    const clearMenuItem = page.getByRole('menuitem', { name: 'Clear basket' });
-    await expect(clearMenuItem).toBeVisible();
-    await clearMenuItem.click();
-
-    // Alert dialog opens
-    const confirmBtn = page.getByRole('alertdialog').getByRole('button', { name: 'Clear basket' });
-    await expect(confirmBtn).toBeVisible();
-    await confirmBtn.click();
-
-    // Verify empty state
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(basket.getByRole('button', { name: 'Clear basket' })).toBeVisible();
+    await basket.getByRole('button', { name: 'Clear basket' }).click();
     await expect(basket.getByText('Your basket is empty')).toBeVisible();
 
     expect(problems).toEqual([]);
