@@ -11,11 +11,11 @@ import {
   type KanbanCommitMeta,
 } from '@smartapp/ui/components/reui/kanban';
 import { Calendar } from '@smartapp/ui/components/calendar';
-import {
-  EventCalendar,
-  type CalendarEvent,
-  type CalendarView,
-} from '@smartapp/ui/components/reui/event-calendar/event-calendar';
+import { EventCalendar } from '@smartapp/ui/components/reui/event-calendar/event-calendar';
+import type {
+  CalendarEvent,
+  CalendarView,
+} from '@smartapp/ui/components/reui/event-calendar/event-calendar-types';
 import { EventCalendarNav } from '@smartapp/ui/components/reui/event-calendar/event-calendar-nav';
 import { EventCalendarContent } from '@smartapp/ui/components/reui/event-calendar/event-calendar-content';
 import {
@@ -424,7 +424,7 @@ export function OrdersPrimitiveSections() {
               onEventsChange={(evts) => setEvents([...evts])}
               view={calendarView}
               onViewChange={(v) => setCalendarView(v)}
-              availableViews={AVAILABLE_VIEWS}
+              views={AVAILABLE_VIEWS}
               interactions={
                 canDragEvents ? { drag: true, resize: false } : { drag: false, resize: false }
               }
