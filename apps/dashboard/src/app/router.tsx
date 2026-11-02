@@ -124,11 +124,13 @@ const ordersRoute = createRoute({
   component: OrdersScreen,
   staticData: page(() => s.orders.title),
 });
-const orderRoute = shellPage(
-  '/orders/$orderId',
-  OrderDetailScreen,
-  page(() => s.orders.detailTitle, orders),
-);
+const orderRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/orders/$orderId',
+  validateSearch: OrdersSearchSchema,
+  component: OrderDetailScreen,
+  staticData: page(() => s.orders.detailTitle, orders),
+});
 
 const catalogRoute = createRoute({
   getParentRoute: () => shellRoute,
