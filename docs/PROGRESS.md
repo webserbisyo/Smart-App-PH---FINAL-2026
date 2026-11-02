@@ -46,6 +46,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] T47 Menu flows stay in place: Save stays, nested create returns to the item, list memory, Back, Undo on Discard (decision T47, pushed to main)
 - [x] O1 Orders: data, rules and mock data (decisions T48 to T53, pushed to main)
 - [x] O2 Orders parts installed and on /kit
+- [x] O3 Orders Now board, ticket and detail
 
 ## Phase 4: Backend, area by area
 

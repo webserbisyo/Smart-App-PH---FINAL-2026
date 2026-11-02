@@ -12,6 +12,7 @@ export interface SmokeRoute {
 }
 
 export const PORTS: Record<SmokeServer, number> = { prod: 3000, dev: 3100 };
+export const DASHBOARD_URL = 'http://localhost:5173';
 
 export const ROUTES: readonly SmokeRoute[] = [
   { name: 'platform page', path: '/', server: 'prod' },

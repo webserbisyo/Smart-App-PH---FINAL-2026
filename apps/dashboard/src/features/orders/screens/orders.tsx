@@ -36,12 +36,7 @@ export function OrdersScreen() {
   const isOnline = useOnlineStatus();
   const now = useNow(30_000);
 
-  const {
-    data: orders = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useOpenOrders(shop.slug, search.q);
+  const { data: orders = [], isLoading, isError, refetch } = useOpenOrders(shop.slug, search.q);
 
   const { soundEnabled, enableSound } = useOrderSound(orders);
 
@@ -82,14 +77,14 @@ export function OrdersScreen() {
   };
 
   return (
-    <div className="flex flex-col min-h-full pb-16 md:pb-8">
+    <div className="flex min-h-full flex-col pb-16 md:pb-8">
       <PageHeader
         title={words.screens.orders.title}
         tabs={tabs}
         actions={<BusyMenu slug={shop.slug} />}
       />
 
-      <main className="flex-1 px-4 py-4 md:px-6 space-y-4">
+      <main className="flex-1 space-y-4 px-4 py-4 md:px-6">
         {/* Offline Notice */}
         {!isOnline && (
           <Notice tone="warning" icon={<WifiOffIcon className="size-4" />}>
@@ -138,7 +133,7 @@ export function OrdersScreen() {
               <Skeleton className="h-9 w-24 rounded-lg" />
               <Skeleton className="h-9 w-24 rounded-lg" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {[1, 2, 3, 4].map((col) => (
                 <div key={col} className="space-y-3 rounded-2xl border border-border/40 p-3">
                   <Skeleton className="h-6 w-24" />

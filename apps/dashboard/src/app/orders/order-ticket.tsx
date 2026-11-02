@@ -129,6 +129,7 @@ function OrderTicketComponent({
 
   return (
     <Card
+      data-order-id={order.id}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
@@ -144,43 +145,44 @@ function OrderTicketComponent({
       }
       className={cn(
         'group flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-xs transition-shadow',
-        onClick && 'cursor-pointer hover:border-border/80 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+        onClick &&
+          'cursor-pointer hover:border-border/80 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
         className,
       )}
     >
       {/* 1. Header row (48 px) */}
       <div className="flex h-12 items-center justify-between gap-2 border-b border-border/50 px-3">
         {/* Left: ReUI Icon Tile + type name (no colour) */}
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex min-w-0 items-center gap-1.5">
           <IconTile variant="outline" size="sm" aria-hidden="true" className="shrink-0">
             <TypeIcon className="size-4 text-foreground" />
           </IconTile>
-          <span className="text-xs font-medium text-muted-foreground capitalize truncate">
+          <span className="truncate text-xs font-medium text-muted-foreground capitalize">
             {ordersWords.types[order.type]}
           </span>
         </div>
 
         {/* Middle: Order number + unseen indicator + short date if scheduled on another day */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex shrink-0 items-center gap-1.5">
           {order.seenAt === null && (
             <span
-              className="size-2 rounded-full bg-primary shrink-0 animate-pulse"
+              className="size-2 shrink-0 animate-pulse rounded-full bg-primary"
               aria-label={ordersWords.ticket.newOrderAria}
             />
           )}
-          <span className="font-bold tabular-nums text-base text-foreground">
+          <span className="text-base font-bold text-foreground tabular-nums">
             #{String(order.orderNo).padStart(3, '0')}
           </span>
           {scheduledOtherDay && order.scheduledAt && (
-            <span className="text-xs text-muted-foreground font-medium">
+            <span className="text-xs font-medium text-muted-foreground">
               {formatManila(order.scheduledAt, 'date')}
             </span>
           )}
         </div>
 
         {/* Right: Due time + age chip */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-xs font-semibold tabular-nums text-foreground">
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="text-xs font-semibold text-foreground tabular-nums">
             {formatClock(order.dueAt)}
           </span>
           {timing.lateMinutes > 0 ? (
@@ -204,17 +206,17 @@ function OrderTicketComponent({
 
       {/* 2. Who row */}
       <div className="flex items-center justify-between gap-2 border-b border-border/30 px-3 py-2">
-        <div className="font-medium text-sm text-foreground truncate min-w-0">
+        <div className="min-w-0 truncate text-sm font-medium text-foreground">
           {order.customerName}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex shrink-0 items-center gap-1">
           {order.isFirstOrder && (
             <Badge variant="outline" size="xs">
               {ordersWords.ticket.firstOrder}
             </Badge>
           )}
           {order.isMember && (
-            <span className="inline-flex items-center rounded-sm border border-member/20 bg-member px-1.5 py-0.5 text-[0.625rem] font-bold text-member-foreground uppercase tracking-wide leading-none">
+            <span className="inline-flex items-center rounded-sm border border-member/20 bg-member px-1.5 py-0.5 text-[0.625rem] leading-none font-bold tracking-wide text-member-foreground uppercase">
               {ordersWords.ticket.member}
             </span>
           )}
@@ -227,22 +229,22 @@ function OrderTicketComponent({
       </div>
 
       {/* 3. Lines grid */}
-      <div className="px-3 py-2 space-y-1.5 text-sm flex-1">
+      <div className="flex-1 space-y-1.5 px-3 py-2 text-sm">
         {visibleLines.map((line, idx) => (
           <div key={idx} className="grid grid-cols-[2rem_1fr] items-start gap-1">
-            <span className="font-semibold tabular-nums text-foreground">{line.qty}×</span>
+            <span className="font-semibold text-foreground tabular-nums">{line.qty}×</span>
             <div className="min-w-0">
-              <div className="font-medium text-foreground leading-snug break-words">
+              <div className="leading-snug font-medium break-words text-foreground">
                 {line.name}
               </div>
               {(line.variantLabel || line.optionLabels.length > 0) && (
-                <div className="text-xs text-muted-foreground leading-snug">
+                <div className="text-xs leading-snug text-muted-foreground">
                   {[line.variantLabel, ...line.optionLabels].filter(Boolean).join(', ')}
                 </div>
               )}
               {line.note && (
-                <div className="mt-1 flex items-start gap-1 rounded bg-warning-soft px-1.5 py-0.5 text-xs text-warning-text font-normal">
-                  <MessageSquareTextIcon className="size-3 shrink-0 mt-0.5" />
+                <div className="mt-1 flex items-start gap-1 rounded bg-warning-soft px-1.5 py-0.5 text-xs font-normal text-warning-text">
+                  <MessageSquareTextIcon className="mt-0.5 size-3 shrink-0" />
                   <span className="break-words">{line.note}</span>
                 </div>
               )}
@@ -257,8 +259,8 @@ function OrderTicketComponent({
         )}
 
         {order.note && (
-          <div className="mt-2 flex items-start gap-1.5 rounded-md bg-warning-soft px-2 py-1 text-xs text-warning-text font-normal">
-            <MessageSquareTextIcon className="size-3.5 shrink-0 mt-0.5" />
+          <div className="mt-2 flex items-start gap-1.5 rounded-md bg-warning-soft px-2 py-1 text-xs font-normal text-warning-text">
+            <MessageSquareTextIcon className="mt-0.5 size-3.5 shrink-0" />
             <span className="break-words">
               <strong>{ordersWords.ticket.orderNote}:</strong> {order.note}
             </span>
@@ -267,14 +269,14 @@ function OrderTicketComponent({
       </div>
 
       {/* 4. Footer row */}
-      <div className="mt-auto border-t border-border/40 p-3 pt-2.5 space-y-2">
+      <div className="mt-auto space-y-2 border-t border-border/40 p-3 pt-2.5">
         <div className="flex items-center justify-between gap-2">
           <Status variant={statusVariant}>
             <StatusIndicator />
             <PaymentIcon className="size-3" />
             <span>{paymentLabel}</span>
           </Status>
-          <span className="font-bold tabular-nums text-base text-foreground shrink-0 whitespace-nowrap">
+          <span className="shrink-0 text-base font-bold whitespace-nowrap text-foreground tabular-nums">
             {formatPeso(totalCentavos)}
           </span>
         </div>

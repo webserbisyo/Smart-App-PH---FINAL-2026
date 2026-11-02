@@ -151,10 +151,7 @@ export function OrdersDevScenarioPanel() {
               )}
             >
               <span>New order every 20s</span>
-              <Badge
-                variant={scenario.ordersMode === 'trickle' ? 'success' : 'outline'}
-                size="xs"
-              >
+              <Badge variant={scenario.ordersMode === 'trickle' ? 'success' : 'outline'} size="xs">
                 {scenario.ordersMode === 'trickle' ? 'ON' : 'OFF'}
               </Badge>
             </button>

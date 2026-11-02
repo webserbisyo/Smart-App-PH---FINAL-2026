@@ -57,7 +57,7 @@ export function TypeFilter({ counts, className }: TypeFilterProps) {
             )}
           >
             <span>{labels[type]}</span>
-            <span className="text-[0.6875rem] font-medium tabular-nums text-muted-foreground">
+            <span className="text-[0.6875rem] font-medium text-muted-foreground tabular-nums">
               {counts[type]}
             </span>
           </ToggleGroupItem>

@@ -13,6 +13,7 @@ export interface StartingSoonStripProps {
 
 export function StartingSoonStrip({ orders, onStartNow, className }: StartingSoonStripProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [startingId, setStartingId] = React.useState<string | null>(null);
 
   if (orders.length === 0) return null;
 
@@ -28,7 +29,7 @@ export function StartingSoonStrip({ orders, onStartNow, className }: StartingSoo
       <button
         type="button"
         onClick={() => setIsExpanded((prev) => !prev)}
-        className="flex w-full items-center justify-between px-3.5 py-2.5 text-xs font-semibold hover:bg-warning/10 transition-colors rounded-xl"
+        className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-colors hover:bg-warning/10"
         aria-expanded={isExpanded}
       >
         <span className="flex items-center gap-2">
@@ -44,7 +45,7 @@ export function StartingSoonStrip({ orders, onStartNow, className }: StartingSoo
       </button>
 
       {isExpanded && (
-        <div className="border-t border-warning/20 p-2.5 space-y-2">
+        <div className="space-y-2 border-t border-warning/20 p-2.5">
           {orders.map((order) => (
             <div
               key={order.id}
@@ -53,27 +54,34 @@ export function StartingSoonStrip({ orders, onStartNow, className }: StartingSoo
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 text-xs font-bold">
                   <span>#{String(order.orderNo).padStart(3, '0')}</span>
-                  <span className="truncate text-muted-foreground font-normal">
+                  <span className="truncate font-normal text-muted-foreground">
                     {order.customerName}
                   </span>
                 </div>
-                <div className="truncate text-xs text-muted-foreground">
-                  {order.itemsSummary}
-                </div>
+                <div className="truncate text-xs text-muted-foreground">{order.itemsSummary}</div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs font-semibold tabular-nums text-foreground">
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-xs font-semibold text-foreground tabular-nums">
                   {formatClock(order.dueAt)}
                 </span>
                 <AsyncButton
                   variant="secondary"
                   size="sm"
-                  onClick={() => onStartNow(order)}
-                  idleLabel={ordersWords.startingSoon.startNow}
-                  pendingLabel={ordersWords.startingSoon.starting}
+                  status={startingId === order.id ? 'loading' : 'idle'}
+                  busyLabel={ordersWords.startingSoon.starting}
                   doneLabel={ordersWords.startingSoon.started}
+                  onClick={async () => {
+                    try {
+                      setStartingId(order.id);
+                      await onStartNow(order);
+                    } finally {
+                      setStartingId(null);
+                    }
+                  }}
                   className="h-7 text-xs font-semibold"
-                />
+                >
+                  {ordersWords.startingSoon.startNow}
+                </AsyncButton>
               </div>
             </div>
           ))}

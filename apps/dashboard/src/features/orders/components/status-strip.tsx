@@ -50,12 +50,12 @@ export function StatusStrip({
   return (
     <div
       className={cn(
-        'sticky top-0 z-20 border-b border-border/80 bg-background/95 backdrop-blur-md px-2 py-2',
+        'sticky top-0 z-20 border-b border-border/80 bg-background/95 px-2 py-2 backdrop-blur-md',
         className,
       )}
     >
       <Scroller orientation="horizontal" hideScrollbar className="w-full">
-        <div className="flex items-center gap-1.5 min-w-max pb-0.5">
+        <div className="flex min-w-max items-center gap-1.5 pb-0.5">
           {steps.map((step) => {
             const isActive = currentStep === step.id;
             return (

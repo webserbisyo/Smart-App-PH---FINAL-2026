@@ -38,6 +38,7 @@ export function OrderDetailScreen() {
   const now = useNow(30_000);
 
   const isDesktopWide = useMediaQuery('(min-width: 1280px)');
+  const tabs = useOrdersTabs();
 
   const {
     data: order,
@@ -68,12 +69,12 @@ export function OrderDetailScreen() {
   // If order details are loading
   if (isOrderLoading) {
     return (
-      <div className="flex flex-col min-h-full p-4 md:p-6 space-y-4">
+      <div className="flex min-h-full flex-col space-y-4 p-4 md:p-6">
         <div className="flex items-center gap-3">
           <Skeleton className="size-9 rounded-lg" />
           <Skeleton className="h-6 w-32" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
+        <div className="grid max-w-4xl grid-cols-1 gap-4 md:grid-cols-2">
           <Skeleton className="h-64 rounded-xl" />
           <Skeleton className="h-64 rounded-xl" />
         </div>
@@ -109,16 +110,16 @@ export function OrderDetailScreen() {
   // At ≥1280px: side panel beside the live board
   if (isDesktopWide) {
     return (
-      <div className="flex flex-col min-h-full">
+      <div className="flex min-h-full flex-col">
         <PageHeader
           title={words.screens.orders.title}
-          tabs={useOrdersTabs()}
+          tabs={tabs}
           actions={<BusyMenu slug={shop.slug} />}
         />
 
-        <div className="flex flex-1 min-h-0 overflow-hidden border-t border-border/60">
+        <div className="flex min-h-0 flex-1 overflow-hidden border-t border-border/60">
           {/* Left: The board */}
-          <div className="flex-1 min-w-0 overflow-y-auto px-4 py-4 md:px-6">
+          <div className="min-w-0 flex-1 overflow-y-auto px-4 py-4 md:px-6">
             <NowBoard
               orders={openOrders}
               now={now}
@@ -130,7 +131,7 @@ export function OrderDetailScreen() {
           </div>
 
           {/* Right: Side panel detail view */}
-          <aside className="w-[440px] shrink-0 border-l border-border/80 bg-background overflow-y-auto">
+          <aside className="w-[440px] shrink-0 overflow-y-auto border-l border-border/80 bg-background">
             <OrderDetailContent
               order={order}
               slug={shop.slug}

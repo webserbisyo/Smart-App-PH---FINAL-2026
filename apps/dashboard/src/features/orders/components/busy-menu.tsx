@@ -69,7 +69,7 @@ export function BusyMenu({ slug, openState, className }: BusyMenuProps) {
             void setPause.mutateAsync({ mode: 'busy_15' });
           }}
         >
-          <CoffeeIcon className="size-3.5 mr-2 text-warning-text" />
+          <CoffeeIcon className="mr-2 size-3.5 text-warning-text" />
           <span>{ordersWords.states.busyMenu.busy15}</span>
         </DropdownMenuItem>
 
@@ -78,7 +78,7 @@ export function BusyMenu({ slug, openState, className }: BusyMenuProps) {
             void setPause.mutateAsync({ mode: 'busy_30' });
           }}
         >
-          <CoffeeIcon className="size-3.5 mr-2 text-warning-text" />
+          <CoffeeIcon className="mr-2 size-3.5 text-warning-text" />
           <span>{ordersWords.states.busyMenu.busy30}</span>
         </DropdownMenuItem>
 
@@ -87,7 +87,7 @@ export function BusyMenu({ slug, openState, className }: BusyMenuProps) {
             void setPause.mutateAsync({ mode: 'pause' });
           }}
         >
-          <PauseCircleIcon className="size-3.5 mr-2 text-destructive" />
+          <PauseCircleIcon className="mr-2 size-3.5 text-destructive" />
           <span>{ordersWords.states.busyMenu.pause}</span>
         </DropdownMenuItem>
 
@@ -100,7 +100,7 @@ export function BusyMenu({ slug, openState, className }: BusyMenuProps) {
               }}
               className="font-semibold text-primary"
             >
-              <PlayCircleIcon className="size-3.5 mr-2 text-primary" />
+              <PlayCircleIcon className="mr-2 size-3.5 text-primary" />
               <span>{ordersWords.states.busyMenu.resume}</span>
             </DropdownMenuItem>
           </>

@@ -47,9 +47,7 @@ function getButtonLabels(order: BoardOrder, kind: ShopKind) {
     case 'ready':
       return {
         idle:
-          order.type === 'delivery'
-            ? ordersWords.buttons.sendOut
-            : ordersWords.buttons.complete,
+          order.type === 'delivery' ? ordersWords.buttons.sendOut : ordersWords.buttons.complete,
         pending: ordersWords.buttons.completing,
         done: ordersWords.buttons.completed,
       };
@@ -81,20 +79,30 @@ export function BoardColumnView({
   const displayOrders = isDoneColumn ? orders.slice(0, 10) : orders;
   const useContentVisibility = orders.length > 30;
 
+  const [advancingId, setAdvancingId] = React.useState<string | null>(null);
+
   const renderCard = (order: BoardOrder) => {
     const btn = getButtonLabels(order, kind);
+    const isAdvancing = advancingId === order.id;
     const actionSlot = btn ? (
       <AsyncButton
         variant="secondary"
         size="sm"
-        onClick={async () => {
-          await onAdvance(order);
-        }}
-        idleLabel={btn.idle}
-        pendingLabel={btn.pending}
+        status={isAdvancing ? 'loading' : 'idle'}
+        busyLabel={btn.pending}
         doneLabel={btn.done}
+        onClick={async () => {
+          try {
+            setAdvancingId(order.id);
+            await onAdvance(order);
+          } finally {
+            setAdvancingId(null);
+          }
+        }}
         className="h-8.5 w-full text-xs font-semibold"
-      />
+      >
+        {btn.idle}
+      </AsyncButton>
     ) : undefined;
 
     return (
@@ -111,49 +119,48 @@ export function BoardColumnView({
   };
 
   const columnHeader = (
-    <div className="flex items-center justify-between px-2 py-2 mb-1 border-b border-border/40">
+    <div className="mb-1 flex items-center justify-between border-b border-border/40 px-2 py-2">
       <div className="flex items-center gap-2">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
           {title}
         </h3>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-bold tabular-nums text-foreground">
+        <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-bold text-foreground tabular-nums">
           {count}
         </span>
       </div>
     </div>
   );
 
-  const doneFooter = isDoneColumn && onShowAllHistory ? (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={onShowAllHistory}
-      className="mt-2 w-full justify-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
-    >
-      <span>{ordersWords.doneToday.showAllInHistory}</span>
-      <ArrowRightIcon className="size-3.5" />
-    </Button>
-  ) : null;
+  const doneFooter =
+    isDoneColumn && onShowAllHistory ? (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onShowAllHistory}
+        className="mt-2 w-full justify-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/5"
+      >
+        <span>{ordersWords.doneToday.showAllInHistory}</span>
+        <ArrowRightIcon className="size-3.5" />
+      </Button>
+    ) : null;
 
   if (isKanban) {
     return (
       <KanbanColumn
         value={columnId}
         className={cn(
-          'flex flex-col w-72 shrink-0 rounded-2xl border border-border/60 bg-muted/30 p-2 select-none',
+          'flex w-72 shrink-0 flex-col rounded-2xl border border-border/60 bg-muted/30 p-2 select-none',
           className,
         )}
       >
         {columnHeader}
         <KanbanColumnContent
           value={columnId}
-          className="flex-1 space-y-2.5 overflow-y-auto px-0.5 py-1 min-h-[150px]"
+          className="min-h-[150px] flex-1 space-y-2.5 overflow-y-auto px-0.5 py-1"
         >
           {displayOrders.map((order) => (
             <KanbanItem key={order.id} value={order.id}>
-              <KanbanItemHandle cursor={false}>
-                {renderCard(order)}
-              </KanbanItemHandle>
+              <KanbanItemHandle cursor={false}>{renderCard(order)}</KanbanItemHandle>
             </KanbanItem>
           ))}
         </KanbanColumnContent>

@@ -137,7 +137,8 @@ export function NowBoard({
   }, [columnData]);
 
   // Kanban state synchronization
-  const [kanbanColumns, setKanbanColumns] = React.useState<Record<string, BoardOrder[]>>(columnData);
+  const [kanbanColumns, setKanbanColumns] =
+    React.useState<Record<string, BoardOrder[]>>(columnData);
   React.useEffect(() => {
     setKanbanColumns(columnData);
   }, [columnData]);
@@ -257,7 +258,7 @@ export function NowBoard({
             counts={stepCounts}
             kind={kind}
             showOut={showOutColumn}
-            className="-mx-4 sm:mx-0 rounded-none sm:rounded-xl"
+            className="-mx-4 rounded-none sm:mx-0 sm:rounded-xl"
           />
 
           <div className="space-y-3">
@@ -267,10 +268,7 @@ export function NowBoard({
               </div>
             ) : (
               columnData[currentStep as keyof typeof columnData]?.map((order) => (
-                <div
-                  key={order.id}
-                  className="transition-all duration-200"
-                >
+                <div key={order.id} className="transition-all duration-200">
                   <OrderTicket
                     order={order}
                     size="card"
@@ -316,7 +314,7 @@ export function NowBoard({
         </div>
       ) : isTablet ? (
         /* Tablet: 3 columns with scroll-snap sideways (no drag) */
-        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-none">
+        <div className="scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4">
           <BoardColumnView
             columnId="new"
             title={ordersWords.columns.new}
@@ -386,7 +384,7 @@ export function NowBoard({
           restoreOnCancel={true}
           className="overflow-x-auto pb-4"
         >
-          <KanbanBoard className="flex gap-4 min-h-[480px]">
+          <KanbanBoard className="flex min-h-[480px] gap-4">
             <BoardColumnView
               columnId="new"
               title={ordersWords.columns.new}
@@ -451,12 +449,8 @@ export function NowBoard({
               const draggedOrder = orders.find((o) => o.id === value);
               if (!draggedOrder) return null;
               return (
-                <div className="w-72 shadow-xl opacity-90 rotate-1 cursor-grabbing">
-                  <OrderTicket
-                    order={draggedOrder}
-                    size="card"
-                    now={now}
-                  />
+                <div className="w-72 rotate-1 cursor-grabbing opacity-90 shadow-xl">
+                  <OrderTicket order={draggedOrder} size="card" now={now} />
                 </div>
               );
             }}

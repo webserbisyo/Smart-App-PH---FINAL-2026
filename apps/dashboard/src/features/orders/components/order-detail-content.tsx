@@ -38,12 +38,7 @@ import {
   AlertDialogTitle,
 } from '@smartapp/ui/components/alert-dialog';
 import { Button } from '@smartapp/ui/components/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@smartapp/ui/components/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@smartapp/ui/components/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,7 +64,7 @@ import {
   TimelineSeparator,
   TimelineTitle,
 } from '@smartapp/ui/components/reui/timeline';
-import { AsyncButton } from '@smartapp/ui/compositions/async-button';
+import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
@@ -128,8 +123,16 @@ export function OrderDetailContent({
 
   // Cancel dialog state
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
-  const [cancelReasonKey, setCancelReasonKey] = React.useState<'sold_out' | 'closing_early' | 'customer_asked' | 'other'>('sold_out');
+  const [cancelReasonKey, setCancelReasonKey] = React.useState<
+    'sold_out' | 'closing_early' | 'customer_asked' | 'other'
+  >('sold_out');
   const [cancelOtherText, setCancelOtherText] = React.useState('');
+
+  const nextStepAction = useAsyncAction();
+  const approvePaymentAction = useAsyncAction();
+  const recordCashAction = useAsyncAction();
+  const saveDeliveryAction = useAsyncAction();
+  const saveOwnerNoteAction = useAsyncAction();
 
   const nextAction = nextActions(order)[0];
 
@@ -204,7 +207,7 @@ export function OrderDetailContent({
   return (
     <div className={cn('flex flex-col bg-background text-foreground', className)}>
       {/* Top action header */}
-      <div className="flex h-14 items-center justify-between border-b border-border/80 px-4 bg-muted/20">
+      <div className="flex h-14 items-center justify-between border-b border-border/80 bg-muted/20 px-4">
         <div className="flex items-center gap-2">
           {onBack && (
             <Button
@@ -217,7 +220,7 @@ export function OrderDetailContent({
               <ArrowLeftIcon className="size-4" />
             </Button>
           )}
-          <span className="font-bold text-base tabular-nums">
+          <span className="text-base font-bold tabular-nums">
             #{String(order.orderNo).padStart(3, '0')}
           </span>
           <span className="text-xs text-muted-foreground">
@@ -229,7 +232,7 @@ export function OrderDetailContent({
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button variant="ghost" size="icon" className="size-8">
+                <Button variant="ghost" size="icon" className="size-8" aria-label="Order actions">
                   <MoreVerticalIcon className="size-4 text-muted-foreground" />
                 </Button>
               }
@@ -242,7 +245,7 @@ export function OrderDetailContent({
                 {ordersWords.detail.cancelOrder}
               </DropdownMenuItem>
               <DropdownMenuItem disabled>
-                <PrinterIcon className="size-3.5 mr-2 opacity-50" />
+                <PrinterIcon className="mr-2 size-3.5 opacity-50" />
                 <span>{ordersWords.detail.printTicket}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -262,7 +265,7 @@ export function OrderDetailContent({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex-1 space-y-6 overflow-y-auto p-4">
         {/* 1. Full Ticket (Size="full") */}
         <OrderTicket
           order={order}
@@ -273,43 +276,47 @@ export function OrderDetailContent({
               <AsyncButton
                 variant="default"
                 size="default"
-                onClick={handleNextStep}
-                idleLabel={buttonLabel}
-                pendingLabel={ordersWords.buttons.starting}
+                status={nextStepAction.status}
+                busyLabel={ordersWords.buttons.starting}
                 doneLabel={ordersWords.buttons.started}
+                onClick={() => nextStepAction.run(handleNextStep)}
                 className="w-full font-semibold shadow-xs"
-              />
+              >
+                {buttonLabel}
+              </AsyncButton>
             ) : undefined
           }
         />
 
         {/* 2. Payment Section */}
-        <div className="rounded-xl border border-border/80 bg-card p-4 space-y-3.5 shadow-2xs">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <div className="space-y-3.5 rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
+          <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
             {ordersWords.detail.paymentSection}
           </h3>
 
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground capitalize">{order.paymentMethod.replace('_', ' ')}</span>
-            <span className="font-bold tabular-nums text-foreground">
+            <span className="text-muted-foreground capitalize">
+              {order.paymentMethod.replace('_', ' ')}
+            </span>
+            <span className="font-bold text-foreground tabular-nums">
               {formatPeso(order.totals.total)}
             </span>
           </div>
 
           {/* Proofs (if GCash/Maya transfer) */}
           {order.proofs.length > 0 && (
-            <div className="space-y-3 pt-1 border-t border-border/40">
+            <div className="space-y-3 border-t border-border/40 pt-1">
               {order.proofs.map((proof) => (
                 <div key={proof.id} className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-muted-foreground font-mono">
+                    <span className="font-mono text-xs text-muted-foreground">
                       Ref: {proof.referenceNo}
                     </span>
                     <CopyButton text={proof.referenceNo} className="h-7 text-xs" />
                   </div>
 
                   {/* Mandatory line from fix 8 */}
-                  <p className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-warning-soft/70 px-2 py-1 rounded-md">
+                  <p className="rounded-md bg-warning-soft/70 px-2 py-1 text-xs font-medium text-amber-600 dark:text-amber-400">
                     {ordersWords.detail.checkGcash}
                   </p>
 
@@ -318,7 +325,7 @@ export function OrderDetailContent({
                     <button
                       type="button"
                       onClick={() => setZoomProofPath(proof.path)}
-                      className="group relative size-16 overflow-hidden rounded-lg border border-border/80 hover:opacity-90 transition-opacity"
+                      className="group relative size-16 overflow-hidden rounded-lg border border-border/80 transition-opacity hover:opacity-90"
                     >
                       <img
                         src={proof.path}
@@ -327,7 +334,13 @@ export function OrderDetailContent({
                       />
                     </button>
                     <div className="text-xs text-muted-foreground">
-                      <div>{proof.status === 'approved' ? 'Approved' : proof.status === 'rejected' ? 'Rejected' : 'Pending review'}</div>
+                      <div>
+                        {proof.status === 'approved'
+                          ? 'Approved'
+                          : proof.status === 'rejected'
+                            ? 'Rejected'
+                            : 'Pending review'}
+                      </div>
                       <div className="text-[0.6875rem]">{formatClock(proof.uploadedAt)}</div>
                     </div>
                   </div>
@@ -338,18 +351,22 @@ export function OrderDetailContent({
                       <AsyncButton
                         variant="default"
                         size="sm"
-                        onClick={async () => {
-                          await reviewPaymentMutation.mutateAsync({
-                            orderId: order.id,
-                            approve: true,
-                          });
-                          notify({ title: ordersWords.detail.approvedPayment, tone: 'success' });
-                        }}
-                        idleLabel={ordersWords.detail.approvePayment}
-                        pendingLabel={ordersWords.detail.approvingPayment}
+                        status={approvePaymentAction.status}
+                        busyLabel={ordersWords.detail.approvingPayment}
                         doneLabel={ordersWords.detail.approvedPayment}
+                        onClick={() =>
+                          approvePaymentAction.run(async () => {
+                            await reviewPaymentMutation.mutateAsync({
+                              orderId: order.id,
+                              approve: true,
+                            });
+                            notify({ title: ordersWords.detail.approvedPayment, tone: 'success' });
+                          })
+                        }
                         className="flex-1 text-xs font-semibold"
-                      />
+                      >
+                        {ordersWords.detail.approvePayment}
+                      </AsyncButton>
                       <Button
                         variant="outline"
                         size="sm"
@@ -374,31 +391,35 @@ export function OrderDetailContent({
 
           {/* Record Cash Button for cash & COD */}
           {isPayLater(order.paymentMethod) && order.paymentStatus !== 'paid' && (
-            <div className="pt-2 border-t border-border/40">
+            <div className="border-t border-border/40 pt-2">
               <AsyncButton
                 variant="outline"
                 size="sm"
-                onClick={async () => {
-                  await recordPaymentMutation.mutateAsync({
-                    orderId: order.id,
-                    method: order.paymentMethod as PaymentMethod,
-                  });
-                  notify({ title: ordersWords.detail.cashRecorded, tone: 'success' });
-                }}
-                idleLabel={ordersWords.detail.recordCash}
-                pendingLabel={ordersWords.detail.recordingCash}
+                status={recordCashAction.status}
+                busyLabel={ordersWords.detail.recordingCash}
                 doneLabel={ordersWords.detail.cashRecorded}
+                onClick={() =>
+                  recordCashAction.run(async () => {
+                    await recordPaymentMutation.mutateAsync({
+                      orderId: order.id,
+                      method: order.paymentMethod as PaymentMethod,
+                    });
+                    notify({ title: ordersWords.detail.cashRecorded, tone: 'success' });
+                  })
+                }
                 className="w-full text-xs font-semibold"
-              />
+              >
+                {ordersWords.detail.recordCash}
+              </AsyncButton>
             </div>
           )}
         </div>
 
         {/* 3. Delivery Section (if delivery order) */}
         {order.type === 'delivery' && (
-          <div className="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-2xs">
+          <div className="space-y-3 rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
                 {ordersWords.detail.deliverySection}
               </h3>
               <Button
@@ -407,19 +428,17 @@ export function OrderDetailContent({
                 onClick={() => setIsDeliverySheetOpen(true)}
                 className="h-7 text-xs font-semibold"
               >
-                <TruckIcon className="size-3.5 mr-1" />
+                <TruckIcon className="mr-1 size-3.5" />
                 {order.rider ? 'Edit details' : 'Add rider'}
               </Button>
             </div>
 
             {order.deliveryAddress && (
-              <p className="text-xs text-muted-foreground break-words">
-                {order.deliveryAddress}
-              </p>
+              <p className="text-xs break-words text-muted-foreground">{order.deliveryAddress}</p>
             )}
 
             {order.rider ? (
-              <div className="rounded-lg bg-muted/40 p-2.5 text-xs space-y-1">
+              <div className="space-y-1 rounded-lg bg-muted/40 p-2.5 text-xs">
                 <div className="font-semibold text-foreground">{order.rider.name}</div>
                 {order.rider.provider && <div>Provider: {order.rider.provider}</div>}
                 {order.rider.phone && (
@@ -448,8 +467,8 @@ export function OrderDetailContent({
         )}
 
         {/* 4. Timeline Section */}
-        <div className="rounded-xl border border-border/80 bg-card p-4 space-y-4 shadow-2xs">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <div className="space-y-4 rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
+          <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
             {ordersWords.detail.timelineSection}
           </h3>
 
@@ -488,7 +507,7 @@ export function OrderDetailContent({
                       <TimelineTitle
                         className={cn(
                           'text-xs font-semibold',
-                          isCurrent ? 'text-primary font-bold' : 'text-foreground',
+                          isCurrent ? 'font-bold text-primary' : 'text-foreground',
                         )}
                       >
                         {stepLabel}
@@ -508,8 +527,8 @@ export function OrderDetailContent({
 
         {/* 5. Order Thread Messages */}
         {order.messages.length > 0 && (
-          <div className="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-2xs">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="space-y-3 rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
+            <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               {ordersWords.detail.threadSection}
             </h3>
 
@@ -520,17 +539,17 @@ export function OrderDetailContent({
                   className={cn(
                     'rounded-lg p-2.5 text-xs',
                     msg.kind === 'proof'
-                      ? 'bg-primary/5 border border-primary/20 text-foreground'
+                      ? 'border border-primary/20 bg-primary/5 text-foreground'
                       : 'bg-muted/50 text-muted-foreground',
                   )}
                 >
-                  <div className="flex items-center justify-between font-semibold mb-0.5">
+                  <div className="mb-0.5 flex items-center justify-between font-semibold">
                     <span className="capitalize">{msg.kind}</span>
                     <span className="text-[0.6875rem] font-normal tabular-nums">
                       {formatClock(msg.at)}
                     </span>
                   </div>
-                  {msg.text && <p className="text-foreground break-words">{msg.text}</p>}
+                  {msg.text && <p className="break-words text-foreground">{msg.text}</p>}
                 </div>
               ))}
             </div>
@@ -538,21 +557,20 @@ export function OrderDetailContent({
         )}
 
         {/* 6. Customer Details */}
-        <div className="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-2xs">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <div className="space-y-3 rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
+          <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
             {ordersWords.detail.customerSection}
           </h3>
 
           <div className="space-y-2 text-xs">
-            <div className="font-semibold text-sm text-foreground">
-              {order.customerName}
-            </div>
+            <div className="text-sm font-semibold text-foreground">{order.customerName}</div>
 
             <div className="flex flex-wrap items-center gap-2 pt-1">
               {order.customerPhone && (
                 <Button
                   variant="outline"
                   size="sm"
+                  nativeButton={false}
                   render={<a href={`tel:${order.customerPhone}`} />}
                   className="h-8 gap-1.5 text-xs font-semibold"
                 >
@@ -564,12 +582,9 @@ export function OrderDetailContent({
               <Button
                 variant="outline"
                 size="sm"
+                nativeButton={false}
                 render={
-                  <a
-                    href={`https://m.me/${slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
+                  <a href={`https://m.me/${slug}`} target="_blank" rel="noopener noreferrer" />
                 }
                 className="h-8 gap-1.5 text-xs font-semibold"
               >
@@ -581,9 +596,9 @@ export function OrderDetailContent({
         </div>
 
         {/* 7. Owner Note */}
-        <div className="rounded-xl border border-border/80 bg-card p-4 space-y-2.5 shadow-2xs">
+        <div className="space-y-2.5 rounded-xl border border-border/80 bg-card p-4 shadow-2xs">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               {ordersWords.detail.ownerNote}
             </h3>
             <span className="text-[0.6875rem] text-muted-foreground">
@@ -602,12 +617,14 @@ export function OrderDetailContent({
           <AsyncButton
             variant="outline"
             size="sm"
-            onClick={handleSaveOwnerNote}
-            idleLabel={ordersWords.detail.saveOwnerNote}
-            pendingLabel={ordersWords.detail.savingOwnerNote}
+            status={saveOwnerNoteAction.status}
+            busyLabel={ordersWords.detail.savingOwnerNote}
             doneLabel={ordersWords.detail.ownerNoteSaved}
+            onClick={() => saveOwnerNoteAction.run(handleSaveOwnerNote)}
             className="w-full text-xs font-semibold"
-          />
+          >
+            {ordersWords.detail.saveOwnerNote}
+          </AsyncButton>
         </div>
       </div>
 
@@ -617,12 +634,14 @@ export function OrderDetailContent({
           <AsyncButton
             variant="default"
             size="default"
-            onClick={handleNextStep}
-            idleLabel={buttonLabel}
-            pendingLabel={ordersWords.buttons.starting}
+            status={nextStepAction.status}
+            busyLabel={ordersWords.buttons.starting}
             doneLabel={ordersWords.buttons.started}
+            onClick={() => nextStepAction.run(handleNextStep)}
             className="w-full font-semibold shadow-xs"
-          />
+          >
+            {buttonLabel}
+          </AsyncButton>
         </div>
       )}
 
@@ -649,7 +668,7 @@ export function OrderDetailContent({
 
       {/* Delivery Info Sheet */}
       <Sheet open={isDeliverySheetOpen} onOpenChange={setIsDeliverySheetOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-6 space-y-4">
+        <SheetContent side="right" className="w-full space-y-4 p-6 sm:max-w-md">
           <SheetHeader>
             <SheetTitle>{ordersWords.detail.deliveryDetails}</SheetTitle>
             <SheetDescription>Assign a rider or update tracking details.</SheetDescription>
@@ -657,7 +676,9 @@ export function OrderDetailContent({
 
           <div className="space-y-3 pt-2">
             <div>
-              <label className="text-xs font-medium text-foreground">{ordersWords.detail.riderName}</label>
+              <label className="text-xs font-medium text-foreground">
+                {ordersWords.detail.riderName}
+              </label>
               <Input
                 value={riderName}
                 onChange={(e) => setRiderName(e.target.value)}
@@ -666,7 +687,9 @@ export function OrderDetailContent({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground">{ordersWords.detail.riderPhone}</label>
+              <label className="text-xs font-medium text-foreground">
+                {ordersWords.detail.riderPhone}
+              </label>
               <Input
                 value={riderPhone}
                 onChange={(e) => setRiderPhone(e.target.value)}
@@ -675,7 +698,9 @@ export function OrderDetailContent({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground">{ordersWords.detail.provider}</label>
+              <label className="text-xs font-medium text-foreground">
+                {ordersWords.detail.provider}
+              </label>
               <Input
                 value={provider}
                 onChange={(e) => setProvider(e.target.value)}
@@ -684,7 +709,9 @@ export function OrderDetailContent({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-foreground">{ordersWords.detail.trackingUrl}</label>
+              <label className="text-xs font-medium text-foreground">
+                {ordersWords.detail.trackingUrl}
+              </label>
               <Input
                 value={trackingUrl}
                 onChange={(e) => setTrackingUrl(e.target.value)}
@@ -697,12 +724,14 @@ export function OrderDetailContent({
           <div className="pt-4">
             <AsyncButton
               variant="default"
-              onClick={handleSaveDelivery}
-              idleLabel={ordersWords.detail.saveDelivery}
-              pendingLabel={ordersWords.detail.savingDelivery}
+              status={saveDeliveryAction.status}
+              busyLabel={ordersWords.detail.savingDelivery}
               doneLabel={ordersWords.detail.deliverySaved}
+              onClick={() => saveDeliveryAction.run(handleSaveDelivery)}
               className="w-full font-semibold"
-            />
+            >
+              {ordersWords.detail.saveDelivery}
+            </AsyncButton>
           </div>
         </SheetContent>
       </Sheet>
@@ -711,12 +740,10 @@ export function OrderDetailContent({
       <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive font-bold">
+            <AlertDialogTitle className="font-bold text-destructive">
               {ordersWords.detail.cancelDialogTitle}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {ordersWords.detail.cancelDialogDesc}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{ordersWords.detail.cancelDialogDesc}</AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="space-y-3 py-2">
@@ -744,7 +771,7 @@ export function OrderDetailContent({
                 onChange={(e) => setCancelOtherText(e.target.value)}
                 placeholder={ordersWords.detail.cancelOtherPlaceholder}
                 rows={2}
-                className="text-xs mt-2"
+                className="mt-2 text-xs"
               />
             )}
           </div>
