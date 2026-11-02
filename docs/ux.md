@@ -46,7 +46,7 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - One filled button per screen; main actions at the bottom in thumb reach; Cancel and Delete small, inside a More menu.
 - A disabled button says why ("You're offline", "Closed now", "Choose a size"). Hide options that can't apply (for example payment methods an order type doesn't allow).
 - Forms in groups of 5 to 7 fields; each settings section saves on its own.
-- Destructive actions confirm with a reason. Order steps only move forward; there is no Undo.
+- Destructive actions confirm with a reason. Order steps advance one by one; an owner can recall (undo) the last advance within 10 seconds (decision T51).
 - Forgiving input: phone accepts 0917…, 917… or +63…; money accepts "₱120" and "120.50"; references ignore spaces.
 - Toasts: bottom centre above the dock on phones, top centre on desktop (decision R36); semantic colours (green, red, amber, blue), never shop colours (R35); success closes after 3 s, errors stay; at most one action.
 

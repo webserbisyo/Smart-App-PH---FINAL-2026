@@ -11,9 +11,6 @@ export const qk = {
   myOrders: (slug: string, tokens: readonly string[]) =>
     ['storefront', slug, 'my-orders', tokens] as const,
   account: (slug: string) => ['storefront', slug, 'account'] as const,
-  schedule: (
-    slug: string,
-    type: string,
-    lines: readonly { itemId: string; qty: number }[],
-  ) => ['storefront', slug, 'schedule', type, lines] as const,
+  schedule: (slug: string, type: string, lines: readonly { itemId: string; qty: number }[]) =>
+    ['storefront', slug, 'schedule', type, lines] as const,
 };

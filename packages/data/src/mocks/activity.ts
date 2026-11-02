@@ -620,8 +620,20 @@ function lolaRemyDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       paymentMethod: gcash,
       note: 'Happy 7th birthday, Migo!',
       lines: [
-        { itemId: choc?.id ?? 'lr-chocolate-moist-cake', variantId: chocVarId, optionIds: [], qty: 1, note: '' },
-        { itemId: ube?.id ?? 'lr-ube-macapuno-cake', variantId: ubeVarId, optionIds: [], qty: 1, note: '' },
+        {
+          itemId: choc?.id ?? 'lr-chocolate-moist-cake',
+          variantId: chocVarId,
+          optionIds: [],
+          qty: 1,
+          note: '',
+        },
+        {
+          itemId: ube?.id ?? 'lr-ube-macapuno-cake',
+          variantId: ubeVarId,
+          optionIds: [],
+          qty: 1,
+          note: '',
+        },
       ],
     },
     {
@@ -634,7 +646,13 @@ function lolaRemyDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       paymentMethod: gcash,
       note: 'Happy 50th Wedding Anniversary Lolo and Lola!',
       lines: [
-        { itemId: ube?.id ?? 'lr-ube-macapuno-cake', variantId: ubeVarId, optionIds: [], qty: 1, note: '' },
+        {
+          itemId: ube?.id ?? 'lr-ube-macapuno-cake',
+          variantId: ubeVarId,
+          optionIds: [],
+          qty: 1,
+          note: '',
+        },
       ],
     },
     {
@@ -647,7 +665,13 @@ function lolaRemyDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       paymentMethod: gcash,
       note: 'Congratulations Sofia on your graduation!',
       lines: [
-        { itemId: choc?.id ?? 'lr-chocolate-moist-cake', variantId: chocVarId, optionIds: [], qty: 2, note: '' },
+        {
+          itemId: choc?.id ?? 'lr-chocolate-moist-cake',
+          variantId: chocVarId,
+          optionIds: [],
+          qty: 2,
+          note: '',
+        },
       ],
     },
     {
@@ -660,13 +684,21 @@ function lolaRemyDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       paymentMethod: gcash,
       note: 'Happy Birthday Tita Baby!',
       lines: [
-        { itemId: ube?.id ?? 'lr-ube-macapuno-cake', variantId: ubeVarId, optionIds: [], qty: 1, note: '' },
+        {
+          itemId: ube?.id ?? 'lr-ube-macapuno-cake',
+          variantId: ubeVarId,
+          optionIds: [],
+          qty: 1,
+          note: '',
+        },
       ],
     },
   ];
 
   // 2. One 40-line party order
-  const activeItems = shop.catalog.items.filter((i) => i.status === 'active' && i.variants.length > 0);
+  const activeItems = shop.catalog.items.filter(
+    (i) => i.status === 'active' && i.variants.length > 0,
+  );
   const partyLines: BasketLine[] = [];
   for (let i = 0; i < 40; i += 1) {
     const item = activeItems[i % activeItems.length]!;

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { BasketSchema } from '../src/schemas/basket.js';
 import { OrderPayloadSchema, OrderReceiptSchema, QuoteSchema } from '../src/schemas/order.js';
 import { MemberAccountSchema, RewardClaimSchema } from '../src/schemas/loyalty.js';
+import { BookingRulesSchema } from '../src/schemas/storefront.js';
+import { BoardOrderSchema } from '../src/schemas/owner-orders.js';
 import { ErrorCode, errorWords } from '../src/errors.js';
 
 const payload = {
@@ -109,6 +111,9 @@ describe('schemas', () => {
         cancelReason: null,
         expiresAt: '2026-10-26T04:30:00.000Z',
         note: null,
+        dueAt: '2026-10-26T04:20:00.000Z',
+        startBy: '2026-10-26T04:00:00.000Z',
+        pickupCode: 'ABCD',
       }).success,
     ).toBe(true);
     expect(
@@ -142,6 +147,72 @@ describe('schemas', () => {
         createdAt: '2026-10-26T04:00:00.000Z',
       }).success,
     ).toBe(true);
+  });
+
+  it('booking rules schema enforces 15, 30, 60 slot lengths', () => {
+    expect(
+      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 15, ordersPerSlot: 4 }).success,
+    ).toBe(true);
+    expect(
+      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 30, ordersPerSlot: null }).success,
+    ).toBe(true);
+    expect(
+      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 60, ordersPerSlot: 10 }).success,
+    ).toBe(true);
+    // 20 is not a valid slotMinutes length
+    expect(
+      BookingRulesSchema.safeParse({ daysAhead: 7, slotMinutes: 20, ordersPerSlot: 4 }).success,
+    ).toBe(false);
+  });
+
+  it('board order schema enforces at most 8 ticket lines', () => {
+    const validBoardOrder = {
+      id: 'ks-o-1',
+      token: 'demo-placed-transfer',
+      orderNo: 42,
+      type: 'pickup',
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: 'gcash',
+      scheduledAt: null,
+      placedAt: '2026-10-26T04:00:00.000Z',
+      customerName: 'Juan',
+      isFirstOrder: true,
+      isMember: false,
+      hasReward: false,
+      itemsSummary: '1 × Classic Smash',
+      total: 14900,
+      dueAt: '2026-10-26T04:20:00.000Z',
+      startBy: '2026-10-26T04:00:00.000Z',
+      pickupCode: 'ABCD',
+      seenAt: null,
+      lines: Array.from({ length: 8 }, (_, i) => ({
+        qty: 1,
+        name: `Item ${i + 1}`,
+        variantLabel: null,
+        optionLabels: [],
+        note: null,
+      })),
+      moreLines: 0,
+      note: null,
+      ownerNote: null,
+      deliveryArea: null,
+      lastStepAt: '2026-10-26T04:00:00.000Z',
+    };
+    expect(BoardOrderSchema.safeParse(validBoardOrder).success).toBe(true);
+
+    // 9 lines fails
+    const invalidBoardOrder = {
+      ...validBoardOrder,
+      lines: Array.from({ length: 9 }, (_, i) => ({
+        qty: 1,
+        name: `Item ${i + 1}`,
+        variantLabel: null,
+        optionLabels: [],
+        note: null,
+      })),
+    };
+    expect(BoardOrderSchema.safeParse(invalidBoardOrder).success).toBe(false);
   });
 
   it('every error code has words', () => {

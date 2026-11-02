@@ -1292,7 +1292,8 @@ export const words = {
         'You already changed this member’s stamps 3 times today. Try again tomorrow.',
       stamp_daily_cap: 'You already earned today’s stamp.',
       claim_not_pending: 'This claim was already handled. Refresh to see it.',
-      recall_expired: 'The recall window passed. You can still update or cancel the order if needed.',
+      recall_expired:
+        'The recall window passed. You can still update or cancel the order if needed.',
       reschedule_not_allowed:
         'This order cannot be rescheduled. Only placed or preparing pickup and delivery orders can be moved.',
       slot_full: 'That time slot is full. Pick another time.',
@@ -1879,4 +1880,3 @@ export const ordersWords = {
     override: 'Override limits',
   },
 } as const;
-

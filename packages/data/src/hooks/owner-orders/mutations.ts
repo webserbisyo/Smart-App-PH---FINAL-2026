@@ -14,8 +14,7 @@ export function useSetPause(slug: string) {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { mode: PauseMode }) =>
-      ownerOrders.setPause({ slug, mode: input.mode }),
+    mutationFn: (input: { mode: PauseMode }) => ownerOrders.setPause({ slug, mode: input.mode }),
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
     },

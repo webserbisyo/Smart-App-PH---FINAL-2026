@@ -173,4 +173,3 @@ export function ordersTrickle(on = true): MockScenario {
   }
   return setMockScenario({ ordersMode: on ? 'trickle' : 'default' });
 }
-

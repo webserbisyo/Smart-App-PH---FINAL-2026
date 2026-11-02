@@ -43,12 +43,7 @@ export {
   createApiOwnerOrdersAdapter,
   type ApiOwnerOrdersOptions,
 } from './adapters/api/owner-orders';
-export {
-  createApiStorefrontAdapter,
-  type ApiStorefrontOptions,
-} from './adapters/api/storefront';
+export { createApiStorefrontAdapter, type ApiStorefrontOptions } from './adapters/api/storefront';
 export { setMockOwnerSlug } from './mocks/store';
 export * from './hooks/owner-catalog/index';
 export * from './hooks/owner-orders/index';
-
-

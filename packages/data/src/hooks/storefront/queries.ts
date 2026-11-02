@@ -280,4 +280,3 @@ export function useSchedule(
     enabled: Boolean(slug && type),
   });
 }
-

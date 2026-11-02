@@ -140,11 +140,7 @@ export interface OwnerOrdersAdapter {
     scheduledAt: string;
     override?: boolean | undefined;
   }): Promise<OwnerOrder>;
-  saveOwnerNote(input: {
-    slug: string;
-    orderId: string;
-    note: string | null;
-  }): Promise<OwnerOrder>;
+  saveOwnerNote(input: { slug: string; orderId: string; note: string | null }): Promise<OwnerOrder>;
   cancelOrder(input: { slug: string; orderId: string; reason: string }): Promise<OwnerOrder>;
   saveDeliveryInfo(input: {
     slug: string;

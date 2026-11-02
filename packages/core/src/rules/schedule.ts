@@ -1,4 +1,10 @@
-import type { Schedule, ScheduleDay, ScheduleDayState, ScheduleNoticeItem, ScheduleSlot } from '../schemas/schedule.js';
+import type {
+  Schedule,
+  ScheduleDay,
+  ScheduleDayState,
+  ScheduleNoticeItem,
+  ScheduleSlot,
+} from '../schemas/schedule.js';
 import type { Storefront } from '../schemas/storefront.js';
 import { addDays, manilaDate, manilaToDate, weekdayOf } from './time.js';
 import { openState } from './hours.js';

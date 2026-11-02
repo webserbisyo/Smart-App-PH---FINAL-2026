@@ -31,7 +31,9 @@ export function dayLoads(
   slotsFullByDate: Record<string, number> = {},
 ): DayLoad[] {
   const itemsList: DayLoadItemInput[] = Array.isArray(items) ? items : Object.values(items);
-  const trackedItems = itemsList.filter((it) => it.dailyLimit !== null && it.dailyLimit !== undefined);
+  const trackedItems = itemsList.filter(
+    (it) => it.dailyLimit !== null && it.dailyLimit !== undefined,
+  );
 
   const result: DayLoad[] = [];
   let current = from;

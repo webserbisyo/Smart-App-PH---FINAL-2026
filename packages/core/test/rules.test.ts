@@ -26,11 +26,14 @@ import {
   boardColumn,
   canAdvance,
   canCancel,
+  canRecall,
+  canReschedule,
   nextActions,
   payCountdown,
   statusTone,
   timelineSteps,
 } from '../src/rules/order-rules.js';
+import { pickupCode } from '../src/rules/pickup-code.js';
 import {
   earnsStamp,
   periodStart,
@@ -384,16 +387,10 @@ describe('order rules', () => {
     ]);
     expect(statusTone('preparing').tone).toBe('warning');
     expect(
-      boardColumn(
-        { status: 'placed', startBy: mnl('2026-10-26 14:40') },
-        mnl('2026-10-26 12:00'),
-      ),
+      boardColumn({ status: 'placed', startBy: mnl('2026-10-26 14:40') }, mnl('2026-10-26 12:00')),
     ).toBe('scheduled');
     expect(
-      boardColumn(
-        { status: 'placed', startBy: mnl('2026-10-26 11:50') },
-        mnl('2026-10-26 12:00'),
-      ),
+      boardColumn({ status: 'placed', startBy: mnl('2026-10-26 11:50') }, mnl('2026-10-26 12:00')),
     ).toBe('new');
   });
 
@@ -512,5 +509,52 @@ describe('weekHours (decision R26)', () => {
     const lolaMonday = weekHours(lola.storefront, null).find((d) => d.day === 1);
     expect(lolaMonday?.lines).toEqual(['5 AM to 12 NN', '2 PM to 8 PM']);
     expect(weekHours(lola.storefront, null).some((d) => d.isToday)).toBe(false);
+  });
+});
+
+describe('canRecall, canReschedule, pickupCode (decision T50, T51, T52)', () => {
+  const mnl = (str: string) => `${str.replace(' ', 'T')}:00+08:00`;
+
+  it('canRecall allows undo within 10 seconds of lastStepAt', () => {
+    const stepAt = new Date(mnl('2026-10-26 12:00:00')).toISOString();
+    const order = { lastStepAt: stepAt };
+
+    // 9 seconds later -> true
+    const at9s = new Date(new Date(stepAt).getTime() + 9_000);
+    expect(canRecall(order, at9s)).toBe(true);
+
+    // 10 seconds later -> true
+    const at10s = new Date(new Date(stepAt).getTime() + 10_000);
+    expect(canRecall(order, at10s)).toBe(true);
+
+    // 11 seconds later -> false (recall expired)
+    const at11s = new Date(new Date(stepAt).getTime() + 11_000);
+    expect(canRecall(order, at11s)).toBe(false);
+  });
+
+  it('canReschedule only allows pickup and delivery in placed or preparing', () => {
+    expect(canReschedule({ type: 'pickup', status: 'placed' })).toBe(true);
+    expect(canReschedule({ type: 'delivery', status: 'preparing' })).toBe(true);
+
+    // Walk-in is refused
+    expect(canReschedule({ type: 'walk_in', status: 'placed' })).toBe(false);
+    expect(canReschedule({ type: 'walk_in', status: 'preparing' })).toBe(false);
+
+    // Later statuses are refused
+    expect(canReschedule({ type: 'pickup', status: 'ready' })).toBe(false);
+    expect(canReschedule({ type: 'pickup', status: 'out_for_delivery' })).toBe(false);
+    expect(canReschedule({ type: 'pickup', status: 'completed' })).toBe(false);
+    expect(canReschedule({ type: 'pickup', status: 'cancelled' })).toBe(false);
+  });
+
+  it('pickupCode is deterministic, 4 characters, and Crockford-safe', () => {
+    const code1 = pickupCode('demo-token-12345');
+    const code2 = pickupCode('demo-token-12345');
+    expect(code1).toBe(code2);
+    expect(code1).toHaveLength(4);
+    expect(code1).toBe(code1.toUpperCase());
+    for (const char of ['0', 'O', '1', 'I', 'L']) {
+      expect(code1.includes(char)).toBe(false);
+    }
   });
 });

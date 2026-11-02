@@ -79,7 +79,8 @@ export function orderTiming(order: OrderTimingInput, now: string | Date): OrderT
     phase = 'active';
   }
 
-  const minutesToStart = nowMs < startByMs ? Math.max(0, Math.round((startByMs - nowMs) / MS_PER_MINUTE)) : 0;
+  const minutesToStart =
+    nowMs < startByMs ? Math.max(0, Math.round((startByMs - nowMs) / MS_PER_MINUTE)) : 0;
   const lateMinutes = Math.max(0, Math.floor((nowMs - dueAtMs) / MS_PER_MINUTE));
 
   let ageTone: AgeTone = 'calm';

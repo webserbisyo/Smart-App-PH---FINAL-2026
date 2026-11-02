@@ -35,11 +35,10 @@ export function createApiOwnerOrdersAdapter({
       if ('date' in input && input.date) params.set('date', input.date);
       if (input.q) params.set('q', input.q);
       const query = params.toString() ? `?${params.toString()}` : '';
-      return fetchApi(
-        `${baseUrl}/owner/orders${query}`,
-        z.array(BoardOrderSchema),
-        { method: 'GET', headers },
-      );
+      return fetchApi(`${baseUrl}/owner/orders${query}`, z.array(BoardOrderSchema), {
+        method: 'GET',
+        headers,
+      });
     },
 
     async listScheduled(input) {

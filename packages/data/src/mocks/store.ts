@@ -682,13 +682,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       run('storefront', () => {
         const s = requireShop(slug);
         const bookings = computeBookings(s);
-        return scheduleDays(
-          s.shop.storefront,
-          lines,
-          s.shop.catalog.items,
-          bookings,
-          now(),
-        );
+        return scheduleDays(s.shop.storefront, lines, s.shop.catalog.items, bookings, now());
       }),
 
     quoteOrder: ({ slug, payload }) =>
@@ -1172,8 +1166,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const todayDate = manilaDate(now());
         const matches = s.orders.filter((o) => {
           const codeMatch =
-            o.receipt.pickupCode.toUpperCase() === q ||
-            String(o.receipt.orderNo) === code.trim();
+            o.receipt.pickupCode.toUpperCase() === q || String(o.receipt.orderNo) === code.trim();
           if (!codeMatch) return false;
           return !isFinal(o.receipt.status) || o.businessDate === todayDate;
         });
@@ -1316,9 +1309,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         order.receipt.events.pop();
         const prevEvent = order.receipt.events[order.receipt.events.length - 1]!;
         order.receipt.status = prevEvent.status;
-        const lastStatusMsgIdx = order.receipt.messages
-          .map((m) => m.kind)
-          .lastIndexOf('status');
+        const lastStatusMsgIdx = order.receipt.messages.map((m) => m.kind).lastIndexOf('status');
         if (lastStatusMsgIdx >= 0) {
           order.receipt.messages.splice(lastStatusMsgIdx, 1);
         }

@@ -18,7 +18,10 @@ export interface ApiStorefrontOptions {
 
 export function createApiStorefrontAdapter({
   baseUrl,
-}: ApiStorefrontOptions): Pick<StorefrontAdapter, 'getStorefront' | 'getSchedule' | 'quoteOrder' | 'placeOrder'> {
+}: ApiStorefrontOptions): Pick<
+  StorefrontAdapter,
+  'getStorefront' | 'getSchedule' | 'quoteOrder' | 'placeOrder'
+> {
   return {
     async getStorefront({ slug }) {
       return fetchApi(`${baseUrl}/s/${encodeURIComponent(slug)}`, PublicShopSchema.nullable(), {
@@ -53,18 +56,14 @@ export function createApiStorefrontAdapter({
         orderNo: z.number().int(),
         token: z.string(),
       });
-      return fetchApi(
-        `${baseUrl}/s/${encodeURIComponent(slug)}/orders`,
-        PlacedOrderSchema,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Idempotency-Key': clientKey,
-          },
-          body: JSON.stringify(payload),
+      return fetchApi(`${baseUrl}/s/${encodeURIComponent(slug)}/orders`, PlacedOrderSchema, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': clientKey,
         },
-      );
+        body: JSON.stringify(payload),
+      });
     },
   };
 }
