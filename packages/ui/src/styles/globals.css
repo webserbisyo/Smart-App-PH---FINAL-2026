@@ -701,6 +701,26 @@
   }
 }
 
+/* Kitchen view (O5): a new ticket's border flashes the brand colour once, under 400 ms. */
+@keyframes ticket-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--color-primary);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--color-primary);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@utility ticket-pulse {
+  animation: ticket-pulse var(--duration-slow) var(--ease-standard) 1;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
 /* Stamp press: lands big and tilted, settles (Rewards). */
 @keyframes press-stamp {
   0% {
@@ -999,5 +1019,37 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/* Printed kitchen ticket (O5): only the ticket prints, dark on light paper in any theme, edge to edge so a
+   58 or 80 mm roll fits. The ticket lives in a body-level [data-slot='print-ticket'] while printing. */
+@media print {
+  @page {
+    margin: 0;
+  }
+  body:has(> [data-slot='print-ticket']) > :not([data-slot='print-ticket']) {
+    display: none !important;
+  }
+  body:has(> [data-slot='print-ticket']) {
+    background: var(--paper);
+    min-height: 0;
+  }
+  /* Paper tokens stay light in the dark theme, so the ticket reads the same in any theme. */
+  [data-slot='print-ticket'],
+  [data-slot='print-ticket'] * {
+    color-scheme: light;
+    color: var(--paper-foreground) !important;
+    border-color: var(--paper-foreground) !important;
+  }
+  [data-slot='print-ticket'] [data-slot='thermal-receipt-card'] > div {
+    box-shadow: none;
+    padding-inline: 2mm;
+  }
+  /* Every line prints whole: wrap long names, add-ons and notes instead of cutting them. */
+  [data-slot='print-ticket'] [data-slot='thermal-receipt-card-items'] span {
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
   }
 }

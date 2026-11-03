@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   canAdvance,
   canCancel,
+  parseFindInput,
   canRecall,
   canReschedule,
   CustomerAddressSchema,
@@ -1170,11 +1171,15 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       run('orders', () => {
         const s = requireShop(slug);
         if (scenario().empty || scenario().ordersMode === 'empty') return [];
-        const q = code.trim().toUpperCase();
+        // The same reading as the dialog: "#012" is order 12, "k7 qp" is code K7QP, a token is a scanned QR.
+        const parsed = parseFindInput(code);
+        const token = code.trim();
         const todayDate = manilaDate(now());
         const matches = s.orders.filter((o) => {
-          const codeMatch =
-            o.receipt.pickupCode.toUpperCase() === q || String(o.receipt.orderNo) === code.trim();
+          const codeMatch = parsed
+            ? parsed.kind === 'typed' &&
+              (o.receipt.orderNo === parsed.orderNo || o.receipt.pickupCode === parsed.code)
+            : token.length >= 8 && o.receipt.token === token;
           if (!codeMatch) return false;
           return !isFinal(o.receipt.status) || o.businessDate === todayDate;
         });

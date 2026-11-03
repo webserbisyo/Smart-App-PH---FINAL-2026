@@ -75,6 +75,7 @@ import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
 import { OrderTicket } from '@/app/orders/order-ticket';
 import { useNow } from '@/app/orders/use-now';
+import { usePrintTicket } from '@/app/orders/print-ticket';
 import { useStepChange } from '@/app/orders/use-step-change';
 import { ChangeTimeDialog } from './change-time-dialog.js';
 
@@ -99,6 +100,7 @@ export function OrderDetailContent({
   className,
 }: OrderDetailContentProps) {
   const now = useNow(30_000);
+  const printer = usePrintTicket(slug);
   const markSeenMutation = useMarkSeen(slug);
   const reviewPaymentMutation = useReviewPayment(slug);
   const recordPaymentMutation = useRecordPayment(slug);
@@ -263,8 +265,8 @@ export function OrderDetailContent({
               >
                 {ordersWords.detail.cancelOrder}
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <PrinterIcon className="mr-2 size-3.5 opacity-50" />
+              <DropdownMenuItem onClick={() => printer.print(order.id)}>
+                <PrinterIcon className="mr-2 size-3.5" />
                 <span>{ordersWords.detail.printTicket}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -808,6 +810,8 @@ export function OrderDetailContent({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {printer.node}
 
       {/* Change Time Dialog */}
       <ChangeTimeDialog

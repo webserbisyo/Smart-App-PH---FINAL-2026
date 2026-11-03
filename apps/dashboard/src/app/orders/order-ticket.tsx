@@ -25,12 +25,12 @@ import { Card } from '@smartapp/ui/components/card';
 import { IconTile } from '@smartapp/ui/components/reui/icon-tile';
 import { Status, StatusIndicator } from '@smartapp/ui/components/status';
 import { cn } from 'cn';
+import { KitchenTicket, type KitchenTicketExtras } from './kitchen-ticket.js';
+import { orderNoLabel } from './order-ticket-label.js';
 import { ORDER_TYPE_ICON } from './order-type-icons.js';
+import { PrintTicket } from './print-ticket.js';
 
-/** "#012": the order number as the owner and customer see it. */
-export function orderNoLabel(orderNo: number): string {
-  return `#${String(orderNo).padStart(3, '0')}`;
-}
+export { orderNoLabel };
 
 type PayVariant = 'success' | 'warning' | 'default';
 
@@ -63,6 +63,10 @@ export interface OrderTicketProps {
   actionSlot?: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  /** size="kitchen": line ticks, the big step button and the print icon (Kitchen view). */
+  kitchen?: KitchenTicketExtras | undefined;
+  /** size="print": the shop name and the receipt link for the QR. */
+  print?: { shopName: string; receiptUrl: string; onReady?: () => void } | undefined;
 }
 
 interface NormalizedLine {
@@ -90,7 +94,23 @@ function OrderTicketComponent({
   actionSlot,
   className,
   onClick,
+  kitchen,
+  print,
 }: OrderTicketProps) {
+  if (size === 'kitchen' && kitchen) {
+    return <KitchenTicket order={order} now={now} className={className} {...kitchen} />;
+  }
+  if (size === 'print' && print) {
+    return (
+      <PrintTicket
+        order={order}
+        now={now}
+        shopName={print.shopName}
+        receiptUrl={print.receiptUrl}
+        onReady={print.onReady}
+      />
+    );
+  }
   const TypeIcon = ORDER_TYPE_ICON[order.type];
   const timing = orderTiming(order, now);
 
@@ -307,6 +327,8 @@ function OrderTicketComponent({
 }
 
 export const OrderTicket = React.memo(OrderTicketComponent, (prev, next) => {
+  // Kitchen and print tickets carry callbacks and ticks: always render them fresh.
+  if (next.size === 'kitchen' || next.size === 'print') return false;
   return (
     prev.order.id === next.order.id &&
     prev.order.status === next.order.status &&

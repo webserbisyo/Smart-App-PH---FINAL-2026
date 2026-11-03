@@ -27,7 +27,8 @@ export interface BoardColumnProps {
   className?: string;
 }
 
-function getButtonLabels(order: BoardOrder, kind: ShopKind) {
+/** The step button's words for an order (none when it can't move, like an unpaid transfer). */
+export function getButtonLabels(order: BoardOrder, kind: ShopKind) {
   const next = nextActions(order)[0];
   if (!next) return null;
 

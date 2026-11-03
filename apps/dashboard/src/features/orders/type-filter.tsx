@@ -14,9 +14,12 @@ export interface TypeFilterCounts {
 export interface TypeFilterProps {
   counts: TypeFilterCounts;
   className?: string;
+  /** The page the chips filter (the board, or Kitchen view with 56 px chips). */
+  to?: '/orders' | '/orders/kitchen';
 }
 
-export function TypeFilter({ counts, className }: TypeFilterProps) {
+export function TypeFilter({ counts, className, to = '/orders' }: TypeFilterProps) {
+  const isKitchen = to === '/orders/kitchen';
   const search = useOrdersSearch();
   const currentType = search.type ?? 'all';
   const navigate = useNavigate();
@@ -24,7 +27,7 @@ export function TypeFilter({ counts, className }: TypeFilterProps) {
   const handleSelect = (val: string[]) => {
     const next = ORDER_TYPES.find((t) => t === val[0]) ?? 'all';
     void navigate({
-      to: '/orders',
+      to,
       search: withSearch(search, { type: next === 'all' ? undefined : next }),
       replace: true,
     });
@@ -52,11 +55,17 @@ export function TypeFilter({ counts, className }: TypeFilterProps) {
             value={type}
             className={cn(
               'h-9 gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-transparent hover:text-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs sm:px-3 md:h-8',
+              isKitchen && 'h-14 px-2.5 text-sm md:h-14 md:px-4 md:text-base',
               counts[type] === 0 && currentType !== type && 'opacity-50',
             )}
           >
             <span>{labels[type]}</span>
-            <span className="text-xs font-medium text-muted-foreground tabular-nums">
+            <span
+              className={cn(
+                'text-xs font-medium text-muted-foreground tabular-nums',
+                isKitchen && 'text-sm md:text-base',
+              )}
+            >
               {counts[type]}
             </span>
           </ToggleGroupItem>

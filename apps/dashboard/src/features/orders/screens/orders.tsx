@@ -1,8 +1,16 @@
 import * as React from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { ReceiptTextIcon, Share2Icon, Volume2Icon, WifiOffIcon } from 'lucide-react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import {
+  ChefHatIcon,
+  PackageIcon,
+  ReceiptTextIcon,
+  SearchIcon,
+  Share2Icon,
+  Volume2Icon,
+  WifiOffIcon,
+} from 'lucide-react';
 import type { BoardOrder } from '@smartapp/core';
-import { errorWords, ordersWords, words } from '@smartapp/core';
+import { errorWords, ordersWords, vocab, words } from '@smartapp/core';
 import { errorCodeOf, useOpenOrders } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
@@ -17,6 +25,7 @@ import { useOnlineStatus } from '@/app/use-online-status';
 import { useShop } from '@/app/shop';
 import { storefrontUrl } from '@/app/use-nav-items';
 import { BusyMenu } from '../busy-menu.js';
+import { FindOrderDialog } from '../find-order-dialog.js';
 import { NowBoard } from '../now-board.js';
 import { OrdersDevScenarioPanel } from '../orders-dev-scenario-panel.js';
 import { useOrdersSearch, useOrdersTabs } from '../tabs.js';
@@ -50,6 +59,9 @@ export function OrdersScreen() {
   }, [openCount, shop.name]);
 
   const tabs = useOrdersTabs();
+  const [findOpen, setFindOpen] = React.useState(false);
+  const KitchenIcon = shop.kind === 'retail' ? PackageIcon : ChefHatIcon;
+  const kitchenLabel = vocab(shop.kind).kitchenView;
 
   const handleShare = async () => {
     const url = storefrontUrl(shop.slug);
@@ -80,8 +92,33 @@ export function OrdersScreen() {
       <PageHeader
         title={words.screens.orders.title}
         tabs={tabs}
-        actions={<BusyMenu slug={shop.slug} />}
+        actions={
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFindOpen(true)}
+              aria-label={ordersWords.find.button}
+              className="h-11 gap-1.5 px-3 md:h-9"
+            >
+              <SearchIcon className="size-4" aria-hidden="true" />
+              <span className="sr-only md:not-sr-only">{ordersWords.find.button}</span>
+            </Button>
+            <Button
+              variant="outline"
+              aria-label={kitchenLabel}
+              className="h-11 gap-1.5 px-3 md:h-9"
+              nativeButton={false}
+              render={<Link to="/orders/kitchen" search={{ type: search.type }} />}
+            >
+              <KitchenIcon className="size-4" aria-hidden="true" />
+              <span className="sr-only md:not-sr-only">{kitchenLabel}</span>
+            </Button>
+            <BusyMenu slug={shop.slug} />
+          </div>
+        }
       />
+      <FindOrderDialog open={findOpen} onOpenChange={setFindOpen} slug={shop.slug} />
 
       <main className="flex-1 space-y-4 px-4 py-4 md:px-6">
         {/* Offline Notice */}
@@ -107,7 +144,7 @@ export function OrdersScreen() {
               </Button>
             }
           >
-            <span>Turn on sound to hear a chime whenever a new order arrives.</span>
+            <span>{ordersWords.states.soundHint}</span>
           </Notice>
         )}
 

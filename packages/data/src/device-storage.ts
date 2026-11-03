@@ -11,6 +11,7 @@ import {
   ShopKindEnum,
   type BasketLine,
   type CheckoutDraft,
+  type KitchenChecks,
   type LastAddress,
   type OrderType,
 } from '@smartapp/core';
@@ -105,6 +106,10 @@ export interface DeviceStorage {
   proofPreviews: DeviceEntry<ProofPreview[]>;
   // The member's picture, picked or cropped on this phone (demo until the members area has a database).
   customerAvatar: DeviceEntry<CustomerAvatar>;
+  // Kitchen view (O5, owner's device): the cook's line ticks per open order, never sent to the server.
+  kitchenChecks: DeviceEntry<KitchenChecks>;
+  // Kitchen view screen: dark by default, light when the owner switched it on this device.
+  kitchenTheme: DeviceEntry<KitchenTheme>;
   subscribe(listener: () => void): () => void;
   /** Bumps on every change; a cheap snapshot for useSyncExternalStore. */
   version(): number;
@@ -127,6 +132,14 @@ export const ProofPreviewSchema = z.object({
   savedAt: IsoDateTimeSchema,
 });
 export type ProofPreview = z.infer<typeof ProofPreviewSchema>;
+
+export const KitchenChecksSchema = z.record(
+  z.string().max(80),
+  z.array(z.number().int().min(0).max(200)).max(200),
+);
+export const KITCHEN_THEMES = ['dark', 'light'] as const;
+export const KitchenThemeEnum = z.enum(KITCHEN_THEMES);
+export type KitchenTheme = z.infer<typeof KitchenThemeEnum>;
 
 export const GuestOrderTokenSchema = z.object({ token: z.string(), addedAt: IsoDateTimeSchema });
 export type GuestOrderToken = z.infer<typeof GuestOrderTokenSchema>;
@@ -227,6 +240,8 @@ export function createDeviceStorage(backend: Backend = pickBackend()): DeviceSto
     mockState: entry('mockState', 1, z.unknown()),
     customerAvatar: entry('customerAvatar', 1, CustomerAvatarSchema),
     proofPreviews: entry('proofPreviews', 1, z.array(ProofPreviewSchema).max(PROOF_PREVIEWS_MAX)),
+    kitchenChecks: entry('kitchenChecks', 1, KitchenChecksSchema),
+    kitchenTheme: entry('kitchenTheme', 1, KitchenThemeEnum),
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

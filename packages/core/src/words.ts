@@ -27,6 +27,8 @@ export interface ShopVocab {
   // The first icons the category form offers, and the emoji sections it opens on.
   iconSuggestions: readonly IconKey[];
   emojiCategories: readonly string[];
+  // The full-screen order wall for the grill or the packing table (O5).
+  kitchenView: string;
 }
 
 const FOOD_VOCAB: ShopVocab = {
@@ -59,6 +61,7 @@ const FOOD_VOCAB: ShopVocab = {
     'bestseller',
   ],
   emojiCategories: ['recent', 'food', 'nature', 'objects', 'symbols', 'activities'],
+  kitchenView: 'Kitchen view',
 };
 
 const RETAIL_VOCAB: ShopVocab = {
@@ -91,6 +94,7 @@ const RETAIL_VOCAB: ShopVocab = {
     'bestseller',
   ],
   emojiCategories: ['recent', 'objects', 'people', 'symbols', 'nature', 'activities'],
+  kitchenView: 'Packing view',
 };
 
 // The variants a new shop starts with (decision T46); owners can rename, edit or delete them.
@@ -2066,6 +2070,43 @@ export const ordersWords = {
     customerSection: 'Customer',
     viewProof: 'View proof',
   },
+  kitchen: {
+    exit: 'Exit',
+    lightOn: 'Light screen',
+    empty: 'No orders to make right now. New orders show here.',
+    emptyRetail: 'No orders to pack right now. New orders show here.',
+    readyRow: 'Ready:',
+    wakeLockRefused: 'Keep this screen on in your phone’s settings.',
+    dismiss: 'OK',
+    printAria: (orderNo: string) => `Print ticket ${orderNo}`,
+    lineCheckAria: (name: string, done: boolean) => (done ? `${name}, done` : `${name}, not done`),
+    offlineReason: 'You’re offline. Buttons work again when you’re back.',
+    loadingMore: 'Loading every line…',
+  },
+  print: {
+    due: (time: string) => `Due ${time}`,
+    total: 'Total',
+    subtotal: 'Subtotal',
+    discount: 'Discount',
+    code: 'Pickup code',
+    footer: 'KITCHEN TICKET · NOT A RECEIPT',
+    payment: (method: string, status: string) => `${method} · ${status}`,
+  },
+  find: {
+    button: 'Find order',
+    title: 'Find order',
+    desc: 'Type the 4-character code under the QR on the customer’s receipt, or the order number.',
+    label: 'Pickup code or order number',
+    placeholder: 'K7QP or 12',
+    search: 'Find',
+    scan: 'Scan QR',
+    scanning: 'Point the camera at the QR on the receipt.',
+    stopScan: 'Stop scanning',
+    cameraBlocked: 'Camera is blocked. Allow it in your browser settings, or type the code.',
+    none: 'No order with that code today. Check the code on the customer’s receipt.',
+    notFound: 'Not found. This QR is not from your shop.',
+    many: (count: number) => `${count} orders match. Pick one.`,
+  },
   states: {
     emptyBoard: 'No orders yet. New orders show here as soon as customers place them.',
     emptyScheduled: 'No scheduled orders.',
@@ -2078,6 +2119,7 @@ export const ordersWords = {
     errorDetail: 'Couldn’t open this order.',
     tryAgain: 'Try again',
     soundNotice: 'Turn on order sound',
+    soundHint: 'Turn on sound to hear a chime whenever a new order arrives.',
     soundTurnedOn: 'Order sound on',
     offlineNotice: 'You’re offline. Orders will refresh when you’re back.',
     offlineDisabled: 'Disabled while offline',

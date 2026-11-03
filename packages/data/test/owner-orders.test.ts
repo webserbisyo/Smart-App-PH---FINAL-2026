@@ -123,6 +123,27 @@ describe('ownerOrders mock adapter', () => {
       code: 'NONEXISTENT999',
     });
     expect(missing).toEqual([]);
+
+    // O5: spaces, # and zeros don't matter; a scanned receipt token finds the order
+    const spaced = await store.ownerOrders.findOrder({
+      slug: 'kanto-smash',
+      code: ` ${target.pickupCode.slice(0, 2).toLowerCase()} ${target.pickupCode.slice(2)} `,
+    });
+    expect(spaced.map((o) => o.id)).toContain(target.id);
+    const padded = await store.ownerOrders.findOrder({
+      slug: 'kanto-smash',
+      code: `#${String(target.orderNo).padStart(3, '0')}`,
+    });
+    expect(padded.map((o) => o.id)).toContain(target.id);
+    const byToken = await store.ownerOrders.findOrder({ slug: 'kanto-smash', code: target.token });
+    expect(byToken.map((o) => o.id)).toEqual([target.id]);
+
+    // Another shop's token is not found in this shop (rule 12)
+    const otherShop = await store.ownerOrders.findOrder({
+      slug: 'tala-apparel',
+      code: target.token,
+    });
+    expect(otherShop).toEqual([]);
   });
 
   it('markSeen sets seenAt timestamp on an order', async () => {
