@@ -1,13 +1,6 @@
 import * as React from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import {
-  CalendarIcon,
-  HistoryIcon,
-  ReceiptTextIcon,
-  Share2Icon,
-  Volume2Icon,
-  WifiOffIcon,
-} from 'lucide-react';
+import { ReceiptTextIcon, Share2Icon, Volume2Icon, WifiOffIcon } from 'lucide-react';
 import type { BoardOrder } from '@smartapp/core';
 import { errorWords, ordersWords, words } from '@smartapp/core';
 import { errorCodeOf, useOpenOrders } from '@smartapp/data';

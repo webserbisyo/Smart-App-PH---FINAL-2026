@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { BoardOrder, DayLoad } from '@smartapp/core';
-import { dayLoads, manilaDate, statusTone } from '@smartapp/core';
+import type { BoardOrder } from '@smartapp/core';
+import { dayLoads, statusTone } from '@smartapp/core';
 
 function mockScheduledOrder(patch: Partial<BoardOrder> = {}): BoardOrder {
   const baseDue = '2026-11-08T07:00:00.000Z'; // Manila 3:00 PM Sat 8 Nov

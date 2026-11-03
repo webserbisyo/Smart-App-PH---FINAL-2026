@@ -1,11 +1,13 @@
 import * as React from 'react';
 import type { BoardOrder, DayLoad } from '@smartapp/core';
 import { formatManila, manilaDate, ordersWords } from '@smartapp/core';
+import { BanIcon } from 'lucide-react';
 import { Calendar, CalendarDayButton } from '@smartapp/ui/components/calendar';
 import { Status, StatusIndicator } from '@smartapp/ui/components/status';
 import { OrderTicket } from '@/app/orders/order-ticket';
 import { cn } from 'cn';
-import type { DayButton } from 'react-day-picker';
+
+type CalendarDayButtonProps = React.ComponentProps<typeof CalendarDayButton>;
 
 export interface DayAgendaProps {
   orders: BoardOrder[];
@@ -87,7 +89,7 @@ export function DayAgenda({
 
   // Custom DayButton wrapper that shows dots and counts under date number
   const CustomDayButton = React.useCallback(
-    (buttonProps: React.ComponentProps<typeof DayButton>) => {
+    (buttonProps: CalendarDayButtonProps) => {
       const dayKey = manilaDate(buttonProps.day.date);
       const meta = dateMetaMap.get(dayKey);
 
@@ -97,8 +99,8 @@ export function DayAgenda({
           {meta && meta.count > 0 && (
             <span
               className={cn(
-                'flex items-center gap-0.5 pt-0.5 text-[9px] leading-none font-bold',
-                meta.isFull ? 'font-black text-destructive' : 'text-primary',
+                'flex items-center gap-0.5 leading-none font-bold',
+                meta.isFull ? 'text-destructive' : 'text-primary',
               )}
             >
               <span
@@ -161,8 +163,9 @@ export function DayAgenda({
           </div>
 
           {currentDayMeta?.isFull && (
-            <Status variant="destructive">
+            <Status variant="error">
               <StatusIndicator />
+              <BanIcon className="size-3" aria-hidden="true" />
               <span>{ordersWords.schedule.full}</span>
             </Status>
           )}
@@ -172,10 +175,7 @@ export function DayAgenda({
         {dayOrders.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border py-12 text-center">
             <p className="text-xs text-muted-foreground">
-              {ordersWords.schedule.emptyRange(
-                formatManila(selectedDate, 'date'),
-                formatManila(selectedDate, 'date'),
-              )}
+              {ordersWords.schedule.emptyDay(formatManila(selectedDate, 'date'))}
             </p>
           </div>
         ) : (

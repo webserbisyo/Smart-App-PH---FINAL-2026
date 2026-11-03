@@ -1122,8 +1122,10 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             : s.orders.filter((o) => o.businessDate === input.date);
         if (input.q) {
           const query = input.q.trim().toLowerCase();
+          // "#012" and "012" find order 12, the way the owner reads the number.
+          const numberQuery = query.replace(/^#?0*/, '');
           list = list.filter((o) => {
-            const matchesNo = String(o.receipt.orderNo).includes(query);
+            const matchesNo = numberQuery !== '' && String(o.receipt.orderNo).includes(numberQuery);
             const matchesName = o.receipt.customerName.toLowerCase().includes(query);
             const matchesPhone = o.customerPhone.toLowerCase().includes(query);
             const matchesCode = o.receipt.pickupCode.toLowerCase().includes(query);
@@ -1142,7 +1144,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const scheduled = s.orders
           .filter(
             (o) =>
-              !isFinal(o.receipt.status) &&
+              // Open and done orders (the calendar's Show done); cancelled and expired never show.
+              o.receipt.status !== 'cancelled' &&
+              o.receipt.status !== 'expired' &&
               o.receipt.scheduledAt !== null &&
               manilaDate(o.receipt.dueAt) >= from &&
               manilaDate(o.receipt.dueAt) <= to,

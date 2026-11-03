@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   BookingRulesSchema,
+  SLOT_LENGTHS,
   errorWords,
   ordersWords,
   type BookingRules,
@@ -26,6 +27,9 @@ import { notify } from '@smartapp/ui/compositions/notify';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 
+const FIELD_KEYS = ['daysAhead', 'slotMinutes', 'ordersPerSlot', 'prepMinutes'] as const;
+type FieldKey = (typeof FIELD_KEYS)[number];
+
 export interface BookingRulesSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -45,7 +49,7 @@ export function BookingRulesSheet({ open, onOpenChange, slug }: BookingRulesShee
     >
       {open &&
         (isLoading || !rules ? (
-          <div className="space-y-6 p-4">
+          <div className="space-y-6">
             <Skeleton className="h-14 w-full rounded-lg" />
             <Skeleton className="h-14 w-full rounded-lg" />
             <Skeleton className="h-14 w-full rounded-lg" />
@@ -87,7 +91,7 @@ function BookingRulesForm({
     initialRules.takeOrdersWhileClosed,
   );
 
-  const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = React.useState<Partial<Record<FieldKey, string>>>({});
 
   const handleSave = async () => {
     if (!isOnline) return;
@@ -102,12 +106,11 @@ function BookingRulesForm({
 
     const parsed = BookingRulesSchema.safeParse(payload);
     if (!parsed.success) {
-      const errMap: Record<string, string> = {};
+      // Field errors are worded by field (words.ts), never from the schema's message text.
+      const errMap: Partial<Record<FieldKey, string>> = {};
       for (const issue of parsed.error.issues) {
-        const path = issue.path[0];
-        if (typeof path === 'string') {
-          errMap[path] = issue.message;
-        }
+        const key = FIELD_KEYS.find((k) => k === issue.path[0]);
+        if (key) errMap[key] = ordersWords.bookingRules.fieldError[key];
       }
       setFieldErrors(errMap);
       return;
@@ -115,15 +118,13 @@ function BookingRulesForm({
 
     setFieldErrors({});
 
-    await saveAction.run(async () => {
-      try {
-        await saveMutation.mutateAsync({ rules: parsed.data });
-        notify({ title: ordersWords.bookingRules.saved, tone: 'success' });
-        onClose();
-      } catch (err) {
-        notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
-      }
-    });
+    try {
+      await saveAction.run(() => saveMutation.mutateAsync({ rules: parsed.data }));
+      notify({ title: ordersWords.bookingRules.saved, tone: 'success' });
+      onClose();
+    } catch (err: unknown) {
+      notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
+    }
   };
 
   return (
@@ -132,7 +133,7 @@ function BookingRulesForm({
         e.preventDefault();
         void handleSave();
       }}
-      className="space-y-6 p-4"
+      className="space-y-6"
     >
       {/* 1. Days Ahead */}
       <div className="space-y-1.5">
@@ -172,13 +173,12 @@ function BookingRulesForm({
         </label>
         <p className="text-xs text-muted-foreground">{ordersWords.bookingRules.slotMinutesHint}</p>
         <ToggleGroup
-          type="single"
-          value={String(slotMinutes)}
+          value={[String(slotMinutes)]}
           onValueChange={(val) => {
-            if (val === '15' || val === '30' || val === '60') {
-              setSlotMinutes(Number(val) as SlotLength);
-            }
+            const next = SLOT_LENGTHS.find((len) => String(len) === val[0]);
+            if (next) setSlotMinutes(next);
           }}
+          aria-label={ordersWords.bookingRules.slotMinutesLabel}
           className="justify-start pt-1"
         >
           <ToggleGroupItem value="15" className="h-9 px-4 text-xs font-semibold">
@@ -204,12 +204,14 @@ function BookingRulesForm({
           </label>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
-              {hasSlotLimit ? 'Limit on' : ordersWords.bookingRules.ordersPerSlotUnlimited}
+              {hasSlotLimit
+                ? ordersWords.bookingRules.limitOn
+                : ordersWords.bookingRules.ordersPerSlotUnlimited}
             </span>
             <Switch
               checked={hasSlotLimit}
               onCheckedChange={(checked) => setHasSlotLimit(checked)}
-              aria-label="Toggle orders per slot limit"
+              aria-label={ordersWords.bookingRules.ordersPerSlotSwitch}
             />
           </div>
         </div>
@@ -289,20 +291,22 @@ function BookingRulesForm({
         />
       </div>
 
-      <ResponsiveDialogFooter className="pt-2">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <AsyncButton
-          type="submit"
-          variant="default"
-          status={saveAction.status}
-          busyLabel={ordersWords.bookingRules.saving}
-          doneLabel={ordersWords.bookingRules.saved}
-          disabled={!isOnline}
-        >
-          {ordersWords.bookingRules.save}
-        </AsyncButton>
+      <ResponsiveDialogFooter>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            {ordersWords.bookingRules.cancel}
+          </Button>
+          <AsyncButton
+            type="submit"
+            variant="default"
+            status={saveAction.status}
+            busyLabel={ordersWords.bookingRules.saving}
+            doneLabel={ordersWords.bookingRules.saved}
+            disabled={!isOnline}
+          >
+            {ordersWords.bookingRules.save}
+          </AsyncButton>
+        </div>
       </ResponsiveDialogFooter>
     </form>
   );

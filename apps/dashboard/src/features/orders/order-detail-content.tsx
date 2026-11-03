@@ -109,11 +109,16 @@ export function OrderDetailContent({
   const { advance } = useStepChange({ slug, kind });
 
   // Mark seen on initial render
+  // Mark seen once per order. The mutation result changes every render, so depend on the
+  // stable `mutate` and remember which order was sent (it looped on every render before).
+  const markSeen = markSeenMutation.mutate;
+  const seenSentFor = React.useRef<string | null>(null);
   React.useEffect(() => {
-    if (order.seenAt === null) {
-      markSeenMutation.mutate({ orderId: order.id });
+    if (order.seenAt === null && seenSentFor.current !== order.id) {
+      seenSentFor.current = order.id;
+      markSeen({ orderId: order.id });
     }
-  }, [order.id, order.seenAt, markSeenMutation]);
+  }, [order.id, order.seenAt, markSeen]);
 
   // Proof photo zoom dialog
   const [zoomProofPath, setZoomProofPath] = React.useState<string | null>(null);
@@ -809,15 +814,7 @@ export function OrderDetailContent({
         open={isChangeTimeOpen}
         onOpenChange={setIsChangeTimeOpen}
         slug={slug}
-        order={{
-          id: order.id,
-          orderNo: order.orderNo,
-          type: order.type,
-          status: order.status,
-          dueAt: order.dueAt,
-          scheduledAt: order.scheduledAt,
-          lines: order.lines,
-        }}
+        orderId={order.id}
       />
     </div>
   );

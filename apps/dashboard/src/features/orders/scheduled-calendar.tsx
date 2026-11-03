@@ -1,8 +1,9 @@
 import * as React from 'react';
 import type { BoardOrder, DayLoad } from '@smartapp/core';
-import { formatClock, formatManila, manilaDate, ordersWords, statusTone } from '@smartapp/core';
+import { BanIcon } from 'lucide-react';
+import { canReschedule, formatManila, manilaDate, ordersWords, statusTone } from '@smartapp/core';
+import { Progress } from '@smartapp/ui/components/progress';
 import { EventCalendar } from '@smartapp/ui/components/reui/event-calendar/event-calendar';
-import { EventCalendarNav } from '@smartapp/ui/components/reui/event-calendar/event-calendar-nav';
 import { EventCalendarContent } from '@smartapp/ui/components/reui/event-calendar/event-calendar-content';
 import type {
   CalendarEvent,
@@ -11,6 +12,7 @@ import type {
 } from '@smartapp/ui/components/reui/event-calendar/event-calendar-types';
 import { useMediaQuery } from '@/app/use-media-query';
 import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
+import { orderNoLabel } from '@/app/orders/order-ticket';
 import { cn } from 'cn';
 
 export interface ScheduledCalendarProps {
@@ -45,10 +47,7 @@ export function ScheduledCalendar({
 
   // Build DayLoad map by Manila date
   const dayLoadMap = React.useMemo(() => {
-    const map = new Map<
-      string,
-      { orders: number; isFull: boolean; progress: number | null; summaryText: string }
-    >();
+    const map = new Map<string, { orders: number; isFull: boolean; progress: number | null }>();
 
     for (const d of days) {
       let isFull = false;
@@ -63,14 +62,10 @@ export function ScheduledCalendar({
         }
       }
 
-      const progress = totalLimit > 0 ? totalCount / totalLimit : null;
+      const progress =
+        totalLimit > 0 ? Math.min(100, Math.round((totalCount / totalLimit) * 100)) : null;
 
-      map.set(d.date, {
-        orders: d.orders,
-        isFull,
-        progress,
-        summaryText: `${d.orders} orders`,
-      });
+      map.set(d.date, { orders: d.orders, isFull, progress });
     }
 
     return map;
@@ -103,11 +98,11 @@ export function ScheduledCalendar({
                 ? 'var(--success)'
                 : 'var(--primary)';
 
-      const TypeIcon = ORDER_TYPE_ICON[order.type];
-
       list.push({
         id: order.id,
-        title: `#${String(order.orderNo).padStart(3, '0')} · ${order.customerName}`,
+        title: `${orderNoLabel(order.orderNo)} · ${order.customerName}`,
+        // Only orders that can still change time can be dragged (T52).
+        draggable: canReschedule(order),
         start: due,
         end,
         color: colorVar,
@@ -158,17 +153,15 @@ export function ScheduledCalendar({
           if (order) onSelectOrder(order);
         }}
         onEventUpdate={handleEventUpdate}
-        renderEvent={({ event, occurrence }) => {
-          const order = event.data?.order;
-          if (!order) return <span>{event.title}</span>;
+        renderEvent={({ occurrence }) => {
+          const order = occurrence.event.data?.order;
+          if (!order) return <span>{occurrence.event.title}</span>;
           const TypeIcon = ORDER_TYPE_ICON[order.type];
 
           return (
             <div className="flex w-full items-center gap-1 overflow-hidden px-1 py-0.5 text-xs leading-tight font-semibold">
               <TypeIcon className="size-3 shrink-0" aria-hidden="true" />
-              <span className="shrink-0 tabular-nums">
-                #{String(order.orderNo).padStart(3, '0')}
-              </span>
+              <span className="shrink-0 tabular-nums">{orderNoLabel(order.orderNo)}</span>
               <span className="truncate font-normal">{order.customerName}</span>
             </div>
           );
@@ -182,26 +175,18 @@ export function ScheduledCalendar({
               <div>{defaultContent}</div>
               {meta && meta.orders > 0 && (
                 <div className="mt-auto px-1.5 pb-1">
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="font-medium text-muted-foreground">
-                      {meta.orders} {meta.orders === 1 ? 'ord' : 'ords'}
+                  <div className="flex items-center justify-between gap-1 text-xs">
+                    <span className="truncate font-medium text-muted-foreground">
+                      {ordersWords.schedule.dayLoadCount(meta.orders)}
                     </span>
-                    {meta.isFull && (
-                      <span className="font-bold tracking-wider text-destructive uppercase">
-                        {ordersWords.schedule.full}
-                      </span>
-                    )}
+                    {meta.isFull && <FullMark />}
                   </div>
                   {meta.progress !== null && (
-                    <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className={cn(
-                          'h-full transition-all',
-                          meta.isFull ? 'bg-destructive' : 'bg-primary',
-                        )}
-                        style={{ width: `${Math.min(100, Math.round(meta.progress * 100))}%` }}
-                      />
-                    </div>
+                    <Progress
+                      value={meta.progress}
+                      aria-label={ordersWords.schedule.dayLoadCount(meta.orders)}
+                      className="mt-0.5"
+                    />
                   )}
                 </div>
               )}
@@ -212,11 +197,11 @@ export function ScheduledCalendar({
           const dayKey = manilaDate(day);
           const meta = dayLoadMap.get(dayKey);
           const dayName = formatManila(day, 'day');
-          const dayDate = day.getDate();
+          const dayDate = Number(manilaDate(day).slice(8));
 
           return (
             <div className="flex flex-col items-center justify-center py-1">
-              <span className="text-[11px] font-medium text-muted-foreground">{dayName}</span>
+              <span className="text-xs font-medium text-muted-foreground">{dayName}</span>
               <span
                 className={cn(
                   'flex size-6 items-center justify-center rounded-full text-xs font-bold',
@@ -226,10 +211,17 @@ export function ScheduledCalendar({
                 {dayDate}
               </span>
               {meta && meta.orders > 0 && (
-                <div className="mt-0.5 flex items-center gap-1 text-[10px]">
-                  <span className="text-muted-foreground">{meta.orders}</span>
-                  {meta.isFull && (
-                    <span className="font-bold text-destructive">{ordersWords.schedule.full}</span>
+                <div className="mt-0.5 flex w-full flex-col items-center gap-0.5 px-1 text-xs">
+                  <span className="text-muted-foreground">
+                    {ordersWords.schedule.dayLoadCount(meta.orders)}
+                  </span>
+                  {meta.isFull && <FullMark />}
+                  {meta.progress !== null && (
+                    <Progress
+                      value={meta.progress}
+                      aria-label={ordersWords.schedule.dayLoadCount(meta.orders)}
+                      className="w-full"
+                    />
                   )}
                 </div>
               )}
@@ -237,9 +229,18 @@ export function ScheduledCalendar({
           );
         }}
       >
-        <EventCalendarNav />
         <EventCalendarContent />
       </EventCalendar>
     </div>
+  );
+}
+
+/** A day at its limit: icon + word + colour. */
+function FullMark() {
+  return (
+    <span className="inline-flex items-center gap-0.5 font-bold text-destructive">
+      <BanIcon className="size-3" aria-hidden="true" />
+      {ordersWords.schedule.full}
+    </span>
   );
 }
