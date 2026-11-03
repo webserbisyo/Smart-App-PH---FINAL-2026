@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import type { BoardOrder, ShopKind } from '@smartapp/core';
-import { boardColumn, ordersWords } from '@smartapp/core';
+import { boardColumn, nextStatus, ordersWords } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Kanban,
@@ -12,12 +12,14 @@ import {
 import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
 import { OrderTicket } from '@/app/orders/order-ticket';
+import { useMediaQuery } from '@/app/use-media-query';
 import { useStepChange } from '@/app/orders/use-step-change';
-import type { OrdersSearch, OrderStepFilter } from '../tabs.js';
-import { BoardColumnView } from './board-column.js';
+
+import { BoardColumnView, BoardTicket } from './board-column.js';
 import { StartingSoonStrip } from './starting-soon-strip.js';
 import { StatusStrip } from './status-strip.js';
 import { TypeFilter } from './type-filter.js';
+import { useOrdersSearch, withSearch } from './tabs.js';
 
 export interface NowBoardProps {
   orders: BoardOrder[];
@@ -32,20 +34,15 @@ export interface NowBoardProps {
 
 const TWO_HOURS_MS = 2 * 60 * 60_000;
 
-function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = React.useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia(query).matches;
-  });
+// onMove mode: the board never applies a drag preview; the order's step change moves the card.
+function ignoreKanbanPreview(): void {}
 
-  React.useEffect(() => {
-    const m = window.matchMedia(query);
-    const handler = () => setMatches(m.matches);
-    m.addEventListener('change', handler);
-    return () => m.removeEventListener('change', handler);
-  }, [query]);
+const BOARD_KEYS = ['new', 'preparing', 'ready', 'out', 'done'] as const;
+type BoardKey = (typeof BOARD_KEYS)[number];
+type BoardColumns = Record<BoardKey, BoardOrder[]>;
 
-  return matches;
+function isBoardKey(value: string): value is BoardKey {
+  return BOARD_KEYS.some((key) => key === value);
 }
 
 export function NowBoard({
@@ -54,13 +51,13 @@ export function NowBoard({
   slug,
   kind = 'food',
   delivers = true,
-  selectedOrderId,
   onSelectOrder,
   className,
 }: NowBoardProps) {
-  const search = useSearch({ strict: false }) as OrdersSearch;
+  const search = useOrdersSearch();
   const currentType = search.type ?? 'all';
-  const currentStep = search.step ?? 'new';
+  const step = search.step ?? 'new';
+  const currentStep: BoardKey = isBoardKey(step) ? step : 'new';
   const navigate = useNavigate();
 
   const isDesktop = useMediaQuery('(min-width: 1024px)');
@@ -98,7 +95,7 @@ export function NowBoard({
 
   // Main board columns
   const columnData = React.useMemo(() => {
-    const cols: Record<string, BoardOrder[]> = {
+    const cols: BoardColumns = {
       new: [],
       preparing: [],
       ready: [],
@@ -108,17 +105,7 @@ export function NowBoard({
 
     for (const order of typeFilteredOrders) {
       const col = boardColumn(order, now);
-      if (col === 'new') {
-        cols.new.push(order);
-      } else if (col === 'preparing') {
-        cols.preparing.push(order);
-      } else if (col === 'ready') {
-        cols.ready.push(order);
-      } else if (col === 'out') {
-        cols.out.push(order);
-      } else if (col === 'done') {
-        cols.done.push(order);
-      }
+      if (col && isBoardKey(col)) cols[col].push(order);
     }
 
     return cols;
@@ -136,12 +123,8 @@ export function NowBoard({
     };
   }, [columnData]);
 
-  // Kanban state synchronization
-  const [kanbanColumns, setKanbanColumns] =
-    React.useState<Record<string, BoardOrder[]>>(columnData);
-  React.useEffect(() => {
-    setKanbanColumns(columnData);
-  }, [columnData]);
+  // In onMove mode the Kanban shows no live preview: a card only moves when the order's step changes.
+  const kanbanColumns = columnData;
 
   // Dropping rules
   const handleKanbanMove = React.useCallback(
@@ -153,57 +136,29 @@ export function NowBoard({
       const order = orders.find((o) => o.id === orderId);
       if (!order) return;
 
-      let validNext = false;
-      let targetStatus: BoardOrder['status'] = 'preparing';
-
-      if (activeContainer === 'new' && overContainer === 'preparing') {
-        validNext = true;
-        targetStatus = 'preparing';
-      } else if (activeContainer === 'preparing' && overContainer === 'ready') {
-        validNext = true;
-        targetStatus = 'ready';
-      } else if (activeContainer === 'ready') {
-        if (overContainer === 'out' && order.type === 'delivery') {
-          validNext = true;
-          targetStatus = 'out_for_delivery';
-        } else if (overContainer === 'done' && order.type !== 'delivery') {
-          validNext = true;
-          targetStatus = 'completed';
-        }
-      } else if (activeContainer === 'out' && overContainer === 'done') {
-        validNext = true;
-        targetStatus = 'completed';
-      }
-
-      if (validNext) {
-        void advance(order, targetStatus);
+      // Only the order's next step is a valid drop (steps move one at a time).
+      const next = nextStatus(order);
+      const target = next ? boardColumn({ status: next, startBy: order.startBy }, now) : null;
+      if (next && target === overContainer) {
+        void advance(order, next);
       } else {
-        notify({
-          title: ordersWords.recall.stepJumpError,
-          tone: 'error',
-        });
-        // Snap back by resetting kanban columns to current valid column data
-        setKanbanColumns({ ...columnData });
+        notify({ title: ordersWords.recall.stepJumpError, tone: 'error' });
       }
     },
-    [orders, columnData, advance],
+    [orders, now, advance],
   );
 
   const handleShowAllHistory = () => {
     void navigate({
-      search: (prev: Record<string, unknown>) => ({
-        ...prev,
-        view: 'history',
-      }),
+      to: '/orders',
+      search: withSearch(search, { view: 'history' }),
     });
   };
 
   const handleClearTypeFilter = () => {
     void navigate({
-      search: (prev: Record<string, unknown>) => ({
-        ...prev,
-        type: undefined,
-      }),
+      to: '/orders',
+      search: withSearch(search, { type: undefined }),
     });
   };
 
@@ -262,42 +217,23 @@ export function NowBoard({
           />
 
           <div className="space-y-3">
-            {columnData[currentStep as keyof typeof columnData]?.length === 0 ? (
+            {columnData[currentStep].length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-8 text-center text-xs text-muted-foreground">
-                No {currentStep} orders
+                {ordersWords.states.emptyStep}
               </div>
             ) : (
-              columnData[currentStep as keyof typeof columnData]?.map((order) => (
-                <div key={order.id} className="transition-all duration-200">
-                  <OrderTicket
+              (currentStep === 'done' ? columnData.done.slice(0, 10) : columnData[currentStep]).map(
+                (order) => (
+                  <BoardTicket
+                    key={order.id}
                     order={order}
-                    size="card"
                     now={now}
-                    onClick={() => onSelectOrder(order)}
-                    actionSlot={
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await advance(order);
-                        }}
-                        className="h-8.5 w-full text-xs font-semibold"
-                      >
-                        {order.status === 'placed'
-                          ? ordersWords.buttons.start(kind)
-                          : order.status === 'preparing'
-                            ? ordersWords.buttons.markReady
-                            : order.status === 'ready'
-                              ? order.type === 'delivery'
-                                ? ordersWords.buttons.sendOut
-                                : ordersWords.buttons.complete
-                              : ordersWords.buttons.complete}
-                      </Button>
-                    }
+                    kind={kind}
+                    onAdvance={advance}
+                    onSelectOrder={onSelectOrder}
                   />
-                </div>
-              ))
+                ),
+              )
             )}
 
             {currentStep === 'done' && columnData.done.length > 0 && (
@@ -378,13 +314,13 @@ export function NowBoard({
         /* Laptop & Desktop: ReUI Kanban drag and drop */
         <Kanban
           value={kanbanColumns}
-          onValueChange={setKanbanColumns}
+          onValueChange={ignoreKanbanPreview}
           getItemValue={(item) => item.id}
           onMove={handleKanbanMove}
           restoreOnCancel={true}
           className="overflow-x-auto pb-4"
         >
-          <KanbanBoard className="flex min-h-[480px] gap-4">
+          <KanbanBoard className="flex min-h-120 gap-4">
             <BoardColumnView
               columnId="new"
               title={ordersWords.columns.new}

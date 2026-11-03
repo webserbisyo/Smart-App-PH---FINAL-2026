@@ -1,9 +1,9 @@
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import type { ShopKind } from '@smartapp/core';
 import { ordersWords } from '@smartapp/core';
 import { Scroller } from '@smartapp/ui/components/scroller';
 import { cn } from 'cn';
-import type { OrderStepFilter, OrdersSearch } from '../tabs.js';
+import { useOrdersSearch, withSearch, type OrderStepFilter } from './tabs.js';
 
 export interface StepCounts {
   new: number;
@@ -26,7 +26,7 @@ export function StatusStrip({
   showOut = true,
   className,
 }: StatusStripProps) {
-  const search = useSearch({ strict: false }) as OrdersSearch;
+  const search = useOrdersSearch();
   const currentStep = search.step ?? 'new';
   const navigate = useNavigate();
 
@@ -39,12 +39,7 @@ export function StatusStrip({
   ];
 
   const handleSelect = (step: OrderStepFilter) => {
-    void navigate({
-      search: (prev: Record<string, unknown>) => ({
-        ...prev,
-        step,
-      }),
-    });
+    void navigate({ to: '/orders', search: withSearch(search, { step }), replace: true });
   };
 
   return (
@@ -73,7 +68,7 @@ export function StatusStrip({
                 <span>{step.label}</span>
                 <span
                   className={cn(
-                    'rounded-full px-1.5 py-0.25 text-[0.6875rem] font-bold tabular-nums',
+                    'rounded-full px-1.5 py-0.25 text-xs font-bold tabular-nums',
                     isActive
                       ? 'bg-primary-foreground/20 text-primary-foreground'
                       : 'bg-background/80 text-foreground',

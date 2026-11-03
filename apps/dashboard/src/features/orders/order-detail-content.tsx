@@ -10,15 +10,17 @@ import {
   TruckIcon,
   XIcon,
 } from 'lucide-react';
-import type { OrderStatus, OwnerOrder, PaymentMethod, ShopKind } from '@smartapp/core';
+import type { OwnerOrder, ShopKind } from '@smartapp/core';
 import {
   formatClock,
   formatManila,
   formatPeso,
   isPayLater,
   nextActions,
+  errorWords,
   ordersWords,
   timelineSteps,
+  words,
 } from '@smartapp/core';
 import {
   useCancelOrder,
@@ -27,6 +29,7 @@ import {
   useReviewPayment,
   useSaveDeliveryInfo,
   useSaveOwnerNote,
+  errorCodeOf,
 } from '@smartapp/data';
 import {
   AlertDialog,
@@ -72,11 +75,13 @@ import { OrderTicket } from '@/app/orders/order-ticket';
 import { useNow } from '@/app/orders/use-now';
 import { useStepChange } from '@/app/orders/use-step-change';
 
+const CANCEL_REASON_KEYS = ['sold_out', 'closing_early', 'customer_asked', 'other'] as const;
+type CancelReasonKey = (typeof CANCEL_REASON_KEYS)[number];
+
 export interface OrderDetailContentProps {
   order: OwnerOrder;
   slug: string;
   kind?: ShopKind;
-  isFullPage?: boolean;
   onBack?: () => void;
   onClose?: () => void;
   className?: string;
@@ -86,7 +91,6 @@ export function OrderDetailContent({
   order,
   slug,
   kind = 'food',
-  isFullPage = false,
   onBack,
   onClose,
   className,
@@ -123,9 +127,7 @@ export function OrderDetailContent({
 
   // Cancel dialog state
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
-  const [cancelReasonKey, setCancelReasonKey] = React.useState<
-    'sold_out' | 'closing_early' | 'customer_asked' | 'other'
-  >('sold_out');
+  const [cancelReasonKey, setCancelReasonKey] = React.useState<CancelReasonKey>('sold_out');
   const [cancelOtherText, setCancelOtherText] = React.useState('');
 
   const nextStepAction = useAsyncAction();
@@ -145,15 +147,15 @@ export function OrderDetailContent({
     try {
       await saveDeliveryMutation.mutateAsync({
         orderId: order.id,
-        riderName: riderName.trim() || undefined,
-        riderPhone: riderPhone.trim() || undefined,
-        provider: provider.trim() || undefined,
-        trackingUrl: trackingUrl.trim() || undefined,
+        ...(riderName.trim() ? { riderName: riderName.trim() } : {}),
+        ...(riderPhone.trim() ? { riderPhone: riderPhone.trim() } : {}),
+        ...(provider.trim() ? { provider: provider.trim() } : {}),
+        ...(trackingUrl.trim() ? { trackingUrl: trackingUrl.trim() } : {}),
       });
       setIsDeliverySheetOpen(false);
       notify({ title: ordersWords.detail.deliverySaved, tone: 'success' });
-    } catch {
-      notify({ title: 'Could not save delivery details', tone: 'error' });
+    } catch (err) {
+      notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
     }
   };
 
@@ -164,8 +166,8 @@ export function OrderDetailContent({
         note: ownerNote.trim() || null,
       });
       notify({ title: ordersWords.detail.ownerNoteSaved, tone: 'success' });
-    } catch {
-      notify({ title: 'Could not save owner note', tone: 'error' });
+    } catch (err) {
+      notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
     }
   };
 
@@ -184,8 +186,8 @@ export function OrderDetailContent({
       notify({ title: ordersWords.detail.orderCancelled, tone: 'info' });
       onBack?.();
       onClose?.();
-    } catch {
-      notify({ title: 'Could not cancel order', tone: 'error' });
+    } catch (err) {
+      notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
     }
   };
 
@@ -295,8 +297,8 @@ export function OrderDetailContent({
           </h3>
 
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground capitalize">
-              {order.paymentMethod.replace('_', ' ')}
+            <span className="text-muted-foreground">
+              {words.shop.paymentMethod[order.paymentMethod]}
             </span>
             <span className="font-bold text-foreground tabular-nums">
               {formatPeso(order.totals.total)}
@@ -310,9 +312,9 @@ export function OrderDetailContent({
                 <div key={proof.id} className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono text-xs text-muted-foreground">
-                      Ref: {proof.referenceNo}
+                      {ordersWords.detail.reference}: {proof.referenceNo}
                     </span>
-                    <CopyButton text={proof.referenceNo} className="h-7 text-xs" />
+                    <CopyButton value={proof.referenceNo} className="h-7 text-xs" />
                   </div>
 
                   {/* Mandatory line from fix 8 */}
@@ -341,7 +343,7 @@ export function OrderDetailContent({
                             ? 'Rejected'
                             : 'Pending review'}
                       </div>
-                      <div className="text-[0.6875rem]">{formatClock(proof.uploadedAt)}</div>
+                      <div className="text-xs">{formatClock(proof.uploadedAt)}</div>
                     </div>
                   </div>
 
@@ -402,7 +404,7 @@ export function OrderDetailContent({
                   recordCashAction.run(async () => {
                     await recordPaymentMutation.mutateAsync({
                       orderId: order.id,
-                      method: order.paymentMethod as PaymentMethod,
+                      method: order.paymentMethod,
                     });
                     notify({ title: ordersWords.detail.cashRecorded, tone: 'success' });
                   })
@@ -513,7 +515,7 @@ export function OrderDetailContent({
                         {stepLabel}
                       </TimelineTitle>
                       {eventMatch && (
-                        <TimelineDate className="text-[0.6875rem] text-muted-foreground tabular-nums">
+                        <TimelineDate className="text-xs text-muted-foreground tabular-nums">
                           {formatClock(eventMatch.at)}
                         </TimelineDate>
                       )}
@@ -545,9 +547,7 @@ export function OrderDetailContent({
                 >
                   <div className="mb-0.5 flex items-center justify-between font-semibold">
                     <span className="capitalize">{msg.kind}</span>
-                    <span className="text-[0.6875rem] font-normal tabular-nums">
-                      {formatClock(msg.at)}
-                    </span>
+                    <span className="text-xs font-normal tabular-nums">{formatClock(msg.at)}</span>
                   </div>
                   {msg.text && <p className="break-words text-foreground">{msg.text}</p>}
                 </div>
@@ -601,7 +601,7 @@ export function OrderDetailContent({
             <h3 className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               {ordersWords.detail.ownerNote}
             </h3>
-            <span className="text-[0.6875rem] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {ordersWords.detail.ownerNotePlaceholder}
             </span>
           </div>
@@ -749,10 +749,13 @@ export function OrderDetailContent({
           <div className="space-y-3 py-2">
             <RadioGroup
               value={cancelReasonKey}
-              onValueChange={(val) => setCancelReasonKey(val as typeof cancelReasonKey)}
+              onValueChange={(val) => {
+                const key = CANCEL_REASON_KEYS.find((k) => k === val);
+                if (key) setCancelReasonKey(key);
+              }}
               className="space-y-2"
             >
-              {(['sold_out', 'closing_early', 'customer_asked', 'other'] as const).map((key) => (
+              {CANCEL_REASON_KEYS.map((key) => (
                 <div
                   key={key}
                   className="flex items-center gap-2 rounded-lg border border-border p-2.5 text-xs font-medium"
