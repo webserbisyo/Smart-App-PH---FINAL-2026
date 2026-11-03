@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { errorWords, words } from '@smartapp/core';
 import { errorCodeOf, useBasket, useLoadOrder } from '@smartapp/data';
 import { notify } from '@smartapp/ui/compositions/notify';
@@ -8,12 +9,14 @@ import { useShop } from '../shell/components/shop-context';
 /**
  * Order again from My orders: loads the order, copies its lines into the basket (merging with what is
  * there) and opens the basket. Changed or missing lines are flagged by the basket rules (T08); it never
- * places an order by itself.
+ * places an order by itself. A booked order (O6) opens the When picker on Schedule instead, so a
+ * returning cake customer books again in a few taps.
  */
 export function useOrderAgain() {
   const { slug, shop, setBasketOpen } = useShop();
   const basket = useBasket(slug);
   const load = useLoadOrder(slug);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   function orderAgain(token: string) {
     load.mutate(token, {
@@ -36,7 +39,8 @@ export function useOrderAgain() {
             qty: line.qty,
           });
         }
-        setBasketOpen(true);
+        if (order.scheduledAt && order.type !== 'walk_in') setScheduleOpen(true);
+        else setBasketOpen(true);
         notify({
           title: words.orders.added(order.lines.reduce((n, l) => n + l.qty, 0)),
           description: words.orders.addedHint,
@@ -51,5 +55,8 @@ export function useOrderAgain() {
     orderAgain,
     // The order being loaded, so only its button shows the spinner.
     loadingToken: load.isPending ? load.variables : null,
+    // Open after Order again of a booked order: the How and where sheet on Schedule.
+    scheduleOpen,
+    setScheduleOpen,
   };
 }

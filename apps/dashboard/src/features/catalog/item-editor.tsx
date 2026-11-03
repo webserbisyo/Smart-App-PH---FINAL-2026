@@ -82,6 +82,7 @@ import { CatalogPhoto } from './catalog-photo.js';
 import { ItemPreview } from './item-preview.js';
 import { PesoInput } from './components/peso-input.js';
 import { PickedChip, PickRow } from './pick-list.js';
+import { BookingSection } from './booking-section.js';
 import { VariantsSection, type VariantsValue } from './variants-section.js';
 import { choicesFrom, pricedAxes, withVersions } from './variants.js';
 import { cn } from 'cn';
@@ -573,6 +574,14 @@ function ItemEditorForm({
             basePrice={form.basePrice}
             otherItems={otherItems}
             onCopied={(name) => notify({ title: catalogWords.copiedFrom(name), tone: 'success' })}
+          />
+
+          <BookingSection
+            kind={kind}
+            noticeDays={form.noticeDays}
+            dailyLimit={form.dailyLimit}
+            onChange={update}
+            className={card}
           />
 
           <section className={card}>

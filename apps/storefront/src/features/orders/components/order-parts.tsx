@@ -78,7 +78,9 @@ export function ActiveOrderCard({
             {words.orders.orderLine(orderNo, words.shop.orderType[row.type])}
           </span>
           <span className="text-sm text-muted-foreground">
-            {formatManila(row.placedAt, 'datetime')}
+            {row.scheduledAt
+              ? words.receipt.scheduled(formatManila(row.scheduledAt, 'datetime'))
+              : formatManila(row.placedAt, 'datetime')}
           </span>
         </div>
         <OrderStatusBadge row={row} />

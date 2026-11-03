@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { GiftIcon, RotateCwIcon, WifiOffIcon } from 'lucide-react';
 import { artPath, formatManila, vocab, words } from '@smartapp/core';
@@ -26,6 +27,12 @@ import { OrdersSkeleton } from './orders-skeleton';
 
 const W = words.orders;
 
+// Loads only after Order again of a booked order (decision R49).
+const HowWhereSheet = dynamic(
+  () => import('../../location/components/how-where-sheet').then((m) => m.HowWhereSheet),
+  { ssr: false },
+);
+
 /**
  * My orders (T11): Active and Past as a segmented control (c-tabs-7 counts on the c-tabs-2 segmented
  * look), the orders kept on this phone merged with the member's, Order again, and every state.
@@ -41,7 +48,7 @@ export function OrdersScreen() {
   const query = useMyOrders(slug);
   const account = useMyAccount(slug).data;
   const saved = useSavedReceipts(slug);
-  const { orderAgain, loadingToken } = useOrderAgain();
+  const { orderAgain, loadingToken, scheduleOpen, setScheduleOpen } = useOrderAgain();
   const [shown, setShown] = useState(PAST_PAGE);
 
   const savedRows = useMemo(
@@ -207,6 +214,15 @@ export function OrdersScreen() {
             {W.join}
           </Button>
         </section>
+      ) : null}
+
+      {scheduleOpen && now ? (
+        <HowWhereSheet
+          open={scheduleOpen}
+          onOpenChange={setScheduleOpen}
+          now={now}
+          initialMode="schedule"
+        />
       ) : null}
     </div>
   );

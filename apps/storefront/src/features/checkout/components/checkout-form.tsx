@@ -120,6 +120,10 @@ export function CheckoutForm({ now }: { now: string }) {
 
   // Error feedback state
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [rejected, setRejected] = useState<{ at: string | null; key: number }>({
+    at: null,
+    key: 0,
+  });
   const [placedOk, setPlacedOk] = useState(false);
   const [printer, setPrinter] = useState<PrinterState | null>(null);
   const [printerLoaded, loadPrinter] = useWhenIdle();
@@ -277,6 +281,13 @@ export function CheckoutForm({ now }: { now: string }) {
   // Flagged lines count
   const flaggedCount = quote?.lines.filter((l) => l.problems.length > 0).length ?? 0;
 
+  // The quote says the picked time filled up: open the picker at that day once per time.
+  const quoteRejectedAt =
+    scheduledAt && quote?.problems.some((p) => p.code === 'slot_unavailable') ? scheduledAt : null;
+  if (quoteRejectedAt && rejected.at !== quoteRejectedAt) {
+    setRejected((prev) => ({ at: quoteRejectedAt, key: prev.key + 1 }));
+  }
+
   // Eligibility evaluation
   const eligibility = checkPlaceOrderEligibility({
     online: isOnline,
@@ -357,6 +368,11 @@ export function CheckoutForm({ now }: { now: string }) {
           break;
         case 'pickup_time_invalid':
           setSubmitError(words.checkout.pickupTimeInvalid);
+          break;
+        case 'slot_unavailable':
+          // The time filled up meanwhile: the picker opens at that day, everything else stays filled in.
+          setSubmitError(words.location.slotFilled);
+          setRejected((prev) => ({ at: scheduledAt, key: prev.key + 1 }));
           break;
         case 'out_of_range':
           setSubmitError(words.checkout.outOfRange);
@@ -443,7 +459,13 @@ export function CheckoutForm({ now }: { now: string }) {
     <div className="mx-auto flex w-full max-w-160 flex-col gap-4 pt-2 pb-40">
       <CheckoutSummary slug={slug} lines={quoteLines} count={basket.count} total={total} />
 
-      <CheckoutHow sf={sf} choice={choice} now={now} />
+      <CheckoutHow
+        sf={sf}
+        choice={choice}
+        now={now}
+        rejectedAt={rejected.at}
+        rejectKey={rejected.key}
+      />
 
       <CheckoutWho
         name={name}

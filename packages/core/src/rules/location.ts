@@ -4,7 +4,7 @@ import type { DeliveryZone, Storefront } from '../schemas/storefront.js';
 import { words } from '../words.js';
 import { pickupSlots } from './hours.js';
 import { formatPeso } from './money.js';
-import { addDays, formatClock, manilaDate } from './time.js';
+import { addDays, formatClock, formatManila, manilaDate } from './time.js';
 
 type LocationInput = Pick<Storefront, 'orderTypes' | 'delivery'>;
 
@@ -28,9 +28,12 @@ export function chosenZone(sf: LocationInput, zoneId: string | null): DeliveryZo
 /** "Today 3:30 PM", "Tomorrow 9 AM" (pickup and delivery slots are today or tomorrow only). */
 export function slotLabel(at: string, now: string | Date): string {
   const time = formatClock(at);
-  return manilaDate(at) === manilaDate(now)
-    ? words.location.today(time)
-    : words.location.tomorrow(time);
+  const day = manilaDate(at);
+  const today = manilaDate(now);
+  if (day === today) return words.location.today(time);
+  if (day === addDays(today, 1)) return words.location.tomorrow(time);
+  // Further ahead (O6): "Sat 8 Nov, 3 PM".
+  return formatManila(at, 'datetime');
 }
 
 const feeText = (centavos: number) => (centavos === 0 ? words.shop.free : formatPeso(centavos));
@@ -57,9 +60,10 @@ export function locationLabel(
       // Shops without named zones take the address at checkout (distance and pins come in T09).
       if (sf.delivery.zones.length === 0) return words.shop.orderType.delivery;
       const zone = chosenZone(sf, choice.zoneId);
+      const when = choice.scheduledAt ? [slotLabel(choice.scheduledAt, now)] : [];
       return zone
-        ? join(words.shop.orderType.delivery, zone.name, feeText(zone.fee))
-        : join(words.shop.orderType.delivery, words.location.chooseArea);
+        ? join(words.shop.orderType.delivery, ...when, zone.name, feeText(zone.fee))
+        : join(words.shop.orderType.delivery, ...when, words.location.chooseArea);
     }
   }
 }

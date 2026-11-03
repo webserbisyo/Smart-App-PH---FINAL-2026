@@ -102,7 +102,8 @@ test.describe('scenarios (dev server, ?mock=)', () => {
 
 test.describe('remembered on the phone', () => {
   test('order type and zone survive a reload', async ({ page }) => {
-    await page.goto(urlFor('dev', '/kanto-smash'));
+    // Sunday noon, shop open: a closed shop would add a scheduled time to the bar.
+    await page.goto(urlFor('dev', '/kanto-smash?now=2026-10-25T12:00:00%2B08:00'));
     await page.getByRole('button', { name: /Change how and where/ }).click();
     const sheet = page.getByRole('dialog', { name: 'How and where' });
     await sheet.getByText('Delivery', { exact: true }).click();
@@ -589,7 +590,8 @@ test.describe('basket (T08)', () => {
         }),
       );
     });
-    await page.goto(urlFor('dev', '/kanto-smash/checkout'));
+    // Sunday noon, shop open: a closed shop can't take the order.
+    await page.goto(urlFor('dev', '/kanto-smash/checkout?now=2026-10-25T12:00:00%2B08:00'));
 
     // Switch to delivery
     await page.locator('#checkout-change-location').click();
@@ -631,7 +633,8 @@ test.describe('basket (T08)', () => {
         }),
       );
     });
-    await page.goto(urlFor('dev', '/kanto-smash/checkout'));
+    // Sunday noon, shop open: a closed shop can't take the order.
+    await page.goto(urlFor('dev', '/kanto-smash/checkout?now=2026-10-25T12:00:00%2B08:00'));
 
     // Switch to delivery
     await page.locator('#checkout-change-location').click();
@@ -871,6 +874,100 @@ test.describe('order receipt and payment proof (T10)', () => {
 
     await expect(page.locator('#receipt-not-found')).toBeVisible();
     await expect(page.getByText("We can't find this order")).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+});
+
+test.describe('scheduling (O6)', () => {
+  function cakeBasket() {
+    localStorage.setItem(
+      'smartapp:basket:lola-remy',
+      JSON.stringify({
+        v: 1,
+        data: [
+          {
+            itemId: 'lr-ube-macapuno-cake',
+            variantId: 'lr-ube-macapuno-cake--6',
+            optionIds: [],
+            note: '',
+            qty: 1,
+          },
+        ],
+      }),
+    );
+  }
+
+  test('a cake that needs notice books days ahead, and the receipt shows the code and date', async ({
+    page,
+  }) => {
+    const problems = watch(page);
+    await page.addInitScript(cakeBasket);
+    // Tuesday 10 AM: the cake needs 2 days' notice, so today and tomorrow are too soon.
+    const now = '?now=2026-10-27T10:00:00%2B08:00';
+    await page.goto(urlFor('dev', `/lola-remy/menu${now}`));
+    await page.goto(urlFor('dev', `/lola-remy/checkout${now}`));
+
+    await page.locator('#checkout-change-location').click();
+    await page.locator('label[for="how-pickup"]').click();
+    const sheet = page.getByRole('dialog', { name: 'How and where' });
+    await expect(page.locator('#when-asap')).toBeDisabled();
+    await expect(sheet.getByText(/needs 2 days’ notice/).first()).toBeVisible();
+    await expect(sheet.getByRole('button', { name: 'Today, Too soon' })).toBeDisabled();
+    await expect(sheet.getByRole('button', { name: 'Tomorrow, Too soon' })).toBeDisabled();
+
+    // The earliest open time is picked; pick another one on that day.
+    await expect(sheet.getByText(/^Pickup Thu 29 Oct/)).toBeVisible();
+    const times = sheet.getByRole('group', { name: 'Afternoon' }).getByRole('button');
+    await times.first().click();
+    const summary = (await sheet.getByText(/^Pickup Thu 29 Oct/).textContent()) ?? '';
+    await page.locator('#how-where-save').click();
+    await expect(page.locator('#how-where-save')).not.toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(summary, { exact: true }).filter({ visible: true })).toHaveCount(1);
+
+    await page.locator('#checkout-name').fill('Ana Reyes');
+    await page.locator('#checkout-phone').fill('09171234567');
+    const placeBtn = page.locator('#checkout-place-order');
+    await expect(placeBtn).toBeEnabled({ timeout: 10_000 });
+    await placeBtn.click();
+    await expect(page).toHaveURL(/\/lola-remy\/o\//, { timeout: 30_000 });
+    await expect(page.locator('#receipt-pickup-code')).toHaveText(/^Code [A-Z0-9]{4}$/);
+    const code = page.locator('figcaption', { has: page.locator('#receipt-pickup-code') });
+    await expect(code).toContainText('Show this at pickup');
+    // The receipt words the date its own way ("Oct 29, 3:00 PM").
+    await expect(code).toContainText(/Pickup Oct 29, \d/);
+    expect(problems).toEqual([]);
+  });
+
+  test('a full or too-soon day cannot be picked, and ASAP is offered when the shop can start now', async ({
+    page,
+  }) => {
+    const problems = watch(page);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
+    await page.goto(urlFor('dev', '/kanto-smash/checkout?now=2026-10-25T12:00:00%2B08:00'));
+    await page.locator('#checkout-change-location').click();
+    await page.locator('label[for="how-pickup"]').click();
+    await expect(page.locator('#when-asap')).toBeEnabled();
+    await page.locator('label[for="when-schedule"]').click();
+    const sheet = page.getByRole('dialog', { name: 'How and where' });
+    await expect(sheet.getByText('Pick a time', { exact: true })).toBeVisible();
+    for (const chip of await sheet.getByRole('button', { name: /, (Closed|Full|Too soon)$/ }).all())
+      await expect(chip).toBeDisabled();
     expect(problems).toEqual([]);
   });
 });

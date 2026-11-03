@@ -6,6 +6,7 @@ import {
   ChevronUpIcon,
   EyeOffIcon,
   GripVerticalIcon,
+  HourglassIcon,
   RotateCcwIcon,
 } from 'lucide-react';
 import { itemPriceLabel, catalogWords, type OwnerItem } from '@smartapp/core';
@@ -60,6 +61,12 @@ export function ItemStatusBadges({ item }: { item: OwnerItem }) {
         <Status className={cn(statusLook, 'border-border bg-secondary text-secondary-foreground')}>
           <EyeOffIcon aria-hidden="true" className="size-3" />
           <StatusLabel>{catalogWords.hiddenBadge}</StatusLabel>
+        </Status>
+      ) : null}
+      {item.noticeDays > 0 ? (
+        <Status className={cn(statusLook, 'border-info/30 bg-info-soft text-info-text')}>
+          <HourglassIcon aria-hidden="true" className="size-3" />
+          <StatusLabel>{catalogWords.noticeBadge(item.noticeDays)}</StatusLabel>
         </Status>
       ) : null}
     </>

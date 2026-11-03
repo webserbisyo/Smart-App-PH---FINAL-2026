@@ -402,6 +402,36 @@ export const words = {
     tomorrowGroup: 'Tomorrow',
     noSlots: 'No pickup times left today or tomorrow.',
     closedNow: 'Closed now, so pick a time for when the shop opens.',
+    // The When picker (O6): ASAP or Schedule, a day strip and time chips.
+    scheduleOption: 'Schedule',
+    scheduleDetail: 'Pick a day and time',
+    asapDelivery: (time: string) => `Arrives around ${time}`,
+    asapNeedsNotice: (item: string) => `${item} needs notice, so pick a day.`,
+    dayLabel: 'Day',
+    timeLabel: (type: 'pickup' | 'delivery') =>
+      type === 'delivery' ? 'Delivery time' : 'Pickup time',
+    dayToday: 'Today',
+    dayTomorrow: 'Tomorrow',
+    dayState: { closed: 'Closed', full: 'Full', too_soon: 'Too soon' },
+    moreDates: 'More dates',
+    moreDatesTitle: 'Pick a date',
+    moreDatesLegend: 'Greyed days are closed, full or too soon.',
+    periods: { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' },
+    slotFull: 'Full',
+    notice: (item: string, days: number, type: 'pickup' | 'delivery', earliest: string) =>
+      `${item} needs ${days} ${days === 1 ? 'day' : 'days'}’ notice. Earliest ${type === 'delivery' ? 'delivery' : 'pickup'}: ${earliest}.`,
+    summary: (type: 'pickup' | 'delivery', when: string) =>
+      `${type === 'delivery' ? 'Delivery' : 'Pickup'} ${when}`,
+    slotMoved: (when: string) => `That time is no longer open, so we picked ${when}.`,
+    fullyBookedUntil: (date: string) =>
+      `Fully booked until ${date}. Message the shop for a special order.`,
+    notBooking: 'Not taking bookings right now. Message the shop for a special order.',
+    messageShop: 'Message the shop',
+    slotFilled: 'That time just filled up. Pick another.',
+    timesFailed: 'Couldn’t load the times. Check your connection and try again.',
+    tryAgain: 'Try again',
+    pickTime: 'Pick a time',
+    dayDisabled: (day: string, state: string) => `${day}, ${state}`,
     area: 'Delivery area',
     addressAtCheckout: 'You’ll add your address at checkout.',
     save: 'Save',
@@ -577,6 +607,9 @@ export const words = {
     copyNumber: (orderNo: string) => `Copy order number ${orderNo}`,
     scheduled: (when: string) => `Scheduled ${when}`,
     qrCounter: 'Show this at the counter',
+    pickupCode: (code: string) => `Code ${code}`,
+    showAtPickup: 'Show this at pickup',
+    slipCode: (code: string) => `Pickup code ${code}`,
     qrLive: 'Scan to open this order',
     qrLabel: (orderNo: string) => `QR code for order ${orderNo}`,
     progress: 'Order progress',
@@ -1707,6 +1740,23 @@ export const catalogWords = {
   choiceNeedsName: 'Give each choice a name, like Size.',
   choiceNeedsOption: 'Add at least one option to each choice, or remove the choice.',
   choiceUnnamed: 'Choice',
+  // Booking (O6): notice and daily limit for things customers order ahead.
+  sectionBooking: 'Booking',
+  sectionBookingHelp: (kind: ShopKind) =>
+    kind === 'retail'
+      ? 'For products customers order ahead, like made-to-order pieces.'
+      : 'For dishes customers order ahead, like cakes and party trays.',
+  noticeLabel: 'Order ahead',
+  noticeUnit: (days: number) => (days === 1 ? 'day' : 'days'),
+  noticeHint: (days: number) =>
+    days === 0
+      ? 'No notice needed'
+      : `Customers book at least ${days} ${days === 1 ? 'day' : 'days'} ahead`,
+  dailyLimitLabel: 'Daily limit',
+  dailyLimitHint: 'Counts how many can be booked for the same day',
+  dailyLimitNone: 'No limit',
+  dailyLimitPlaceholder: 'No limit',
+  noticeBadge: (days: number) => `${days} ${days === 1 ? 'day' : 'days'}’ notice`,
   sectionAddOnsHelp: (kind: ShopKind) =>
     `Extras customers can add, ${vocab(kind).addOnExamples}. Set them up once, use them on any item.`,
   newAddOnGroup: 'New add-on group',

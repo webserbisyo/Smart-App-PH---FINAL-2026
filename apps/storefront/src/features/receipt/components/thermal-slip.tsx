@@ -81,9 +81,17 @@ export function ThermalSlip({ order, storefront, receiptUrl }: ThermalSlipProps)
                 paymentChip(order).label,
               )}
             </p>
+            {order.scheduledAt && order.type !== 'walk_in' ? (
+              <p className="text-xs font-semibold">
+                {words.location.summary(order.type, formatManilaDateTime(order.scheduledAt))}
+              </p>
+            ) : null}
             <QRCode value={receiptUrl} size={100}>
               <QRCodeSvg className="rounded-sm" />
             </QRCode>
+            <p className="text-sm font-bold tracking-widest">
+              {words.receipt.slipCode(order.pickupCode)}
+            </p>
           </div>
         }
       />

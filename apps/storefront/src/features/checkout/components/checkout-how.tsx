@@ -4,7 +4,6 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   chosenZone,
-  formatClock,
   locationLabel,
   openState,
   words,
@@ -14,6 +13,7 @@ import {
 import { Button } from '@smartapp/ui/components/button';
 import { ORDER_TYPE_ICON } from '../../location/components/order-type-icons';
 import { CheckoutStep } from './checkout-step';
+import { whenSummary } from '../../location/when-rules';
 
 // The sheet loads on the first Change, as from the location pill (decision R49).
 const HowWhereSheet = dynamic(
@@ -25,14 +25,22 @@ interface CheckoutHowProps {
   sf: Storefront;
   choice: LocationChoice;
   now: string;
+  /** A time the shop turned away (slot_unavailable); each new `rejectKey` opens the picker at its day. */
+  rejectedAt?: string | null | undefined;
+  rejectKey?: number | undefined;
 }
 
 /**
  * How section: Displays the current order type, place, or pickup time with a Change button.
  */
-export function CheckoutHow({ sf, choice, now }: CheckoutHowProps) {
+export function CheckoutHow({ sf, choice, now, rejectedAt, rejectKey = 0 }: CheckoutHowProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetLoaded, setSheetLoaded] = useState(false);
+  const [seenRejectKey, setSeenRejectKey] = useState(rejectKey);
+  if (rejectKey !== seenRejectKey) {
+    setSeenRejectKey(rejectKey);
+    setSheetOpen(true);
+  }
   if (sheetOpen && !sheetLoaded) setSheetLoaded(true);
   const state = openState(sf, now);
   const label = locationLabel(sf, choice, now);
@@ -40,13 +48,14 @@ export function CheckoutHow({ sf, choice, now }: CheckoutHowProps) {
   let detail: string | null = null;
   if (choice.type === 'pickup') {
     if (choice.scheduledAt) {
-      detail = words.checkout.scheduledFor(formatClock(choice.scheduledAt));
+      detail = whenSummary('pickup', choice.scheduledAt, now);
     } else if (state.state === 'open') {
       detail = words.shop.readyIn(sf.prepMinutes);
     }
   } else if (choice.type === 'delivery') {
     const zone = chosenZone(sf, choice.zoneId);
-    if (zone) detail = zone.etaText;
+    if (choice.scheduledAt) detail = whenSummary('delivery', choice.scheduledAt, now);
+    else if (zone) detail = zone.etaText;
   }
 
   const Icon = ORDER_TYPE_ICON[choice.type ?? sf.orderTypes[0] ?? 'pickup'];
@@ -81,7 +90,12 @@ export function CheckoutHow({ sf, choice, now }: CheckoutHowProps) {
       </CheckoutStep>
 
       {sheetLoaded ? (
-        <HowWhereSheet open={sheetOpen} onOpenChange={setSheetOpen} now={now} />
+        <HowWhereSheet
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          now={now}
+          rejectedAt={rejectedAt}
+        />
       ) : null}
     </>
   );

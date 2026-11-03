@@ -295,8 +295,22 @@ export function ReceiptHeader({
                 className="rounded-sm"
               />
             </QRCode>
-            <figcaption className="text-xs font-medium">
-              {order.type === 'delivery' ? words.receipt.qrLive : words.receipt.qrCounter}
+            <figcaption className="flex flex-col items-center gap-0.5 text-center">
+              {/* The pickup code (O6): the shop types it in Find order at hand-over. */}
+              <span
+                id="receipt-pickup-code"
+                className="text-2xl font-extrabold tracking-widest tabular"
+              >
+                {words.receipt.pickupCode(order.pickupCode)}
+              </span>
+              <span className="text-xs font-medium">
+                {order.type === 'delivery' ? words.receipt.qrLive : words.receipt.showAtPickup}
+              </span>
+              {order.scheduledAt && order.type !== 'walk_in' ? (
+                <span className="text-xs font-semibold tabular">
+                  {words.location.summary(order.type, formatManilaDateTime(order.scheduledAt))}
+                </span>
+              ) : null}
             </figcaption>
           </figure>
         </div>

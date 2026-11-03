@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   chosenOrderType,
   chosenZone,
@@ -8,13 +8,9 @@ import {
   formatPeso,
   isShortMapsLink,
   mapsLinkFor,
-  openState,
-  openStateText,
   orderTypeDetail,
   parseMapsLink,
-  readyEstimate,
   roundKm,
-  slotGroups,
   words,
   OrderTypeEnum,
   type LatLng,
@@ -40,11 +36,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from '@smartapp/ui/components/input-group';
-import {
-  NativeSelect,
-  NativeSelectOptGroup,
-  NativeSelectOption,
-} from '@smartapp/ui/components/native-select';
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/reui/alert';
 import { Spinner } from '@smartapp/ui/components/spinner';
@@ -63,6 +54,8 @@ import {
 import { useShop } from '../../shell/components/shop-context';
 import { ORDER_TYPE_ICON } from './order-type-icons';
 import { useLocationChoice } from './use-location-choice';
+import { WhenPicker, type WhenValue } from './when-picker';
+import type { WhenMode } from '../when-rules';
 import { notify } from '@smartapp/ui/compositions/notify';
 
 const TYPE_COLS: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' };
@@ -76,30 +69,35 @@ function Required() {
   );
 }
 
-type When = 'asap' | 'later';
-const isWhen = (value: unknown): value is When => value === 'asap' || value === 'later';
 type GeoStatus = 'idle' | 'locating' | 'done' | 'denied';
 
-function HowWhereForm({ now, onDone }: { now: string; onDone: () => void }) {
+function HowWhereForm({
+  now,
+  onDone,
+  initialMode,
+  rejectedAt,
+}: {
+  now: string;
+  onDone: () => void;
+  initialMode?: WhenMode | undefined;
+  rejectedAt?: string | null | undefined;
+}) {
   const { slug, shop } = useShop();
   const sf = shop.storefront;
   const basket = useBasket(slug);
   const resolveMaps = useResolveMapsLink();
   const { choice, address, save } = useLocationChoice(slug);
 
-  const asapOpen = readyEstimate(sf, now) !== null;
-  const groups = slotGroups(sf, now);
-  const firstSlot = groups[0]?.slots[0]?.value ?? null;
-
   const [type, setType] = useState<OrderType>(
     chosenOrderType(sf, choice.type) ?? sf.orderTypes[0] ?? 'pickup',
   );
-  const [when, setWhen] = useState<When>(choice.scheduledAt || !asapOpen ? 'later' : 'asap');
-  const [slot, setSlot] = useState<string | null>(
-    groups.some((g) => g.slots.some((s) => s.value === choice.scheduledAt))
-      ? choice.scheduledAt
-      : firstSlot,
-  );
+  // When (O6): ASAP or a booked day and time, for pickup and delivery; walk-in is never scheduled.
+  const [when, setWhen] = useState<WhenValue>({
+    mode: initialMode ?? (choice.scheduledAt ? 'schedule' : 'asap'),
+    at: choice.scheduledAt,
+  });
+  const [bookable, setBookable] = useState(true);
+  const onWhenChange = useCallback((next: WhenValue) => setWhen(next), []);
 
   // Delivery fields
   const [spot, setSpot] = useState<LatLng | null>(address.spot ?? null);
@@ -118,8 +116,6 @@ function HowWhereForm({ now, onDone }: { now: string; onDone: () => void }) {
   const [mapsInput, setMapsInput] = useState('');
   const [mapsValid, setMapsValid] = useState(false);
   const [mapsError, setMapsError] = useState(false);
-
-  const state = openState(sf, now);
 
   // Re-evaluate Maps input whenever text changes
   async function handleMapsInputChange(val: string) {
@@ -198,7 +194,7 @@ function HowWhereForm({ now, onDone }: { now: string; onDone: () => void }) {
   function submit() {
     save({
       type,
-      scheduledAt: type === 'walk_in' || when === 'asap' ? null : slot,
+      scheduledAt: type === 'walk_in' || when.mode === 'asap' ? null : when.at,
       zoneId: type === 'delivery' ? zoneId : null,
       spot: type === 'delivery' ? spot : null,
       addressLine: type === 'delivery' ? addressLine.trim() : '',
@@ -253,75 +249,15 @@ function HowWhereForm({ now, onDone }: { now: string; onDone: () => void }) {
         <p className="text-sm text-muted-foreground">{orderTypeDetail(sf, type)}</p>
       </FieldSet>
 
-      {type === 'pickup' ? (
-        <FieldSet className="gap-3">
-          <FieldLegend variant="label">{words.location.when}</FieldLegend>
-          {!asapOpen ? (
-            <FieldDescription>
-              {openStateText(state, now)}. {words.location.closedNow}
-            </FieldDescription>
-          ) : null}
-          {/* ASAP or later: pattern c-radio-group-3 as two cards. */}
-          <RadioGroup
-            value={when}
-            onValueChange={(value) => {
-              if (isWhen(value)) setWhen(value);
-            }}
-            className="grid grid-cols-2 gap-2"
-          >
-            <FieldLabel htmlFor="when-asap" className="rounded-2xl">
-              <Field
-                orientation="horizontal"
-                data-disabled={asapOpen ? undefined : 'true'}
-                className="min-h-16 items-start gap-2.5"
-              >
-                <RadioGroupItem value="asap" id="when-asap" disabled={!asapOpen} />
-                <FieldContent>
-                  <FieldTitle>{words.location.asap}</FieldTitle>
-                  <FieldDescription>{words.shop.readyIn(sf.prepMinutes)}</FieldDescription>
-                </FieldContent>
-              </Field>
-            </FieldLabel>
-            <FieldLabel htmlFor="when-later" className="rounded-2xl">
-              <Field orientation="horizontal" className="min-h-16 items-start gap-2.5">
-                <RadioGroupItem value="later" id="when-later" />
-                <FieldContent>
-                  <FieldTitle>{words.location.later}</FieldTitle>
-                  <FieldDescription>{words.location.laterDetail}</FieldDescription>
-                </FieldContent>
-              </Field>
-            </FieldLabel>
-          </RadioGroup>
-          {when === 'later' ? (
-            groups.length > 0 ? (
-              <Field>
-                <FieldLabel htmlFor="pickup-slot">{words.location.pickupTime}</FieldLabel>
-                {/* Pattern c-native-select-2, grouped Today / Tomorrow. */}
-                <NativeSelect
-                  id="pickup-slot"
-                  className="h-11 w-full rounded-xl"
-                  value={slot ?? ''}
-                  onChange={(event) => setSlot(event.target.value || null)}
-                >
-                  <NativeSelectOption value="" disabled>
-                    {words.location.chooseTime}
-                  </NativeSelectOption>
-                  {groups.map((g) => (
-                    <NativeSelectOptGroup key={g.label} label={g.label}>
-                      {g.slots.map((s) => (
-                        <NativeSelectOption key={s.value} value={s.value}>
-                          {s.label}
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelectOptGroup>
-                  ))}
-                </NativeSelect>
-              </Field>
-            ) : (
-              <FieldDescription>{words.location.noSlots}</FieldDescription>
-            )
-          ) : null}
-        </FieldSet>
+      {type === 'pickup' || type === 'delivery' ? (
+        <WhenPicker
+          type={type}
+          now={now}
+          value={when}
+          onChange={onWhenChange}
+          onBookableChange={setBookable}
+          rejectedAt={rejectedAt}
+        />
       ) : null}
 
       {type === 'delivery' ? (
@@ -565,7 +501,7 @@ function HowWhereForm({ now, onDone }: { now: string; onDone: () => void }) {
           size="lg"
           className="h-12 w-full rounded-full text-base font-semibold"
           disabled={
-            (type === 'pickup' && when === 'later' && !slot) ||
+            (type !== 'walk_in' && when.mode === 'schedule' && !when.at && bookable) ||
             (type === 'delivery' && Boolean(isDeliveryDisabled))
           }
         >
@@ -581,10 +517,16 @@ export function HowWhereSheet({
   open,
   onOpenChange,
   now,
+  initialMode,
+  rejectedAt,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   now: string;
+  /** Opens on Schedule (Order again of a booked order). */
+  initialMode?: WhenMode | undefined;
+  /** A time the shop just turned away: the picker says so and opens at its day. */
+  rejectedAt?: string | null | undefined;
 }) {
   return (
     <ResponsiveDialog
@@ -594,7 +536,14 @@ export function HowWhereSheet({
       description={words.location.sheetDescription}
       scroll
     >
-      {open ? <HowWhereForm now={now} onDone={() => onOpenChange(false)} /> : null}
+      {open ? (
+        <HowWhereForm
+          now={now}
+          onDone={() => onOpenChange(false)}
+          initialMode={initialMode}
+          rejectedAt={rejectedAt}
+        />
+      ) : null}
     </ResponsiveDialog>
   );
 }

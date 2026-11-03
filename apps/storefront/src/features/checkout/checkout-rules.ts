@@ -217,7 +217,7 @@ export function checkPlaceOrderEligibility(
         case 'zone_required':
           return { canPlace: false, reason: words.location.chooseArea, missingField: 'zone' };
         case 'slot_unavailable':
-          return { canPlace: false, reason: words.checkout.pickupTimeInvalid, missingField: null };
+          return { canPlace: false, reason: words.location.slotFilled, missingField: null };
         case 'shop_closed':
         case 'shop_busy':
         case 'shop_paused':

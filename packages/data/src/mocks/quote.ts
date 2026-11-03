@@ -102,7 +102,10 @@ export function quote(
   if (!sf.orderTypes.includes(payload.type)) problems.push(problem('fulfillment_unavailable'));
   if (state.paused) problems.push(problem('shop_paused'));
   else if (payload.scheduledAt) {
-    if (!slots.includes(payload.scheduledAt)) problems.push(problem('slot_unavailable'));
+    // Booked days ahead (O6): the store checks the time against scheduleDays (hours, notice, daily
+    // and per-slot limits) before quoting; here only a time already past fails.
+    if (new Date(payload.scheduledAt).getTime() <= new Date(now).getTime())
+      problems.push(problem('slot_unavailable'));
   } else if (state.state === 'closed') problems.push(problem('shop_closed'));
   else if (state.state === 'busy') problems.push(problem('shop_busy'));
   if (payload.type === 'walk_in' && state.state !== 'open' && !state.paused) {
