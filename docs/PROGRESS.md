@@ -47,6 +47,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] O1 Orders: data, rules and mock data (decisions T48 to T53, pushed to main)
 - [x] O2 Orders parts installed and on /kit
 - [x] O3 Orders Now board, ticket and detail
+- [x] O4 Orders Scheduled, History, Change time
 
 ## Phase 4: Backend, area by area
 

@@ -27,6 +27,8 @@ import { BusyMenu } from '../busy-menu.js';
 import { NowBoard } from '../now-board.js';
 import { OrdersDevScenarioPanel } from '../orders-dev-scenario-panel.js';
 import { useOrdersSearch, useOrdersTabs } from '../tabs.js';
+import { ScheduledScreen } from './scheduled.js';
+import { HistoryScreen } from './history.js';
 
 export function OrdersScreen() {
   const shop = useShop();
@@ -118,17 +120,9 @@ export function OrdersScreen() {
 
         {/* View switching */}
         {currentView === 'scheduled' ? (
-          <PageEmpty
-            className="py-16"
-            icon={<CalendarIcon className="size-8 text-muted-foreground" />}
-            description={words.screens.orders.emptyScheduled}
-          />
+          <ScheduledScreen slug={shop.slug} />
         ) : currentView === 'history' ? (
-          <PageEmpty
-            className="py-16"
-            icon={<HistoryIcon className="size-8 text-muted-foreground" />}
-            description={words.screens.orders.emptyHistory}
-          />
+          <HistoryScreen slug={shop.slug} />
         ) : isLoading ? (
           /* Loading Skeletons in board shape */
           <div className="space-y-4">

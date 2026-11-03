@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   ArrowLeftIcon,
+  CalendarClockIcon,
   CheckIcon,
   ExternalLinkIcon,
   MessageCircleIcon,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { OwnerOrder, ShopKind } from '@smartapp/core';
 import {
+  canReschedule,
   formatClock,
   formatManila,
   formatPeso,
@@ -74,6 +76,7 @@ import { cn } from 'cn';
 import { OrderTicket } from '@/app/orders/order-ticket';
 import { useNow } from '@/app/orders/use-now';
 import { useStepChange } from '@/app/orders/use-step-change';
+import { ChangeTimeDialog } from './change-time-dialog.js';
 
 const CANCEL_REASON_KEYS = ['sold_out', 'closing_early', 'customer_asked', 'other'] as const;
 type CancelReasonKey = (typeof CANCEL_REASON_KEYS)[number];
@@ -129,6 +132,9 @@ export function OrderDetailContent({
   const [isCancelDialogOpen, setIsCancelDialogOpen] = React.useState(false);
   const [cancelReasonKey, setCancelReasonKey] = React.useState<CancelReasonKey>('sold_out');
   const [cancelOtherText, setCancelOtherText] = React.useState('');
+
+  // Change time dialog state
+  const [isChangeTimeOpen, setIsChangeTimeOpen] = React.useState(false);
 
   const nextStepAction = useAsyncAction();
   const approvePaymentAction = useAsyncAction();
@@ -240,6 +246,12 @@ export function OrderDetailContent({
               }
             />
             <DropdownMenuContent align="end" className="w-44 text-xs">
+              {canReschedule(order) && (
+                <DropdownMenuItem onClick={() => setIsChangeTimeOpen(true)}>
+                  <CalendarClockIcon className="mr-2 size-3.5" />
+                  <span>{ordersWords.detail.changeTime}</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={() => setIsCancelDialogOpen(true)}
                 className="font-semibold text-destructive focus:text-destructive"
@@ -791,6 +803,22 @@ export function OrderDetailContent({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Change Time Dialog */}
+      <ChangeTimeDialog
+        open={isChangeTimeOpen}
+        onOpenChange={setIsChangeTimeOpen}
+        slug={slug}
+        order={{
+          id: order.id,
+          orderNo: order.orderNo,
+          type: order.type,
+          status: order.status,
+          dueAt: order.dueAt,
+          scheduledAt: order.scheduledAt,
+          lines: order.lines,
+        }}
+      />
     </div>
   );
 }
