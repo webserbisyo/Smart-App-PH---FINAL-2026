@@ -7,16 +7,18 @@ import {
   HistoryIcon,
   WifiOffIcon,
 } from 'lucide-react';
-import type { BoardOrder, OrderStatus, OrderType, PaymentStatus } from '@smartapp/core';
+import type { BoardOrder, OrderStatus, PaymentStatus } from '@smartapp/core';
 import {
   addDays,
   formatClock,
   formatManila,
+  errorWords,
   formatPeso,
   manilaDate,
   ordersWords,
+  words,
 } from '@smartapp/core';
-import { useOrdersByDate } from '@smartapp/data';
+import { errorCodeOf, useOrdersByDate } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Calendar } from '@smartapp/ui/components/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@smartapp/ui/components/popover';
@@ -39,7 +41,7 @@ import { useMediaQuery } from '@/app/use-media-query';
 import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
 import { useOrdersSearch, withSearch } from '../tabs.js';
 import { TypeFilter } from '../type-filter.js';
-import { cn } from 'cn';
+import { orderNoLabel } from '@/app/orders/order-ticket';
 
 export interface HistoryScreenProps {
   slug: string;
@@ -61,6 +63,10 @@ function orderStatusVariant(
     case 'out_for_delivery':
       return 'info';
   }
+}
+
+function paymentWord(order: BoardOrder): string {
+  return words.shop.paymentStatus[order.paymentStatus];
 }
 
 function paymentStatusVariant(
@@ -99,13 +105,14 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
     data: orders = [],
     isLoading,
     isError,
+    error,
     refetch,
   } = useOrdersByDate(slug, activeDateStr, searchQuery || undefined);
 
   // Filter orders by order type if selected
   const filteredOrders = React.useMemo(() => {
     if (typeFilter === 'all') return orders;
-    return orders.filter((o) => o.type === (typeFilter as OrderType));
+    return orders.filter((o) => o.type === typeFilter);
   }, [orders, typeFilter]);
 
   const typeCounts = React.useMemo(() => {
@@ -121,7 +128,7 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
   const totalSalesCentavos = React.useMemo(() => {
     return filteredOrders
       .filter((o) => o.status !== 'cancelled' && o.status !== 'expired')
-      .reduce((sum, o) => sum + o.totals.total, 0);
+      .reduce((sum, o) => sum + o.total, 0);
   }, [filteredOrders]);
 
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
@@ -165,9 +172,7 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
         accessorKey: 'orderNo',
         header: ordersWords.history.cols.orderNo,
         cell: ({ row }) => (
-          <span className="font-bold tabular-nums">
-            #{String(row.original.orderNo).padStart(3, '0')}
-          </span>
+          <span className="font-bold tabular-nums">{orderNoLabel(row.original.orderNo)}</span>
         ),
         size: 70,
       },
@@ -200,18 +205,11 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
         accessorKey: 'customerName',
         header: ordersWords.history.cols.customer,
         cell: ({ row }) => (
-          <div className="flex flex-col truncate">
-            <span className="truncate font-medium text-foreground">
-              {row.original.customerName}
-            </span>
-            {row.original.customerPhone && (
-              <span className="text-[11px] text-muted-foreground tabular-nums">
-                {row.original.customerPhone}
-              </span>
-            )}
-          </div>
+          <span className="block truncate font-medium text-foreground">
+            {row.original.customerName}
+          </span>
         ),
-        size: 160,
+        size: 150,
       },
       {
         id: 'items',
@@ -221,15 +219,13 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
           const text = lines.map((l) => `${l.qty}× ${l.name}`).join(', ');
           return <span className="line-clamp-1 text-xs text-muted-foreground">{text}</span>;
         },
-        size: 240,
+        size: 180,
       },
       {
         id: 'total',
         header: () => <div className="w-full text-right">{ordersWords.history.cols.total}</div>,
         cell: ({ row }) => (
-          <div className="text-right font-bold tabular-nums">
-            {formatPeso(row.original.totals.total)}
-          </div>
+          <div className="text-right font-bold tabular-nums">{formatPeso(row.original.total)}</div>
         ),
         size: 110,
       },
@@ -242,7 +238,7 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
           return (
             <Status variant={variant}>
               <StatusIndicator />
-              <span className="capitalize">{p}</span>
+              <span>{paymentWord(row.original)}</span>
             </Status>
           );
         },
@@ -257,7 +253,7 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
           return (
             <Status variant={variant}>
               <StatusIndicator />
-              <span className="capitalize">{st.replace(/_/g, ' ')}</span>
+              <span>{words.shop.orderStatus[st]}</span>
             </Status>
           );
         },
@@ -328,7 +324,7 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => handleStepDate(-1)}
+            onClick={() => handleSetDate(new Date(now.getTime() - 86_400_000))}
             className="h-9 px-3 text-xs font-semibold"
           >
             {ordersWords.history.yesterday}
@@ -340,7 +336,7 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
               variant="outline"
               size="icon"
               onClick={() => handleStepDate(-1)}
-              aria-label="Previous day"
+              aria-label={ordersWords.history.previousDay}
               className="size-9"
             >
               <ChevronLeftIcon className="size-4" />
@@ -350,7 +346,7 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
               variant="outline"
               size="icon"
               onClick={() => handleStepDate(1)}
-              aria-label="Next day"
+              aria-label={ordersWords.history.nextDay}
               className="size-9"
             >
               <ChevronRightIcon className="size-4" />
@@ -364,7 +360,7 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
             value={searchQuery}
             onChange={handleSearchChange}
             placeholder={ordersWords.history.searchPlaceholder}
-            clearLabel="Clear search"
+            clearLabel={ordersWords.history.clearSearch}
           />
         </div>
       </div>
@@ -382,8 +378,12 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
         </div>
       ) : isError ? (
         <PageError
-          error={ordersWords.states.errorHistory}
-          onRetry={() => void refetch()}
+          title={ordersWords.states.errorHistory}
+          message={errorWords(errorCodeOf(error))}
+          retryLabel={ordersWords.states.tryAgain}
+          onRetry={() => {
+            void refetch();
+          }}
           className="py-16"
         />
       ) : filteredOrders.length === 0 ? (
@@ -438,23 +438,22 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
             {filteredOrders.map((order) => {
               const TypeIcon = ORDER_TYPE_ICON[order.type];
               return (
-                <div
+                <button
+                  type="button"
                   key={order.id}
                   onClick={() => handleSelectOrder(order)}
-                  className="flex cursor-pointer flex-col gap-2 rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs transition-shadow active:bg-muted/30"
+                  className="flex w-full cursor-pointer flex-col gap-2 rounded-xl border border-border/80 bg-card p-3.5 text-left shadow-2xs transition-shadow focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-muted/30"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold tabular-nums">
-                        #{String(order.orderNo).padStart(3, '0')}
-                      </span>
+                      <span className="font-bold tabular-nums">{orderNoLabel(order.orderNo)}</span>
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {formatClock(order.placedAt)}
                       </span>
                     </div>
                     <Status variant={orderStatusVariant(order.status)}>
                       <StatusIndicator />
-                      <span className="capitalize">{order.status.replace(/_/g, ' ')}</span>
+                      <span>{words.shop.orderStatus[order.status]}</span>
                     </Status>
                   </div>
 
@@ -466,20 +465,20 @@ export function HistoryScreen({ slug }: HistoryScreenProps) {
                       </span>
                     </div>
                     <span className="font-bold text-foreground tabular-nums">
-                      {formatPeso(order.totals.total)}
+                      {formatPeso(order.total)}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between border-t border-border/40 pt-2 text-[11px] text-muted-foreground">
+                  <div className="flex items-center justify-between border-t border-border/40 pt-2 text-xs text-muted-foreground">
                     <span className="line-clamp-1 truncate">
                       {order.lines.map((l) => `${l.qty}× ${l.name}`).join(', ')}
                     </span>
                     <Status variant={paymentStatusVariant(order.paymentStatus)}>
                       <StatusIndicator />
-                      <span className="capitalize">{order.paymentStatus}</span>
+                      <span>{paymentWord(order)}</span>
                     </Status>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

@@ -7,9 +7,9 @@ import {
   SlidersHorizontalIcon,
   WifiOffIcon,
 } from 'lucide-react';
-import type { BoardOrder, OrderType } from '@smartapp/core';
-import { addDays, formatManila, manilaDate, ordersWords, words } from '@smartapp/core';
-import { useScheduledOrders } from '@smartapp/data';
+import type { BoardOrder } from '@smartapp/core';
+import { addDays, errorWords, formatManila, manilaDate, ordersWords } from '@smartapp/core';
+import { errorCodeOf, useScheduledOrders } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Switch } from '@smartapp/ui/components/switch';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
@@ -19,12 +19,16 @@ import { PageEmpty, PageError } from '@/app/page-state';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { useNow } from '@/app/orders/use-now';
 import { useMediaQuery } from '@/app/use-media-query';
-import { useOrdersSearch, withSearch, type CalendarViewParam } from '../tabs.js';
+import { CALENDAR_VIEWS, useOrdersSearch, withSearch, type CalendarViewParam } from '../tabs.js';
 import { TypeFilter } from '../type-filter.js';
 import { ScheduledCalendar } from '../scheduled-calendar.js';
 import { DayAgenda } from '../day-agenda.js';
 import { BookingRulesSheet } from '../booking-rules-sheet.js';
-import { ChangeTimeDialog, type RescheduleOrderTarget } from '../change-time-dialog.js';
+import { ChangeTimeDialog } from '../change-time-dialog.js';
+
+function isCalendarViewParam(value: unknown): value is CalendarViewParam {
+  return CALENDAR_VIEWS.some((v) => v === value);
+}
 
 export interface ScheduledScreenProps {
   slug: string;
@@ -55,41 +59,31 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
 
   // Work out data query range from calView and activeDate (Requirement 3)
   const { fromDateStr, toDateStr } = React.useMemo(() => {
-    if (!isDesktop) {
-      // Phone/tablet shows month grid, so fetch 35 days centered on month
-      const start = addDays(activeDateStr, -14);
-      const end = addDays(activeDateStr, 35);
-      return { fromDateStr: start, toDateStr: end };
+    // Month grid (phone, tablet, desktop Month): the whole month plus the weeks around it (at most 62 days).
+    if (!isDesktop || calView === 'month') {
+      const monthStart = `${activeDateStr.slice(0, 7)}-01`;
+      return { fromDateStr: addDays(monthStart, -7), toDateStr: addDays(monthStart, 38) };
     }
-
-    if (calView === 'month') {
-      const start = addDays(activeDateStr, -14);
-      const end = addDays(activeDateStr, 35);
-      return { fromDateStr: start, toDateStr: end };
-    }
-
     if (calView === 'agenda') {
-      return {
-        fromDateStr: activeDateStr,
-        toDateStr: addDays(activeDateStr, 14),
-      };
+      return { fromDateStr: activeDateStr, toDateStr: addDays(activeDateStr, 14) };
     }
-
-    // Default 'week': 7 days (current week)
-    const start = addDays(activeDateStr, -3);
-    const end = addDays(activeDateStr, 4);
-    return { fromDateStr: start, toDateStr: end };
+    // Week: a week either side covers any first day of the week.
+    return { fromDateStr: addDays(activeDateStr, -7), toDateStr: addDays(activeDateStr, 7) };
   }, [isDesktop, calView, activeDateStr]);
 
-  const { data, isLoading, isError, refetch } = useScheduledOrders(slug, fromDateStr, toDateStr);
+  const { data, isLoading, isError, error, refetch } = useScheduledOrders(
+    slug,
+    fromDateStr,
+    toDateStr,
+  );
 
-  const orders = data?.orders ?? [];
-  const days = data?.days ?? [];
+  const orders = React.useMemo(() => data?.orders ?? [], [data]);
+  const days = React.useMemo(() => data?.days ?? [], [data]);
 
   // Filter orders by order type if selected
   const filteredOrders = React.useMemo(() => {
     if (typeFilter === 'all') return orders;
-    return orders.filter((o) => o.type === (typeFilter as OrderType));
+    return orders.filter((o) => o.type === typeFilter);
   }, [orders, typeFilter]);
 
   const typeCounts = React.useMemo(() => {
@@ -103,12 +97,8 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
 
   // Sheet & dialog state
   const [isRulesOpen, setIsRulesOpen] = React.useState(false);
-  const [rescheduleTarget, setRescheduleTarget] = React.useState<RescheduleOrderTarget | null>(
-    null,
-  );
-  const [rescheduleDate, setRescheduleDate] = React.useState<Date | null>(null);
-  const [rescheduleSlotAt, setRescheduleSlotAt] = React.useState<string | null>(null);
-  const [isRescheduleOpen, setIsRescheduleOpen] = React.useState(false);
+  // A calendar drop: the order and the time it was dropped on (saved only on confirm, T52).
+  const [dropped, setDropped] = React.useState<{ orderId: string; at: Date } | null>(null);
 
   // Date navigation handlers
   const handleSetDate = (newDate: Date) => {
@@ -134,6 +124,10 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
     });
   };
 
+  const handleCalendarViewChange = (v: string) => {
+    if (isCalendarViewParam(v)) handleSetCalView(v);
+  };
+
   const handleToggleShowDone = (checked: boolean) => {
     void navigate({
       to: '/orders',
@@ -150,18 +144,7 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
   };
 
   const handleDropOrder = (order: BoardOrder, proposedStart: Date) => {
-    setRescheduleTarget({
-      id: order.id,
-      orderNo: order.orderNo,
-      type: order.type,
-      status: order.status,
-      dueAt: order.dueAt,
-      scheduledAt: order.scheduledAt,
-      lines: order.lines,
-    });
-    setRescheduleDate(proposedStart);
-    setRescheduleSlotAt(proposedStart.toISOString());
-    setIsRescheduleOpen(true);
+    setDropped({ orderId: order.id, at: proposedStart });
   };
 
   return (
@@ -192,7 +175,7 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
             variant="outline"
             size="icon"
             onClick={() => handleStepDay(calView === 'month' ? -30 : -7)}
-            aria-label="Previous period"
+            aria-label={ordersWords.schedule.previous}
             className="size-9"
           >
             <ChevronLeftIcon className="size-4" />
@@ -203,7 +186,7 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
             variant="outline"
             size="icon"
             onClick={() => handleStepDay(calView === 'month' ? 30 : 7)}
-            aria-label="Next period"
+            aria-label={ordersWords.schedule.next}
             className="size-9"
           >
             <ChevronRightIcon className="size-4" />
@@ -219,13 +202,12 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
           {/* Desktop view switch */}
           {isDesktop && (
             <ToggleGroup
-              type="single"
-              value={calView}
+              value={[calView]}
               onValueChange={(val) => {
-                if (val === 'month' || val === 'week' || val === 'agenda') {
-                  handleSetCalView(val);
-                }
+                const next = val[0];
+                if (isCalendarViewParam(next)) handleSetCalView(next);
               }}
+              aria-label={ordersWords.schedule.viewsLabel}
               className="h-9"
             >
               <ToggleGroupItem value="month" className="h-9 px-3 text-xs font-semibold">
@@ -275,8 +257,12 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
         </div>
       ) : isError ? (
         <PageError
-          error={ordersWords.states.errorScheduled}
-          onRetry={() => void refetch()}
+          title={ordersWords.states.errorScheduled}
+          message={errorWords(errorCodeOf(error))}
+          retryLabel={ordersWords.states.tryAgain}
+          onRetry={() => {
+            void refetch();
+          }}
           className="py-16"
         />
       ) : orders.length === 0 ? (
@@ -304,7 +290,7 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
           orders={filteredOrders}
           days={days}
           view={calView}
-          onViewChange={handleSetCalView}
+          onViewChange={handleCalendarViewChange}
           date={activeDate}
           onDateChange={handleSetDate}
           showDone={showDone}
@@ -326,14 +312,17 @@ export function ScheduledScreen({ slug }: ScheduledScreenProps) {
       <BookingRulesSheet open={isRulesOpen} onOpenChange={setIsRulesOpen} slug={slug} />
 
       {/* Change Time Dialog from calendar drop */}
-      <ChangeTimeDialog
-        open={isRescheduleOpen}
-        onOpenChange={setIsRescheduleOpen}
-        slug={slug}
-        order={rescheduleTarget}
-        initialDate={rescheduleDate}
-        initialSlotAt={rescheduleSlotAt}
-      />
+      {dropped && (
+        <ChangeTimeDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setDropped(null);
+          }}
+          slug={slug}
+          orderId={dropped.orderId}
+          initialAt={dropped.at}
+        />
+      )}
     </div>
   );
 }
