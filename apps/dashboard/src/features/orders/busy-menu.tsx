@@ -34,7 +34,7 @@ export function BusyMenu({ slug, openState, className }: BusyMenuProps) {
             variant="outline"
             size="sm"
             className={cn(
-              'h-8.5 gap-1.5 rounded-lg text-xs font-semibold transition-colors',
+              'h-11 gap-1.5 rounded-lg text-xs font-semibold transition-colors md:h-9',
               isPaused
                 ? 'border-destructive/30 bg-destructive/10 text-destructive'
                 : isBusy
@@ -56,7 +56,7 @@ export function BusyMenu({ slug, openState, className }: BusyMenuProps) {
             ) : (
               <>
                 <CoffeeIcon className="size-3.5 text-muted-foreground" />
-                <span>Busy</span>
+                <span>{ordersWords.states.busyMenu.busy}</span>
               </>
             )}
           </Button>

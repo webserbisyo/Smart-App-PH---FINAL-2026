@@ -27,7 +27,7 @@ export * from './rules/delivery.js';
 export * from './rules/order-rules.js';
 export * from './rules/order-timing.js';
 export * from './rules/pickup-code.js';
-export * from './rules/kitchen.js';
+export * from './rules/order-search.js';
 export * from './rules/schedule.js';
 export * from './rules/day-loads.js';
 export * from './rules/stamps.js';

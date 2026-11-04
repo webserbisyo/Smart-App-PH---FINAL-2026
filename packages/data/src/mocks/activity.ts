@@ -197,6 +197,9 @@ interface DraftOrder extends Omit<
 > {
   token?: string;
   lines?: BasketLine[];
+  // How many different items to pick (default 1 to 3), and a quantity multiplier for big orders.
+  lineCount?: number;
+  qtyBoost?: number;
   customerIndex?: number;
   customer?: OrderSpec['customer'];
 }
@@ -539,6 +542,36 @@ function kantoSmashDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       deliveryAddress: delivery.address,
     },
   ];
+
+  // Edge cases the board must handle: a big family order with many lines, a bulk order with a long
+  // name and a big total, and a walk-in that is almost due.
+  openDrafts.push(
+    {
+      customerIndex: 5,
+      placedAt: addMinutes(iso, -6),
+      type: walkIn,
+      status: 'preparing',
+      paymentStatus: 'paid',
+      paymentMethod: methodFor(shop, walkIn, 'cash'),
+      lineCount: 7,
+    },
+    {
+      customer: {
+        name: 'Ma. Concepcion Dela Paz-Villanueva',
+        phone: '+639170004321',
+        email: 'concepcion.villanueva@example.com',
+      },
+      placedAt: addMinutes(iso, -4),
+      type: pickup,
+      status: 'placed',
+      paymentStatus: 'paid',
+      paymentMethod: gcash,
+      lineCount: 3,
+      qtyBoost: 25,
+      proofs: [proof('pf-ks-bulk', 'approved', addMinutes(iso, -3), '2001 777 8888')],
+      note: 'Office party. Please pack per box with labels.',
+    },
+  );
 
   // Earlier completed/cancelled orders today
   const historyToday: DraftOrder[] = [
@@ -1340,7 +1373,13 @@ export function generateOrders(shop: PublicShop, now: Date, rng: Rng): OrderReco
   const slug = shop.storefront.slug;
   if (shop.catalog.items.length === 0) return [];
   const drafts = [...activityDrafts(shop, now), ...demoReceiptDrafts(shop, now)]
-    .map((d) => ({ ...d, lines: d.lines ?? orderableLines(shop, now, rng, int(rng, 1, 3)) }))
+    .map(({ lineCount, qtyBoost, ...d }) => {
+      const lines = d.lines ?? orderableLines(shop, now, rng, lineCount ?? int(rng, 1, 3));
+      return {
+        ...d,
+        lines: qtyBoost ? lines.map((l) => ({ ...l, qty: l.qty * qtyBoost })) : lines,
+      };
+    })
     .filter((d) => d.lines.length > 0)
     .sort((a, b) => a.placedAt.localeCompare(b.placedAt));
   const counters = new Map<string, number>();

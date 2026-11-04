@@ -27,7 +27,7 @@ import {
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { Notice } from '@/app/notice';
-import { orderNoLabel } from '@/app/orders/order-ticket';
+import { orderNoLabel } from '@/app/orders/order-card';
 import { useOnlineStatus } from '@/app/use-online-status';
 
 export interface ChangeTimeDialogProps {

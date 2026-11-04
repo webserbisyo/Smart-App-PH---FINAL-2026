@@ -377,9 +377,20 @@ describe('order rules', () => {
     };
     expect(canAdvance(order, 'preparing')).toEqual({ ok: false, code: 'not_paid' });
     expect(canAdvance({ ...order, paymentMethod: 'cash' }, 'preparing')).toEqual({ ok: true });
-    expect(canAdvance({ ...order, paymentStatus: 'paid' }, 'ready')).toEqual({
+    // Forward skips are allowed (decision T55); backwards and off-route steps are not.
+    expect(canAdvance({ ...order, paymentStatus: 'paid' }, 'ready')).toEqual({ ok: true });
+    expect(canAdvance({ ...order, paymentStatus: 'paid' }, 'completed')).toEqual({ ok: true });
+    expect(canAdvance({ ...order, paymentStatus: 'paid' }, 'out_for_delivery')).toEqual({
       ok: false,
       code: 'invalid_transition',
+    });
+    expect(canAdvance({ ...order, status: 'ready', paymentStatus: 'paid' }, 'preparing')).toEqual({
+      ok: false,
+      code: 'invalid_transition',
+    });
+    expect(canAdvance({ ...order, paymentMethod: 'cash' }, 'completed')).toEqual({
+      ok: false,
+      code: 'not_paid',
     });
     expect(nextActions({ ...order, status: 'ready', paymentMethod: 'cash' })).toEqual([]);
     expect(nextActions({ ...order, status: 'ready', paymentStatus: 'paid' })).toEqual([

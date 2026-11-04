@@ -83,6 +83,20 @@ Prices stay in the text colour, never the brand colour. Status and member colour
 
 The mapping lives once in `packages/core` (`STATUS_TONE`) and is used by every badge.
 
+### Stage colours (dashboard Orders, decision T56)
+
+One colour per board stage, each with a solid (`stage-*`: dots, column bars, rings), a soft background (`stage-*-soft`) and a text colour (`stage-*-text`). The storefront keeps the status tones above. A stage always shows as icon + word + colour.
+
+| Stage             | Token             | Light (solid / soft / text)                                  | Dark (solid / soft / text)                          | Icon                               |
+| ----------------- | ----------------- | ------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------- |
+| New               | `stage-new`       | `oklch(0.53 0.22 263)` / `0.955 0.03 264` / `0.44 0.2 263`   | `0.69 0.16 263` / `0.27 0.08 263` / `0.85 0.09 263` | `bell-ring`                        |
+| Preparing/Packing | `stage-preparing` | `oklch(0.68 0.15 65)` / `0.96 0.045 78` / `0.47 0.11 60`     | `0.8 0.15 75` / `0.29 0.06 70` / `0.88 0.11 75`     | `chef-hat` (retail `package-open`) |
+| Ready             | `stage-ready`     | `oklch(0.62 0.15 150)` / `0.955 0.045 150` / `0.44 0.11 150` | `0.74 0.16 150` / `0.27 0.06 150` / `0.87 0.11 150` | `package-check`                    |
+| Out               | `stage-out`       | `oklch(0.56 0.2 295)` / `0.955 0.035 300` / `0.45 0.19 295`  | `0.7 0.16 295` / `0.28 0.08 295` / `0.86 0.09 295`  | `bike`                             |
+| Done              | `stage-done`      | `oklch(0.62 0.02 265)` / `0.95 0.008 265` / `0.45 0.03 260`  | `0.6 0.02 265` / `0.28 0.03 262` / `0.86 0.015 265` | `circle-check`                     |
+
+Every `*-text` on its `*-soft` and on `card` is at least 6:1 in both themes (`packages/ui/test/tokens-contrast.test.ts`). The classes live once in `apps/dashboard/src/app/orders/stage.ts`.
+
 ## Type, shape, motion
 
 - Font: Plus Jakarta Sans (variable, self-hosted); numbers with `tabular-nums`. Money as `₱1,234` (no `.00` for whole pesos); prices never wrap.

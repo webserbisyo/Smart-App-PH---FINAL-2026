@@ -4,6 +4,7 @@ import {
   createRouter,
   lazyRouteComponent,
   Outlet,
+  redirect,
 } from '@tanstack/react-router';
 import { words } from '@smartapp/core';
 import { LoginScreen } from '../features/auth/screens/login.js';
@@ -23,10 +24,8 @@ import { PrizeClaimsScreen } from '../features/members/screens/claims.js';
 import { MemberDetailScreen } from '../features/members/screens/member-detail.js';
 import { MembersScreen } from '../features/members/screens/members.js';
 import { StampCardScreen } from '../features/members/screens/stamp-card.js';
-import { KitchenScreen } from '../features/orders/screens/kitchen.js';
-import { OrderDetailScreen } from '../features/orders/screens/order-detail.js';
 import { OrdersScreen } from '../features/orders/screens/orders.js';
-import { OrdersSearchSchema } from '../features/orders/tabs.js';
+import { OrdersSearchSchema } from '../features/orders/search.js';
 import { AccountSettingsScreen } from '../features/settings/screens/account.js';
 import { DeliverySettingsScreen } from '../features/settings/screens/delivery.js';
 import { HoursSettingsScreen } from '../features/settings/screens/hours.js';
@@ -42,7 +41,7 @@ import { rememberPreviousPath } from './back.js';
 import { requireAuth, requireGuest, signOut } from './guards.js';
 import type { PageMeta } from './page-meta.js';
 import { AppShell } from './shell/app-shell.js';
-import { resolveShop, ShopContext } from './shop.js';
+import { resolveShop } from './shop.js';
 
 const s = words.screens;
 const page = (title: PageMeta['title'], parent?: PageMeta['parent'], hideDock?: boolean) => ({
@@ -83,28 +82,6 @@ const editorRoute = createRoute({
   beforeLoad: requireAuth,
   component: EditorScreen,
 });
-
-// Kitchen / Packing view (O5): full screen outside the shell like the Editor (N13), same owner login.
-// A static path, so it wins over /orders/$orderId.
-const kitchenRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/orders/kitchen',
-  validateSearch: OrdersSearchSchema,
-  beforeLoad: async () => {
-    const claims = await requireAuth();
-    return { shop: resolveShop(claims) };
-  },
-  component: KitchenLayout,
-});
-
-function KitchenLayout() {
-  const { shop } = kitchenRoute.useRouteContext();
-  return (
-    <ShopContext value={shop}>
-      <KitchenScreen />
-    </ShopContext>
-  );
-}
 
 // The signed-in shell: without a session every page below redirects to /login.
 const shellRoute = createRoute({
@@ -147,12 +124,14 @@ const ordersRoute = createRoute({
   component: OrdersScreen,
   staticData: page(() => s.orders.title),
 });
+// Old order links (notifications, bookmarks) open the order panel on the Orders page (decision T54).
 const orderRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/orders/$orderId',
-  validateSearch: OrdersSearchSchema,
-  component: OrderDetailScreen,
-  staticData: page(() => s.orders.detailTitle, orders),
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/orders', search: { order: params.orderId }, replace: true });
+  },
+  staticData: page(() => s.orders.title, orders),
 });
 
 const catalogRoute = createRoute({
@@ -262,7 +241,6 @@ const baseRoutes = [
   signupRoute,
   logoutRoute,
   editorRoute,
-  kitchenRoute,
   shellRoute.addChildren([
     homeRoute,
     ordersRoute,

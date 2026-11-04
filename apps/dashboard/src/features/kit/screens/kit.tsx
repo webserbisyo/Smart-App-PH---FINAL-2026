@@ -27,6 +27,7 @@ import { StorefrontPatterns } from '../storefront-patterns.js';
 import { StorefrontSections } from '../storefront-sections.js';
 import { CatalogPrimitiveSections } from '../catalog-primitives.js';
 import { OrdersPrimitiveSections } from '../orders-primitives.js';
+import { OrdersV2Sections } from '../orders-v2-primitives.js';
 
 interface TokenSwatch {
   name: string;
@@ -350,6 +351,7 @@ export default function KitPage() {
         <Separator />
 
         <div id="kit-orders" className="scroll-mt-20" />
+        <OrdersV2Sections />
         <OrdersPrimitiveSections />
 
         <Separator />

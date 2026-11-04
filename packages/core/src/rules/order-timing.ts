@@ -106,3 +106,48 @@ export function orderTiming(order: OrderTimingInput, now: string | Date): OrderT
     ageTone,
   };
 }
+
+export const SOON_MINUTES = 5;
+
+export type TicketTimeKind = 'due' | 'soon' | 'late' | 'waiting' | 'out' | 'none';
+
+export interface TicketTime {
+  kind: TicketTimeKind;
+  // Minutes left (soon), late, waiting or out; 0 for due and none.
+  minutes: number;
+}
+
+/**
+ * The time chip on a ticket (Orders v2, D10). New and Preparing count down to the due time: "Due 2:33",
+ * then "4 min left" in the last 5 minutes, then "Late 4 min". Ready counts how long it has waited and Out
+ * how long the rider has been gone, both calm. Finished orders show none.
+ */
+export function ticketTime(
+  order: { status: OrderStatus; dueAt: string; lastStepAt: string },
+  now: string | Date,
+): TicketTime {
+  const nowMs = (now instanceof Date ? now : new Date(now)).getTime();
+  switch (order.status) {
+    case 'placed':
+    case 'preparing': {
+      const msLeft = new Date(order.dueAt).getTime() - nowMs;
+      if (msLeft < 0) {
+        return { kind: 'late', minutes: Math.max(1, Math.floor(-msLeft / MS_PER_MINUTE)) };
+      }
+      if (msLeft <= SOON_MINUTES * MS_PER_MINUTE) {
+        return { kind: 'soon', minutes: Math.max(1, Math.ceil(msLeft / MS_PER_MINUTE)) };
+      }
+      return { kind: 'due', minutes: 0 };
+    }
+    case 'ready':
+    case 'out_for_delivery': {
+      const since = Math.max(
+        0,
+        Math.floor((nowMs - new Date(order.lastStepAt).getTime()) / MS_PER_MINUTE),
+      );
+      return { kind: order.status === 'ready' ? 'waiting' : 'out', minutes: since };
+    }
+    default:
+      return { kind: 'none', minutes: 0 };
+  }
+}

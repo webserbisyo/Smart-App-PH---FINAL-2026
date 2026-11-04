@@ -100,6 +100,11 @@ describe('Design Tokens Contrast', () => {
     { bg: 'invert', fg: 'invert-foreground' },
     { bg: 'focus', fg: 'focus-foreground' },
     { bg: 'background', fg: 'destructive-text' },
+    // Order stages (decision T56): the stage word on its soft fill and on a card.
+    ...['new', 'preparing', 'ready', 'out', 'done'].flatMap((stage) => [
+      { bg: `stage-${stage}-soft`, fg: `stage-${stage}-text` },
+      { bg: 'card', fg: `stage-${stage}-text` },
+    ]),
   ];
 
   describe('Light Mode Text Contrast (>= 4.5:1)', () => {

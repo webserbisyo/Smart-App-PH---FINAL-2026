@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CentavosSchema, IdSchema, IsoDateTimeSchema } from './common.js';
+import { CentavosSchema, IdSchema, IsoDateTimeSchema, MediaRefSchema } from './common.js';
 import { OrderStatusEnum, OrderTypeEnum, PaymentMethodEnum, PaymentStatusEnum } from './enums.js';
 import { OrderReceiptSchema, ProofSchema } from './order.js';
 
@@ -10,6 +10,8 @@ export const TicketLineSchema = z.object({
   variantLabel: z.string().nullable(),
   optionLabels: z.array(z.string()),
   note: z.string().nullable(),
+  // The item's first photo (a media ref, like catalog photos), for the photo stack (decision T56).
+  photo: MediaRefSchema.nullable(),
 });
 export type TicketLine = z.infer<typeof TicketLineSchema>;
 
@@ -40,6 +42,12 @@ export const BoardOrderSchema = z.object({
   ownerNote: z.string().nullable(),
   deliveryArea: z.string().nullable(),
   lastStepAt: IsoDateTimeSchema,
+  // When an unpaid transfer's pay window ends (null for cash and paid orders).
+  expiresAt: IsoDateTimeSchema.nullable(),
+  // The member's stamps toward the prize, for the "7/10" chip (null when not a member or the card is off).
+  memberStamps: z
+    .object({ have: z.number().int().nonnegative(), goal: z.number().int().positive() })
+    .nullable(),
 });
 export type BoardOrder = z.infer<typeof BoardOrderSchema>;
 

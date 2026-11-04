@@ -202,7 +202,7 @@ describe('orders', () => {
     expect(after.lines[0]?.problems).toEqual([]);
   });
 
-  it('steps only move forward and completing needs paid', async () => {
+  it('steps move forward, skips allowed (T55), and completing needs paid', async () => {
     const { store } = testStore(OPEN_MONDAY);
     const slug = 'kanto-smash';
     const placed = await store.storefront.placeOrder({
@@ -210,13 +210,13 @@ describe('orders', () => {
       payload: pickupPayload(await lines(store, slug), { paymentMethod: 'cash' }),
       clientKey: 's-1',
     });
+    // New straight to Ready (skips Preparing), then never backwards.
+    await store.ownerOrders.advanceOrder({ slug, orderId: placed.orderId, toStatus: 'ready' });
     expect(
       await errorCode(
-        store.ownerOrders.advanceOrder({ slug, orderId: placed.orderId, toStatus: 'ready' }),
+        store.ownerOrders.advanceOrder({ slug, orderId: placed.orderId, toStatus: 'preparing' }),
       ),
     ).toBe('invalid_transition');
-    await store.ownerOrders.advanceOrder({ slug, orderId: placed.orderId, toStatus: 'preparing' });
-    await store.ownerOrders.advanceOrder({ slug, orderId: placed.orderId, toStatus: 'ready' });
     expect(
       await errorCode(
         store.ownerOrders.advanceOrder({ slug, orderId: placed.orderId, toStatus: 'completed' }),

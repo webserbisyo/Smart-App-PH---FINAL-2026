@@ -76,6 +76,22 @@
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
 
+  --color-stage-new: var(--stage-new);
+  --color-stage-new-soft: var(--stage-new-soft);
+  --color-stage-new-text: var(--stage-new-text);
+  --color-stage-preparing: var(--stage-preparing);
+  --color-stage-preparing-soft: var(--stage-preparing-soft);
+  --color-stage-preparing-text: var(--stage-preparing-text);
+  --color-stage-ready: var(--stage-ready);
+  --color-stage-ready-soft: var(--stage-ready-soft);
+  --color-stage-ready-text: var(--stage-ready-text);
+  --color-stage-out: var(--stage-out);
+  --color-stage-out-soft: var(--stage-out-soft);
+  --color-stage-out-text: var(--stage-out-text);
+  --color-stage-done: var(--stage-done);
+  --color-stage-done-soft: var(--stage-done-soft);
+  --color-stage-done-text: var(--stage-done-text);
+
   --color-shop-60: var(--shop-60);
   --color-shop-30: var(--shop-30);
   --color-shop-10: var(--shop-10);

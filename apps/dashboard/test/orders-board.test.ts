@@ -25,17 +25,19 @@ function mockOrder(patch: Partial<BoardOrder> = {}): BoardOrder {
     pickupCode: 'ABCD',
     seenAt: basePlaced,
     lines: [
-      { qty: 1, name: 'Burger', variantLabel: null, optionLabels: [], note: null },
-      { qty: 1, name: 'Fries', variantLabel: null, optionLabels: [], note: null },
-      { qty: 1, name: 'Drink', variantLabel: null, optionLabels: [], note: null },
-      { qty: 1, name: 'Pie', variantLabel: null, optionLabels: [], note: null },
-      { qty: 1, name: 'Sauce', variantLabel: null, optionLabels: [], note: null },
+      { qty: 1, name: 'Burger', variantLabel: null, optionLabels: [], note: null, photo: null },
+      { qty: 1, name: 'Fries', variantLabel: null, optionLabels: [], note: null, photo: null },
+      { qty: 1, name: 'Drink', variantLabel: null, optionLabels: [], note: null, photo: null },
+      { qty: 1, name: 'Pie', variantLabel: null, optionLabels: [], note: null, photo: null },
+      { qty: 1, name: 'Sauce', variantLabel: null, optionLabels: [], note: null, photo: null },
     ],
     moreLines: 1,
     note: null,
     ownerNote: null,
     deliveryArea: null,
     lastStepAt: basePlaced,
+    expiresAt: null,
+    memberStamps: null,
     ...patch,
   };
 }
@@ -76,7 +78,7 @@ describe('O3 orders-board rules and grouping', () => {
     expect(orders.filter((o) => o.type === 'delivery')).toHaveLength(1);
   });
 
-  it('enforces drop rules: advances only to the exact next column', () => {
+  it('enforces drop rules: any later column (T55), never backwards', () => {
     const order = mockOrder({
       status: 'placed',
       type: 'pickup',
@@ -88,8 +90,13 @@ describe('O3 orders-board rules and grouping', () => {
     expect(canAdvance(order, 'preparing')).toEqual({ ok: true });
     expect(nextActions(order)).toEqual(['preparing']);
 
-    // Invalid jump: placed -> ready (not allowed)
-    expect(canAdvance(order, 'ready')).toEqual({ ok: false, code: 'invalid_transition' });
+    // Forward skip: placed -> ready is allowed (decision T55)
+    expect(canAdvance(order, 'ready')).toEqual({ ok: true });
+    // A pickup never goes Out
+    expect(canAdvance(order, 'out_for_delivery')).toEqual({
+      ok: false,
+      code: 'invalid_transition',
+    });
 
     // Invalid backward move: preparing -> placed
     const prepOrder = mockOrder({ status: 'preparing', paymentStatus: 'paid' });
@@ -152,6 +159,7 @@ describe('O3 orders-board rules and grouping', () => {
         variantLabel: null,
         optionLabels: [],
         note: null,
+        photo: null,
       })),
       moreLines: 32,
     });

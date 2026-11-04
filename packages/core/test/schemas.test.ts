@@ -197,12 +197,15 @@ describe('schemas', () => {
         variantLabel: null,
         optionLabels: [],
         note: null,
+        photo: null,
       })),
       moreLines: 0,
       note: null,
       ownerNote: null,
       deliveryArea: null,
       lastStepAt: '2026-10-26T04:00:00.000Z',
+      expiresAt: null,
+      memberStamps: null,
     };
     expect(BoardOrderSchema.safeParse(validBoardOrder).success).toBe(true);
 
@@ -215,6 +218,7 @@ describe('schemas', () => {
         variantLabel: null,
         optionLabels: [],
         note: null,
+        photo: null,
       })),
     };
     expect(BoardOrderSchema.safeParse(invalidBoardOrder).success).toBe(false);

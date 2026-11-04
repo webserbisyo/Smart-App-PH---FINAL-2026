@@ -50,6 +50,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] O4 Orders Scheduled, History, Change time
 - [x] O5 Orders Kitchen view, print and Find order
 - [x] O6 Storefront scheduling, item notice and limits
+- [x] Orders v2: one page with Board and List, order panel, live drag, stage colours (decisions T54 to T56)
 
 ## Phase 4: Backend, area by area
 

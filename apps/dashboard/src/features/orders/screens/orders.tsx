@@ -1,215 +1,314 @@
 import * as React from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { FilterXIcon, ReceiptTextIcon, Share2Icon, WifiOffIcon } from 'lucide-react';
+import type { BoardOrder, OrderType } from '@smartapp/core';
 import {
-  ChefHatIcon,
-  PackageIcon,
-  ReceiptTextIcon,
-  SearchIcon,
-  Share2Icon,
-  Volume2Icon,
-  WifiOffIcon,
-} from 'lucide-react';
-import type { BoardOrder } from '@smartapp/core';
-import { errorWords, ordersWords, vocab, words } from '@smartapp/core';
-import { errorCodeOf, useOpenOrders } from '@smartapp/data';
+  ORDER_TYPES,
+  awaitsTransfer,
+  boardColumn,
+  errorWords,
+  manilaDate,
+  ordersWords,
+  payWindowOver,
+  words,
+} from '@smartapp/core';
+import { errorCodeOf, useOpenOrders, useOrdersByDate, useStorefront } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
-import { copyText } from '@smartapp/ui/lib/copy-text';
 import { notify } from '@smartapp/ui/compositions/notify';
+import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
+import { copyText } from '@smartapp/ui/lib/copy-text';
 import { Notice } from '@/app/notice';
+import { useFreshIds } from '@/app/orders/order-motion';
 import { useNow } from '@/app/orders/use-now';
 import { useOrderSound } from '@/app/orders/use-order-sound';
+import { useStepChange } from '@/app/orders/use-step-change';
 import { PageEmpty, PageError } from '@/app/page-state';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { useShop } from '@/app/shop';
 import { storefrontUrl } from '@/app/use-nav-items';
-import { BusyMenu } from '../busy-menu.js';
-import { FindOrderDialog } from '../find-order-dialog.js';
-import { NowBoard } from '../now-board.js';
-import { OrdersDevScenarioPanel } from '../orders-dev-scenario-panel.js';
-import { useOrdersSearch, useOrdersTabs } from '../tabs.js';
-import { ScheduledScreen } from './scheduled.js';
-import { HistoryScreen } from './history.js';
+import { Board, groupByStage } from '../board.js';
+import { ListView } from '../list-view.js';
+import { OrderPanel } from '../order-panel.js';
+import { OrdersToolbar } from '../orders-toolbar.js';
+import { PHONE_STAGES, useOrdersSearch, useSetOrdersSearch, type OrderFilter } from '../search.js';
+import { TypeCards, type TypeTotals } from '../type-cards.js';
 
+/** Waiting for the owner: the customer sent a transfer and the proof needs a look. */
+function needsCheck(order: BoardOrder): boolean {
+  return order.status === 'placed' && awaitsTransfer(order) && order.paymentStatus === 'pending';
+}
+
+function matchesFilter(order: BoardOrder, filter: OrderFilter | undefined): boolean {
+  if (!filter) return true;
+  if (filter === 'to_check') return needsCheck(order);
+  return order.type === filter;
+}
+
+/**
+ * Orders v2 (decision T54): one page with a Board (live stages) and a List (any day), type cards on top
+ * and the order panel over either view. Everything that changes the view lives in the address.
+ */
 export function OrdersScreen() {
   const shop = useShop();
   const search = useOrdersSearch();
-  const currentView = search.view ?? 'now';
-  const navigate = useNavigate();
-
+  const setSearch = useSetOrdersSearch();
+  const view = search.view ?? 'board';
+  const query = search.q ?? '';
+  const isPhone = useFormFactor() === 'phone';
   const isOnline = useOnlineStatus();
   const now = useNow(30_000);
+  const today = manilaDate(now);
 
-  const {
-    data: orders = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useOpenOrders(shop.slug, search.q);
+  const open = useOpenOrders(shop.slug, query || undefined);
+  const todays = useOrdersByDate(shop.slug, today);
+  const storefront = useStorefront(shop.slug);
 
-  const { soundEnabled, enableSound } = useOrderSound(orders);
+  // Unpaid orders whose pay window ran out leave the board right away (D10), before the server says so.
+  const live = React.useMemo(
+    () => (open.data ?? []).filter((o) => !payWindowOver(o, now)),
+    [open.data, now],
+  );
 
-  // Tab title shows open count: "(5) Orders · Kanto Smash Burgers"
-  const openCount = orders.length;
+  const types: readonly OrderType[] = storefront.data?.storefront.orderTypes ?? ORDER_TYPES;
+  const delivers = types.includes('delivery');
+
+  const totals = React.useMemo(() => {
+    const out: Record<OrderType, TypeTotals> = {
+      walk_in: { count: 0, total: 0 },
+      pickup: { count: 0, total: 0 },
+      delivery: { count: 0, total: 0 },
+    };
+    for (const o of live) {
+      out[o.type].count += 1;
+      out[o.type].total += o.total;
+    }
+    return out;
+  }, [live]);
+  const toCheck = React.useMemo(() => live.filter(needsCheck).length, [live]);
+
+  const filter = search.filter === 'to_check' && toCheck === 0 ? undefined : search.filter;
+  const shown = React.useMemo(() => live.filter((o) => matchesFilter(o, filter)), [live, filter]);
+
+  const laterCount = React.useMemo(
+    () =>
+      shown.filter((o) => boardColumn(o, now) === 'scheduled' && manilaDate(o.dueAt) === today)
+        .length,
+    [shown, now, today],
+  );
+
+  const done = React.useMemo(() => {
+    const list = (todays.data ?? []).filter(
+      (o) => o.status === 'completed' && matchesFilter(o, filter),
+    );
+    return { count: list.length, total: list.reduce((sum, o) => sum + o.total, 0) };
+  }, [todays.data, filter]);
+
+  // The phone list starts on the first stage with work in it, unless the owner picked one.
+  const phoneStage = React.useMemo(() => {
+    if (search.stage) return search.stage;
+    const cols = groupByStage(shown, now);
+    return PHONE_STAGES.find((s) => cols[s].length > 0) ?? 'new';
+  }, [search.stage, shown, now]);
+
+  const fresh = useFreshIds(
+    React.useMemo(() => live.map((o) => o.id), [live]),
+    open.isSuccess,
+  );
+  const { soundEnabled, enableSound, disableSound } = useOrderSound(live);
+  const step = useStepChange({ slug: shop.slug, kind: shop.kind });
+
+  // Tab title shows the open count: "(5) Orders · Kanto Smash Burgers".
+  const openCount = live.length;
   React.useEffect(() => {
     const prefix = openCount > 0 ? `(${openCount}) ` : '';
     document.title = `${prefix}${words.screens.orders.title} · ${shop.name}`;
   }, [openCount, shop.name]);
 
-  const tabs = useOrdersTabs();
-  const [findOpen, setFindOpen] = React.useState(false);
-  const KitchenIcon = shop.kind === 'retail' ? PackageIcon : ChefHatIcon;
-  const kitchenLabel = vocab(shop.kind).kitchenView;
+  // The panel opens at once from what the board or list already has; the detail fills in behind it.
+  const [clicked, setClicked] = React.useState<BoardOrder | undefined>(undefined);
+  const seed =
+    live.find((o) => o.id === search.order) ??
+    (clicked && clicked.id === search.order ? clicked : undefined);
+
+  const openOrder = React.useCallback(
+    (order: BoardOrder) => {
+      setClicked(order);
+      setSearch({ order: order.id });
+    },
+    [setSearch],
+  );
+  const closeOrder = React.useCallback(
+    () => setSearch({ order: undefined }, { replace: true }),
+    [setSearch],
+  );
 
   const handleShare = async () => {
     const url = storefrontUrl(shop.slug);
-    if (navigator.share) {
+    if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ title: shop.name, url });
         return;
       } catch {
-        // Fall back to copy
+        // Closed or not allowed: copy instead.
       }
     }
-    const ok = await copyText(url);
-    if (ok) {
-      notify({ title: words.share.copied, tone: 'success' });
-    }
+    if (await copyText(url)) notify({ title: words.share.copied, tone: 'success' });
   };
 
-  const handleSelectOrder = (order: BoardOrder) => {
-    void navigate({
-      to: '/orders/$orderId',
-      params: { orderId: order.id },
-      search,
-    });
-  };
+  const hasFilters = filter !== undefined || query !== '';
+  const clearFilters = () => setSearch({ filter: undefined, q: undefined }, { replace: true });
 
-  return (
-    <div className="flex min-h-full flex-col pb-16 md:pb-8">
-      <PageHeader
-        title={words.screens.orders.title}
-        tabs={tabs}
-        actions={
-          <div className="flex items-center gap-1.5">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setFindOpen(true)}
-              aria-label={ordersWords.find.button}
-              className="h-11 gap-1.5 px-3 md:h-9"
-            >
-              <SearchIcon className="size-4" aria-hidden="true" />
-              <span className="sr-only md:not-sr-only">{ordersWords.find.button}</span>
-            </Button>
-            <Button
-              variant="outline"
-              aria-label={kitchenLabel}
-              className="h-11 gap-1.5 px-3 md:h-9"
-              nativeButton={false}
-              render={<Link to="/orders/kitchen" search={{ type: search.type }} />}
-            >
-              <KitchenIcon className="size-4" aria-hidden="true" />
-              <span className="sr-only md:not-sr-only">{kitchenLabel}</span>
-            </Button>
-            <BusyMenu slug={shop.slug} />
-          </div>
+  let boardBody: React.ReactNode;
+  if (open.isPending) {
+    boardBody = <BoardSkeleton isPhone={isPhone} />;
+  } else if (open.isError) {
+    boardBody = (
+      <PageError
+        title={ordersWords.states.errorBoard}
+        message={errorWords(errorCodeOf(open.error))}
+        retryLabel={ordersWords.states.tryAgain}
+        onRetry={() => void open.refetch()}
+      />
+    );
+  } else if (shown.length === 0 && hasFilters) {
+    boardBody = (
+      <PageEmpty
+        icon={<FilterXIcon className="size-8 text-muted-foreground" />}
+        title={ordersWords.states.noMatches}
+        action={
+          <Button variant="outline" onClick={clearFilters} className="h-11 md:h-9">
+            {ordersWords.states.clearFilters}
+          </Button>
         }
       />
-      <FindOrderDialog open={findOpen} onOpenChange={setFindOpen} slug={shop.slug} />
+    );
+  } else if (live.length === 0 && done.count === 0) {
+    boardBody = (
+      <PageEmpty
+        icon={<ReceiptTextIcon className="size-8 text-muted-foreground" />}
+        title={ordersWords.states.emptyBoardTitle}
+        description={ordersWords.states.emptyBoard}
+        action={
+          <Button
+            variant="outline"
+            onClick={() => void handleShare()}
+            className="h-11 gap-1.5 md:h-9"
+          >
+            <Share2Icon aria-hidden="true" />
+            {ordersWords.states.shareMyShop}
+          </Button>
+        }
+      />
+    );
+  } else {
+    boardBody = (
+      <Board
+        orders={shown}
+        now={now}
+        kind={shop.kind}
+        delivers={delivers}
+        isPhone={isPhone}
+        disabled={!isOnline}
+        fresh={fresh}
+        laterCount={laterCount}
+        done={done}
+        phoneStage={phoneStage}
+        onPhoneStageChange={(stage) => setSearch({ stage }, { replace: true })}
+        onOpen={openOrder}
+        onAdvance={step.advance}
+        onPayAndComplete={step.payAndComplete}
+        onShowLater={() => setSearch({ view: 'list', day: 'today', status: 'new' })}
+        onShowDone={() => setSearch({ view: 'list', day: 'today', status: 'done' })}
+      />
+    );
+  }
 
-      <main className="flex-1 space-y-4 px-4 py-4 md:px-6">
-        {/* Offline Notice */}
-        {!isOnline && (
+  return (
+    <div className="flex min-h-full flex-col pb-24 md:pb-8">
+      <PageHeader title={words.screens.orders.title} />
+
+      <div className="flex flex-col gap-3 px-4 pt-2 md:px-6 md:pt-4">
+        <OrdersToolbar
+          slug={shop.slug}
+          view={view}
+          onViewChange={(next) => setSearch({ view: next })}
+          query={query}
+          onQueryChange={(q) => setSearch({ q: q || undefined }, { replace: true })}
+          soundOn={soundEnabled}
+          onSoundChange={(on) => (on ? enableSound() : disableSound())}
+        />
+
+        {!isOnline ? (
           <Notice tone="warning" icon={<WifiOffIcon className="size-4" />}>
             <span>{ordersWords.states.offlineNotice}</span>
           </Notice>
-        )}
+        ) : null}
 
-        {/* Turn on sound Notice until tapped */}
-        {!soundEnabled && currentView === 'now' && (
-          <Notice
-            tone="brand"
-            icon={<Volume2Icon className="size-4" />}
-            action={
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={enableSound}
-                className="h-8 text-xs font-semibold"
-              >
-                {ordersWords.states.soundNotice}
-              </Button>
-            }
-          >
-            <span>{ordersWords.states.soundHint}</span>
-          </Notice>
-        )}
+        <TypeCards
+          types={types}
+          totals={totals}
+          toCheck={toCheck}
+          value={filter}
+          onChange={(next) => setSearch({ filter: next }, { replace: true })}
+        />
+      </div>
 
-        {/* View switching */}
-        {currentView === 'scheduled' ? (
-          <ScheduledScreen slug={shop.slug} />
-        ) : currentView === 'history' ? (
-          <HistoryScreen slug={shop.slug} />
-        ) : isLoading ? (
-          /* Loading Skeletons in board shape */
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Skeleton className="h-9 w-20 rounded-lg" />
-              <Skeleton className="h-9 w-24 rounded-lg" />
-              <Skeleton className="h-9 w-24 rounded-lg" />
-            </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
-              {[1, 2, 3, 4].map((col) => (
-                <div key={col} className="space-y-3 rounded-2xl border border-border/40 p-3">
-                  <Skeleton className="h-6 w-24" />
-                  <Skeleton className="h-44 w-full rounded-xl" />
-                  <Skeleton className="h-44 w-full rounded-xl" />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : isError ? (
-          <PageError
-            title={ordersWords.states.errorBoard}
-            message={errorWords(errorCodeOf(error))}
-            retryLabel={ordersWords.states.tryAgain}
-            onRetry={() => {
-              void refetch();
-            }}
-          />
-        ) : orders.length === 0 ? (
-          <PageEmpty
-            className="py-16"
-            icon={<ReceiptTextIcon className="size-8 text-muted-foreground" />}
-            title="No orders yet"
-            description={ordersWords.states.emptyBoard}
-            action={
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void handleShare()}
-                className="h-9 gap-1.5 font-semibold"
-              >
-                <Share2Icon className="size-4" />
-                {ordersWords.states.shareMyShop}
-              </Button>
-            }
-          />
-        ) : (
-          <NowBoard
-            orders={orders}
-            now={now}
+      <main className="flex-1 px-4 pt-3 md:px-6 md:pt-4">
+        {view === 'list' ? (
+          <ListView
             slug={shop.slug}
             kind={shop.kind}
-            onSelectOrder={handleSelectOrder}
+            now={now}
+            query={query}
+            filter={filter}
+            matches={(o) => matchesFilter(o, filter)}
+            onOpen={openOrder}
+            onClearFilters={hasFilters ? clearFilters : undefined}
           />
+        ) : (
+          boardBody
         )}
       </main>
 
-      <OrdersDevScenarioPanel />
+      <OrderPanel
+        orderId={search.order}
+        seed={seed}
+        slug={shop.slug}
+        kind={shop.kind}
+        shopName={shop.name}
+        onClose={closeOrder}
+      />
+    </div>
+  );
+}
+
+function BoardSkeleton({ isPhone }: { isPhone: boolean }) {
+  if (isPhone) {
+    return (
+      <div className="flex flex-col gap-3" aria-hidden="true">
+        <div className="flex gap-1.5">
+          <Skeleton className="h-10 w-24 rounded-full" />
+          <Skeleton className="h-10 w-28 rounded-full" />
+          <Skeleton className="h-10 w-24 rounded-full" />
+        </div>
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+      </div>
+    );
+  }
+  return (
+    <div className="flex gap-3" aria-hidden="true">
+      {[0, 1, 2, 3].map((col) => (
+        <div
+          key={col}
+          className="flex w-72 shrink-0 flex-col gap-3 rounded-xl border border-border/60 p-3 lg:w-auto lg:flex-1"
+        >
+          <Skeleton className="h-7 w-28 rounded-full" />
+          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-40 w-full rounded-xl" />
+        </div>
+      ))}
     </div>
   );
 }

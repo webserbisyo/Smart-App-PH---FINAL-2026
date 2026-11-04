@@ -566,8 +566,11 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       variantLabel: l.variantLabel,
       optionLabels: l.optionLabels,
       note: l.note || null,
+      photo: s.shop.catalog.items.find((i) => i.id === l.itemId)?.photos[0] ?? null,
     }));
     const lastStepAt = o.receipt.events[o.receipt.events.length - 1]?.at ?? o.receipt.placedAt;
+    const member = memberOf(s, o.memberEmail ?? o.customerEmail);
+    const card = s.shop.storefront.stampCard;
     return BoardOrderSchema.parse({
       id: o.id,
       token: o.receipt.token,
@@ -580,7 +583,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       placedAt: o.receipt.placedAt,
       customerName: o.receipt.customerName,
       isFirstOrder: o.isFirstOrder,
-      isMember: memberOf(s, o.memberEmail ?? o.customerEmail) !== null,
+      isMember: member !== null,
       hasReward: o.receipt.rewardTitle !== null,
       itemsSummary: o.receipt.lines.map((l) => `${l.qty} × ${l.name}`).join(', '),
       total: o.receipt.totals.total,
@@ -597,6 +600,14 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           ? (o.receipt.deliveryAddress?.split(',')[0]?.trim() ?? null)
           : null,
       lastStepAt,
+      expiresAt: o.receipt.expiresAt,
+      memberStamps:
+        member && card.status === 'on'
+          ? {
+              have: Math.min(memberBalance(member), card.rule.stampsNeeded),
+              goal: card.rule.stampsNeeded,
+            }
+          : null,
     });
   }
 

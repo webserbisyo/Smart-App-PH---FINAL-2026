@@ -70,26 +70,99 @@ export function nextStatus(order: Pick<OrderStepInput, 'status' | 'type'>): Orde
   return index >= 0 && index < steps.length - 1 ? (steps[index + 1] ?? null) : null;
 }
 
+/** Every step after the current one for the order's type (forward skips, decision T55). */
+export function laterSteps(order: Pick<OrderStepInput, 'status' | 'type'>): OrderStatus[] {
+  const steps = timelineSteps(order.type);
+  const index = steps.indexOf(order.status);
+  return index >= 0 ? steps.slice(index + 1) : [];
+}
+
 export type AdvanceCheck = { ok: true } | { ok: false; code: 'invalid_transition' | 'not_paid' };
 
-/** Steps only move forward, one at a time. Starting a transfer order needs it paid; completing needs paid. */
+/**
+ * Steps only move forward, to any later step for the type (T55: New to Done for a walk-in coffee is fine).
+ * A transfer can't leave New until it is paid; nothing completes until it is paid.
+ */
 export function canAdvance(order: OrderStepInput, to: OrderStatus): AdvanceCheck {
-  if (nextStatus(order) !== to) return { ok: false, code: 'invalid_transition' };
+  if (!laterSteps(order).includes(to)) return { ok: false, code: 'invalid_transition' };
   const paid = order.paymentStatus === 'paid';
-  if (to === 'preparing' && !paid && !isPayLater(order.paymentMethod))
-    return { ok: false, code: 'not_paid' };
+  if (!paid && !isPayLater(order.paymentMethod)) return { ok: false, code: 'not_paid' };
   if (to === 'completed' && !paid) return { ok: false, code: 'not_paid' };
   return { ok: true };
 }
 
-/** Next-step buttons for the owner (one at most in A). */
+/** The one next-step button for the owner (at most one, decision T35). */
 export function nextActions(order: OrderStepInput): OrderStatus[] {
   const next = nextStatus(order);
   return next && canAdvance(order, next).ok ? [next] : [];
 }
 
+/** Steps the order can jump to now, for the "Move to" menu (payment rules included). */
+export function moveTargets(order: OrderStepInput): OrderStatus[] {
+  return laterSteps(order).filter((to) => canAdvance(order, to).ok);
+}
+
+/** An unpaid transfer: it waits for the customer's payment (or the owner's check) before it can start. */
+export function awaitsTransfer(order: Pick<OrderStepInput, 'paymentStatus' | 'paymentMethod'>) {
+  return order.paymentStatus !== 'paid' && isTransfer(order.paymentMethod);
+}
+
+/** A placed, unpaid transfer whose pay window has ended: it leaves the board before the server expires it. */
+export function payWindowOver(
+  order: {
+    status: OrderStatus;
+    paymentStatus: PaymentStatus;
+    paymentMethod: PaymentMethod;
+    expiresAt: string | null;
+  },
+  now: string | Date,
+): boolean {
+  if (order.status !== 'placed' || order.paymentStatus !== 'unpaid') return false;
+  if (!isTransfer(order.paymentMethod) || !order.expiresAt) return false;
+  const t = (now instanceof Date ? now : new Date(now)).getTime();
+  return t >= new Date(order.expiresAt).getTime();
+}
+
 export const BOARD_COLUMNS = ['scheduled', 'new', 'preparing', 'ready', 'out', 'done'] as const;
 export type BoardColumn = (typeof BOARD_COLUMNS)[number];
+
+// The stages the owner sees on the board and in the List view, each with its own colour (decision T56).
+export const ORDER_STAGES = ['new', 'preparing', 'ready', 'out', 'done'] as const;
+export type OrderStage = (typeof ORDER_STAGES)[number];
+
+/** The stage of a status; cancelled and expired orders have none. */
+export function statusStage(status: OrderStatus): OrderStage | null {
+  switch (status) {
+    case 'placed':
+      return 'new';
+    case 'preparing':
+      return 'preparing';
+    case 'ready':
+      return 'ready';
+    case 'out_for_delivery':
+      return 'out';
+    case 'completed':
+      return 'done';
+    default:
+      return null;
+  }
+}
+
+/** The status an order gets when it is dropped on a stage (the stage's own step). */
+export function stageStatus(stage: OrderStage): OrderStatus {
+  switch (stage) {
+    case 'new':
+      return 'placed';
+    case 'preparing':
+      return 'preparing';
+    case 'ready':
+      return 'ready';
+    case 'out':
+      return 'out_for_delivery';
+    case 'done':
+      return 'completed';
+  }
+}
 
 /** Board column; a placed order sits in Scheduled when now < startBy, else New. */
 export function boardColumn(

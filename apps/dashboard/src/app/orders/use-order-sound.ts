@@ -33,19 +33,33 @@ function playChime() {
 
 export function useOrderSound(orders?: BoardOrder[]) {
   const [soundEnabled, setSoundEnabled] = React.useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem(STORAGE_KEY) === 'true';
+    try {
+      return window.localStorage.getItem(STORAGE_KEY) === 'true';
+    } catch {
+      return false;
+    }
   });
 
   const previousIdsRef = React.useRef<Set<string> | null>(null);
 
   const enableSound = React.useCallback(() => {
     setSoundEnabled(true);
-    if (typeof window !== 'undefined') {
+    try {
       window.localStorage.setItem(STORAGE_KEY, 'true');
+    } catch {
+      // Private mode: sound stays on for this visit only.
     }
     // Play once on enable to unlock audio context
     playChime();
+  }, []);
+
+  const disableSound = React.useCallback(() => {
+    setSoundEnabled(false);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, 'false');
+    } catch {
+      // Private mode: nothing to remember.
+    }
   }, []);
 
   React.useEffect(() => {
@@ -72,5 +86,6 @@ export function useOrderSound(orders?: BoardOrder[]) {
   return {
     soundEnabled,
     enableSound,
+    disableSound,
   };
 }

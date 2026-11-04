@@ -71,6 +71,24 @@
   --highlight: oklch(0.78 0.16 72);
   --highlight-foreground: oklch(0.15 0.05 72);
 
+  /* Order stages (Orders v2, decision T56): one colour per board stage. Order type is never a colour.
+     The base is for dots and edges; text on the soft fill or a card uses -text (AA). */
+  --stage-new: oklch(0.53 0.22 263);
+  --stage-new-soft: oklch(0.955 0.03 264);
+  --stage-new-text: oklch(0.44 0.2 263);
+  --stage-preparing: oklch(0.68 0.15 65);
+  --stage-preparing-soft: oklch(0.96 0.045 78);
+  --stage-preparing-text: oklch(0.47 0.11 60);
+  --stage-ready: oklch(0.62 0.15 150);
+  --stage-ready-soft: oklch(0.955 0.045 150);
+  --stage-ready-text: oklch(0.44 0.11 150);
+  --stage-out: oklch(0.56 0.2 295);
+  --stage-out-soft: oklch(0.955 0.035 300);
+  --stage-out-text: oklch(0.45 0.19 295);
+  --stage-done: oklch(0.62 0.02 265);
+  --stage-done-soft: oklch(0.95 0.008 265);
+  --stage-done-text: oklch(0.45 0.03 260);
+
   --faint-foreground: oklch(0.65 0 0);
   --overlay: oklch(0 0 0 / 0.5);
   /* Shade under words on a photo (banners) and the words on it; the same in both themes. */
@@ -223,6 +241,23 @@
 
   --highlight: oklch(0.78 0.16 72);
   --highlight-foreground: oklch(0.15 0.05 72);
+
+  /* Order stages, dark. */
+  --stage-new: oklch(0.69 0.16 263);
+  --stage-new-soft: oklch(0.27 0.08 263);
+  --stage-new-text: oklch(0.85 0.09 263);
+  --stage-preparing: oklch(0.8 0.15 75);
+  --stage-preparing-soft: oklch(0.29 0.06 70);
+  --stage-preparing-text: oklch(0.88 0.11 75);
+  --stage-ready: oklch(0.74 0.16 150);
+  --stage-ready-soft: oklch(0.27 0.06 150);
+  --stage-ready-text: oklch(0.87 0.11 150);
+  --stage-out: oklch(0.7 0.16 295);
+  --stage-out-soft: oklch(0.28 0.08 295);
+  --stage-out-text: oklch(0.86 0.09 295);
+  --stage-done: oklch(0.6 0.02 265);
+  --stage-done-soft: oklch(0.28 0.03 262);
+  --stage-done-text: oklch(0.86 0.015 265);
 
   --faint-foreground: oklch(0.5 0 0);
   --overlay: oklch(0 0 0 / 0.7);
