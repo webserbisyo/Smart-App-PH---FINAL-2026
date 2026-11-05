@@ -61,7 +61,7 @@ import {
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
 import { notify } from '@smartapp/ui/compositions/notify';
-import { PesoInput } from './components/peso-input.js';
+import { PesoInput } from '@/app/peso-input';
 import { VariantTemplateSheet, type VariantSaved } from './variant-template-sheet.js';
 import { comboCount, pesoText, pricedAxes, withVersions, type ChoicesValue } from './variants.js';
 import { cn } from 'cn';

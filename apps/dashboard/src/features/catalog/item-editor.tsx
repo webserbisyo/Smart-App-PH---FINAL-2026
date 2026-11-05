@@ -80,7 +80,7 @@ import { AddOnSheet } from './add-on-sheet.js';
 import { CategorySheet } from './category-sheet.js';
 import { CatalogPhoto } from './catalog-photo.js';
 import { ItemPreview } from './item-preview.js';
-import { PesoInput } from './components/peso-input.js';
+import { PesoInput } from '@/app/peso-input';
 import { PickedChip, PickRow } from './pick-list.js';
 import { BookingSection } from './booking-section.js';
 import { VariantsSection, type VariantsValue } from './variants-section.js';

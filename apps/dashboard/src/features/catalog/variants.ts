@@ -1,3 +1,4 @@
+export { parsePeso, pesoText } from '@/app/peso-input';
 import { buildVersions, isSamePrice, type Variant, type VariantAxis } from '@smartapp/core';
 
 // Dashboard-only helpers for the item editor's choices. The pricing rules live in
@@ -8,20 +9,6 @@ export { newVariantId } from '@smartapp/core';
 export function comboCount(axes: readonly Pick<VariantAxis, 'values'>[]): number {
   if (axes.length === 0) return 1;
   return axes.reduce((total, axis) => total * axis.values.length, 1);
-}
-
-/** "₱149" style text for an input: whole pesos stay whole, centavos keep two places. */
-export function pesoText(centavos: number): string {
-  if (centavos === 0) return '';
-  return centavos % 100 === 0 ? String(centavos / 100) : (centavos / 100).toFixed(2);
-}
-
-/** Parses what the owner typed into centavos; null while the text is not a price yet. */
-export function parsePeso(text: string): number | null {
-  const trimmed = text.trim().replace(/,/g, '');
-  if (trimmed === '') return 0;
-  if (!/^\d{1,6}(\.\d{0,2})?$/.test(trimmed)) return null;
-  return Math.round(Number(trimmed) * 100);
 }
 
 /**

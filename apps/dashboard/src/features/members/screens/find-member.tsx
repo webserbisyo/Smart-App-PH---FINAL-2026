@@ -42,7 +42,12 @@ export function FindMemberScreen() {
           icon={<SearchXIcon className="size-8 text-muted-foreground" />}
           title={failed}
           action={
-            <Button variant="outline" className="h-11 md:h-9" render={<Link to="/members" />}>
+            <Button
+              variant="outline"
+              className="h-11 md:h-9"
+              nativeButton={false}
+              render={<Link to="/members" />}
+            >
               {W.back}
             </Button>
           }

@@ -2399,6 +2399,134 @@ export const membersWords = {
     notFound: 'No member or prize with that code. Check the code and try again.',
     back: 'Back to Members',
   },
+  // The Stamp card tab (T60): status, how to earn, the reward, a live preview and the effect of a change.
+  card: {
+    statusTitle: 'Status',
+    statusLabel: 'Stamp card status',
+    status: { on: 'On', paused: 'Paused', off: 'Off' },
+    statusLine: {
+      on: 'Customers earn stamps and use rewards.',
+      paused: 'New stamps and the welcome stamp stop. Ready rewards still work.',
+      off: 'Rewards are hidden from your shop. Everyone keeps their stamps.',
+    },
+    statusSaved: {
+      on: 'Stamp card on',
+      paused: 'Stamp card paused',
+      off: 'Stamp card off',
+    },
+    earnTitle: 'How to earn',
+    minOrder: 'Minimum order',
+    minOrderHint: 'Before the reward is taken off. Leave empty for any order.',
+    cap: 'Most stamps',
+    capHint: 'Per member, so one big group order counts once.',
+    capNone: 'No limit',
+    capOption: (max: number, period: 'day' | 'week' | 'month') => `${max} a ${period}`,
+    goal: 'Stamps for a reward',
+    goalHint: '4 to 20. Shorter cards bring people back sooner.',
+    welcome: 'Welcome stamp',
+    welcomeHint: '1 stamp when someone joins, only while the card is on.',
+    rewardTitle: 'Reward',
+    rewardLabel: 'Reward type',
+    kind: {
+      discount: ['Peso off', 'Money off one order'],
+      free_item: ['Free item', 'One item from your list'],
+      custom: ['Custom prize', 'A thing to hand over, like a tumbler'],
+    },
+    amount: 'Amount off',
+    discountTitle: (amount: string) => `${amount} off`,
+    freeItemTitle: (name: string, variant: string | null) =>
+      variant ? `Free ${name} (${variant})` : `Free ${name}`,
+    minOrderAny: 'Any',
+    amountNeeded: 'Type how much to take off.',
+    itemNeeded: 'Pick the free item.',
+    prizeNameNeeded: 'Give the prize a name.',
+    item: (catalog: string) => `Item from your ${catalog.toLowerCase()}`,
+    itemPlaceholder: 'Pick an item',
+    variant: 'Which one',
+    itemGuard: (catalog: string) =>
+      `While it is the reward, this item can't be hidden or archived in your ${catalog.toLowerCase()}.`,
+    noItems: (catalog: string) => `Add an item to your ${catalog.toLowerCase()} first.`,
+    prizeName: 'Prize name',
+    prizeNamePlaceholder: 'e.g. Suki Tumbler',
+    prizeBody: 'What to tell members',
+    prizeBodyPlaceholder: 'e.g. Pick your colour at the counter.',
+    limited: 'Limited pieces',
+    limitedHint: 'Members see how many are left. A claim holds a piece until you give it.',
+    pieces: 'Pieces',
+    piecesHeld: (held: number) =>
+      held === 0 ? 'None claimed yet.' : `${held} already claimed, so at least ${held}.`,
+    onePerCustomer: 'One per customer',
+    onePerCustomerHint: 'Each member can claim this prize once.',
+    previewTitle: 'What customers see',
+    previewToGo: (left: number, reward: string) =>
+      left === 1 ? `1 more to ${reward}` : `${left} more to ${reward}`,
+    left: (n: number) => `${n} left`,
+    impactReady: (n: number) =>
+      n === 1
+        ? '1 reward becomes ready right away when you save.'
+        : `${n} rewards become ready right away when you save.`,
+    impactLose: (n: number) =>
+      n === 1
+        ? '1 member with a ready reward will need more stamps.'
+        : `${n} members with a ready reward will need more stamps.`,
+    impactClaims: (n: number) =>
+      n === 1
+        ? '1 prize waiting at the counter keeps the prize they claimed.'
+        : `${n} prizes waiting at the counter keep the prize they claimed.`,
+    discard: 'Discard',
+    save: 'Save stamp card',
+    saving: 'Saving…',
+    saved: 'Saved',
+    savedToast: 'Stamp card saved',
+    unsaved: 'Unsaved changes',
+    errorTitle: "Couldn't load your stamp card",
+  },
+  // The Prizes tab (custom prizes, D8): claims waiting at the counter, given and cancelled.
+  prizes: {
+    filters: { pending: 'To give', given: 'Given', cancelled: 'Cancelled' },
+    filtersLabel: 'Prize claims',
+    piecesLine: (left: number, total: number) => `${left} of ${total} left`,
+    piecesHint: (onePer: boolean) =>
+      onePer
+        ? 'One per customer. A claim holds a piece until you give it.'
+        : 'A claim holds a piece until you give it.',
+    allClaimed: (total: number) => `All ${total} claimed. Add pieces or change the prize.`,
+    unlimited: 'No piece limit',
+    addPieces: 'Add pieces',
+    addTitle: 'Add pieces',
+    addBody: (title: string) => `More ${title} for members to claim.`,
+    addCount: 'How many to add',
+    add: 'Add',
+    added: (n: number) => (n === 1 ? '1 piece added' : `${n} pieces added`),
+    waiting: (days: number) =>
+      days <= 0 ? 'waiting since today' : days === 1 ? 'waiting 1 day' : `waiting ${days} days`,
+    givenOn: (date: string) => `given ${date}`,
+    cancelledLine: (reason: string) => `cancelled · ${reason}`,
+    give: 'Give prize',
+    givenToast: (name: string) => `Prize given to ${name}`,
+    more: (name: string) => `More for ${name}`,
+    cancel: 'Cancel claim…',
+    cancelTitle: 'Cancel this claim?',
+    cancelBody: (name: string, stamps: number) =>
+      `${name} gets ${stamps} stamps back, and the piece goes back to the pile.`,
+    cancelReason: 'Reason',
+    reasons: { no_show: 'No-show', out_of_stock: 'Ran out', other: 'Other' },
+    cancelConfirm: 'Cancel claim',
+    keep: 'Keep it',
+    cancelledToast: 'Claim cancelled. Stamps given back.',
+    empty: {
+      pending: 'No prizes to give',
+      given: 'No prizes given yet',
+      cancelled: 'Nothing cancelled',
+    },
+    emptyBody: (title: string) =>
+      `When a member claims the ${title}, it shows here with their code.`,
+    notCustomTitle: 'Prizes are for custom prize cards',
+    notCustomBody:
+      'Your reward is used at checkout or at the counter, so there is nothing to hand over here.',
+    openCard: 'Open Stamp card',
+    errorTitle: "Couldn't load prizes",
+  },
   piecesBelowHeld: (held: number) =>
     `${held} ${held === 1 ? 'piece is' : 'pieces are'} already claimed. Set at least ${held}.`,
 } as const;

@@ -59,7 +59,7 @@ import {
   AlertDialogTitle,
 } from '@smartapp/ui/components/alert-dialog';
 import { notify } from '@smartapp/ui/compositions/notify';
-import { PesoInput } from './components/peso-input.js';
+import { PesoInput } from '@/app/peso-input';
 import { PickedChip, PickRow } from './pick-list.js';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { Notice } from '@/app/notice';
