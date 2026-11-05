@@ -12,6 +12,7 @@ import {
   type DataGridFeatures,
 } from '@smartapp/ui/components/reui/data-grid/index';
 import { initials } from '@smartapp/ui/compositions/shop-image';
+import { cn } from 'cn';
 import { AnimatePresence, FadeUp } from '@/app/orders/order-motion';
 import { StampDots } from './stamp-dots.js';
 import { lastInLabel } from './when.js';
@@ -100,10 +101,15 @@ export function PhoneRows({ rows, now, onOpen }: RowsProps) {
               type="button"
               onClick={() => onOpen(row)}
               aria-label={W.openMember(row.name)}
-              className="flex w-full items-start gap-3 rounded-xl border border-border bg-card p-3 text-left shadow-xs transition-colors duration-base hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-muted/60"
+              className={cn(
+                'flex w-full items-start gap-3 rounded-xl border border-border bg-card px-3 py-2.5 text-left shadow-xs transition-colors duration-base hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-muted/60',
+                // A reward or prize waiting stands out so the counter sees it first (T61).
+                (row.segments.includes('ready') || row.prizeToGive) &&
+                  'border-member/50 bg-member-soft/40',
+              )}
             >
               <MemberAvatar name={row.name} member={row.isMember} />
-              <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate font-semibold">{row.name}</span>
                   <RowStatus row={row} />

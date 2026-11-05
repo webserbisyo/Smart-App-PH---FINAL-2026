@@ -2242,12 +2242,15 @@ export const membersWords = {
     almost: 'Almost there',
     almostNote: (smallCard: boolean) => (smallCard ? '1 stamp to go' : '1 or 2 stamps to go'),
     sales: 'Member sales',
+    pesoSign: '₱',
     salesNote: (share: number) => `${share}% of sales in 30 days`,
     change: (n: number) => `${n > 0 ? '+' : ''}${n}%`,
     changeAria: (n: number) => `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)}% on the 30 days before`,
     open: (label: string) => `Show ${label.toLowerCase()}`,
     openSales: 'Show member sales',
   },
+  // Phone: Card progress and the sales cards fold behind one button (T61).
+  insights: { show: 'See card progress and sales', hide: 'Hide card progress and sales' },
   // Member sales, the week ring, Top suki and the feed (T63).
   sales: {
     title: 'Member sales',

@@ -1,9 +1,16 @@
 import * as React from 'react';
 import {
+  ClockIcon,
   GiftIcon,
+  HandHeartIcon,
+  MinusIcon,
   PauseCircleIcon,
+  PlusIcon,
+  RotateCcwIcon,
+  SparklesIcon,
   StampIcon,
   StickyNoteIcon,
+  Undo2Icon,
   UserPlusIcon,
   XIcon,
 } from 'lucide-react';
@@ -41,6 +48,7 @@ import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { ResponsiveSheet } from '@smartapp/ui/compositions/responsive-sheet';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
+import type { Point } from '@smartapp/ui/compositions/celebrate';
 import { StampCard } from '@smartapp/ui/compositions/stamp-card';
 import { cn } from 'cn';
 import { env } from '@/app/env';
@@ -50,6 +58,7 @@ import { storefrontUrl } from '@/app/use-nav-items';
 import { AdjustDialog } from './adjust-dialog.js';
 import { MemberAvatar } from './member-rows.js';
 import { daysSince, lastInLabel } from './when.js';
+import { originOf } from './use-counter-actions.js';
 
 const W = membersWords;
 
@@ -63,7 +72,7 @@ export interface MemberPanelProps {
   now: Date;
   online: boolean;
   busy: boolean;
-  onStamp: (member: { id: string; name: string }) => void;
+  onStamp: (member: { id: string; name: string }, origin: Point) => void;
   onRedeem: (member: { id: string }, prize: boolean) => void;
   onClose: () => void;
 }
@@ -240,7 +249,7 @@ function PanelBody({
       <Button
         className="h-12 gap-2 text-base"
         disabled={status !== 'on' || !canChange || busy}
-        onClick={() => onStamp(member)}
+        onClick={(event) => onStamp(member, originOf(event.currentTarget))}
       >
         {busy ? <Spinner /> : <StampIcon aria-hidden="true" />}
         {W.panel.addStamp}
@@ -330,7 +339,7 @@ function PanelBody({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="history">
-          <History entries={member.history} />
+          <History entries={member.history} now={now} />
         </TabsContent>
         <TabsContent value="orders">
           <OrdersList member={member} />
@@ -511,22 +520,31 @@ function historyLine(e: OwnerLedgerEntry): string {
   }
 }
 
-const DOT: Record<OwnerLedgerEntry['kind'], string> = {
-  welcome: 'bg-member',
-  pending: 'bg-warning',
-  earned: 'bg-success',
-  used: 'bg-highlight',
-  claimed: 'bg-highlight',
-  returned: 'bg-success',
-  reversed: 'bg-destructive',
-  given: 'bg-success',
-  removed: 'bg-destructive',
-  undone: 'bg-muted-foreground',
+// Each kind gets its own icon and colour so the history reads at a glance (T62).
+const KIND: Record<OwnerLedgerEntry['kind'], { icon: React.ReactNode; tone: string }> = {
+  welcome: { icon: <SparklesIcon />, tone: 'bg-member-soft text-member-text' },
+  pending: { icon: <ClockIcon />, tone: 'bg-warning-soft text-warning-text' },
+  earned: { icon: <StampIcon />, tone: 'bg-success-soft text-success-text' },
+  used: { icon: <GiftIcon />, tone: 'bg-member-soft text-member-text' },
+  claimed: { icon: <HandHeartIcon />, tone: 'bg-member-soft text-member-text' },
+  returned: { icon: <RotateCcwIcon />, tone: 'bg-success-soft text-success-text' },
+  reversed: { icon: <MinusIcon />, tone: 'bg-destructive-soft text-destructive-text' },
+  given: { icon: <PlusIcon />, tone: 'bg-success-soft text-success-text' },
+  removed: { icon: <MinusIcon />, tone: 'bg-destructive-soft text-destructive-text' },
+  undone: { icon: <Undo2Icon />, tone: 'bg-muted text-muted-foreground' },
 };
+
+/** "Today", "Yesterday", then the date: the heading over each day of history. */
+function dayLabel(at: string, now: Date): string {
+  const days = daysSince(at, now);
+  if (days <= 0) return W.when.today;
+  if (days === 1) return W.when.yesterday;
+  return formatManila(at, 'date');
+}
 
 const HISTORY_PAGE = 15;
 
-function History({ entries }: { entries: readonly OwnerLedgerEntry[] }) {
+function History({ entries, now }: { entries: readonly OwnerLedgerEntry[]; now: Date }) {
   const [shown, setShown] = React.useState(HISTORY_PAGE);
   if (entries.length === 0) {
     return <p className="py-6 text-center text-sm text-muted-foreground">{W.panel.historyEmpty}</p>;
@@ -534,47 +552,64 @@ function History({ entries }: { entries: readonly OwnerLedgerEntry[] }) {
   return (
     <div className="flex flex-col gap-3">
       <Timeline defaultValue={entries.length} className="gap-0">
-        {entries.slice(0, shown).map((e, index) => (
-          <TimelineItem
-            key={e.id}
-            step={index + 1}
-            className="group-orientation-vertical/timeline:not-last:pb-4"
-          >
-            <TimelineHeader className="flex items-center gap-2.5">
-              <TimelineSeparator />
-              <TimelineIndicator className={cn('size-2.5 border-none', DOT[e.kind])} />
-              <TimelineDate className="mb-0 text-xs text-muted-foreground">
-                {formatManila(e.at, 'datetime')}
-                {e.byOwner ? ` · ${W.history.byYou}` : ''}
-              </TimelineDate>
-            </TimelineHeader>
-            <TimelineContent className="flex flex-col gap-0.5 text-sm">
-              <span className="flex items-baseline justify-between gap-3">
-                <span
+        {entries.slice(0, shown).map((e, index, list) => {
+          const day = dayLabel(e.at, now);
+          const prev = list[index - 1];
+          const newDay = !prev || dayLabel(prev.at, now) !== day;
+          return (
+            <TimelineItem
+              key={e.id}
+              step={index + 1}
+              className="group-orientation-vertical/timeline:not-last:pb-4"
+            >
+              {newDay ? (
+                <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  {day}
+                </p>
+              ) : null}
+              <TimelineHeader className="flex items-center gap-2.5">
+                <TimelineSeparator />
+                <TimelineIndicator
                   className={cn(
-                    'font-medium text-foreground',
-                    e.undone && 'line-through opacity-60',
+                    'flex size-6 items-center justify-center border-none [&_svg]:size-3.5',
+                    KIND[e.kind].tone,
                   )}
                 >
-                  {historyLine(e)}
+                  {KIND[e.kind].icon}
+                </TimelineIndicator>
+                <TimelineDate className="mb-0 text-xs text-muted-foreground">
+                  {formatManila(e.at, 'time')}
+                  {e.byOwner ? ` · ${W.history.byYou}` : ''}
+                </TimelineDate>
+              </TimelineHeader>
+              <TimelineContent className="flex flex-col gap-0.5 text-sm">
+                <span className="flex items-baseline justify-between gap-3">
+                  <span
+                    className={cn(
+                      'font-medium text-foreground',
+                      e.undone && 'line-through opacity-60',
+                    )}
+                  >
+                    {historyLine(e)}
+                  </span>
+                  <span
+                    className={cn(
+                      'shrink-0 font-semibold tabular-nums',
+                      e.undone
+                        ? 'text-muted-foreground line-through'
+                        : e.delta < 0
+                          ? 'text-destructive-text'
+                          : 'text-success-text',
+                    )}
+                  >
+                    {words.rewards.delta(e.delta)}
+                  </span>
                 </span>
-                <span
-                  className={cn(
-                    'shrink-0 font-semibold tabular-nums',
-                    e.undone
-                      ? 'text-muted-foreground line-through'
-                      : e.delta < 0
-                        ? 'text-destructive-text'
-                        : 'text-success-text',
-                  )}
-                >
-                  {words.rewards.delta(e.delta)}
-                </span>
-              </span>
-              {e.note ? <span className="text-xs text-muted-foreground">“{e.note}”</span> : null}
-            </TimelineContent>
-          </TimelineItem>
-        ))}
+                {e.note ? <span className="text-xs text-muted-foreground">“{e.note}”</span> : null}
+              </TimelineContent>
+            </TimelineItem>
+          );
+        })}
       </Timeline>
       {entries.length > shown ? (
         <Button

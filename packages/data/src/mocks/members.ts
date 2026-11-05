@@ -441,8 +441,9 @@ export function generateCommunity(
     };
     if (items.length === 0) return;
     const favourite = items[(j * 5 + 3) % items.length] ?? pick(rng, items);
-    const count = int(rng, 1, 4);
-    for (const daysAgo of days(rng, count, int(rng, 3, 30), 120)) {
+    // Walk-ins order often and recently, so the members' share of sales reads like a real shop (T63).
+    const count = int(rng, 2, 7);
+    for (const daysAgo of days(rng, count, int(rng, 0, 8), 75)) {
       archiveOrder(
         person,
         orderTime(now, daysAgo, rng),

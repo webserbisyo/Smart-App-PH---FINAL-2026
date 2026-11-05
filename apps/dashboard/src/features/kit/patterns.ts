@@ -879,6 +879,13 @@ export const KIT_PATTERNS: readonly KitPattern[] = [
     url: 'https://reui.io/patterns/chart',
   },
   {
+    id: 'c-chart-19',
+    name: 'Donut with total',
+    screen: 'rewards',
+    usedFor: 'Dashboard Members Member sales donut c-chart-19 (shadcn Chart, lazy-loaded)',
+    url: 'https://reui.io/patterns/chart',
+  },
+  {
     id: 'c-timeline-7',
     name: 'Roadmap Items',
     screen: 'rewards',

@@ -9,12 +9,27 @@ import {
   useRewardAtCounter,
   useUndoChange,
 } from '@smartapp/data';
+import { rewardReady, stampBurst, type Point } from '@smartapp/ui/compositions/celebrate';
 import { closeToast, notify } from '@smartapp/ui/compositions/notify';
 
 export interface RecentAsk {
   customerId: string;
   name: string;
   at: string | null;
+}
+
+/** Where a burst starts: the middle of the tapped button, as a share of the viewport. */
+export function originOf(el: Element): Point {
+  const r = el.getBoundingClientRect();
+  return {
+    x: (r.left + r.width / 2) / window.innerWidth,
+    y: (r.top + r.height / 2) / window.innerHeight,
+  };
+}
+
+// A short buzz on phones that support it (T62); iPhones ignore it.
+function buzz(): void {
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(12);
 }
 
 function newKey(): string {
@@ -63,7 +78,11 @@ export function useCounterActions() {
   );
 
   const stamp = useCallback(
-    async (member: { id: string; name: string }, confirmRecent = false): Promise<void> => {
+    async (
+      member: { id: string; name: string },
+      confirmRecent = false,
+      origin: Point = { x: 0.5, y: 0.6 },
+    ): Promise<void> => {
       setBusyId(member.id);
       try {
         const change = await give.mutateAsync({
@@ -72,6 +91,10 @@ export function useCounterActions() {
           confirmRecent,
         });
         setRecent(null);
+        buzz();
+        // Confetti only when this stamp fills the card; a normal stamp gets the small burst (T62).
+        if (change.member.balance === change.member.goal) void rewardReady();
+        else void stampBurst(origin);
         offerUndo(
           membersWords.toast.stamped(change.member.balance, change.member.goal),
           member.id,
@@ -105,6 +128,8 @@ export function useCounterActions() {
       setBusyId(member.id);
       try {
         const change = await use.mutateAsync({ customerId: member.id, clientKey: newKey() });
+        buzz();
+        void rewardReady();
         offerUndo(
           prize ? membersWords.toast.prizeGiven : membersWords.toast.rewardUsed,
           member.id,

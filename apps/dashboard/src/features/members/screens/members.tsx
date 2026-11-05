@@ -3,10 +3,10 @@ import {
   CirclePauseIcon,
   CircleCheckIcon,
   CircleOffIcon,
+  ChevronDownIcon,
   FilterXIcon,
   PauseCircleIcon,
   StampIcon,
-  UsersIcon,
   WifiOffIcon,
   XIcon,
 } from 'lucide-react';
@@ -29,6 +29,11 @@ import {
   useStorefront,
 } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@smartapp/ui/components/collapsible';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Scroller } from '@smartapp/ui/components/scroller';
 import {
@@ -40,10 +45,11 @@ import {
 } from '@smartapp/ui/components/select';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
-import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
+import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
+import { cn } from 'cn';
 import { Notice } from '@/app/notice';
 import { useNow } from '@/app/orders/use-now';
 import { PageEmpty, PageError } from '@/app/page-state';
@@ -51,8 +57,12 @@ import { SearchField } from '@/app/search-field';
 import { useShop } from '@/app/shop';
 import { storefrontUrl } from '@/app/use-nav-items';
 import { useOnlineStatus } from '@/app/use-online-status';
+import { useOwnerFirstName } from '@/app/use-owner-name';
 import { MemberPanel } from '../member-panel.js';
 import { MembersGrid, PhoneRows } from '../member-rows.js';
+import { ActivityFeed, MemberSalesCard, TopSukiCard, WeekRing } from '../members-insights.js';
+import { MembersStart, MilestoneNotice } from '../members-start.js';
+import { MembersHello, MembersStats, type StatPick } from '../members-stats.js';
 import { NearList } from '../near-list.js';
 import { RecentStampDialog } from '../recent-stamp-dialog.js';
 import { useMembersSearch, useSetMembersSearch } from '../search.js';
@@ -64,7 +74,7 @@ const W = membersWords;
 const ProgressChart = React.lazy(() => import('../progress-chart.js'));
 const PAGE = 30;
 const CHIP =
-  'h-10 gap-1.5 rounded-full border border-border bg-card px-3 text-sm font-semibold text-muted-foreground aria-pressed:border-primary aria-pressed:bg-accent aria-pressed:text-foreground md:h-8';
+  'h-10 gap-1.5 rounded-full border border-border bg-card px-3 text-sm font-semibold text-muted-foreground aria-pressed:border-primary aria-pressed:bg-accent aria-pressed:text-foreground md:h-10';
 
 /**
  * Members (decision T57): one list with group chips, the "1 or 2 stamps away" list, and the member panel
@@ -78,6 +88,10 @@ export function MembersScreen() {
   const online = useOnlineStatus();
   const now = useNow(30_000);
   const tabs = useMembersTabs();
+  const ownerName = useOwnerFirstName();
+  const reducedMotion = useReducedMotion();
+  // Phone: Card progress and the sales cards fold away so the list starts near the top (T61).
+  const [insightsOpen, setInsightsOpen] = React.useState(false);
 
   const filter: CustomerFilter = search.filter ?? 'all';
   const sort: MemberSort = search.sort ?? 'last_order';
@@ -119,6 +133,26 @@ export function MembersScreen() {
       .then(() => notify({ title: W.cardState.on, tone: 'success' }))
       .catch((err: unknown) => notify({ title: errorWords(errorCodeOf(err)), tone: 'error' }));
   };
+
+  const scrollTo = (id: string) =>
+    window.requestAnimationFrame(() =>
+      document
+        .getElementById(id)
+        ?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' }),
+    );
+  const pickStat = (pick: StatPick) => {
+    if (pick === 'sales') {
+      setInsightsOpen(true);
+      scrollTo('member-sales');
+      return;
+    }
+    setSearch(
+      { filter: pick === 'all' ? undefined : pick, stamps: undefined, q: undefined },
+      { replace: true },
+    );
+    if (isPhone) scrollTo('members-list');
+  };
+  const openId = (id: string) => setSearch({ member: id });
 
   const clearFilters = () =>
     setSearch({ filter: undefined, q: undefined, stamps: undefined }, { replace: true });
@@ -176,18 +210,14 @@ export function MembersScreen() {
     );
   } else if (view && view.members === 0 && filter !== 'guests' && !q) {
     body = (
-      <PageEmpty
-        variant="box"
-        icon={<UsersIcon className="size-8 text-muted-foreground" />}
-        title={W.states.emptyTitle}
-        description={W.states.emptyBody((card?.rule.welcomeStamps ?? 1) > 0)}
-        action={
-          <CopyButton
-            value={storefrontUrl(shop.slug)}
-            label={W.states.copyLink}
-            className="h-11 md:h-9"
-          />
-        }
+      <MembersStart
+        cardOn={status === 'on'}
+        welcome={(card?.rule.welcomeStamps ?? 1) > 0}
+        url={storefrontUrl(shop.slug)}
+        slug={shop.slug}
+        online={online}
+        turningOn={setStatus.isPending}
+        onTurnOn={turnOn}
       />
     );
   } else if (rows.length === 0) {
@@ -230,30 +260,54 @@ export function MembersScreen() {
 
   const showNear = filter === 'all' && !q && stamps === null && status !== 'off';
   const showChart = filter === 'all' && !q && status !== 'off' && (view?.members ?? 0) > 0;
+  const showInsights = filter === 'all' && !q && stamps === null && (view?.members ?? 0) > 0;
+  const chart = view ? (
+    <section
+      className="flex flex-col gap-2 rounded-xl border bg-card p-4 shadow-xs"
+      aria-labelledby="progress-title"
+    >
+      <div>
+        <h2 id="progress-title" className="text-sm font-bold">
+          {W.chart.title}
+        </h2>
+        <p className="text-xs text-muted-foreground">{W.chart.hint}</p>
+      </div>
+      <React.Suspense fallback={<Skeleton className="h-40 w-full rounded-lg md:h-44" />}>
+        <ProgressChart
+          progress={view.progress}
+          goal={goal}
+          selected={stamps}
+          onPick={(next) => setSearch({ stamps: next ?? undefined }, { replace: true })}
+        />
+      </React.Suspense>
+    </section>
+  ) : null;
 
   return (
     <div className="flex min-h-full flex-col pb-24 md:pb-8">
       <PageHeader title={words.screens.members.title} tabs={tabs} />
 
       <div className="flex flex-col gap-3 px-4 pt-3 md:px-6 md:pt-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-start justify-between gap-3">
           {view ? (
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">
-                {W.summary.members(view.members)}
-              </span>
-              {' · '}
-              {W.summary.joined(view.pulse.joined)}
-              {' · '}
-              <span className="font-semibold text-foreground">
-                {W.summary.given(view.rewardsGiven)}
-              </span>
-            </p>
+            <MembersHello
+              view={view}
+              name={ownerName}
+              now={now}
+              smallCard={smallCard}
+              compact={isPhone}
+            />
           ) : (
-            <Skeleton className="h-5 w-72" />
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-72 max-w-full" />
+            </div>
           )}
-          {statusChip}
+          <span className="shrink-0 pt-1">{statusChip}</span>
         </div>
+        {view && view.members > 0 ? (
+          <MilestoneNotice slug={shop.slug} members={view.members} />
+        ) : null}
 
         {!online ? (
           <Notice tone="warning" icon={<WifiOffIcon className="size-4" />}>
@@ -296,46 +350,97 @@ export function MembersScreen() {
           </Notice>
         ) : null}
 
-        {(showNear || showChart) && view ? (
+        {view && view.members > 0 ? (
+          <MembersStats
+            view={view}
+            filter={filter}
+            smallCard={smallCard}
+            onPick={pickStat}
+            row={isPhone}
+          />
+        ) : overview.isPending ? (
+          <div className="grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-4" aria-hidden="true">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="h-24 rounded-xl md:h-28" />
+            ))}
+          </div>
+        ) : null}
+
+        {showNear && view && isPhone ? (
+          <NearList
+            layout="strip"
+            rows={view.near}
+            smallCard={smallCard}
+            now={now}
+            shown={8}
+            canStamp={online && status === 'on'}
+            busyId={counter.busyId}
+            onStamp={(row, origin) => void counter.stamp(row, false, origin)}
+            onOpen={openRow}
+            onSeeAll={() => pickStat('almost')}
+          />
+        ) : null}
+
+        {(showNear || showChart) && view && !isPhone ? (
           <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
             {showNear ? (
               <NearList
                 rows={view.near}
                 smallCard={smallCard}
                 now={now}
-                shown={isPhone ? 2 : 4}
+                shown={4}
                 canStamp={online && status === 'on'}
                 busyId={counter.busyId}
-                onStamp={(row) => void counter.stamp(row)}
+                onStamp={(row, origin) => void counter.stamp(row, false, origin)}
                 onOpen={openRow}
                 onSeeAll={() => setSearch({ filter: 'almost' }, { replace: true })}
               />
             ) : null}
-            {showChart ? (
-              <section
-                className="flex flex-col gap-2 rounded-xl border bg-card p-4"
-                aria-labelledby="progress-title"
-              >
-                <div>
-                  <h2 id="progress-title" className="text-sm font-bold">
-                    {W.chart.title}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">{W.chart.hint}</p>
-                </div>
-                <React.Suspense fallback={<Skeleton className="h-40 w-full rounded-lg md:h-44" />}>
-                  <ProgressChart
-                    progress={view.progress}
-                    goal={goal}
-                    selected={stamps}
-                    onPick={(next) => setSearch({ stamps: next ?? undefined }, { replace: true })}
-                  />
-                </React.Suspense>
-              </section>
-            ) : null}
+            {showChart ? chart : null}
           </div>
         ) : null}
 
-        <div className="flex gap-2">
+        {showInsights && view ? (
+          isPhone ? (
+            <Collapsible open={insightsOpen} onOpenChange={setInsightsOpen}>
+              <CollapsibleTrigger
+                render={
+                  <Button
+                    variant="outline"
+                    className="h-11 w-full justify-between bg-card text-base"
+                  />
+                }
+              >
+                {insightsOpen ? W.insights.hide : W.insights.show}
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  className={cn(
+                    'transition-transform duration-base motion-reduce:transition-none',
+                    insightsOpen && 'rotate-180',
+                  )}
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="flex flex-col gap-3 pt-3">
+                {showChart ? chart : null}
+                <MemberSalesCard pulse={view.pulse} />
+                <WeekRing pulse={view.pulse} />
+                <TopSukiCard top={view.pulse.top} onOpen={openId} />
+                <ActivityFeed activity={view.pulse.activity} now={now} onOpen={openId} />
+              </CollapsibleContent>
+            </Collapsible>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
+              <MemberSalesCard pulse={view.pulse} />
+              <div className="flex flex-col gap-3">
+                <WeekRing pulse={view.pulse} />
+                <TopSukiCard top={view.pulse.top} onOpen={openId} />
+              </div>
+              <ActivityFeed activity={view.pulse.activity} now={now} onOpen={openId} />
+            </div>
+          )
+        ) : null}
+
+        <div id="members-list" className="flex scroll-mt-20 gap-2">
           <SearchField
             value={q}
             onChange={(next) => setSearch({ q: next || undefined }, { replace: true })}
@@ -394,7 +499,13 @@ export function MembersScreen() {
               ))}
             </ToggleGroup>
           </Scroller>
-          <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <p
+            className={cn(
+              'flex flex-wrap items-center gap-2 text-xs text-muted-foreground',
+              // "Everyone who joined" says nothing new on a phone; the other groups keep their rule.
+              filter === 'all' && stamps === null && 'hidden md:flex',
+            )}
+          >
             {filter === 'almost' ? W.rules.almost(smallCard) : W.rules[filter]}
             {stamps !== null ? (
               <Button
@@ -422,7 +533,7 @@ export function MembersScreen() {
         now={now}
         online={online}
         busy={counter.busyId !== null && counter.busyId === search.member}
-        onStamp={(m) => void counter.stamp(m)}
+        onStamp={(m, origin) => void counter.stamp(m, false, origin)}
         onRedeem={(m, prize) => void counter.redeem(m, prize)}
         onClose={() => setSearch({ member: undefined }, { replace: true })}
       />
