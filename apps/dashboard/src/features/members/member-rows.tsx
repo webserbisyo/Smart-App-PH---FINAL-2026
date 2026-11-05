@@ -120,7 +120,7 @@ export function PhoneRows({ rows, now, onOpen }: RowsProps) {
                 )}
                 <span className="flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
                   <span>
-                    {row.visits} {W.panel.visits}
+                    {row.visits} {W.panel.visits(row.visits)}
                   </span>
                   <span className="font-semibold text-foreground">{formatPeso(row.spent)}</span>
                   <span className="ml-auto">{lastInLabel(row.lastOrderAt, now)}</span>

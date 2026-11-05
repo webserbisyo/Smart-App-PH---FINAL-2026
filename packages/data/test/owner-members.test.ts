@@ -54,6 +54,30 @@ describe('ownerMembers mock adapter', () => {
     expect(detail.visits).toBeGreaterThan(0);
   });
 
+  it('the pulse adds up and moves with a counter stamp (T61, T63)', async () => {
+    const { store } = shopStore('kape-juan');
+    const view = await store.ownerMembers.getMembersOverview();
+    const { pulse } = view;
+    expect(pulse.joined).toBeGreaterThan(0);
+    expect(pulse.stamps).toBeGreaterThan(0);
+    expect(pulse.sales.members).toBeGreaterThan(0);
+    expect(pulse.sales.guests).toBeGreaterThan(0);
+    expect(pulse.top.length).toBeGreaterThan(0);
+    expect(pulse.top.length).toBeLessThanOrEqual(5);
+    expect(pulse.top.every((t) => t.row.isMember && t.visits > 0)).toBe(true);
+    const visits = pulse.top.map((t) => t.visits);
+    expect([...visits].sort((a, b) => b - a)).toEqual(visits);
+    expect(pulse.activity.length).toBe(8);
+    const times = pulse.activity.map((a) => a.at);
+    expect([...times].sort().reverse()).toEqual(times);
+
+    const id = view.near[0]?.id ?? '';
+    await store.ownerMembers.giveStamp({ customerId: id, clientKey: 'p1', confirmRecent: false });
+    const after = (await store.ownerMembers.getMembersOverview()).pulse;
+    expect(after.stamps).toBe(pulse.stamps + 1);
+    expect(after.activity[0]).toMatchObject({ kind: 'stamp', customerId: id, stamps: 1 });
+  });
+
   it('a progress bar filters to members with exactly that many stamps', async () => {
     const { store } = shopStore('kanto-smash');
     const view = await store.ownerMembers.getMembersOverview();

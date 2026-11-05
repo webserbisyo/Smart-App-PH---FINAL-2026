@@ -149,3 +149,36 @@ export function usuallyBuys(lines: readonly { name: string; qty: number }[]): st
   }
   return best;
 }
+
+// The numbers at the top of Members (T61, T63): rolling windows so the 1st of a month never looks empty.
+export const PULSE_DAYS = 30;
+export const STAMP_WEEK_DAYS = 7;
+export const TOP_SUKI = 5;
+export const ACTIVITY_SHOWN = 8;
+// One-time celebrations as the community grows (T62).
+export const MEMBER_MILESTONES = [10, 25, 50, 100, 250, 500, 1000] as const;
+
+/** Whole-number change in percent, or null when there was nothing before to compare with. */
+export function percentChange(recent: number, before: number): number | null {
+  if (before <= 0) return null;
+  return Math.round(((recent - before) / before) * 100);
+}
+
+/** Part of a whole in whole percent (0 when the whole is 0). */
+export function sharePercent(part: number, whole: number): number {
+  if (whole <= 0) return 0;
+  return Math.round((part / whole) * 100);
+}
+
+/** The biggest milestone reached, or null below the first one. */
+export function milestoneReached(members: number): number | null {
+  let reached: number | null = null;
+  for (const m of MEMBER_MILESTONES) if (members >= m) reached = m;
+  return reached;
+}
+
+/** True when `at` falls in the `days` days that end at `end` (end included, start excluded). */
+export function inWindow(at: string, end: Date, days: number): boolean {
+  const t = new Date(at).getTime();
+  return t <= end.getTime() && t > end.getTime() - days * DAY_MS;
+}

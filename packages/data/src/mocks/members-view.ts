@@ -1,18 +1,22 @@
 // What the owner's Members page reads, worked out from orders and the stamp history (D6). The SQL functions
 // in phase 4 return the same shapes, with the same core rules.
 import {
+  ACTIVITY_SHOWN,
   changesLeftToday,
   CustomerPageSchema,
   CustomerRowSchema,
   formatPhPhone,
+  inWindow,
   isFinal,
-  manilaDate,
   MemberDetailSchema,
   memberCodeMatches,
   memberSegments,
   MembersOverviewSchema,
   OwnerClaimSchema,
+  PULSE_DAYS,
   recentCounterStamp,
+  STAMP_WEEK_DAYS,
+  TOP_SUKI,
   usuallyBuys,
   USUALLY_BUYS_DAYS,
   CUSTOMER_FILTERS,
@@ -21,8 +25,11 @@ import {
   type CustomerPage,
   type CustomerRow,
   type ListCustomersInput,
+  type MemberActivity,
   type MemberDetail,
+  type MemberSales,
   type MembersOverview,
+  type MembersPulse,
   type OrderStatus,
   type OwnerClaim,
   type OwnerLedgerEntry,
@@ -314,11 +321,106 @@ export function listPage(rows: CustomerRow[], input: ListCustomersInput): Custom
   });
 }
 
-export function overview(s: ShopState, rows: CustomerRow[], now: Date): MembersOverview {
+function salesIn(people: readonly Person[], end: Date, days: number): MemberSales {
+  const sales: MemberSales = { members: 0, guests: 0, memberOrders: 0, guestOrders: 0 };
+  for (const p of people) {
+    for (const o of p.orders) {
+      if (o.status !== 'completed' || !inWindow(o.placedAt, end, days)) continue;
+      if (p.member) {
+        sales.members += o.total;
+        sales.memberOrders += 1;
+      } else {
+        sales.guests += o.total;
+        sales.guestOrders += 1;
+      }
+    }
+  }
+  return sales;
+}
+
+const STAMP_KINDS = new Set(['earned', 'given']);
+
+function stampsIn(s: ShopState, end: Date, days: number): number {
+  return s.members.reduce(
+    (sum, m) =>
+      sum +
+      m.ledger
+        .filter((e) => STAMP_KINDS.has(e.kind) && !(e.undone ?? false) && inWindow(e.at, end, days))
+        .reduce((n, e) => n + e.delta, 0),
+    0,
+  );
+}
+
+function activityOf(s: ShopState, end: Date): MemberActivity[] {
+  const lines: MemberActivity[] = [];
+  for (const m of s.members) {
+    const base = { customerId: memberId(m), name: m.name };
+    lines.push({ ...base, id: `${memberId(m)}-joined`, kind: 'joined', at: m.joinedAt, stamps: 0 });
+    m.ledger.forEach((e, index) => {
+      if (e.undone ?? false) return;
+      const id = entryIdOf(m, e, index);
+      if (STAMP_KINDS.has(e.kind) && e.delta > 0)
+        lines.push({ ...base, id, kind: 'stamp', at: e.at, stamps: e.delta });
+      else if (e.kind === 'used') lines.push({ ...base, id, kind: 'reward', at: e.at, stamps: 0 });
+    });
+    for (const c of m.claims) {
+      if (c.status === 'given' && c.givenAt)
+        lines.push({ ...base, id: claimIdOf(m, c), kind: 'prize', at: c.givenAt, stamps: 0 });
+    }
+  }
+  return lines
+    .filter((l) => new Date(l.at).getTime() <= end.getTime())
+    .sort((a, b) => b.at.localeCompare(a.at))
+    .slice(0, ACTIVITY_SHOWN);
+}
+
+/** The numbers behind the stat cards, the story line, Member sales, Top suki and the feed (T61, T63). */
+export function pulseOf(
+  s: ShopState,
+  people: readonly Person[],
+  rows: readonly CustomerRow[],
+  now: Date,
+): MembersPulse {
+  const before = new Date(now.getTime() - PULSE_DAYS * DAY_MS);
+  const weekBefore = new Date(now.getTime() - STAMP_WEEK_DAYS * DAY_MS);
+  const joinedIn = (end: Date) =>
+    s.members.filter((m) => inWindow(m.joinedAt, end, PULSE_DAYS)).length;
+  const rowById = new Map(rows.map((r) => [r.id, r]));
+  const top = people
+    .filter((p) => p.member !== null)
+    .map((p) => {
+      const recent = p.orders.filter(
+        (o) => o.status === 'completed' && inWindow(o.placedAt, now, PULSE_DAYS),
+      );
+      return {
+        row: rowById.get(p.id),
+        visits: recent.length,
+        spent: recent.reduce((sum, o) => sum + o.total, 0),
+      };
+    })
+    .filter((t): t is { row: CustomerRow; visits: number; spent: number } =>
+      Boolean(t.row && t.visits > 0),
+    )
+    .sort((a, b) => b.visits - a.visits || b.spent - a.spent || byName(a.row, b.row))
+    .slice(0, TOP_SUKI)
+    .map(({ row, visits }) => ({ row, visits }));
+  return {
+    joined: joinedIn(now),
+    joinedBefore: joinedIn(before),
+    stamps: stampsIn(s, now, STAMP_WEEK_DAYS),
+    stampsBefore: stampsIn(s, weekBefore, STAMP_WEEK_DAYS),
+    sales: salesIn(people, now, PULSE_DAYS),
+    salesBefore: salesIn(people, before, PULSE_DAYS),
+    top,
+    activity: activityOf(s, now),
+  };
+}
+
+export function overview(s: ShopState, people: readonly Person[], now: Date): MembersOverview {
   const card = s.shop.storefront.stampCard;
   const goal = card.rule.stampsNeeded;
+  const rows = people.map((p) => customerRow(s, p, now));
   const members = rows.filter((r) => r.isMember);
-  const month = manilaDate(now).slice(0, 7);
   const progress = Array.from({ length: goal + 1 }, () => 0);
   for (const r of members) {
     const at = Math.min(r.balance, goal);
@@ -339,9 +441,6 @@ export function overview(s: ShopState, rows: CustomerRow[], now: Date): MembersO
     goal,
     members: members.length,
     guests: rows.length - members.length,
-    joinedThisMonth: members.filter(
-      (r) => r.joinedAt && manilaDate(r.joinedAt).slice(0, 7) === month,
-    ).length,
     rewardsGiven,
     counts,
     progress,
@@ -353,5 +452,6 @@ export function overview(s: ShopState, rows: CustomerRow[], now: Date): MembersO
             members.filter((r) => r.segments.includes('almost')),
             'last_order',
           ).slice(0, NEAR_LIMIT),
+    pulse: pulseOf(s, people, rows, now),
   });
 }

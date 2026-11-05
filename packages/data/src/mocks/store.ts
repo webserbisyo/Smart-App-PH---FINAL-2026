@@ -2208,11 +2208,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       return run('members', () => {
         const s = membersShop(slug);
         const t = now();
-        return overview(
-          s,
-          peopleOf(s).map((p) => customerRow(s, p, t)),
-          t,
-        );
+        return overview(s, peopleOf(s), t);
       });
     },
 

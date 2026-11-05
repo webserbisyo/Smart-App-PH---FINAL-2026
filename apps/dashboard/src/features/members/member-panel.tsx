@@ -401,7 +401,7 @@ function PrizeToGive({
 
 function Numbers({ member, now }: { member: MemberDetail; now: Date }) {
   const tiles = [
-    { value: String(member.visits), label: W.panel.visits },
+    { value: String(member.visits), label: W.panel.visits(member.visits) },
     { value: formatPeso(member.spent), label: W.panel.spent },
     { value: lastInLabel(member.lastOrderAt, now), label: W.panel.lastIn },
   ];

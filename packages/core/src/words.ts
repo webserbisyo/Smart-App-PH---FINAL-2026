@@ -2211,8 +2211,104 @@ export const membersWords = {
   cardState: { on: 'Card on', paused: 'Card paused', off: 'Card off' },
   summary: {
     members: (n: number) => `${n} ${n === 1 ? 'member' : 'members'}`,
-    joined: (n: number) => `${n} joined this month`,
+    joined: (n: number) => `${n} joined in 30 days`,
     given: (n: number) => `${n} ${n === 1 ? 'reward' : 'rewards'} given`,
+  },
+  // The greeting and story line above the number cards (T61). `hour` is the Manila hour.
+  hello: {
+    greeting: (hour: number, name: string | null) => {
+      const part = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+      return name ? `${part}, ${name}` : part;
+    },
+    near: (n: number, smallCard: boolean) =>
+      n === 0
+        ? 'Nobody is close to a reward right now.'
+        : `${n} ${n === 1 ? 'suki is' : 'suki are'} ${smallCard ? '1 stamp' : '1 or 2 stamps'} away.`,
+    ready: (n: number) =>
+      n === 0 ? '' : `${n} ${n === 1 ? 'reward is' : 'rewards are'} ready to use at the counter.`,
+    sales: (amount: string, change: number | null) =>
+      change === null || change === 0
+        ? `Members spent ${amount} in the last 30 days.`
+        : `Members spent ${amount} in the last 30 days, ${change > 0 ? 'up' : 'down'} ${Math.abs(change)}% on the 30 days before.`,
+    quietStart: 'Share your shop link so your first suki can join.',
+  },
+  // The number cards at the top of Members (T61): tap one to open that group.
+  stats: {
+    label: 'Members at a glance',
+    members: 'Members',
+    joined: (n: number) => (n > 0 ? `+${n} in 30 days` : 'None new in 30 days'),
+    ready: 'Rewards ready',
+    readyNote: (n: number) => (n > 0 ? 'Use them at the counter' : 'None waiting'),
+    almost: 'Almost there',
+    almostNote: (smallCard: boolean) => (smallCard ? '1 stamp to go' : '1 or 2 stamps to go'),
+    sales: 'Member sales',
+    salesNote: (share: number) => `${share}% of sales in 30 days`,
+    change: (n: number) => `${n > 0 ? '+' : ''}${n}%`,
+    changeAria: (n: number) => `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)}% on the 30 days before`,
+    open: (label: string) => `Show ${label.toLowerCase()}`,
+    openSales: 'Show member sales',
+  },
+  // Member sales, the week ring, Top suki and the feed (T63).
+  sales: {
+    title: 'Member sales',
+    hint: 'Completed orders in the last 30 days.',
+    members: 'Members',
+    guests: 'Guests',
+    share: 'from members',
+    average: 'Average order',
+    orders: (n: number) => `${n} ${n === 1 ? 'order' : 'orders'}`,
+    summary: (share: number, member: string, guest: string) =>
+      `${share}% of sales came from members. Average order: members ${member}, guests ${guest}.`,
+    empty: 'No completed orders in the last 30 days.',
+  },
+  week: {
+    title: 'Stamps this week',
+    of: (n: number) => `of ${n} last week`,
+    hint: (left: number) =>
+      left > 0 ? `${left} more to beat last week` : 'You beat last week. Nice work.',
+    firstWeek: 'Last 7 days',
+    aria: (n: number, before: number) =>
+      `${n} stamps in the last 7 days, ${before} the 7 days before`,
+  },
+  top: {
+    title: 'Top suki',
+    hint: 'Most visits in the last 30 days.',
+    visits: (n: number) => `${n} ${n === 1 ? 'visit' : 'visits'}`,
+    empty: 'No visits in the last 30 days yet.',
+  },
+  activity: {
+    title: 'Latest at the counter',
+    joined: (name: string) => `${name} joined`,
+    stamp: (name: string, n: number) =>
+      n === 1 ? `${name} got a stamp` : `${name} got ${n} stamps`,
+    reward: (name: string) => `${name} used a reward`,
+    prize: (name: string) => `${name} got their prize`,
+    empty: 'Stamps and rewards show here as they happen.',
+  },
+  milestone: {
+    title: (n: number) => `${n} members!`,
+    body: (n: number) =>
+      n === 10
+        ? 'Your first 10 suki. The stamp card is working.'
+        : `${n} people joined your stamp card. Keep the stamps coming.`,
+    close: 'Nice',
+  },
+  // A new shop with no members yet (T63).
+  start: {
+    title: 'Get your first members',
+    body: 'Three steps. Most shops get their first member on the first day.',
+    stepCard: 'Turn on the stamp card',
+    stepCardDone: 'Stamp card is on',
+    stepQr: 'Put the QR on your counter',
+    stepQrBody: 'Customers scan it, order, and join with one tap.',
+    stepFirst: 'Your first member joins',
+    stepFirstBody: (welcome: boolean) =>
+      welcome
+        ? 'They get a welcome stamp right away.'
+        : 'They start collecting on their next order.',
+    qrLabel: 'Scan to order and get stamps',
+    download: 'Download QR',
+    copy: 'Copy link',
   },
   filters: {
     all: 'All',
@@ -2327,7 +2423,7 @@ export const membersWords = {
     capReached: '3 changes today. Try again tomorrow.',
     stopped: 'New stamps are stopped. Turn the card on in Stamp card.',
     paused: 'Paused: no new stamps. A ready reward still works.',
-    visits: 'visits',
+    visits: (n: number) => (n === 1 ? 'visit' : 'visits'),
     spent: 'spent',
     lastIn: 'last in',
     usuallyBuys: 'Usually buys',

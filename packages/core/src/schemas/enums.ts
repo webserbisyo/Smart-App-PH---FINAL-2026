@@ -77,6 +77,12 @@ export const LEDGER_KINDS = [
 export const LedgerKindEnum = z.enum(LEDGER_KINDS);
 export type LedgerKind = z.infer<typeof LedgerKindEnum>;
 
+// What the "Latest at the counter" feed on Members shows (T63). Worked out from the stamp history and
+// claims, never stored, so there is no database CHECK to mirror.
+export const MEMBER_ACTIVITY_KINDS = ['joined', 'stamp', 'reward', 'prize'] as const;
+export const MemberActivityKindEnum = z.enum(MEMBER_ACTIVITY_KINDS);
+export type MemberActivityKind = z.infer<typeof MemberActivityKindEnum>;
+
 // Reason categories a member may see for a manual change (never the owner's private note).
 export const MANUAL_REASONS = ['counter_purchase', 'correction', 'goodwill', 'other'] as const;
 export const ManualReasonEnum = z.enum(MANUAL_REASONS);

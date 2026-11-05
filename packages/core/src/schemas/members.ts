@@ -7,6 +7,7 @@ import {
   CustomerFilterEnum,
   LedgerKindEnum,
   ManualReasonEnum,
+  MemberActivityKindEnum,
   MemberSegmentEnum,
   MemberSortEnum,
   OrderStatusEnum,
@@ -110,12 +111,55 @@ export const MemberDetailSchema = CustomerRowSchema.extend({
 });
 export type MemberDetail = z.infer<typeof MemberDetailSchema>;
 
+// A top suki: the member and how often they came in the last 30 days (T63).
+export const TopSukiSchema = z.object({
+  row: CustomerRowSchema,
+  visits: z.number().int().min(1),
+});
+export type TopSuki = z.infer<typeof TopSukiSchema>;
+
+// One line of the "Latest at the counter" feed (T63).
+export const MemberActivitySchema = z.object({
+  id: IdSchema,
+  kind: MemberActivityKindEnum,
+  customerId: IdSchema,
+  name: z.string().min(1),
+  at: IsoDateTimeSchema,
+  // Stamps added for a `stamp` line (an order or the counter).
+  stamps: z.number().int().min(0),
+});
+export type MemberActivity = z.infer<typeof MemberActivitySchema>;
+
+// Completed sales split between members and guests (T63).
+export const MemberSalesSchema = z.object({
+  members: CentavosSchema,
+  guests: CentavosSchema,
+  memberOrders: z.number().int().min(0),
+  guestOrders: z.number().int().min(0),
+});
+export type MemberSales = z.infer<typeof MemberSalesSchema>;
+
+// How the stamp card is doing (T61, T63). Rolling windows, so the 1st of a month never looks empty:
+// "recent" is the last 30 days (stamps: the last 7) and "before" the same length just before it.
+export const MembersPulseSchema = z.object({
+  joined: z.number().int().min(0),
+  joinedBefore: z.number().int().min(0),
+  stamps: z.number().int().min(0),
+  stampsBefore: z.number().int().min(0),
+  sales: MemberSalesSchema,
+  salesBefore: MemberSalesSchema,
+  // Top 5 members by completed orders in the last 30 days.
+  top: z.array(TopSukiSchema),
+  // Newest first, at most 8.
+  activity: z.array(MemberActivitySchema),
+});
+export type MembersPulse = z.infer<typeof MembersPulseSchema>;
+
 export const MembersOverviewSchema = z.object({
   cardStatus: StampCardStatusEnum,
   goal: z.number().int().min(1),
   members: z.number().int().min(0),
   guests: z.number().int().min(0),
-  joinedThisMonth: z.number().int().min(0),
   // Rewards used and prizes given since the card began.
   rewardsGiven: z.number().int().min(0),
   counts: z.record(CustomerFilterEnum, z.number().int().min(0)),
@@ -124,6 +168,7 @@ export const MembersOverviewSchema = z.object({
   prizesToGive: z.number().int().min(0),
   // Members 1 or 2 stamps away, most recent first (Levra's "worth a word at the counter").
   near: z.array(CustomerRowSchema),
+  pulse: MembersPulseSchema,
 });
 export type MembersOverview = z.infer<typeof MembersOverviewSchema>;
 

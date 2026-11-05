@@ -243,7 +243,7 @@ export function MembersScreen() {
                 {W.summary.members(view.members)}
               </span>
               {' · '}
-              {W.summary.joined(view.joinedThisMonth)}
+              {W.summary.joined(view.pulse.joined)}
               {' · '}
               <span className="font-semibold text-foreground">
                 {W.summary.given(view.rewardsGiven)}
