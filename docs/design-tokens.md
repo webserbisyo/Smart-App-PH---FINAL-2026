@@ -97,6 +97,10 @@ One colour per board stage, each with a solid (`stage-*`: dots, column bars, rin
 
 Every `*-text` on its `*-soft` and on `card` is at least 6:1 in both themes (`packages/ui/test/tokens-contrast.test.ts`). The classes live once in `apps/dashboard/src/app/orders/stage.ts`.
 
+### Owner picture backgrounds (decision T68)
+
+Eight backgrounds behind the owner's face or initials, the same in light and dark (faces need a light ground): `avatar-sky`, `avatar-mint`, `avatar-sun`, `avatar-blush`, `avatar-lilac`, `avatar-sand` (initials in `avatar-ink`), and `avatar-navy`, `avatar-brand` (initials in `avatar-ink-on-dark`). The classes live once in `apps/dashboard/src/app/owner-avatar.tsx`.
+
 ## Type, shape, motion
 
 - Font: Plus Jakarta Sans (variable, self-hosted); numbers with `tabular-nums`. Money as `₱1,234` (no `.00` for whole pesos); prices never wrap.

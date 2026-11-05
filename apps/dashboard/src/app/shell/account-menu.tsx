@@ -2,7 +2,6 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { ChevronsUpDownIcon, LogOutIcon, UserIcon } from 'lucide-react';
 import { words } from '@smartapp/core';
 import type { UserClaims } from '@smartapp/data';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
 import { Button } from '@smartapp/ui/components/button';
 import {
   DropdownMenu,
@@ -14,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@smartapp/ui/components/dropdown-menu';
 import { SidebarMenuButton } from '@smartapp/ui/components/sidebar';
+import { MyAvatar } from '../owner-avatar.js';
 
 function userInitials(claims: UserClaims): string {
   const source = claims.fullName ?? claims.email;
@@ -43,11 +43,7 @@ export function AccountMenu({
   placement: 'sidebar' | 'top-bar';
 }) {
   const navigate = useNavigate();
-  const avatar = (
-    <Avatar>
-      <AvatarFallback>{userInitials(claims)}</AvatarFallback>
-    </Avatar>
-  );
+  const avatar = <MyAvatar fallbackName={claims.fullName ?? userInitials(claims)} />;
 
   return (
     <DropdownMenu>

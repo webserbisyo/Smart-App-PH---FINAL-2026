@@ -2927,6 +2927,8 @@ export const settingsWords = {
     done: 'Password changed',
     resend: 'Send a new code',
     resendIn: (s: number) => `New code in ${s} s`,
+    codeHint: 'Not there? Check Spam or Promotions.',
+    devCode: (code: string) => `Test code: ${code}`,
     cancel: 'Cancel',
   },
   avatar: {

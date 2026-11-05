@@ -100,7 +100,7 @@ export function SettingsCard({
   title: string;
   description?: React.ReactNode;
   action?: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
 }) {
   return (
@@ -110,7 +110,7 @@ export function SettingsCard({
         {description ? <CardDescription>{description}</CardDescription> : null}
         {action ? <CardAction>{action}</CardAction> : null}
       </CardHeader>
-      <CardContent className="flex flex-col gap-5">{children}</CardContent>
+      {children ? <CardContent className="flex flex-col gap-5">{children}</CardContent> : null}
     </Card>
   );
 }

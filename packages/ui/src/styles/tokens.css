@@ -71,6 +71,18 @@
   --highlight: oklch(0.78 0.16 72);
   --highlight-foreground: oklch(0.15 0.05 72);
 
+  /* Owner picture backgrounds (decision T68): the same in light and dark, faces need a light ground. */
+  --avatar-sky: oklch(0.88 0.06 230);
+  --avatar-mint: oklch(0.9 0.07 165);
+  --avatar-sun: oklch(0.92 0.1 90);
+  --avatar-blush: oklch(0.89 0.06 15);
+  --avatar-lilac: oklch(0.87 0.07 300);
+  --avatar-sand: oklch(0.9 0.04 70);
+  --avatar-navy: oklch(0.32 0.09 262);
+  --avatar-brand: oklch(0.55 0.24 263);
+  --avatar-ink: oklch(0.2 0.06 262);
+  --avatar-ink-on-dark: oklch(0.98 0 0);
+
   /* Order stages (Orders v2, decision T56): one colour per board stage. Order type is never a colour.
      The base is for dots and edges; text on the soft fill or a card uses -text (AA). */
   --stage-new: oklch(0.53 0.22 263);

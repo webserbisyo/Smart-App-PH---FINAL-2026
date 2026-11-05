@@ -76,6 +76,16 @@
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
 
+  --color-avatar-sky: var(--avatar-sky);
+  --color-avatar-mint: var(--avatar-mint);
+  --color-avatar-sun: var(--avatar-sun);
+  --color-avatar-blush: var(--avatar-blush);
+  --color-avatar-lilac: var(--avatar-lilac);
+  --color-avatar-sand: var(--avatar-sand);
+  --color-avatar-navy: var(--avatar-navy);
+  --color-avatar-brand: var(--avatar-brand);
+  --color-avatar-ink: var(--avatar-ink);
+  --color-avatar-ink-on-dark: var(--avatar-ink-on-dark);
   --color-stage-new: var(--stage-new);
   --color-stage-new-soft: var(--stage-new-soft);
   --color-stage-new-text: var(--stage-new-text);
