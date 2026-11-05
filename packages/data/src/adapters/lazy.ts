@@ -4,6 +4,7 @@ import type {
   CustomerAuthAdapter,
   DataAdapters,
   OwnerCatalogAdapter,
+  OwnerMembersAdapter,
   OwnerOrdersAdapter,
   OwnerSamplesAdapter,
   StorefrontAdapter,
@@ -84,5 +85,25 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     createUploadUrl: async (input) => (await real()).ownerCatalog.createUploadUrl(input),
   };
 
-  return { storefront, customerAuth, ownerOrders, ownerSamples, ownerCatalog };
+  const ownerMembers: OwnerMembersAdapter = {
+    getStampCard: async () => (await real()).ownerMembers.getStampCard(),
+    previewStampCardChange: async (input) =>
+      (await real()).ownerMembers.previewStampCardChange(input),
+    saveStampCard: async (input) => (await real()).ownerMembers.saveStampCard(input),
+    setStampCardStatus: async (input) => (await real()).ownerMembers.setStampCardStatus(input),
+    getMembersOverview: async () => (await real()).ownerMembers.getMembersOverview(),
+    listCustomers: async (input) => (await real()).ownerMembers.listCustomers(input),
+    getMember: async (input) => (await real()).ownerMembers.getMember(input),
+    findMember: async (input) => (await real()).ownerMembers.findMember(input),
+    giveStamp: async (input) => (await real()).ownerMembers.giveStamp(input),
+    undoChange: async (input) => (await real()).ownerMembers.undoChange(input),
+    adjustStamps: async (input) => (await real()).ownerMembers.adjustStamps(input),
+    useReward: async (input) => (await real()).ownerMembers.useReward(input),
+    saveMemberNote: async (input) => (await real()).ownerMembers.saveMemberNote(input),
+    listRewardClaims: async () => (await real()).ownerMembers.listRewardClaims(),
+    giveClaim: async (input) => (await real()).ownerMembers.giveClaim(input),
+    cancelClaim: async (input) => (await real()).ownerMembers.cancelClaim(input),
+  };
+
+  return { storefront, customerAuth, ownerOrders, ownerSamples, ownerCatalog, ownerMembers };
 }

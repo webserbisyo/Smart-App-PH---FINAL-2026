@@ -24,21 +24,22 @@ function HomeStampCardContent({ slug, stampCard }: HomeStampCardProps) {
   const needed = rule.stampsNeeded;
   const stamped = Math.min(account?.balance ?? 0, needed);
   const pending = account?.pendingStamps ?? 0;
-  const ready = Boolean(account?.rewardReady) && status !== 'paused';
+  // Paused stops new stamps only; a ready reward still shines (M1).
+  const ready = Boolean(account?.rewardReady);
   const href = account || status === 'paused' ? `/${slug}/rewards` : `/${slug}/join`;
   const prize = { title: reward.title, photo: imageSources(reward.image), label: W.prize };
 
   let title: string = W.guestTitle(needed, reward.title);
   let body: string | null = W.guestBody(rule.welcomeStamps);
   let action: string = W.join;
-  if (status === 'paused') {
-    title = W.pausedTitle;
-    body = W.pausedBody;
-    action = W.view;
-  } else if (ready) {
+  if (ready) {
     title = W.readyTitle(reward.title);
     body = null;
     action = W.claim;
+  } else if (status === 'paused') {
+    title = W.pausedTitle;
+    body = W.pausedBody;
+    action = W.view;
   } else if (account) {
     title = W.memberTitle(Math.max(0, needed - stamped));
     body = pending > 0 ? W.pending(pending) : reward.title;

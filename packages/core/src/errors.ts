@@ -45,7 +45,9 @@ export const ErrorCode = [
   'payment_not_pending',
   'already_paid',
   'stamp_cap_reached',
-  'stamp_daily_cap',
+  'stamp_recent',
+  'stamp_card_off',
+  'undo_expired',
   'claim_not_pending',
   'recall_expired',
   'reschedule_not_allowed',
@@ -56,6 +58,7 @@ export const ErrorCode = [
   'category_not_empty',
   'item_has_orders',
   'variant_is_reward',
+  'item_is_reward',
 ] as const;
 
 export const ErrorCodeEnum = z.enum(ErrorCode);

@@ -30,7 +30,7 @@ export function capReached(
 
 /** How many rewards the member has used: confetti fires once for each new round. */
 export function rewardRound(history: readonly LedgerEntry[]): number {
-  return history.filter((e) => e.kind === 'redeemed').length + 1;
+  return history.filter((e) => e.kind === 'used' || e.kind === 'claimed').length + 1;
 }
 
 /** The history line for one stamp change; manual changes show the reason category only. */
@@ -44,10 +44,16 @@ export function ledgerLine(entry: LedgerEntry): string {
       return L.pending(orderNo ?? '');
     case 'earned':
       return L.earned(orderNo);
-    case 'redeemed':
-      return L.redeemed(orderNo);
+    case 'used':
+      return L.used(orderNo);
+    case 'claimed':
+      return L.claimed;
+    case 'returned':
+      return L.returned(orderNo);
     case 'reversed':
       return L.reversed(orderNo);
+    case 'undone':
+      return L.undone;
     case 'given':
       return entry.reasonCategory
         ? `${L.given} · ${words.rewards.reason[entry.reasonCategory]}`

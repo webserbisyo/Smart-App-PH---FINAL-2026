@@ -51,6 +51,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] O5 Orders Kitchen view, print and Find order
 - [x] O6 Storefront scheduling, item notice and limits
 - [x] Orders v2: one page with Board and List, order panel, live drag, stage colours (decisions T54 to T56)
+- [ ] Members page: list and groups, member panel with one-tap stamp and Undo, Stamp card and Prizes tabs, Card progress chart (decisions T57 to T60; part 1 of 4, rules and data, pushed to main)
 
 ## Phase 4: Backend, area by area
 

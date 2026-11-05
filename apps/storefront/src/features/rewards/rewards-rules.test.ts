@@ -39,7 +39,7 @@ describe('rewards rules', () => {
 
   it('counts reward rounds so confetti fires once per reward', () => {
     expect(rewardRound([entry({})])).toBe(1);
-    expect(rewardRound([entry({ kind: 'redeemed', delta: -8 }), entry({})])).toBe(2);
+    expect(rewardRound([entry({ kind: 'used', delta: -8 }), entry({})])).toBe(2);
   });
 
   it('words history lines without private notes', () => {

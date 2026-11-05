@@ -274,7 +274,7 @@ describe('stamps and rewards', () => {
     expect(store.inspect(slug)?.shop.storefront.stampCard.reward.quantityLeft).toBe(0);
   });
 
-  it('a paused card refuses claims and earns no stamps', async () => {
+  it('a paused card still lets a ready member claim the prize (M1)', async () => {
     const { store } = testStore(OPEN_MONDAY);
     const slug = 'tala-apparel';
     await signIn(store, 'paused@example.com');
@@ -291,7 +291,7 @@ describe('stamps and rewards', () => {
       });
     const card = store.inspect(slug)?.shop.storefront.stampCard;
     if (card) card.status = 'paused';
-    expect(await errorCode(store.storefront.claimReward({ slug }))).toBe('reward_paused');
+    expect(await errorCode(store.storefront.claimReward({ slug }))).toBe('no error');
   });
 
   it('stamp daily cap: the second completed order today earns nothing', async () => {

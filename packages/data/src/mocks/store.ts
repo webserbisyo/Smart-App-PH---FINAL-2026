@@ -21,6 +21,21 @@ import {
   isTransfer,
   LatLngSchema,
   LedgerEntrySchema,
+  ClaimCancelReasonEnum,
+  AdjustStampsInputSchema,
+  canUndo,
+  changesLeftToday,
+  CounterChangeSchema,
+  FoundMemberSchema,
+  ListCustomersInputSchema,
+  memberCodeMatches,
+  normaliseMemberCode,
+  recentCounterStamp,
+  StampCardImpactSchema,
+  StampCardSettingsSchema,
+  StampCardStatusEnum,
+  stampImpact,
+  UNDO_SECONDS,
   manilaDate,
   MemberAccountSchema,
   nextOpening,
@@ -82,11 +97,23 @@ import type { DataAdapters } from '../adapters/types';
 import {
   DEMO_CUSTOMER,
   demoAddresses,
-  generateMembers,
   generateOrders,
   isDemoReceiptToken,
   orderableLines,
 } from './activity';
+import { generateCommunity } from './members';
+import {
+  claimIdOf,
+  counterEntries,
+  customerRow,
+  entryIdOf,
+  listPage,
+  memberDetail,
+  ownerClaim,
+  overview,
+  peopleOf,
+  type Person,
+} from './members-view';
 import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
 import { registerTrickleHandler } from './scenario';
@@ -95,12 +122,15 @@ import {
   addMinutes,
   buildOrder,
   memberBalance,
+  memberId,
   nextOrderNo,
   receiptLines,
   type MemberRecord,
   type MockState,
   type OrderRecord,
   type ShopState,
+  type StoredClaim,
+  type StoredLedgerEntry,
 } from './state';
 
 // Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
@@ -142,6 +172,31 @@ function fail(code: ErrorCode, status = 400, fieldErrors?: Record<string, string
 
 const clone = <T>(value: T): T => structuredClone(value);
 
+// Phones saved before decision T57 used "redeemed" for a used reward and "reversed" for stamps given back.
+const StoredLedgerSchema = z.preprocess(
+  (raw) => {
+    if (typeof raw !== 'object' || raw === null || !('kind' in raw)) return raw;
+    const delta = 'delta' in raw && typeof raw.delta === 'number' ? raw.delta : 0;
+    if (raw.kind === 'redeemed') return { ...raw, kind: 'used' };
+    if (raw.kind === 'reversed' && delta > 0) return { ...raw, kind: 'returned' };
+    return raw;
+  },
+  LedgerEntrySchema.extend({
+    id: z.string().optional(),
+    note: z.string().nullable().optional(),
+    byOwner: z.boolean().optional(),
+    undone: z.boolean().optional(),
+    clientKey: z.string().optional(),
+  }),
+);
+
+const StoredClaimSchema = RewardClaimSchema.extend({
+  id: z.string().optional(),
+  givenAt: z.string().nullable().optional(),
+  cancelledAt: z.string().nullable().optional(),
+  cancelReason: ClaimCancelReasonEnum.nullable().optional(),
+});
+
 const PersistedSchema = z.object({
   session: CustomerSessionSchema.nullable(),
   codes: z.record(z.string(), z.object({ issuedAt: z.string(), sends: z.array(z.string()) })),
@@ -173,10 +228,11 @@ const PersistedSchema = z.object({
       phone: z.string(),
       memberCode: z.string(),
       joinedAt: z.string(),
-      ledger: z.array(LedgerEntrySchema),
+      ledger: z.array(StoredLedgerSchema),
       addresses: z.array(CustomerAddressSchema),
-      claims: z.array(RewardClaimSchema),
+      claims: z.array(StoredClaimSchema),
       byCustomer: z.boolean(),
+      note: z.string().nullable().default(null),
     }),
   ),
   rewardsLeft: z.record(z.string(), z.number()),
@@ -254,10 +310,25 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       }
     }
     const shopRng = mulberry32(seed + slug.length * 7919 + slug.charCodeAt(0));
+    const orders = generateOrders(shop, now(), shopRng);
+    const community = generateCommunity(
+      shop,
+      orders,
+      now(),
+      mulberry32(seed + slug.length * 104729 + slug.charCodeAt(1)),
+    );
+    // A claimed prize holds its piece (D8).
+    const reward = shop.storefront.stampCard.reward;
+    if (reward.quantityTotal !== null && reward.quantityLeft !== null)
+      reward.quantityLeft = Math.min(
+        reward.quantityLeft,
+        Math.max(0, reward.quantityTotal - community.piecesHeld),
+      );
     return {
       shop,
-      orders: generateOrders(shop, now(), shopRng),
-      members: generateMembers(shop, now()),
+      orders,
+      members: community.members,
+      archive: community.archive,
       variantTemplates: clone(variantTemplates),
     };
   }
@@ -306,7 +377,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       session: state.session,
       codes: state.codes,
       orders: [...state.shops.values()].flatMap((s) => s.orders.filter((o) => o.byCustomer)),
-      members: [...state.shops.values()].flatMap((s) => s.members.filter((m) => m.byCustomer)),
+      members: [...state.shops.values()].flatMap((s) =>
+        s.members.filter((m) => m.byCustomer).map((m) => ({ ...m, note: m.note ?? null })),
+      ),
       rewardsLeft: Object.fromEntries(
         [...state.shops.entries()].flatMap(([slug, s]) =>
           s.shop.storefront.stampCard.reward.quantityLeft === null
@@ -381,7 +454,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     const member = memberOf(s, order.memberEmail);
     if (member && order.redeemed > 0) {
       member.ledger.push({
-        kind: 'reversed',
+        kind: 'returned',
         delta: order.redeemed,
         reasonCategory: null,
         orderNo: order.receipt.orderNo,
@@ -459,8 +532,11 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       (o) => o.memberEmail === member.email && o.stamp === 'pending' && !isFinal(o.receipt.status),
     );
     const balance = memberBalance(member);
+    // An undone counter change and its undo line cancel out, so the member sees neither (T58).
     const history = [
-      ...member.ledger,
+      ...member.ledger
+        .filter((e) => !(e.undone ?? false) && e.kind !== 'undone')
+        .map((e) => LedgerEntrySchema.parse(e)),
       ...pendingOrders.map((o) => ({
         kind: 'pending' as const,
         delta: 1,
@@ -481,7 +557,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       memberCode: member.memberCode,
       joinedAt: member.joinedAt,
       history,
-      claims: [...member.claims].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      claims: [...member.claims]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map((c) => RewardClaimSchema.parse(c)),
     });
   }
 
@@ -529,7 +607,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
   }
 
   async function run<T>(
-    area: 'storefront' | 'orders' | 'account' | 'auth' | 'catalog',
+    area: 'storefront' | 'orders' | 'account' | 'auth' | 'catalog' | 'members',
     fn: () => T,
   ): Promise<T> {
     const sc = scenario();
@@ -829,7 +907,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         });
         if (member && redeemed > 0) {
           member.ledger.push({
-            kind: 'redeemed',
+            kind: 'used',
             delta: -redeemed,
             reasonCategory: null,
             orderNo,
@@ -980,7 +1058,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           memberCode: `${slug.slice(0, 2).toUpperCase()}-${String(Math.floor(rng() * 9000) + 1000)}`,
           joinedAt: at,
           ledger:
-            card.status !== 'off' && card.rule.welcomeStamps > 0
+            // Only an On card gives the welcome stamp (M3); paused stops new stamps (M1).
+            card.status === 'on' && card.rule.welcomeStamps > 0
               ? [
                   {
                     kind: 'welcome',
@@ -1048,8 +1127,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const member = currentMember(s);
         if (!member) fail('not_signed_in', 401);
         const card = s.shop.storefront.stampCard;
+        // Paused stops new stamps only; a ready prize can still be claimed (M1).
         if (card.status === 'off' || card.reward.kind !== 'custom') fail('reward_unavailable', 409);
-        if (card.status === 'paused') fail('reward_paused', 409);
         if (memberBalance(member) < card.rule.stampsNeeded) fail('stamps_insufficient', 409);
         // One step, so two claims for the last piece can't both win.
         if (card.reward.quantityLeft !== null && card.reward.quantityLeft <= 0)
@@ -1062,13 +1141,15 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const claim = RewardClaimSchema.parse({
           code,
           status: 'pending',
-          qrUrl: `https://app.webserbisyo.com/claims/${code}`,
+          // Member and prize QR both open /m/<code> (M13).
+          qrUrl: `https://app.webserbisyo.com/m/${code}`,
           title: card.reward.title,
           createdAt: at,
         });
-        member.claims.push(claim);
+        member.claims.push({ ...claim, id: newId('claim'), givenAt: null, cancelledAt: null });
         member.ledger.push({
-          kind: 'redeemed',
+          id: newId('l'),
+          kind: 'claimed',
           delta: -card.rule.stampsNeeded,
           reasonCategory: null,
           orderNo: null,
@@ -1585,6 +1666,11 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       }),
   };
 
+  function isRewardItem(s: ShopState, itemId: string): boolean {
+    const reward = s.shop.storefront.stampCard.reward;
+    return reward.kind === 'free_item' && reward.itemId === itemId;
+  }
+
   const ownerCatalog: DataAdapters['ownerCatalog'] = {
     listCategories: async () => {
       const slug = await resolveOwnerShopSlug();
@@ -1657,6 +1743,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           if (!parsed.variants.some((v) => v.id === reward.variantId)) {
             fail('variant_is_reward', 400);
           }
+          if (parsed.status !== 'active') fail('item_is_reward', 409);
         }
         for (const axis of parsed.axes) {
           if (axis.templateId) {
@@ -1722,6 +1809,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         if (hasOrders) {
           fail('item_has_orders', 400);
         }
+        if (isRewardItem(s, id)) fail('item_is_reward', 409);
         s.shop.catalog.items = s.shop.catalog.items.filter((i) => i.id !== id);
       });
     },
@@ -1732,6 +1820,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const s = requireShop(slug);
         const item = s.shop.catalog.items.find((i) => i.id === id);
         if (!item) fail('not_found', 404);
+        // The prize item can't be hidden or archived while it is the prize (M10).
+        if (status !== 'active' && isRewardItem(s, id)) fail('item_is_reward', 409);
         const hasOrders = s.orders.some((o) => o.receipt.lines.some((l) => l.itemId === id));
         item.status = status;
         return OwnerItemSchema.parse({ ...item, hasOrders });
@@ -1958,12 +2048,429 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     },
   };
 
+  // Owner Members (decisions T57 to T60). The shop comes from the owner's login, like the catalog.
+  async function ownerShop(): Promise<string> {
+    return resolveOwnerShopSlug();
+  }
+
+  function membersShop(slug: string): ShopState {
+    const s = requireShop(slug);
+    if (scenario().empty) {
+      s.members = [];
+      s.archive = [];
+    }
+    return s;
+  }
+
+  function personById(s: ShopState, customerId: string): Person {
+    const person = peopleOf(s).find((p) => p.id === customerId);
+    if (!person) fail('not_found', 404);
+    return person;
+  }
+
+  function memberById(s: ShopState, customerId: string): MemberRecord {
+    const member = s.members.find((m) => memberId(m) === customerId);
+    if (!member) fail('not_found', 404);
+    return member;
+  }
+
+  function detailOf(s: ShopState, member: MemberRecord) {
+    return memberDetail(s, personById(s, memberId(member)), now());
+  }
+
+  function cardOf(s: ShopState) {
+    return StampCardSettingsSchema.parse(s.shop.storefront.stampCard);
+  }
+
+  function counterChange(s: ShopState, member: MemberRecord, entry: StoredLedgerEntry) {
+    const index = member.ledger.indexOf(entry);
+    return CounterChangeSchema.parse({
+      member: detailOf(s, member),
+      entryId: entryIdOf(member, entry, index),
+      undoUntil: new Date(new Date(entry.at).getTime() + UNDO_SECONDS * 1000).toISOString(),
+    });
+  }
+
+  function claimById(s: ShopState, claimId: string): { member: MemberRecord; claim: StoredClaim } {
+    for (const member of s.members) {
+      const claim = member.claims.find((c) => claimIdOf(member, c) === claimId);
+      if (claim) return { member, claim };
+    }
+    fail('not_found', 404);
+  }
+
+  function capCheck(member: MemberRecord): void {
+    if (changesLeftToday(counterEntries(member), now()) <= 0) fail('stamp_cap_reached', 429);
+  }
+
+  /** A prize handed over at once at the counter, or a claim for later; both hold a piece (D8). */
+  function newClaim(s: ShopState, member: MemberRecord, at: string, given: boolean): StoredClaim {
+    const card = s.shop.storefront.stampCard;
+    if (card.reward.quantityLeft !== null && card.reward.quantityLeft <= 0)
+      fail('reward_all_claimed', 409);
+    if (card.reward.onePerCustomer && member.claims.some((c) => c.status !== 'cancelled'))
+      fail('reward_unavailable', 409);
+    if (card.reward.quantityLeft !== null) card.reward.quantityLeft -= 1;
+    const code = `${s.shop.storefront.slug.slice(0, 2).toUpperCase()}-${makeToken(rng).slice(0, 6).toUpperCase()}`;
+    const claim: StoredClaim = {
+      id: newId('claim'),
+      code,
+      status: given ? 'given' : 'pending',
+      qrUrl: `https://app.webserbisyo.com/m/${code}`,
+      title: card.reward.title,
+      createdAt: at,
+      givenAt: given ? at : null,
+      cancelledAt: null,
+      cancelReason: null,
+    };
+    member.claims.push(claim);
+    return claim;
+  }
+
+  const ownerMembers: DataAdapters['ownerMembers'] = {
+    getStampCard: async () => {
+      const slug = await ownerShop();
+      return run('members', () => cardOf(requireShop(slug)));
+    },
+
+    previewStampCardChange: async (input) => {
+      const slug = await ownerShop();
+      const next = StampCardSettingsSchema.parse(input);
+      return run('members', () => {
+        const s = membersShop(slug);
+        const card = s.shop.storefront.stampCard;
+        const impact = stampImpact(
+          s.members.map((m) => memberBalance(m)),
+          card.rule.stampsNeeded,
+          next.rule.stampsNeeded,
+        );
+        return StampCardImpactSchema.parse({
+          ...impact,
+          pendingClaims: s.members.flatMap((m) => m.claims).filter((c) => c.status === 'pending')
+            .length,
+        });
+      });
+    },
+
+    saveStampCard: async (input) => {
+      const slug = await ownerShop();
+      const parsed = StampCardSettingsSchema.safeParse(input);
+      if (!parsed.success) fail('invalid_input', 422);
+      const next = parsed.data;
+      return run('members', () => {
+        const s = requireShop(slug);
+        const card = s.shop.storefront.stampCard;
+        if (next.reward.kind === 'free_item') {
+          const item = s.shop.catalog.items.find((i) => i.id === next.reward.itemId);
+          if (
+            !item ||
+            item.status !== 'active' ||
+            !item.variants.some((v) => v.id === next.reward.variantId)
+          )
+            fail('item_unavailable', 409);
+        }
+        // Pieces can be added, never set below what claims already hold (M7). Only custom prizes have pieces.
+        const held =
+          card.reward.quantityTotal !== null && card.reward.quantityLeft !== null
+            ? card.reward.quantityTotal - card.reward.quantityLeft
+            : 0;
+        const total = next.reward.kind === 'custom' ? next.reward.quantityTotal : null;
+        if (total !== null && total < held)
+          fail('invalid_input', 422, { quantityTotal: [words.members.piecesBelowHeld(held)] });
+        s.shop.storefront.stampCard = {
+          status: next.status,
+          rule: next.rule,
+          reward: {
+            ...next.reward,
+            quantityTotal: total,
+            quantityLeft: total === null ? null : total - held,
+          },
+        };
+        persist();
+        return cardOf(s);
+      });
+    },
+
+    setStampCardStatus: async ({ status }) => {
+      const slug = await ownerShop();
+      return run('members', () => {
+        const s = requireShop(slug);
+        s.shop.storefront.stampCard.status = StampCardStatusEnum.parse(status);
+        persist();
+        return cardOf(s);
+      });
+    },
+
+    getMembersOverview: async () => {
+      const slug = await ownerShop();
+      return run('members', () => {
+        const s = membersShop(slug);
+        const t = now();
+        return overview(
+          s,
+          peopleOf(s).map((p) => customerRow(s, p, t)),
+          t,
+        );
+      });
+    },
+
+    listCustomers: async (input) => {
+      const slug = await ownerShop();
+      const parsed = ListCustomersInputSchema.parse(input);
+      return run('members', () => {
+        const s = membersShop(slug);
+        const t = now();
+        return listPage(
+          peopleOf(s).map((p) => customerRow(s, p, t)),
+          parsed,
+        );
+      });
+    },
+
+    getMember: async ({ customerId }) => {
+      const slug = await ownerShop();
+      return run('members', () => {
+        const s = membersShop(slug);
+        return memberDetail(s, personById(s, customerId), now());
+      });
+    },
+
+    findMember: async ({ code }) => {
+      const slug = await ownerShop();
+      return run('members', () => {
+        const s = membersShop(slug);
+        const typed = normaliseMemberCode(code);
+        // A prize code opens its member with the claim to give (M13); a member code matches exactly (D7).
+        for (const member of s.members) {
+          const claim = member.claims.find((c) => normaliseMemberCode(c.code) === typed);
+          if (claim)
+            return FoundMemberSchema.parse({
+              customerId: memberId(member),
+              claimId: claim.status === 'pending' ? claimIdOf(member, claim) : null,
+            });
+        }
+        const member = s.members.find((m) => memberCodeMatches(m.memberCode, code));
+        if (!member) fail('not_found', 404);
+        return FoundMemberSchema.parse({ customerId: memberId(member), claimId: null });
+      });
+    },
+
+    giveStamp: async ({ customerId, clientKey, confirmRecent }) => {
+      const slug = await ownerShop();
+      return run('members', () => {
+        const s = membersShop(slug);
+        const member = memberById(s, customerId);
+        // A retry of the same tap returns the first result (D2).
+        const again = member.ledger.find((e) => e.clientKey === clientKey);
+        if (again) return counterChange(s, member, again);
+        if (s.shop.storefront.stampCard.status !== 'on') fail('stamp_card_off', 409);
+        capCheck(member);
+        if (!confirmRecent && recentCounterStamp(counterEntries(member), now()) !== null)
+          fail('stamp_recent', 409);
+        const entry: StoredLedgerEntry = {
+          id: newId('l'),
+          kind: 'given',
+          delta: 1,
+          reasonCategory: 'counter_purchase',
+          orderNo: null,
+          at: now().toISOString(),
+          note: null,
+          byOwner: true,
+          undone: false,
+          clientKey,
+        };
+        member.ledger.push(entry);
+        persist();
+        return counterChange(s, member, entry);
+      });
+    },
+
+    undoChange: async ({ customerId, entryId }) => {
+      const slug = await ownerShop();
+      return run('members', () => {
+        const s = membersShop(slug);
+        const member = memberById(s, customerId);
+        const index = member.ledger.findIndex((e, i) => entryIdOf(member, e, i) === entryId);
+        const entry = member.ledger[index];
+        if (!entry) fail('not_found', 404);
+        const undoable =
+          (entry.byOwner ?? false) &&
+          !(entry.undone ?? false) &&
+          (entry.kind === 'given' || entry.kind === 'used' || entry.kind === 'claimed');
+        if (!undoable || !canUndo(entry.at, now())) fail('undo_expired', 409);
+        if (memberBalance(member) - entry.delta < 0) fail('undo_expired', 409);
+        if (entry.kind === 'claimed') {
+          // The prize handed over by mistake goes back on the shelf.
+          const claim = [...member.claims].reverse().find((c) => c.createdAt === entry.at);
+          if (claim) {
+            claim.status = 'cancelled';
+            claim.cancelledAt = now().toISOString();
+            claim.cancelReason = 'other';
+          }
+          const reward = s.shop.storefront.stampCard.reward;
+          if (reward.quantityLeft !== null) reward.quantityLeft += 1;
+        }
+        entry.undone = true;
+        member.ledger.push({
+          id: newId('l'),
+          kind: 'undone',
+          delta: -entry.delta,
+          reasonCategory: entry.reasonCategory,
+          orderNo: null,
+          at: now().toISOString(),
+          note: null,
+          byOwner: true,
+          undone: true,
+        });
+        persist();
+        return detailOf(s, member);
+      });
+    },
+
+    adjustStamps: async (input) => {
+      const slug = await ownerShop();
+      const parsed = AdjustStampsInputSchema.parse(input);
+      return run('members', () => {
+        const s = membersShop(slug);
+        const member = memberById(s, parsed.customerId);
+        const card = s.shop.storefront.stampCard;
+        if (parsed.delta > 0 && card.status !== 'on') fail('stamp_card_off', 409);
+        capCheck(member);
+        // Never below 0 (M6).
+        if (memberBalance(member) + parsed.delta < 0) fail('stamps_insufficient', 409);
+        member.ledger.push({
+          id: newId('l'),
+          kind: parsed.delta > 0 ? 'given' : 'removed',
+          delta: parsed.delta,
+          reasonCategory: parsed.reason,
+          orderNo: null,
+          at: now().toISOString(),
+          note: parsed.note ? parsed.note : null,
+          byOwner: true,
+          undone: false,
+        });
+        persist();
+        return detailOf(s, member);
+      });
+    },
+
+    useReward: async ({ customerId, clientKey }) => {
+      const slug = await ownerShop();
+      return run('members', () => {
+        const s = membersShop(slug);
+        const member = memberById(s, customerId);
+        const again = member.ledger.find((e) => e.clientKey === clientKey);
+        if (again) return counterChange(s, member, again);
+        const card = s.shop.storefront.stampCard;
+        // Paused keeps ready rewards usable (M1); Off stops using (M2).
+        if (card.status === 'off') fail('reward_unavailable', 409);
+        const goal = card.rule.stampsNeeded;
+        if (memberBalance(member) < goal) fail('stamps_insufficient', 409);
+        const at = now().toISOString();
+        if (card.reward.kind === 'custom') newClaim(s, member, at, true);
+        const entry: StoredLedgerEntry = {
+          id: newId('l'),
+          kind: card.reward.kind === 'custom' ? 'claimed' : 'used',
+          delta: -goal,
+          reasonCategory: null,
+          orderNo: null,
+          at,
+          note: null,
+          byOwner: true,
+          undone: false,
+          clientKey,
+        };
+        member.ledger.push(entry);
+        persist();
+        return counterChange(s, member, entry);
+      });
+    },
+
+    saveMemberNote: async ({ customerId, note }) => {
+      const slug = await ownerShop();
+      const clean = note?.trim() ? note.trim() : null;
+      if (clean !== null && clean.length > 300) fail('invalid_input', 422);
+      return run('members', () => {
+        const s = membersShop(slug);
+        const member = memberById(s, customerId);
+        member.note = clean;
+        persist();
+        return detailOf(s, member);
+      });
+    },
+
+    listRewardClaims: async () => {
+      const slug = await ownerShop();
+      return run('members', () => {
+        const s = membersShop(slug);
+        // Waiting longest first, then the rest newest first.
+        return s.members
+          .flatMap((m) => m.claims.map((c) => ownerClaim(m, c)))
+          .sort((a, b) =>
+            a.status === 'pending' && b.status === 'pending'
+              ? a.createdAt.localeCompare(b.createdAt)
+              : a.status === 'pending'
+                ? -1
+                : b.status === 'pending'
+                  ? 1
+                  : b.createdAt.localeCompare(a.createdAt),
+          );
+      });
+    },
+
+    giveClaim: async ({ claimId }) => {
+      const slug = await ownerShop();
+      return run('members', () => {
+        const s = membersShop(slug);
+        const { member, claim } = claimById(s, claimId);
+        if (claim.status !== 'pending') fail('claim_not_pending', 409);
+        claim.status = 'given';
+        claim.givenAt = now().toISOString();
+        persist();
+        return ownerClaim(member, claim);
+      });
+    },
+
+    cancelClaim: async ({ claimId, reason }) => {
+      const slug = await ownerShop();
+      const why = ClaimCancelReasonEnum.parse(reason);
+      return run('members', () => {
+        const s = membersShop(slug);
+        const { member, claim } = claimById(s, claimId);
+        if (claim.status !== 'pending') fail('claim_not_pending', 409);
+        const at = now().toISOString();
+        claim.status = 'cancelled';
+        claim.cancelledAt = at;
+        claim.cancelReason = why;
+        // The stamps and the piece come back (M7).
+        const taken = member.ledger.find((e) => e.kind === 'claimed' && e.at === claim.createdAt);
+        member.ledger.push({
+          id: newId('l'),
+          kind: 'returned',
+          delta: taken ? -taken.delta : s.shop.storefront.stampCard.rule.stampsNeeded,
+          reasonCategory: null,
+          orderNo: null,
+          at,
+          note: null,
+          byOwner: true,
+          undone: false,
+        });
+        const reward = s.shop.storefront.stampCard.reward;
+        if (reward.quantityLeft !== null && reward.quantityTotal !== null)
+          reward.quantityLeft = Math.min(reward.quantityTotal, reward.quantityLeft + 1);
+        persist();
+        return ownerClaim(member, claim);
+      });
+    },
+  };
+
   return {
     storefront,
     customerAuth,
     ownerOrders,
     ownerSamples,
     ownerCatalog,
+    ownerMembers,
     now,
     reset() {
       state = { shops: new Map(), session: null, codes: {} };

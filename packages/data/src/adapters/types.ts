@@ -1,7 +1,19 @@
 // One interface per area, named exactly like the rows in docs/api.md. The mock implements every row; the API
 // adapter for each area comes in phase 4.
 import type {
+  AdjustStampsInput,
   Availability,
+  ClaimCancelReason,
+  CounterChange,
+  CustomerPage,
+  FoundMember,
+  ListCustomersInput,
+  MemberDetail,
+  MembersOverview,
+  OwnerClaim,
+  StampCardImpact,
+  StampCardSettings,
+  StampCardStatus,
   BoardOrder,
   BookingRules,
   Category,
@@ -183,10 +195,35 @@ export interface OwnerCatalogAdapter {
   createUploadUrl(input: { kind: UploadKind }): Promise<UploadResult>;
 }
 
+// The shop comes from the owner's login (T34), so no method takes a slug.
+export interface OwnerMembersAdapter {
+  getStampCard(): Promise<StampCardSettings>;
+  previewStampCardChange(input: StampCardSettings): Promise<StampCardImpact>;
+  saveStampCard(input: StampCardSettings): Promise<StampCardSettings>;
+  setStampCardStatus(input: { status: StampCardStatus }): Promise<StampCardSettings>;
+  getMembersOverview(): Promise<MembersOverview>;
+  listCustomers(input: ListCustomersInput): Promise<CustomerPage>;
+  getMember(input: { customerId: string }): Promise<MemberDetail>;
+  findMember(input: { code: string }): Promise<FoundMember>;
+  giveStamp(input: {
+    customerId: string;
+    clientKey: string;
+    confirmRecent: boolean;
+  }): Promise<CounterChange>;
+  undoChange(input: { customerId: string; entryId: string }): Promise<MemberDetail>;
+  adjustStamps(input: AdjustStampsInput): Promise<MemberDetail>;
+  useReward(input: { customerId: string; clientKey: string }): Promise<CounterChange>;
+  saveMemberNote(input: { customerId: string; note: string | null }): Promise<MemberDetail>;
+  listRewardClaims(): Promise<OwnerClaim[]>;
+  giveClaim(input: { claimId: string }): Promise<OwnerClaim>;
+  cancelClaim(input: { claimId: string; reason: ClaimCancelReason }): Promise<OwnerClaim>;
+}
+
 export interface DataAdapters {
   storefront: StorefrontAdapter;
   customerAuth: CustomerAuthAdapter;
   ownerOrders: OwnerOrdersAdapter;
   ownerSamples: OwnerSamplesAdapter;
   ownerCatalog: OwnerCatalogAdapter;
+  ownerMembers: OwnerMembersAdapter;
 }

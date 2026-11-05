@@ -58,14 +58,21 @@ export const REWARD_KINDS = ['discount', 'free_item', 'custom'] as const;
 export const RewardKindEnum = z.enum(REWARD_KINDS);
 export type RewardKind = z.infer<typeof RewardKindEnum>;
 
+// Stamp history kinds (decision T57, rule M4). `pending` is shown to the member only and never stored:
+// it is counted from open orders. `used` = a reward on an order or at the counter, `claimed` = a prize
+// claim, `returned` = stamps given back (cancelled order or claim), `reversed` = an earned stamp taken
+// back, `undone` = a counter change undone within 10 seconds (T58).
 export const LEDGER_KINDS = [
   'welcome',
   'pending',
   'earned',
-  'redeemed',
+  'used',
+  'claimed',
+  'returned',
   'reversed',
   'given',
   'removed',
+  'undone',
 ] as const;
 export const LedgerKindEnum = z.enum(LEDGER_KINDS);
 export type LedgerKind = z.infer<typeof LedgerKindEnum>;
@@ -78,6 +85,25 @@ export type ManualReason = z.infer<typeof ManualReasonEnum>;
 export const CLAIM_STATUSES = ['pending', 'given', 'cancelled'] as const;
 export const ClaimStatusEnum = z.enum(CLAIM_STATUSES);
 export type ClaimStatus = z.infer<typeof ClaimStatusEnum>;
+
+// Owner member groups (decision T57, rule M11); one person can be in several. Guests are a separate list.
+export const MEMBER_SEGMENTS = ['ready', 'almost', 'regulars', 'quiet', 'new'] as const;
+export const MemberSegmentEnum = z.enum(MEMBER_SEGMENTS);
+export type MemberSegment = z.infer<typeof MemberSegmentEnum>;
+
+// The chips on the Members list: everyone who joined, one group, or guests (never merged by phone, M12).
+export const CUSTOMER_FILTERS = ['all', ...MEMBER_SEGMENTS, 'guests'] as const;
+export const CustomerFilterEnum = z.enum(CUSTOMER_FILTERS);
+export type CustomerFilter = z.infer<typeof CustomerFilterEnum>;
+
+export const MEMBER_SORTS = ['last_order', 'stamps', 'spent', 'name'] as const;
+export const MemberSortEnum = z.enum(MEMBER_SORTS);
+export type MemberSort = z.infer<typeof MemberSortEnum>;
+
+// Why the owner cancelled a prize claim (stamps and the piece go back, rule M7).
+export const CLAIM_CANCEL_REASONS = ['no_show', 'out_of_stock', 'other'] as const;
+export const ClaimCancelReasonEnum = z.enum(CLAIM_CANCEL_REASONS);
+export type ClaimCancelReason = z.infer<typeof ClaimCancelReasonEnum>;
 
 export const MESSAGE_KINDS = ['proof', 'status', 'rider', 'tracking', 'schedule'] as const;
 export const MessageKindEnum = z.enum(MESSAGE_KINDS);

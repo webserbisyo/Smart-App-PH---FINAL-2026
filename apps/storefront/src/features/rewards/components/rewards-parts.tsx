@@ -25,10 +25,13 @@ const DOT: Record<MemberAccount['history'][number]['kind'], string> = {
   welcome: 'bg-member',
   pending: 'bg-warning',
   earned: 'bg-success',
-  redeemed: 'bg-highlight',
+  used: 'bg-highlight',
+  claimed: 'bg-highlight',
+  returned: 'bg-success',
   reversed: 'bg-destructive',
   given: 'bg-success',
   removed: 'bg-destructive',
+  undone: 'bg-muted-foreground',
 };
 
 /** Every stamp change, newest first (c-timeline-7 look), 20 at a time. */

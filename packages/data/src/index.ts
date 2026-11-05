@@ -40,6 +40,10 @@ export {
   type ApiOwnerCatalogOptions,
 } from './adapters/api/owner-catalog';
 export {
+  createApiOwnerMembersAdapter,
+  type ApiOwnerMembersOptions,
+} from './adapters/api/owner-members';
+export {
   createApiOwnerOrdersAdapter,
   type ApiOwnerOrdersOptions,
 } from './adapters/api/owner-orders';
@@ -47,3 +51,4 @@ export { createApiStorefrontAdapter, type ApiStorefrontOptions } from './adapter
 export { setMockOwnerSlug } from './mocks/store';
 export * from './hooks/owner-catalog/index';
 export * from './hooks/owner-orders/index';
+export * from './hooks/owner-members/index';

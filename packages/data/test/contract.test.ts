@@ -35,6 +35,7 @@ describe('contract: docs/api.md rows have mock methods with the same name', () =
     ['Storefront (public', store.storefront],
     ['Orders (owner)', store.ownerOrders],
     ['Samples (owner)', store.ownerSamples],
+    ['Members (owner)', store.ownerMembers],
   ] as const)('%s', (section, adapter) => {
     const names = methodsIn(section);
     expect(names.length).toBeGreaterThan(1);

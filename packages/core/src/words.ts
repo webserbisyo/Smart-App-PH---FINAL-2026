@@ -903,12 +903,16 @@ export const words = {
       welcome: 'Welcome stamp',
       pending: (orderNo: string) => `Pending · Order ${orderNo}`,
       earned: (orderNo: string | null) => (orderNo ? `Earned · Order ${orderNo}` : 'Earned'),
-      redeemed: (orderNo: string | null) =>
-        orderNo ? `Used for your reward · Order ${orderNo}` : 'Used for your reward',
+      used: (orderNo: string | null) =>
+        orderNo ? `Used for your reward · Order ${orderNo}` : 'Used for your reward at the shop',
+      claimed: 'Used for your prize',
+      returned: (orderNo: string | null) =>
+        orderNo ? `Given back · Order ${orderNo} was cancelled` : 'Given back · prize cancelled',
       reversed: (orderNo: string | null) =>
         orderNo ? `Taken back · Order ${orderNo} was cancelled` : 'Taken back',
       given: 'Given by the shop',
       removed: 'Removed by the shop',
+      undone: 'Undone by the shop',
     },
     reason: {
       counter_purchase: 'Counter purchase',
@@ -1274,6 +1278,11 @@ export const words = {
     passwordRequired: 'Please enter your password.',
     passwordMinLength: 'Password must be at least 8 characters long.',
   },
+  // Owner Members page (decisions T57 to T60).
+  members: {
+    piecesBelowHeld: (held: number) =>
+      `${held} ${held === 1 ? 'piece is' : 'pieces are'} already claimed. Set at least ${held}.`,
+  },
   errors: {
     invalidLogin: 'Incorrect email or password. Please check your credentials and try again.',
     emailTaken: 'An account with this email already exists. Try logging in instead.',
@@ -1319,7 +1328,10 @@ export const words = {
       already_paid: 'This order is already paid.',
       stamp_cap_reached:
         'You already changed this member’s stamps 3 times today. Try again tomorrow.',
-      stamp_daily_cap: 'You already earned today’s stamp.',
+      stamp_recent:
+        'This member got a stamp less than 2 minutes ago. Give another only if they bought again.',
+      stamp_card_off: 'New stamps are stopped. Turn the stamp card on in Stamp card first.',
+      undo_expired: 'Too late to undo. Use Adjust to fix the stamps.',
       claim_not_pending: 'This claim was already handled. Refresh to see it.',
       recall_expired:
         'The recall window passed. You can still update or cancel the order if needed.',
@@ -1332,6 +1344,7 @@ export const words = {
       item_has_orders: 'This item has past orders. Hide it instead of removing.',
       variant_is_reward:
         'That option is your stamp card prize. Choose another prize first, then remove it.',
+      item_is_reward: 'This is your stamp card prize. Change the prize first.',
     },
   },
 } as const;

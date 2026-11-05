@@ -116,25 +116,41 @@ Codes: `not_found`, `invalid_transition`, `not_paid`, `payment_not_pending`, `al
 | `applySamplePack` | POST `/owner/samples`   | `{ packSlug }` → `PublicShop` ("Start with samples": copies a shop pack's catalog, look and card)   |
 | `clearSamples`    | DELETE `/owner/samples` | → `PublicShop` (removes every `sample` item, banners and logo; the shop then looks like test-blank) |
 
-## Members, home, reports (owner)
+## Members (owner)
 
-| Method                           | HTTP                                        | Input → Output                                                              |
-| -------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------- |
-| `getStampRule` / `saveStampRule` | `/owner/stamp-rule`                         | `StampRule`                                                                 |
-| `getToday`                       | GET `/owner/today`                          | → `DashboardToday` (Manila business date)                                   |
-| `previewStampRuleChange`         | POST `/owner/stamp-rule/preview`            | `StampRule` → `{ readyNow, pendingClaims }`                                 |
-| `listCustomers`                  | GET `/owner/customers`                      | `{ search, membersOnly, segment }` → `CustomerRow[]`                        |
-| `getMember`                      | GET `/owner/customers/:id`                  | → `MemberDetail` (ledger, orders, claims)                                   |
-| `findMemberByCode`               | GET `/owner/members/code/:code`             | → `{ customerId }`                                                          |
-| `adjustStamps`                   | POST `/owner/customers/:id/stamps`          | `{ delta: 1 \| -1, reason, note? }` → `MemberDetail`                        |
-| `listRewardClaims`               | GET `/owner/claims`                         | `{ status }` → `RewardClaim[]`                                              |
-| `giveClaim` / `cancelClaim`      | POST `/owner/claims/:id/give` and `/cancel` | `{ reason? }` → `RewardClaim`                                               |
-| `getInsights`                    | GET `/owner/insights`                       | `{ range: '7d' \| '30d' }` → `Insights`                                     |
-| `saveCustomerNotes`              | PATCH `/owner/customers/:id`                | `{ notes, tags }`                                                           |
-| `getSalesReport`                 | GET `/owner/reports/sales`                  | `{ from, to }` → `SalesReport`                                              |
-| `exportOrdersCsv`                | GET `/owner/reports/orders.csv`             | `{ from, to }` → CSV (BOM; cells starting with `= + - @` get a leading `'`) |
+Decisions T57 to T60. The shop comes from the owner's login, so no row takes a slug. Balances, groups and member numbers are worked out from orders and the stamp history by core functions now (`memberSegments`, `stampImpact`, `changesLeftToday`, `recentCounterStamp`, `canUndo`, `memberCodeMatches`, `usuallyBuys`) and by SQL functions later, with one test table. The stamp history is append-only: no update or delete grants, unique indexes for one stamp per order and one welcome stamp per member (D5).
 
-Codes: `stamp_cap_reached`, `stamps_insufficient`, `claim_not_pending`.
+| Method                   | HTTP                                 | Input → Output                                                                                                                                                 |
+| ------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getStampCard`           | GET `/owner/stamp-card`              | → `StampCardSettings` (status, earn rule, reward with pieces)                                                                                                  |
+| `previewStampCardChange` | POST `/owner/stamp-card/preview`     | `StampCardSettings` → `StampCardImpact` `{ readyNow, loseReady, pendingClaims }` (both ways, M9)                                                               |
+| `saveStampCard`          | PUT `/owner/stamp-card`              | `StampCardSettings` → `StampCardSettings` (pieces never below what claims hold, M7; a free item must be an active item)                                        |
+| `setStampCardStatus`     | POST `/owner/stamp-card/status`      | `{ status }` → `StampCardSettings` (Paused stops new stamps only, M1)                                                                                          |
+| `getMembersOverview`     | GET `/owner/members/overview`        | → `MembersOverview` (counts per group, card progress, prizes to give, members 1 or 2 stamps away)                                                              |
+| `listCustomers`          | GET `/owner/members`                 | `ListCustomersInput` `{ filter, q, stamps, sort, cursor, limit }` → `CustomerPage` (members, or guests grouped by mobile number, M12)                          |
+| `getMember`              | GET `/owner/members/:id`             | → `MemberDetail` (numbers from orders, usually buys, note, changes left today, stamp history with who and note, orders, claims)                                |
+| `findMember`             | GET `/owner/members/find`            | `{ code }` → `FoundMember` `{ customerId, claimId }` (member code exact, or a prize code; M13, D7)                                                             |
+| `giveStamp`              | POST `/owner/members/:id/stamp`      | `{ clientKey, confirmRecent }` → `CounterChange` (+1 Counter purchase, Undo for 10 s; `stamp_recent` within 2 minutes unless confirmed; same key, same result) |
+| `undoChange`             | POST `/owner/members/:id/undo`       | `{ entryId }` → `MemberDetail` (writes an `undone` line; accepted for 15 s)                                                                                    |
+| `adjustStamps`           | POST `/owner/members/:id/adjust`     | `AdjustStampsInput` `{ delta: 1 \| -1, reason, note }` → `MemberDetail` (3 changes per member per Manila day, never below 0)                                   |
+| `useReward`              | POST `/owner/members/:id/use-reward` | `{ clientKey }` → `CounterChange` (reward used at the counter; a custom prize is handed over at once, D3)                                                      |
+| `saveMemberNote`         | PUT `/owner/members/:id/note`        | `{ note }` → `MemberDetail` (up to 300 characters, owner only)                                                                                                 |
+| `listRewardClaims`       | GET `/owner/claims`                  | → `OwnerClaim[]` (waiting longest first)                                                                                                                       |
+| `giveClaim`              | POST `/owner/claims/:id/give`        | → `OwnerClaim`                                                                                                                                                 |
+| `cancelClaim`            | POST `/owner/claims/:id/cancel`      | `{ reason }` → `OwnerClaim` (stamps and the piece come back)                                                                                                   |
+
+Codes: `stamp_cap_reached`, `stamp_recent`, `stamp_card_off`, `undo_expired`, `stamps_insufficient`, `reward_unavailable`, `reward_all_claimed`, `claim_not_pending`, `not_found`. The prize item can't be hidden, archived or removed while it is the prize: `item_is_reward` (M10).
+
+No CSV export, tags, bulk stamps or messaging in A (M14).
+
+## Home and reports (owner)
+
+| Method            | HTTP                            | Input → Output                                                              |
+| ----------------- | ------------------------------- | --------------------------------------------------------------------------- |
+| `getToday`        | GET `/owner/today`              | → `DashboardToday` (Manila business date)                                   |
+| `getInsights`     | GET `/owner/insights`           | `{ range: '7d' \| '30d' }` → `Insights`                                     |
+| `getSalesReport`  | GET `/owner/reports/sales`      | `{ from, to }` → `SalesReport`                                              |
+| `exportOrdersCsv` | GET `/owner/reports/orders.csv` | `{ from, to }` → CSV (BOM; cells starting with `= + - @` get a leading `'`) |
 
 ## Editor (owner)
 

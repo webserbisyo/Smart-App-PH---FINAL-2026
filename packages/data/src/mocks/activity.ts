@@ -11,7 +11,6 @@ import {
   validateLinePicks,
   type BasketLine,
   type CustomerAddress,
-  type LedgerEntry,
   type OrderStatus,
   type OrderType,
   type PaymentMethod,
@@ -20,13 +19,7 @@ import {
   type PublicShop,
 } from '@smartapp/core';
 import { int, pick, token, type Rng } from './rng';
-import {
-  addMinutes,
-  buildOrder,
-  type MemberRecord,
-  type OrderRecord,
-  type OrderSpec,
-} from './state';
+import { addMinutes, buildOrder, type OrderRecord, type OrderSpec } from './state';
 
 export const DEMO_RECEIPT_TOKENS = [
   'demo-placed-transfer',
@@ -1409,99 +1402,6 @@ export function generateOrders(shop: PublicShop, now: Date, rng: Rng): OrderReco
       lines: d.lines,
       customer,
     });
-  });
-}
-
-const SEGMENTS = [
-  'new',
-  'regular',
-  'ready',
-  'almost',
-  'quiet',
-  'reversed',
-  'manual',
-  'guest-linked',
-] as const;
-
-/** Members in every segment, with ledgers showing welcome, earned, redeemed, reversed and manual rows. */
-export function generateMembers(shop: PublicShop, now: Date): MemberRecord[] {
-  const slug = shop.storefront.slug;
-  if (shop.storefront.stampCard.status === 'off') return [];
-  const needed = shop.storefront.stampCard.rule.stampsNeeded;
-  const iso = now.toISOString();
-  const prefix = slug.slice(0, 2).toUpperCase();
-  return SEGMENTS.map((segment, i) => {
-    const c = customerFor(i);
-    const joinedAt = addMinutes(iso, -(segment === 'new' ? 3 : 20 + i * 5) * DAY);
-    const ledger: LedgerEntry[] = [
-      { kind: 'welcome', delta: 1, reasonCategory: null, orderNo: null, at: joinedAt },
-    ];
-    const earn = (n: number, fromDay: number) => {
-      for (let k = 0; k < n; k += 1) {
-        ledger.push({
-          kind: 'earned',
-          delta: 1,
-          reasonCategory: null,
-          orderNo: 10 + k,
-          at: addMinutes(iso, -(fromDay - k) * DAY),
-        });
-      }
-    };
-    switch (segment) {
-      case 'regular':
-        earn(4, 15);
-        break;
-      case 'ready':
-        earn(needed - 1, needed + 2);
-        break;
-      case 'almost':
-        earn(needed - 2, needed + 3);
-        break;
-      case 'quiet':
-        earn(1, 45);
-        break;
-      case 'reversed':
-        earn(3, 12);
-        ledger.push({
-          kind: 'reversed',
-          delta: -1,
-          reasonCategory: null,
-          orderNo: 12,
-          at: addMinutes(iso, -9 * DAY),
-        });
-        break;
-      case 'manual':
-        ledger.push({
-          kind: 'given',
-          delta: 1,
-          reasonCategory: 'counter_purchase',
-          orderNo: null,
-          at: addMinutes(iso, -6 * DAY),
-        });
-        ledger.push({
-          kind: 'removed',
-          delta: -1,
-          reasonCategory: 'correction',
-          orderNo: null,
-          at: addMinutes(iso, -5 * DAY),
-        });
-        earn(2, 4);
-        break;
-      default:
-        break;
-    }
-    return {
-      slug,
-      email: c.email,
-      name: c.name,
-      phone: c.phone,
-      memberCode: `${prefix}-${String(4100 + i * 37).padStart(4, '0')}`,
-      joinedAt,
-      ledger: ledger.sort((a, b) => a.at.localeCompare(b.at)),
-      addresses: [],
-      claims: [],
-      byCustomer: false,
-    };
   });
 }
 

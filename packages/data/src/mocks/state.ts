@@ -8,6 +8,7 @@ import {
   variantLabel,
   words,
   type BasketLine,
+  type ClaimCancelReason,
   type CustomerAddress,
   type CustomerSession,
   type LedgerEntry,
@@ -48,6 +49,37 @@ export interface OrderRecord {
   ownerNote: string | null;
 }
 
+// A stamp history line as stored. The extra fields are the owner's (D4) and optional, so a plain line still fits.
+export type StoredLedgerEntry = LedgerEntry & {
+  id?: string | undefined;
+  note?: string | null | undefined;
+  byOwner?: boolean | undefined;
+  undone?: boolean | undefined;
+  // The one-time key of a counter tap, so a retry never adds two (D2).
+  clientKey?: string | undefined;
+};
+
+export type StoredClaim = RewardClaim & {
+  id?: string | undefined;
+  givenAt?: string | null | undefined;
+  cancelledAt?: string | null | undefined;
+  cancelReason?: ClaimCancelReason | null | undefined;
+};
+
+// A past order kept only for member numbers (visits, spent, usually buys); the Orders page never lists it.
+export interface ArchivedOrder {
+  id: string;
+  orderNo: number;
+  placedAt: string;
+  status: 'completed' | 'cancelled';
+  subtotal: number;
+  total: number;
+  lines: { name: string; qty: number }[];
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string | null;
+}
+
 export interface MemberRecord {
   slug: string;
   email: string;
@@ -55,16 +87,19 @@ export interface MemberRecord {
   phone: string;
   memberCode: string;
   joinedAt: string;
-  ledger: LedgerEntry[];
+  ledger: StoredLedgerEntry[];
   addresses: CustomerAddress[];
-  claims: RewardClaim[];
+  claims: StoredClaim[];
   byCustomer: boolean;
+  // The owner's note for the counter ("less ice").
+  note?: string | null | undefined;
 }
 
 export interface ShopState {
   shop: PublicShop;
   orders: OrderRecord[];
   members: MemberRecord[];
+  archive?: ArchivedOrder[];
   variantTemplates?: VariantTemplate[];
 }
 
@@ -335,3 +370,8 @@ export function nextOrderNo(state: ShopState, businessDate: string): number {
 export function memberBalance(member: MemberRecord): number {
   return member.ledger.filter((e) => e.kind !== 'pending').reduce((sum, e) => sum + e.delta, 0);
 }
+
+/** Stable ids from data that is unique per shop: one member per email, one guest per mobile number. */
+export const memberId = (m: Pick<MemberRecord, 'email'>): string =>
+  `m-${m.email.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`.slice(0, 64);
+export const guestId = (phone: string): string => `g-${phone.replace(/\D/g, '')}`;
