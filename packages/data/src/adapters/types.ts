@@ -50,6 +50,22 @@ import type {
   SortOrderInput,
   UploadKind,
   UploadResult,
+  CleanupKind,
+  CleanupPreview,
+  CreateExportInput,
+  DataExport,
+  DeliverySettings,
+  HoursSettings,
+  NotificationPrefs,
+  OrderingSettings,
+  OwnerProfile,
+  OwnerSettings,
+  PaymentSettings,
+  Plan,
+  SaveProfileInput,
+  ShopFacts,
+  StorageSummary,
+  SubmitPlanPaymentInput,
 } from '@smartapp/core';
 
 export interface PlacedOrder {
@@ -192,7 +208,8 @@ export interface OwnerCatalogAdapter {
   saveVariantTemplate(input: SaveVariantTemplateInput): Promise<SaveVariantTemplateResult>;
   removeVariantTemplate(input: { id: string }): Promise<RemoveVariantTemplateResult>;
   saveSortOrder(input: SortOrderInput): Promise<void>;
-  createUploadUrl(input: { kind: UploadKind }): Promise<UploadResult>;
+  // bytes: the size after shrinking, checked against the shop's storage (T66); never asked for proofs.
+  createUploadUrl(input: { kind: UploadKind; bytes?: number | undefined }): Promise<UploadResult>;
 }
 
 // The shop comes from the owner's login (T34), so no method takes a slug.
@@ -219,6 +236,32 @@ export interface OwnerMembersAdapter {
   cancelClaim(input: { claimId: string; reason: ClaimCancelReason }): Promise<OwnerClaim>;
 }
 
+// Owner Settings (decisions T64 to T68): one read for the shop's settings, one save per section, the
+// owner's profile and emails, the Pro plan, storage, cleanups and exports. No method takes a slug (T34).
+export interface OwnerSettingsAdapter {
+  getSettings(): Promise<OwnerSettings>;
+  saveShopFacts(input: ShopFacts): Promise<OwnerSettings>;
+  saveHours(input: HoursSettings): Promise<OwnerSettings>;
+  saveOrdering(input: OrderingSettings): Promise<OwnerSettings>;
+  saveDelivery(input: DeliverySettings): Promise<OwnerSettings>;
+  savePayments(input: PaymentSettings): Promise<OwnerSettings>;
+  getProfile(): Promise<OwnerProfile>;
+  saveProfile(input: SaveProfileInput): Promise<OwnerProfile>;
+  sendPasswordCode(): Promise<SendCodeResult>;
+  resetPasswordWithCode(input: { code: string; newPassword: string }): Promise<{ ok: true }>;
+  signOutEverywhere(): Promise<{ ok: true }>;
+  requestAccountDelete(): Promise<{ ok: true }>;
+  getNotificationPrefs(): Promise<NotificationPrefs>;
+  saveNotificationPrefs(input: NotificationPrefs): Promise<NotificationPrefs>;
+  getPlan(): Promise<Plan>;
+  submitPlanPayment(input: SubmitPlanPaymentInput): Promise<Plan>;
+  getStorage(): Promise<StorageSummary>;
+  previewCleanup(input: { kind: CleanupKind }): Promise<CleanupPreview>;
+  runCleanup(input: { kind: CleanupKind; token: string }): Promise<StorageSummary>;
+  createExport(input: CreateExportInput): Promise<DataExport>;
+  getExport(input: { id: string }): Promise<DataExport>;
+}
+
 export interface DataAdapters {
   storefront: StorefrontAdapter;
   customerAuth: CustomerAuthAdapter;
@@ -226,4 +269,5 @@ export interface DataAdapters {
   ownerSamples: OwnerSamplesAdapter;
   ownerCatalog: OwnerCatalogAdapter;
   ownerMembers: OwnerMembersAdapter;
+  ownerSettings: OwnerSettingsAdapter;
 }

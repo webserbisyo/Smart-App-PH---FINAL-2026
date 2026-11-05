@@ -217,6 +217,70 @@ export const SORT_KINDS = ['category', 'item', 'option'] as const;
 export const SortKindEnum = z.enum(SORT_KINDS);
 export type SortKind = z.infer<typeof SortKindEnum>;
 
-export const UPLOAD_KINDS = ['logo', 'banner', 'item', 'category', 'qr'] as const;
+// What an owner upload is for. Avatar is the owner's own photo; plan_proof is the receipt for the Pro plan,
+// which never counts against the shop's storage (decision T66).
+export const UPLOAD_KINDS = ['logo', 'banner', 'item', 'category', 'qr', 'avatar', 'plan_proof'] as const;
 export const UploadKindEnum = z.enum(UPLOAD_KINDS);
 export type UploadKind = z.infer<typeof UploadKindEnum>;
+
+// Owner Settings (decisions T64 to T68).
+
+// The owner's picture (T68): six DiceBear styles made once as files, our names for them.
+export const OWNER_AVATAR_STYLES = ['sketch', 'soft', 'bright', 'people', 'pixel', 'fun'] as const;
+export const OwnerAvatarStyleEnum = z.enum(OWNER_AVATAR_STYLES);
+export type OwnerAvatarStyle = z.infer<typeof OwnerAvatarStyleEnum>;
+
+// The colour behind a face or initials: one token each, with a dark version (docs/design-tokens.md).
+export const AVATAR_THEMES = ['sky', 'mint', 'sun', 'blush', 'lilac', 'sand', 'navy', 'brand'] as const;
+export const AvatarThemeEnum = z.enum(AVATAR_THEMES);
+export type AvatarTheme = z.infer<typeof AvatarThemeEnum>;
+
+// Make your own: six hair styles of the Soft (Lorelei) face in three colours.
+export const AVATAR_HAIRS = ['short', 'bob', 'curly', 'long', 'bun', 'wavy'] as const;
+export const AvatarHairEnum = z.enum(AVATAR_HAIRS);
+export type AvatarHair = z.infer<typeof AvatarHairEnum>;
+export const AVATAR_HAIR_COLORS = ['black', 'brown', 'golden'] as const;
+export const AvatarHairColorEnum = z.enum(AVATAR_HAIR_COLORS);
+export type AvatarHairColor = z.infer<typeof AvatarHairColorEnum>;
+
+// Where a shop's 500 MB goes (T66). Customer payment proofs are never blocked, even when full.
+export const STORAGE_KINDS = ['menu', 'proofs', 'look', 'qr', 'profile'] as const;
+export const StorageKindEnum = z.enum(STORAGE_KINDS);
+export type StorageKind = z.infer<typeof StorageKindEnum>;
+
+// The cleanups the owner runs by hand; unconfirmed uploads clear by themselves every night. Exported proofs
+// are the proofs in a copy the owner just saved (early delete only after an export, P7).
+export const CLEANUP_KINDS = ['old_proofs', 'archived_photos', 'exported_proofs'] as const;
+export const CleanupKindEnum = z.enum(CLEANUP_KINDS);
+export type CleanupKind = z.infer<typeof CleanupKindEnum>;
+
+// 80 % amber, 95 % red, 100 % full: new menu and look photos wait, proofs still come in.
+export const STORAGE_LEVELS = ['ok', 'high', 'almost', 'full'] as const;
+export const StorageLevelEnum = z.enum(STORAGE_LEVELS);
+export type StorageLevel = z.infer<typeof StorageLevelEnum>;
+
+export const EXPORT_RANGES = ['this_month', 'last_month', 'everything'] as const;
+export const ExportRangeEnum = z.enum(EXPORT_RANGES);
+export type ExportRange = z.infer<typeof ExportRangeEnum>;
+
+export const EXPORT_STATUSES = ['preparing', 'ready', 'failed', 'expired'] as const;
+export const ExportStatusEnum = z.enum(EXPORT_STATUSES);
+export type ExportStatus = z.infer<typeof ExportStatusEnum>;
+
+// The Pro plan (T67): trial, paid and due soon, unpaid within the 7-day grace, then paused.
+export const PLAN_STATUSES = ['trial', 'active', 'due', 'overdue', 'paused'] as const;
+export const PlanStatusEnum = z.enum(PLAN_STATUSES);
+export type PlanStatus = z.infer<typeof PlanStatusEnum>;
+
+export const PLAN_PAY_METHODS = ['gcash', 'maya'] as const;
+export const PlanPayMethodEnum = z.enum(PLAN_PAY_METHODS);
+export type PlanPayMethod = z.infer<typeof PlanPayMethodEnum>;
+
+export const PLAN_PAYMENT_STATUSES = ['pending', 'approved', 'rejected'] as const;
+export const PlanPaymentStatusEnum = z.enum(PLAN_PAYMENT_STATUSES);
+export type PlanPaymentStatus = z.infer<typeof PlanPaymentStatusEnum>;
+
+// How many months one plan payment covers.
+export const PLAN_MONTH_CHOICES = [1, 3, 6] as const;
+export const PlanMonthsSchema = z.union([z.literal(1), z.literal(3), z.literal(6)]);
+export type PlanMonths = z.infer<typeof PlanMonthsSchema>;

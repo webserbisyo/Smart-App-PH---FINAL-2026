@@ -13,8 +13,12 @@ export const MOCK_AREAS = [
   'auth',
   'catalog',
   'members',
+  'settings',
   'all',
 ] as const;
+// Settings demo states (T66, T67): the plan's place in its month, and a full storage.
+export const MOCK_PLAN_STATES = ['default', 'trial', 'due', 'overdue', 'paused'] as const;
+export const MOCK_STORAGE_STATES = ['default', 'full'] as const;
 export const DEMO_CUSTOMER_STATES = [
   'guest',
   'member',
@@ -36,6 +40,10 @@ export const MockScenarioSchema = z.object({
   now: IsoDateTimeSchema.nullable(),
   as: DemoCustomerStateEnum.nullable(),
   ordersMode: z.enum(['default', 'rush', 'empty', 'trickle']).default('default'),
+  plan: z.enum(MOCK_PLAN_STATES).default('default'),
+  storage: z.enum(MOCK_STORAGE_STATES).default('default'),
+  // The next export fails, so the screen's failed state can be seen.
+  exportFails: z.boolean().default(false),
 });
 export type MockScenario = z.infer<typeof MockScenarioSchema>;
 
@@ -49,6 +57,9 @@ export const DEFAULT_SCENARIO: MockScenario = {
   now: null,
   as: null,
   ordersMode: 'default',
+  plan: 'default',
+  storage: 'default',
+  exportFails: false,
 };
 
 let current: MockScenario = DEFAULT_SCENARIO;

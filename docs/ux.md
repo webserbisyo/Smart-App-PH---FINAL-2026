@@ -77,7 +77,7 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - Members: list with segments, member detail with stamp history, manual stamp ±1 with a reason (at most 3 per member per day), stamp card, claims (N5).
 - Editor: opens full screen outside the shell (N13); the shop look and content edited on a live preview of the real storefront, Draft and Publish, contrast warning, logo colour helper (N7, N8).
 - Insights: simple blocks for 7 or 30 days, no % comparisons.
-- Settings: operations only (info, hours, order types, payments, delivery), each section with its own Save.
+- Settings (T64 to T68): three groups, Your shop (Shop with contact facts, Hours, Ordering, Delivery, Payments), You (Account with the avatar, Appearance, Notifications) and Plan and storage (Plan, Storage). The index shows a status line per section; each section has one Save bar and a leave guard; laptops show a "Customers see" preview. Every owner photo goes through one upload step that says what changed ("4.2 MB → 180 KB · WebP"). Storage shows the 500 MB pool, cleanups that ask first and a ZIP export.
 
 ## 7. Dashboard brand rules (decision T35)
 

@@ -63,6 +63,12 @@ const MOCK_VALUES = [
   'orders-rush',
   'orders-empty',
   'orders-trickle',
+  'plan-trial',
+  'plan-due',
+  'plan-overdue',
+  'plan-paused',
+  'storage-full',
+  'export-fail',
   'none',
 ] as const;
 
@@ -102,6 +108,24 @@ export function parseMockScenario(params: URLSearchParams): UrlScenario {
     case 'orders-trickle':
       out.scenario.ordersMode = 'trickle';
       break;
+    case 'plan-trial':
+      out.scenario.plan = 'trial';
+      break;
+    case 'plan-due':
+      out.scenario.plan = 'due';
+      break;
+    case 'plan-overdue':
+      out.scenario.plan = 'overdue';
+      break;
+    case 'plan-paused':
+      out.scenario.plan = 'paused';
+      break;
+    case 'storage-full':
+      out.scenario.storage = 'full';
+      break;
+    case 'export-fail':
+      out.scenario.exportFails = true;
+      break;
     case 'none':
       Object.assign(out.scenario, { ...DEFAULT_SCENARIO });
       break;
@@ -136,6 +160,9 @@ export function readMockScenarioFromUrl(
           closed: false,
           noCard: false,
           ordersMode: 'default' as const,
+          plan: 'default' as const,
+          storage: 'default' as const,
+          exportFails: false,
         }
       : {};
     setMockScenario({ ...reset, ...parsed.scenario });

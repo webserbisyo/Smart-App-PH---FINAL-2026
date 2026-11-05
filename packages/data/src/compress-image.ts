@@ -74,24 +74,19 @@ export async function compressImage(file: Blob | File, options?: CompressOptions
 
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Try image/webp first; fallback to image/jpeg if not supported
+      // WebP first. Safari can't write WebP and quietly returns a PNG instead (WebKit bug 226950), which
+      // can be bigger than the photo, so anything that isn't a real WebP falls back to JPEG.
       canvas.toBlob(
         (webpBlob) => {
-          if (webpBlob) {
+          if (webpBlob && webpBlob.type === 'image/webp') {
             resolve(webpBlob);
-          } else {
-            canvas.toBlob(
-              (jpegBlob) => {
-                if (jpegBlob) {
-                  resolve(jpegBlob);
-                } else {
-                  resolve(file);
-                }
-              },
-              'image/jpeg',
-              quality,
-            );
+            return;
           }
+          canvas.toBlob(
+            (jpegBlob) => resolve(jpegBlob ?? file),
+            'image/jpeg',
+            quality,
+          );
         },
         'image/webp',
         quality,

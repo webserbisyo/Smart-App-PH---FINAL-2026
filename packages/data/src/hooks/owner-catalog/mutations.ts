@@ -12,6 +12,7 @@ import type {
   UploadKind,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
+import { ownerSettingsQk } from '../owner-settings/qk';
 import { ownerCatalogQk } from './qk';
 
 export function useSaveCategory() {
@@ -278,11 +279,15 @@ export function useSaveSortOrder() {
   });
 }
 
+/** Asks for room and a signed upload (T66): `bytes` is the size after shrinking. The meter moves after. */
 export function useCreateUploadUrl() {
   const { ownerCatalog } = useAdapters();
+  const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { kind: UploadKind }) => ownerCatalog.createUploadUrl(input),
+    mutationFn: (input: { kind: UploadKind; bytes?: number | undefined }) =>
+      ownerCatalog.createUploadUrl(input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ownerSettingsQk.storage() }),
   });
 }
 

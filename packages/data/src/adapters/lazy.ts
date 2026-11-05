@@ -7,6 +7,7 @@ import type {
   OwnerMembersAdapter,
   OwnerOrdersAdapter,
   OwnerSamplesAdapter,
+  OwnerSettingsAdapter,
   StorefrontAdapter,
 } from './types';
 
@@ -105,5 +106,29 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     cancelClaim: async (input) => (await real()).ownerMembers.cancelClaim(input),
   };
 
-  return { storefront, customerAuth, ownerOrders, ownerSamples, ownerCatalog, ownerMembers };
+  const ownerSettings: OwnerSettingsAdapter = {
+    getSettings: async () => (await real()).ownerSettings.getSettings(),
+    saveShopFacts: async (input) => (await real()).ownerSettings.saveShopFacts(input),
+    saveHours: async (input) => (await real()).ownerSettings.saveHours(input),
+    saveOrdering: async (input) => (await real()).ownerSettings.saveOrdering(input),
+    saveDelivery: async (input) => (await real()).ownerSettings.saveDelivery(input),
+    savePayments: async (input) => (await real()).ownerSettings.savePayments(input),
+    getProfile: async () => (await real()).ownerSettings.getProfile(),
+    saveProfile: async (input) => (await real()).ownerSettings.saveProfile(input),
+    sendPasswordCode: async () => (await real()).ownerSettings.sendPasswordCode(),
+    resetPasswordWithCode: async (input) => (await real()).ownerSettings.resetPasswordWithCode(input),
+    signOutEverywhere: async () => (await real()).ownerSettings.signOutEverywhere(),
+    requestAccountDelete: async () => (await real()).ownerSettings.requestAccountDelete(),
+    getNotificationPrefs: async () => (await real()).ownerSettings.getNotificationPrefs(),
+    saveNotificationPrefs: async (input) => (await real()).ownerSettings.saveNotificationPrefs(input),
+    getPlan: async () => (await real()).ownerSettings.getPlan(),
+    submitPlanPayment: async (input) => (await real()).ownerSettings.submitPlanPayment(input),
+    getStorage: async () => (await real()).ownerSettings.getStorage(),
+    previewCleanup: async (input) => (await real()).ownerSettings.previewCleanup(input),
+    runCleanup: async (input) => (await real()).ownerSettings.runCleanup(input),
+    createExport: async (input) => (await real()).ownerSettings.createExport(input),
+    getExport: async (input) => (await real()).ownerSettings.getExport(input),
+  };
+
+  return { storefront, customerAuth, ownerOrders, ownerSamples, ownerCatalog, ownerMembers, ownerSettings };
 }

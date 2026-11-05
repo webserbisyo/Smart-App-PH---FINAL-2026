@@ -28,21 +28,44 @@ Trimmed from the old `api-surface.md` (2026-10-11) to fit the restart: NestJS fr
 
 Codes: `invalid_login`, `email_taken`, `weak_password`, `invalid_code`, `code_expired`, `rate_limited`, `not_signed_in`.
 
-## Shop and settings (owner, `/owner/...`)
+## Shop (owner, `/owner/...`)
 
-| Method                                                                | HTTP                        | Input → Output                                                                                            |
-| --------------------------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `getMyShop`                                                           | GET `/owner/shop`           | → `Shop \| null`                                                                                          |
-| `createMyShop`                                                        | POST `/owner/shop`          | `{ kind, name, slug }` → `Shop` (status `pending`)                                                        |
-| `isSlugFree`                                                          | GET `/slugs/:slug`          | → `boolean`                                                                                               |
-| `getSettings` / `saveSettings`                                        | GET/PATCH `/owner/settings` | `ShopSettings` (look, info, order types, stamps)                                                          |
-| `getHours` / `saveHours`                                              | GET/PUT `/owner/hours`      | `BusinessHours[]` (whole week) and closures                                                               |
-| `listPaymentAccounts` / `savePaymentAccount` / `removePaymentAccount` | `/owner/payment-accounts`   | `PaymentAccount`                                                                                          |
-| `listZones` / `saveZone` / `removeZone`                               | `/owner/zones`              | `DeliveryZone`                                                                                            |
-| `saveSortOrder`                                                       | PUT `/owner/sort`           | `{ kind, ids }`                                                                                           |
-| `createUploadUrl`                                                     | POST `/owner/uploads`       | `{ kind: logo\|banner\|item\|category\|qr }` → signed upload URL + `path` (WebP, compressed on the phone) |
+| Method            | HTTP                  | Input → Output                                                                                                                                                                                                                         |
+| ----------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getMyShop`       | GET `/owner/shop`     | → `Shop \| null`                                                                                                                                                                                                                       |
+| `createMyShop`    | POST `/owner/shop`    | `{ kind, name, slug }` → `Shop` (status `pending`)                                                                                                                                                                                     |
+| `isSlugFree`      | GET `/slugs/:slug`    | → `boolean`                                                                                                                                                                                                                            |
+| `saveSortOrder`   | PUT `/owner/sort`     | `{ kind, ids }`                                                                                                                                                                                                                        |
+| `createUploadUrl` | POST `/owner/uploads` | `{ kind: logo\|banner\|item\|category\|qr\|avatar\|plan_proof, bytes? }` → signed upload URL + `path` for exactly that size (shrunk on the phone, T65). Refuses `storage_full` when the 500 MB is used, never for a plan receipt (T66) |
 
-Codes: `slug_taken`, `slug_reserved`, `slug_invalid`, `already_has_shop`, `not_allowed`.
+Codes: `slug_taken`, `slug_reserved`, `slug_invalid`, `already_has_shop`, `not_allowed`, `storage_full`.
+
+## Settings (owner)
+
+The whole Settings area (decisions T64 to T68). One read, one save per section; unknown keys are stripped. A saved section also refreshes the storefront and the Orders page's Order times.
+
+| Method                                           | HTTP                                            | Input → Output                                                                                                                                                                   |
+| ------------------------------------------------ | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getSettings`                                    | GET `/owner/settings`                           | → `OwnerSettings` (shop facts, hours and closures, order types and booking rules, delivery, payments, booked pickups and deliveries)                                             |
+| `saveShopFacts`                                  | PUT `/owner/settings/shop`                      | `ShopFacts` (name, contact, pin, pickup note) → `OwnerSettings`; a bad phone is `invalid_input` with `fieldErrors.phone`                                                         |
+| `saveHours`                                      | PUT `/owner/hours`                              | `HoursSettings` → `OwnerSettings`; overlapping or backwards times are `hours_overlap` with `fieldErrors["hours.<i>"]` (`hoursProblems` in core, shared with SQL)                 |
+| `saveOrdering`                                   | PUT `/owner/settings/ordering`                  | `OrderingSettings` (order types and `BookingRules`) → `OwnerSettings`; no order type is `last_order_type`                                                                        |
+| `saveDelivery`                                   | PUT `/owner/settings/delivery`                  | `DeliverySettings` → `OwnerSettings`; rows with a gap or overlap are `invalid_input` with `fieldErrors["distance.<i>"]` (N25)                                                    |
+| `savePayments`                                   | PUT `/owner/settings/payments`                  | `PaymentSettings` → `OwnerSettings`; none on is `last_payment_method`; a transfer without name and number is `invalid_input`                                                     |
+| `getProfile` / `saveProfile`                     | GET/PUT `/owner/profile`                        | `OwnerProfile` (name, email, avatar) / `{ name, avatar }`; the avatar is a face record (0 KB) or a photo upload (T68). `profiles.avatar` jsonb with a CHECK on kind              |
+| `getNotificationPrefs` / `saveNotificationPrefs` | GET/PUT `/owner/notifications`                  | `NotificationPrefs` (4 switches and an email)                                                                                                                                    |
+| `sendPasswordCode` / `resetPasswordWithCode`     | POST `/auth/password-code`, `/auth/password`    | none → `SendCodeResult` / `{ code, newPassword }` → `{ ok }`; the same 6-digit code as Auth (resend after 60 s, `rate_limited`, `invalid_code`, `code_expired`, `weak_password`) |
+| `signOutEverywhere`                              | POST `/auth/sign-out-all`                       | → `{ ok }` (Supabase Auth global sign-out behind NestJS)                                                                                                                         |
+| `requestAccountDelete`                           | POST `/owner/account/delete-request`            | → `{ ok }`; emails the founder, no self-delete at launch                                                                                                                         |
+| `getPlan`                                        | GET `/owner/plan`                               | → `Plan` (status from `planStatus`, paid-until, grace, pay-to numbers, pending payment, history)                                                                                 |
+| `submitPlanPayment`                              | POST `/owner/plan/payments`                     | `{ months: 1\|3\|6, method: gcash\|maya, reference, proofPath }` → `Plan`; one pending at a time (`payment_not_pending`), a used reference is `duplicate_reference`              |
+| `getStorage`                                     | GET `/owner/storage`                            | → `StorageSummary` (used and limit, per kind, cleanups with files and bytes, unused uploads, proof days, last export)                                                            |
+| `previewCleanup` / `runCleanup`                  | GET/POST `/owner/storage/cleanup`               | `{ kind }` → `CleanupPreview` (files, bytes, `savedCopy`, `token`) / `{ kind, token }` → `StorageSummary`; a list that moved since the preview is `cleanup_changed`              |
+| `createExport` / `getExport`                     | POST `/owner/exports`, GET `/owner/exports/:id` | `{ range, parts }` → `DataExport` (`preparing`, `ready` with a 24-hour link, `failed`, `expired`)                                                                                |
+
+Every stored file has a row in `media_files` (shop, kind, path, bytes, made, used by), so the meter is a sum, not a bucket scan. The limit lives on the plan (`storage_limit_bytes`). Uploads not confirmed in an hour, and proofs past 30 days, are removed by the NestJS job planned for proof deletion (no pg_cron, rule 13).
+
+Codes: `storage_full`, `file_not_image`, `file_too_large`, `export_not_ready`, `cleanup_changed`, `last_order_type`, `last_payment_method`, `hours_overlap`.
 
 ## Catalog (owner)
 

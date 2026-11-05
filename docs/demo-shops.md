@@ -30,6 +30,20 @@ Gmail "+" addresses all land in the founder's inbox, so codes and resets can be 
 | Tala Apparel (retail)                 | `daysAhead` 3, `slotMinutes` 60                     | none                                                                       | Pickup and delivery only, one ₱12,345.50 order, long product names                                                                                                  |
 | AquaLinis (retail)                    | `daysAhead` 2, `slotMinutes` 30, `ordersPerSlot` 3  | none                                                                       | Repeat delivery customers, two slots full tomorrow                                                                                                                  |
 
+### Plan and storage (decisions T66, T67)
+
+The Settings mock gives each shop a plan and a number of stored files with seeded sizes (500 MB pool):
+
+| Shop         | Plan                   | Storage used                                |
+| ------------ | ---------------------- | ------------------------------------------- |
+| AquaLinis    | Trial, no payments yet | about 61 MB                                 |
+| Kapé Juan    | Paid, 18 days left     | about 128 MB                                |
+| Kanto Smash  | Paid, 30 days left     | about 212 MB                                |
+| Tala Apparel | Paid, 25 days left     | about 431 MB, many photos of archived items |
+| Lola Remy    | Due, 3 days left       | about 486 MB, almost full                   |
+
+Dev links: `?mock=plan-trial`, `plan-due`, `plan-overdue`, `plan-paused`, `storage-full`, `export-fail`.
+
 ---
 
 ## 1. Kanto Smash Burgers (`kanto-smash`, food)

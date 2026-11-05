@@ -59,6 +59,15 @@ export const ErrorCode = [
   'item_has_orders',
   'variant_is_reward',
   'item_is_reward',
+  // Settings, storage and plan (owner)
+  'storage_full',
+  'file_not_image',
+  'file_too_large',
+  'export_not_ready',
+  'cleanup_changed',
+  'last_order_type',
+  'last_payment_method',
+  'hours_overlap',
 ] as const;
 
 export const ErrorCodeEnum = z.enum(ErrorCode);

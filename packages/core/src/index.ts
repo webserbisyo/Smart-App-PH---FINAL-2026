@@ -20,6 +20,7 @@ export * from './schemas/shop-pack.js';
 export * from './schemas/owner-orders.js';
 export * from './schemas/schedule.js';
 export * from './schemas/members.js';
+export * from './schemas/settings.js';
 export * from './rules/money.js';
 export * from './rules/time.js';
 export * from './rules/hours.js';
@@ -41,6 +42,7 @@ export * from './rules/variant-limits.js';
 export * from './rules/variant-pricing.js';
 export * from './rules/variant-templates.js';
 export * from './rules/members.js';
+export * from './rules/settings.js';
 export { SHOP_PACKS } from './demo/packs/index.js';
 export {
   TEST_SHOP_PACKS,

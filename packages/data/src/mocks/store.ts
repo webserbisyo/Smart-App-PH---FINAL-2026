@@ -118,6 +118,7 @@ import {
 } from './members-view';
 import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
+import { createSettingsMock } from './settings';
 import { registerTrickleHandler } from './scenario';
 import { getMockScenario, type DemoCustomerState, type MockScenario } from './scenario-state';
 import {
@@ -569,6 +570,22 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     return memberOf(s, state.session?.email);
   }
 
+  // Owner Settings, storage and plan (T64 to T68); shop facts stay in the shop's storefront.
+  const settingsMock = createSettingsMock({
+    run: (area, fn) => run(area, fn),
+    requireShop: (slug) => requireShop(slug),
+    ownerShop: () => resolveOwnerShopSlug(),
+    ownerClaims: async () => {
+      const client = getAuthClient();
+      return client ? getClaims(client) : null;
+    },
+    now: () => now(),
+    scenario: () => scenario(),
+    fail,
+    seed,
+    production,
+  });
+
   let idSeq = 0;
   function newId(prefix: string): string {
     idSeq += 1;
@@ -609,7 +626,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
   }
 
   async function run<T>(
-    area: 'storefront' | 'orders' | 'account' | 'auth' | 'catalog' | 'members',
+    area: 'storefront' | 'orders' | 'account' | 'auth' | 'catalog' | 'members' | 'settings',
     fn: () => T,
   ): Promise<T> {
     const sc = scenario();
@@ -999,6 +1016,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           rejectReason: null,
         };
         order.proofs.push(proof);
+        // The screenshot counts toward the shop's storage, and always goes through (T66).
+        void settingsMock.recordProof(slug, 150 * 1024);
         // A proof never marks an order paid: only the owner's check does.
         r.paymentStatus = 'pending';
         r.messages.push({
@@ -2041,8 +2060,10 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       });
     },
 
-    createUploadUrl: async ({ kind }) => {
+    createUploadUrl: async ({ kind, bytes }) => {
       UploadKindEnum.parse(kind);
+      // NestJS checks the shop's storage before it signs an upload (T66).
+      await settingsMock.reserveUpload(kind, bytes);
       return run('catalog', () => {
         const path = `uploads/${kind}/${Date.now()}-${makeToken(rng).slice(0, 6)}.webp`;
         return UploadResultSchema.parse({ uploadUrl: `mock://upload/${path}`, path });
@@ -2469,9 +2490,11 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     ownerSamples,
     ownerCatalog,
     ownerMembers,
+    ownerSettings: settingsMock.adapter,
     now,
     reset() {
       state = { shops: new Map(), session: null, codes: {} };
+      settingsMock.reset();
       appliedAs = new Map();
       saved = null;
       rng = mulberry32(seed);

@@ -170,7 +170,9 @@ describe('owner catalog schemas', () => {
     expect(UploadKindEnum.safeParse('item').success).toBe(true);
     expect(UploadKindEnum.safeParse('category').success).toBe(true);
     expect(UploadKindEnum.safeParse('qr').success).toBe(true);
-    expect(UploadKindEnum.safeParse('avatar').success).toBe(false);
+    expect(UploadKindEnum.safeParse('avatar').success).toBe(true);
+    expect(UploadKindEnum.safeParse('plan_proof').success).toBe(true);
+    expect(UploadKindEnum.safeParse('video').success).toBe(false);
   });
 
   it('errorWords resolves category_not_empty and item_has_orders', () => {
