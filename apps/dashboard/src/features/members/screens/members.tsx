@@ -60,6 +60,8 @@ import { useMembersTabs } from '../tabs.js';
 import { useCounterActions } from '../use-counter-actions.js';
 
 const W = membersWords;
+// Recharts loads only when the chart shows (T57).
+const ProgressChart = React.lazy(() => import('../progress-chart.js'));
 const PAGE = 30;
 const CHIP =
   'h-10 gap-1.5 rounded-full border border-border bg-card px-3 text-sm font-semibold text-muted-foreground aria-pressed:border-primary aria-pressed:bg-accent aria-pressed:text-foreground md:h-8';
@@ -227,6 +229,7 @@ export function MembersScreen() {
   }
 
   const showNear = filter === 'all' && !q && stamps === null && status !== 'off';
+  const showChart = filter === 'all' && !q && status !== 'off' && (view?.members ?? 0) > 0;
 
   return (
     <div className="flex min-h-full flex-col pb-24 md:pb-8">
@@ -293,18 +296,43 @@ export function MembersScreen() {
           </Notice>
         ) : null}
 
-        {showNear && view ? (
-          <NearList
-            rows={view.near}
-            smallCard={smallCard}
-            now={now}
-            shown={isPhone ? 2 : 4}
-            canStamp={online && status === 'on'}
-            busyId={counter.busyId}
-            onStamp={(row) => void counter.stamp(row)}
-            onOpen={openRow}
-            onSeeAll={() => setSearch({ filter: 'almost' }, { replace: true })}
-          />
+        {(showNear || showChart) && view ? (
+          <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
+            {showNear ? (
+              <NearList
+                rows={view.near}
+                smallCard={smallCard}
+                now={now}
+                shown={isPhone ? 2 : 4}
+                canStamp={online && status === 'on'}
+                busyId={counter.busyId}
+                onStamp={(row) => void counter.stamp(row)}
+                onOpen={openRow}
+                onSeeAll={() => setSearch({ filter: 'almost' }, { replace: true })}
+              />
+            ) : null}
+            {showChart ? (
+              <section
+                className="flex flex-col gap-2 rounded-xl border bg-card p-4"
+                aria-labelledby="progress-title"
+              >
+                <div>
+                  <h2 id="progress-title" className="text-sm font-bold">
+                    {W.chart.title}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">{W.chart.hint}</p>
+                </div>
+                <React.Suspense fallback={<Skeleton className="h-40 w-full rounded-lg md:h-44" />}>
+                  <ProgressChart
+                    progress={view.progress}
+                    goal={goal}
+                    selected={stamps}
+                    onPick={(next) => setSearch({ stamps: next ?? undefined }, { replace: true })}
+                  />
+                </React.Suspense>
+              </section>
+            ) : null}
+          </div>
         ) : null}
 
         <div className="flex gap-2">

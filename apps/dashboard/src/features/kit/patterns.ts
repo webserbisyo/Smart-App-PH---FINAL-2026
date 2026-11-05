@@ -872,6 +872,13 @@ export const KIT_PATTERNS: readonly KitPattern[] = [
     url: 'https://reui.io/patterns/timeline',
   },
   {
+    id: 'c-chart-1',
+    name: 'Basic bar chart',
+    screen: 'rewards',
+    usedFor: 'Dashboard Members Card progress c-chart-1 (shadcn Chart, lazy-loaded)',
+    url: 'https://reui.io/patterns/chart',
+  },
+  {
     id: 'c-timeline-7',
     name: 'Roadmap Items',
     screen: 'rewards',

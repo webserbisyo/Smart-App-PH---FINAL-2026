@@ -2399,6 +2399,19 @@ export const membersWords = {
     notFound: 'No member or prize with that code. Check the code and try again.',
     back: 'Back to Members',
   },
+  // The Card progress chart (T57): members by stamps on the card; a bar opens that group.
+  chart: {
+    title: 'Card progress',
+    hint: 'Members by stamps on their card. Tap a bar to see them.',
+    ready: 'Ready',
+    series: 'Members',
+    bar: (stamps: number, goal: number) =>
+      stamps >= goal ? 'Reward ready' : stamps === 1 ? '1 stamp' : `${stamps} stamps`,
+    count: (n: number) => (n === 1 ? '1 member' : `${n} members`),
+    summary: (most: number, mostCount: number, ready: number) =>
+      `Most members (${mostCount}) have ${most === 1 ? '1 stamp' : `${most} stamps`}. ${ready} ${ready === 1 ? 'has' : 'have'} a reward ready.`,
+    empty: 'No members yet.',
+  },
   // The Stamp card tab (T60): status, how to earn, the reward, a live preview and the effect of a change.
   card: {
     statusTitle: 'Status',

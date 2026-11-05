@@ -3,6 +3,7 @@ import { PatternGrid } from './pattern-grid.js';
 import { Pattern as UserDetails } from './examples/c-avatar-16';
 import { Pattern as DropdownMenu } from './examples/c-avatar-35';
 import { Pattern as Basic } from './examples/c-card-1';
+import { Pattern as BasicBarChart } from './examples/c-chart-1';
 import { Pattern as BadgeActions } from './examples/c-card-16';
 import { Pattern as NotificationPreferences } from './examples/c-field-10';
 import { Pattern as Basic1 } from './examples/c-frame-1';
@@ -21,6 +22,7 @@ const EXAMPLES = {
   'c-avatar-35': DropdownMenu,
   'c-card-1': Basic,
   'c-card-16': BadgeActions,
+  'c-chart-1': BasicBarChart,
   'c-field-10': NotificationPreferences,
   'c-frame-1': Basic1,
   'c-icon-tile-6': Circular,

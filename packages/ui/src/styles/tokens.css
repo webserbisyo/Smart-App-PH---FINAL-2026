@@ -96,6 +96,14 @@
   --on-scrim: oklch(0.99 0 0);
   --skeleton: oklch(0.92 0 0);
 
+  /* Chart marks (3:1 on cards), fixed meanings: 1 the main series, 2 members and rewards, 3 info,
+     4 warning, 5 muted. They follow each app's palette. */
+  --chart-1: var(--primary);
+  --chart-2: var(--member-text);
+  --chart-3: var(--info);
+  --chart-4: var(--warning-text);
+  --chart-5: var(--muted-foreground);
+
   --sidebar: var(--card);
   --sidebar-foreground: var(--card-foreground);
   --sidebar-primary: var(--primary);
