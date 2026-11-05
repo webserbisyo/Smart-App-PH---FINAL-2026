@@ -110,9 +110,9 @@ export function storagePercent(usedBytes: number, limitBytes: number): number {
 /** "212 MB", "1.5 GB", "180 KB", "0 MB": whole MB, decimals under 10 MB, KB under 1 MB. */
 export function formatStorage(bytes: number): string {
   const mb = Math.max(0, bytes) / MB;
-  if (mb > 0 && mb < 1) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  if (mb > 0 && bytes < 1000 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
-  if (mb > 0 && mb < 10) return `${mb.toFixed(1).replace(/\.0$/, '')} MB`;
+  if (mb > 0 && mb < 10) return `${Math.max(1, mb).toFixed(1).replace(/\.0$/, '')} MB`;
   return `${Math.round(mb)} MB`;
 }
 

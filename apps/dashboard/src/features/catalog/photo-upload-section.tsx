@@ -9,8 +9,14 @@ import {
   StarIcon,
   PlusIcon,
 } from 'lucide-react';
-import { actionWords, catalogWords } from '@smartapp/core';
-import { useCreateUploadUrl, compressImage, cropImage } from '@smartapp/data';
+import {
+  UPLOAD_ACCEPT,
+  actionWords,
+  catalogWords,
+  errorWords,
+  settingsWords,
+} from '@smartapp/core';
+import { cropImage, errorCodeOf, prepareImage, useCreateUploadUrl } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Progress } from '@smartapp/ui/components/progress';
@@ -37,6 +43,7 @@ import {
 import { Sortable, SortableItem, SortableItemHandle } from '@smartapp/ui/components/reui/sortable';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
+import { uploadProblemText } from '@/app/image-upload-row';
 import { Notice } from '@/app/notice';
 import { CatalogPhoto, catalogPhotoSrc } from './catalog-photo.js';
 import { cn } from 'cn';
@@ -48,9 +55,10 @@ export interface PhotoUploadSectionProps {
 }
 
 const MAX_PHOTOS = 5;
-const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,.jpg,.jpeg,.png,.webp,.heic';
-// Item photos are saved square (menu cards and the desktop item dialog are square).
-const PHOTO_SIDE = 1200;
+// Item photos are saved square (menu cards and the desktop item dialog are square), 1080 px on the
+// longest side through the shared upload step (T65). HEIC is left out of the picker so iPhones hand
+// over a JPEG; a HEIC that still arrives is read from its bytes and worded.
+const PHOTO_SIDE = 1080;
 
 interface UploadState {
   uploading: boolean;
@@ -82,9 +90,10 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
   const upload = async (url: string, blob: Blob) => {
     setUpload(url, { uploading: true, progress: 30, failed: false, blob });
     try {
-      await createUpload.mutateAsync({ kind: 'item' });
+      await createUpload.mutateAsync({ kind: 'item', bytes: blob.size });
       setUpload(url, null);
-    } catch {
+    } catch (err) {
+      setErrorMsg(errorWords(errorCodeOf(err)));
       setUpload(url, { uploading: false, progress: 0, failed: true, blob });
     }
   };
@@ -102,21 +111,13 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
     setIsCompressing(true);
     const added: { url: string; blob: Blob }[] = [];
     for (const file of list) {
-      if (file.size > 15 * 1024 * 1024) {
-        setErrorMsg(catalogWords.photoTooLarge);
+      // One check for every owner photo: size, what the bytes really are, then smaller on the phone.
+      const prepared = await prepareImage(file, { maxSide: PHOTO_SIDE, quality: 0.85 });
+      if (!prepared.ok) {
+        setErrorMsg(uploadProblemText(prepared));
         continue;
       }
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-      if (!validTypes.includes(file.type) && !/\.(jpg|jpeg|png|webp|heic)$/i.test(file.name)) {
-        setErrorMsg(catalogWords.photoUnsupported);
-        continue;
-      }
-      try {
-        const compressed = await compressImage(file, { maxSide: PHOTO_SIDE, quality: 0.85 });
-        added.push({ url: URL.createObjectURL(compressed), blob: compressed });
-      } catch {
-        setErrorMsg(catalogWords.photoProcessFailed);
-      }
+      added.push({ url: URL.createObjectURL(prepared.image.blob), blob: prepared.image.blob });
     }
     setIsCompressing(false);
     if (!added.length) return;
@@ -172,11 +173,15 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
   return (
     <FileUpload
       multiple
-      accept={ACCEPT}
+      accept={UPLOAD_ACCEPT}
       label={catalogWords.photoDropzone}
       disabled={!canAdd || isCompressing}
       onAccept={(files) => void handleFiles(files)}
-      onFileReject={() => setErrorMsg(catalogWords.photoUnsupported)}
+      onFileReject={(file) =>
+        setErrorMsg(
+          /\.hei[cf]$/i.test(file.name) ? settingsWords.upload.heic : settingsWords.upload.notImage,
+        )
+      }
       className="gap-4"
       onDragOver={(e) => {
         if (!listDrop || !canAdd || !e.dataTransfer.types.includes('Files')) return;
