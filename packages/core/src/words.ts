@@ -2755,7 +2755,8 @@ export const settingsWords = {
     showAddressHelp: 'Off shows only the area, for home-based shops',
     pin: 'Map pin',
     pinPlaceholder: 'Paste a Google Maps link',
-    pinHelp: 'Open Google Maps, press and hold your shop, tap Share, Copy link, then paste it here.',
+    pinHelp:
+      'Open Google Maps, press and hold your shop, tap Share, Copy link, then paste it here.',
     pinFound: (lat: string, lng: string) => `Pin found at ${lat}, ${lng}`,
     pinSet: 'Pin set. Delivery distances start here.',
     pinBad: "We couldn't read a pin from that link. Copy the link again from Google Maps.",
@@ -2768,6 +2769,7 @@ export const settingsWords = {
   hours: {
     card: 'Opening hours',
     copyMonday: 'Copy Monday to all days',
+    copyMondayShort: 'Copy Monday',
     copied: (n: number) => `Copied Monday to ${n} ${n === 1 ? 'day' : 'days'}`,
     undo: 'Undo',
     today: 'Today',
@@ -2835,7 +2837,8 @@ export const settingsWords = {
     },
     etaRequired: 'Type a time, like 30 to 45 min.',
     zonesCard: 'Named areas',
-    zonesLine: 'A flat fee for a barangay or village, for customers past your rows or without a pin.',
+    zonesLine:
+      'A flat fee for a barangay or village, for customers past your rows or without a pin.',
     zoneName: 'Area name',
     zoneNameRequired: 'Type the area name.',
     addZone: 'Add an area',
@@ -2948,7 +2951,8 @@ export const settingsWords = {
     hairColors: { black: 'Black', brown: 'Brown', golden: 'Golden' },
     glasses: 'Glasses',
     earrings: 'Earrings',
-    makeLine: 'A ready-made picture, so it shows instantly everywhere and uses none of your storage.',
+    makeLine:
+      'A ready-made picture, so it shows instantly everywhere and uses none of your storage.',
     photoLine: 'We fit it in a circle and keep a 256 px copy, about 20 KB of your storage.',
     pickPhoto: 'Pick a photo',
     cropTitle: 'Fit your photo',
@@ -3055,7 +3059,8 @@ export const settingsWords = {
     lineOk: 'Photos are made smaller on your phone, so most shops use under a quarter.',
     lineHigh: 'Over 80% used. Clean up below or save a copy, then delete old proofs.',
     lineAlmost: 'Almost full. New menu photos stop at 100%. Clean up now.',
-    lineFull: "Full. New menu and look photos wait until you free space. Customers' proofs still come in.",
+    lineFull:
+      "Full. New menu and look photos wait until you free space. Customers' proofs still come in.",
     meterLabel: (used: string, limit: string) => `${used} of ${limit} used`,
     kinds: {
       menu: 'Menu photos',
@@ -3107,7 +3112,8 @@ export const settingsWords = {
       exported_proofs: (n: number, size: string) =>
         `${n} ${n === 1 ? 'proof' : 'proofs'} on finished orders that are in your saved copy. Frees ${size}. Proofs on open or unpaid orders stay.`,
     },
-    noCopy: "You haven't saved a copy. Once deleted, you can't show these screenshots if a customer asks later.",
+    noCopy:
+      "You haven't saved a copy. Once deleted, you can't show these screenshots if a customer asks later.",
     hasCopy: 'These are all in the copy you saved. Keep that ZIP somewhere safe.',
     saveCopyFirst: 'Save a copy first',
     confirm: {
@@ -3163,6 +3169,7 @@ export const settingsWords = {
     smaller: (percent: number) => `${percent}% smaller`,
     sizes: (before: string, after: string) => `${before} → ${after}`,
     compare: 'Compare',
+    pick: 'Upload a photo',
     remove: 'Remove',
     replace: 'Replace',
     retry: 'Retry',

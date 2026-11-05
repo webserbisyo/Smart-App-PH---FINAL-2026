@@ -10,6 +10,14 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
     />
     <title>Smart App PH</title>
+    <script>
+      // Appearance before the first paint (decision T64; app/appearance.ts keeps it after).
+      try {
+        var a = localStorage.getItem('smartapp.dashboard.appearance');
+        if (a === 'dark' || (a === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
+          document.documentElement.classList.add('dark');
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

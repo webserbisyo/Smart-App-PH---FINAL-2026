@@ -3,63 +3,97 @@ import {
   ClockIcon,
   CreditCardIcon,
   GemIcon,
+  HardDriveIcon,
   ShoppingBagIcon,
   StoreIcon,
   TruckIcon,
   UserIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { words } from '@smartapp/core';
+import { settingsWords } from '@smartapp/core';
 
-const w = words.screens.settings;
+const t = settingsWords.sectionTitles;
+const l = settingsWords.lines;
 
-// The settings sections, in menu order. Desktop shows them as the left
-// sub-menu, phone as a list of rows.
+// The settings sections in three groups (decision T64): Your shop, You, Plan. Laptops show them as
+// the left sub-menu; phones as the grouped list on /settings with one status line each.
 export const SETTINGS_SECTIONS = [
-  { id: 'shop', to: '/settings/shop', label: w.shop, empty: w.shopEmpty, icon: StoreIcon },
-  { id: 'hours', to: '/settings/hours', label: w.hours, empty: w.hoursEmpty, icon: ClockIcon },
+  { id: 'shop', group: 'shop', to: '/settings/shop', label: t.shop, line: l.shop, icon: StoreIcon },
+  {
+    id: 'hours',
+    group: 'shop',
+    to: '/settings/hours',
+    label: t.hours,
+    line: l.hours,
+    icon: ClockIcon,
+  },
   {
     id: 'ordering',
+    group: 'shop',
     to: '/settings/ordering',
-    label: w.ordering,
-    empty: w.orderingEmpty,
+    label: t.ordering,
+    line: l.ordering,
     icon: ShoppingBagIcon,
   },
   {
     id: 'delivery',
+    group: 'shop',
     to: '/settings/delivery',
-    label: w.delivery,
-    empty: w.deliveryEmpty,
+    label: t.delivery,
+    line: l.delivery,
     icon: TruckIcon,
   },
   {
     id: 'payments',
+    group: 'shop',
     to: '/settings/payments',
-    label: w.payments,
-    empty: w.paymentsEmpty,
+    label: t.payments,
+    line: l.payments,
     icon: CreditCardIcon,
   },
   {
+    id: 'account',
+    group: 'you',
+    to: '/settings/account',
+    label: t.account,
+    line: l.account,
+    icon: UserIcon,
+  },
+  {
     id: 'notifications',
+    group: 'you',
     to: '/settings/notifications',
-    label: w.notifications,
-    empty: w.notificationsEmpty,
+    label: t.notifications,
+    line: l.notifications,
     icon: BellIcon,
   },
-  { id: 'plan', to: '/settings/plan', label: w.plan, empty: w.planEmpty, icon: GemIcon },
+  { id: 'plan', group: 'plan', to: '/settings/plan', label: t.plan, line: l.plan, icon: GemIcon },
   {
-    id: 'account',
-    to: '/settings/account',
-    label: w.account,
-    empty: w.accountEmpty,
-    icon: UserIcon,
+    id: 'storage',
+    group: 'plan',
+    to: '/settings/storage',
+    label: t.storage,
+    line: l.storage,
+    icon: HardDriveIcon,
   },
 ] as const satisfies readonly {
   id: string;
+  group: 'shop' | 'you' | 'plan';
   to: `/settings/${string}`;
   label: string;
-  empty: string;
+  line: string;
   icon: LucideIcon;
 }[];
 
 export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number]['id'];
+export type SettingsSection = (typeof SETTINGS_SECTIONS)[number];
+
+export const SETTINGS_GROUPS = [
+  { id: 'shop', label: settingsWords.groups.shop },
+  { id: 'you', label: settingsWords.groups.you },
+  { id: 'plan', label: settingsWords.groups.plan },
+] as const;
+
+export function sectionOf(id: SettingsSectionId): SettingsSection {
+  return SETTINGS_SECTIONS.find((s) => s.id === id) ?? SETTINGS_SECTIONS[0];
+}

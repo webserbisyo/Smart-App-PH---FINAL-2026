@@ -2,7 +2,13 @@
 // profile and emails; the Pro plan, storage and exports. The shop always comes from the owner's login (T34).
 import { z } from 'zod';
 import { ShopKindEnum } from './demo-shop.js';
-import { CentavosSchema, IdSchema, IsoDateSchema, IsoDateTimeSchema, MediaRefSchema } from './common.js';
+import {
+  CentavosSchema,
+  IdSchema,
+  IsoDateSchema,
+  IsoDateTimeSchema,
+  MediaRefSchema,
+} from './common.js';
 import {
   AvatarHairColorEnum,
   AvatarHairEnum,

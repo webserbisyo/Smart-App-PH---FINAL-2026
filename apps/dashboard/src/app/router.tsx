@@ -6,7 +6,7 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router';
-import { membersWords, words } from '@smartapp/core';
+import { membersWords, settingsWords, words } from '@smartapp/core';
 import { LoginScreen } from '../features/auth/screens/login.js';
 import { SignupScreen } from '../features/auth/screens/signup.js';
 import { CatalogAddOnsScreen } from '../features/catalog/screens/add-ons.js';
@@ -37,6 +37,7 @@ import { PlanSettingsScreen } from '../features/settings/screens/plan.js';
 import { SettingsIndexScreen } from '../features/settings/screens/settings-index.js';
 import { SettingsLayout } from '../features/settings/screens/settings-layout.js';
 import { ShopSettingsScreen } from '../features/settings/screens/shop.js';
+import { StorageSettingsScreen } from '../features/settings/screens/storage.js';
 import { setMockOwnerSlug } from '@smartapp/data';
 import { rememberPreviousPath } from './back.js';
 import { requireAuth, requireGuest, signOut } from './guards.js';
@@ -52,6 +53,7 @@ const orders = { to: '/orders', title: () => s.orders.title } as const;
 const catalog = { to: '/catalog', title: s.catalog.title } as const;
 const members = { to: '/members', title: () => s.members.title } as const;
 const settings = { to: '/settings', title: () => s.settings.title } as const;
+const st = settingsWords.sectionTitles;
 
 const rootRoute = createRootRoute({ component: Outlet });
 
@@ -239,14 +241,15 @@ const settingsIndexRoute = createRoute({
 
 const settingsChildren = [
   settingsIndexRoute,
-  settingsPage('/shop', ShopSettingsScreen, s.settings.shop),
-  settingsPage('/hours', HoursSettingsScreen, s.settings.hours),
-  settingsPage('/ordering', OrderingSettingsScreen, s.settings.ordering),
-  settingsPage('/delivery', DeliverySettingsScreen, s.settings.delivery),
-  settingsPage('/payments', PaymentsSettingsScreen, s.settings.payments),
-  settingsPage('/notifications', NotificationsSettingsScreen, s.settings.notifications),
-  settingsPage('/plan', PlanSettingsScreen, s.settings.plan),
-  settingsPage('/account', AccountSettingsScreen, s.settings.account),
+  settingsPage('/shop', ShopSettingsScreen, st.shop),
+  settingsPage('/hours', HoursSettingsScreen, st.hours),
+  settingsPage('/ordering', OrderingSettingsScreen, st.ordering),
+  settingsPage('/delivery', DeliverySettingsScreen, st.delivery),
+  settingsPage('/payments', PaymentsSettingsScreen, st.payments),
+  settingsPage('/account', AccountSettingsScreen, st.account),
+  settingsPage('/notifications', NotificationsSettingsScreen, st.notifications),
+  settingsPage('/plan', PlanSettingsScreen, st.plan),
+  settingsPage('/storage', StorageSettingsScreen, st.storage),
 ] as const;
 
 const baseRoutes = [

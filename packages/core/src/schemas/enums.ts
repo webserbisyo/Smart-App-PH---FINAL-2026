@@ -219,7 +219,15 @@ export type SortKind = z.infer<typeof SortKindEnum>;
 
 // What an owner upload is for. Avatar is the owner's own photo; plan_proof is the receipt for the Pro plan,
 // which never counts against the shop's storage (decision T66).
-export const UPLOAD_KINDS = ['logo', 'banner', 'item', 'category', 'qr', 'avatar', 'plan_proof'] as const;
+export const UPLOAD_KINDS = [
+  'logo',
+  'banner',
+  'item',
+  'category',
+  'qr',
+  'avatar',
+  'plan_proof',
+] as const;
 export const UploadKindEnum = z.enum(UPLOAD_KINDS);
 export type UploadKind = z.infer<typeof UploadKindEnum>;
 
@@ -231,7 +239,16 @@ export const OwnerAvatarStyleEnum = z.enum(OWNER_AVATAR_STYLES);
 export type OwnerAvatarStyle = z.infer<typeof OwnerAvatarStyleEnum>;
 
 // The colour behind a face or initials: one token each, with a dark version (docs/design-tokens.md).
-export const AVATAR_THEMES = ['sky', 'mint', 'sun', 'blush', 'lilac', 'sand', 'navy', 'brand'] as const;
+export const AVATAR_THEMES = [
+  'sky',
+  'mint',
+  'sun',
+  'blush',
+  'lilac',
+  'sand',
+  'navy',
+  'brand',
+] as const;
 export const AvatarThemeEnum = z.enum(AVATAR_THEMES);
 export type AvatarTheme = z.infer<typeof AvatarThemeEnum>;
 
@@ -284,3 +301,8 @@ export type PlanPaymentStatus = z.infer<typeof PlanPaymentStatusEnum>;
 export const PLAN_MONTH_CHOICES = [1, 3, 6] as const;
 export const PlanMonthsSchema = z.union([z.literal(1), z.literal(3), z.literal(6)]);
 export type PlanMonths = z.infer<typeof PlanMonthsSchema>;
+
+// The dashboard's look, kept on the device (decision T64).
+export const APPEARANCES = ['system', 'light', 'dark'] as const;
+export const AppearanceEnum = z.enum(APPEARANCES);
+export type Appearance = z.infer<typeof AppearanceEnum>;

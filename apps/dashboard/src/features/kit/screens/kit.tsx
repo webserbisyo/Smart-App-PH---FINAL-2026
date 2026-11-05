@@ -29,6 +29,7 @@ import { CatalogPrimitiveSections } from '../catalog-primitives.js';
 import { OrdersPrimitiveSections } from '../orders-primitives.js';
 import { OrdersV2Sections } from '../orders-v2-primitives.js';
 import { MembersPrimitiveSections } from '../members-primitives.js';
+import { SettingsPrimitiveSections } from '../settings-primitives.js';
 
 interface TokenSwatch {
   name: string;
@@ -45,6 +46,7 @@ const KIT_GROUPS = [
   { id: 'kit-catalog', label: 'Catalog' },
   { id: 'kit-orders', label: 'Orders' },
   { id: 'kit-members', label: 'Members' },
+  { id: 'kit-settings', label: 'Settings' },
   { id: 'kit-patterns', label: 'Library references' },
 ] as const;
 
@@ -360,6 +362,11 @@ export default function KitPage() {
 
         <div id="kit-members" className="scroll-mt-20" />
         <MembersPrimitiveSections />
+
+        <Separator />
+
+        <div id="kit-settings" className="scroll-mt-20" />
+        <SettingsPrimitiveSections />
 
         <Separator />
 

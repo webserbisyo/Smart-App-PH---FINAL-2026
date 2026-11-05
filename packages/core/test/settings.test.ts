@@ -88,13 +88,16 @@ describe('storage (T66)', () => {
     expect(formatStorage(212 * MB)).toBe('212 MB');
     expect(formatStorage(2.1 * MB)).toBe('2.1 MB');
     expect(formatStorage(0)).toBe('0 MB');
+    expect(formatStorage(180 * 1024)).toBe('180 KB');
   });
 });
 
 describe('plan (T67)', () => {
   const now = mnl('2026-11-05 12:00');
   it('trial, active, due, overdue for 7 days, then paused', () => {
-    expect(planStatus({ trialEndsAt: mnl('2026-11-12 12:00'), paidUntil: null }, now)).toBe('trial');
+    expect(planStatus({ trialEndsAt: mnl('2026-11-12 12:00'), paidUntil: null }, now)).toBe(
+      'trial',
+    );
     expect(planStatus({ trialEndsAt: null, paidUntil: '2026-12-05' }, now)).toBe('active');
     expect(planStatus({ trialEndsAt: null, paidUntil: '2026-11-08' }, now)).toBe('due');
     expect(planStatus({ trialEndsAt: null, paidUntil: '2026-11-01' }, now)).toBe('overdue');

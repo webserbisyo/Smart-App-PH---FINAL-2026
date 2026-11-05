@@ -1,3 +1,4 @@
+import { ownerSettingsQk } from '../owner-settings/qk';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   BoardOrder,
@@ -243,6 +244,8 @@ export function useSaveBookingRules(slug: string) {
       ownerOrders.saveBookingRules({ slug, rules: input.rules }),
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.bookingRules(slug) });
+      // Settings › Ordering shows the same rules (T64).
+      qc.invalidateQueries({ queryKey: ownerSettingsQk.settings() });
     },
   });
 }

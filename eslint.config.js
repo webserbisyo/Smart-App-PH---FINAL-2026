@@ -69,6 +69,13 @@ export default tseslint.config(
       'no-useless-assignment': 'off',
     },
   },
+  // Scope @typescript-eslint/no-empty-object-type: off to only installed DiceUI files that declare empty prop interfaces (decision T39, T64)
+  {
+    files: ['packages/ui/src/components/gauge.tsx', 'packages/ui/src/components/time-picker.tsx'],
+    rules: {
+      '@typescript-eslint/no-empty-object-type': 'off',
+    },
+  },
   // Scope reportUnusedDisableDirectives: off to only installed files with unused directives (decision T39)
   {
     files: [

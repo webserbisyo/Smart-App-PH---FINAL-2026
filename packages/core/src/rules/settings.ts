@@ -25,7 +25,8 @@ export function hoursProblems(hours: readonly OpeningRange[]): Map<number, Hours
     hours.forEach((b, j) => {
       if (j <= i || a.day !== b.day || problems.has(i) || problems.has(j)) return;
       const overlap =
-        clockMinutes(a.open) < clockMinutes(b.close) && clockMinutes(b.open) < clockMinutes(a.close);
+        clockMinutes(a.open) < clockMinutes(b.close) &&
+        clockMinutes(b.open) < clockMinutes(a.close);
       if (overlap) problems.set(j, 'overlap');
     });
   });
@@ -40,10 +41,9 @@ export function copyDayToAll(
 ): OpeningRange[] {
   const source = hours.filter((h) => h.day === from);
   const others = openDays.filter((d) => d !== from);
-  return [
-    ...source,
-    ...others.flatMap((day) => source.map((range) => ({ ...range, day }))),
-  ].sort((a, b) => a.day - b.day || clockMinutes(a.open) - clockMinutes(b.open));
+  return [...source, ...others.flatMap((day) => source.map((range) => ({ ...range, day })))].sort(
+    (a, b) => a.day - b.day || clockMinutes(a.open) - clockMinutes(b.open),
+  );
 }
 
 // ---------- delivery rows ----------
@@ -83,9 +83,7 @@ export function nextDistanceRow(rows: readonly DistanceRow[]): DistanceRow {
 /** The row for a distance (the delivery calculator), or null past the last row. */
 export function distanceRowFor(rows: readonly DistanceRow[], km: number): DistanceRow | null {
   if (!Number.isFinite(km) || km < 0) return null;
-  return (
-    rows.find((r) => km >= r.fromKm && km < r.toKm) ?? rows.find((r) => km === r.toKm) ?? null
-  );
+  return rows.find((r) => km >= r.fromKm && km < r.toKm) ?? rows.find((r) => km === r.toKm) ?? null;
 }
 
 // ---------- storage (T66) ----------
@@ -109,9 +107,10 @@ export function storagePercent(usedBytes: number, limitBytes: number): number {
   return Math.min(100, Math.max(0, Math.round((usedBytes / limitBytes) * 100)));
 }
 
-/** "212 MB", "1.5 GB", "0 MB": storage sizes in whole MB (decimals under 10 MB). */
+/** "212 MB", "1.5 GB", "180 KB", "0 MB": whole MB, decimals under 10 MB, KB under 1 MB. */
 export function formatStorage(bytes: number): string {
   const mb = Math.max(0, bytes) / MB;
+  if (mb > 0 && mb < 1) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
   if (mb > 0 && mb < 10) return `${mb.toFixed(1).replace(/\.0$/, '')} MB`;
   return `${Math.round(mb)} MB`;
@@ -149,7 +148,11 @@ export function planGraceUntil(paidUntil: string | null): string | null {
 }
 
 /** The day a payment of some months pays up to, counted on from the paid-until day (or today). */
-export function planCoversUntil(paidUntil: string | null, months: number, now: string | Date): string {
+export function planCoversUntil(
+  paidUntil: string | null,
+  months: number,
+  now: string | Date,
+): string {
   const today = manilaDate(now);
   const from = paidUntil && paidUntil >= today ? paidUntil : today;
   const [y = 0, m = 1, d = 1] = from.split('-').map(Number);
