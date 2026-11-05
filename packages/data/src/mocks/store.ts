@@ -61,6 +61,8 @@ import {
   SHOP_PACKS,
   TEST_SHOP_PACKS,
   words,
+  membersWords,
+  memberQrUrl,
   applyTemplateToItem,
   buildVersions,
   defaultVariantTemplates,
@@ -1142,7 +1144,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           code,
           status: 'pending',
           // Member and prize QR both open /m/<code> (M13).
-          qrUrl: `https://app.webserbisyo.com/m/${code}`,
+          qrUrl: memberQrUrl(code),
           title: card.reward.title,
           createdAt: at,
         });
@@ -2116,7 +2118,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       id: newId('claim'),
       code,
       status: given ? 'given' : 'pending',
-      qrUrl: `https://app.webserbisyo.com/m/${code}`,
+      qrUrl: memberQrUrl(code),
       title: card.reward.title,
       createdAt: at,
       givenAt: given ? at : null,
@@ -2176,7 +2178,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             : 0;
         const total = next.reward.kind === 'custom' ? next.reward.quantityTotal : null;
         if (total !== null && total < held)
-          fail('invalid_input', 422, { quantityTotal: [words.members.piecesBelowHeld(held)] });
+          fail('invalid_input', 422, { quantityTotal: [membersWords.piecesBelowHeld(held)] });
         s.shop.storefront.stampCard = {
           status: next.status,
           rule: next.rule,

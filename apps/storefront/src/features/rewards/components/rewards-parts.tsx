@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { SunIcon } from 'lucide-react';
-import { artPath, formatManila, words, type MemberAccount } from '@smartapp/core';
+import { artPath, formatManila, memberQrUrl, words, type MemberAccount } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { QRCode, QRCodeSvg } from '@smartapp/ui/components/qr-code';
 import {
@@ -105,7 +105,7 @@ export function MemberQr({ account }: { account: MemberAccount }) {
       </div>
       {/* Black on white on every shop, so any scanner reads it. */}
       <figure className="flex flex-col items-center gap-3 rounded-2xl bg-paper p-4 text-paper-foreground ring-1 ring-foreground/8">
-        <QRCode value={account.memberCode} size={200}>
+        <QRCode value={memberQrUrl(account.memberCode)} size={200}>
           <QRCodeSvg role="img" aria-label={W.qrLabel(account.memberCode)} />
         </QRCode>
         <figcaption className="font-mono text-2xl font-bold tracking-widest">

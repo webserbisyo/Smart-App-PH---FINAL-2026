@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import type { ListCustomersInput, StampCardSettings } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
 import { ownerMembersQk } from './qk';
@@ -25,6 +25,18 @@ export function useCustomers(input: ListCustomersInput) {
   return useQuery({
     queryKey: ownerMembersQk.list(input),
     queryFn: () => ownerMembers.listCustomers(input),
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** The Members list page by page ("Show more"); a new filter starts again from the top. */
+export function useCustomerPages(input: Omit<ListCustomersInput, 'cursor'>) {
+  const { ownerMembers } = useAdapters();
+  return useInfiniteQuery({
+    queryKey: [...ownerMembersQk.lists(), 'pages', input] as const,
+    queryFn: ({ pageParam }) => ownerMembers.listCustomers({ ...input, cursor: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
     placeholderData: keepPreviousData,
   });
 }

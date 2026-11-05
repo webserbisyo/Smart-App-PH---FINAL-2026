@@ -16,6 +16,14 @@ export const USUALLY_BUYS_DAYS = 90;
 
 const DAY_MS = 86_400_000;
 
+// The owner dashboard: member and prize QR codes open /m/<code> there with the phone camera (M13).
+export const DASHBOARD_ORIGIN = 'https://app.webserbisyo.com';
+
+/** The link a member's or a prize's QR holds; scanning it only opens the card (D7). */
+export function memberQrUrl(code: string): string {
+  return `${DASHBOARD_ORIGIN}/m/${encodeURIComponent(code)}`;
+}
+
 /** 1 or 2 stamps left; on small cards (5 or fewer) only 1 left, so a 5-stamp card isn't all "almost". */
 export function isAlmost(balance: number, goal: number): boolean {
   const left = goal - balance;

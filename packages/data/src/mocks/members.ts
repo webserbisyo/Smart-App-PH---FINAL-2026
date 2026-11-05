@@ -1,6 +1,13 @@
 // Demo members and guests for one shop (decision T57, D6): who they are, their past orders and a stamp history
 // replayed from those orders with the shop's own rules, so every number on the Members page adds up.
-import { addDays, isAlmost, manilaDate, manilaToDate, type PublicShop } from '@smartapp/core';
+import {
+  addDays,
+  isAlmost,
+  manilaDate,
+  manilaToDate,
+  memberQrUrl,
+  type PublicShop,
+} from '@smartapp/core';
 import { int, pick, token, type Rng } from './rng';
 import {
   addMinutes,
@@ -293,7 +300,7 @@ export function generateCommunity(
             id: `${slug}-c-${i}-${claims.length + 1}`,
             code,
             status: isWaiting ? 'pending' : 'given',
-            qrUrl: `https://app.webserbisyo.com/m/${code}`,
+            qrUrl: memberQrUrl(code),
             title: card.reward.title,
             createdAt: claimAt,
             givenAt: isWaiting ? null : addMinutes(claimAt, int(rng, 20, 1440)),

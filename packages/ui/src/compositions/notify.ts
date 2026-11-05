@@ -13,6 +13,8 @@ export interface NotifyInput {
   action?: { label: string; onClick: () => void } | undefined;
   // Stays until closed, like an error: for a warning the owner must act on.
   persist?: boolean | undefined;
+  // How long an Undo stays on screen when it differs from the tone's default (10 s for a counter stamp).
+  durationMs?: number | undefined;
 }
 
 const SUCCESS_MS = 3000;
@@ -56,6 +58,7 @@ export function notify({
   tone = 'info',
   action,
   persist = false,
+  durationMs,
 }: NotifyInput): string {
   count += 1;
   const options: ToastOptions = {
@@ -63,7 +66,8 @@ export function notify({
     title,
     description,
     type: tone,
-    timeout: tone === 'error' || persist ? 0 : tone === 'success' ? SUCCESS_MS : INFO_MS,
+    timeout:
+      tone === 'error' || persist ? 0 : (durationMs ?? (tone === 'success' ? SUCCESS_MS : INFO_MS)),
     priority: tone === 'error' ? 'high' : 'low',
     actionProps: action ? { children: action.label, onClick: action.onClick } : undefined,
   };
@@ -74,4 +78,11 @@ export function notify({
     for (const listener of listeners) listener();
   }
   return `notify-${count}`;
+}
+
+/** Closes a toast that notify() showed, e.g. the Undo toast once Undo is pressed. */
+export function closeToast(id: string): void {
+  const at = waiting.findIndex((o) => o.id === id);
+  if (at >= 0) waiting.splice(at, 1);
+  manager?.close(id);
 }

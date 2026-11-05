@@ -6,7 +6,7 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router';
-import { words } from '@smartapp/core';
+import { membersWords, words } from '@smartapp/core';
 import { LoginScreen } from '../features/auth/screens/login.js';
 import { SignupScreen } from '../features/auth/screens/signup.js';
 import { CatalogAddOnsScreen } from '../features/catalog/screens/add-ons.js';
@@ -21,8 +21,9 @@ import { HomeScreen } from '../features/home/screens/home.js';
 import { InsightsScreen } from '../features/insights/screens/insights.js';
 import { InsightsSearchSchema } from '../features/insights/tabs.js';
 import { PrizeClaimsScreen } from '../features/members/screens/claims.js';
-import { MemberDetailScreen } from '../features/members/screens/member-detail.js';
+import { FindMemberScreen } from '../features/members/screens/find-member.js';
 import { MembersScreen } from '../features/members/screens/members.js';
+import { MembersSearchSchema } from '../features/members/search.js';
 import { StampCardScreen } from '../features/members/screens/stamp-card.js';
 import { OrdersScreen } from '../features/orders/screens/orders.js';
 import { OrdersSearchSchema } from '../features/orders/search.js';
@@ -169,11 +170,13 @@ const catalogItemRoute = shellPage(
   page(s.catalog.itemTitle, catalog, true),
 );
 
-const membersRoute = shellPage(
-  '/members',
-  MembersScreen,
-  page(() => s.members.title),
-);
+const membersRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/members',
+  validateSearch: MembersSearchSchema,
+  component: MembersScreen,
+  staticData: page(() => s.members.title),
+});
 const stampCardRoute = shellPage(
   '/members/stamp-card',
   StampCardScreen,
@@ -184,10 +187,20 @@ const claimsRoute = shellPage(
   PrizeClaimsScreen,
   page(() => s.members.title),
 );
-const memberRoute = shellPage(
-  '/members/$customerId',
-  MemberDetailScreen,
-  page(() => s.members.detailTitle, members),
+// Old member links open the member panel on the Members page (decision T57).
+const memberRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/members/$customerId',
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/members', search: { member: params.customerId }, replace: true });
+  },
+  staticData: page(() => s.members.detailTitle, members),
+});
+// Member and prize QR codes open here (M13).
+const findMemberRoute = shellPage(
+  '/m/$code',
+  FindMemberScreen,
+  page(() => membersWords.find.title, members),
 );
 
 const insightsRoute = createRoute({
@@ -255,6 +268,7 @@ const baseRoutes = [
     stampCardRoute,
     claimsRoute,
     memberRoute,
+    findMemberRoute,
     insightsRoute,
     settingsRoute.addChildren(settingsChildren),
   ]),
