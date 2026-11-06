@@ -4,6 +4,7 @@ import { formatPeso, ordersWords } from '@smartapp/core';
 import { IconTile } from '@smartapp/ui/components/reui/icon-tile';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { Scroller } from '@smartapp/ui/components/scroller';
+import { useScrollerRecheck } from '@smartapp/ui/hooks/use-scroller-recheck';
 import { cn } from 'cn';
 import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
 import { ORDER_FILTERS, type OrderFilter } from './search.js';
@@ -28,11 +29,18 @@ export interface TypeCardsProps {
  * filter, tap it again to clear. Built from the installed Toggle Group and ReUI Icon Tile.
  */
 export function TypeCards({ types, totals, toCheck, value, onChange }: TypeCardsProps) {
+  // The cards load after the row, so the edge fade re-checks when they grow (T77).
+  const scrollerRef = useScrollerRecheck<HTMLDivElement>();
   const itemClass =
     'h-auto min-h-11 shrink-0 justify-start gap-2.5 rounded-xl border border-border bg-card px-2.5 py-2 text-left shadow-xs hover:bg-muted/60 aria-pressed:border-primary aria-pressed:bg-accent aria-pressed:ring-1 aria-pressed:ring-primary md:min-w-44 md:px-3';
 
   return (
-    <Scroller orientation="horizontal" hideScrollbar className="-mx-4 px-4 md:mx-0 md:px-0">
+    <Scroller
+      ref={scrollerRef}
+      orientation="horizontal"
+      hideScrollbar
+      className="-mx-4 px-4 md:mx-0 md:px-0"
+    >
       <ToggleGroup
         value={value ? [value] : []}
         onValueChange={(next) => {

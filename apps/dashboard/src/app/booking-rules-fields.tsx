@@ -54,7 +54,7 @@ export function BookingRulesFields({
             max={60}
             className="w-36"
           >
-            <NumberFieldGroup>
+            <NumberFieldGroup className="h-11 md:h-9">
               <NumberFieldDecrement />
               <NumberFieldInput className="text-base font-semibold tabular-nums" />
               <NumberFieldIncrement />
@@ -138,7 +138,7 @@ export function BookingRulesFields({
               max={50}
               className="w-36"
             >
-              <NumberFieldGroup>
+              <NumberFieldGroup className="h-11 md:h-9">
                 <NumberFieldDecrement />
                 <NumberFieldInput className="text-base font-semibold tabular-nums" />
                 <NumberFieldIncrement />
@@ -169,7 +169,7 @@ export function BookingRulesFields({
             step={5}
             className="w-36"
           >
-            <NumberFieldGroup>
+            <NumberFieldGroup className="h-11 md:h-9">
               <NumberFieldDecrement />
               <NumberFieldInput className="text-base font-semibold tabular-nums" />
               <NumberFieldIncrement />

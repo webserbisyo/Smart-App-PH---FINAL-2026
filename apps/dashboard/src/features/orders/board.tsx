@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CalendarClockIcon, CircleCheckIcon } from 'lucide-react';
+import { CalendarClockIcon, ChevronDownIcon, CircleCheckIcon } from 'lucide-react';
 import type { BoardOrder, OrderStage, OrderStatus, ShopKind } from '@smartapp/core';
 import {
   awaitsTransfer,
@@ -7,6 +7,7 @@ import {
   canAdvance,
   formatPeso,
   ordersWords,
+  scrollWords,
   stageStatus,
 } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
@@ -23,6 +24,8 @@ import {
 import { Scroller } from '@smartapp/ui/components/scroller';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { notify } from '@smartapp/ui/compositions/notify';
+import { useHiddenBelow } from '@smartapp/ui/hooks/use-hidden-below';
+import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { cn } from 'cn';
 import { OrderCard, orderNoLabel } from '@/app/orders/order-card';
 import { AnimatePresence, FadeUp } from '@/app/orders/order-motion';
@@ -388,6 +391,9 @@ function StageColumn({
   children,
 }: StageColumnProps) {
   const look = STAGE_LOOK[stage];
+  // A long column fades at the bottom and says how many cards are below (T77).
+  const [contentRef, hidden] = useHiddenBelow<HTMLDivElement>();
+  const reduced = useReducedMotion();
   return (
     <KanbanColumn
       value={stage}
@@ -407,8 +413,10 @@ function StageColumn({
         </span>
       </div>
       <KanbanColumnContent
+        ref={contentRef}
         value={stage}
-        className="scrollbar-none flex min-h-40 flex-1 flex-col gap-2.5 overflow-y-auto px-2 pb-2 md:max-h-vh-70"
+        data-more={hidden > 0 ? '' : undefined}
+        className="scrollbar-fine flex min-h-40 flex-1 flex-col gap-2.5 overflow-y-auto px-2 pb-2 data-more:mask-b-from-85% md:max-h-vh-70"
       >
         {orders.length === 0 ? (
           <p className="rounded-xl border border-dashed p-6 text-center text-xs text-muted-foreground">
@@ -417,6 +425,22 @@ function StageColumn({
         ) : null}
         {children}
       </KanbanColumnContent>
+      {hidden > 0 ? (
+        <Button
+          type="button"
+          variant="ghost"
+          aria-label={scrollWords.moreAria(hidden)}
+          className="mx-2 mb-2 h-11 gap-1 rounded-xl text-xs font-semibold text-muted-foreground md:h-8"
+          onClick={() => {
+            const el = contentRef.current;
+            if (!el) return;
+            el.scrollBy({ top: el.clientHeight * 0.7, behavior: reduced ? 'auto' : 'smooth' });
+          }}
+        >
+          {scrollWords.more(hidden)}
+          <ChevronDownIcon aria-hidden="true" />
+        </Button>
+      ) : null}
       {footer ? <div className="px-2 pb-2">{footer}</div> : null}
     </KanbanColumn>
   );

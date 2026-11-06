@@ -8,6 +8,7 @@ import {
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@smartapp/ui/components/sheet';
 import { cn } from 'cn';
 import { useFormFactor } from '../hooks/use-form-factor';
+import { ScrollHint } from './scroll-hint';
 
 export interface ResponsiveSheetProps {
   open: boolean;
@@ -40,11 +41,8 @@ export function ResponsiveSheet({
 }: ResponsiveSheetProps) {
   const formFactor = useFormFactor();
 
-  const body = (
-    <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
-      {children}
-    </div>
-  );
+  // The body says when more is hidden below (T77): a fade, "More below", a thin scrollbar for a mouse.
+  const body = <ScrollHint>{children}</ScrollHint>;
   const foot = footer ? (
     <div className="shrink-0 border-t bg-popover px-4 py-3 pb-safe">{footer}</div>
   ) : null;

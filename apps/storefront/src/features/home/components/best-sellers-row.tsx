@@ -22,7 +22,7 @@ export function ProductRow({ slug, title, items, catalog }: ProductRowProps) {
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-      <Scroller orientation="horizontal" hideScrollbar className="-mx-4 w-auto px-4">
+      <Scroller orientation="horizontal" className="-mx-4 scrollbar-fine w-auto px-4">
         <div className="flex gap-3 pb-2">
           {items.map((item) => (
             <MenuProductCard

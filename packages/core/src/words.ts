@@ -1380,6 +1380,13 @@ export const actionWords = {
   copied: 'Copied',
 } as const;
 
+// Hidden-content hints (T77): a list or panel that scrolls says so.
+export const scrollWords = {
+  moreBelow: 'More below',
+  more: (n: number) => `+${n} more`,
+  moreAria: (n: number) => `${n} more below. Scroll to see them.`,
+} as const;
+
 export const catalogWords = {
   title: (kind: ShopKind) => vocab(kind).catalog,
   tabItems: 'Items',

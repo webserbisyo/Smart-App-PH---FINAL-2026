@@ -19,7 +19,7 @@ export function CategoriesChips({ slug, categories }: CategoriesChipsProps) {
       <h2 className="text-base font-semibold tracking-tight">
         {words.storefrontShell.home.categories}
       </h2>
-      <Scroller orientation="horizontal" hideScrollbar className="-mx-4 w-auto px-4">
+      <Scroller orientation="horizontal" className="-mx-4 scrollbar-fine w-auto px-4">
         <ul className="flex gap-3 pb-1">
           {sorted.map((cat) => (
             <li key={cat.id} className="shrink-0">

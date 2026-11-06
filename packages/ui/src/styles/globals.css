@@ -539,6 +539,27 @@
   }
 }
 
+/* T77: a thin scrollbar for a mouse or trackpad, none for touch (the fade and "More below" say it scrolls). */
+@utility scrollbar-fine {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  @media (pointer: fine) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    &::-webkit-scrollbar {
+      display: block;
+      width: 6px;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 999px;
+    }
+  }
+}
+
 @utility content-visibility-auto {
   content-visibility: auto;
   contain-intrinsic-size: auto 120px;

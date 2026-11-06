@@ -47,7 +47,7 @@ export function BookingSection({
             max={NOTICE_MAX}
             onValueChange={(value) => onChange({ noticeDays: value ?? 0 })}
           >
-            <NumberFieldGroup>
+            <NumberFieldGroup className="h-11 md:h-9">
               <NumberFieldDecrement />
               <NumberFieldInput className="text-base tabular-nums" />
               <NumberFieldIncrement />
@@ -64,7 +64,7 @@ export function BookingSection({
             max={LIMIT_MAX}
             onValueChange={(value) => onChange({ dailyLimit: value })}
           >
-            <NumberFieldGroup>
+            <NumberFieldGroup className="h-11 md:h-9">
               <NumberFieldDecrement />
               <NumberFieldInput
                 placeholder={catalogWords.dailyLimitPlaceholder}
