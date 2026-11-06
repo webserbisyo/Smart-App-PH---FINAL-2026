@@ -482,6 +482,20 @@
   }
 }
 
+/* Thick progress track (Home pace bar, T69). */
+@utility progress-thick {
+  & [data-slot='progress-track'] {
+    height: calc(var(--spacing) * 2.5);
+  }
+}
+
+/* Green progress fill (Home collected bar, T69). */
+@utility progress-success {
+  & [data-slot='progress-indicator'] {
+    background-color: var(--success);
+  }
+}
+
 @utility pressable {
   touch-action: manipulation;
   transition: transform 120ms cubic-bezier(0.2, 0, 0, 1);

@@ -3183,3 +3183,239 @@ export const settingsWords = {
     added: (size: string) => `Added a photo · ${size}`,
   },
 } as const;
+
+// Owner Home (decisions T69 to T71). Today is compared in words only; the 7 and 30 days in %.
+const plural = (n: number, one: string, many: string): string => (n === 1 ? one : many);
+const weekdayLong = (date: string): string =>
+  ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
+    new Date(`${date}T00:00:00Z`).getUTCDay()
+  ] ?? '';
+
+export const homeWords = {
+  weekday: weekdayLong,
+  usualDay: (date: string) => `a usual ${weekdayLong(date)}`,
+  hello: {
+    greeting: (hour: number, name: string | null) => {
+      const part = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+      return name ? `${part}, ${name}` : part;
+    },
+    welcome:
+      'Welcome to Smart App PH. Finish these steps and share your link to get your first order.',
+    closed: (opens: string | null) => (opens ? `Closed today. Opens ${opens}.` : 'Closed today.'),
+    quiet: (date: string, first: string | null) =>
+      first
+        ? `No orders yet today. A usual ${weekdayLong(date)}’s first order comes around ${first}.`
+        : 'No orders yet today.',
+    sales: (sales: string, orders: number) =>
+      `${sales} so far from ${orders} ${plural(orders, 'order', 'orders')}`,
+    pace: {
+      ahead: (date: string) => `, ahead of a usual ${weekdayLong(date)}.`,
+      about: (date: string) => `, about the same as a usual ${weekdayLong(date)}.`,
+      behind: (date: string) => `, behind a usual ${weekdayLong(date)}.`,
+      none: '.',
+    },
+    toCheck: (n: number) => `${n} ${plural(n, 'payment', 'payments')} to check.`,
+    late: (n: number) => `${n} ${plural(n, 'order is', 'orders are')} late.`,
+    shareShop: 'Share shop',
+    viewShop: 'View shop',
+  },
+  pause: {
+    busy: (time: string) => `Busy until ${time}: customers see a longer wait.`,
+    paused: 'New orders are paused. Customers can look but can’t order.',
+    resume: 'Back to normal',
+    resumed: 'Busy is off. Customers see the normal wait.',
+  },
+  offline: (time: string | null) =>
+    time
+      ? `You’re offline · updated ${time}. Numbers refresh when you’re back.`
+      : 'You’re offline.',
+  setup: {
+    title: 'Get your shop ready',
+    progress: (done: number, total: number) => `${done} of ${total} done`,
+    steps: {
+      items: { title: 'Add 5 items', hint: (n: number) => `${Math.min(n, 5)} of 5 added` },
+      look: { title: 'Logo and colour', hint: () => 'Customers know it’s you' },
+      hours: { title: 'Opening hours', hint: () => 'So customers know when to order' },
+      payments: { title: 'How customers pay', hint: () => 'GCash, Maya, cash' },
+      stamp_card: { title: 'Turn on the stamp card', hint: () => 'Members come back for it' },
+      first_order: { title: 'Get your first order', hint: () => 'Share your link or the QR' },
+    },
+    go: 'Open',
+    doneAria: 'Done',
+    todoAria: 'Not done yet',
+  },
+  needs: {
+    title: 'Needs you',
+    hint: 'Worst first. Each one opens the right place.',
+    showMore: (n: number) => `Show ${n} more`,
+    showLess: 'Show less',
+    rows: {
+      to_check: (n: number) => `${n} ${plural(n, 'payment', 'payments')} to check`,
+      late: (n: number) => `${n} ${plural(n, 'order is', 'orders are')} late`,
+      unseen: (n: number) => `${n} new ${plural(n, 'order', 'orders')} not opened`,
+      waiting: (n: number) => `${n} ready and waiting`,
+      prizes: (n: number) => `${n} ${plural(n, 'prize', 'prizes')} to give`,
+      sold_out: (n: number) => `${n} ${plural(n, 'item', 'items')} sold out`,
+      bookings: (n: number) => `${n} ${plural(n, 'booking', 'bookings')} for tomorrow need notice`,
+      plan: () => 'Your plan needs paying',
+      storage: () => 'Storage is almost full',
+    },
+    wasDue: (name: string, time: string) => `${name} · was due ${time}`,
+    readyFor: (name: string, minutes: number) => `${name} · ready for ${minutes} min`,
+    checkOne: (name: string, method: string, total: string) => `${name} · ${method} ${total}`,
+    prizes: 'Members who claimed a prize',
+    bookings: 'Items that need days of notice',
+    plan: 'Pay to keep the shop open',
+    storage: (percent: number) => `${percent}% of your storage used`,
+    more: (names: string, more: number) => (more > 0 ? `${names} and ${more} more` : names),
+    allClear: 'Nothing needs you right now.',
+  },
+  today: {
+    sales: 'Sales today',
+    orders: (n: number) => `${n} ${plural(n, 'order', 'orders')}`,
+    usualByNow: 'usual by now',
+    pace: { ahead: 'Ahead', about: 'About usual', behind: 'Behind' },
+    paceLine: (date: string, byNow: string, time: string, day: string) =>
+      `A usual ${weekdayLong(date)} has ${byNow} by ${time} and ends near ${day}.`,
+    firstOrder: (date: string, time: string) =>
+      `A usual ${weekdayLong(date)}’s first order comes around ${time}.`,
+    learning: (days: number) =>
+      days === 0
+        ? 'After 3 weeks of orders, Home compares today with a usual day.'
+        : `Home compares today with a usual day once 3 of the last 4 weeks had orders (${days} so far).`,
+    paceAria: (percent: number) => `${percent}% of a usual day`,
+    tiles: {
+      orders: 'Orders',
+      openNow: (n: number) => (n === 0 ? 'none open now' : `${n} open now`),
+      average: 'Average order',
+      averageHint: 'per order today',
+      averageWait: 'shows from 3 orders',
+      toCollect: 'To collect',
+      toCollectHint: 'cash and COD',
+      collected: (amount: string) => `${amount} collected`,
+      members: 'Members',
+      membersHint: (joined: number) => `stamps · ${joined} joined`,
+      cardOff: 'stamp card is off',
+    },
+    sparkAria: (label: string) => `${label}, the last 7 days`,
+  },
+  hours: {
+    title: 'Hour by hour',
+    hint: (date: string) => `Today against a usual ${weekdayLong(date)}`,
+    lastDay: (day: string) => `Closed today. This is ${day}.`,
+    sales: 'Sales',
+    orders: 'Orders',
+    today: 'Today',
+    usual: (date: string) => `A usual ${weekdayLong(date)}`,
+    now: 'now',
+    busiest: 'Busiest so far:',
+    busiestDay: 'Busiest hour:',
+    empty: 'Bars fill in as orders come in.',
+    hour: (h: number) => {
+      const suffix = h < 12 || h === 24 ? 'AM' : 'PM';
+      const h12 = h % 12 === 0 ? 12 : h % 12;
+      return `${h12} ${suffix}`;
+    },
+    hourShort: (h: number) => {
+      const h12 = h % 12 === 0 ? 12 : h % 12;
+      return `${h12}${h < 12 ? 'a' : 'p'}`;
+    },
+    ordersCount: (n: number) => `${Math.round(n * 10) / 10} ${plural(n, 'order', 'orders')}`,
+  },
+  board: {
+    title: 'On the board',
+    open: (n: number) => (n === 0 ? 'Nothing open right now' : `${n} open · next up by due time`),
+    openOrders: 'Open Orders',
+    nextUp: 'Next up',
+    late: 'Late',
+    doneToday: 'Done today',
+    doneLine: (n: number, total: string) => `${n} · ${total}`,
+    items: (n: number) => `${n} ${plural(n, 'item', 'items')}`,
+    stageAria: (label: string, n: number) => `${label}: ${n}`,
+    empty: 'New orders show here as they come in.',
+  },
+  best: {
+    title: 'Best sellers',
+    hint: 'By how many were sold',
+    today: 'Today',
+    week: '7 days',
+    soldOut: 'Sold out',
+    sold: (n: number) => `${n} sold`,
+    idle: (n: number) => `${n} ${plural(n, 'item hasn’t', 'items haven’t')} sold in 14 days.`,
+    seeThem: 'See them',
+    emptyToday: 'Nothing sold yet today.',
+    emptyWeek: 'Nothing sold in the last 7 days.',
+  },
+  mix: {
+    title: 'How they ordered and paid',
+    hint: 'Today, share of sales',
+    types: 'Order type',
+    methods: 'Payment',
+    method: {
+      cash: 'Cash',
+      cod: 'COD',
+      gcash: 'GCash',
+      maya: 'Maya',
+      bank: 'Bank',
+      qr_ph: 'QR Ph',
+    },
+    row: (label: string, orders: number) => `${label} · ${orders}`,
+    percent: (n: number) => `${n}%`,
+    empty: 'Shows once today has orders.',
+  },
+  members: {
+    title: 'Members today',
+    open: 'Open',
+    share: (n: number) => `${n}% of today’s sales came from members`,
+    stamps: (n: number) => `${plural(n, 'stamp', 'stamps')} given`,
+    joined: 'joined',
+    rewardsUsed: (n: number) => `${plural(n, 'reward', 'rewards')} used`,
+    ready: (n: number) => `${n} ${plural(n, 'reward', 'rewards')} ready to use at the counter`,
+    off: 'The stamp card is off. Members come back for it.',
+    turnOn: 'Set up the stamp card',
+  },
+  coming: {
+    title: 'Coming up',
+    hint: 'Bookings for the next 7 days',
+    orders: (n: number) => `${n} ${plural(n, 'booking', 'bookings')}`,
+    open: 'See bookings',
+    tomorrow: 'Tomorrow',
+  },
+  trends: {
+    title: (days: number) => `Last ${days} days`,
+    hint: (days: number) => `Against the ${days} days before (dashed)`,
+    range: { '7d': '7 days', '30d': '30 days' },
+    sales: 'Sales',
+    orders: 'Orders',
+    average: 'Average order',
+    joined: 'New members',
+    change: (n: number) => `${n > 0 ? '↑' : '↓'} ${Math.abs(n)}%`,
+    changeAria: (n: number) => `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)}% against the days before`,
+    same: 'Same as before',
+    today: 'Today',
+    bestDay: (day: string, sales: string, orders: number) =>
+      `Best day: ${day}, ${sales} from ${orders} ${plural(orders, 'order', 'orders')}.`,
+    before: 'Days before',
+    empty: 'Your first week fills in here.',
+  },
+  busy: {
+    title: 'When you’re busy',
+    hint: 'Orders per hour, average of the last 4 weeks',
+    fewer: 'Fewer',
+    more: 'More',
+    sentence: (busiest: string, quietest: string | null) =>
+      quietest ? `Busiest: ${busiest}. Quietest open hour: ${quietest}.` : `Busiest: ${busiest}.`,
+    slot: (day: string, hour: string) => `${day}s ${hour}`,
+    cell: (day: string, hour: string, orders: string) => `${day} ${hour}: ${orders}`,
+    waiting: (days: number) => `Fills in after two weeks of orders (${days} of 14 days so far).`,
+  },
+  empty: {
+    title: 'Your numbers start here',
+    body: 'Share your shop link. Sales, best sellers and busy hours fill in as orders come in.',
+  },
+  states: {
+    errorTitle: 'Couldn’t load Home.',
+    tryAgain: 'Try again',
+    errorCard: 'Couldn’t load this part.',
+  },
+} as const;

@@ -127,6 +127,8 @@ export interface HomeNeed {
   count: number;
   // The order to open when there is exactly one, so the row goes straight to it.
   orderId: string | null;
+  // Every order in the row, oldest due first, for the names under it.
+  orderIds: string[];
 }
 
 export interface NeedsInput {
@@ -141,8 +143,14 @@ export interface NeedsInput {
 }
 
 function orderNeed(kind: HomeNeedKind, orders: readonly NeedOrder[]): HomeNeed {
-  const only = orders.length === 1 ? orders[0] : undefined;
-  return { kind, count: orders.length, orderId: only ? only.id : null };
+  const sorted = [...orders].sort((a, b) => a.dueAt.localeCompare(b.dueAt));
+  const only = sorted.length === 1 ? sorted[0] : undefined;
+  return {
+    kind,
+    count: sorted.length,
+    orderId: only ? only.id : null,
+    orderIds: sorted.map((o) => o.id),
+  };
 }
 
 /** The rows of Needs you, worst first, rows at 0 left out (H8). An order shows in one row only. */
@@ -175,11 +183,11 @@ export function homeNeeds(input: NeedsInput): HomeNeed[] {
     late: orderNeed('late', late),
     unseen: orderNeed('unseen', unseen),
     waiting: orderNeed('waiting', waiting),
-    prizes: { kind: 'prizes', count: input.prizesToGive, orderId: null },
-    sold_out: { kind: 'sold_out', count: input.soldOut, orderId: null },
-    bookings: { kind: 'bookings', count: input.noticeTomorrow, orderId: null },
-    plan: { kind: 'plan', count: input.plan ? 1 : 0, orderId: null },
-    storage: { kind: 'storage', count: input.storage ? 1 : 0, orderId: null },
+    prizes: { kind: 'prizes', count: input.prizesToGive, orderId: null, orderIds: [] },
+    sold_out: { kind: 'sold_out', count: input.soldOut, orderId: null, orderIds: [] },
+    bookings: { kind: 'bookings', count: input.noticeTomorrow, orderId: null, orderIds: [] },
+    plan: { kind: 'plan', count: input.plan ? 1 : 0, orderId: null, orderIds: [] },
+    storage: { kind: 'storage', count: input.storage ? 1 : 0, orderId: null, orderIds: [] },
   };
   return HOME_NEED_KINDS.map((k) => rows[k]).filter((r) => r.count > 0);
 }

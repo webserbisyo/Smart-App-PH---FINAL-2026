@@ -31,3 +31,14 @@ export function parsePeso(text: string): number | null {
   const [whole = '0', fraction = ''] = cleaned.split('.');
   return Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
 }
+
+/** Short peso for chart axes: ₱800, ₱2.5k, ₱118k, ₱1.2M. */
+export function formatPesoShort(centavos: number): string {
+  const pesos = Math.round(centavos / 100);
+  const abs = Math.abs(pesos);
+  const sign = pesos < 0 ? '−' : '';
+  const trim = (n: number): string => String(Math.round(n * 10) / 10);
+  if (abs >= 1_000_000) return `${sign}₱${trim(abs / 1_000_000)}M`;
+  if (abs >= 1_000) return `${sign}₱${trim(abs / 1_000)}k`;
+  return `${sign}₱${abs}`;
+}
