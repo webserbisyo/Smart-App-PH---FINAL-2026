@@ -1,6 +1,6 @@
 'use client';
 
-import { lazy, Suspense, useEffect, useState, type ReactElement } from 'react';
+import { lazy, Suspense, useEffect, useState, type ReactElement, type ReactNode } from 'react';
 import { ArrowRightIcon } from 'lucide-react';
 import { cn } from 'cn';
 import type { IconKey } from '@smartapp/core/icons';
@@ -15,6 +15,9 @@ export interface BannerSlide {
   // Optional words over the photo and one in-shop button (decision R42).
   title?: string | undefined;
   description?: string | undefined;
+  // The Editor's preview puts a box the owner types into in place of the words (T78).
+  titleSlot?: ReactNode | undefined;
+  descriptionSlot?: ReactNode | undefined;
   // `link` is an element from the app (Next Link); packages/ui never imports a router.
   action?: { label: string; link: ReactElement } | undefined;
 }
@@ -71,7 +74,9 @@ export function BannerFrame({
   fallbackText,
   assetOrigin,
 }: BannerFrameProps) {
-  const { title, description, action } = slide;
+  const { action } = slide;
+  const title = slide.titleSlot ?? slide.title;
+  const description = slide.descriptionSlot ?? slide.description;
   const hasCopy = Boolean(title || description || action);
   return (
     <div className="relative overflow-hidden rounded-2xl bg-shop-10-soft">
@@ -90,12 +95,23 @@ export function BannerFrame({
         <div className="absolute inset-0 flex items-end bg-linear-to-t from-scrim via-scrim/45 to-transparent to-70% p-3 text-on-scrim sm:p-4 md:p-6">
           <div className="flex max-w-md banner-copy flex-col items-start gap-1">
             {title ? (
-              <p className="line-clamp-2 text-base leading-tight font-semibold tracking-tight text-balance sm:text-lg md:text-2xl">
+              <p
+                className={cn(
+                  'text-base leading-tight font-semibold tracking-tight text-balance sm:text-lg md:text-2xl',
+                  // While the owner types, the whole line shows.
+                  !slide.titleSlot && 'line-clamp-2',
+                )}
+              >
                 {title}
               </p>
             ) : null}
             {description ? (
-              <p className="line-clamp-1 text-sm text-on-scrim/85 md:line-clamp-2 md:text-base">
+              <p
+                className={cn(
+                  'text-sm text-on-scrim/85 md:text-base',
+                  !slide.descriptionSlot && 'line-clamp-1 md:line-clamp-2',
+                )}
+              >
                 {description}
               </p>
             ) : null}

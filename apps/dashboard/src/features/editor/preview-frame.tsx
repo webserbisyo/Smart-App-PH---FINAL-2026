@@ -4,8 +4,10 @@ import {
   EDITOR_CHANNEL,
   PreviewToEditorSchema,
   editorWords,
+  type BannerTextField,
   type EditorSection,
   type EditorToPreview,
+  type PreviewPage,
   type StorefrontContent,
 } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
@@ -56,6 +58,11 @@ export interface PreviewFrameProps {
   /** The banner the owner is editing, so the carousel shows it. */
   banner: { index: number; at: number } | null;
   onSelect: (section: EditorSection) => void;
+  /** The page the preview shows (T78), and the owner moving to another page inside it. */
+  page: PreviewPage;
+  onPage: (page: PreviewPage) => void;
+  /** A banner's words typed straight onto the preview (T78). */
+  onText: (index: number, field: BannerTextField, value: string) => void;
   /** Phone screens: the page fills the space with no device border. */
   bare?: boolean | undefined;
 }
@@ -72,6 +79,9 @@ export function PreviewFrame({
   hovered,
   banner,
   onSelect,
+  page,
+  onPage,
+  onText,
   bare = false,
 }: PreviewFrameProps) {
   const boxRef = React.useRef<HTMLDivElement>(null);
@@ -83,10 +93,10 @@ export function PreviewFrame({
   const [failed, setFailed] = React.useState(false);
   const [slow, setSlow] = React.useState(false);
   const [attempt, setAttempt] = React.useState(0);
-  const onSelectRef = React.useRef(onSelect);
+  const handlers = React.useRef({ onSelect, onPage, onText });
   React.useEffect(() => {
-    onSelectRef.current = onSelect;
-  }, [onSelect]);
+    handlers.current = { onSelect, onPage, onText };
+  }, [onSelect, onPage, onText]);
 
   const send = React.useCallback((message: EditorToPreview) => {
     frameRef.current?.contentWindow?.postMessage(message, storefrontOrigin);
@@ -98,11 +108,21 @@ export function PreviewFrame({
       if (event.source !== frameRef.current?.contentWindow) return;
       const parsed = PreviewToEditorSchema.safeParse(event.data);
       if (!parsed.success) return;
-      if (parsed.data.type === 'ready') {
-        setSession((n) => n + 1);
-        setFailed(false);
-      } else {
-        onSelectRef.current(parsed.data.section);
+      const message = parsed.data;
+      switch (message.type) {
+        case 'ready':
+          setSession((n) => n + 1);
+          setFailed(false);
+          break;
+        case 'select':
+          handlers.current.onSelect(message.section);
+          break;
+        case 'page':
+          handlers.current.onPage(message.page);
+          break;
+        case 'text':
+          handlers.current.onText(message.index, message.field, message.value);
+          break;
       }
     };
     window.addEventListener('message', onMessage);
@@ -132,6 +152,10 @@ export function PreviewFrame({
       send({ channel: EDITOR_CHANNEL, type: 'banner', index: banner.index });
     }
   }, [session, banner, send]);
+
+  React.useEffect(() => {
+    if (session > 0) send({ channel: EDITOR_CHANNEL, type: 'page', page });
+  }, [session, page, send]);
 
   const width = DEVICE_WIDTH[device];
   const scale = box.width > 0 ? Math.min(1, box.width / width) : 1;

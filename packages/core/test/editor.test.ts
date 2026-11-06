@@ -95,6 +95,17 @@ describe('preview messages (E13)', () => {
         .success,
     ).toBe(false);
   });
+
+  it('reads page and banner text messages, and refuses words too long for a banner', () => {
+    const page = { channel: EDITOR_CHANNEL, type: 'page', page: 'menu' };
+    expect(EditorToPreviewSchema.safeParse(page).success).toBe(true);
+    expect(PreviewToEditorSchema.safeParse(page).success).toBe(true);
+    expect(EditorToPreviewSchema.safeParse({ ...page, page: 'checkout' }).success).toBe(false);
+    const text = { channel: EDITOR_CHANNEL, type: 'text', index: 0, field: 'title', value: 'Hi' };
+    expect(PreviewToEditorSchema.safeParse(text).success).toBe(true);
+    expect(PreviewToEditorSchema.safeParse({ ...text, field: 'alt' }).success).toBe(false);
+    expect(PreviewToEditorSchema.safeParse({ ...text, value: 'x'.repeat(91) }).success).toBe(false);
+  });
 });
 
 describe('pictures added in mock mode', () => {

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { imageSources, words, type Banner, type Storefront } from '@smartapp/core';
 import { BrandPanel } from '@smartapp/ui/compositions/brand-panel';
@@ -10,7 +11,14 @@ export interface HomeBannersProps {
   storefront: Storefront;
   // The Editor's preview shows the banner being edited (decision T72).
   show?: { index: number; at: number } | undefined;
+  // The Editor's preview: boxes to type each banner's words into (T78).
+  bannerText?: BannerTextSlots | undefined;
 }
+
+export type BannerTextSlots = (
+  index: number,
+  banner: Banner,
+) => { title: ReactNode; description: ReactNode };
 
 const SIZES = '(min-width: 1280px) 1120px, 100vw';
 
@@ -35,7 +43,7 @@ function bannerAction(
   };
 }
 
-export function HomeBanners({ storefront, show }: HomeBannersProps) {
+export function HomeBanners({ storefront, show, bannerText }: HomeBannersProps) {
   const { slug } = useShop();
   const { banners, bannerSeconds } = storefront.look;
   const { name, tagline, logo } = storefront.info;
@@ -52,13 +60,18 @@ export function HomeBanners({ storefront, show }: HomeBannersProps) {
   }
 
   const rewardsOn = storefront.stampCard.status !== 'off';
-  const slides: BannerSlide[] = banners.map((banner) => ({
-    src: imageSources(banner.ref),
-    alt: banner.alt,
-    title: banner.title,
-    description: banner.description,
-    action: bannerAction(banner, slug, rewardsOn),
-  }));
+  const slides: BannerSlide[] = banners.map((banner, index) => {
+    const slots = bannerText?.(index, banner);
+    return {
+      src: imageSources(banner.ref),
+      alt: banner.alt,
+      title: banner.title,
+      description: banner.description,
+      titleSlot: slots?.title,
+      descriptionSlot: slots?.description,
+      action: bannerAction(banner, slug, rewardsOn),
+    };
+  });
 
   return (
     <BannerCarousel

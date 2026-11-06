@@ -44,6 +44,7 @@ import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
 import { useImageUpload } from '@/app/image-upload-row';
 import { useShop } from '@/app/shop';
+import { withText } from '../banner-text.js';
 import { pictureRef, pictureSrc } from '../picture.js';
 import type { PanelProps } from './types.js';
 import { CountedLabel } from './field-count.js';
@@ -57,14 +58,6 @@ const BANNER_HEIGHT = 900;
 
 function withBanners(c: StorefrontContent, banners: Banner[]): StorefrontContent {
   return { ...c, look: { ...c.look, banners } };
-}
-
-/** Empty words are left out, since a banner's title and line are optional. */
-function withText(banner: Banner, key: 'title' | 'description', text: string): Banner {
-  const next: Banner = { ...banner };
-  if (text.trim()) next[key] = text;
-  else delete next[key];
-  return next;
 }
 
 function firstTarget(kind: BannerLink['kind'], shop: PublicShop | undefined): string | null {

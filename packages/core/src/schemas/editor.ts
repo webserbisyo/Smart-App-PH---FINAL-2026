@@ -70,18 +70,48 @@ export type PreviewToken = z.infer<typeof PreviewTokenSchema>;
 export const EDITOR_CHANNEL = 'smartapp-editor';
 const channel = z.literal(EDITOR_CHANNEL);
 
-/** Editor → preview: the whole draft, the part to outline, the part under the pointer, the banner to show. */
+/**
+ * The page the preview shows (final polish, T78): Home, the menu, Rewards, Account as a guest sees it, or
+ * Home with the Shop info sheet open (where the About text lives).
+ */
+export const PREVIEW_PAGES = ['home', 'menu', 'rewards', 'account', 'about'] as const;
+export const PreviewPageEnum = z.enum(PREVIEW_PAGES);
+export type PreviewPage = z.infer<typeof PreviewPageEnum>;
+
+// A banner's words, typed straight onto the preview (T78).
+export const BANNER_TEXT_FIELDS = ['title', 'description'] as const;
+export const BannerTextFieldEnum = z.enum(BANNER_TEXT_FIELDS);
+export type BannerTextField = z.infer<typeof BannerTextFieldEnum>;
+// The longest each one may be (BannerSchema).
+export const BANNER_TEXT_MAX: Record<BannerTextField, number> = { title: 40, description: 90 };
+
+/**
+ * Editor → preview: the whole draft, the part to outline, the part under the pointer, the banner to show,
+ * the page to show.
+ */
 export const EditorToPreviewSchema = z.discriminatedUnion('type', [
   z.object({ channel, type: z.literal('draft'), content: StorefrontContentSchema }),
   z.object({ channel, type: z.literal('select'), section: EditorSectionEnum.nullable() }),
   z.object({ channel, type: z.literal('hover'), section: EditorSectionEnum.nullable() }),
   z.object({ channel, type: z.literal('banner'), index: z.number().int().min(0).max(2) }),
+  z.object({ channel, type: z.literal('page'), page: PreviewPageEnum }),
 ]);
 export type EditorToPreview = z.infer<typeof EditorToPreviewSchema>;
 
-/** Preview → Editor: the page is ready for a draft, or the owner tapped a part of it. */
+/**
+ * Preview → Editor: the page is ready for a draft, the owner tapped a part of it, moved to another page, or
+ * typed a banner's words on the page.
+ */
 export const PreviewToEditorSchema = z.discriminatedUnion('type', [
   z.object({ channel, type: z.literal('ready') }),
   z.object({ channel, type: z.literal('select'), section: EditorSectionEnum }),
+  z.object({ channel, type: z.literal('page'), page: PreviewPageEnum }),
+  z.object({
+    channel,
+    type: z.literal('text'),
+    index: z.number().int().min(0).max(2),
+    field: BannerTextFieldEnum,
+    value: z.string().max(BANNER_TEXT_MAX.description),
+  }),
 ]);
 export type PreviewToEditor = z.infer<typeof PreviewToEditorSchema>;

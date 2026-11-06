@@ -6,6 +6,7 @@ import { AnnouncementStrip } from './announcement-strip';
 import { BestSellersRow } from './best-sellers-row';
 import { CategoriesChips } from './categories-chips';
 import { FavouritesRow } from './favourites-row';
+import type { BannerTextSlots } from './home-banners';
 import { HomeHero } from './home-hero';
 import { HomeInfoCard } from './home-info-card';
 import { HomeStampCard } from './home-stamp-card';
@@ -20,6 +21,7 @@ export interface HomeSectionsProps {
   // The Editor's preview puts each part in a frame the owner can tap (decision T72). Home leaves it off.
   wrap?: ((section: EditorSection, node: ReactNode) => ReactNode) | undefined;
   show?: { index: number; at: number } | undefined;
+  bannerText?: BannerTextSlots | undefined;
 }
 
 const same = (_section: EditorSection, node: ReactNode) => node;
@@ -34,6 +36,7 @@ export function HomeSections({
   referenceTime,
   wrap = same,
   show,
+  bannerText,
 }: HomeSectionsProps) {
   const visibility = resolveHomeSections(storefront, catalog, referenceTime);
   const showInfo = visibility.hours || visibility.contact || visibility.about;
@@ -43,7 +46,12 @@ export function HomeSections({
       {visibility.banners || visibility.brandPanel
         ? wrap(
             'banners',
-            <HomeHero storefront={storefront} demo={visibility.demoRibbon} show={show} />,
+            <HomeHero
+              storefront={storefront}
+              demo={visibility.demoRibbon}
+              show={show}
+              bannerText={bannerText}
+            />,
           )
         : null}
 

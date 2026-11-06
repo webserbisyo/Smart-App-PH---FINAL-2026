@@ -1,27 +1,38 @@
 import * as React from 'react';
-import { CircleAlertIcon, ListIcon, PaletteIcon, WifiOffIcon } from 'lucide-react';
+import {
+  CircleAlertIcon,
+  LayersIcon,
+  ListIcon,
+  PaletteIcon,
+  SendIcon,
+  WifiOffIcon,
+} from 'lucide-react';
 import {
   catalogWords,
   editorWords,
   sameContent,
+  type BannerTextField,
   type EditorSection,
+  type PreviewPage,
   type StorefrontDraftState,
 } from '@smartapp/core';
 import { useStorefront, useStorefrontDraft } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { ResponsiveSheet } from '@smartapp/ui/compositions/responsive-sheet';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { Notice } from '@/app/notice';
 import { PageError } from '@/app/page-state';
 import { useShop } from '@/app/shop';
 import { usePageTitle } from '@/app/use-page-title';
 import { storefrontUrl } from '@/app/use-nav-items';
+import { bannerTextKey, withBannerText } from '../banner-text.js';
 import { DiscardDialog, PublishDialog } from '../editor-dialogs.js';
 import { EditorTopBar } from '../editor-top-bar.js';
 import { PartPanel } from '../part-panel.js';
 import { PartsList } from '../parts-list.js';
 import { PreviewFrame, type PreviewDevice } from '../preview-frame.js';
+import { PagesList, PagesToggle, previewPages } from '../preview-pages.js';
+import { PhoneSheet } from '../phone-sheet.js';
 import { useEditorDraft } from '../use-editor-draft.js';
 
 const W = editorWords;
@@ -53,6 +64,30 @@ function useUndoKeys(undo: () => void, redo: () => void) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [undo, redo]);
+}
+
+function DockButton({
+  icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      aria-pressed={active}
+      className="h-14 flex-col gap-0.5 rounded-xl text-xs font-medium text-muted-foreground aria-pressed:bg-muted aria-pressed:text-foreground"
+      onClick={onClick}
+    >
+      {icon}
+      {label}
+    </Button>
+  );
 }
 
 function EditorSkeleton() {
@@ -130,8 +165,12 @@ function EditorWorkspace({
   const [banner, setBanner] = React.useState<{ index: number; at: number } | null>(null);
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [discardOpen, setDiscardOpen] = React.useState(false);
-  // Phones: the list and the part open in a bottom sheet over the full-screen preview.
-  const [sheet, setSheet] = React.useState<'list' | 'part' | null>(null);
+  // The page the preview shows (T78).
+  const [page, setPage] = React.useState<PreviewPage>('home');
+  // Phones: the list, the part or the pages sit in a sheet docked above the dock (T78), at one of 3 heights.
+  const [sheet, setSheet] = React.useState<'list' | 'part' | 'pages' | null>(null);
+  const [snap, setSnap] = React.useState(1);
+  const area = React.useRef<HTMLDivElement>(null);
 
   useUndoKeys(editor.undo, editor.redo);
 
@@ -139,11 +178,27 @@ function EditorWorkspace({
   const select = React.useCallback(
     (section: EditorSection) => {
       setSelected(section);
+      // A Home part shows on Home; the look shows on every page; About also lives in Shop info.
+      if (section !== 'brand') {
+        setPage((current) =>
+          current === 'about' && (section === 'about' || section === 'info') ? current : 'home',
+        );
+      }
       if (phone) setSheet('part');
     },
     [phone],
   );
   const showBanner = React.useCallback((index: number) => setBanner({ index, at: Date.now() }), []);
+  const { update } = editor;
+  const typeBanner = React.useCallback(
+    (index: number, field: BannerTextField, value: string) =>
+      update((c) => withBannerText(c, index, field, value), bannerTextKey(index, field)),
+    [update],
+  );
+  const stampsOn = shopData ? shopData.storefront.stampCard.status !== 'off' : true;
+  const pages = previewPages(shop.kind, stampsOn);
+  const openSheet = (next: 'list' | 'pages') =>
+    setSheet((current) => (current === next ? null : next));
 
   const panelProps = {
     content: editor.content,
@@ -165,6 +220,9 @@ function EditorWorkspace({
       hovered={hovered}
       banner={banner}
       onSelect={select}
+      page={page}
+      onPage={setPage}
+      onText={typeBanner}
       bare={phone}
     />
   );
@@ -234,54 +292,90 @@ function EditorWorkspace({
 
       {phone ? (
         <>
-          <main className="min-h-0 flex-1">{preview}</main>
-          {/* The picked part docks under the preview, so the page stays in sight while the owner types. */}
-          {sheet === 'part' && selected ? (
-            <section className="relative flex h-1/2 shrink-0 flex-col overflow-y-auto overscroll-contain rounded-t-2xl border-t border-border bg-background pb-safe shadow-lg">
-              <PartPanel
-                {...panelProps}
-                section={selected}
-                onBack={() => setSheet('list')}
+          <div ref={area} className="flex min-h-0 flex-1 flex-col">
+            <main className="min-h-0 flex-1">{preview}</main>
+            {/* Docked under the preview, never over it, so the page stays in sight while the owner types. */}
+            {sheet ? (
+              <PhoneSheet
+                area={area}
+                snap={snap}
+                onSnap={setSnap}
                 onClose={() => setSheet(null)}
-              />
-            </section>
-          ) : (
-            <nav className="grid shrink-0 grid-cols-3 gap-2 border-t border-border bg-background p-2 pb-safe">
-              <Button variant="outline" className="h-12" onClick={() => setSheet('list')}>
-                <ListIcon />
-                {W.phone.sections}
-              </Button>
-              <Button variant="outline" className="h-12" onClick={() => select('brand')}>
-                <PaletteIcon />
-                {W.phone.colours}
-              </Button>
-              <Button
-                className="h-12 font-semibold"
-                disabled={!canPublish}
-                aria-label={count > 0 ? W.bar.publishCount(count) : W.bar.publish}
-                onClick={() => setPublishOpen(true)}
+                onBack={sheet === 'part' ? () => setSheet('list') : undefined}
+                label={
+                  sheet === 'pages'
+                    ? W.pages.title
+                    : sheet === 'part' && selected
+                      ? W.sections[selected]
+                      : W.list.title
+                }
               >
-                {W.bar.publish}
+                {sheet === 'part' && selected ? (
+                  <PartPanel
+                    {...panelProps}
+                    section={selected}
+                    onBack={() => setSheet('list')}
+                    onClose={() => setSheet(null)}
+                  />
+                ) : sheet === 'pages' ? (
+                  <PagesList
+                    pages={pages}
+                    page={page}
+                    onPage={(next) => {
+                      setPage(next);
+                      setSheet(null);
+                    }}
+                  />
+                ) : (
+                  list
+                )}
+              </PhoneSheet>
+            ) : null}
+          </div>
+          <nav
+            aria-label={W.title}
+            className="grid shrink-0 grid-cols-4 gap-1 border-t border-border bg-background px-2 pt-1.5 pb-safe"
+          >
+            <DockButton
+              icon={<ListIcon />}
+              label={W.phone.sections}
+              active={sheet === 'list' || (sheet === 'part' && selected !== 'brand')}
+              onClick={() => openSheet('list')}
+            />
+            <DockButton
+              icon={<PaletteIcon />}
+              label={W.phone.style}
+              active={sheet === 'part' && selected === 'brand'}
+              onClick={() =>
+                sheet === 'part' && selected === 'brand' ? setSheet(null) : select('brand')
+              }
+            />
+            <DockButton
+              icon={<LayersIcon />}
+              label={W.phone.pages}
+              active={sheet === 'pages'}
+              onClick={() => openSheet('pages')}
+            />
+            <Button
+              className="h-14 flex-col gap-0.5 rounded-xl text-xs font-semibold"
+              disabled={!canPublish}
+              aria-label={count > 0 ? W.bar.publishCount(count) : W.bar.publish}
+              onClick={() => setPublishOpen(true)}
+            >
+              <span className="relative">
+                <SendIcon />
                 {count > 0 ? (
                   <span
-                    className="rounded-full bg-primary-foreground/20 px-1.5 text-xs tabular-nums"
+                    className="absolute -top-1.5 -right-3 min-w-4 rounded-full bg-primary-foreground px-1 text-xs leading-4 text-primary tabular-nums"
                     aria-hidden
                   >
                     {count}
                   </span>
                 ) : null}
-              </Button>
-            </nav>
-          )}
-          <ResponsiveSheet
-            open={sheet === 'list'}
-            onOpenChange={(open) => {
-              if (!open) setSheet(null);
-            }}
-            title={W.list.title}
-          >
-            {list}
-          </ResponsiveSheet>
+              </span>
+              {W.bar.publish}
+            </Button>
+          </nav>
         </>
       ) : (
         <div className="flex min-h-0 flex-1">
@@ -292,7 +386,10 @@ function EditorWorkspace({
               list
             )}
           </aside>
-          <main className="flex min-w-0 flex-1 bg-muted/40 p-4 lg:p-6">{preview}</main>
+          <main className="flex min-w-0 flex-1 flex-col items-center gap-3 bg-muted/40 p-4 lg:p-6">
+            <PagesToggle pages={pages} page={page} onPage={setPage} />
+            <div className="flex min-h-0 w-full flex-1">{preview}</div>
+          </main>
           {formFactor === 'desktop' ? (
             <aside className="relative flex w-96 shrink-0 flex-col overflow-y-auto overscroll-contain border-l border-border">
               <PartPanel {...panelProps} section={selected} />

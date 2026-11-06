@@ -11,21 +11,23 @@ const CATALOG_ICON = { utensils: <UtensilsIcon />, package: <PackageIcon /> } as
 
 /** Home, Menu or Products, Rewards (only when the stamp card is not Off), Orders (decision N30). */
 export function useShopNav(): NavItem[] {
-  const { slug, shop, preview } = useShop();
+  const { slug, shop, preview, previewPage } = useShop();
   const pathname = usePathname();
   const base = `/${slug}`;
   const kind = vocab(shop.storefront.info.kind);
-  // The Editor's preview is the shop's Home (decision T72).
-  const isHome = preview || pathname === base;
+  // The Editor's preview lights the page it shows (decision T72, T78).
+  const previewTab =
+    previewPage === 'about' ? 'home' : previewPage === 'menu' ? 'catalog' : previewPage;
   const entry = (id: string, label: string, icon: NavItem['icon'], href: string): NavItem => ({
     id,
     label,
     icon,
     link: <Link href={href} />,
-    active:
-      href === base
-        ? isHome
-        : (!preview && pathname.startsWith(href)) ||
+    active: preview
+      ? previewTab === id
+      : href === base
+        ? pathname === base
+        : pathname.startsWith(href) ||
           // An order's own page lights up Orders (decision R45).
           (id === 'orders' && pathname.startsWith(`${base}/o/`)),
   });

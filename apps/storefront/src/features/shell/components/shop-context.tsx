@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { PublicShop } from '@smartapp/core';
+import type { PreviewPage, PublicShop } from '@smartapp/core';
 import { useStorefront } from '@smartapp/data';
 
 interface ShopContextValue {
@@ -14,6 +14,8 @@ interface ShopContextValue {
   setInfoOpen: (open: boolean) => void;
   // The Editor's preview (decision T72): the shop is the owner's draft, links stay on the page.
   preview: boolean;
+  // The page the Editor's preview shows (T78), so the dock lights the right tab.
+  previewPage: PreviewPage | null;
 }
 
 const ShopContext = createContext<ShopContextValue | null>(null);
@@ -25,10 +27,12 @@ const ShopContext = createContext<ShopContextValue | null>(null);
 export function ShopProvider({
   initialShop,
   preview = false,
+  previewPage = null,
   children,
 }: {
   initialShop: PublicShop;
   preview?: boolean | undefined;
+  previewPage?: PreviewPage | null | undefined;
   children: ReactNode;
 }) {
   const slug = initialShop.storefront.slug;
@@ -37,7 +41,9 @@ export function ShopProvider({
   const [basketOpen, setBasketOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   return (
-    <ShopContext value={{ slug, shop, basketOpen, setBasketOpen, infoOpen, setInfoOpen, preview }}>
+    <ShopContext
+      value={{ slug, shop, basketOpen, setBasketOpen, infoOpen, setInfoOpen, preview, previewPage }}
+    >
       {children}
     </ShopContext>
   );

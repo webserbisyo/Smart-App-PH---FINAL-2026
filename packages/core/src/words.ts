@@ -3498,6 +3498,11 @@ const SURFACE_NAMES = { light: 'Light', dark: 'Dark' } as const;
 export const editorPreviewWords = {
   sections: EDITOR_SECTION_NAMES,
   title: (shop: string) => `Preview · ${shop}`,
+  // Shown on an empty banner while the owner edits banners, so they can type straight onto it (T78).
+  bannerTitle: 'Add a title',
+  bannerDescription: 'Add one line',
+  bannerTitleAria: (n: number) => `Banner ${n} title`,
+  bannerDescriptionAria: (n: number) => `Banner ${n} line`,
 } as const;
 
 export const editorWords = {
@@ -3578,9 +3583,26 @@ export const editorWords = {
   },
   phone: {
     sections: 'Sections',
-    colours: 'Colours',
+    style: 'Style',
+    pages: 'Pages',
     close: 'Close',
     backToList: 'All parts',
+    handle: 'Panel height',
+    handleHint: 'Drag up or down. Swipe right to go back.',
+  },
+  // The page the preview shows (T78).
+  pages: {
+    title: 'Show page',
+    label: 'Page in the preview',
+    home: 'Home',
+    rewards: 'Rewards',
+    account: 'Account',
+    about: 'Shop info',
+    accountNote: 'As a customer who hasn’t joined sees it',
+    aboutNote: 'Your About text, hours and contact',
+    homeNote: 'Banners, stamp card and best sellers',
+    menuNote: (catalog: string) => `Your ${catalog.toLowerCase()} as customers browse it`,
+    rewardsNote: 'Your stamp card and prize',
   },
   brand: {
     name: 'Shop name',
