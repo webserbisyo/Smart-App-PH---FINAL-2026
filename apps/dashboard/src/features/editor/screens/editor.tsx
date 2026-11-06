@@ -205,7 +205,7 @@ function EditorWorkspace({
         <div className="shrink-0 border-b border-border p-2 md:px-3">
           {editor.status === 'conflict' ? (
             <Notice
-              tone="warning"
+              tone="error"
               icon={<CircleAlertIcon className="size-4" />}
               action={
                 <div className="flex w-full gap-2 sm:w-auto">

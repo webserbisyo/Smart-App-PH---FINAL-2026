@@ -3628,6 +3628,7 @@ export const editorWords = {
     cropTitle: 'Crop your banner',
     cropHelp: 'Banners are 16:9 so they fit phones and laptops.',
     cropDone: 'Use this crop',
+    cropCancel: 'Cancel',
     cropFailed: 'Couldn’t crop that photo. Try another one.',
     title: 'Title',
     titlePlaceholder: 'New: our best seller',

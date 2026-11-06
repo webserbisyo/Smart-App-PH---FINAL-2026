@@ -20,7 +20,7 @@ export type PreviewDevice = 'phone' | 'laptop';
 
 // The page is drawn at a real phone or laptop width, then scaled down to fit (decision T72).
 const DEVICE_WIDTH: Record<PreviewDevice, number> = { phone: 390, laptop: 1280 };
-const READY_TIMEOUT_MS = 15_000;
+const READY_TIMEOUT_MS = 8_000;
 
 const storefrontOrigin = new URL(env.VITE_STOREFRONT_URL).origin;
 

@@ -107,23 +107,29 @@ export interface PixelArea {
 }
 
 /**
- * Cuts the cropped part out of a picture (decision R24) and returns a small square data URL: WebP, or
- * JPEG where the browser can't write WebP. 256 px is about 20 KB, small enough to keep on the phone.
+ * Cuts the cropped part out of a picture (decision R24) and returns a data URL: WebP, or JPEG where the
+ * browser can't write WebP. Square by default (256 px is about 20 KB, small enough to keep on the phone);
+ * a height makes another shape, such as a 16:9 banner (T74).
  */
-export function cropImage(src: string, area: PixelArea, size = 256): Promise<string> {
+export function cropImage(
+  src: string,
+  area: PixelArea,
+  size = 256,
+  height = size,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = size;
-      canvas.height = size;
+      canvas.height = height;
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         reject(new Error('unreadable_image'));
         return;
       }
       ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, size, size);
+      ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, size, height);
       const webp = canvas.toDataURL('image/webp', 0.82);
       resolve(webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', 0.82));
     };
