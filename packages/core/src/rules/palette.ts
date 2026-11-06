@@ -131,6 +131,11 @@ export function hexToOklch(hex: string): Oklch | null {
   return linearRgbToOklch([channel(0), channel(2), channel(4)]);
 }
 
+/** OKLCH of an 8-bit sRGB pixel (0 to 255 per channel), e.g. from a canvas. */
+export function rgbToOklch(r: number, g: number, b: number): Oklch {
+  return linearRgbToOklch([srgbToLinear(r / 255), srgbToLinear(g / 255), srgbToLinear(b / 255)]);
+}
+
 export function parseOklch(value: string): Oklch | null {
   const match = /^oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*(?:\/[^)]*)?\)$/.exec(value.trim());
   if (!match?.[1] || !match[2] || !match[3]) return null;

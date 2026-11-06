@@ -9,6 +9,7 @@ export * from './art.js';
 export * from './media.js';
 export * from './demo/media.js';
 export * from './rules/palette.js';
+export * from './rules/logo-colours.js';
 export * from './schemas/common.js';
 export * from './schemas/enums.js';
 export * from './schemas/storefront.js';

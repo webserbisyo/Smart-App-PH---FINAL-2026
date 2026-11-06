@@ -14,6 +14,7 @@
     "src/components/reui/emoji-picker.tsx",
     "src/components/reui/data-grid/data-grid-cell-selection.tsx",
     "src/components/reui/kanban.tsx",
+    "src/components/reui/color-picker.tsx",
     "src/components/reui/event-calendar/**/*"
   ],
   "exclude": [],
