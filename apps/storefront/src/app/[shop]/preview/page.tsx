@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import { DEMO_SHOP_SLUGS, editorWords } from '@smartapp/core';
+import { DEMO_SHOP_SLUGS, editorPreviewWords } from '@smartapp/core';
 import { getStorefrontForServer } from '@smartapp/data/server';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { dashboardOrigin, dataSource } from '@/env';
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PreviewPageProps): Promise<Me
   const { shop: slug } = await params;
   const shop = getStorefrontForServer(slug);
   return {
-    title: editorWords.preview.title(shop?.storefront.info.name ?? slug),
+    title: editorPreviewWords.title(shop?.storefront.info.name ?? slug),
     robots: { index: false, follow: false },
   };
 }

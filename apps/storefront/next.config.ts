@@ -1,9 +1,11 @@
 import type { NextConfig } from 'next';
 import { withSerwist } from '@serwist/turbopack';
 
-// The Editor's preview (decision T72) may only be framed by the owner dashboard. Read at build time.
-const dashboardOrigin = new URL(process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:5173')
-  .origin;
+// The Editor's preview (decision T72) may only be framed by the owner dashboard. Read at build time; the live
+// dashboard unless set (`pnpm dev` sets the local one).
+const dashboardOrigin = new URL(
+  process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://app.webserbisyo.com',
+).origin;
 
 const nextConfig: NextConfig = {
   cacheComponents: true,

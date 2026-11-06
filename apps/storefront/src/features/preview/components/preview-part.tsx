@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { editorWords, type EditorSection } from '@smartapp/core';
+import { editorPreviewWords, type EditorSection } from '@smartapp/core';
 
 /**
  * One part of the shop in the Editor's preview: a blue outline when the owner points at it or edits it,
@@ -30,7 +30,7 @@ export function PreviewPart({
         aria-hidden="true"
         className="pointer-events-none absolute -bottom-3 left-3 z-10 hidden rounded-full bg-info px-2 py-0.5 text-xs font-semibold text-info-foreground shadow-sm group-data-hovered/part:block group-data-selected/part:block"
       >
-        {editorWords.sections[section]}
+        {editorPreviewWords.sections[section]}
       </span>
     </div>
   );

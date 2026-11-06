@@ -3474,6 +3474,15 @@ const SECTION_SWITCH_NAMES = {
 
 const SURFACE_NAMES = { light: 'Light', dark: 'Dark' } as const;
 
+/**
+ * The few words the storefront's Editor preview shows (part tags, page title). Kept apart from editorWords so
+ * the storefront's pages don't carry the whole Editor's text (JS budget, T31).
+ */
+export const editorPreviewWords = {
+  sections: EDITOR_SECTION_NAMES,
+  title: (shop: string) => `Preview · ${shop}`,
+} as const;
+
 export const editorWords = {
   title: 'Editor',
   titleFor: (shop: string) => `Editor · ${shop}`,
@@ -3726,7 +3735,6 @@ export const editorWords = {
     failed: 'The preview didn’t load.',
     tryAgain: 'Try again',
     frameTitle: 'Live preview of your shop',
-    title: (shop: string) => `Preview · ${shop}`,
   },
   load: {
     error: 'Couldn’t open the Editor.',
