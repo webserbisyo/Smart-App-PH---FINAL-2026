@@ -2,6 +2,7 @@
 // states on any page.
 // Production builds never load this module: the storefront imports it dynamically behind a NODE_ENV
 // check, so neither its code nor its source text ships.
+import { manilaDate, manilaToDate } from '@smartapp/core';
 import {
   DEFAULT_SCENARIO,
   DemoCustomerStateEnum,
@@ -52,6 +53,9 @@ export interface UrlScenario {
   fillBasket: boolean;
 }
 
+// ?mock=home-quiet: 5:30 AM Manila today, before the demo shops open.
+const QUIET_MORNING = '05:30';
+
 const MOCK_VALUES = [
   'slow',
   'error',
@@ -69,6 +73,11 @@ const MOCK_VALUES = [
   'plan-paused',
   'storage-full',
   'export-fail',
+  'home-quiet',
+  'home-new',
+  'home-closed',
+  'home-error',
+  'home-slow',
   'none',
 ] as const;
 
@@ -126,6 +135,23 @@ export function parseMockScenario(params: URLSearchParams): UrlScenario {
     case 'export-fail':
       out.scenario.exportFails = true;
       break;
+    // Home (T69): a quiet morning before any shop opens, a new shop, closed today, a failed read, slow.
+    case 'home-quiet':
+      out.scenario.ordersMode = 'empty';
+      out.scenario.now = manilaToDate(manilaDate(new Date()), QUIET_MORNING).toISOString();
+      break;
+    case 'home-new':
+      out.scenario.empty = true;
+      break;
+    case 'home-closed':
+      out.scenario.closed = true;
+      break;
+    case 'home-error':
+      out.scenario.fail = 'home';
+      break;
+    case 'home-slow':
+      out.scenario.latency = 'slow';
+      break;
     case 'none':
       Object.assign(out.scenario, { ...DEFAULT_SCENARIO });
       break;
@@ -163,6 +189,7 @@ export function readMockScenarioFromUrl(
           plan: 'default' as const,
           storage: 'default' as const,
           exportFails: false,
+          now: null,
         }
       : {};
     setMockScenario({ ...reset, ...parsed.scenario });

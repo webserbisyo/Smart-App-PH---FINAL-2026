@@ -118,6 +118,7 @@ import {
 } from './members-view';
 import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
+import { createHomeMock } from './home';
 import { createSettingsMock } from './settings';
 import { registerTrickleHandler } from './scenario';
 import { getMockScenario, type DemoCustomerState, type MockScenario } from './scenario-state';
@@ -586,6 +587,18 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     production,
   });
 
+  // Owner Home (T69 to T71): worked out on each read from orders, members' past orders and the menu.
+  const homeMock = createHomeMock({
+    run: (area, fn) => run(area, fn),
+    ownerShop: () => resolveOwnerShopSlug(),
+    homeShop: (slug) => membersShop(slug),
+    publicShop: (s) => publicShop(s),
+    membersOverview: (s) => overview(s, peopleOf(s), now()),
+    now: () => now(),
+    scenario: () => scenario(),
+    seed,
+  });
+
   let idSeq = 0;
   function newId(prefix: string): string {
     idSeq += 1;
@@ -626,7 +639,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
   }
 
   async function run<T>(
-    area: 'storefront' | 'orders' | 'account' | 'auth' | 'catalog' | 'members' | 'settings',
+    area:
+      'storefront' | 'orders' | 'account' | 'auth' | 'catalog' | 'members' | 'settings' | 'home',
     fn: () => T,
   ): Promise<T> {
     const sc = scenario();
@@ -2491,10 +2505,12 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     ownerCatalog,
     ownerMembers,
     ownerSettings: settingsMock.adapter,
+    ownerHome: homeMock.adapter,
     now,
     reset() {
       state = { shops: new Map(), session: null, codes: {} };
       settingsMock.reset();
+      homeMock.reset();
       appliedAs = new Map();
       saved = null;
       rng = mulberry32(seed);

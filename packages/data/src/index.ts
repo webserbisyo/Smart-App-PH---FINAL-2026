@@ -52,9 +52,11 @@ export {
   createApiOwnerSettingsAdapter,
   type ApiOwnerSettingsOptions,
 } from './adapters/api/owner-settings';
+export { createApiOwnerHomeAdapter, type ApiOwnerHomeOptions } from './adapters/api/owner-home';
 export { createApiStorefrontAdapter, type ApiStorefrontOptions } from './adapters/api/storefront';
 export { setMockOwnerSlug } from './mocks/store';
 export * from './hooks/owner-catalog/index';
 export * from './hooks/owner-orders/index';
 export * from './hooks/owner-members/index';
 export * from './hooks/owner-settings/index';
+export * from './hooks/owner-home/index';

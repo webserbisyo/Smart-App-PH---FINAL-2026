@@ -8,6 +8,7 @@ import type {
   PaymentMethod,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
+import { ownerHomeQk } from '../owner-home/qk';
 import { ownerOrdersQk } from './qk';
 
 export function useSetPause(slug: string) {
@@ -18,6 +19,7 @@ export function useSetPause(slug: string) {
     mutationFn: (input: { mode: PauseMode }) => ownerOrders.setPause({ slug, mode: input.mode }),
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -52,6 +54,7 @@ export function useAdvanceOrder(slug: string) {
     },
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
       if (vars?.orderId) {
         qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
       }
@@ -78,6 +81,7 @@ export function useRecallOrder(slug: string) {
     },
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
       if (vars?.orderId) {
         qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
       }
@@ -94,6 +98,7 @@ export function useCancelOrder(slug: string) {
       ownerOrders.cancelOrder({ slug, orderId: input.orderId, reason: input.reason }),
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
       if (vars?.orderId) {
         qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
       }
@@ -115,6 +120,7 @@ export function useReviewPayment(slug: string) {
       }),
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
       if (vars?.orderId) {
         qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
       }
@@ -131,6 +137,7 @@ export function useRecordPayment(slug: string) {
       ownerOrders.recordPayment({ slug, orderId: input.orderId, method: input.method }),
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
       if (vars?.orderId) {
         qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
       }
@@ -160,6 +167,7 @@ export function useSaveDeliveryInfo(slug: string) {
       }),
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
       if (vars?.orderId) {
         qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
       }
@@ -194,6 +202,7 @@ export function useMarkSeen(slug: string) {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -212,6 +221,7 @@ export function useRescheduleOrder(slug: string) {
       }),
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
       if (vars?.orderId) {
         qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
       }
@@ -228,6 +238,7 @@ export function useSaveOwnerNote(slug: string) {
       ownerOrders.saveOwnerNote({ slug, orderId: input.orderId, note: input.note }),
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
       if (vars?.orderId) {
         qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
       }

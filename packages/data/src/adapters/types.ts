@@ -1,6 +1,9 @@
 // One interface per area, named exactly like the rows in docs/api.md. The mock implements every row; the API
 // adapter for each area comes in phase 4.
 import type {
+  HomeRange,
+  HomeSummary,
+  HomeTrends,
   AdjustStampsInput,
   Availability,
   ClaimCancelReason,
@@ -262,6 +265,13 @@ export interface OwnerSettingsAdapter {
   getExport(input: { id: string }): Promise<DataExport>;
 }
 
+// Owner Home (decisions T69 to T71): today's numbers and the 7 or 30 day trend. The live board comes from
+// listOrders, so Home and Orders always show the same orders.
+export interface OwnerHomeAdapter {
+  getHome(): Promise<HomeSummary>;
+  getHomeTrends(input: { range: HomeRange }): Promise<HomeTrends>;
+}
+
 export interface DataAdapters {
   storefront: StorefrontAdapter;
   customerAuth: CustomerAuthAdapter;
@@ -270,4 +280,5 @@ export interface DataAdapters {
   ownerCatalog: OwnerCatalogAdapter;
   ownerMembers: OwnerMembersAdapter;
   ownerSettings: OwnerSettingsAdapter;
+  ownerHome: OwnerHomeAdapter;
 }

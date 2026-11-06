@@ -54,6 +54,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Members page: list and groups, member panel with one-tap stamp and Undo, Stamp card and Prizes tabs, Card progress chart (decisions T57 to T60; 4 parts pushed to main 2026-11-05)
 - [x] Members polish: stat cards, story line, motion moments, Member sales, week ring, Top suki, counter feed, milestones, first-day start (decisions T61 to T63; pushed to main 2026-11-05)
 - [x] Settings page: Your shop, You, Plan and storage (decisions T64 to T68; 4 parts pushed to main 2026-11-05)
+- [ ] Home page: today desk and trends, Insights hidden for launch (decisions T69 to T71; part 1 of 3 pushed to main 2026-11-06)
 
 ## Phase 4: Backend, area by area
 

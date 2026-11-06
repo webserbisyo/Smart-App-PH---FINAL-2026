@@ -16,6 +16,7 @@ import {
   manilaDate,
   ordersWords,
   payWindowOver,
+  salesTotal,
   statusStage,
 } from '@smartapp/core';
 import { errorCodeOf, useOrdersByDate, useScheduledOrders } from '@smartapp/data';
@@ -104,15 +105,6 @@ function StatusChip({ status, kind }: { status: ListStatus; kind: ShopKind }) {
 }
 
 /** Sales count only what wasn't cancelled or expired. */
-function salesTotal(orders: readonly BoardOrder[], now: Date): number {
-  return orders
-    .filter((o) => {
-      const s = listStatus(o, now);
-      return s !== 'cancelled' && s !== 'expired';
-    })
-    .reduce((sum, o) => sum + o.total, 0);
-}
-
 function dateFromKey(key: string): Date {
   const [y = 1970, m = 1, d = 1] = key.split('-').map(Number);
   return new Date(y, m - 1, d, 12);

@@ -306,3 +306,40 @@ export type PlanMonths = z.infer<typeof PlanMonthsSchema>;
 export const APPEARANCES = ['system', 'light', 'dark'] as const;
 export const AppearanceEnum = z.enum(APPEARANCES);
 export type Appearance = z.infer<typeof AppearanceEnum>;
+
+// Owner Home (T69, T70): how today compares with a usual day of the same weekday (words, never a %).
+export const PACE_VERDICTS = ['ahead', 'about', 'behind'] as const;
+export const PaceVerdictEnum = z.enum(PACE_VERDICTS);
+export type PaceVerdict = z.infer<typeof PaceVerdictEnum>;
+
+// The trend window at the bottom of Home (it replaces the Insights page for launch, T69).
+export const HOME_RANGES = ['7d', '30d'] as const;
+export const HomeRangeEnum = z.enum(HOME_RANGES);
+export type HomeRange = z.infer<typeof HomeRangeEnum>;
+
+// The new-shop checklist on Home, in order.
+export const SETUP_STEPS = [
+  'items',
+  'look',
+  'hours',
+  'payments',
+  'stamp_card',
+  'first_order',
+] as const;
+export const SetupStepEnum = z.enum(SETUP_STEPS);
+export type SetupStep = z.infer<typeof SetupStepEnum>;
+
+// "Needs you" rows, worst first (H8). Each is hidden at 0.
+export const HOME_NEED_KINDS = [
+  'to_check',
+  'late',
+  'unseen',
+  'waiting',
+  'prizes',
+  'sold_out',
+  'bookings',
+  'plan',
+  'storage',
+] as const;
+export const HomeNeedKindEnum = z.enum(HOME_NEED_KINDS);
+export type HomeNeedKind = z.infer<typeof HomeNeedKindEnum>;

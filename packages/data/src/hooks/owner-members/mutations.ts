@@ -7,6 +7,7 @@ import type {
   StampCardStatus,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
+import { ownerHomeQk } from '../owner-home/qk';
 import { ownerMembersQk } from './qk';
 
 /** The changed member goes straight into its cache; the list numbers refresh behind it. */
@@ -14,11 +15,13 @@ function memberChanged(qc: QueryClient, member: MemberDetail): void {
   qc.setQueryData(ownerMembersQk.member(member.id), member);
   void qc.invalidateQueries({ queryKey: ownerMembersQk.overview() });
   void qc.invalidateQueries({ queryKey: ownerMembersQk.lists() });
+  void qc.invalidateQueries({ queryKey: ownerHomeQk.all });
 }
 
 function cardChanged(qc: QueryClient, card: StampCardSettings): void {
   qc.setQueryData(ownerMembersQk.stampCard(), card);
   void qc.invalidateQueries({ queryKey: ownerMembersQk.all });
+  void qc.invalidateQueries({ queryKey: ownerHomeQk.all });
 }
 
 export function useGiveStamp() {
@@ -91,6 +94,7 @@ function useClaimChange<I>(run: (input: I) => Promise<{ customerId: string }>) {
       void qc.invalidateQueries({ queryKey: ownerMembersQk.overview() });
       void qc.invalidateQueries({ queryKey: ownerMembersQk.lists() });
       void qc.invalidateQueries({ queryKey: ownerMembersQk.stampCard() });
+      void qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }

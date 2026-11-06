@@ -4,6 +4,7 @@ import type {
   CustomerAuthAdapter,
   DataAdapters,
   OwnerCatalogAdapter,
+  OwnerHomeAdapter,
   OwnerMembersAdapter,
   OwnerOrdersAdapter,
   OwnerSamplesAdapter,
@@ -116,11 +117,13 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     getProfile: async () => (await real()).ownerSettings.getProfile(),
     saveProfile: async (input) => (await real()).ownerSettings.saveProfile(input),
     sendPasswordCode: async () => (await real()).ownerSettings.sendPasswordCode(),
-    resetPasswordWithCode: async (input) => (await real()).ownerSettings.resetPasswordWithCode(input),
+    resetPasswordWithCode: async (input) =>
+      (await real()).ownerSettings.resetPasswordWithCode(input),
     signOutEverywhere: async () => (await real()).ownerSettings.signOutEverywhere(),
     requestAccountDelete: async () => (await real()).ownerSettings.requestAccountDelete(),
     getNotificationPrefs: async () => (await real()).ownerSettings.getNotificationPrefs(),
-    saveNotificationPrefs: async (input) => (await real()).ownerSettings.saveNotificationPrefs(input),
+    saveNotificationPrefs: async (input) =>
+      (await real()).ownerSettings.saveNotificationPrefs(input),
     getPlan: async () => (await real()).ownerSettings.getPlan(),
     submitPlanPayment: async (input) => (await real()).ownerSettings.submitPlanPayment(input),
     getStorage: async () => (await real()).ownerSettings.getStorage(),
@@ -130,5 +133,19 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     getExport: async (input) => (await real()).ownerSettings.getExport(input),
   };
 
-  return { storefront, customerAuth, ownerOrders, ownerSamples, ownerCatalog, ownerMembers, ownerSettings };
+  const ownerHome: OwnerHomeAdapter = {
+    getHome: async () => (await real()).ownerHome.getHome(),
+    getHomeTrends: async (input) => (await real()).ownerHome.getHomeTrends(input),
+  };
+
+  return {
+    storefront,
+    customerAuth,
+    ownerOrders,
+    ownerSamples,
+    ownerCatalog,
+    ownerMembers,
+    ownerSettings,
+    ownerHome,
+  };
 }

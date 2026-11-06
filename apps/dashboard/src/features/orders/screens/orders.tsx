@@ -3,10 +3,10 @@ import { FilterXIcon, ReceiptTextIcon, Share2Icon, WifiOffIcon } from 'lucide-re
 import type { BoardOrder, OrderType } from '@smartapp/core';
 import {
   ORDER_TYPES,
-  awaitsTransfer,
   boardColumn,
   errorWords,
   manilaDate,
+  needsProofCheck,
   ordersWords,
   payWindowOver,
   words,
@@ -34,14 +34,9 @@ import { OrdersToolbar } from '../orders-toolbar.js';
 import { PHONE_STAGES, useOrdersSearch, useSetOrdersSearch, type OrderFilter } from '../search.js';
 import { TypeCards, type TypeTotals } from '../type-cards.js';
 
-/** Waiting for the owner: the customer sent a transfer and the proof needs a look. */
-function needsCheck(order: BoardOrder): boolean {
-  return order.status === 'placed' && awaitsTransfer(order) && order.paymentStatus === 'pending';
-}
-
 function matchesFilter(order: BoardOrder, filter: OrderFilter | undefined): boolean {
   if (!filter) return true;
-  if (filter === 'to_check') return needsCheck(order);
+  if (filter === 'to_check') return needsProofCheck(order);
   return order.type === filter;
 }
 
@@ -85,7 +80,7 @@ export function OrdersScreen() {
     }
     return out;
   }, [live]);
-  const toCheck = React.useMemo(() => live.filter(needsCheck).length, [live]);
+  const toCheck = React.useMemo(() => live.filter(needsProofCheck).length, [live]);
 
   const filter = search.filter === 'to_check' && toCheck === 0 ? undefined : search.filter;
   const shown = React.useMemo(() => live.filter((o) => matchesFilter(o, filter)), [live, filter]);

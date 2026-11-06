@@ -166,14 +166,20 @@ Codes: `stamp_cap_reached`, `stamp_recent`, `stamp_card_off`, `undo_expired`, `s
 
 No CSV export, tags, bulk stamps or messaging in A (M14).
 
-## Home and reports (owner)
+## Home (owner)
 
-| Method            | HTTP                            | Input → Output                                                              |
-| ----------------- | ------------------------------- | --------------------------------------------------------------------------- |
-| `getToday`        | GET `/owner/today`              | → `DashboardToday` (Manila business date)                                   |
-| `getInsights`     | GET `/owner/insights`           | `{ range: '7d' \| '30d' }` → `Insights`                                     |
-| `getSalesReport`  | GET `/owner/reports/sales`      | `{ from, to }` → `SalesReport`                                              |
-| `exportOrdersCsv` | GET `/owner/reports/orders.csv` | `{ from, to }` → CSV (BOM; cells starting with `= + - @` get a leading `'`) |
+Decisions T69 to T71. No method takes a slug; the shop comes from the login (T34). Every number is worked out on
+each read from orders, the stamp history and the menu (rules H1 to H14 in `packages/core/src/rules/owner-home.ts`);
+nothing is stored. The live board and the order rows of "Needs you" come from `listOrders` (open), so Home and
+Orders always show the same orders.
+
+| Method          | HTTP                     | Input → Output                                                             |
+| --------------- | ------------------------ | -------------------------------------------------------------------------- |
+| `getHome`       | GET `/owner/home`        | → `HomeSummary` (today, pace, hours, best sellers, mix, members, bookings) |
+| `getHomeTrends` | GET `/owner/home/trends` | `{ range: '7d' \| '30d' }` → `HomeTrends` (days, days before, busy hours)  |
+
+The Insights page is hidden for launch (T69); `/insights` opens Home's trends. The sales report and the orders CSV
+move to Blueprint B with the full Insights page.
 
 ## Editor (owner)
 

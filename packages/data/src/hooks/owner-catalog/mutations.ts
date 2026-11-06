@@ -12,6 +12,7 @@ import type {
   UploadKind,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
+import { ownerHomeQk } from '../owner-home/qk';
 import { ownerSettingsQk } from '../owner-settings/qk';
 import { ownerCatalogQk } from './qk';
 
@@ -63,6 +64,7 @@ export function useSaveItem() {
     mutationFn: (input: { id?: string; draft: ItemDraft }) => ownerCatalog.saveItem(input),
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -91,6 +93,7 @@ export function useRemoveItem() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -119,6 +122,7 @@ export function useSetItemStatus() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -160,6 +164,7 @@ export function useSetSoldOut() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -173,6 +178,7 @@ export function useSaveOptionGroup() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.optionGroups() });
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -186,6 +192,7 @@ export function useRemoveOptionGroup() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.optionGroups() });
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -199,6 +206,7 @@ export function useSaveVariantTemplate() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.variantTemplates() });
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -212,6 +220,7 @@ export function useRemoveVariantTemplate() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.variantTemplates() });
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -339,6 +348,7 @@ export function useBulkSetSoldOut() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -372,6 +382,7 @@ export function useBulkSetItemStatus() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
@@ -427,6 +438,7 @@ export function useBulkMoveCategory() {
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
   });
 }
