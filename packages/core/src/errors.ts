@@ -68,6 +68,8 @@ export const ErrorCode = [
   'last_order_type',
   'last_payment_method',
   'hours_overlap',
+  // Editor (owner)
+  'draft_conflict',
 ] as const;
 
 export const ErrorCodeEnum = z.enum(ErrorCode);

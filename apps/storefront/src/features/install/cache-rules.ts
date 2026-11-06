@@ -1,8 +1,8 @@
 // What the service worker keeps for offline (T13, decisions T6 and T26). Shared by sw.ts and the shop frame.
 
-// Never cached: checkout, receipts, join, account, proofs, API, auth and the worker itself.
+// Never cached: checkout, receipts, join, account, the Editor's preview, proofs, API, auth and the worker.
 const PRIVATE_PATH =
-  /^\/(?:api|auth|proofs|serwist)(?:\/|$)|^\/[^/]+\/(?:checkout|join|account|o)(?:\/|$)/;
+  /^\/(?:api|auth|proofs|serwist)(?:\/|$)|^\/[^/]+\/(?:checkout|join|account|o|preview)(?:\/|$)/;
 // Kept for offline: Home, Menu, My orders and Rewards (the member QR works at the counter).
 const SHOP_PAGE = /^\/[a-z0-9-]+(?:\/(?:menu|orders|rewards))?\/?$/;
 

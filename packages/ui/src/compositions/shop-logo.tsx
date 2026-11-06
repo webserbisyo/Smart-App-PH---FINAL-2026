@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from 'cn';
-import type { ImageSources } from '@smartapp/core/media';
+import { srcsetUrls, type ImageSources } from '@smartapp/core/media';
 import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { initials } from './shop-image';
@@ -37,7 +37,7 @@ export function ShopLogo({
   if (isLoading) {
     return <Skeleton className={cn('shrink-0 bg-skeleton', radius, SIZE_CLASS[size], className)} />;
   }
-  const webp = src?.webp.split(',').map((entry) => entry.trim().split(' ')[0] ?? '');
+  const webp = src ? srcsetUrls(src.webp) : null;
   return (
     <Avatar
       className={cn(

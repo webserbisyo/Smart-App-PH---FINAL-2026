@@ -12,3 +12,5 @@ export const CommitShaSchema = z
   .string()
   .regex(/^[0-9a-f]{7,40}$/)
   .optional();
+// The owner dashboard's address (the storefront's Editor preview only answers it; decision T72).
+export const DashboardUrlSchema = z.url().default('http://localhost:5173');

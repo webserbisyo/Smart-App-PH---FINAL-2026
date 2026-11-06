@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { cn } from 'cn';
 import type { IconKey, CategoryIcon as CategoryIconType } from '@smartapp/core/icons';
-import type { ImageSources } from '@smartapp/core/media';
+import { srcsetUrls, type ImageSources } from '@smartapp/core/media';
 import { AspectRatio } from '@smartapp/ui/components/aspect-ratio';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { CategoryIcon } from './category-icon';
@@ -46,7 +46,7 @@ export function initials(text: string): string {
 }
 
 function largestWebp(src: ImageSources): string {
-  const entries = src.webp.split(',').map((entry) => entry.trim().split(' ')[0] ?? '');
+  const entries = srcsetUrls(src.webp);
   return entries[entries.length - 1] ?? '';
 }
 
@@ -121,7 +121,7 @@ export function ShopImage({
       className={cn('overflow-hidden rounded-lg bg-shop-10-soft', className)}
     >
       <picture>
-        <source type="image/avif" srcSet={src.avif} sizes={sizes} />
+        {src.avif ? <source type="image/avif" srcSet={src.avif} sizes={sizes} /> : null}
         <source type="image/webp" srcSet={src.webp} sizes={sizes} />
         <img
           ref={imgRef}

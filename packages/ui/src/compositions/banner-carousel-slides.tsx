@@ -41,6 +41,7 @@ export default function BannerCarouselSlides({
   fallbackText,
   assetOrigin,
   className,
+  show,
 }: BannerCarouselProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [api, setApi] = useState<CarouselApi>();
@@ -94,6 +95,12 @@ export default function BannerCarouselSlides({
       api.off('autoplay:timerstopped', onTimerStopped);
     };
   }, [api]);
+
+  const showIndex = show?.index;
+  const showAt = show?.at;
+  useEffect(() => {
+    if (api && showIndex !== undefined) api.scrollTo(showIndex);
+  }, [api, showIndex, showAt]);
 
   // Off-screen: stop; back on screen: play again.
   useEffect(() => {

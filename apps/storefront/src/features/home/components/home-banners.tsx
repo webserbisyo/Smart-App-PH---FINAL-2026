@@ -8,6 +8,8 @@ import { useShop } from '../../shell/components/shop-context';
 
 export interface HomeBannersProps {
   storefront: Storefront;
+  // The Editor's preview shows the banner being edited (decision T72).
+  show?: { index: number; at: number } | undefined;
 }
 
 const SIZES = '(min-width: 1280px) 1120px, 100vw';
@@ -33,7 +35,7 @@ function bannerAction(
   };
 }
 
-export function HomeBanners({ storefront }: HomeBannersProps) {
+export function HomeBanners({ storefront, show }: HomeBannersProps) {
   const { slug } = useShop();
   const { banners, bannerSeconds } = storefront.look;
   const { name, tagline, logo } = storefront.info;
@@ -66,6 +68,7 @@ export function HomeBanners({ storefront }: HomeBannersProps) {
       sizes={SIZES}
       labels={words.storefrontShell.home.carousel}
       fallbackText={name}
+      show={show}
     />
   );
 }

@@ -39,6 +39,8 @@ export interface BannerCarouselProps {
   fallbackText?: string | undefined;
   assetOrigin?: string | undefined;
   className?: string | undefined;
+  // The Editor's preview moves to the banner being edited (decision T72); `at` repeats the same request.
+  show?: { index: number; at: number } | undefined;
 }
 
 // Phones show banners at 16:9 so the words fit; from 768 px they use the given ratio (21:9).

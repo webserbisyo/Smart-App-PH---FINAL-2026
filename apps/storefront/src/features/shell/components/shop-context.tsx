@@ -12,24 +12,32 @@ interface ShopContextValue {
   // The Shop info sheet (redesign R7), opened from the top bar logo and the Home info card.
   infoOpen: boolean;
   setInfoOpen: (open: boolean) => void;
+  // The Editor's preview (decision T72): the shop is the owner's draft, links stay on the page.
+  preview: boolean;
 }
 
 const ShopContext = createContext<ShopContextValue | null>(null);
 
-/** The shop for this page (fresh from the query, else what the server read), the basket drawer and Shop info sheet state. */
+/**
+ * The shop for this page (fresh from the query, else what the server read), the basket drawer and Shop
+ * info sheet state. The Editor's preview passes the draft as `initialShop` and keeps it.
+ */
 export function ShopProvider({
   initialShop,
+  preview = false,
   children,
 }: {
   initialShop: PublicShop;
+  preview?: boolean | undefined;
   children: ReactNode;
 }) {
   const slug = initialShop.storefront.slug;
-  const shop = useStorefront(slug).data ?? initialShop;
+  const fresh = useStorefront(slug).data;
+  const shop = preview ? initialShop : (fresh ?? initialShop);
   const [basketOpen, setBasketOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   return (
-    <ShopContext value={{ slug, shop, basketOpen, setBasketOpen, infoOpen, setInfoOpen }}>
+    <ShopContext value={{ slug, shop, basketOpen, setBasketOpen, infoOpen, setInfoOpen, preview }}>
       {children}
     </ShopContext>
   );

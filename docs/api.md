@@ -183,13 +183,33 @@ move to Blueprint B with the full Insights page.
 
 ## Editor (owner)
 
-| Method                                         | HTTP                                   | Input → Output                         |
-| ---------------------------------------------- | -------------------------------------- | -------------------------------------- |
-| `getStorefrontDraft` / `saveStorefrontDraft`   | GET/PUT `/owner/storefront/draft`      | `StorefrontContent` with `baseVersion` |
-| `publishStorefront` / `discardStorefrontDraft` | POST/DELETE `/owner/storefront/draft`  | → `{ contentVersion }`                 |
-| `createPreviewToken`                           | POST `/owner/storefront/preview-token` | → `{ token, expiresAt }`               |
+| Method                   | HTTP                                   | Input → Output                                                                                                           |
+| ------------------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `getStorefrontDraft`     | GET `/owner/storefront/draft`          | → `StorefrontDraftState` `{ draft, published, baseVersion, contentVersion, savedAt }` (`StorefrontContent` each)         |
+| `saveStorefrontDraft`    | PUT `/owner/storefront/draft`          | `{ content: StorefrontContent, baseVersion }` → `StorefrontDraftState`; an older `baseVersion` is `draft_conflict` (409) |
+| `publishStorefront`      | POST `/owner/storefront/draft`         | `{ baseVersion }` → `{ contentVersion }`; copies the draft onto the shop in one transaction                              |
+| `discardStorefrontDraft` | DELETE `/owner/storefront/draft`       | → `{ contentVersion }`; the draft becomes what customers see                                                             |
+| `createPreviewToken`     | POST `/owner/storefront/preview-token` | → `{ token, expiresAt }` (short-lived, owner-only, one shop)                                                             |
 
-Codes: `draft_conflict`.
+`StorefrontContent` (core `schemas/editor.ts`) is the logo, tagline, About text and the whole look (colours, banners,
+announcement, section switches). Name and contact stay in Settings (T64), the Best seller switch in Menu (T44), the
+stamp card in Members. Codes: `draft_conflict`.
+
+**Preview messages (T72).** The Editor frames the storefront's `/[shop]/preview` and talks to it with `postMessage`.
+Both sides check the other's origin (`VITE_STOREFRONT_URL`, `NEXT_PUBLIC_DASHBOARD_URL`) and parse every message with
+the shared Zod schemas (`EditorToPreviewSchema`, `PreviewToEditorSchema`, tagged `channel: 'smartapp-editor'`):
+
+| Direction        | `type`   | Fields                                      |
+| ---------------- | -------- | ------------------------------------------- |
+| Editor → preview | `draft`  | `content: StorefrontContent`                |
+| Editor → preview | `select` | `section: EditorSection \| null` (outline)  |
+| Editor → preview | `hover`  | `section: EditorSection \| null`            |
+| Editor → preview | `banner` | `index: 0..2` (show that banner)            |
+| Preview → Editor | `ready`  | (send the draft now)                        |
+| Preview → Editor | `select` | `section: EditorSection` (the owner tapped) |
+
+The preview is `noindex`, `no-store`, never kept by the service worker, framed only by the dashboard
+(`frame-ancestors`), and every tap only picks a part: it never takes orders.
 
 ## Live updates
 

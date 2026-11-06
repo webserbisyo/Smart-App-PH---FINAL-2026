@@ -1,6 +1,10 @@
 import type { NextConfig } from 'next';
 import { withSerwist } from '@serwist/turbopack';
 
+// The Editor's preview (decision T72) may only be framed by the owner dashboard. Read at build time.
+const dashboardOrigin = new URL(process.env.NEXT_PUBLIC_DASHBOARD_URL || 'http://localhost:5173')
+  .origin;
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
@@ -17,6 +21,14 @@ const nextConfig: NextConfig = {
       {
         source: '/demo/:path*',
         headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }],
+      },
+      {
+        source: '/:shop/preview',
+        headers: [
+          { key: 'Content-Security-Policy', value: `frame-ancestors 'self' ${dashboardOrigin}` },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+          { key: 'Cache-Control', value: 'no-store' },
+        ],
       },
       {
         source: '/serwist/:path*',

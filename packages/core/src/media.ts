@@ -97,7 +97,27 @@ export function imageUrl(
  * Returns AVIF and WebP srcset strings and widths for a <picture> element.
  * Returns null if the ref is invalid, unknown, or missing from DEMO_MEDIA.
  */
+/**
+ * The addresses in a srcset, smallest first as written. A data address has a comma inside it, so the list
+ * is read by "address, space, width" instead of splitting on commas.
+ */
+export function srcsetUrls(srcset: string): string[] {
+  return [...srcset.matchAll(/(\S+)\s+\d+[wx](?:\s*,\s*|\s*$)/g)].flatMap((m) =>
+    m[1] ? [m[1]] : [],
+  );
+}
+
+// A picture the owner just added in mock mode, kept in the draft as a data address (decision T72). The
+// Editor's preview on another address can still show it; real uploads get a storage address in phase 4.
+const LOCAL_PICTURE = /^data:image\/(?:webp|jpeg|png|gif);base64,/;
+
+export function isLocalPicture(ref: string | null | undefined): ref is string {
+  return typeof ref === 'string' && LOCAL_PICTURE.test(ref);
+}
+
 export function imageSources(ref: string | null | undefined, origin = ''): ImageSources | null {
+  // One file, no AVIF copy: ShopImage leaves the AVIF source out when it is empty.
+  if (isLocalPicture(ref)) return { avif: '', webp: `${ref} 1600w`, widths: [1600] };
   const parsed = parseDemoRef(ref);
   if (!parsed) return null;
 
