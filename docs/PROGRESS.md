@@ -55,6 +55,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Members polish: stat cards, story line, motion moments, Member sales, week ring, Top suki, counter feed, milestones, first-day start (decisions T61 to T63; pushed to main 2026-11-05)
 - [x] Settings page: Your shop, You, Plan and storage (decisions T64 to T68; 4 parts pushed to main 2026-11-05)
 - [x] Home page: today desk and trends, Insights hidden for launch (decisions T69 to T71; 3 parts pushed to main 2026-11-06)
+- [x] Editor: live preview of the real shop page, parts list, draft and Publish, logo colours and Color Picker, banners, announcement (decisions T72 to T75; 4 parts pushed to main 2026-11-06)
 
 ## Phase 4: Backend, area by area
 
