@@ -379,8 +379,18 @@ export function tweakStyle(style: ShopStyle, tweak: StyleTweak): ShopStyle {
   return { ...style, pageColor, cardColor, surface: surfaceForPage(pageColor), best: false };
 }
 
+export type PageSwatchId = 'white' | 'offWhite' | 'tint' | 'paper' | 'night' | 'deep' | 'logo';
+export type CardSwatchId = 'stepUp' | 'charcoal' | 'white' | 'softGrey' | 'tint' | 'ink';
+export interface TuneSwatch<Id extends string> {
+  readonly id: Id;
+  readonly hex: string;
+}
+
 /** Swatches for fine-tuning each colour, built from the logo's main colour. */
-export function tuneSwatches(main: string, pageColor: string) {
+export function tuneSwatches(
+  main: string,
+  pageColor: string,
+): { page: readonly TuneSwatch<PageSwatchId>[]; card: readonly TuneSwatch<CardSwatchId>[] } {
   const c = hctOf(main);
   const h = c.hue;
   const page = hctOf(pageColor);
@@ -407,8 +417,5 @@ export function tuneSwatches(main: string, pageColor: string) {
           { id: 'tint', hex: hexOf(h, 10, 94) },
           { id: 'ink', hex: hexOf(h, 6, 14) },
         ],
-  } as const;
+  };
 }
-
-export type PageSwatchId = ReturnType<typeof tuneSwatches>['page'][number]['id'];
-export type CardSwatchId = ReturnType<typeof tuneSwatches>['card'][number]['id'];

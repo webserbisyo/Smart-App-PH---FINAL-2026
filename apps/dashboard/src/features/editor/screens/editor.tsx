@@ -237,7 +237,7 @@ function EditorWorkspace({
           <main className="min-h-0 flex-1">{preview}</main>
           {/* The picked part docks under the preview, so the page stays in sight while the owner types. */}
           {sheet === 'part' && selected ? (
-            <section className="flex h-1/2 shrink-0 flex-col overflow-y-auto overscroll-contain rounded-t-2xl border-t border-border bg-background pb-safe shadow-lg">
+            <section className="relative flex h-1/2 shrink-0 flex-col overflow-y-auto overscroll-contain rounded-t-2xl border-t border-border bg-background pb-safe shadow-lg">
               <PartPanel
                 {...panelProps}
                 section={selected}
@@ -285,7 +285,7 @@ function EditorWorkspace({
         </>
       ) : (
         <div className="flex min-h-0 flex-1">
-          <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border xl:w-80">
+          <aside className="relative flex w-72 shrink-0 flex-col overflow-y-auto overscroll-contain border-r border-border xl:w-80">
             {formFactor === 'tablet' && selected ? (
               <PartPanel {...panelProps} section={selected} onBack={() => setSelected(null)} />
             ) : (
@@ -294,7 +294,7 @@ function EditorWorkspace({
           </aside>
           <main className="flex min-w-0 flex-1 bg-muted/40 p-4 lg:p-6">{preview}</main>
           {formFactor === 'desktop' ? (
-            <aside className="flex w-96 shrink-0 flex-col overflow-y-auto border-l border-border">
+            <aside className="relative flex w-96 shrink-0 flex-col overflow-y-auto overscroll-contain border-l border-border">
               <PartPanel {...panelProps} section={selected} />
             </aside>
           ) : null}

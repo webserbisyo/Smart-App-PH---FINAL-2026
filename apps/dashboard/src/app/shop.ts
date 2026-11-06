@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import { DEMO_SHOPS, words, type ShopKind } from '@smartapp/core';
 import { setMockOwnerSlug, type UserClaims } from '@smartapp/data';
+import { warmPreview } from './warm-preview.js';
 
 export interface CurrentShop {
   slug: string;
@@ -24,6 +25,7 @@ export function resolveShop(claims: UserClaims): CurrentShop {
   const slug = found?.slug ?? '';
   if (slug) {
     setMockOwnerSlug(slug);
+    warmPreview(slug);
   }
   return {
     slug,

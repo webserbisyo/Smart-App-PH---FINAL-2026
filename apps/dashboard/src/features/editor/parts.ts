@@ -59,8 +59,8 @@ export function partStatus(
   switch (section) {
     case 'brand': {
       const colour = colourName(look.brandColor);
-      const surface = editorWords.surfaces[look.surface];
-      return content.logo ? S.brand(colour, surface) : S.brandNoLogo(colour, surface);
+      const page = look.pageColor ? colourName(look.pageColor) : editorWords.surfaces[look.surface];
+      return content.logo ? S.brand(colour, page) : S.brandNoLogo(colour, page);
     }
     case 'banners':
       return S.banners(look.banners.length, look.bannerSeconds);

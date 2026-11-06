@@ -11,8 +11,6 @@ import {
   editorChanges,
   imageSources,
   isLocalPicture,
-  logoColours,
-  logoPalettes,
   sameContent,
   sectionIsOn,
   srcsetUrls,
@@ -127,39 +125,5 @@ describe('colour names', () => {
     expect(colourFamily('#1F9D55')).toBe('green');
     expect(colourFamily('#FFFFFF')).toBe('white');
     expect(colourFamily('#111111')).toBe('black');
-  });
-});
-
-describe('colours from a logo (T73)', () => {
-  const pixels = (...runs: [number, [number, number, number, number]][]) =>
-    runs.flatMap(([n, px]) => Array.from({ length: n }, () => px)).flat();
-
-  it('finds the main colours, most used first, and skips white and see-through pixels', () => {
-    const rgba = pixels(
-      [700, [215, 55, 47, 255]],
-      [200, [255, 255, 255, 255]],
-      [100, [14, 122, 196, 255]],
-      [300, [0, 200, 0, 0]],
-    );
-    const colours = logoColours(rgba);
-    expect(colours.map((c) => colourFamily(c.hex))).toEqual(['red', 'blue']);
-    expect(colours[0]?.share).toBeCloseTo(0.875, 2);
-  });
-
-  it('gives nothing for a black and white logo, so the owner picks a colour instead', () => {
-    expect(logoColours(pixels([500, [0, 0, 0, 255]], [500, [250, 250, 250, 255]]))).toEqual([]);
-    expect(logoPalettes([])).toEqual([]);
-  });
-
-  it('suggests plain, tinted, then the second colour', () => {
-    const looks = logoPalettes([
-      { hex: '#D7372F', share: 0.8 },
-      { hex: '#0E7AC4', share: 0.2 },
-    ]);
-    expect(looks).toEqual([
-      { brandColor: '#D7372F', pageColor: null },
-      { brandColor: '#D7372F', pageColor: '#D7372F' },
-      { brandColor: '#0E7AC4', pageColor: null },
-    ]);
   });
 });

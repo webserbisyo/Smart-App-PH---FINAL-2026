@@ -192,7 +192,8 @@ move to Blueprint B with the full Insights page.
 | `createPreviewToken`     | POST `/owner/storefront/preview-token` | → `{ token, expiresAt }` (short-lived, owner-only, one shop)                                                             |
 
 `StorefrontContent` (core `schemas/editor.ts`) is the logo, tagline, About text and the whole look (colours, banners,
-announcement, section switches). Name and contact stay in Settings (T64), the Best seller switch in Menu (T44), the
+announcement, section switches). The look's colours are `brandColor`, `pageColor` and `cardColor` (hex; `cardColor` null
+follows the page), `surface` worked out from the page colour, and `logoShape` (`circle` or `rounded`) (T76). Name and contact stay in Settings (T64), the Best seller switch in Menu (T44), the
 stamp card in Members. Codes: `draft_conflict`.
 
 **Preview messages (T72).** The Editor frames the storefront's `/[shop]/preview` and talks to it with `postMessage`.

@@ -20,7 +20,10 @@ export type PreviewDevice = 'phone' | 'laptop';
 
 // The page is drawn at a real phone or laptop width, then scaled down to fit (decision T72).
 const DEVICE_WIDTH: Record<PreviewDevice, number> = { phone: 390, laptop: 1280 };
-const READY_TIMEOUT_MS = 8_000;
+// On a developer's computer the storefront builds the page the first time it opens, which can take a minute.
+const READY_TIMEOUT_MS = import.meta.env.DEV ? 60_000 : 8_000;
+// After this, the wait says why it is taking long.
+const SLOW_AFTER_MS = 4_000;
 
 const storefrontOrigin = new URL(env.VITE_STOREFRONT_URL).origin;
 
@@ -78,6 +81,7 @@ export function PreviewFrame({
   const [session, setSession] = React.useState(0);
   const ready = session > 0;
   const [failed, setFailed] = React.useState(false);
+  const [slow, setSlow] = React.useState(false);
   const [attempt, setAttempt] = React.useState(0);
   const onSelectRef = React.useRef(onSelect);
   React.useEffect(() => {
@@ -109,7 +113,11 @@ export function PreviewFrame({
   React.useEffect(() => {
     if (ready) return;
     const timer = window.setTimeout(() => setFailed(true), READY_TIMEOUT_MS);
-    return () => window.clearTimeout(timer);
+    const slowTimer = window.setTimeout(() => setSlow(true), SLOW_AFTER_MS);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(slowTimer);
+    };
   }, [ready, attempt]);
 
   React.useEffect(() => {
@@ -137,6 +145,7 @@ export function PreviewFrame({
   const retry = () => {
     setSession(0);
     setFailed(false);
+    setSlow(false);
     setAttempt((n) => n + 1);
   };
 
@@ -184,6 +193,11 @@ export function PreviewFrame({
                   <Skeleton className="aspect-video w-full rounded-2xl" />
                   <Skeleton className="h-40 w-full rounded-2xl" />
                   <Skeleton className="h-24 w-full rounded-2xl" />
+                  {slow ? (
+                    <p className="text-center text-sm text-muted-foreground">
+                      {import.meta.env.DEV ? W.slowFirst : W.slow}
+                    </p>
+                  ) : null}
                 </>
               )}
             </div>

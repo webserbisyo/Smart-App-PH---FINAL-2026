@@ -174,8 +174,13 @@ export interface ImageUploadRowProps {
   src: string | null;
   onUploaded: (upload: UploadedImage) => void;
   onRemove?: (() => void) | undefined;
-  shape?: 'square' | 'circle';
+  shape?: 'square' | 'circle' | 'rounded';
   disabled?: boolean | undefined;
+  // Button words when the default "Upload a photo" / "Replace" don't fit (the Editor's logo).
+  pickLabel?: string | undefined;
+  replaceLabel?: string | undefined;
+  // A step on this device before the shared upload step (the Editor trims and squares a logo).
+  prepare?: ((file: File) => Promise<File>) | undefined;
 }
 
 /** A photo with Upload or Replace, Remove, the size line, Compare and the problem in words. */
@@ -190,14 +195,19 @@ export function ImageUploadRow({
   onRemove,
   shape = 'square',
   disabled,
+  pickLabel,
+  replaceLabel,
+  prepare,
 }: ImageUploadRowProps) {
   const { upload, busy, problem } = useImageUpload(kind, maxSide);
   const [last, setLast] = React.useState<UploadedImage | null>(null);
   const [compareOpen, setCompareOpen] = React.useState(false);
 
   const onFiles = async (files: File[]) => {
-    const file = files[0];
-    if (!file) return;
+    const picked = files[0];
+    if (!picked) return;
+    // A file the step can't read goes up as it is; the shared step then says what is wrong.
+    const file = prepare ? await prepare(picked).catch(() => picked) : picked;
     const done = await upload(file);
     if (!done) return;
     setLast(done);
@@ -218,7 +228,7 @@ export function ImageUploadRow({
         <div
           className={cn(
             'flex size-16 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted text-muted-foreground',
-            shape === 'circle' ? 'rounded-full' : 'rounded-lg',
+            shape === 'circle' ? 'rounded-full' : shape === 'rounded' ? 'rounded-xl' : 'rounded-lg',
           )}
         >
           {busy ? (
@@ -249,7 +259,7 @@ export function ImageUploadRow({
           render={<Button id={id} type="button" variant="outline" className="h-11 md:h-9" />}
         >
           <ImageUpIcon />
-          {src ? U.replace : U.pick}
+          {src ? (replaceLabel ?? U.replace) : (pickLabel ?? U.pick)}
         </FileUploadTrigger>
         {last ? (
           <Button

@@ -1,4 +1,4 @@
-import { CheckCircle2Icon, InfoIcon } from 'lucide-react';
+import { CheckCircle2Icon, InfoIcon, TriangleAlertIcon } from 'lucide-react';
 import {
   PALETTE_BLACK,
   contrastRatio,
@@ -9,6 +9,7 @@ import {
   type ShopLook,
 } from '@smartapp/core';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
+import { cn } from 'cn';
 
 const W = editorWords.brand;
 
@@ -22,13 +23,20 @@ function keptExact(brandHex: string, shop10: string): boolean {
 
 /** The 60 · 30 · 10 the customers will see, and the three readability checks (rule E7). */
 export function PaletteCheck({ look }: { look: ShopLook }) {
-  const p = shopPalette(look.brandColor, look.surface, look.pageColor);
-  const cardSurface = look.surface === 'dark' ? p.shop30 : p.shop60;
+  const p = shopPalette(look.brandColor, look.surface, look.pageColor, look.cardColor);
+  // Links sit on cards and on the page; the harder of the two is the one that counts.
+  const linkRatio = Math.min(
+    contrastRatio(p.shop10Text, p.shop30),
+    p.mixed ? contrastRatio(p.page.link, p.shop60) : contrastRatio(p.shop10Text, p.shop60),
+  );
   const checks = [
-    { label: W.checks.buttons, ratio: contrastRatio(p.shop10Foreground, p.shop10) },
-    { label: W.checks.links, ratio: contrastRatio(p.shop10Text, cardSurface) },
-    { label: W.checks.body, ratio: contrastRatio(p.foreground, p.shop60) },
-  ];
+    { label: W.checks.buttons, ratio: contrastRatio(p.shop10Foreground, p.shop10), min: 4.5 },
+    { label: W.checks.links, ratio: linkRatio, min: 4.5 },
+    { label: W.checks.body, ratio: contrastRatio(p.page.foreground, p.shop60), min: 4.5 },
+    { label: W.checks.cards, ratio: contrastRatio(p.foreground, p.shop30), min: 4.5 },
+    // A shape, not words: 3:1 is enough to see it (WCAG 1.4.11).
+    { label: W.checks.standOut, ratio: contrastRatio(p.shop10, p.shop60), min: 3, shape: true },
+  ].map((check) => ({ ...check, ok: check.ratio >= check.min - 0.05 }));
   let note: string = W.adjusted;
   if (p.shop10Foreground === PALETTE_BLACK) note = W.exactBlack;
   else if (keptExact(look.brandColor, p.shop10)) note = W.exactWhite;
@@ -66,12 +74,23 @@ export function PaletteCheck({ look }: { look: ShopLook }) {
       <ul className="flex flex-col gap-1.5">
         {checks.map((check) => (
           <li key={check.label} className="flex items-center gap-2 text-sm">
-            <CheckCircle2Icon className="size-4 shrink-0 text-success" aria-hidden />
+            {check.ok ? (
+              <CheckCircle2Icon className="size-4 shrink-0 text-success" aria-hidden />
+            ) : (
+              <TriangleAlertIcon className="size-4 shrink-0 text-warning-text" aria-hidden />
+            )}
             <span className="min-w-0 flex-1">{check.label}</span>
             <span className="font-mono text-xs text-muted-foreground tabular-nums">
               {W.ratio(check.ratio)}
             </span>
-            <span className="text-xs font-medium text-success-text">{W.passes}</span>
+            <span
+              className={cn(
+                'text-xs font-medium',
+                check.ok ? 'text-success-text' : 'text-warning-text',
+              )}
+            >
+              {check.ok ? (check.shape ? W.seen : W.passes) : check.shape ? W.hardToSee : W.hard}
+            </span>
           </li>
         ))}
       </ul>

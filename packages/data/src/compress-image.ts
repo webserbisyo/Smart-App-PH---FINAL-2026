@@ -82,7 +82,9 @@ export async function compressImage(file: Blob | File, options?: CompressOptions
             resolve(webpBlob);
             return;
           }
-          canvas.toBlob((jpegBlob) => resolve(jpegBlob ?? file), 'image/jpeg', quality);
+          // A PNG may be see-through (a logo): JPEG would turn that black, so it stays a PNG.
+          const fallback = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          canvas.toBlob((blob) => resolve(blob ?? file), fallback, quality);
         },
         'image/webp',
         quality,

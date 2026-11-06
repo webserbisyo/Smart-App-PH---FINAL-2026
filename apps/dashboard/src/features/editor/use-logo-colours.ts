@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { logoColours, type LogoColour } from '@smartapp/core';
+import { readLogo, type LogoReading } from '@smartapp/core/rules/style-designer';
 
 // The logo is read small: enough for its colours, quick on an old phone.
-const SAMPLE_SIDE = 64;
+const SAMPLE_SIDE = 96;
 
 export type LogoRead =
   | { status: 'none' }
   | { status: 'reading' }
   | { status: 'failed' }
-  | { status: 'ready'; colours: LogoColour[]; image: HTMLImageElement };
+  | { status: 'ready'; reading: LogoReading; image: HTMLImageElement };
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -21,7 +21,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/** The logo's main colours, worked out on this device (decision T73). */
+/** The logo's colours, edge and white box, worked out on this device (decisions T73, T76). */
 export function useLogoColours(src: string | null): LogoRead {
   const [read, setRead] = React.useState<LogoRead>({ status: 'none' });
   React.useEffect(() => {
@@ -40,7 +40,8 @@ export function useLogoColours(src: string | null): LogoRead {
         if (!context) throw new Error('logo_unreadable');
         context.drawImage(image, 0, 0, SAMPLE_SIDE, SAMPLE_SIDE);
         const pixels = context.getImageData(0, 0, SAMPLE_SIDE, SAMPLE_SIDE).data;
-        if (!cancelled) setRead({ status: 'ready', colours: logoColours(pixels), image });
+        const reading = readLogo(pixels, SAMPLE_SIDE, SAMPLE_SIDE);
+        if (!cancelled) setRead({ status: 'ready', reading, image });
       })
       .catch(() => {
         if (!cancelled) setRead({ status: 'failed' });
