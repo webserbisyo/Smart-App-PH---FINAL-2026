@@ -29,6 +29,7 @@ import { CatalogPrimitiveSections } from '../catalog-primitives.js';
 import { OrdersPrimitiveSections } from '../orders-primitives.js';
 import { OrdersV2Sections } from '../orders-v2-primitives.js';
 import { MembersPrimitiveSections } from '../members-primitives.js';
+import { HomePrimitiveSections } from '../home-primitives.js';
 import { SettingsPrimitiveSections } from '../settings-primitives.js';
 import { EditorPrimitiveSections } from '../editor-primitives.js';
 
@@ -47,6 +48,7 @@ const KIT_GROUPS = [
   { id: 'kit-catalog', label: 'Catalog' },
   { id: 'kit-orders', label: 'Orders' },
   { id: 'kit-members', label: 'Members' },
+  { id: 'kit-home', label: 'Home' },
   { id: 'kit-settings', label: 'Settings' },
   { id: 'kit-editor', label: 'Editor' },
   { id: 'kit-patterns', label: 'Library references' },
@@ -364,6 +366,11 @@ export default function KitPage() {
 
         <div id="kit-members" className="scroll-mt-20" />
         <MembersPrimitiveSections />
+
+        <Separator />
+
+        <div id="kit-home" className="scroll-mt-20" />
+        <HomePrimitiveSections />
 
         <Separator />
 

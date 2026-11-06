@@ -104,6 +104,17 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  // Installed evilcharts (decision T77): unused imports, two type-only imports and unused disable directives
+  {
+    files: ['packages/ui/src/components/evilcharts/**'],
+    linterOptions: {
+      reportUnusedDisableDirectives: 'off',
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/consistent-type-imports': 'off',
+    },
+  },
   // Scope react-hooks/purity: off to installed event-calendar-event.tsx (decision T39)
   {
     files: ['packages/ui/src/components/reui/event-calendar/event-calendar-event.tsx'],

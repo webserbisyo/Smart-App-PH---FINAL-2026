@@ -57,6 +57,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Home page: today desk and trends, Insights hidden for launch (decisions T69 to T71; 3 parts pushed to main 2026-11-06)
 - [x] Editor: live preview of the real shop page, parts list, draft and Publish, logo colours and Color Picker, banners, announcement (decisions T72 to T75; 4 parts pushed to main 2026-11-06)
 - [x] Editor style designer: Pick a style from the logo, Fine-tune any page, card and button colour, logo trim, shape and white removal (decision T76; 3 parts pushed to main 2026-11-06)
+- [ ] Final polish of every page: Home charts (part 1 done), scroll hints and touch sizes, phone editor dock, fonts, customer avatars, proof chat, page fixes (decision T77; 7 parts to main)
 
 ## Phase 4: Backend, area by area
 

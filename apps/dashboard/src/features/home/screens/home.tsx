@@ -88,31 +88,29 @@ export function HomeScreen() {
             <TodayCard
               summary={summary}
               openNow={openNow}
-              wide={!hasNeeds}
               className={cn(
                 'md:col-span-2 lg:row-start-1',
                 hasNeeds ? 'lg:col-span-2 lg:col-start-1' : 'lg:col-span-3',
               )}
             />
             <HourCard summary={summary} className="md:col-span-2" />
+            {/* The board is tall, so on wide screens it spans the rows of Hour by hour and the trend. */}
             <BoardCard
               live={live}
               todays={view.todays}
               kind={shop.kind}
               delivers={delivers}
               now={now}
-              className="md:col-span-2 lg:col-span-1"
+              className="md:col-span-2 lg:col-span-1 lg:row-span-2"
             />
+            <TrendsCard className="md:col-span-2" />
             <BestCard summary={summary} className="md:col-span-2 lg:col-span-1" />
             <MixCard summary={summary} />
             <MembersCard members={summary.members} />
-            <TrendsCard
-              className={cn('md:col-span-2', booked ? 'lg:col-span-2' : 'lg:col-span-3')}
-            />
             {booked ? (
               <ComingCard days={summary.comingUp} className="md:col-span-2 lg:col-span-1" />
             ) : null}
-            <BusyCard className="md:col-span-2 lg:col-span-3" />
+            <BusyCard className={cn('md:col-span-2', booked ? 'lg:col-span-2' : 'lg:col-span-3')} />
           </div>
         )}
       </div>

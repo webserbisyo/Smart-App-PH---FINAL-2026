@@ -25,6 +25,9 @@ export function HourCard({
   const [metric, setMetric] = React.useState<Metric>('sales');
   const isToday = summary.hoursDate === summary.businessDate;
   const usualLabel = W.usual(summary.hoursDate);
+  const todayLabel = isToday
+    ? W.today
+    : formatManila(manilaToDate(summary.hoursDate, '12:00'), 'day');
   const peak = summary.hours.reduce<{ hour: number; v: number } | null>((top, h) => {
     const v = metric === 'sales' ? h.sales : h.orders;
     return v > 0 && (top === null || v > top.v) ? { hour: h.hour, v } : top;
@@ -59,6 +62,7 @@ export function HourCard({
             metric={metric}
             nowHour={isToday ? manilaParts(summary.asOf).hour : null}
             usualLabel={usualLabel}
+            todayLabel={todayLabel}
           />
         </React.Suspense>
       )}
@@ -66,10 +70,13 @@ export function HourCard({
         <span className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">
             <span aria-hidden="true" className="size-2.5 rounded-sm bg-chart-1" />
-            {isToday ? W.today : formatManila(manilaToDate(summary.hoursDate, '12:00'), 'day')}
+            {todayLabel}
           </span>
           <span className="flex items-center gap-1.5">
-            <span aria-hidden="true" className="size-2.5 rounded-sm bg-muted-foreground/20" />
+            <span
+              aria-hidden="true"
+              className="size-2.5 rounded-sm border border-muted-foreground/60 bg-muted-foreground/25"
+            />
             {usualLabel}
           </span>
         </span>

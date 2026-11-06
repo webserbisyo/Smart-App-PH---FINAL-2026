@@ -164,6 +164,27 @@ export function percentChange(recent: number, before: number): number | null {
   return Math.round(((recent - before) / before) * 100);
 }
 
+// Under this many on both sides a change shows as a plain difference ("+3"), never a percent (T77).
+export const CHANGE_SMALL_BASE = 10;
+
+export type Change =
+  { kind: 'percent'; value: number } | { kind: 'diff'; value: number } | { kind: 'same' };
+
+/**
+ * How a number moved against the period before, in the form a beginner reads right (T77): a percent on
+ * real bases, the plain difference on small counts ("0 against 1" is "−1", not "−100%"), nothing when
+ * there was nothing before and nothing now.
+ */
+export function changeOf(recent: number, before: number, count: boolean): Change | null {
+  if (recent === before) return before === 0 ? null : { kind: 'same' };
+  if (count && Math.max(recent, before) < CHANGE_SMALL_BASE) {
+    return { kind: 'diff', value: recent - before };
+  }
+  const percent = percentChange(recent, before);
+  if (percent === null) return null;
+  return percent === 0 ? { kind: 'same' } : { kind: 'percent', value: percent };
+}
+
 /** Part of a whole in whole percent (0 when the whole is 0). */
 export function sharePercent(part: number, whole: number): number {
   if (whole <= 0) return 0;

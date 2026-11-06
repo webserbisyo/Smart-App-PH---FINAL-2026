@@ -2,12 +2,12 @@ import * as React from 'react';
 import { ArrowDownRightIcon, ArrowUpRightIcon, MinusIcon } from 'lucide-react';
 import { useRouterState } from '@tanstack/react-router';
 import {
+  changeOf,
   formatManila,
   formatPeso,
   formatPesoShort,
   homeWords,
   manilaToDate,
-  percentChange,
   RANGE_DAYS,
   type HomeTrends,
 } from '@smartapp/core';
@@ -22,10 +22,11 @@ import { useHomeRange, useSetHomeRange } from './search.js';
 const W = homeWords.trends;
 const TrendChart = React.lazy(() => import('./trend-chart.js'));
 
-function Change({ recent, before }: { recent: number; before: number }) {
-  const change = percentChange(recent, before);
+function Change({ recent, before, count }: { recent: number; before: number; count: boolean }) {
+  // Small counts show "+3" or "−1", never "−100%" (T77).
+  const change = changeOf(recent, before, count);
   if (change === null) return null;
-  if (change === 0) {
+  if (change.kind === 'same') {
     return (
       <Badge variant="secondary" radius="full" size="sm" className="gap-1">
         <MinusIcon aria-hidden="true" />
@@ -33,18 +34,19 @@ function Change({ recent, before }: { recent: number; before: number }) {
       </Badge>
     );
   }
-  const up = change > 0;
+  const up = change.value > 0;
   const Icon = up ? ArrowUpRightIcon : ArrowDownRightIcon;
+  const percent = change.kind === 'percent';
   return (
     <Badge
       variant={up ? 'success-light' : 'warning-light'}
       radius="full"
       size="sm"
       className="gap-1 tabular-nums"
-      aria-label={W.changeAria(change)}
+      aria-label={percent ? W.changeAria(change.value) : W.diffAria(change.value)}
     >
       <Icon aria-hidden="true" />
-      {W.change(change)}
+      {percent ? W.change(change.value) : W.diff(change.value)}
     </Badge>
   );
 }
@@ -54,18 +56,20 @@ function Total({
   value,
   recent,
   before,
+  count = false,
 }: {
   label: string;
   value: string;
   recent: number;
   before: number;
+  count?: boolean;
 }) {
   return (
     <div className="flex min-w-0 flex-col gap-1 rounded-xl border p-3">
       <span className="truncate text-xs text-muted-foreground">{label}</span>
       <span className="truncate text-lg font-extrabold tabular-nums">{value}</span>
       <span className="flex min-h-5 items-center">
-        <Change recent={recent} before={before} />
+        <Change recent={recent} before={before} count={count} />
       </span>
     </div>
   );
@@ -93,6 +97,7 @@ function TrendsBody({ trends }: { trends: HomeTrends }) {
           value={totals.orders.toLocaleString('en-PH')}
           recent={totals.orders}
           before={totalsBefore.orders}
+          count
         />
         <Total
           label={W.average}
@@ -105,6 +110,7 @@ function TrendsBody({ trends }: { trends: HomeTrends }) {
           value={String(totals.joined)}
           recent={totals.joined}
           before={totalsBefore.joined}
+          count
         />
       </div>
       <React.Suspense fallback={<Skeleton className="h-52 w-full rounded-lg md:h-60" />}>
@@ -119,7 +125,7 @@ function TrendsBody({ trends }: { trends: HomeTrends }) {
           <span className="flex items-center gap-1.5">
             <span
               aria-hidden="true"
-              className="w-4 border-t-2 border-dashed border-muted-foreground"
+              className="w-4 border-t-2 border-dotted border-muted-foreground"
             />
             {W.before}
           </span>
@@ -138,7 +144,7 @@ function TrendsBody({ trends }: { trends: HomeTrends }) {
   );
 }
 
-/** Last 7 or 30 days (H12): totals with % change against the days before, and the daily chart. */
+/** Last 7 or 30 days (H12, T77): totals with the change against the days before, and the daily chart. */
 export function TrendsCard({ className }: { className?: string | undefined }) {
   const range = useHomeRange();
   const setRange = useSetHomeRange();

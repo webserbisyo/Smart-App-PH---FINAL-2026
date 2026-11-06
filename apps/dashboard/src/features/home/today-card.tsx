@@ -9,14 +9,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
-import {
-  formatClock,
-  formatPeso,
-  homeWords,
-  pacePercent,
-  type HomeSummary,
-  type PaceVerdict,
-} from '@smartapp/core';
+import { formatPeso, homeWords, type HomeSummary, type PaceVerdict } from '@smartapp/core';
 import { Progress } from '@smartapp/ui/components/progress';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
@@ -27,14 +20,13 @@ import {
   StatLabel,
   StatValue,
 } from '@smartapp/ui/components/stat';
-import { cssVars } from '@smartapp/ui/lib/css-vars';
 import { cn } from 'cn';
 import { clockText } from './home-hello.js';
 import { CARD } from './home-card.js';
 
 const W = homeWords.today;
-// Recharts loads only when the tiles show (T57).
-const SparkLine = React.lazy(() => import('./spark-line.js'));
+// Recharts loads only when Home shows (T57).
+const TodayRing = React.lazy(() => import('./today-ring.js'));
 
 // A tile is one link: the whole card opens the right place.
 const TILE_LINK =
@@ -51,51 +43,91 @@ const VERDICT: Readonly<
   behind: { icon: ArrowDownRightIcon, variant: 'warning-light' },
 };
 
-function PaceBar({ summary }: { summary: HomeSummary }) {
+/** Today against a usual weekday (T77): a ring with the amount in the middle and the gap in words. */
+function Pace({ summary }: { summary: HomeSummary }) {
   const { pace, today, businessDate } = summary;
+  const amount = (
+    <p
+      className={cn(
+        'text-4xl font-extrabold tracking-tight tabular-nums md:text-5xl',
+        today.orders === 0 && 'text-muted-foreground',
+      )}
+    >
+      {formatPeso(today.sales)}
+    </p>
+  );
   if (pace.usualDay === null || pace.usualByNow === null) {
-    return <p className="text-sm text-muted-foreground">{W.learning(pace.daysUsed)}</p>;
+    return (
+      <div className="flex flex-col gap-1">
+        {amount}
+        <p className="text-sm text-muted-foreground">{W.learning(pace.daysUsed)}</p>
+      </div>
+    );
   }
-  const value = pacePercent(today.sales, pace.usualDay);
-  const mark = pacePercent(pace.usualByNow, pace.usualDay);
+  const first = clockText(pace.usualFirstOrder);
   const verdict = pace.verdict ? VERDICT[pace.verdict] : null;
   const VerdictIcon = verdict?.icon;
-  const first = clockText(pace.usualFirstOrder);
+  const gap = Math.abs(today.sales - pace.usualByNow);
   return (
-    <div className="flex flex-col gap-2">
-      <div className="relative pt-5">
-        <span
-          style={cssVars({ '--mark': `${mark}%` })}
-          className={cn(
-            'absolute top-0 left-(--mark) text-xs whitespace-nowrap text-muted-foreground',
-            mark < 15 ? '' : mark > 85 ? '-translate-x-full' : '-translate-x-1/2',
-          )}
-        >
-          {W.usualByNow}
-        </span>
-        <Progress value={value} aria-label={W.paceAria(value)} className="progress-thick" />
-        <span
+    <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
+      <div
+        role="img"
+        aria-label={W.ringAria(formatPeso(today.sales), formatPeso(pace.usualByNow))}
+        className="relative size-48 shrink-0"
+      >
+        <React.Suspense fallback={<Skeleton className="size-full rounded-full" />}>
+          <TodayRing
+            sales={today.sales}
+            usualByNow={pace.usualByNow}
+            usualDay={pace.usualDay}
+            todayLabel={W.ringToday}
+            usualLabel={W.ringUsual}
+          />
+        </React.Suspense>
+        <div
           aria-hidden="true"
-          style={cssVars({ '--mark': `${mark}%` })}
-          className="absolute bottom-0 left-(--mark) h-4.5 w-0.5 -translate-x-1/2 translate-y-1 rounded-full bg-foreground"
-        />
+          className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"
+        >
+          <span
+            className={cn(
+              'text-xl font-extrabold tracking-tight tabular-nums md:text-2xl',
+              today.orders === 0 && 'text-muted-foreground',
+            )}
+          >
+            {formatPeso(today.sales)}
+          </span>
+          <span className="text-xs text-muted-foreground">{W.soFar}</span>
+        </div>
       </div>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <div className="flex w-full min-w-0 flex-1 flex-col gap-2">
         {verdict && VerdictIcon && pace.verdict ? (
-          <Badge variant={verdict.variant} radius="full" className="gap-1 font-semibold">
+          <Badge variant={verdict.variant} radius="full" className="gap-1 self-start font-semibold">
             <VerdictIcon aria-hidden="true" />
             {W.pace[pace.verdict]}
           </Badge>
         ) : null}
-        <p className="min-w-0 flex-1 text-sm text-muted-foreground md:text-right">
+        <p className="text-base font-semibold text-balance">
           {(today.orders === 0 || pace.usualByNow === 0) && first
             ? W.firstOrder(businessDate, first)
-            : W.paceLine(
-                businessDate,
-                formatPeso(pace.usualByNow),
-                formatClock(summary.asOf),
-                formatPeso(pace.usualDay),
-              )}
+            : W.gap(pace.verdict ?? 'about', formatPeso(gap), businessDate)}
+        </p>
+        <ul className="flex flex-col gap-1 text-sm">
+          <li className="flex items-center gap-2">
+            <span aria-hidden="true" className="size-2.5 shrink-0 rounded-full bg-chart-1" />
+            <span className="flex-1 text-muted-foreground">{W.ringToday}</span>
+            <span className="font-semibold tabular-nums">{formatPeso(today.sales)}</span>
+          </li>
+          <li className="flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              className="size-2.5 shrink-0 rounded-full bg-muted-foreground/45"
+            />
+            <span className="flex-1 text-muted-foreground">{W.ringUsual}</span>
+            <span className="font-semibold tabular-nums">{formatPeso(pace.usualByNow)}</span>
+          </li>
+        </ul>
+        <p className="text-sm text-muted-foreground">
+          {W.endsNear(businessDate, formatPeso(pace.usualDay))}
         </p>
       </div>
     </div>
@@ -107,13 +139,13 @@ function Tile({
   icon,
   value,
   note,
-  spark,
+  extra,
 }: {
   label: string;
   icon: React.ReactNode;
   value: React.ReactNode;
   note: React.ReactNode;
-  spark: React.ReactNode;
+  extra?: React.ReactNode;
 }) {
   return (
     <Stat className="h-full min-w-0 gap-y-0.5 overflow-hidden rounded-xl p-3 shadow-none transition duration-base group-hover:-translate-y-0.5 group-hover:shadow-md motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
@@ -130,81 +162,40 @@ function Tile({
       </StatValue>
       <StatDescription className="flex min-w-0 flex-col gap-1">
         <span className="truncate">{note}</span>
-        {spark}
+        {extra}
       </StatDescription>
     </Stat>
   );
 }
 
-function Spark({
-  values,
-  label,
-  tone,
-}: {
-  values: readonly number[];
-  label: string;
-  tone?: 'member';
-}) {
-  return (
-    <React.Suspense fallback={<Skeleton className="h-8 w-full rounded" />}>
-      <SparkLine values={values} label={W.sparkAria(label)} {...(tone ? { tone } : {})} />
-    </React.Suspense>
-  );
-}
-
-/** Today (H2 to H6): sales against a usual weekday in words, then four tiles with the last 7 days. */
+/**
+ * Today (H2 to H6, T77): sales against a usual weekday as a ring and in words, then three plain tiles, each
+ * about today only and each saying what its number means.
+ */
 export function TodayCard({
   summary,
   openNow,
-  wide,
   className,
 }: {
   summary: HomeSummary;
   openNow: number;
-  // Wide when the card has the whole row; beside the needs list four tiles get too narrow for big amounts.
-  wide: boolean;
   className?: string | undefined;
 }) {
-  const { today, members, sparks } = summary;
+  const { today, members } = summary;
   const collectedShare = today.sales > 0 ? Math.round((today.collected / today.sales) * 100) : 0;
   return (
     <section aria-labelledby="today-title" className={cn(CARD, 'gap-4', className)}>
-      <div className="flex flex-col gap-0.5">
-        <h2 id="today-title" className="text-sm text-muted-foreground">
-          {W.sales} · {W.orders(today.orders)}
-        </h2>
-        <p
-          className={cn(
-            'text-4xl font-extrabold tracking-tight tabular-nums md:text-5xl',
-            today.orders === 0 && 'text-muted-foreground',
-          )}
-        >
-          {formatPeso(today.sales)}
-        </p>
-      </div>
-      <PaceBar summary={summary} />
-      <div
-        className={cn(
-          'grid grid-cols-2 gap-2 md:gap-3',
-          wide ? 'xl:grid-cols-4' : '2xl:grid-cols-4',
-        )}
-      >
+      <h2 id="today-title" className="text-sm text-muted-foreground">
+        {W.sales} · {W.orders(today.orders)}
+      </h2>
+      <Pace summary={summary} />
+      <div className="grid gap-2 sm:grid-cols-3 md:gap-3">
         <Link to="/orders" className={TILE_LINK}>
           <Tile
             label={W.tiles.orders}
             icon={<ReceiptTextIcon />}
             value={today.orders}
             note={W.tiles.openNow(openNow)}
-            spark={<Spark values={sparks.orders} label={W.tiles.orders} />}
-          />
-        </Link>
-        <Link to="/orders" search={{ view: 'list', day: 'today' }} className={TILE_LINK}>
-          <Tile
-            label={W.tiles.average}
-            icon={<ReceiptTextIcon />}
-            value={today.average === null ? '—' : formatPeso(today.average)}
-            note={today.average === null ? W.tiles.averageWait : W.tiles.averageHint}
-            spark={<Spark values={sparks.average} label={W.tiles.average} />}
           />
         </Link>
         <Link to="/orders" search={{ view: 'list', day: 'today' }} className={TILE_LINK}>
@@ -213,7 +204,7 @@ export function TodayCard({
             icon={<WalletIcon />}
             value={formatPeso(today.toCollect)}
             note={W.tiles.toCollectHint}
-            spark={
+            extra={
               <span className="flex flex-col gap-1 pt-1">
                 <Progress
                   value={collectedShare}
@@ -233,7 +224,6 @@ export function TodayCard({
             icon={<StampIcon />}
             value={members.cardOn ? members.stamps : '—'}
             note={members.cardOn ? W.tiles.membersHint(members.joined) : W.tiles.cardOff}
-            spark={<Spark values={sparks.joined} label={W.tiles.members} tone="member" />}
           />
         </Link>
       </div>

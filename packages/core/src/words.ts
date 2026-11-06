@@ -3293,20 +3293,28 @@ export const homeWords = {
         ? 'After 3 weeks of orders, Home compares today with a usual day.'
         : `Home compares today with a usual day once 3 of the last 4 weeks had orders (${days} so far).`,
     paceAria: (percent: number) => `${percent}% of a usual day`,
+    soFar: 'so far today',
+    gap: (verdict: 'ahead' | 'about' | 'behind', amount: string, date: string) =>
+      verdict === 'about'
+        ? `About the same as a usual ${weekdayLong(date)} at this hour.`
+        : `${amount} ${verdict === 'ahead' ? 'ahead of' : 'behind'} a usual ${weekdayLong(date)} at this hour.`,
+    endsNear: (date: string, day: string) => `A usual ${weekdayLong(date)} ends near ${day}.`,
+    ringToday: 'Today',
+    ringUsual: 'Usual by now',
+    ringAria: (sales: string, byNow: string) => `${sales} today. A usual day has ${byNow} by now.`,
     tiles: {
-      orders: 'Orders',
-      openNow: (n: number) => (n === 0 ? 'none open now' : `${n} open now`),
-      average: 'Average order',
-      averageHint: 'per order today',
-      averageWait: 'shows from 3 orders',
-      toCollect: 'To collect',
-      toCollectHint: 'cash and COD',
-      collected: (amount: string) => `${amount} collected`,
-      members: 'Members',
-      membersHint: (joined: number) => `stamps · ${joined} joined`,
-      cardOff: 'stamp card is off',
+      orders: 'Orders today',
+      openNow: (n: number) => (n === 0 ? 'All done, none open' : `${n} still open`),
+      toCollect: 'Not paid yet',
+      toCollectHint: 'Cash and pay on delivery',
+      collected: (amount: string) => `${amount} already paid`,
+      members: 'Stamps today',
+      membersHint: (joined: number) =>
+        joined === 0
+          ? 'No new members yet'
+          : `${joined} new ${plural(joined, 'member', 'members')}`,
+      cardOff: 'Stamp card is off',
     },
-    sparkAria: (label: string) => `${label}, the last 7 days`,
   },
   hours: {
     title: 'Hour by hour',
@@ -3401,7 +3409,7 @@ export const homeWords = {
   },
   trends: {
     title: (days: number) => `Last ${days} days`,
-    hint: (days: number) => `Against the ${days} days before (dashed)`,
+    hint: (days: number) => `Against the ${days} days before (dotted)`,
     range: { '7d': '7 days', '30d': '30 days' },
     sales: 'Sales',
     orders: 'Orders',
@@ -3409,6 +3417,8 @@ export const homeWords = {
     joined: 'New members',
     change: (n: number) => `${n > 0 ? '+' : '−'}${Math.abs(n)}%`,
     changeAria: (n: number) => `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)}% against the days before`,
+    diff: (n: number) => `${n > 0 ? '+' : '−'}${Math.abs(n)}`,
+    diffAria: (n: number) => `${Math.abs(n)} ${n > 0 ? 'more' : 'fewer'} than the days before`,
     same: 'Same as before',
     today: 'Today',
     bestDay: (day: string, sales: string, orders: number) =>

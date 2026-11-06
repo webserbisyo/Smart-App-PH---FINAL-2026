@@ -6,8 +6,10 @@ import {
   defaultPicks,
   manilaDate,
   manilaToDate,
+  openHoursOf,
   openState,
   pickupSlots,
+  shopRhythm,
   validateLinePicks,
   type BasketLine,
   type CustomerAddress,
@@ -18,7 +20,7 @@ import {
   type Proof,
   type PublicShop,
 } from '@smartapp/core';
-import { int, pick, token, type Rng } from './rng';
+import { int, mulberry32, pick, token, type Rng } from './rng';
 import { addMinutes, buildOrder, type OrderRecord, type OrderSpec } from './state';
 
 export const DEMO_RECEIPT_TOKENS = [
@@ -71,6 +73,16 @@ const NAMES = [
 ] as const;
 
 const DAY = 24 * 60;
+
+// Guests for today's earlier done orders: not members, so the demo members' stamps stay as they are.
+const GUESTS = [
+  'Carla Villanueva',
+  'Nico Fernandez',
+  'Bea Domingo',
+  'Tony Castillo',
+  'Mika Salazar',
+  'Ramon Pascual',
+] as const;
 
 /** Juan's two saved places in the shop's first delivery zone, so the account shows real-looking data. */
 export function demoAddresses(shop: PublicShop): CustomerAddress[] {
@@ -1361,11 +1373,70 @@ function activityDrafts(shop: PublicShop, now: Date): DraftOrder[] {
   }
 }
 
+// The board holds the last hour or so; done orders before it start this long before now (T77, H17).
+const EARLIER_GAP_MINUTES = 150;
+
+/**
+ * Today's done orders before the board (T77, H17): without them every peso of today sits in the current
+ * hour, so Hour by hour shows one bar. Each open hour gets one to six orders, more in the shop's busy hours,
+ * at fixed minutes so a reload shows the same day. They are real orders, so Home and the Orders list agree.
+ */
+function earlierTodayDrafts(shop: PublicShop, now: Date): DraftOrder[] {
+  const today = manilaDate(now);
+  const peaks = new Map(shopRhythm(shop.storefront.slug).peaks);
+  const pickup = typeFor(shop, 'pickup');
+  const walkIn = typeFor(shop, 'walk_in');
+  const delivery = deliveryFor(shop);
+  const latest = addMinutes(now.toISOString(), -EARLIER_GAP_MINUTES);
+  // Their own generator, so the rest of the demo (claims, receipts) stays exactly as before.
+  const seed = [...`${shop.storefront.slug}|${today}`].reduce(
+    (h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) | 0,
+    7,
+  );
+  const rng = mulberry32(seed);
+  const drafts: DraftOrder[] = [];
+  for (const hour of openHoursOf({ hours: shop.storefront.hours, closures: [] }, today)) {
+    const count = Math.min(6, Math.max(1, Math.round(1 + (peaks.get(hour) ?? 0))));
+    for (let k = 0; k < count; k += 1) {
+      const minute = (hour * 17 + k * 23) % 60;
+      const clock = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      const placedAt = manilaToDate(today, clock).toISOString();
+      if (placedAt >= latest) continue;
+      const type = k % 2 === 0 ? pickup : walkIn;
+      const lines = orderableLines(shop, now, rng, int(rng, 2, 4));
+      if (lines.length === 0) continue;
+      const guest = drafts.length;
+      drafts.push({
+        lines,
+        token: token(rng),
+        customer: {
+          name: GUESTS[guest % GUESTS.length] ?? 'Guest',
+          phone: `+63918000${String(3000 + guest).padStart(4, '0')}`,
+          email: null,
+        },
+        placedAt,
+        type,
+        status: 'completed',
+        paymentStatus: 'paid',
+        paymentMethod: methodFor(shop, type, k % 3 === 0 ? 'gcash' : 'cash'),
+        ...(type === 'delivery'
+          ? { deliveryFee: delivery.fee, deliveryAddress: delivery.address }
+          : {}),
+      });
+    }
+  }
+  return drafts;
+}
+
 /** Builds every generated order for a shop, numbered gap-free per Manila day in placement order. */
 export function generateOrders(shop: PublicShop, now: Date, rng: Rng): OrderRecord[] {
   const slug = shop.storefront.slug;
   if (shop.catalog.items.length === 0) return [];
-  const drafts = [...activityDrafts(shop, now), ...demoReceiptDrafts(shop, now)]
+  const drafts = [
+    ...activityDrafts(shop, now),
+    ...earlierTodayDrafts(shop, now),
+    ...demoReceiptDrafts(shop, now),
+  ]
     .map(({ lineCount, qtyBoost, ...d }) => {
       const lines = d.lines ?? orderableLines(shop, now, rng, lineCount ?? int(rng, 1, 3));
       return {
