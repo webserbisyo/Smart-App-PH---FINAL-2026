@@ -57,6 +57,7 @@ function ShopInfoBody() {
           size="lg"
           state={state ? (state.paused ? 'closed' : state.state) : null}
           stateLabel={state ? words.shop.openStateShort[state.paused ? 'closed' : state.state] : ''}
+          logoShape={sf.look.logoShape}
         />
         <div className="min-w-0">
           <p className="truncate text-lg font-semibold">{sf.info.name}</p>

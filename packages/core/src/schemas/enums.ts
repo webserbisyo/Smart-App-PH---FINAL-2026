@@ -23,6 +23,11 @@ export const SHOP_SURFACES = ['light', 'dark'] as const;
 export const ShopSurfaceEnum = z.enum(SHOP_SURFACES);
 export type ShopSurface = z.infer<typeof ShopSurfaceEnum>;
 
+// The logo's frame on the storefront (decision T76 C7).
+export const LOGO_SHAPES = ['circle', 'rounded'] as const;
+export const LogoShapeEnum = z.enum(LOGO_SHAPES);
+export type LogoShape = z.infer<typeof LogoShapeEnum>;
+
 export const PAYMENT_STATUSES = ['unpaid', 'pending', 'paid', 'refunded'] as const;
 export const PaymentStatusEnum = z.enum(PAYMENT_STATUSES);
 export type PaymentStatus = z.infer<typeof PaymentStatusEnum>;

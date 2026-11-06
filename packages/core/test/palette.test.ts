@@ -97,11 +97,58 @@ describe('shopPalette', () => {
     expect(new Set(pages).size).toBe(DEMO_SHOPS.length);
   });
 
-  it('keeps a page colour in a readable band: light stays light, dark stays dark', () => {
-    const light = shopPalette('#2456D3', 'light', '#253475');
-    const dark = shopPalette('#2456D3', 'dark', '#FFF1C9');
-    expect(contrastRatio(light.shop60, PALETTE_BLACK)).toBeGreaterThan(12);
-    expect(contrastRatio(dark.shop60, PALETTE_WHITE)).toBeGreaterThan(12);
+  it('uses the page colour exactly and turns the words to whatever reads (T76 C1, C4)', () => {
+    const navy = shopPalette('#2456D3', 'light', '#253475');
+    const cream = shopPalette('#2456D3', 'dark', '#FFF1C9');
+    expect(navy.dark).toBe(true);
+    expect(cream.dark).toBe(false);
+    expect(contrastRatio(navy.shop60, '#253475')).toBeCloseTo(1, 1);
+    expect(contrastRatio(navy.shop60, navy.page.foreground)).toBeGreaterThan(10);
+    expect(contrastRatio(cream.shop60, cream.page.foreground)).toBeGreaterThan(12);
+  });
+
+  const MIXED_CASES = [
+    // [brand, page, cards]: white cards on a red page, ink page with white cards, a pure white page,
+    // dark cards on a light page, a gold page with navy cards.
+    ['#D7372F', '#D7372F', '#FFFFFF'],
+    ['#D7372F', '#1A1414', '#FFFFFF'],
+    ['#D7372F', '#FFFFFF', '#F4F4F5'],
+    ['#0E7AC4', '#F7F9FC', '#14213D'],
+    ['#C9A227', '#C9A227', '#253475'],
+    ['#FFF3A3', '#FFFFFF', null],
+    ['#0B1736', '#0B1736', null],
+  ] as const;
+
+  it.each(MIXED_CASES)('%s on page %s with cards %s: every pair reads (T76)', (hex, page, card) => {
+    const p = shopPalette(hex, 'light', page, card);
+    const pairs: readonly (readonly [string, string, number])[] = [
+      [p.shop60, p.page.foreground, 4.5],
+      [p.shop60, p.page.muted, 4.5],
+      [p.shop60, p.page.link, 4.5],
+      [p.shop30, p.foreground, 4.5],
+      [p.shop30, p.shop10Text, 4.5],
+      [p.shop10, p.shop10Foreground, 4.5],
+      [p.shop10Hover, p.shop10Foreground, 4.5],
+      [p.shop10Soft, p.shop10SoftForeground, 4.5],
+    ];
+    for (const [bg, fg, min] of pairs) expect(contrastRatio(bg, fg)).toBeGreaterThanOrEqual(min);
+    if (p.cardMuted) expect(contrastRatio(p.shop30, p.cardMuted)).toBeGreaterThanOrEqual(4.5);
+    // Buttons stand out from the page or the cards (C2).
+    expect(
+      Math.max(contrastRatio(p.shop10, p.shop60), contrastRatio(p.shop10, p.shop30)),
+    ).toBeGreaterThanOrEqual(3);
+  });
+
+  it('marks white cards on a red page as mixed, and same-side cards as not', () => {
+    expect(shopPalette('#D7372F', 'light', '#D7372F', '#FFFFFF').mixed).toBe(true);
+    expect(shopPalette('#D7372F', 'light', '#FFFFFF', '#F4F4F5').mixed).toBe(false);
+    expect(shopPalette('#D7372F', 'dark').mixed).toBe(false);
+  });
+
+  it('keeps every demo shop on one side (no mixed look in the demo packs)', () => {
+    for (const shop of DEMO_SHOPS) {
+      expect(shopPalette(shop.brandColor, shop.surface, shop.pageColor).mixed).toBe(false);
+    }
   });
 
   it('keeps 60 and 30 neutral without a page colour: no tinted page behind the photos', () => {
@@ -136,8 +183,20 @@ describe('shopPalette', () => {
   });
 
   it('returns OKLCH strings', () => {
-    const { tint, ...p } = shopPalette('#D7372F', 'light', '#FFF1C9');
-    const values = [...Object.values(p), ...(tint ? Object.values(tint) : [])];
+    const p = shopPalette('#D7372F', 'light', '#FFF1C9');
+    const values = [
+      p.shop60,
+      p.shop30,
+      p.foreground,
+      p.shop10,
+      p.shop10Foreground,
+      p.shop10Hover,
+      p.shop10Text,
+      p.shop10Soft,
+      p.shop10SoftForeground,
+      ...Object.values(p.page),
+      ...(p.tint ? Object.values(p.tint) : []),
+    ];
     for (const value of values) expect(value).toMatch(/^oklch\(/);
   });
 });

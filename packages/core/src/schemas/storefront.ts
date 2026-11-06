@@ -14,6 +14,7 @@ import {
   BannerLinkKindEnum,
   OrderTypeEnum,
   PaymentMethodEnum,
+  LogoShapeEnum,
   ShopSurfaceEnum,
   SlotLengthSchema,
   StampCardStatusEnum,
@@ -85,14 +86,22 @@ export type SectionSwitches = z.infer<typeof SectionSwitchesSchema>;
 
 export const ShopLookSchema = z.object({
   brandColor: z.string().regex(/^#[0-9a-f]{6}$/i),
-  // Light or dark page; the brand colour stays the 10 either way (decision R2).
+  // Light or dark page (decision R2). With a page colour the Editor sets it from that colour (T76 C4).
   surface: ShopSurfaceEnum.default('light'),
-  // Optional page colour for the 60 (decision R52); null keeps the neutral page.
+  // Optional page colour for the 60 (decisions R52, T76); null keeps the neutral page.
   pageColor: z
     .string()
     .regex(/^#[0-9a-f]{6}$/i)
     .nullable()
     .default(null),
+  // Optional card colour for the 30 (T76 C3); null lets the cards follow the page.
+  cardColor: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullable()
+    .default(null),
+  // The logo's frame (T76 C7).
+  logoShape: LogoShapeEnum.default('circle'),
   banners: z.array(BannerSchema).max(3),
   bannerSeconds: z.number().int().min(3).max(10).default(5),
   announcement: AnnouncementSchema.nullable(),

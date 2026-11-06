@@ -228,6 +228,8 @@ export const LOLA_REMY_PACK: ShopPack = {
       brandColor: '#C27C2C',
       surface: 'light',
       pageColor: '#FFF1C9',
+      cardColor: null,
+      logoShape: 'circle',
       banners: [
         {
           ref: 'demo:lola-remy/banners/banner-1',

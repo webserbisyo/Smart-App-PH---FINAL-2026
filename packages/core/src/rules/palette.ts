@@ -9,11 +9,11 @@ export interface Oklch {
 }
 
 export interface ShopPalette {
-  /** The page (60): near white on a light shop, near black on a dark one. */
+  /** The page (60): the owner's page colour, or near white (near black on a dark shop). */
   shop60: string;
-  /** Cards and sheets (30): white on a light shop, a raised dark grey on a dark one. */
+  /** Cards, sheets and bars (30): the owner's card colour, or white (one step up on a dark page). */
   shop30: string;
-  /** Body text on 60 and 30. */
+  /** Body text on the cards (30), and on the page when both share a side. */
   foreground: string;
   /** The brand (10): filled buttons, the active tab, the cart. */
   shop10: string;
@@ -26,6 +26,14 @@ export interface ShopPalette {
   shop10SoftForeground: string;
   /** Only with a page colour: quiet fills, hovers and lines in the page's hue, so greys don't look pasted on. */
   tint: { muted: string; border: string } | null;
+  /** The cards (30) are dark: the app's dark tokens apply to cards, sheets and dialogs. */
+  dark: boolean;
+  /** Page and cards are on different sides (white cards on a red page): the page gets its own words. */
+  mixed: boolean;
+  /** Words, captions and brand-coloured links straight on the page (60). */
+  page: { foreground: string; muted: string; link: string };
+  /** Captions on the cards when the cards are a chosen colour or differ from the page; else the app's own. */
+  cardMuted: string | null;
 }
 
 export const DEFAULT_BRAND_COLOR = '#2456D3';
@@ -47,6 +55,8 @@ export const PALETTE_BLACK = 'oklch(0.145 0 0)';
 export const PALETTE_LIGHT_TEXT = 'oklch(0.985 0 0)';
 
 const MIN_TEXT_CONTRAST = 4.5;
+/** Buttons, rings and other parts against what they sit on (WCAG 1.4.11). */
+const MIN_UI_CONTRAST = 3;
 /** How far --shop-10 may be darkened before we switch to black text instead. */
 const MAX_DARKEN = 0.2;
 const DARKEN_STEP = 0.005;
@@ -201,39 +211,73 @@ function untilReadable(base: Oklch, against: string, direction: 'darker' | 'ligh
   return toGamut({ ...base, l: direction === 'darker' ? 0.2 : 0.9 });
 }
 
-// A page colour is kept in a band where body text and the app's muted text stay readable (decision R52).
-const LIGHT_PAGE = { min: 0.89, max: 0.98, chroma: 0.08 } as const;
-const DARK_PAGE = { min: 0.16, max: 0.25, chroma: 0.09 } as const;
+/** Black or white text, whichever reads better on `bg`; every colour has one of the two at 4.5:1 or more. */
+function wordsOn(bg: Oklch): { text: string; dark: boolean } {
+  const onWhite = contrastOf(bg, PALETTE_LIGHT_TEXT);
+  const onBlack = contrastOf(bg, PALETTE_BLACK);
+  if (onWhite <= onBlack) return { text: PALETTE_BLACK, dark: false };
+  // Pure white when the soft white falls just short (a strong red page).
+  return { text: onWhite >= MIN_TEXT_CONTRAST ? PALETTE_LIGHT_TEXT : PALETTE_WHITE, dark: true };
+}
 
-function pageFrom(color: Oklch, dark: boolean): Oklch {
-  const band = dark ? DARK_PAGE : LIGHT_PAGE;
-  return toGamut({
-    l: Math.min(band.max, Math.max(band.min, color.l)),
-    c: Math.min(band.chroma, color.c),
-    h: color.h,
-  });
+/** A quiet grey in the surface's hue that still reads at 4.5:1 (captions, hints). */
+function mutedOn(bg: Oklch, dark: boolean): string {
+  const start: Oklch = { l: dark ? 0.78 : 0.48, c: Math.min(0.02, bg.c), h: bg.h };
+  return formatOklch(untilReadable(start, formatOklch(bg), dark ? 'lighter' : 'darker'));
+}
+
+/** Light or dark for a page colour: dark when white words read better on it (T76 C4). */
+export function surfaceForPage(pageColor: string): ShopSurface {
+  const page = hexToOklch(pageColor);
+  return page && wordsOn(toGamut(page)).dark ? 'dark' : 'light';
 }
 
 /**
- * Builds the shop palette from one brand colour (hex) and the shop's surface. An unreadable value falls back
- * to the default brand blue.
- * - 60 and 30 stay neutral (a hint of the brand hue only), so photos and the brand colour carry the page.
- * - --shop-10 is the brand colour darkened until white text reaches 4.5:1; a light brand (L 0.7 and up, such
- *   as gold or pale yellow), or one that would change too much, keeps its colour and the text turns black.
- * - --shop-10-text is the brand colour moved until it reads at 4.5:1 on the 60 and 30 surfaces.
- * - An optional page colour (hex) makes the 60 a real colour (decision R52): kept in a readable lightness
- *   band, with white cards on a light page and cards one step lighter than the page on a dark one.
+ * Builds the shop palette (decisions R2, R52, T76). Any page (60), card (30) and brand (10) colour is
+ * allowed; only the words and the brand's lightness move so everything reads:
+ * - Words on the page and on the cards are black or white, whichever reads better (C1).
+ * - --shop-10 keeps the brand's hue and strength; its lightness moves the least it can until the button
+ *   words reach 4.5:1 and the button stands out 3:1 from the page or the cards (C2). A light brand (gold,
+ *   pale yellow) keeps its colour with black words.
+ * - No page colour keeps the neutral page: near white, or near black when `surface` is dark.
+ * - No card colour: white cards on a light page, cards one step lighter on a dark one (C3).
+ * - Light or dark comes from the colours, not from `surface`, once a page colour is set (C4). When the page
+ *   and the cards are on different sides (white cards on a red page), `mixed` is true and the page gets its
+ *   own words, captions and links.
+ * An unreadable brand falls back to the default blue.
  */
 export function shopPalette(
   hex: string,
   surface: ShopSurface = 'light',
   pageColor?: string | null,
+  cardColor?: string | null,
 ): ShopPalette {
   const brand = hexToOklch(hex) ?? hexToOklch(DEFAULT_BRAND_COLOR);
   if (!brand) throw new Error('Default brand colour is invalid');
   const base = toGamut(brand);
 
-  // A light brand (gold, yellow) keeps its colour with black text instead of turning muddy (decision R52).
+  const pageBase = pageColor ? hexToOklch(pageColor) : null;
+  const page: Oklch = pageBase
+    ? toGamut(pageBase)
+    : surface === 'dark'
+      ? { l: 0.16, c: Math.min(0.008, base.c), h: base.h }
+      : { l: 0.982, c: Math.min(0.003, base.c), h: base.h };
+  const pageWords = wordsOn(page);
+  const pageDark = pageWords.dark;
+
+  const cardBase = cardColor ? hexToOklch(cardColor) : null;
+  const card: Oklch = cardBase
+    ? toGamut(cardBase)
+    : pageDark
+      ? pageBase
+        ? toGamut({ ...page, l: page.l + 0.055 })
+        : { l: 0.215, c: Math.min(0.01, base.c), h: base.h }
+      : { l: 1, c: 0, h: 0 };
+  const cardWords = wordsOn(card);
+  const dark = cardWords.dark;
+  const mixed = dark !== pageDark;
+
+  // The brand (10): a light brand keeps its colour with black words (decision R52).
   const keepLight = base.l >= LIGHT_BRAND && contrastOf(base, PALETTE_BLACK) >= MIN_TEXT_CONTRAST;
   let shop10 = keepLight ? null : darkenForWhite(base, Math.max(0, base.l - MAX_DARKEN));
   let foreground = PALETTE_WHITE;
@@ -245,6 +289,38 @@ export function shopPalette(
       shop10 = darkenForWhite(base, 0) ?? { ...base, l: 0.3 };
     }
   }
+  // Buttons must stand out from where they sit (WCAG 1.4.11): the page and the cards both, or else at least
+  // the page (the cart button floats on it). Only the lightness moves, keeping readable words.
+  const pageHex = formatOklch(page);
+  const cardHex = formatOklch(card);
+  const fits = (c: Oklch, both: boolean) =>
+    contrastOf(c, pageHex) >= MIN_UI_CONTRAST &&
+    (!both || contrastOf(c, cardHex) >= MIN_UI_CONTRAST);
+  const wordsFor = (c: Oklch) =>
+    contrastOf(c, PALETTE_WHITE) >= MIN_TEXT_CONTRAST ? PALETTE_WHITE : PALETTE_BLACK;
+  if (!fits(shop10, true)) {
+    let found: Oklch | null = null;
+    for (const both of [true, false]) {
+      for (let d = DARKEN_STEP; d < 0.6 && !found; d += DARKEN_STEP) {
+        for (const l of [shop10.l - d, shop10.l + d]) {
+          if (l <= 0.05 || l >= 0.98) continue;
+          const candidate = toGamut({ ...shop10, l });
+          if (
+            fits(candidate, both) &&
+            contrastOf(candidate, wordsFor(candidate)) >= MIN_TEXT_CONTRAST
+          ) {
+            found = candidate;
+            break;
+          }
+        }
+      }
+      if (found) break;
+    }
+    if (found) {
+      shop10 = found;
+      foreground = wordsFor(found);
+    }
+  }
 
   // Hover goes 0.06 darker; with black text it goes lighter instead so the text stays readable.
   const darkerHover = toGamut({ ...shop10, l: shop10.l - HOVER_STEP });
@@ -253,51 +329,61 @@ export function shopPalette(
       ? darkerHover
       : toGamut({ ...shop10, l: Math.min(0.98, shop10.l + HOVER_STEP) });
 
-  const dark = surface === 'dark';
-  const pageBase = pageColor ? hexToOklch(pageColor) : null;
-  const page = pageBase ? pageFrom(pageBase, dark) : null;
-  let shop60: Oklch = dark
-    ? { l: 0.16, c: Math.min(0.008, base.c), h: base.h }
-    : { l: 0.982, c: Math.min(0.003, base.c), h: base.h };
-  let shop30: Oklch | null = dark ? { l: 0.215, c: Math.min(0.01, base.c), h: base.h } : null;
-  let soft: Oklch = dark
-    ? { l: 0.3, c: Math.min(0.06, base.c), h: base.h }
-    : { l: 0.95, c: Math.min(0.035, base.c), h: base.h };
+  // Chips and selected rows: a soft brand tint a step beyond the surfaces it sits on (page and cards).
+  const pageTinted = Boolean(pageBase) && !mixed && !cardBase;
+  const soft: Oklch = dark
+    ? toGamut(
+        pageTinted
+          ? { l: card.l + 0.1, c: Math.min(0.08, page.c), h: page.h }
+          : { l: Math.min(0.42, card.l + 0.1), c: Math.min(0.06, base.c), h: base.h },
+      )
+    : toGamut({
+        l: Math.min(0.95, (mixed ? card.l : Math.min(page.l, card.l)) - 0.04),
+        c: Math.min(pageTinted ? 0.06 : 0.035, base.c),
+        h: base.h,
+      });
+
+  // With a page colour, quiet fills and lines follow its hue (not when page and cards differ in side).
   let tint: ShopPalette['tint'] = null;
-  if (page) {
-    shop60 = page;
-    if (dark) {
-      // Cards one step up from the page; chips another step up in the page's hue.
-      const card = toGamut({ ...page, l: page.l + 0.055 });
-      shop30 = card;
-      soft = toGamut({ l: card.l + 0.1, c: Math.min(0.08, page.c), h: page.h });
-      tint = {
-        muted: formatOklch({ l: card.l + 0.04, c: Math.min(0.05, page.c), h: page.h }),
-        border: formatOklch({ l: card.l + 0.1, c: Math.min(0.05, page.c), h: page.h }),
-      };
-    } else {
-      // Chips sit a little deeper than the page so they still show on it.
-      soft = toGamut({ l: Math.min(0.92, page.l - 0.04), c: Math.min(0.06, base.c), h: base.h });
-      tint = {
-        muted: formatOklch({ l: page.l - 0.03, c: Math.min(0.03, page.c), h: page.h }),
-        border: formatOklch({ l: page.l - 0.09, c: Math.min(0.04, page.c), h: page.h }),
-      };
-    }
+  if (pageTinted) {
+    tint = dark
+      ? {
+          muted: formatOklch({ l: card.l + 0.04, c: Math.min(0.05, page.c), h: page.h }),
+          border: formatOklch({ l: card.l + 0.1, c: Math.min(0.05, page.c), h: page.h }),
+        }
+      : {
+          muted: formatOklch({ l: page.l - 0.03, c: Math.min(0.03, page.c), h: page.h }),
+          border: formatOklch({ l: page.l - 0.09, c: Math.min(0.04, page.c), h: page.h }),
+        };
   }
-  const direction = dark ? 'lighter' : 'darker';
-  // The text must read on the less contrasting of the two surfaces: 60 on a light shop, 30 on a dark one.
-  const textSurface = formatOklch(dark && shop30 ? shop30 : shop60);
+
+  const direction = (bg: Oklch, isDark: boolean) =>
+    formatOklch(untilReadable(base, formatOklch(bg), isDark ? 'lighter' : 'darker'));
+  // Brand-coloured words (prices, links) must read on the harder of the two surfaces when they share a
+  // side (the darker one on a light shop, the lighter one on a dark shop); else on the cards.
+  const harder = dark === card.l < page.l ? page : card;
+  const linkOn = mixed ? card : harder;
 
   return {
-    shop60: formatOklch(shop60),
-    shop30: shop30 ? formatOklch(shop30) : PALETTE_WHITE,
-    foreground: dark ? PALETTE_LIGHT_TEXT : PALETTE_BLACK,
+    shop60: formatOklch(page),
+    shop30: cardBase || pageDark || dark ? formatOklch(card) : PALETTE_WHITE,
+    foreground: cardWords.text === PALETTE_LIGHT_TEXT ? PALETTE_LIGHT_TEXT : PALETTE_BLACK,
     shop10: formatOklch(shop10),
     shop10Foreground: foreground,
     shop10Hover: formatOklch(hover),
-    shop10Text: formatOklch(untilReadable(base, textSurface, direction)),
+    shop10Text: direction(linkOn, dark),
     shop10Soft: formatOklch(soft),
-    shop10SoftForeground: formatOklch(untilReadable(base, formatOklch(soft), direction)),
+    shop10SoftForeground: formatOklch(
+      untilReadable(base, formatOklch(soft), dark ? 'lighter' : 'darker'),
+    ),
     tint,
+    dark,
+    mixed,
+    page: {
+      foreground: pageWords.text,
+      muted: mutedOn(page, pageDark),
+      link: direction(page, pageDark),
+    },
+    cardMuted: cardBase || mixed ? mutedOn(card, dark) : null,
   };
 }

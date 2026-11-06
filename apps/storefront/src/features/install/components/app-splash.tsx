@@ -8,6 +8,7 @@ export function AppSplash({ name, icon }: { name: string; icon: string | null })
   return (
     <div
       aria-hidden="true"
+      data-page-surface
       className="app-splash fixed inset-0 z-splash flex-col items-center justify-center bg-shop-60 text-foreground"
     >
       <div className="flex flex-col items-center gap-4">

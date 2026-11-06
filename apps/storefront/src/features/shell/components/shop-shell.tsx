@@ -96,7 +96,7 @@ export function ShopShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex min-h-dvh flex-col bg-shop-60 text-foreground">
+    <div data-page-surface className="flex min-h-dvh flex-col bg-shop-60 text-foreground">
       <SkipNav>{words.shell.skipToContent}</SkipNav>
       <TopBar />
       <PullRing store={pullStore} />

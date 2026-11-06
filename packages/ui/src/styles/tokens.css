@@ -472,3 +472,21 @@
   --elevation-lg: 0 4px 12px -2px oklch(0 0 0 / 0.4);
   --elevation-xl: 0 12px 24px -6px oklch(0 0 0 / 0.5);
 }
+
+/* A shop whose cards sit on the other side of its page (white cards on a red page, decision T76): words,
+   captions and links straight on the page take the page's own colours; cards, bars and sheets inside the
+   page go back to the card colours. ShopTheme sets the variables and data-surface-mix. */
+[data-surface-mix='mixed'] [data-page-surface] {
+  --foreground: var(--page-foreground);
+  --muted-foreground: var(--page-muted-foreground);
+  --shop-10-text: var(--page-link);
+  color: var(--page-foreground);
+}
+[data-surface-mix='mixed']
+  [data-page-surface]
+  :is([class*='bg-card'], [class*='bg-popover'], [class*='bg-shop-30'], [class*='bg-background']) {
+  --foreground: var(--card-foreground);
+  --muted-foreground: var(--card-muted-foreground);
+  --shop-10-text: var(--card-link);
+  color: var(--card-foreground);
+}

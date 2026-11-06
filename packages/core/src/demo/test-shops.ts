@@ -46,6 +46,8 @@ const BLANK_STOREFRONT: Storefront = {
     brandColor: '#2456D3',
     surface: 'light',
     pageColor: null,
+    cardColor: null,
+    logoShape: 'circle',
     banners: [],
     bannerSeconds: 5,
     announcement: null,

@@ -11,6 +11,8 @@ export interface StatusLogoProps {
   // The word on a chip under the ring: "Busy", "Closed". Open shows the ring alone (decision R21).
   stateLabel: string;
   size?: 'md' | 'lg' | undefined;
+  // The owner's pick in the Editor (decision T76 C7): a circle or a rounded square.
+  logoShape?: 'circle' | 'rounded' | undefined;
   className?: string | undefined;
 }
 
@@ -35,23 +37,25 @@ export function StatusLogo({
   state,
   stateLabel,
   size = 'md',
+  logoShape = 'circle',
   className,
 }: StatusLogoProps) {
+  const radius = logoShape === 'circle' ? 'rounded-full' : 'rounded-xl';
   return (
     <span
       data-slot="status-logo"
       data-state={state ?? undefined}
-      className={cn('relative inline-flex shrink-0 rounded-full', className)}
+      className={cn('relative inline-flex shrink-0', radius, className)}
     >
       <span
         aria-hidden="true"
-        className={cn('absolute rounded-full', state ? RING_CLASS[state] : '-inset-0.5 bg-border')}
+        className={cn('absolute', radius, state ? RING_CLASS[state] : '-inset-0.5 bg-border')}
       />
       <ShopLogo
         name={name}
         src={src}
         size={size}
-        shape="round"
+        shape={logoShape === 'circle' ? 'round' : 'square'}
         className="relative ring-2 ring-background"
       />
       {state && state !== 'open' ? (

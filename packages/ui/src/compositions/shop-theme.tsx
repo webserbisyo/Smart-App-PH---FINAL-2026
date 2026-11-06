@@ -10,8 +10,10 @@ export interface ShopThemeProps extends Omit<ComponentProps<'div'>, 'style'> {
   brandColor: string;
   // Light or dark page (decision R2). A dark shop also gets the app's dark tokens (muted, borders, states).
   surface?: ShopSurface | undefined;
-  // Optional page colour (hex) for the 60; none keeps the neutral page (decision R52).
+  // Optional page colour (hex) for the 60; none keeps the neutral page (decisions R52, T76).
   pageColor?: string | null | undefined;
+  // Optional card colour (hex) for the 30; none lets the cards follow the page (T76 C3).
+  cardColor?: string | null | undefined;
   // The storefront sets this once: sheets, dialogs and toasts render outside this wrapper (portals), so the
   // shop's colours are copied onto <html> too. The kit leaves it off, since it shows several shops at once.
   withPortals?: boolean | undefined;
@@ -31,7 +33,8 @@ export function shopThemeVars(palette: ShopPalette): CssVarsObject {
     // Keeps the older bg-shop / text-shop utilities on the same colour.
     '--shop-color': palette.shop10,
     // Buttons, rings, cards and inputs follow the shop, never the app's default blue.
-    '--background': palette.shop60,
+    // Sheets and dialogs read as cards when the page is on the other side (white sheets on a red page).
+    '--background': palette.mixed ? palette.shop30 : palette.shop60,
     '--foreground': palette.foreground,
     '--card': palette.shop30,
     '--card-foreground': palette.foreground,
@@ -44,6 +47,14 @@ export function shopThemeVars(palette: ShopPalette): CssVarsObject {
     '--secondary-foreground': palette.shop10SoftForeground,
     '--ring': palette.shop10Text,
     '--focus': palette.shop10Text,
+    // Words straight on the page (60); globals.css applies them inside [data-page-surface] when mixed.
+    '--page-foreground': palette.page.foreground,
+    '--page-muted-foreground': palette.page.muted,
+    '--page-link': palette.page.link,
+    '--card-link': palette.shop10Text,
+    ...(palette.cardMuted
+      ? { '--muted-foreground': palette.cardMuted, '--card-muted-foreground': palette.cardMuted }
+      : {}),
     // With a page colour, quiet fills and lines follow its hue.
     ...(palette.tint
       ? {
@@ -61,17 +72,21 @@ export function ShopTheme({
   brandColor,
   surface = 'light',
   pageColor,
+  cardColor,
   withPortals = false,
   className,
   children,
   ...props
 }: ShopThemeProps) {
-  const vars = shopThemeVars(shopPalette(brandColor, surface, pageColor));
-  const dark = surface === 'dark';
+  const palette = shopPalette(brandColor, surface, pageColor, cardColor);
+  const vars = shopThemeVars(palette);
+  // Cards, sheets and dialogs carry most of the words, so the app's dark tokens follow the cards (T76 C4).
+  const dark = palette.dark;
   return (
     <div
       data-slot="shop-theme"
-      data-surface={surface}
+      data-surface={dark ? 'dark' : 'light'}
+      data-surface-mix={palette.mixed ? 'mixed' : undefined}
       className={cn('contents', dark && 'dark', className)}
       style={cssVars(vars)}
       {...props}

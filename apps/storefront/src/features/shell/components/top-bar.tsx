@@ -122,6 +122,7 @@ export function TopBar() {
             src={logo}
             state={open?.kind ?? null}
             stateLabel={open ? words.shop.openStateShort[open.kind] : ''}
+            logoShape={shop.storefront.look.logoShape}
           />
           <div className="flex min-w-0 flex-col items-start gap-1">
             <button

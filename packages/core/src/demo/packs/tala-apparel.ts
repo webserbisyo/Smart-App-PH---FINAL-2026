@@ -231,6 +231,8 @@ export const TALA_APPAREL_PACK: ShopPack = {
       brandColor: '#C9A227',
       surface: 'dark',
       pageColor: '#253475',
+      cardColor: null,
+      logoShape: 'circle',
       banners: [
         {
           ref: 'demo:tala-apparel/banners/banner-1',

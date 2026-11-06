@@ -18,6 +18,10 @@ export function changeText(change: EditorChange): string {
       return C.surface(change.from, change.to);
     case 'pageColor':
       return C.pageColor(change.to);
+    case 'cardColor':
+      return C.cardColor(change.to);
+    case 'logoShape':
+      return C.logoShape(change.to);
     case 'banners':
       return C.banners(change.from, change.to);
     case 'bannerSeconds':

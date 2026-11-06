@@ -146,6 +146,8 @@ export const AQUALINIS_PACK: ShopPack = {
       brandColor: '#0E7AC4',
       surface: 'light',
       pageColor: '#E2F1FD',
+      cardColor: null,
+      logoShape: 'circle',
       banners: [
         {
           ref: 'demo:aqualinis/banners/banner-1',

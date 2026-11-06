@@ -3704,6 +3704,10 @@ export const editorWords = {
       `Page: ${SURFACE_NAMES[from]} → ${SURFACE_NAMES[to]}`,
     pageColor: (hex: string | null) =>
       hex ? `Page colour: ${hex.toUpperCase()}` : 'Page colour: plain',
+    cardColor: (hex: string | null) =>
+      hex ? `Card colour: ${hex.toUpperCase()}` : 'Card colour: follows the page',
+    logoShape: (shape: 'circle' | 'rounded') =>
+      shape === 'circle' ? 'Logo shape: circle' : 'Logo shape: rounded square',
     banners: (from: number, to: number) =>
       from === to ? 'Banners changed' : `Banners: ${from} → ${to}`,
     bannerSeconds: (n: number) => `Each banner shows ${n} seconds`,
