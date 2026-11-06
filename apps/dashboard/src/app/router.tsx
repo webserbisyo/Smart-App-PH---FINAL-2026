@@ -45,7 +45,7 @@ import { rememberPreviousPath } from './back.js';
 import { requireAuth, requireGuest, signOut } from './guards.js';
 import type { PageMeta } from './page-meta.js';
 import { AppShell } from './shell/app-shell.js';
-import { resolveShop } from './shop.js';
+import { ShopContext, resolveShop } from './shop.js';
 
 const s = words.screens;
 const page = (title: PageMeta['title'], parent?: PageMeta['parent'], hideDock?: boolean) => ({
@@ -81,12 +81,25 @@ const logoutRoute = createRoute({
   component: () => null,
 });
 
+// Full screen, outside the shell, but for the same signed-in owner and shop.
 const editorRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/editor',
-  beforeLoad: requireAuth,
-  component: EditorScreen,
+  beforeLoad: async () => {
+    const claims = await requireAuth();
+    return { shop: resolveShop(claims) };
+  },
+  component: EditorPage,
 });
+
+function EditorPage() {
+  const { shop } = editorRoute.useRouteContext();
+  return (
+    <ShopContext value={shop}>
+      <EditorScreen />
+    </ShopContext>
+  );
+}
 
 // The signed-in shell: without a session every page below redirects to /login.
 const shellRoute = createRoute({

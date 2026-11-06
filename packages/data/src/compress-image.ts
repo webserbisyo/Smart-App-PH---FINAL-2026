@@ -82,11 +82,7 @@ export async function compressImage(file: Blob | File, options?: CompressOptions
             resolve(webpBlob);
             return;
           }
-          canvas.toBlob(
-            (jpegBlob) => resolve(jpegBlob ?? file),
-            'image/jpeg',
-            quality,
-          );
+          canvas.toBlob((jpegBlob) => resolve(jpegBlob ?? file), 'image/jpeg', quality);
         },
         'image/webp',
         quality,

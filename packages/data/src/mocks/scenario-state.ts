@@ -15,6 +15,7 @@ export const MOCK_AREAS = [
   'members',
   'settings',
   'home',
+  'editor',
   'all',
 ] as const;
 // Settings demo states (T66, T67): the plan's place in its month, and a full storage.

@@ -4,6 +4,7 @@ import type {
   CustomerAuthAdapter,
   DataAdapters,
   OwnerCatalogAdapter,
+  OwnerEditorAdapter,
   OwnerHomeAdapter,
   OwnerMembersAdapter,
   OwnerOrdersAdapter,
@@ -138,6 +139,14 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     getHomeTrends: async (input) => (await real()).ownerHome.getHomeTrends(input),
   };
 
+  const ownerEditor: OwnerEditorAdapter = {
+    getStorefrontDraft: async () => (await real()).ownerEditor.getStorefrontDraft(),
+    saveStorefrontDraft: async (input) => (await real()).ownerEditor.saveStorefrontDraft(input),
+    publishStorefront: async (input) => (await real()).ownerEditor.publishStorefront(input),
+    discardStorefrontDraft: async () => (await real()).ownerEditor.discardStorefrontDraft(),
+    createPreviewToken: async () => (await real()).ownerEditor.createPreviewToken(),
+  };
+
   return {
     storefront,
     customerAuth,
@@ -147,5 +156,6 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     ownerMembers,
     ownerSettings,
     ownerHome,
+    ownerEditor,
   };
 }

@@ -118,6 +118,8 @@ import {
 } from './members-view';
 import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
+import { getDeviceStorage } from '../device-storage';
+import { createEditorMock } from './editor';
 import { createHomeMock } from './home';
 import { createSettingsMock } from './settings';
 import { registerTrickleHandler } from './scenario';
@@ -406,6 +408,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     if (existing) return existing;
     const fresh = freshShop(slug);
     if (!fresh) return null;
+    // The look this owner published in the Editor on this device (mock only, T72).
+    if (persistence) editorMock.applyPublished(slug, fresh.shop);
     if (saved) {
       fresh.orders.push(...saved.orders.filter((o) => o.slug === slug));
       for (const m of saved.members.filter((x) => x.slug === slug)) {
@@ -599,6 +603,17 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     seed,
   });
 
+  // Owner Editor (T72 to T75): the draft and the published look are kept on the device per shop.
+  const editorMock = createEditorMock({
+    run: (area, fn) => run(area, fn),
+    requireShop: (slug) => requireShop(slug),
+    ownerShop: () => resolveOwnerShopSlug(),
+    now: () => now(),
+    fail,
+    storage: () => getDeviceStorage().editorDraft,
+    rng: () => rng,
+  });
+
   let idSeq = 0;
   function newId(prefix: string): string {
     idSeq += 1;
@@ -640,7 +655,15 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
 
   async function run<T>(
     area:
-      'storefront' | 'orders' | 'account' | 'auth' | 'catalog' | 'members' | 'settings' | 'home',
+      | 'storefront'
+      | 'orders'
+      | 'account'
+      | 'auth'
+      | 'catalog'
+      | 'members'
+      | 'settings'
+      | 'home'
+      | 'editor',
     fn: () => T,
   ): Promise<T> {
     const sc = scenario();
@@ -2506,11 +2529,13 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     ownerMembers,
     ownerSettings: settingsMock.adapter,
     ownerHome: homeMock.adapter,
+    ownerEditor: editorMock.adapter,
     now,
     reset() {
       state = { shops: new Map(), session: null, codes: {} };
       settingsMock.reset();
       homeMock.reset();
+      if (persistence) editorMock.reset();
       appliedAs = new Map();
       saved = null;
       rng = mulberry32(seed);

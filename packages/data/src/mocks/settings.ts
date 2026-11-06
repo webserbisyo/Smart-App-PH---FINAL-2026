@@ -261,8 +261,9 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         method: m % 3 === 2 ? 'maya' : 'gcash',
         reference: String(1_000_000_000_000 + Math.floor(rng() * 8_999_999_999_999)),
         status: 'approved',
-        submittedAt: new Date(now().getTime() - (30 * m + 31 - (story.paidDays ?? 0)) * DAY)
-          .toISOString(),
+        submittedAt: new Date(
+          now().getTime() - (30 * m + 31 - (story.paidDays ?? 0)) * DAY,
+        ).toISOString(),
         coversUntil: covers,
       });
     }
@@ -363,7 +364,8 @@ export function createSettingsMock(deps: SettingsMockDeps) {
   function refreshExports(o: OwnerState): void {
     const t = now().getTime();
     for (const e of o.exports) {
-      if (e.status === 'preparing' && new Date(e.createdAt).getTime() + EXPORT_MS <= t) finish(o, e);
+      if (e.status === 'preparing' && new Date(e.createdAt).getTime() + EXPORT_MS <= t)
+        finish(o, e);
       if (e.status === 'ready' && e.expiresAt && new Date(e.expiresAt).getTime() <= t) {
         e.status = 'expired';
         e.url = null;
@@ -469,13 +471,21 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         name: 'proofs/list.csv',
         text: csv([
           ['File', 'Sent (Manila)', 'Size (KB)'],
-          ...proofs.map((f) => [`${f.id}.webp`, formatManila(f.at, 'datetime'), Math.round(f.bytes / KB)]),
+          ...proofs.map((f) => [
+            `${f.id}.webp`,
+            formatManila(f.at, 'datetime'),
+            Math.round(f.bytes / KB),
+          ]),
         ]),
       });
     }
     const zip = makeZip(entries, t);
     let url: string | null = null;
-    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function' && typeof Blob !== 'undefined') {
+    if (
+      typeof URL !== 'undefined' &&
+      typeof URL.createObjectURL === 'function' &&
+      typeof Blob !== 'undefined'
+    ) {
       url = URL.createObjectURL(new Blob([zip], { type: 'application/zip' }));
       o.exportBlobs.set(e.id, url);
     }
@@ -501,7 +511,10 @@ export function createSettingsMock(deps: SettingsMockDeps) {
     const today = manilaDate(t);
     // A payment the founder hasn't checked: the demo approves it after a short wait.
     for (const p of o.history) {
-      if (p.status === 'pending' && new Date(p.submittedAt).getTime() + PLAN_APPROVE_MS <= t.getTime()) {
+      if (
+        p.status === 'pending' &&
+        new Date(p.submittedAt).getTime() + PLAN_APPROVE_MS <= t.getTime()
+      ) {
         p.status = 'approved';
         o.paidUntil = p.coversUntil;
         o.trialEndsAt = null;
@@ -635,7 +648,11 @@ export function createSettingsMock(deps: SettingsMockDeps) {
             (!p.accountName || !p.accountNumber),
         );
         if (missing.length > 0)
-          fail('invalid_input', 400, Object.fromEntries(missing.map((p) => [p.method, ['missing']])));
+          fail(
+            'invalid_input',
+            400,
+            Object.fromEntries(missing.map((p) => [p.method, ['missing']])),
+          );
         s.shop.storefront.payments = parsed.data.payments;
         s.shop.storefront.codMaxTotal = parsed.data.codMaxTotal;
         return settingsOf(s);
@@ -733,7 +750,11 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         const parsed = SubmitPlanPaymentInputSchema.safeParse(input);
         if (!parsed.success) fail('invalid_input', 400, { reference: ['invalid'] });
         const ref = parsed.data.reference.replace(/[\s-]/g, '');
-        if (o.history.some((p) => p.reference.replace(/[\s-]/g, '') === ref && p.status !== 'rejected'))
+        if (
+          o.history.some(
+            (p) => p.reference.replace(/[\s-]/g, '') === ref && p.status !== 'rejected',
+          )
+        )
           fail('duplicate_reference', 409);
         if (o.history.some((p) => p.status === 'pending')) fail('payment_not_pending', 409);
         o.history.push({
@@ -763,7 +784,9 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         const latest = lastReadyExport(o);
         const savedCopy =
           files.length > 0 &&
-          files.every((f) => f.kind !== 'proofs' || (latest !== null && f.exportIds.includes(latest.id)));
+          files.every(
+            (f) => f.kind !== 'proofs' || (latest !== null && f.exportIds.includes(latest.id)),
+          );
         return CleanupPreviewSchema.parse({
           kind,
           files: files.length,

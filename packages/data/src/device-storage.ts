@@ -9,6 +9,7 @@ import {
   OrderReceiptSchema,
   OrderTypeEnum,
   ShopKindEnum,
+  StorefrontContentSchema,
   type BasketLine,
   type CheckoutDraft,
   type LastAddress,
@@ -101,6 +102,8 @@ export interface DeviceStorage {
   pushOrders: DeviceEntry<string[]>;
   // Mock mode only: what the customer created on this phone (orders, proofs, member account).
   mockState: DeviceEntry<unknown>;
+  // Mock mode only: the owner's Editor draft (per shop).
+  editorDraft: DeviceEntry<StoredEditor>;
   // Small copies of the proof photos sent from this phone, so the order thread can show them.
   proofPreviews: DeviceEntry<ProofPreview[]>;
   // The member's picture, picked or cropped on this phone (demo until the members area has a database).
@@ -137,6 +140,17 @@ export const SavedReceiptSchema = z.object({
   endedAt: IsoDateTimeSchema.nullable(),
 });
 export type SavedReceipt = z.infer<typeof SavedReceiptSchema>;
+
+// Mock mode only: the Editor's draft and what customers see, per shop, so a reload or a second tab keeps them
+// (decision T72). The API keeps them in storefront_drafts in phase 4.
+export const StoredEditorSchema = z.object({
+  draft: StorefrontContentSchema.nullable(),
+  published: StorefrontContentSchema.nullable(),
+  baseVersion: z.number().int().min(0),
+  contentVersion: z.number().int().min(0),
+  savedAt: IsoDateTimeSchema.nullable(),
+});
+export type StoredEditor = z.infer<typeof StoredEditorSchema>;
 
 // The shop this phone opened last, for the offline page (scope: all shops).
 export const LastShopSchema = z.object({
@@ -225,6 +239,7 @@ export function createDeviceStorage(backend: Backend = pickBackend()): DeviceSto
     lastShop: entry('lastShop', 1, LastShopSchema),
     pushOrders: entry('pushOrders', 1, z.array(z.string().max(80)).max(20)),
     mockState: entry('mockState', 1, z.unknown()),
+    editorDraft: entry('editorDraft', 1, StoredEditorSchema),
     customerAvatar: entry('customerAvatar', 1, CustomerAvatarSchema),
     proofPreviews: entry('proofPreviews', 1, z.array(ProofPreviewSchema).max(PROOF_PREVIEWS_MAX)),
     subscribe(listener) {

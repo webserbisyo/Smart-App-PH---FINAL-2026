@@ -83,6 +83,8 @@ export function PreviewApp({
   const [hovered, setHovered] = useState<EditorSection | null>(null);
   const [show, setShow] = useState<{ index: number; at: number } | undefined>(undefined);
   const scrollTo = useRef<EditorSection | null>(null);
+  // Goes up on every select from the Editor, so the same part scrolls into view again (the frame resized).
+  const [scrollTick, setScrollTick] = useState(0);
 
   const shop = useMemo<PublicShop>(
     () =>
@@ -106,6 +108,7 @@ export function PreviewApp({
         case 'select':
           scrollTo.current = message.section;
           setSelected(message.section);
+          setScrollTick((n) => n + 1);
           break;
         case 'hover':
           setHovered(message.section);
@@ -148,7 +151,7 @@ export function PreviewApp({
       block: 'center',
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
     });
-  }, [selected, shop]);
+  }, [selected, shop, scrollTick]);
 
   return (
     <ShopTheme

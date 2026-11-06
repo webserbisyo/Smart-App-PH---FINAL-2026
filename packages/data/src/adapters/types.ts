@@ -69,6 +69,11 @@ import type {
   ShopFacts,
   StorageSummary,
   SubmitPlanPaymentInput,
+  ContentVersion,
+  PreviewToken,
+  PublishStorefrontInput,
+  SaveStorefrontDraftInput,
+  StorefrontDraftState,
 } from '@smartapp/core';
 
 export interface PlacedOrder {
@@ -272,6 +277,15 @@ export interface OwnerHomeAdapter {
   getHomeTrends(input: { range: HomeRange }): Promise<HomeTrends>;
 }
 
+// Owner Editor (decisions T72 to T75): one draft per shop, saved with the version it started from.
+export interface OwnerEditorAdapter {
+  getStorefrontDraft(): Promise<StorefrontDraftState>;
+  saveStorefrontDraft(input: SaveStorefrontDraftInput): Promise<StorefrontDraftState>;
+  publishStorefront(input: PublishStorefrontInput): Promise<ContentVersion>;
+  discardStorefrontDraft(): Promise<ContentVersion>;
+  createPreviewToken(): Promise<PreviewToken>;
+}
+
 export interface DataAdapters {
   storefront: StorefrontAdapter;
   customerAuth: CustomerAuthAdapter;
@@ -281,4 +295,5 @@ export interface DataAdapters {
   ownerMembers: OwnerMembersAdapter;
   ownerSettings: OwnerSettingsAdapter;
   ownerHome: OwnerHomeAdapter;
+  ownerEditor: OwnerEditorAdapter;
 }
