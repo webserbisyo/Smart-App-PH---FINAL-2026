@@ -14,13 +14,19 @@ import { useShop } from '@/app/shop';
 import { storefrontUrl } from '@/app/use-nav-items';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { useOwnerFirstName } from '@/app/use-owner-name';
+import { BestCard } from '../best-card.js';
 import { BoardCard, isOpenOnBoard } from '../board-card.js';
+import { BusyCard } from '../busy-card.js';
+import { ComingCard, hasBookings } from '../coming-card.js';
 import { CARD } from '../home-card.js';
 import { HomeHello, PauseNotice } from '../home-hello.js';
 import { HourCard } from '../hour-card.js';
+import { MembersCard } from '../members-card.js';
+import { MixCard } from '../mix-card.js';
 import { NeedsCard } from '../needs-card.js';
 import { SetupCard } from '../setup-card.js';
 import { TodayCard } from '../today-card.js';
+import { TrendsCard } from '../trends-card.js';
 import { useHomeView } from '../use-home-view.js';
 
 const W = homeWords;
@@ -60,6 +66,7 @@ export function HomeScreen() {
   } else if (summary) {
     const fresh = summary.daysWithOrders === 0;
     const hasNeeds = needs.length > 0;
+    const booked = hasBookings(summary.comingUp);
     body = (
       <div className="flex flex-col gap-3 md:gap-4">
         {summary.setup ? <SetupCard steps={summary.setup} activeItems={activeItems} /> : null}
@@ -96,6 +103,16 @@ export function HomeScreen() {
               now={now}
               className="md:col-span-2 lg:col-span-1"
             />
+            <BestCard summary={summary} className="md:col-span-2 lg:col-span-1" />
+            <MixCard summary={summary} />
+            <MembersCard members={summary.members} />
+            <TrendsCard
+              className={cn('md:col-span-2', booked ? 'lg:col-span-2' : 'lg:col-span-3')}
+            />
+            {booked ? (
+              <ComingCard days={summary.comingUp} className="md:col-span-2 lg:col-span-1" />
+            ) : null}
+            <BusyCard className="md:col-span-2 lg:col-span-3" />
           </div>
         )}
       </div>

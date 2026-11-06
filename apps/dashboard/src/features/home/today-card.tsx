@@ -125,7 +125,9 @@ function Tile({
       >
         {icon}
       </StatIndicator>
-      <StatValue className="truncate text-xl font-extrabold tabular-nums">{value}</StatValue>
+      <StatValue className="truncate text-lg font-extrabold tabular-nums sm:text-xl">
+        {value}
+      </StatValue>
       <StatDescription className="flex min-w-0 flex-col gap-1">
         <span className="truncate">{note}</span>
         {spark}

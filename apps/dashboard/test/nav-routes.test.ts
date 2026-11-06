@@ -70,9 +70,12 @@ describe('dashboard routes', () => {
     ]);
     expect(NAV.filter((item) => item.placement === 'more').map((item) => item.id)).toEqual([
       'editor',
-      'insights',
       'settings',
     ]);
+  });
+
+  it('sends /insights to the trends on Home while Insights is hidden (T69)', () => {
+    expect(NAV.some((item) => item.path === '/insights')).toBe(false);
   });
 
   it('keeps an area active on its sub-pages, and Home only on /', () => {

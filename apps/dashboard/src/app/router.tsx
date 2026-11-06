@@ -18,7 +18,9 @@ import { NewCatalogItemScreen } from '../features/catalog/screens/new-item.js';
 import { CatalogSearchSchema, NewItemSearchSchema } from '../features/catalog/tabs.js';
 import { EditorScreen } from '../features/editor/screens/editor.js';
 import { HomeScreen } from '../features/home/screens/home.js';
-import { InsightsScreen } from '../features/insights/screens/insights.js';
+import { HomeSearchSchema } from '../features/home/search.js';
+// Insights is hidden for launch (decision T69); its screen stays for later.
+// import { InsightsScreen } from '../features/insights/screens/insights.js';
 import { InsightsSearchSchema } from '../features/insights/tabs.js';
 import { PrizeClaimsScreen } from '../features/members/screens/claims.js';
 import { FindMemberScreen } from '../features/members/screens/find-member.js';
@@ -114,11 +116,13 @@ function shellPage<TPath extends string>(
   return createRoute({ getParentRoute: () => shellRoute, path, component, staticData: meta });
 }
 
-const homeRoute = shellPage(
-  '/',
-  HomeScreen,
-  page(() => s.home.title),
-);
+const homeRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/',
+  validateSearch: HomeSearchSchema,
+  component: HomeScreen,
+  staticData: page(() => s.home.title),
+});
 
 const ordersRoute = createRoute({
   getParentRoute: () => shellRoute,
@@ -205,11 +209,20 @@ const findMemberRoute = shellPage(
   page(() => membersWords.find.title, members),
 );
 
+// Insights is hidden for launch (decision T69): old links and bookmarks open Home's trends with the same range.
 const insightsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/insights',
   validateSearch: InsightsSearchSchema,
-  component: InsightsScreen,
+  beforeLoad: ({ search }) => {
+    throw redirect({
+      to: '/',
+      search: { range: search.range === '30d' ? '30d' : undefined },
+      hash: 'trends',
+      replace: true,
+    });
+  },
+  // component: InsightsScreen,
   staticData: page(() => s.insights.title),
 });
 

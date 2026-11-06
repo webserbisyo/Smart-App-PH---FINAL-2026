@@ -1,5 +1,4 @@
 import {
-  ChartColumnIcon,
   ExternalLinkIcon,
   HouseIcon,
   PackageIcon,
@@ -32,13 +31,15 @@ export const NAV = [
   { id: 'catalog', path: '/catalog', icon: 'catalog', words: 'catalog', placement: 'dock' },
   { id: 'members', path: '/members', icon: UsersIcon, words: 'members', placement: 'dock' },
   { id: 'editor', path: '/editor', icon: PaintbrushIcon, words: 'editor', placement: 'more' },
-  {
-    id: 'insights',
-    path: '/insights',
-    icon: ChartColumnIcon,
-    words: 'insights',
-    placement: 'more',
-  },
+  // Insights is hidden for launch (decision T69): its 7 and 30 day trends live on Home, and /insights
+  // opens them. Put this back to bring the page back.
+  // {
+  //   id: 'insights',
+  //   path: '/insights',
+  //   icon: ChartColumnIcon,
+  //   words: 'insights',
+  //   placement: 'more',
+  // },
   { id: 'settings', path: '/settings', icon: SettingsIcon, words: 'settings', placement: 'more' },
 ] as const satisfies readonly {
   id: string;

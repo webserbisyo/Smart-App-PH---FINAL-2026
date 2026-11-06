@@ -3186,10 +3186,17 @@ export const settingsWords = {
 
 // Owner Home (decisions T69 to T71). Today is compared in words only; the 7 and 30 days in %.
 const plural = (n: number, one: string, many: string): string => (n === 1 ? one : many);
+const WEEKDAYS = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const;
 const weekdayLong = (date: string): string =>
-  ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
-    new Date(`${date}T00:00:00Z`).getUTCDay()
-  ] ?? '';
+  WEEKDAYS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? '';
 
 export const homeWords = {
   weekday: weekdayLong,
@@ -3337,13 +3344,15 @@ export const homeWords = {
   best: {
     title: 'Best sellers',
     hint: 'By how many were sold',
+    period: 'Period',
     today: 'Today',
     week: '7 days',
     soldOut: 'Sold out',
     sold: (n: number) => `${n} sold`,
+    rowAria: (rank: number, name: string, qty: number, sales: string) =>
+      `${rank}. ${name}: ${qty} sold, ${sales}`,
     idle: (n: number) => `${n} ${plural(n, 'item hasn’t', 'items haven’t')} sold in 14 days.`,
-    seeThem: 'See them',
-    emptyToday: 'Nothing sold yet today.',
+    emptyToday: 'Nothing sold yet today. Switch to 7 days.',
     emptyWeek: 'Nothing sold in the last 7 days.',
   },
   mix: {
@@ -3351,6 +3360,7 @@ export const homeWords = {
     hint: 'Today, share of sales',
     types: 'Order type',
     methods: 'Payment',
+    type: { walk_in: 'Walk-in', pickup: 'Pickup', delivery: 'Delivery' },
     method: {
       cash: 'Cash',
       cod: 'COD',
@@ -3361,12 +3371,15 @@ export const homeWords = {
     },
     row: (label: string, orders: number) => `${label} · ${orders}`,
     percent: (n: number) => `${n}%`,
+    barAria: (rows: string) => `Share of today’s sales: ${rows}`,
+    barRow: (label: string, percent: number) => `${label} ${percent}%`,
     empty: 'Shows once today has orders.',
   },
   members: {
     title: 'Members today',
     open: 'Open',
     share: (n: number) => `${n}% of today’s sales came from members`,
+    plain: 'Stamps and rewards today',
     stamps: (n: number) => `${plural(n, 'stamp', 'stamps')} given`,
     joined: 'joined',
     rewardsUsed: (n: number) => `${plural(n, 'reward', 'rewards')} used`,
@@ -3380,6 +3393,9 @@ export const homeWords = {
     orders: (n: number) => `${n} ${plural(n, 'booking', 'bookings')}`,
     open: 'See bookings',
     tomorrow: 'Tomorrow',
+    dayAria: (day: string, n: number, total: string) =>
+      `${day}: ${n} ${plural(n, 'booking', 'bookings')}, ${total}`,
+    none: '–',
   },
   trends: {
     title: (days: number) => `Last ${days} days`,
@@ -3389,13 +3405,17 @@ export const homeWords = {
     orders: 'Orders',
     average: 'Average order',
     joined: 'New members',
-    change: (n: number) => `${n > 0 ? '↑' : '↓'} ${Math.abs(n)}%`,
+    change: (n: number) => `${n > 0 ? '+' : '−'}${Math.abs(n)}%`,
     changeAria: (n: number) => `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)}% against the days before`,
     same: 'Same as before',
     today: 'Today',
     bestDay: (day: string, sales: string, orders: number) =>
       `Best day: ${day}, ${sales} from ${orders} ${plural(orders, 'order', 'orders')}.`,
     before: 'Days before',
+    rangeLabel: 'Range',
+    chartAria: (days: number) =>
+      `Daily sales for the last ${days} days, against the ${days} days before`,
+    tipOrders: (n: number) => `${n} ${plural(n, 'order', 'orders')}`,
     empty: 'Your first week fills in here.',
   },
   busy: {
@@ -3405,8 +3425,11 @@ export const homeWords = {
     more: 'More',
     sentence: (busiest: string, quietest: string | null) =>
       quietest ? `Busiest: ${busiest}. Quietest open hour: ${quietest}.` : `Busiest: ${busiest}.`,
-    slot: (day: string, hour: string) => `${day}s ${hour}`,
-    cell: (day: string, hour: string, orders: string) => `${day} ${hour}: ${orders}`,
+    slot: (weekday: number, hour: string) => `${WEEKDAYS[weekday] ?? ''}s ${hour}`,
+    rowLabel: (weekday: number) => (WEEKDAYS[weekday] ?? '').slice(0, 3),
+    cell: (weekday: number, hour: string, orders: number) =>
+      `${WEEKDAYS[weekday] ?? ''}s ${hour}: about ${Math.round(orders * 10) / 10} ${plural(orders, 'order', 'orders')}`,
+    mapAria: 'Orders per hour by weekday, last 4 weeks',
     waiting: (days: number) => `Fills in after two weeks of orders (${days} of 14 days so far).`,
   },
   empty: {
