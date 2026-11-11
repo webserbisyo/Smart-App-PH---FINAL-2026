@@ -26,7 +26,7 @@ export function BrandPanel({ name, tagline, logo, ratio = '21:9', className }: B
       <div className="relative flex size-full items-center gap-4 p-4 md:gap-6 md:p-8">
         <ShopLogo name={name} src={logo} size="lg" />
         <div className="min-w-0">
-          <p className="truncate text-lg font-semibold md:text-2xl">{name}</p>
+          <p className="truncate font-heading text-lg font-semibold md:text-2xl">{name}</p>
           {tagline ? (
             <p className="line-clamp-2 text-sm text-muted-foreground md:text-base">{tagline}</p>
           ) : null}

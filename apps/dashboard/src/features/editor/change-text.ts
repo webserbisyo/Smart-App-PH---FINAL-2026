@@ -22,6 +22,8 @@ export function changeText(change: EditorChange): string {
       return C.cardColor(change.to);
     case 'logoShape':
       return C.logoShape(change.to);
+    case 'fontPair':
+      return C.fontPair(editorWords.brand.fontPairs[change.to].name);
     case 'banners':
       return C.banners(change.from, change.to);
     case 'bannerSeconds':

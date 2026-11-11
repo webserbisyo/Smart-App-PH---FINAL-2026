@@ -253,6 +253,7 @@ export const KAPE_JUAN_PACK: ShopPack = {
       pageColor: '#EEE2CF',
       cardColor: null,
       logoShape: 'circle',
+      fontPair: 'cafe',
       banners: [
         { ref: 'demo:kape-juan/banners/banner-1', alt: 'Barako coffee in warm morning light' },
         {

@@ -42,6 +42,7 @@ import { AnyColourPicker } from '../any-colour-picker.js';
 import { LogoLoupe } from '../logo-loupe.js';
 import { LogoPlaces } from '../logo-places.js';
 import { removeWhiteBackground, squareLogo } from '../logo-tools.js';
+import { FontPicker } from '../font-picker.js';
 import { PaletteCheck } from '../palette-check.js';
 import { StyleCard, styleName } from '../style-card.js';
 import { useLogoColours } from '../use-logo-colours.js';
@@ -381,6 +382,15 @@ export function BrandPanel({ content, update }: PanelProps) {
           </ul>
         ) : null}
       </section>
+
+      <FontPicker
+        value={look.fontPair}
+        shopName={shop.name}
+        onChange={(pair) => {
+          setLook({ fontPair: pair }, 'font-pair');
+          notify({ title: W.fontOn(W.fontPairs[pair].name), tone: 'success' });
+        }}
+      />
 
       <Collapsible open={tuneOpen} onOpenChange={setTuneOpen}>
         <CollapsibleTrigger

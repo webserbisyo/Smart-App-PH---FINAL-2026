@@ -1,10 +1,25 @@
 @import 'tailwindcss';
 @source '../';
 @import '@fontsource-variable/plus-jakarta-sans';
+/* The shop font pairs (decision T79). Only @font-face rules: a browser downloads a family only when a page
+   uses it, so a customer gets their shop's pair and nothing else. */
+@import '@fontsource-variable/fredoka';
+@import '@fontsource-variable/nunito';
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/dm-sans';
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/figtree';
+@import '@fontsource-variable/playfair-display';
+@import '@fontsource-variable/manrope';
+@import '@fontsource/young-serif';
+@import '@fontsource-variable/baloo-2';
+@import '@fontsource-variable/sora';
+@import '@fontsource-variable/outfit';
 @import './tokens.css';
 
 @theme inline {
   --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -1060,6 +1075,16 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+
+  /* Titles wear the shop's heading font (decision T79); the dashboard's is the same as its body font. A
+     heading font with one weight (Young Serif) is shown as drawn, never made bold by the browser. */
+  h1,
+  h2,
+  h3,
+  .font-heading {
+    font-family: var(--font-heading);
+    font-synthesis-weight: none;
   }
 
   body {

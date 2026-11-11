@@ -97,7 +97,7 @@ export function BannerFrame({
             {title ? (
               <p
                 className={cn(
-                  'text-base leading-tight font-semibold tracking-tight text-balance sm:text-lg md:text-2xl',
+                  'font-heading text-base leading-tight font-semibold tracking-tight text-balance sm:text-lg md:text-2xl',
                   // While the owner types, the whole line shows.
                   !slide.titleSlot && 'line-clamp-2',
                 )}

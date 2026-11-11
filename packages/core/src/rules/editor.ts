@@ -1,7 +1,7 @@
 // Editor rules (decisions T72 to T75): what a draft holds, how it lands on the shop, and what changed since
 // customers last saw the page. Pure functions, shared by the Editor, the preview page and the mock.
 import type { EditorSection, StorefrontContent } from '../schemas/editor.js';
-import type { LogoShape, ShopSurface } from '../schemas/enums.js';
+import type { FontPair, LogoShape, ShopSurface } from '../schemas/enums.js';
 import type { SectionSwitches, Storefront } from '../schemas/storefront.js';
 import { hexToOklch } from './palette.js';
 
@@ -89,6 +89,7 @@ export type EditorChange =
   | { kind: 'pageColor'; to: string | null }
   | { kind: 'cardColor'; to: string | null }
   | { kind: 'logoShape'; to: LogoShape }
+  | { kind: 'fontPair'; to: FontPair }
   | { kind: 'banners'; from: number; to: number }
   | { kind: 'bannerSeconds'; to: number }
   | { kind: 'announcement'; how: 'added' | 'removed' | 'changed' }
@@ -118,6 +119,7 @@ export function editorChanges(
   if ((a.cardColor ?? '').toLowerCase() !== (b.cardColor ?? '').toLowerCase())
     out.push({ kind: 'cardColor', to: b.cardColor });
   if (a.logoShape !== b.logoShape) out.push({ kind: 'logoShape', to: b.logoShape });
+  if (a.fontPair !== b.fontPair) out.push({ kind: 'fontPair', to: b.fontPair });
   if ((published.tagline ?? '') !== (draft.tagline ?? '')) out.push({ kind: 'tagline' });
   if (stable(a.banners) !== stable(b.banners))
     out.push({ kind: 'banners', from: a.banners.length, to: b.banners.length });

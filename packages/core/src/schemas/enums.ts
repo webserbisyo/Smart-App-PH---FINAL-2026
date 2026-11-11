@@ -28,6 +28,20 @@ export const LOGO_SHAPES = ['circle', 'rounded'] as const;
 export const LogoShapeEnum = z.enum(LOGO_SHAPES);
 export type LogoShape = z.infer<typeof LogoShapeEnum>;
 
+// The shop's font pair, one heading and one body font for every page (decision T79).
+export const FONT_PAIRS = [
+  'malinaw',
+  'friendly',
+  'street',
+  'cafe',
+  'elegant',
+  'bakery',
+  'playful',
+  'modern',
+] as const;
+export const FontPairEnum = z.enum(FONT_PAIRS);
+export type FontPair = z.infer<typeof FontPairEnum>;
+
 export const PAYMENT_STATUSES = ['unpaid', 'pending', 'paid', 'refunded'] as const;
 export const PaymentStatusEnum = z.enum(PAYMENT_STATUSES);
 export type PaymentStatus = z.infer<typeof PaymentStatusEnum>;

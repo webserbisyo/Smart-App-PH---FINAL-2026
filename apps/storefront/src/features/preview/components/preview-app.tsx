@@ -332,6 +332,7 @@ export function PreviewApp({
       surface={look.surface}
       pageColor={look.pageColor}
       cardColor={look.cardColor}
+      fontPair={look.fontPair}
       withPortals
     >
       <StorefrontDataProvider slug={shop.storefront.slug} source={source} initialShop={shop}>

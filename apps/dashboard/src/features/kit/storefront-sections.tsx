@@ -11,6 +11,8 @@ import {
   artPath,
   contrastRatio,
   DEMO_SHOPS,
+  editorWords,
+  FONT_PAIRS,
   imageSources,
   SHOP_PACKS,
   shopPalette,
@@ -48,6 +50,8 @@ import { startReveal } from '@smartapp/ui/lib/reveal-clip';
 import { AddToCartButton } from '@smartapp/ui/vendor/opensource-ui/add-to-cart';
 import { LikeButton } from '@smartapp/ui/vendor/opensource-ui/like-toggle';
 import { ThermalReceiptCard } from '@smartapp/ui/vendor/opensource-ui/thermal-receipt';
+import { cssVars } from '@smartapp/ui/lib/css-vars';
+import { fontPairVars } from '@smartapp/ui/lib/font-pairs';
 import { env } from '@/app/env';
 import { KitSection } from './kit-section.js';
 import { KitShopProvider } from './kit-shop.js';
@@ -739,6 +743,29 @@ export function StorefrontSections() {
               surface={summary.surface}
               pageColor={summary.pageColor}
             />
+          </KitSection>
+
+          <KitSection
+            title="Shop font pairs (Fontsource)"
+            library="Fontsource"
+            path="packages/ui/src/lib/font-pairs.ts · globals.css @import · ShopTheme fontPair"
+            usedIn="storefront (one pair per shop), Editor Style, kit"
+          >
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {FONT_PAIRS.map((pair) => (
+                <div
+                  key={pair}
+                  style={cssVars(fontPairVars(pair))}
+                  className="flex flex-col gap-1 rounded-xl border border-border bg-card p-3 font-sans text-card-foreground"
+                >
+                  <span className="font-heading text-xl font-semibold">{summary.name}</span>
+                  <span className="text-sm">
+                    {editorWords.brand.fontPairs[pair].name} ·{' '}
+                    {editorWords.brand.fontPairs[pair].goodFor}
+                  </span>
+                </div>
+              ))}
+            </div>
           </KitSection>
 
           <KitSection

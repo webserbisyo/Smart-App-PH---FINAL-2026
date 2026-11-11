@@ -70,13 +70,14 @@ async function ShopFrame({ params, children }: ShopLayoutProps) {
   const shop = getStorefrontForServer(slug);
   // Unknown, pending or suspended: the page calls notFound() (Cache Components wants it there).
   if (!shop) return children;
-  const { brandColor, surface, pageColor, cardColor } = shop.storefront.look;
+  const { brandColor, surface, pageColor, cardColor, fontPair } = shop.storefront.look;
   return (
     <ShopTheme
       brandColor={brandColor}
       surface={surface}
       pageColor={pageColor}
       cardColor={cardColor}
+      fontPair={fontPair}
       withPortals
     >
       {/* Per-shop theme-color: the page colour (shop-60), so the phone's status bar meets the glass top bar.

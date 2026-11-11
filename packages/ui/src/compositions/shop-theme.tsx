@@ -1,8 +1,9 @@
 import type { ComponentProps } from 'react';
 import { cn } from 'cn';
 import { shopPalette, type ShopPalette } from '@smartapp/core/rules/palette';
-import type { ShopSurface } from '@smartapp/core/schemas/enums';
+import type { FontPair, ShopSurface } from '@smartapp/core/schemas/enums';
 import { cssVars, type CssVarsObject } from '../lib/css-vars';
+import { fontPairVars } from '../lib/font-pairs';
 import { ShopThemeDocument } from './shop-theme-document';
 
 export interface ShopThemeProps extends Omit<ComponentProps<'div'>, 'style'> {
@@ -14,6 +15,8 @@ export interface ShopThemeProps extends Omit<ComponentProps<'div'>, 'style'> {
   pageColor?: string | null | undefined;
   // Optional card colour (hex) for the 30; none lets the cards follow the page (T76 C3).
   cardColor?: string | null | undefined;
+  // The shop's heading and body fonts (decision T79); none keeps Plus Jakarta Sans.
+  fontPair?: FontPair | undefined;
   // The storefront sets this once: sheets, dialogs and toasts render outside this wrapper (portals), so the
   // shop's colours are copied onto <html> too. The kit leaves it off, since it shows several shops at once.
   withPortals?: boolean | undefined;
@@ -73,13 +76,14 @@ export function ShopTheme({
   surface = 'light',
   pageColor,
   cardColor,
+  fontPair = 'malinaw',
   withPortals = false,
   className,
   children,
   ...props
 }: ShopThemeProps) {
   const palette = shopPalette(brandColor, surface, pageColor, cardColor);
-  const vars = shopThemeVars(palette);
+  const vars = { ...shopThemeVars(palette), ...fontPairVars(fontPair) };
   // Cards, sheets and dialogs carry most of the words, so the app's dark tokens follow the cards (T76 C4).
   const dark = palette.dark;
   return (
@@ -87,7 +91,8 @@ export function ShopTheme({
       data-slot="shop-theme"
       data-surface={dark ? 'dark' : 'light'}
       data-surface-mix={palette.mixed ? 'mixed' : undefined}
-      className={cn('contents', dark && 'dark', className)}
+      data-font-pair={fontPair}
+      className={cn('contents font-sans', dark && 'dark', className)}
       style={cssVars(vars)}
       {...props}
     >

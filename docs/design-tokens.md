@@ -103,7 +103,7 @@ Eight backgrounds behind the owner's face or initials, the same in light and dar
 
 ## Type, shape, motion
 
-- Font: Plus Jakarta Sans (variable, self-hosted); numbers with `tabular-nums`. Money as `₱1,234` (no `.00` for whole pesos); prices never wrap.
+- Font: Plus Jakarta Sans (variable, self-hosted); numbers with `tabular-nums`. Shops pick one of 8 font pairs (decision T79): `--font-sans` is the body font and `--font-heading` the title font (`font-heading`; `h1` to `h3` get it by themselves), set by `ShopTheme` from `packages/ui/src/lib/font-pairs.ts`. Money as `₱1,234` (no `.00` for whole pesos); prices never wrap.
 - Type scale: 12, 14, 16, 18, 22, 28 px (in rem, so the phone's text size setting scales the app). Weights 400 and 600; 700 only for prices and order numbers.
 - Space: 4 px grid. Page gutter 16 px on phone, 24 px on desktop. Card padding 16 px phone, 20 px desktop.
 - Radius: shadcn default scale with `--radius: 0.625rem` in `:root` and mapped in `@theme inline` (`--radius-sm: calc(var(--radius) * 0.6)`, `--radius-md: calc(var(--radius) * 0.8)`, `--radius-lg: var(--radius)`, `--radius-xl: calc(var(--radius) * 1.4)`); chips and pills fully round.

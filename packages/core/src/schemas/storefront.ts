@@ -14,6 +14,7 @@ import {
   BannerLinkKindEnum,
   OrderTypeEnum,
   PaymentMethodEnum,
+  FontPairEnum,
   LogoShapeEnum,
   ShopSurfaceEnum,
   SlotLengthSchema,
@@ -102,6 +103,8 @@ export const ShopLookSchema = z.object({
     .default(null),
   // The logo's frame (T76 C7).
   logoShape: LogoShapeEnum.default('circle'),
+  // One font pair for the whole shop (decision T79).
+  fontPair: FontPairEnum.default('malinaw'),
   banners: z.array(BannerSchema).max(3),
   bannerSeconds: z.number().int().min(3).max(10).default(5),
   announcement: AnnouncementSchema.nullable(),

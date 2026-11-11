@@ -3636,6 +3636,19 @@ export const editorWords = {
     placeIcon: 'App icon',
     placeSplash: 'Opening screen',
     placeShare: 'Shared link',
+    fonts: 'Fonts',
+    fontsNote: 'One font for titles and one for the rest, on every page of your shop.',
+    fontOn: (name: string) => `${name} fonts on`,
+    fontPairs: {
+      malinaw: { name: 'Malinaw', goodFor: 'Any shop' },
+      friendly: { name: 'Friendly', goodFor: 'Milk tea, desserts' },
+      street: { name: 'Street', goodFor: 'Burgers, street food' },
+      cafe: { name: 'Café', goodFor: 'Coffee, brunch' },
+      elegant: { name: 'Elegant', goodFor: 'Clothing, gifts' },
+      bakery: { name: 'Bakery', goodFor: 'Bread, cakes' },
+      playful: { name: 'Playful', goodFor: 'Kids, snacks' },
+      modern: { name: 'Modern', goodFor: 'Gadgets, water, retail' },
+    },
     styles: 'Pick a style',
     stylesNote: 'Made from your logo on this device',
     stylesNoLogo: 'Made from your brand colour. Add your logo for styles that match it.',
@@ -3811,6 +3824,7 @@ export const editorWords = {
       hex ? `Card colour: ${hex.toUpperCase()}` : 'Card colour: follows the page',
     logoShape: (shape: 'circle' | 'rounded') =>
       shape === 'circle' ? 'Logo shape: circle' : 'Logo shape: rounded square',
+    fontPair: (name: string) => `Fonts: ${name}`,
     banners: (from: number, to: number) =>
       from === to ? 'Banners changed' : `Banners: ${from} → ${to}`,
     bannerSeconds: (n: number) => `Each banner shows ${n} seconds`,

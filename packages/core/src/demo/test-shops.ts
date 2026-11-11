@@ -48,6 +48,7 @@ const BLANK_STOREFRONT: Storefront = {
     pageColor: null,
     cardColor: null,
     logoShape: 'circle',
+    fontPair: 'malinaw',
     banners: [],
     bannerSeconds: 5,
     announcement: null,

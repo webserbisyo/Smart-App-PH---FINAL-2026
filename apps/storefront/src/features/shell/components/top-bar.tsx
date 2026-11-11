@@ -130,7 +130,7 @@ export function TopBar() {
               aria-haspopup="dialog"
               aria-label={words.storefrontShell.shopInfo(name, open?.text ?? '')}
               onClick={() => setInfoOpen(true)}
-              className="max-w-full truncate rounded-sm text-left text-base leading-tight font-semibold outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
+              className="max-w-full truncate rounded-sm text-left font-heading text-base leading-tight font-semibold outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-2 focus-visible:after:ring-ring"
             >
               {name}
             </button>
