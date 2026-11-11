@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   CalendarClockIcon,
+  CheckIcon,
   ChevronDownIcon,
   CircleXIcon,
   ExternalLinkIcon,
@@ -22,6 +23,7 @@ import {
   formatClock,
   formatManila,
   formatPeso,
+  hasReference,
   isFinal,
   isPayLater,
   moveTargets,
@@ -51,6 +53,7 @@ import {
 } from '@smartapp/ui/components/alert-dialog';
 import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
 import { Badge } from '@smartapp/ui/components/reui/badge';
+import { Bubble, BubbleContent } from '@smartapp/ui/components/bubble';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Collapsible,
@@ -69,6 +72,12 @@ import {
 } from '@smartapp/ui/components/dropdown-menu';
 import { Field, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
+import {
+  Message,
+  MessageContent,
+  MessageFooter,
+  MessageGroup,
+} from '@smartapp/ui/components/message';
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import {
@@ -116,8 +125,10 @@ import { useNow } from '@/app/orders/use-now';
 import { useStepChange } from '@/app/orders/use-step-change';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { ChangeTimeDialog } from './change-time-dialog.js';
+import { MessengerOrderButton } from './messenger-inbox.js';
 
 const CANCEL_REASON_KEYS = ['sold_out', 'closing_early', 'customer_asked', 'other'] as const;
+const REJECT_REASON_KEYS = ['amount', 'unclear', 'account', 'missing'] as const;
 type CancelReasonKey = (typeof CANCEL_REASON_KEYS)[number];
 
 /** The board's card shape from the full order, for an order opened from a link (no card loaded yet). */
@@ -541,9 +552,7 @@ function PaymentSection({
   const approve = useAsyncAction();
   const recordAction = useAsyncAction();
   const [rejectOpen, setRejectOpen] = React.useState(false);
-  const [rejectReason, setRejectReason] = React.useState<string>(
-    ordersWords.detail.rejectReasonDefault,
-  );
+  const [rejectReason, setRejectReason] = React.useState('');
   const [zoom, setZoom] = React.useState<string | null>(null);
   const [broken, setBroken] = React.useState<ReadonlySet<string>>(() => new Set());
   const proofs = detail?.proofs ?? [];
@@ -557,48 +566,90 @@ function PaymentSection({
       action={<PaymentChip order={order} now={now} />}
     >
       {loading && !detail ? <Skeleton className="h-16 w-full rounded-xl" /> : null}
-      {[...proofs].reverse().map((proof) => (
-        <div key={proof.id} className="flex gap-3 rounded-xl border p-3">
-          <button
-            type="button"
-            onClick={() => setZoom(proof.path)}
-            className="size-16 shrink-0 overflow-hidden rounded-lg border bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            aria-label={ordersWords.detail.viewProof}
-          >
-            {broken.has(proof.id) ? (
-              <ImageOffIcon className="m-auto size-5 text-muted-foreground" aria-hidden="true" />
-            ) : (
-              <img
-                src={proof.path}
-                alt={ordersWords.detail.proofAlt(orderNoLabel(order.orderNo))}
-                className="size-full object-cover"
-                onError={() => setBroken((prev) => new Set([...prev, proof.id]))}
-              />
-            )}
-          </button>
-          <div className="min-w-0 flex-1 space-y-1 text-sm">
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-muted-foreground">{ordersWords.detail.reference}</span>
-              <span className="font-mono font-semibold">{proof.referenceNo}</span>
-              <CopyButton value={proof.referenceNo} iconOnly className="size-8" />
-            </div>
-            <p className="text-xs text-muted-foreground tabular-nums">
-              {formatClock(proof.uploadedAt)} ·{' '}
-              {proof.status === 'pending'
-                ? ordersWords.detail.proofPending
-                : proof.status === 'approved'
-                  ? ordersWords.detail.proofApproved
-                  : ordersWords.detail.proofRejected}
-            </p>
-            {proof.rejectReason ? (
-              <p className="text-xs text-destructive-text">{proof.rejectReason}</p>
-            ) : null}
-            {broken.has(proof.id) ? (
-              <p className="text-xs text-muted-foreground">{ordersWords.detail.proofMissing}</p>
-            ) : null}
-          </div>
-        </div>
-      ))}
+      {proofs.length > 0 ? (
+        // The payment chat (T81): the customer's photos on the left, the shop's answers on the right,
+        // the same lines the customer sees in their order chat.
+        <MessageGroup className="gap-3">
+          {proofs.map((proof) => (
+            <React.Fragment key={proof.id}>
+              <Message>
+                <MessageContent>
+                  <button
+                    type="button"
+                    onClick={() => setZoom(proof.path)}
+                    className="size-28 shrink-0 overflow-hidden rounded-xl border bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    aria-label={ordersWords.detail.viewProof}
+                  >
+                    {broken.has(proof.id) ? (
+                      <ImageOffIcon
+                        className="m-auto size-6 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <img
+                        src={proof.path}
+                        alt={ordersWords.detail.proofAlt(orderNoLabel(order.orderNo))}
+                        className="size-full object-cover"
+                        onError={() => setBroken((prev) => new Set([...prev, proof.id]))}
+                      />
+                    )}
+                  </button>
+                  <Bubble variant="muted">
+                    {hasReference(proof.referenceNo) ? (
+                      <BubbleContent className="flex flex-col gap-0.5">
+                        <span className="text-xs text-muted-foreground">
+                          {ordersWords.detail.reference}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span className="font-mono font-semibold">{proof.referenceNo}</span>
+                          <CopyButton value={proof.referenceNo} iconOnly className="size-8" />
+                        </span>
+                      </BubbleContent>
+                    ) : (
+                      <BubbleContent className="text-muted-foreground">
+                        {ordersWords.detail.noReference}
+                      </BubbleContent>
+                    )}
+                  </Bubble>
+                  <MessageFooter className="tabular-nums">
+                    {formatClock(proof.uploadedAt)} ·{' '}
+                    {proof.status === 'pending'
+                      ? ordersWords.detail.proofPending
+                      : proof.status === 'approved'
+                        ? ordersWords.detail.proofApproved
+                        : ordersWords.detail.proofRejected}
+                  </MessageFooter>
+                  {broken.has(proof.id) ? (
+                    <p className="text-xs text-muted-foreground">
+                      {ordersWords.detail.proofMissing}
+                    </p>
+                  ) : null}
+                </MessageContent>
+              </Message>
+              {proof.status === 'pending' ? null : (
+                <Message align="end">
+                  <MessageContent>
+                    <Bubble variant={proof.status === 'approved' ? 'default' : 'destructive'}>
+                      <BubbleContent className="flex items-start gap-1.5">
+                        {proof.status === 'approved' ? (
+                          <CheckIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                        ) : (
+                          <XIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                        )}
+                        {proof.status === 'approved'
+                          ? ordersWords.detail.youApproved
+                          : ordersWords.detail.youRejected(
+                              proof.rejectReason ?? ordersWords.detail.proofRejected,
+                            )}
+                      </BubbleContent>
+                    </Bubble>
+                  </MessageContent>
+                </Message>
+              )}
+            </React.Fragment>
+          ))}
+        </MessageGroup>
+      ) : null}
 
       {pending && order.paymentStatus === 'pending' ? (
         <div className="space-y-2">
@@ -662,15 +713,36 @@ function PaymentSection({
       <AlertDialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{ordersWords.detail.rejectPayment}</AlertDialogTitle>
+            <AlertDialogTitle>{ordersWords.detail.rejectTitle}</AlertDialogTitle>
             <AlertDialogDescription>{ordersWords.detail.rejectReason}</AlertDialogDescription>
           </AlertDialogHeader>
+          {/* Reason chips (T81): one tap writes a full sentence the owner can still change. */}
+          <div className="flex flex-wrap gap-2">
+            {REJECT_REASON_KEYS.map((key) => {
+              const reason = ordersWords.detail.rejectReasons[key];
+              const picked = rejectReason === reason.text;
+              return (
+                <Button
+                  key={key}
+                  type="button"
+                  variant={picked ? 'secondary' : 'outline'}
+                  aria-pressed={picked}
+                  onClick={() => setRejectReason(reason.text)}
+                  className="h-11 rounded-full px-3.5 aria-pressed:border-destructive/40 aria-pressed:bg-destructive-soft aria-pressed:text-destructive-soft-foreground md:h-9"
+                >
+                  {picked ? <CheckIcon aria-hidden="true" /> : null}
+                  {reason.label}
+                </Button>
+              );
+            })}
+          </div>
           <Textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
             rows={3}
+            maxLength={300}
             className="text-base md:text-sm"
-            aria-label={ordersWords.detail.rejectReason}
+            aria-label={ordersWords.detail.rejectReasonLabel}
           />
           <AlertDialogFooter>
             <AlertDialogCancel>{ordersWords.detail.keepOrder}</AlertDialogCancel>
@@ -686,12 +758,15 @@ function PaymentSection({
                   })
                   .then(() => {
                     setRejectOpen(false);
+                    setRejectReason('');
                     notify({ title: ordersWords.detail.paymentRejected, tone: 'info' });
                   })
                   .catch(fail);
               }}
             >
-              {ordersWords.detail.rejectPayment}
+              {review.isPending
+                ? ordersWords.detail.rejectingPayment
+                : ordersWords.detail.rejectPayment}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -840,7 +915,7 @@ function CustomerSection({
         ) : null}
       </div>
       {detail ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <Button
             variant="outline"
             nativeButton={false}
@@ -859,6 +934,7 @@ function CustomerSection({
             <MessageSquareTextIcon aria-hidden="true" />
             {ordersWords.detail.openMessenger}
           </Button>
+          <MessengerOrderButton order={order} />
         </div>
       ) : null}
     </Section>

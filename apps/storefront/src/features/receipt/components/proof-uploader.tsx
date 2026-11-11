@@ -2,12 +2,14 @@
 
 import { useId, useRef, useState, type ChangeEvent } from 'react';
 import {
+  NO_REFERENCE,
+  PROOFS_PER_ORDER,
   errorWords,
   formatFileSize,
   imageFormatName,
+  orderProofs,
   words,
   type OrderReceipt,
-  type Proof,
 } from '@smartapp/core';
 import {
   blobToDataUrl,
@@ -32,15 +34,7 @@ import { Button } from '@smartapp/ui/components/button';
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import { Spinner } from '@smartapp/ui/components/spinner';
-import {
-  AlertCircle,
-  Camera,
-  CheckCircle2,
-  RotateCw,
-  SendIcon,
-  XCircle,
-  XIcon,
-} from 'lucide-react';
+import { AlertCircle, Camera, CheckCircle2, RotateCw, SendIcon, XIcon } from 'lucide-react';
 
 export interface ProofUploaderProps {
   readonly slug: string;
@@ -55,7 +49,6 @@ interface PickedPhoto {
   readonly fromSize: number;
 }
 
-const MAX_PROOFS = 3;
 // Automatic retries after a network failure, while online (T10).
 const RETRY_DELAYS_MS = [2000, 4000, 8000] as const;
 
@@ -69,9 +62,9 @@ function waitUntilOnline(): Promise<void> {
 }
 
 /**
- * Proof of payment (decision R33): pick a photo, see it made smaller on the phone ("4.2 MB to 310 KB ·
- * WebP") with Remove, add the optional reference, then Send proof. c-attachment-6 picker and preview,
- * c-attachment-5 progress row, inside the payment card.
+ * Proof of payment (decisions R33 and T81): pick a photo, see it made smaller on the phone ("4.2 MB to
+ * 310 KB · WebP") with Remove, add the optional reference, then Send proof. c-attachment-6 picker and
+ * preview, c-attachment-5 progress row, at the bottom of the order chat where a message box would be.
  */
 export function ProofUploader({ slug, order }: ProofUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,13 +83,10 @@ export function ProofUploader({ slug, order }: ProofUploaderProps) {
     return null;
   }
 
-  const proofs: Proof[] = [];
-  for (const msg of order.messages) {
-    if (msg.proof) proofs.push(msg.proof);
-  }
+  const proofs = orderProofs(order.messages);
   const latestProof = proofs[proofs.length - 1];
   const isRejected = order.paymentStatus === 'unpaid' && latestProof?.status === 'rejected';
-  const isTooMany = proofs.length >= MAX_PROOFS;
+  const isTooMany = proofs.length >= PROOFS_PER_ORDER;
   const busy = state === 'compressing' || state === 'uploading' || state === 'retrying';
 
   async function pickPhoto(file: File) {
@@ -120,7 +110,7 @@ export function ProofUploader({ slug, order }: ProofUploaderProps) {
     const send = () =>
       submitProof.mutateAsync({
         method: order.paymentMethod,
-        referenceNo: referenceNo.trim() || 'PROOF',
+        referenceNo: referenceNo.trim() || NO_REFERENCE,
         file: photo.blob,
       });
 
@@ -181,29 +171,9 @@ export function ProofUploader({ slug, order }: ProofUploaderProps) {
       )
     : '';
 
+  // The shop's reason for a photo it said no to is a bubble just above, so it is not repeated here.
   return (
     <div id="receipt-proof-uploader" className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-base font-semibold">{W.title}</h2>
-        {proofs.length > 0 ? (
-          <span className="text-xs text-muted-foreground tabular">
-            {W.count(proofs.length, MAX_PROOFS)}
-          </span>
-        ) : null}
-      </div>
-
-      {isRejected && !sent ? (
-        <Alert variant="destructive">
-          <XCircle />
-          <AlertTitle>{W.rejectedTitle}</AlertTitle>
-          <AlertDescription>
-            {latestProof.rejectReason
-              ? W.rejectedReason(latestProof.rejectReason)
-              : W.rejectedNoReason}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
       {sent ? (
         <Alert variant="info">
           <CheckCircle2 />
@@ -215,7 +185,7 @@ export function ProofUploader({ slug, order }: ProofUploaderProps) {
       ) : isTooMany ? (
         <Alert variant="warning">
           <AlertCircle />
-          <AlertTitle>{W.tooManyTitle(MAX_PROOFS)}</AlertTitle>
+          <AlertTitle>{W.tooManyTitle(PROOFS_PER_ORDER)}</AlertTitle>
           <AlertDescription>{W.tooManyText}</AlertDescription>
         </Alert>
       ) : (
@@ -298,21 +268,24 @@ export function ProofUploader({ slug, order }: ProofUploaderProps) {
             </Attachment>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={refInputId} className="text-sm text-muted-foreground">
-              {W.reference}
-            </Label>
-            <Input
-              id={refInputId}
-              inputMode="numeric"
-              autoComplete="off"
-              placeholder={W.referencePlaceholder}
-              value={referenceNo}
-              onChange={(e) => setReferenceNo(e.target.value)}
-              disabled={busy}
-              className="h-11 rounded-xl text-base tabular"
-            />
-          </div>
+          {/* The reference asks for room only once there is a photo to send with it. */}
+          {picked ? (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={refInputId} className="text-sm text-muted-foreground">
+                {W.reference}
+              </Label>
+              <Input
+                id={refInputId}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder={W.referencePlaceholder}
+                value={referenceNo}
+                onChange={(e) => setReferenceNo(e.target.value)}
+                disabled={busy}
+                className="h-11 rounded-xl text-base tabular"
+              />
+            </div>
+          ) : null}
 
           {picked && state === 'ready' ? (
             <Button

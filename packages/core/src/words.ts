@@ -678,8 +678,8 @@ export const words = {
       count: (sent: number, max: number) => `${sent} of ${max} sent`,
       reference: 'Reference number (optional)',
       referencePlaceholder: 'e.g. 1234 567 890',
-      upload: 'Upload proof of payment',
-      uploadAgain: 'Upload again',
+      upload: 'Send payment photo',
+      uploadAgain: 'Send a new photo',
       // The picked photo before it is sent (decision R33): the size it was, the size it is now.
       photo: 'Payment photo',
       pickHint: 'A screenshot or photo of your payment receipt',
@@ -688,7 +688,7 @@ export const words = {
       send: 'Send proof',
       sending: 'Sending…',
       photoSent: 'Photo sent',
-      photoElsewhere: 'Saved on the phone that sent it',
+      photoElsewhere: 'Kept on the sending phone',
       compressing: 'Making the photo smaller…',
       uploading: 'Uploading your proof…',
       keepOpen: 'Keep this page open.',
@@ -722,6 +722,29 @@ export const words = {
       scheduleChanged: (timeText: string) => `Time changed to ${timeText}`,
       // Under a proof bubble: where the shop's check stands.
       proofState: { pending: 'Checking', approved: 'Approved', rejected: 'Not approved' },
+    },
+    // The order chat (T81): a chat head on the receipt opens the shop's answers and the payment photos.
+    chat: {
+      head: (shop: string) => `Chat with ${shop}`,
+      headNew: (shop: string) => `Chat with ${shop}, new reply`,
+      title: (shop: string) => `Chat with ${shop}`,
+      subtitle: (orderNo: string) => `Order ${orderNo} · payment photos`,
+      close: 'Close chat',
+      placed: (time: string) => `Order placed · ${time}`,
+      payAsk: (amount: string, method: string) =>
+        `Please send exactly ${amount} by ${method}, then send a photo of your receipt here.`,
+      sendPhoto: 'Send payment photo',
+      sendNewPhoto: 'Send a new photo',
+      openChat: 'Open chat',
+      openHint: 'Send the photo in the chat with the shop.',
+      locked: 'Only payment photos for now. Questions about your order? Chat on Messenger.',
+      lockedNoMessenger: 'Only payment photos for now. Questions about your order? Call the shop.',
+      used: (sent: number, max: number) => `${sent} of ${max} photos used.`,
+      messenger: 'Messenger',
+      messengerLabel: 'Continue on Messenger',
+      call: 'Call',
+      callShop: (shop: string) => `Call ${shop}`,
+      copied: 'Copied your order. Paste it in Messenger.',
     },
     messenger: {
       text: 'Send your order details to the shop on Messenger.',
@@ -1196,6 +1219,7 @@ export const words = {
     finishOtherOrder: 'Finish or cancel your other order first.',
     thread: {
       proofSent: (reference: string) => `Proof sent · Ref ${reference}`,
+      photoSent: 'Payment photo sent',
       paymentApproved: 'Payment approved',
       paymentRejected: (reason: string) => `Payment not approved: ${reason}`,
       refunded: (amount: string, reason: string) =>
@@ -1676,6 +1700,8 @@ export const catalogWords = {
   // Items list (menu redesign 2026-11-02).
   visibleSwitch: 'Visible',
   soldOutSwitch: 'Sold out',
+  soldOutSwitchToday: 'Sold out today',
+  soldOutSwitchUntil: 'Sold out until you turn it on',
   soldOutSwitchAria: (name: string) => `Sold out: ${name}`,
   hiddenBadge: 'Hidden',
   soldOutBadge: 'Sold out',
@@ -1763,6 +1789,8 @@ export const catalogWords = {
       ? 'For products customers order ahead, like made-to-order pieces.'
       : 'For dishes customers order ahead, like cakes and party trays.',
   noticeLabel: 'Order ahead',
+  noticeUnit: (days: number) => (days === 1 ? 'day' : 'days'),
+  dailyLimitUnit: 'a day',
   noticeUnit: (days: number) => (days === 1 ? 'day' : 'days'),
   noticeHint: (days: number) =>
     days === 0
@@ -1943,10 +1971,19 @@ export const ordersWords = {
     offline: 'Offline',
     reset: 'Back to normal',
   },
+  // The floating Messenger button on Orders (T81): the Page inbox, with the open order copied to paste.
+  messenger: {
+    open: 'Open Messenger',
+    label: 'Open your Page inbox in Messenger',
+    orderLine: (orderNo: string, total: string, name: string) =>
+      `Order ${orderNo} · ${total} · ${name}`,
+    copied: (line: string) => `Copied “${line}”. Paste it in Messenger.`,
+    opened: 'Opening your Page inbox in Messenger.',
+  },
   typeCards: {
     label: 'Filter by order type',
-    toCheck: 'To check',
-    toCheckHint: 'Payments to check',
+    toCheck: (n: number) => `${n} ${plural(n, 'photo', 'photos')} to check`,
+    toCheckHint: 'Approve or say why not',
     openCount: (count: number) => `${count} open`,
   },
   stages: {
@@ -2110,11 +2147,35 @@ export const ordersWords = {
     approvePayment: 'Approve payment',
     approvingPayment: 'Approving…',
     approvedPayment: 'Payment approved',
-    rejectPayment: 'Reject',
-    rejectingPayment: 'Rejecting…',
-    paymentRejected: 'Payment rejected. The customer can send a new proof.',
-    rejectReason: 'Reason for rejecting',
-    rejectReasonDefault: 'The reference number could not be found. Please check and send it again.',
+    rejectPayment: 'Not approved',
+    rejectingPayment: 'Saving…',
+    paymentRejected: 'Payment not approved. The customer can send a new photo.',
+    rejectTitle: 'Why is it not approved?',
+    rejectReason: 'The customer sees this in their order chat. Pick one or write your own.',
+    rejectReasonLabel: 'Message to the customer',
+    // Reason chips (T81): each fills the message with a full sentence the owner can still change.
+    rejectReasons: {
+      amount: {
+        label: 'Amount does not match',
+        text: 'The amount does not match your total. Please send the right amount, then a new photo.',
+      },
+      unclear: {
+        label: 'Photo is not clear',
+        text: 'We can’t read this photo. Please send a clearer one.',
+      },
+      account: {
+        label: 'Wrong account',
+        text: 'This was sent to a different account. Please check our payment details and send again.',
+      },
+      missing: {
+        label: 'Payment not received',
+        text: 'We haven’t received this payment yet. Please check the reference number and send it again.',
+      },
+    },
+    // The payment chat in the order panel (T81): the customer's photos on the left, the shop's answers on the right.
+    customerPhoto: (name: string) => `${name} sent a payment photo`,
+    youApproved: 'You approved the payment',
+    youRejected: (reason: string) => `Not approved: ${reason}`,
     recordCash: 'Mark as paid',
     recordingCash: 'Saving…',
     cashRecorded: 'Marked as paid',
@@ -2125,6 +2186,7 @@ export const ordersWords = {
     proofRejected: 'Rejected',
     proofAlt: (orderNo: string) => `Payment proof for ${orderNo}`,
     proofMissing: 'The photo didn’t load. Check the reference number instead.',
+    noReference: 'No reference number given',
     deliveryDetails: 'Rider and tracking',
     deliveryDesc: 'Add the rider so the customer can see who is coming.',
     addRider: 'Add rider',
@@ -2146,7 +2208,8 @@ export const ordersWords = {
     savingOwnerNote: 'Saving…',
     ownerNoteSaved: 'Note saved',
     callCustomer: 'Call',
-    openMessenger: 'Message',
+    openMessenger: 'Text',
+    messenger: 'Messenger',
     cancelOrder: 'Cancel order',
     cancelingOrder: 'Cancelling…',
     orderCancelled: 'Order cancelled',
@@ -2265,6 +2328,8 @@ export const membersWords = {
     salesNote: (share: number) => `${share}% of sales in 30 days`,
     change: (n: number) => `${n > 0 ? '+' : ''}${n}%`,
     changeAria: (n: number) => `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)}% on the 30 days before`,
+    diff: (n: number) => `${n > 0 ? '+' : '−'}${Math.abs(n)}`,
+    diffAria: (n: number) => `${Math.abs(n)} ${n > 0 ? 'more' : 'fewer'} than the 30 days before`,
     open: (label: string) => `Show ${label.toLowerCase()}`,
     openSales: 'Show member sales',
   },
@@ -2441,7 +2506,8 @@ export const membersWords = {
     readyFor: (title: string) => `Ready: ${title}`,
     pending: (n: number) => `${n} pending from open ${n === 1 ? 'order' : 'orders'}`,
     changesLeft: (n: number) => `${n} of 3 changes left today`,
-    adjust: 'Adjust…',
+    adjust: 'Fix stamps',
+    customerSees: 'What your customer sees',
     capReached: '3 changes today. Try again tomorrow.',
     stopped: 'New stamps are stopped. Turn the card on in Stamp card.',
     paused: 'Paused: no new stamps. A ready reward still works.',
@@ -2498,7 +2564,7 @@ export const membersWords = {
     cancel: 'Cancel',
   },
   adjust: {
-    title: 'Adjust stamps',
+    title: 'Fix stamps',
     description: 'Each change is saved in the history with your reason.',
     change: 'Change',
     add: 'Add one',

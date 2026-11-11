@@ -29,6 +29,7 @@ import { useShop } from '@/app/shop';
 import { storefrontUrl } from '@/app/use-nav-items';
 import { Board, groupByStage } from '../board.js';
 import { ListView } from '../list-view.js';
+import { MessengerFab } from '../messenger-inbox.js';
 import { OrderPanel } from '../order-panel.js';
 import { OrdersToolbar } from '../orders-toolbar.js';
 import { PHONE_STAGES, useOrdersSearch, useSetOrdersSearch, type OrderFilter } from '../search.js';
@@ -265,6 +266,8 @@ export function OrdersScreen() {
           boardBody
         )}
       </main>
+
+      <MessengerFab />
 
       <OrderPanel
         orderId={search.order}

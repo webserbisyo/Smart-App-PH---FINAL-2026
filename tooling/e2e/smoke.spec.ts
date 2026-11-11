@@ -807,7 +807,10 @@ test.describe('order receipt and payment proof (T10)', () => {
     await page.goto(urlFor('dev', '/kape-juan/o/demo-placed-transfer'));
     await settle(page);
 
-    const fileInput = page.locator('input[type="file"]');
+    // The photo is sent in the order chat (T81), opened from the pay card.
+    await page.locator('#receipt-open-chat').click();
+    const chat = page.getByRole('dialog');
+    const fileInput = chat.locator('input[type="file"]');
     await expect(fileInput).toBeAttached();
 
     // A real 1x1 PNG: the phone compresses it to WebP before anything is sent (decision R33).
@@ -819,12 +822,12 @@ test.describe('order receipt and payment proof (T10)', () => {
         'base64',
       ),
     });
-    await expect(page.getByText(/to .* · WebP/)).toBeVisible({ timeout: 15_000 });
-    await page.locator('#receipt-send-proof').click();
+    await expect(chat.getByText(/to .* · WebP/)).toBeVisible({ timeout: 15_000 });
+    await chat.locator('#receipt-send-proof').click();
 
-    await expect(page.getByText('Proof sent', { exact: true })).toBeVisible({ timeout: 15_000 });
+    await expect(chat.getByText('Proof sent', { exact: true })).toBeVisible({ timeout: 15_000 });
     // The photo shows in the order chat, from the copy kept on this phone.
-    await expect(page.locator('#receipt-order-thread img').first()).toBeVisible();
+    await expect(chat.locator('#receipt-order-thread img').first()).toBeVisible();
     expect(problems).toEqual([]);
   });
 
@@ -832,11 +835,15 @@ test.describe('order receipt and payment proof (T10)', () => {
     const problems = watch(page);
     await page.goto(urlFor('dev', '/kape-juan/o/demo-placed-transfer'));
     await settle(page);
-    await page.locator('input[type="file"]').setInputFiles({
-      name: 'proof.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('not a picture'),
-    });
+    await page.locator('#receipt-open-chat').click();
+    await page
+      .getByRole('dialog')
+      .locator('input[type="file"]')
+      .setInputFiles({
+        name: 'proof.png',
+        mimeType: 'image/png',
+        buffer: Buffer.from('not a picture'),
+      });
     await expect(page.getByText("Couldn't read this photo. Pick another one.")).toBeVisible();
     expect(problems).toEqual([]);
   });
@@ -847,6 +854,9 @@ test.describe('order receipt and payment proof (T10)', () => {
     await settle(page);
 
     await expect(page.getByText('Payment not accepted')).toBeVisible();
+    // The shop answered, so the chat head has a dot; the new photo goes in the chat.
+    await expect(page.locator('#receipt-chat-head')).toHaveAccessibleName(/new reply/);
+    await page.locator('#receipt-open-chat').click();
     await expect(page.locator('#receipt-upload-proof-button')).toBeVisible();
     expect(problems).toEqual([]);
   });

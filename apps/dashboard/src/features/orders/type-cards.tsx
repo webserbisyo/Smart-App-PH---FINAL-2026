@@ -98,8 +98,7 @@ export function TypeCards({ types, totals, toCheck, value, onChange }: TypeCards
             <ShieldAlertIcon aria-hidden="true" className="sm:hidden" />
             <span className="flex min-w-0 flex-col">
               <span className="text-sm leading-tight font-semibold">
-                {ordersWords.typeCards.toCheck}
-                <span className="ml-1.5 tabular-nums">{toCheck}</span>
+                <span className="tabular-nums">{ordersWords.typeCards.toCheck(toCheck)}</span>
               </span>
               <span className="hidden text-xs sm:block">{ordersWords.typeCards.toCheckHint}</span>
             </span>

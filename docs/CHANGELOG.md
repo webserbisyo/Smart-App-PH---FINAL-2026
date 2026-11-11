@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-11 Final polish part 6, payment photo chat (T81, pushed to main): the receipt's chat head opens the order chat with the shop's answers and the payment photo button, typing locked with a Messenger button; the owner's payment part reads as the same chat with 4 reason chips for Not approved, "3 photos to check", and Messenger beside Call and Text and floating on Orders; photos without a reference no longer show "Ref PROOF".
 - 2026-11-11 Final polish part 5, customer avatars (T80, pushed to main): customers get their own faces, none of the owner's: Toon Head defaults and four picker sets (Toon, Smile, Blob on the shop's colour, Adventure) plus their photo; Privacy credits updated.
 - 2026-11-11 Final polish part 4, fonts (T79, pushed to main): 8 font pairs from 12 self-hosted Fontsource families, picked in Editor > Style > Fonts and shown on every storefront page (titles and body); each demo shop gets a fitting pair; /kit shows all 8.
 - 2026-11-06 Final polish part 3, phone Editor (T78, pushed to main): a dock that stays (Sections, Style, Pages, Publish) with the list, a part or the pages in a sheet docked under the preview at 3 heights (drag or tap the handle, swipe right to go back); the preview opens Home, the menu, Rewards, Account and Shop info from the Pages list, the page buttons on computers, or a tap on its own dock and links; banner title and line typed straight onto the preview with placeholders.

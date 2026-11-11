@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { artPath, words, type OrderReceipt } from '@smartapp/core';
+import { artPath, shopAnswerCount, words, type OrderReceipt } from '@smartapp/core';
 import { useOnline, useOrder, useSavedReceipt } from '@smartapp/data';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/reui/alert';
 import { Button } from '@smartapp/ui/components/button';
@@ -12,13 +12,19 @@ import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { ArrowLeft, WifiOff } from 'lucide-react';
 import { useShop } from '../../shell/components/shop-context';
 import { ReceiptHeader } from './receipt-header';
-import { PaymentCard } from './payment-card';
-import { OrderThread } from './order-thread';
+import { useWhenIdle } from '../../shell/use-when-idle';
+import { useChatSeen } from '../chat-seen';
+import { ChatHead } from './chat-head';
+import { PaymentCard, paymentOpen } from './payment-card';
+import { RiderCard } from './rider-card';
 import { ThermalSlip } from './thermal-slip';
 import { MessengerHandoff } from './messenger-handoff';
 import { ReceiptActions } from './receipt-actions';
 import { ReceiptSkeleton } from './receipt-skeleton';
 import { formatManilaTime } from '../receipt-rules';
+
+// The order chat (T81) stays out of the page's first JavaScript: it loads once the phone is idle or on a tap.
+const ChatSheet = dynamic(() => import('./chat-sheet').then((m) => m.ChatSheet), { ssr: false });
 
 export interface ReceiptWrapperProps {
   readonly slug: string;
@@ -49,6 +55,22 @@ export function ReceiptWrapper({ slug, token, initialOrder }: ReceiptWrapperProp
 
   const currentOrder = order ?? saved?.receipt ?? initialOrder;
   const hasOrder = Boolean(currentOrder);
+
+  const [chatOpen, setChatOpen] = useState(false);
+  const answers = currentOrder ? shopAnswerCount(currentOrder.messages) : 0;
+  const payOpen = currentOrder ? paymentOpen(currentOrder) : false;
+  const hasChat = payOpen || (currentOrder?.messages.length ?? 0) > 0;
+  const [chatLoaded, loadChat] = useWhenIdle(hasChat);
+  const [seen, markSeen] = useChatSeen(token);
+  const unread = seen !== null && answers > seen && !chatOpen;
+  // An answer that arrives while the chat is open is read right there.
+  useEffect(() => {
+    if (chatOpen) markSeen(answers);
+  }, [chatOpen, answers, markSeen]);
+  const openChat = () => {
+    loadChat();
+    setChatOpen(true);
+  };
 
   useEffect(() => {
     if (!justPlaced || !hasOrder) return;
@@ -117,9 +139,14 @@ export function ReceiptWrapper({ slug, token, initialOrder }: ReceiptWrapperProp
         justPlaced={justPlaced}
       />
 
-      <PaymentCard slug={slug} order={currentOrder} shopName={storefront.info.name} />
+      <PaymentCard
+        order={currentOrder}
+        shopName={storefront.info.name}
+        onOpenChat={openChat}
+        onWarmChat={loadChat}
+      />
 
-      <OrderThread order={currentOrder} />
+      <RiderCard order={currentOrder} />
 
       <ThermalSlip order={currentOrder} storefront={storefront} receiptUrl={receiptUrl} />
 
@@ -131,6 +158,17 @@ export function ReceiptWrapper({ slug, token, initialOrder }: ReceiptWrapperProp
         storefront={storefront}
         receiptUrl={receiptUrl}
       />
+
+      {hasChat ? <ChatHead unread={unread} onOpen={openChat} onWarm={loadChat} /> : null}
+      {chatLoaded ? (
+        <ChatSheet
+          open={chatOpen}
+          onOpenChange={setChatOpen}
+          order={currentOrder}
+          receiptUrl={receiptUrl}
+          payOpen={payOpen}
+        />
+      ) : null}
 
       {/* Dev-only controls for testing without dashboard */}
       <DevControls slug={slug} order={currentOrder} />

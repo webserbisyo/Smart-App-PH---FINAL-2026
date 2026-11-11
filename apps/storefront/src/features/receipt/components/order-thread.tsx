@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
+  formatPeso,
+  hasReference,
   imageSources,
+  isTransfer,
   words,
   type OrderMessage,
   type OrderReceipt,
@@ -19,7 +22,6 @@ import {
   AttachmentTrigger,
 } from '@smartapp/ui/components/attachment';
 import { Bubble, BubbleContent } from '@smartapp/ui/components/bubble';
-import { Button } from '@smartapp/ui/components/button';
 import { Marker, MarkerContent, MarkerIcon } from '@smartapp/ui/components/marker';
 import {
   Message,
@@ -31,14 +33,12 @@ import {
 import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { cn } from '@smartapp/ui/lib/utils';
 import {
-  Bike,
   CalendarClock,
   CircleCheckIcon,
-  ExternalLink,
   HourglassIcon,
   ImageIcon,
   LinkIcon,
-  Phone,
+  ReceiptTextIcon,
   XCircle,
 } from 'lucide-react';
 import { useShop } from '../../shell/components/shop-context';
@@ -108,7 +108,11 @@ function ProofMessage({
           ) : null}
         </Attachment>
         <Bubble>
-          <BubbleContent>{words.shop.thread.proofSent(proof.referenceNo)}</BubbleContent>
+          <BubbleContent>
+            {hasReference(proof.referenceNo)
+              ? words.shop.thread.proofSent(proof.referenceNo)
+              : words.shop.thread.photoSent}
+          </BubbleContent>
         </Bubble>
         <MessageFooter className="gap-1.5 tabular">
           <StateIcon aria-hidden="true" className={cn('size-3.5', state.className)} />
@@ -122,9 +126,9 @@ function ProofMessage({
 }
 
 /**
- * Order updates as a chat (decision R34): the customer's proofs on the right as bubbles with the photo,
- * the shop's replies on the left with its logo (c-message-5), and status changes as markers (c-marker-2).
- * Free-text chat is MVP B (S7).
+ * The order chat (decisions R34 and T81): the customer's payment photos on the right as bubbles, the
+ * shop's replies on the left with its logo (c-message-5), and status changes as markers (c-marker-2).
+ * It opens from the chat head on the receipt; free-text chat is MVP B (S7).
  */
 export function OrderThread({ order }: OrderThreadProps) {
   const { slug, shop } = useShop();
@@ -134,10 +138,6 @@ export function OrderThread({ order }: OrderThreadProps) {
   const info = shop.storefront.info;
   const logo = info.logo ? imageSources(info.logo) : null;
   const T = words.receipt.thread;
-
-  if (!order.messages || order.messages.length === 0) {
-    return null;
-  }
 
   // The shop's replies (payment checked, rider): its logo and a muted bubble on the left.
   const shopSays = (msg: OrderMessage, text: string) => (
@@ -154,15 +154,41 @@ export function OrderThread({ order }: OrderThreadProps) {
     </Message>
   );
 
-  return (
-    <div
-      id="receipt-order-thread"
-      className="flex flex-col gap-4 rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6 print:hidden"
-    >
-      <h2 className="text-base font-semibold">{T.title}</h2>
+  const C = words.receipt.chat;
+  // The opening lines: when the order was placed and, for a transfer, what to send (said by the shop).
+  const asksToPay = isTransfer(order.paymentMethod);
 
+  return (
+    <div id="receipt-order-thread" className="flex flex-col gap-4 px-4 py-4">
       <MessageGroup className="gap-4">
+        <Marker variant="separator">
+          <MarkerIcon>
+            <ReceiptTextIcon />
+          </MarkerIcon>
+          <MarkerContent className="tabular">
+            {C.placed(formatManilaTime(order.placedAt))}
+          </MarkerContent>
+        </Marker>
+        {asksToPay ? (
+          <Message>
+            <MessageAvatar>
+              <ShopLogo name={info.name} src={logo} size="sm" shape="round" />
+            </MessageAvatar>
+            <MessageContent>
+              <Bubble variant="muted">
+                <BubbleContent>
+                  {C.payAsk(
+                    formatPeso(order.totals.total),
+                    words.shop.paymentMethod[order.paymentMethod],
+                  )}
+                </BubbleContent>
+              </Bubble>
+            </MessageContent>
+          </Message>
+        ) : null}
         {order.messages.map((msg) => {
+          // The placed line is drawn above, once.
+          if (msg.kind === 'status' && msg.status === 'placed' && !msg.text) return null;
           const time = formatManilaTime(msg.at);
 
           if (msg.proof) {
@@ -226,48 +252,6 @@ export function OrderThread({ order }: OrderThreadProps) {
           return shopSays(msg, text);
         })}
       </MessageGroup>
-
-      {/* Rider details & tracking link (c-item-4) if delivery is active */}
-      {order.rider && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted/50 p-3 text-sm">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
-              <Bike aria-hidden="true" className="size-5" />
-            </div>
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate font-semibold text-foreground">{order.rider.name}</span>
-              <span className="truncate text-xs text-muted-foreground">
-                {order.rider.provider ?? T.rider}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {order.rider.phone && (
-              <Button
-                variant="outline"
-                nativeButton={false}
-                render={<a href={`tel:${order.rider.phone}`} />}
-                aria-label={T.callRider(order.rider.name)}
-                className="h-11 gap-1.5 rounded-full bg-card px-4"
-              >
-                <Phone aria-hidden="true" className="size-4" />
-                {T.call}
-              </Button>
-            )}
-            {order.trackingUrl && (
-              <Button
-                nativeButton={false}
-                render={<a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" />}
-                className="h-11 gap-1.5 rounded-full px-4"
-              >
-                {T.track}
-                <ExternalLink aria-hidden="true" className="size-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
 
       {viewerLoaded ? <ProofViewer src={viewing} onClose={() => setViewing(null)} /> : null}
     </div>

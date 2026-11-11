@@ -39,6 +39,7 @@ import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
 import { StampCard } from '@smartapp/ui/compositions/stamp-card';
 import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
 import { InfoList } from '@smartapp/ui/compositions/info-list';
+import { MessengerIcon } from '@smartapp/ui/compositions/messenger-icon';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
@@ -765,6 +766,25 @@ export function StorefrontSections() {
                   </span>
                 </div>
               ))}
+            </div>
+          </KitSection>
+
+          <KitSection
+            title="Messenger icon (simple-icons)"
+            library="simple-icons"
+            path="packages/ui/src/compositions/messenger-icon.tsx"
+            usedIn="receipt chat sheet, Orders Messenger button and order panel (T81)"
+          >
+            <div className="flex flex-wrap items-center gap-3">
+              <MessengerIcon className="size-5" />
+              <MessengerIcon className="size-8 text-primary" />
+              <Button className="h-11 gap-1.5 rounded-full px-4">
+                <MessengerIcon />
+                Messenger
+              </Button>
+              <Button aria-label="Open Messenger" className="size-14 rounded-full shadow-lg">
+                <MessengerIcon className="size-6" />
+              </Button>
             </div>
           </KitSection>
 

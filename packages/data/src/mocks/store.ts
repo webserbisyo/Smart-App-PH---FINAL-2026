@@ -92,6 +92,8 @@ import {
   type SaveVariantTemplateResult,
   type ShopPack,
   type VariantTemplate,
+  PROOFS_PER_ORDER,
+  hasReference,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
 import { getAuthClient, getClaims } from '../auth';
@@ -147,7 +149,7 @@ const RESEND_SECONDS = 60;
 const SENDS_PER_HOUR = 5;
 const CODE_MINUTES = 10;
 const PAY_MINUTES = 30;
-const MAX_PROOFS = 3;
+const MAX_PROOFS = PROOFS_PER_ORDER;
 const UNPAID_LIMIT = 3;
 
 export interface MockPersistence {
@@ -1037,11 +1039,14 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         if (method !== r.paymentMethod && !isTransfer(method)) fail('payment_unavailable', 409);
         const ref = normaliseReference(referenceNo);
         if (!ref) fail('invalid_input', 422, { referenceNo: [errorWords('invalid_input')] });
-        const used = s.orders.some((o) =>
-          o.proofs.some(
-            (p) => p.status !== 'rejected' && normaliseReference(p.referenceNo) === ref,
-          ),
-        );
+        // A photo sent without a reference number can't clash with another order's.
+        const used =
+          hasReference(referenceNo) &&
+          s.orders.some((o) =>
+            o.proofs.some(
+              (p) => p.status !== 'rejected' && normaliseReference(p.referenceNo) === ref,
+            ),
+          );
         if (used) fail('duplicate_reference', 409);
         const at = now().toISOString();
         const proof = {
