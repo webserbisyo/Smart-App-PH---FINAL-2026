@@ -26,8 +26,8 @@ export interface CopyButtonProps extends Omit<
 
 /**
  * The one copy button for both apps (c-button-41 pattern, decisions R43, T43, T45): copies through
- * copyText, then turns green for 1.5 s with a check that draws itself and the word "Copied". Each tap
- * starts it again; "Copied" is announced. Copying never fails silently.
+ * copyText, then turns green for 1.5 s with a check that draws itself and the word "Copied" (a toast
+ * for the round icon one). Each tap starts it again; "Copied" is announced. Copying never fails silently.
  */
 export function CopyButton({
   value,
@@ -56,6 +56,8 @@ export function CopyButton({
       return;
     }
     if (timer.current) clearTimeout(timer.current);
+    // A round icon has no room for the word, so a toast says "Copied" too (T77 part 7).
+    if (iconOnly) notify({ title: actionWords.copied, tone: 'success' });
     // A new number each tap remounts the check, so it draws again.
     setCopied((n) => n + 1);
     timer.current = setTimeout(() => setCopied(0), COPIED_MS);

@@ -166,7 +166,7 @@ export function RewardsScreen() {
             id="rewards-join"
             nativeButton={false}
             render={<Link href={`/${slug}/join`} />}
-            className="h-12 rounded-full bg-member text-base font-semibold text-member-foreground hover:bg-member-hover"
+            className="h-12 rounded-full bg-shop-10 text-base font-semibold text-shop-10-foreground hover:bg-shop-10-hover"
           >
             {W.join}
           </Button>

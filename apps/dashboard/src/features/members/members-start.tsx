@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { CircleDashedIcon, DownloadIcon, PartyPopperIcon, TrophyIcon } from 'lucide-react';
-import { membersWords, milestoneReached } from '@smartapp/core';
+import { membersWords, milestoneJustReached } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { QRCode, QRCodeDownload, QRCodeSvg } from '@smartapp/ui/components/qr-code';
 import { rewardReady } from '@smartapp/ui/compositions/celebrate';
@@ -135,9 +135,20 @@ function readSeen(slug: string): number {
   }
 }
 
-/** A one-time celebration at 10, 25, 50, 100 … members (T62), remembered on this device. */
-export function MilestoneNotice({ slug, members }: { slug: string; members: number }) {
-  const reached = milestoneReached(members);
+/**
+ * A one-time celebration at 10, 25, 50, 100 … members (T62), remembered on this device, and only while
+ * it is news: the members who joined in the last 30 days crossed it.
+ */
+export function MilestoneNotice({
+  slug,
+  members,
+  joined,
+}: {
+  slug: string;
+  members: number;
+  joined: number;
+}) {
+  const reached = milestoneJustReached(members, joined);
   const [seen, setSeen] = React.useState(() => readSeen(slug));
   const show = reached !== null && reached > seen;
 

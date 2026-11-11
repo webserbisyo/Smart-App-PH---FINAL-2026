@@ -1,9 +1,10 @@
 import { GiftIcon, StarIcon, UsersIcon, WalletIcon } from 'lucide-react';
 import {
+  changeOf,
   formatPeso,
-  manilaParts,
   membersWords,
   percentChange,
+  type Change as ChangeValue,
   sharePercent,
   type CustomerFilter,
   type MembersOverview,
@@ -24,17 +25,16 @@ const W = membersWords;
 
 export type StatPick = CustomerFilter | 'sales';
 
-/** The greeting and one story line above the number cards (T61). */
+/**
+ * One story line above the number cards (T61). No greeting: Home already says hello (T77 part 7), so
+ * the first fact is the heading.
+ */
 export function MembersHello({
   view,
-  name,
-  now,
   smallCard,
   compact = false,
 }: {
   view: MembersOverview;
-  name: string | null;
-  now: Date;
   smallCard: boolean;
   // Phone: only the first sentence, so the list starts higher up.
   compact?: boolean;
@@ -56,10 +56,10 @@ export function MembersHello({
         ].filter(Boolean);
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
-      <h2 className="text-lg font-bold tracking-tight md:text-xl">
-        {W.hello.greeting(manilaParts(now).hour, name)}
-      </h2>
-      <p className="text-sm text-muted-foreground">{compact ? lines[0] : lines.join(' ')}</p>
+      <h2 className="text-lg font-bold tracking-tight text-balance md:text-xl">{lines[0]}</h2>
+      {!compact && lines.length > 1 ? (
+        <p className="text-sm text-muted-foreground">{lines.slice(1).join(' ')}</p>
+      ) : null}
     </div>
   );
 }
@@ -107,16 +107,18 @@ function StatCard({ label, icon, tone, value, note, pressed, onClick, aria }: Ca
   );
 }
 
-function Change({ value }: { value: number | null }) {
-  if (value === null || value === 0) return null;
+// A plain "+3" on small counts, a percent only on real bases (changeOf, T77): never "+100%" for 3 to 6.
+function Change({ value }: { value: ChangeValue | null }) {
+  if (value === null || value.kind === 'same' || value.value === 0) return null;
+  const n = value.value;
   return (
     <Badge
-      variant={value > 0 ? 'success-light' : 'secondary'}
+      variant={n > 0 ? 'success-light' : 'secondary'}
       radius="full"
-      aria-label={W.stats.changeAria(value)}
+      aria-label={value.kind === 'percent' ? W.stats.changeAria(n) : W.stats.diffAria(n)}
       className="tabular-nums"
     >
-      {W.stats.change(value)}
+      {value.kind === 'percent' ? W.stats.change(n) : W.stats.diff(n)}
     </Badge>
   );
 }
@@ -154,7 +156,7 @@ export function MembersStats({
         value={<CountUp value={view.members} />}
         note={
           <>
-            <Change value={percentChange(pulse.joined, pulse.joinedBefore)} />
+            <Change value={changeOf(pulse.joined, pulse.joinedBefore, true)} />
             <span className="truncate">{W.stats.joined(pulse.joined)}</span>
           </>
         }
@@ -193,7 +195,7 @@ export function MembersStats({
         }
         note={
           <>
-            <Change value={percentChange(pulse.sales.members, pulse.salesBefore.members)} />
+            <Change value={changeOf(pulse.sales.members, pulse.salesBefore.members, false)} />
             <span className="truncate">
               {W.stats.salesNote(sharePercent(pulse.sales.members, total))}
             </span>

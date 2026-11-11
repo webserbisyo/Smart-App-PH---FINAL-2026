@@ -279,12 +279,13 @@ export function PhotoUploadSection({ photos, onChange, disabled }: PhotoUploadSe
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-11 w-fit gap-1.5 px-2 text-muted-foreground hover:text-foreground md:h-9"
+                          // Shrinks inside the row at 360 px instead of running under the crop button.
+                          className="h-11 w-fit max-w-full min-w-0 gap-1.5 px-2 text-muted-foreground hover:text-foreground md:h-9"
                           aria-label={catalogWords.photoMakeCoverAria(index + 1)}
                           onClick={() => handleMakeCover(index)}
                         >
                           <StarIcon className="size-4" />
-                          {catalogWords.photoMakeCover}
+                          <span className="truncate">{catalogWords.photoMakeCover}</span>
                         </Button>
                       )}
                       {state?.uploading ? (

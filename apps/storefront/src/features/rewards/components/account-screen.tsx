@@ -16,6 +16,7 @@ import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { notify } from '@smartapp/ui/compositions/notify';
+import { HomeStampCard } from '../../home/components/home-stamp-card';
 import { useShop } from '../../shell/components/shop-context';
 import { useLaterPart } from '../../shell/use-when-idle';
 import { AvatarPicker } from './avatar-picker';
@@ -55,6 +56,24 @@ export function AccountScreen() {
     );
   }
 
+  // Signed out with the stamp card on (T77 part 7): the card itself, with the welcome stamp and Join,
+  // is the reason to join, so it shows instead of a bare empty page.
+  if (!member && stampsOn) {
+    return (
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 pt-2 pb-6">
+        <div className="flex flex-col gap-1">
+          <h1 id="account-title" className="text-2xl font-bold tracking-tight">
+            {W.title}
+          </h1>
+          <p className="text-sm text-muted-foreground">{W.guestBody}</p>
+        </div>
+        <div id="account-guest">
+          <HomeStampCard slug={slug} stampCard={shop.storefront.stampCard} />
+        </div>
+      </div>
+    );
+  }
+
   if (!member) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 pt-2 pb-6">
@@ -70,7 +89,7 @@ export function AccountScreen() {
             <Button
               nativeButton={false}
               render={<Link href={`/${slug}/join`} />}
-              className="h-11 rounded-full bg-member px-6 text-member-foreground hover:bg-member-hover"
+              className="h-11 rounded-full bg-shop-10 px-6 text-shop-10-foreground hover:bg-shop-10-hover"
             >
               {W.join}
             </Button>

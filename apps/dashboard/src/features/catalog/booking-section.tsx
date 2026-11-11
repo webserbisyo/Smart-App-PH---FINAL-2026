@@ -50,6 +50,13 @@ export function BookingSection({
             <NumberFieldGroup className="h-11 md:h-9">
               <NumberFieldDecrement />
               <NumberFieldInput className="text-base tabular-nums" />
+              {/* The unit after the number (T77 part 7). */}
+              <span
+                aria-hidden="true"
+                className="shrink-0 self-center pr-2 text-sm text-muted-foreground"
+              >
+                {catalogWords.noticeUnit(noticeDays)}
+              </span>
               <NumberFieldIncrement />
             </NumberFieldGroup>
           </NumberField>
@@ -70,6 +77,14 @@ export function BookingSection({
                 placeholder={catalogWords.dailyLimitPlaceholder}
                 className="text-base tabular-nums"
               />
+              {dailyLimit === null ? null : (
+                <span
+                  aria-hidden="true"
+                  className="shrink-0 self-center pr-2 text-sm text-muted-foreground"
+                >
+                  {catalogWords.dailyLimitUnit}
+                </span>
+              )}
               <NumberFieldIncrement />
             </NumberFieldGroup>
           </NumberField>

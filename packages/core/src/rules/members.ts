@@ -198,6 +198,16 @@ export function milestoneReached(members: number): number | null {
   return reached;
 }
 
+/**
+ * The milestone crossed by the members who joined lately, or null (T77 part 7): 36 members with 6 new
+ * did not just reach 25, so "25 members!" would not be true news.
+ */
+export function milestoneJustReached(members: number, joinedLately: number): number | null {
+  const reached = milestoneReached(members);
+  if (reached === null) return null;
+  return members - Math.max(0, joinedLately) < reached ? reached : null;
+}
+
 /** True when `at` falls in the `days` days that end at `end` (end included, start excluded). */
 export function inWindow(at: string, end: Date, days: number): boolean {
   const t = new Date(at).getTime();

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { changeOf, inWindow, milestoneReached, percentChange, sharePercent } from '../src/index.js';
+import {
+  changeOf,
+  inWindow,
+  milestoneJustReached,
+  milestoneReached,
+  percentChange,
+  sharePercent,
+} from '../src/index.js';
 
 describe('members pulse rules (T61, T63)', () => {
   it('percentChange rounds and needs something before', () => {
@@ -17,6 +24,12 @@ describe('members pulse rules (T61, T63)', () => {
     expect(milestoneReached(10)).toBe(10);
     expect(milestoneReached(36)).toBe(25);
     expect(milestoneReached(1200)).toBe(1000);
+  });
+  it('milestoneJustReached only when the new members crossed it', () => {
+    expect(milestoneJustReached(36, 6)).toBeNull();
+    expect(milestoneJustReached(27, 4)).toBe(25);
+    expect(milestoneJustReached(10, 1)).toBe(10);
+    expect(milestoneJustReached(9, 9)).toBeNull();
   });
   it('inWindow includes the end and excludes the start', () => {
     const end = new Date('2026-11-05T04:00:00.000Z');

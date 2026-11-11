@@ -163,17 +163,25 @@ test.describe('banner carousel (T06)', () => {
     await expect(banner2Dot).not.toHaveAttribute('aria-current', 'true');
   });
 
+  // Checked on the production build, by what the scripts contain: the dev server groups chunks its own
+  // way (a Turbopack dev chunk can list the slides for a page that never renders them, T82).
   test('shops with no banners ship no carousel chunk', async ({ page }) => {
-    const scripts: string[] = [];
-    page.on('request', (req) => {
-      if (req.resourceType() === 'script') {
-        scripts.push(req.url());
-      }
+    const bodies: Promise<string>[] = [];
+    page.on('response', (res) => {
+      if (res.request().resourceType() === 'script') bodies.push(res.text().catch(() => ''));
     });
-    await page.goto(urlFor('dev', '/test-blank'));
+    // '--banner-delay' is only in the slides code (banner-carousel-slides.tsx).
+    const shipsSlides = async () =>
+      (await Promise.all(bodies)).some((js) => js.includes('--banner-delay'));
+
+    await page.goto(urlFor('prod', '/test-blank'));
     await settle(page);
-    const hasCarouselChunk = scripts.some((url) => url.includes('banner-carousel-slides'));
-    expect(hasCarouselChunk).toBe(false);
+    expect(await shipsSlides()).toBe(false);
+
+    // The marker is real: a shop with banners loads the slides once its first banner is up.
+    await page.goto(urlFor('prod', '/kanto-smash'));
+    await settle(page);
+    await expect.poll(shipsSlides, { timeout: 15_000 }).toBe(true);
   });
 });
 

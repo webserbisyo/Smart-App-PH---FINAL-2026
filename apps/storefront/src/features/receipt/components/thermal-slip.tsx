@@ -86,9 +86,12 @@ export function ThermalSlip({ order, storefront, receiptUrl }: ThermalSlipProps)
                 {words.location.summary(order.type, formatManilaDateTime(order.scheduledAt))}
               </p>
             ) : null}
-            <QRCode value={receiptUrl} size={100}>
-              <QRCodeSvg className="rounded-sm" />
-            </QRCode>
+            {/* One QR on screen (the big one up top, T77 part 7); the printed slip keeps its own. */}
+            <div className="hidden print:block">
+              <QRCode value={receiptUrl} size={100}>
+                <QRCodeSvg className="rounded-sm" />
+              </QRCode>
+            </div>
             <p className="text-sm font-bold tracking-widest">
               {words.receipt.slipCode(order.pickupCode)}
             </p>

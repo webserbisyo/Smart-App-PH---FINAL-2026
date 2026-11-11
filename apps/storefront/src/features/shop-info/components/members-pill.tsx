@@ -1,12 +1,11 @@
-import { membersPreviewAvatars, words } from '@smartapp/core';
+import { MEMBERS_PILL_MIN, membersPreviewAvatars, words } from '@smartapp/core';
 import { Avatar, AvatarImage } from '@smartapp/ui/components/avatar';
 import { AvatarGroup } from '@smartapp/ui/components/avatar-group';
-import { CountUp } from '@smartapp/ui/compositions/count-up';
 
-// Members count with default faces (DiceUI avatar group, decision R11), never made-up initials. The
-// number counts up once (Number Ticker, loaded lazily; decision R38).
+// Members count with default faces (DiceUI avatar group, decision R11), never made-up initials. From
+// 5 members up, and the real number at once (T77 part 7): a count-up from 0 read as "0 members".
 export function MembersPill({ slug, count }: { slug: string; count: number }) {
-  if (count <= 0) return null;
+  if (count < MEMBERS_PILL_MIN) return null;
   const faces = membersPreviewAvatars(slug, Math.min(count, 4));
   return (
     <div className="inline-flex items-center gap-2 rounded-full border bg-card py-1 pr-3 pl-1 shadow-xs">
@@ -20,7 +19,8 @@ export function MembersPill({ slug, count }: { slug: string; count: number }) {
       <span className="text-sm font-semibold">
         <span className="sr-only">{words.storefrontShell.home.membersCount(count)}</span>
         <span aria-hidden="true">
-          <CountUp value={count} /> {words.storefrontShell.home.membersWord}
+          <span className="tabular-nums">{count.toLocaleString('en-PH')}</span>{' '}
+          {words.storefrontShell.home.membersWord}
         </span>
       </span>
     </div>

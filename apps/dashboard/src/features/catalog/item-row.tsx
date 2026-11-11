@@ -112,6 +112,20 @@ export function ItemRow({
   highlighted = false,
 }: ItemRowProps) {
   const soldOut = isItemSoldOut(item);
+  // Says what On means (T77 part 7): sold out for today, or until the owner turns it back on.
+  const soldOutLabel =
+    soldOut && item.variants.every((v) => v.soldOutUntil === null)
+      ? catalogWords.soldOutSwitchUntil
+      : catalogWords.soldOutSwitchToday;
+  const soldOutSwitch = (
+    <LabeledSwitch
+      label={soldOutLabel}
+      ariaLabel={catalogWords.soldOutSwitchAria(item.name)}
+      checked={soldOut}
+      onCheckedChange={(checked) => actions.setSoldOut(item, checked)}
+    />
+  );
+  const showSwitch = item.status !== 'archived' && !isReordering && !selecting;
   const meta = [
     item.axes.length > 0 ? catalogWords.versionCount(item.variants.length) : null,
     addOnCount > 0 ? catalogWords.addOnGroupCount(addOnCount) : null,
@@ -175,6 +189,8 @@ export function ItemRow({
           <div className="flex flex-wrap gap-1 empty:hidden">
             <ItemStatusBadges item={item} />
           </div>
+          {/* Phones: the switch sits under the price, so the card is one row shorter. */}
+          {showSwitch ? <div className="md:hidden">{soldOutSwitch}</div> : null}
         </div>
 
         {isReordering ? (
@@ -224,15 +240,10 @@ export function ItemRow({
           </Button>
           <ItemMenu item={item} actions={actions} className="hidden md:inline-flex" />
         </div>
-      ) : !isReordering && !selecting ? (
-        <div className="flex items-center gap-2 pl-17 md:pl-0">
-          <LabeledSwitch
-            label={catalogWords.soldOutSwitch}
-            ariaLabel={catalogWords.soldOutSwitchAria(item.name)}
-            checked={soldOut}
-            onCheckedChange={(checked) => actions.setSoldOut(item, checked)}
-          />
-          <ItemMenu item={item} actions={actions} className="hidden md:inline-flex" />
+      ) : showSwitch ? (
+        <div className="hidden items-center gap-2 md:flex">
+          {soldOutSwitch}
+          <ItemMenu item={item} actions={actions} />
         </div>
       ) : null}
     </Item>

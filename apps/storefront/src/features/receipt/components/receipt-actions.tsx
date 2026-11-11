@@ -74,7 +74,7 @@ function StampLine({ slug, completed }: { slug: string; completed: boolean }) {
       <Button
         nativeButton={false}
         render={<Link href={`/${slug}/join`} />}
-        className="h-11 shrink-0 rounded-full bg-member px-5 text-member-foreground hover:bg-member-hover"
+        className="h-11 shrink-0 rounded-full bg-shop-10 px-5 text-shop-10-foreground hover:bg-shop-10-hover"
       >
         {W.join}
       </Button>

@@ -88,7 +88,7 @@ export function SukiInvite({ slug, shopName, member }: SukiInviteProps) {
               variant="ripple"
               distance="10px"
               onClick={() => router.push(`/${slug}/join`)}
-              className="h-12 rounded-full bg-member px-8 text-base font-semibold text-member-foreground hover:bg-member-hover focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:*:animate-none"
+              className="h-12 rounded-full bg-shop-10 px-8 text-base font-semibold text-shop-10-foreground hover:bg-shop-10-hover focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-reduce:*:animate-none"
             >
               {W.join}
             </PulsatingButton>

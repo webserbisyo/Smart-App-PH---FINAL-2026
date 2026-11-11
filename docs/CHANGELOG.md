@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-11 Final polish part 7, page-by-page fixes (T82, pushed to main): Members without the repeated greeting, "+3" instead of "+100%", a milestone only when it is news, "Fix stamps", "What your customer sees"; Menu cards a row shorter with "Sold out today", Make cover fixed at 360 px, units on booking numbers; storefront members pill from 5 members, signed-out Account with the stamp card, Join in the shop's colour, one QR on the receipt, "Copied" toasts on icon copy buttons.
 - 2026-11-11 Final polish part 6, payment photo chat (T81, pushed to main): the receipt's chat head opens the order chat with the shop's answers and the payment photo button, typing locked with a Messenger button; the owner's payment part reads as the same chat with 4 reason chips for Not approved, "3 photos to check", and Messenger beside Call and Text and floating on Orders; photos without a reference no longer show "Ref PROOF".
 - 2026-11-11 Final polish part 5, customer avatars (T80, pushed to main): customers get their own faces, none of the owner's: Toon Head defaults and four picker sets (Toon, Smile, Blob on the shop's colour, Adventure) plus their photo; Privacy credits updated.
 - 2026-11-11 Final polish part 4, fonts (T79, pushed to main): 8 font pairs from 12 self-hosted Fontsource families, picked in Editor > Style > Fonts and shown on every storefront page (titles and body); each demo shop gets a fitting pair; /kit shows all 8.

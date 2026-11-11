@@ -57,7 +57,6 @@ import { SearchField } from '@/app/search-field';
 import { useShop } from '@/app/shop';
 import { storefrontUrl } from '@/app/use-nav-items';
 import { useOnlineStatus } from '@/app/use-online-status';
-import { useOwnerFirstName } from '@/app/use-owner-name';
 import { MemberPanel } from '../member-panel.js';
 import { MembersGrid, PhoneRows } from '../member-rows.js';
 import { ActivityFeed, MemberSalesCard, TopSukiCard, WeekRing } from '../members-insights.js';
@@ -88,7 +87,6 @@ export function MembersScreen() {
   const online = useOnlineStatus();
   const now = useNow(30_000);
   const tabs = useMembersTabs();
-  const ownerName = useOwnerFirstName();
   const reducedMotion = useReducedMotion();
   // Phone: Card progress and the sales cards fold away so the list starts near the top (T61).
   const [insightsOpen, setInsightsOpen] = React.useState(false);
@@ -290,13 +288,7 @@ export function MembersScreen() {
       <div className="flex flex-col gap-3 px-4 pt-3 md:px-6 md:pt-4">
         <div className="flex items-start justify-between gap-3">
           {view ? (
-            <MembersHello
-              view={view}
-              name={ownerName}
-              now={now}
-              smallCard={smallCard}
-              compact={isPhone}
-            />
+            <MembersHello view={view} smallCard={smallCard} compact={isPhone} />
           ) : (
             <div className="flex flex-col gap-1.5">
               <Skeleton className="h-6 w-48" />
@@ -306,7 +298,7 @@ export function MembersScreen() {
           <span className="shrink-0 pt-1">{statusChip}</span>
         </div>
         {view && view.members > 0 ? (
-          <MilestoneNotice slug={shop.slug} members={view.members} />
+          <MilestoneNotice slug={shop.slug} members={view.members} joined={view.pulse.joined} />
         ) : null}
 
         {!online ? (

@@ -294,6 +294,10 @@ function PanelBody({
         />
       ) : null}
 
+      {/* The card in the shop's colours, as the customer sees it on their phone (T77 part 7). */}
+      <p className="-mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        {W.panel.customerSees}
+      </p>
       {brandColor ? <ShopTheme brandColor={brandColor}>{stampCard}</ShopTheme> : stampCard}
 
       <div className="-mt-1 flex flex-col items-center gap-1 text-center text-sm text-muted-foreground">

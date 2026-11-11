@@ -3,6 +3,8 @@ import type { Catalog, Item } from '../schemas/catalog.js';
 import type { Storefront } from '../schemas/storefront.js';
 import { openState } from './hours.js';
 
+// The Home members pill shows from this many members up.
+export const MEMBERS_PILL_MIN = 5;
 export interface HomeDeviceState {
   favouriteIds?: readonly string[] | undefined;
   member?: { balance: number; pendingStamps: number } | null | undefined;
@@ -85,8 +87,9 @@ export function resolveHomeSections(
   );
   const contact = sections.contact && hasContact;
 
-  // 11. Members count: rendered only if owner turned it on and count > 0.
-  const membersCount = sections.membersCount && storefront.membersCount > 0;
+  // 11. Members count: rendered only if owner turned it on and there are enough members to show off
+  // (T77 part 7): "2 Suki members" says the shop is empty rather than popular.
+  const membersCount = sections.membersCount && storefront.membersCount >= MEMBERS_PILL_MIN;
 
   // 12. Footer: always rendered on finished shop home.
   const footer = true;

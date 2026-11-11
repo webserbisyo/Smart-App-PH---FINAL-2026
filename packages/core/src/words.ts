@@ -1791,7 +1791,6 @@ export const catalogWords = {
   noticeLabel: 'Order ahead',
   noticeUnit: (days: number) => (days === 1 ? 'day' : 'days'),
   dailyLimitUnit: 'a day',
-  noticeUnit: (days: number) => (days === 1 ? 'day' : 'days'),
   noticeHint: (days: number) =>
     days === 0
       ? 'No notice needed'
