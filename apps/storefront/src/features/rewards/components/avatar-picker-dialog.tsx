@@ -2,7 +2,14 @@
 
 import { useId, useRef, useState, type ChangeEvent } from 'react';
 import { CameraIcon, MinusIcon, PlusIcon } from 'lucide-react';
-import { AVATAR_SETS, AvatarSetEnum, avatarChoices, words, type AvatarSet } from '@smartapp/core';
+import {
+  AVATAR_SETS,
+  AvatarSetEnum,
+  avatarChoices,
+  avatarSetOf,
+  words,
+  type AvatarSet,
+} from '@smartapp/core';
 import {
   blobToDataUrl,
   compressImage,
@@ -51,12 +58,11 @@ function srcOf(draft: CustomerAvatar): string {
 }
 
 function setOf(src: string): AvatarSet {
-  const prefix = AvatarSetEnum.safeParse(src.split('/').pop()?.split('-')[0]);
-  return prefix.success ? prefix.data : 'notionists';
+  return avatarSetOf(src) ?? 'toon';
 }
 
 /**
- * The picker itself (decisions R23, R24): three face styles of 12 (DiceBear), or their own photo fitted
+ * The picker itself (decisions R23, R24, T80): four face styles of 12 (DiceBear), or their own photo fitted
  * in a circle with the DiceUI Cropper. Loaded by AvatarPicker; it mounts afresh on each open, so every
  * open starts from the picture shown now.
  */
@@ -222,7 +228,7 @@ export function AvatarPickerDialog({
               onChange={handleFile}
             />
             <div className="flex items-center gap-4">
-              <Avatar className="size-20 ring-4 ring-member-soft">
+              <Avatar className="size-20 bg-shop-10-soft ring-4 ring-member-soft">
                 <AvatarImage src={srcOf(draft)} alt="" />
                 <AvatarFallback className="bg-member text-xl font-semibold text-member-foreground">
                   {initials(name)}
@@ -262,10 +268,14 @@ export function AvatarPickerDialog({
             >
               <TabsList
                 aria-label={W.setsLabel}
-                className="grid w-full grid-cols-3 rounded-full p-1 group-data-horizontal/tabs:h-auto"
+                className="grid w-full grid-cols-4 rounded-full p-1 group-data-horizontal/tabs:h-auto"
               >
                 {AVATAR_SETS.map((key) => (
-                  <TabsTrigger key={key} value={key} className="h-11 rounded-full text-base">
+                  <TabsTrigger
+                    key={key}
+                    value={key}
+                    className="h-11 rounded-full px-1 text-sm sm:text-base"
+                  >
                     {W.sets[key]}
                   </TabsTrigger>
                 ))}
@@ -288,7 +298,8 @@ export function AvatarPickerDialog({
                         aria-label={W.pick(index + 1)}
                         className="aspect-square h-auto w-full rounded-full bg-muted/60 p-0.5 ring-2 ring-transparent transition duration-fast hover:bg-muted aria-pressed:bg-member-soft aria-pressed:ring-member motion-safe:active:scale-95"
                       >
-                        <Avatar className="size-full after:hidden">
+                        {/* Blobs have no background of their own: they sit on the shop's colour. */}
+                        <Avatar className="size-full bg-shop-10-soft after:hidden">
                           <AvatarImage src={path} alt="" loading="lazy" decoding="async" />
                         </Avatar>
                       </ToggleGroupItem>

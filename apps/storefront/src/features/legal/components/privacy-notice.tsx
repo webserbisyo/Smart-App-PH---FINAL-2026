@@ -10,7 +10,7 @@ const W = words.privacy;
 // Change with the text (shown as "Last updated", Manila date).
 const UPDATED_AT = '2026-10-26T09:00:00+08:00';
 
-// The Micah faces' licence, linked next to their credit.
+// The CC BY faces' licence (Toon Head, Big Smile, Adventurer), linked next to their credit.
 const CC_BY_4 = 'https://creativecommons.org/licenses/by/4.0/';
 
 const SECTIONS = ['who', 'collect', 'why', 'phone', 'keep', 'sees', 'rights', 'contact'] as const;

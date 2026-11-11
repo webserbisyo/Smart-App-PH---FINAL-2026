@@ -163,8 +163,9 @@ export const ANNOUNCEMENT_TONES = ['info', 'warning', 'success'] as const;
 export const AnnouncementToneEnum = z.enum(ANNOUNCEMENT_TONES);
 export type AnnouncementTone = z.infer<typeof AnnouncementToneEnum>;
 
-// The avatar picker's face sets (decision R23): DiceBear Notionists, Lorelei and Micah.
-export const AVATAR_SETS = ['notionists', 'lorelei', 'micah'] as const;
+// The customer avatar picker's face sets (decisions R23, T80): DiceBear Toon Head, Big Smile, Thumbs (a blob
+// on the shop's colour) and Adventurer, none of them the owner's faces.
+export const AVATAR_SETS = ['toon', 'smile', 'blob', 'adventure'] as const;
 export const AvatarSetEnum = z.enum(AVATAR_SETS);
 export type AvatarSet = z.infer<typeof AvatarSetEnum>;
 

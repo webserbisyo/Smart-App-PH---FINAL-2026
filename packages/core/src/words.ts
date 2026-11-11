@@ -965,7 +965,7 @@ export const words = {
       change: 'Change picture',
       title: 'Your picture',
       hint: 'Pick a face or use your own photo. It stays on this phone.',
-      sets: { notionists: 'Sketch', lorelei: 'Soft', micah: 'Bright' },
+      sets: { toon: 'Toon', smile: 'Smile', blob: 'Blob', adventure: 'Adventure' },
       setsLabel: 'Face styles',
       pick: (index: number) => `Face ${index}`,
       upload: 'Use my photo',
@@ -1083,9 +1083,10 @@ export const words = {
       none: 'Ask at the counter, or reply in your order’s Messenger chat.',
     },
     lastUpdated: (date: string) => `Last updated ${date}`,
-    // Licences of the member faces (decision R23): Micah needs credit (CC BY 4.0); the others are CC0.
+    // Licences of the member faces (decision T80): Toon Head, Big Smile and Adventurer need credit (CC BY
+    // 4.0); Thumbs is CC0.
     faceCredits:
-      'Member faces from DiceBear: Notionists by Zoish and Lorelei by Lisa Wischofsky (CC0), Micah by Micah Lanier (CC BY 4.0).',
+      'Member faces from DiceBear: Toon Head by Johan Melin, Big Smile by Ashley Seo and Adventurer by Lisa Wischofsky (CC BY 4.0), Thumbs by DiceBear (CC0).',
     faceLicence: 'CC BY 4.0 licence',
     back: 'Back to the shop',
   },

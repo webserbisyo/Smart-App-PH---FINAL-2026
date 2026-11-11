@@ -1,5 +1,5 @@
 // The Shop info sheet: the week's hours day by day, closures as lines, default member avatars.
-import type { AvatarSet, Weekday } from '../schemas/enums.js';
+import { AVATAR_SETS, type AvatarSet, type Weekday } from '../schemas/enums.js';
 import type { Closure, OpeningRange } from '../schemas/storefront.js';
 import { words } from '../words.js';
 import {
@@ -138,11 +138,19 @@ export function defaultAvatar(key: string): string {
 // Faces in each set of the avatar picker (tooling/scripts/default-avatars.ts makes the files).
 export const AVATARS_PER_SET = 12;
 
-/** The picker's faces for one set; Notionists reuses the first 12 default faces. */
+/** The picker's faces for one set; Toon reuses the first 12 default faces. */
 export function avatarChoices(set: AvatarSet): string[] {
   return Array.from({ length: AVATARS_PER_SET }, (_, i) =>
-    set === 'notionists' ? avatarPath(i) : `/avatars/${set}-${String(i + 1).padStart(2, '0')}.webp`,
+    set === 'toon' ? avatarPath(i) : `/avatars/${set}-${String(i + 1).padStart(2, '0')}.webp`,
   );
+}
+
+/** The face set a picture path belongs to; the default faces are Toon. Null for a photo. */
+export function avatarSetOf(src: string): AvatarSet | null {
+  const file = src.split('/').pop() ?? '';
+  if (file.startsWith('default-')) return 'toon';
+  const prefix = file.split('-')[0];
+  return AVATAR_SETS.find((set) => set === prefix) ?? null;
 }
 
 /** A few different faces for a shop's members pill, the same set on every visit. */

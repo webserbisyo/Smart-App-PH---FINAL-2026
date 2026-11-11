@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { SHOP_PACKS } from '../src/demo/packs/index.js';
 import {
   DEFAULT_AVATAR_COUNT,
+  avatarChoices,
+  avatarSetOf,
   defaultAvatar,
   groupedHours,
   membersPreviewAvatars,
@@ -72,5 +74,14 @@ describe('default avatars', () => {
     const faces = membersPreviewAvatars('kanto-smash', 4);
     expect(new Set(faces).size).toBe(4);
     expect(membersPreviewAvatars('kanto-smash', 99)).toHaveLength(DEFAULT_AVATAR_COUNT);
+  });
+
+  it('knows the set of a face, with the default faces in Toon', () => {
+    expect(avatarChoices('toon')[0]).toBe('/avatars/default-01.webp');
+    expect(avatarChoices('blob')[11]).toBe('/avatars/blob-12.webp');
+    expect(avatarSetOf('/avatars/default-07.webp')).toBe('toon');
+    expect(avatarSetOf('/avatars/smile-03.webp')).toBe('smile');
+    expect(avatarSetOf('/avatars/micah-03.webp')).toBeNull();
+    expect(avatarSetOf('data:image/webp;base64,AAAA')).toBeNull();
   });
 });

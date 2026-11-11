@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-11 Final polish part 5, customer avatars (T80, pushed to main): customers get their own faces, none of the owner's: Toon Head defaults and four picker sets (Toon, Smile, Blob on the shop's colour, Adventure) plus their photo; Privacy credits updated.
 - 2026-11-11 Final polish part 4, fonts (T79, pushed to main): 8 font pairs from 12 self-hosted Fontsource families, picked in Editor > Style > Fonts and shown on every storefront page (titles and body); each demo shop gets a fitting pair; /kit shows all 8.
 - 2026-11-06 Final polish part 3, phone Editor (T78, pushed to main): a dock that stays (Sections, Style, Pages, Publish) with the list, a part or the pages in a sheet docked under the preview at 3 heights (drag or tap the handle, swipe right to go back); the preview opens Home, the menu, Rewards, Account and Shop info from the Pages list, the page buttons on computers, or a tap on its own dock and links; banner title and line typed straight onto the preview with placeholders.
 - 2026-11-06 Final polish part 2, hidden scroll and touch sizes (T77, pushed to main): side panels (order, member) fade at the bottom with a "More below" button and a thin scrollbar for a mouse (`scroll-hint` on the DiceUI Scroller); Orders board columns fade and say "+5 more"; Orders type cards on phones fade at the edge (`use-scroller-recheck`); booking and catalog number fields 44 px on phones; storefront Home rows show a thin scrollbar for a mouse

@@ -33,7 +33,7 @@ export function AccountButton() {
   const face = (
     <>
       {account ? (
-        <Avatar className="size-9">
+        <Avatar className="size-9 bg-shop-10-soft">
           <AvatarImage src={avatar} alt="" />
           <AvatarFallback className="bg-shop-10-soft text-sm font-semibold text-shop-10-soft-foreground">
             {initials(account.name)}

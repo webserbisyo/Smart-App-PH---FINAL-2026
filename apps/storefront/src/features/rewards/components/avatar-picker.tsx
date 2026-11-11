@@ -50,7 +50,7 @@ export function AvatarPicker({ slug, name, current }: AvatarPickerProps) {
         }}
         className="relative shrink-0 rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <Avatar className="size-16 ring-4 ring-card">
+        <Avatar className="size-16 bg-shop-10-soft ring-4 ring-card">
           <AvatarImage src={current} alt="" />
           <AvatarFallback className="bg-member text-lg font-semibold text-member-foreground">
             {initials(name)}

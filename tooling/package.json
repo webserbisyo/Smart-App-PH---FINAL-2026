@@ -13,10 +13,11 @@
     "budget": "node scripts/js-budget.ts"
   },
   "devDependencies": {
+    "@dicebear/adventurer": "9.4.3",
+    "@dicebear/big-smile": "9.4.3",
     "@dicebear/core": "9.4.3",
-    "@dicebear/lorelei": "9.4.3",
-    "@dicebear/micah": "9.4.3",
-    "@dicebear/notionists": "9.4.3",
+    "@dicebear/thumbs": "9.4.3",
+    "@dicebear/toon-head": "9.4.3",
     "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "emojibase-data": "17.0.0",
