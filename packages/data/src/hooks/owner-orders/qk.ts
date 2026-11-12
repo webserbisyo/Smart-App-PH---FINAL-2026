@@ -10,4 +10,6 @@ export const ownerOrdersQk = {
   find: (slug: string, code: string) => ['owner-orders', slug, 'find', code] as const,
   detail: (slug: string, orderId: string) => ['owner-orders', slug, 'detail', orderId] as const,
   bookingRules: (slug: string) => ['owner-orders', slug, 'booking-rules'] as const,
+  rescheduleSchedule: (slug: string, orderId: string) =>
+    ['owner-orders', slug, 'reschedule-schedule', orderId] as const,
 };

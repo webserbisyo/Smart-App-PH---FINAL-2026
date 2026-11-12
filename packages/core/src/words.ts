@@ -1,6 +1,6 @@
 import type { ShopKind } from './schemas/demo-shop.js';
 import type { IconKey } from './icons.js';
-import type { PaymentMethod, PhBank } from './schemas/enums.js';
+import type { OrderType, PaymentMethod, PhBank } from './schemas/enums.js';
 
 // Icon keys for the catalog nav item; apps map each key to a lucide icon.
 export const CATALOG_ICONS = ['utensils', 'package'] as const;
@@ -165,6 +165,9 @@ export const words = {
     shareMyShop: 'Share my shop',
     account: 'Account',
     more: 'More',
+    // Under Orders in the sidebar, for shops that take orders for later days (T85).
+    calendar: 'Calendar',
+    calendarCount: (n: number) => `${n} ${n === 1 ? 'order' : 'orders'} for later days`,
   },
   shell: {
     myShop: 'My shop',
@@ -419,6 +422,8 @@ export const words = {
     moreDatesLegend: 'Greyed days are closed, full or too soon.',
     periods: { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' },
     slotFull: 'Full',
+    // Shown on a time once only a few orders fit (T85).
+    slotLeft: (n: number) => `${n} left`,
     notice: (item: string, days: number, type: 'pickup' | 'delivery', earliest: string) =>
       `${item} needs ${days} ${days === 1 ? 'day' : 'days'}’ notice. Earliest ${type === 'delivery' ? 'delivery' : 'pickup'}: ${earliest}.`,
     summary: (type: 'pickup' | 'delivery', when: string) =>
@@ -436,6 +441,8 @@ export const words = {
     area: 'Delivery area',
     addressAtCheckout: 'You’ll add your address at checkout.',
     save: 'Save',
+    // Save names the pick, so the customer sees what they're saying yes to (T85).
+    saveWhen: (summary: string) => `Save · ${summary}`,
     useMyLocation: 'Use my location',
     locating: 'Locating…',
     locationUsed: 'Location used',
@@ -1981,13 +1988,14 @@ export const ordersWords = {
     label: 'Orders view',
     board: 'Board',
     list: 'List',
-    bookings: 'Bookings',
+    bookings: 'Calendar',
   },
-  // The Bookings view (T83): orders for later days on a calendar; drag one to change its time.
+  // The Calendar view (T83, T85): orders for later days; drag one (laptop, tablet) or tap it to change its time.
   bookings: {
-    hint: 'Drag an order to change its time. Customers see the new time on their receipt.',
+    hint: 'Drag an order to a new time, or click it to open it.',
+    hintTablet: 'Press and hold an order, then drag it to a new time. Tap to open it.',
     hintPhone: 'Tap an order to open it or change its time.',
-    empty: 'No bookings yet. Orders for later days show here.',
+    empty: 'No orders for later days yet. They show here when customers order ahead.',
     moved: (orderNo: string, when: string) => `${orderNo} moved to ${when}`,
     undo: 'Undo',
     notPast: 'Pick a time from now on.',
@@ -2003,8 +2011,59 @@ export const ordersWords = {
       dropNotAllowed: 'Can’t move here',
       month: 'Month',
       week: 'Week',
+      day: 'Day',
+      days: (n: number) => `${n} days`,
       agenda: 'List',
     },
+    viewLabel: 'Calendar view',
+    phoneViews: { list: 'List', days: '3 days', month: 'Month' },
+    dayStrip: 'Pick a day',
+    dayTotal: (n: number, total: string) => `${n} ${n === 1 ? 'order' : 'orders'} · ${total}`,
+    dayCount: (n: number) => `${n} ${n === 1 ? 'order' : 'orders'}`,
+    noOrdersDay: (day: string) => `No orders on ${day} yet.`,
+    closedDay: (day: string) => `Closed on ${day}.`,
+    closed: 'Closed',
+    full: 'Full',
+    tooSoon: 'Too soon',
+    morning: 'Morning',
+    afternoon: 'Afternoon',
+    evening: 'Evening',
+    // Taken out of the per-time limit, on full and busy times ("2/3").
+    taken: (taken: number, limit: number) => `${taken}/${limit}`,
+    takenAria: (taken: number, limit: number) => `${taken} of ${limit} orders taken`,
+    eventAria: (orderNo: string, name: string, when: string, who: string) =>
+      `${orderNo}, ${name}, ${who}, ${when}`,
+    // Who ordered, by colour plus a word (T85).
+    legend: 'Colour shows who ordered',
+    customer: {
+      member: 'Member',
+      prize: 'Prize ready',
+      first: 'First order',
+      guest: 'Guest',
+    },
+    toCheck: 'Payment to check',
+    whatToMake: 'What to make',
+    whatToMakeTitle: (day: string) => `What to make · ${day}`,
+    whatToMakeDesc: (n: number) =>
+      `Everything ordered for this day, from ${n} ${n === 1 ? 'order' : 'orders'}.`,
+    whatToMakeEmpty: 'Nothing to make that day.',
+    whatToMakeMore: (n: number) =>
+      `+${n} more ${n === 1 ? 'item' : 'items'} on big orders. Open them to see every line.`,
+    orderNotes: 'Notes from customers',
+    copyList: 'Copy list',
+    listCopied: 'List copied. Paste it anywhere.',
+    copyFailed: 'Could not copy. Select the list and copy it.',
+    copyHeading: (day: string) => `What to make, ${day}`,
+  },
+  // The When card at the top of the order panel (T85).
+  when: {
+    label: (type: OrderType) => (type === 'delivery' ? 'Delivery time' : 'Pickup time'),
+    today: 'Today',
+    tomorrow: 'Tomorrow',
+    inDays: (n: number) => `In ${n} days`,
+    change: 'Change',
+    changeAria: 'Change the day or time',
+    fixed: 'Only New or Preparing pickup and delivery orders can change time.',
   },
   toolbar: {
     searchPlaceholder: 'Search name, # or code',
@@ -2107,23 +2166,43 @@ export const ordersWords = {
   changeTime: {
     dialogTitle: 'Change time',
     dialogDesc: 'Pick a new date and time slot for this order.',
-    allowAnywayLabel: 'Allow anyway',
-    allowAnywayHint:
-      'Allow booking past slot limit, daily limit, or prep notice. Closed days remain disabled.',
+    back: 'Back to the order',
+    nowAt: (name: string, when: string) => `${name} · now ${when}`,
+    now: 'Now',
+    left: (n: number) => `${n} left`,
+    allowAnywayLabel: 'Show full times',
+    allowAnywayHint: 'Lets you go over your limit for a time or a day. Closed days stay off.',
+    overLimit: 'Over limit',
     pickAnotherDate: 'Pick another date',
+    moreDates: 'More dates',
     confirm: 'Change time',
-    changing: 'Changing…',
-    changed: 'Changed',
+    moveTo: (when: string) => `Move to ${when}`,
+    pickFirst: 'Pick a new time',
+    changing: 'Moving…',
+    changed: 'Moved',
     successToast: (orderNo: string, formattedDateTime: string) =>
       `${orderNo} moved to ${formattedDateTime}`,
+    undo: 'Undo',
+    undone: (orderNo: string, when: string) => `${orderNo} is back on ${when}`,
+    tellLabel: (firstName: string) => `Tell ${firstName} on Messenger`,
+    tellHint: 'Copies this message, then opens Messenger to paste it.',
+    messageLabel: 'Message',
+    message: (firstName: string, type: OrderType, orderNo: string, when: string, shop: string) =>
+      `Hi ${firstName}! Your ${type === 'delivery' ? 'delivery' : 'pickup'} order ${orderNo} is now ${when}. Thank you! – ${shop}`,
+    messageCopied: 'Message copied. Paste it in Messenger.',
     errors: {
-      slot_full: 'That time just filled up. Pick another or turn on Allow anyway.',
+      slot_full: 'That time just filled up. Pick another, or turn on Show full times.',
       reschedule_not_allowed: 'Only New or Preparing pickup and delivery orders can change time.',
     },
     dateLabel: 'Date',
     timesLabel: 'Times',
     closedDay: 'The shop is closed that day. Pick another date.',
     noTimes: 'No times left that day. Pick another date.',
+    // An item in this order needs more days' notice than that day gives (T85).
+    tooSoonDay: (item: string | null, days: number | null) =>
+      item && days
+        ? `${item} needs ${days} ${days === 1 ? 'day' : 'days'}’ notice. Pick a later date.`
+        : 'Too soon for this order. Pick a later date.',
     cancel: 'Cancel',
   },
   ticket: {

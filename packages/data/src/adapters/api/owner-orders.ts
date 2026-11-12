@@ -5,6 +5,7 @@ import {
   OpenStateSchema,
   OwnerOrderSchema,
   PaymentSchema,
+  ScheduleSchema,
 } from '@smartapp/core';
 import { z } from 'zod';
 import { fetchApi } from '../../api-client';
@@ -159,6 +160,15 @@ export function createApiOwnerOrdersAdapter({
             override: input.override ?? false,
           }),
         },
+      );
+    },
+
+    async getRescheduleSchedule(input) {
+      const headers = await authHeaders();
+      return fetchApi(
+        `${baseUrl}/owner/orders/${encodeURIComponent(input.orderId)}/schedule`,
+        ScheduleSchema,
+        { method: 'GET', headers },
       );
     },
 

@@ -31,12 +31,10 @@ import {
   FieldSet,
   FieldTitle,
 } from '@smartapp/ui/components/field';
-import { Popover, PopoverContent, PopoverTrigger } from '@smartapp/ui/components/popover';
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
-import { Scroller } from '@smartapp/ui/components/scroller';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
+import { DayChips, TimeChips, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
 import { cn } from '@smartapp/ui/lib/utils';
 import { useShop } from '../../shell/components/shop-context';
 import {
@@ -85,10 +83,10 @@ const DAY_STATE_ICON: Record<Exclude<ScheduleDayState, 'open'>, LucideIcon> = {
   too_soon: HourglassIcon,
 };
 
-const DAY_CHIP =
-  'h-16 min-w-18 shrink-0 flex-col gap-0.5 rounded-2xl px-3 text-sm font-semibold aria-pressed:border-transparent aria-pressed:bg-shop-10 aria-pressed:text-shop-10-foreground';
-const TIME_CHIP =
-  'h-11 min-w-22 rounded-full px-3 text-base font-medium tabular aria-pressed:border-transparent aria-pressed:bg-shop-10 aria-pressed:text-shop-10-foreground';
+// The shared day and time chips (T85) in the shop's own colour.
+const PRESSED = 'aria-pressed:bg-shop-10 aria-pressed:text-shop-10-foreground';
+// A time says how many are left once only this many remain.
+const FEW_LEFT = 2;
 
 /**
  * The When picker (O6), used by the How and where sheet (also opened from checkout): ASAP or Schedule,
@@ -268,78 +266,62 @@ export function WhenPicker({
             {/* Day strip: Today, Tomorrow, then "Wed 5"; closed, full and too-soon days say so. */}
             <div className="flex min-w-0 flex-col gap-2">
               <span className="text-sm font-medium">{words.location.dayLabel}</span>
-              <Scroller orientation="horizontal" hideScrollbar className="-mx-1 min-w-0 px-1">
-                <div className="flex w-max items-stretch gap-2">
-                  <ToggleGroup
-                    value={day && dayInStrip ? [day] : []}
-                    onValueChange={(next) => {
-                      const picked = next[0];
-                      if (picked) pickDay(picked);
+              <DayChips
+                label={words.location.dayLabel}
+                value={day && dayInStrip ? day : null}
+                onValueChange={(date) => {
+                  pickDay(date);
+                  setMoreOpen(false);
+                }}
+                pressedClassName={PRESSED}
+                chips={chips.map((d): SlotChip => {
+                  const label = dayChipLabel(d.date, now);
+                  if (d.state === 'open') return { value: d.date, label };
+                  const StateIcon = DAY_STATE_ICON[d.state];
+                  const stateWord = words.location.dayState[d.state];
+                  return {
+                    value: d.date,
+                    label,
+                    detail: stateWord,
+                    icon: <StateIcon aria-hidden="true" className="size-3" />,
+                    disabled: true,
+                    ariaLabel: words.location.dayDisabled(label, stateWord),
+                  };
+                })}
+                trailing={
+                  hasMore ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      aria-expanded={moreOpen}
+                      aria-pressed={Boolean(day && !dayInStrip)}
+                      onClick={() => setMoreOpen((open) => !open)}
+                      className={cn(
+                        'h-16 min-w-18 shrink-0 flex-col gap-0.5 rounded-2xl px-3 text-sm font-semibold aria-pressed:border-transparent',
+                        PRESSED,
+                      )}
+                    >
+                      <CalendarDaysIcon aria-hidden="true" className="size-4" />
+                      <span>
+                        {day && !dayInStrip ? dayChipLabel(day, now) : words.location.moreDates}
+                      </span>
+                    </Button>
+                  ) : null
+                }
+              />
+              {/* More dates opens a month inside the sheet, under the strip, never over it (T85). */}
+              {hasMore && moreOpen ? (
+                <div className="flex justify-center rounded-2xl border bg-card">
+                  <MoreDatesCalendar
+                    days={data.days}
+                    selected={day}
+                    onPick={(date) => {
+                      pickDay(date);
+                      setMoreOpen(false);
                     }}
-                    aria-label={words.location.dayLabel}
-                    spacing={2}
-                    className="flex w-max items-stretch"
-                  >
-                    {chips.map((d) => {
-                      const label = dayChipLabel(d.date, now);
-                      const StateIcon = d.state === 'open' ? null : DAY_STATE_ICON[d.state];
-                      const stateWord =
-                        d.state === 'open' ? null : words.location.dayState[d.state];
-                      return (
-                        <ToggleGroupItem
-                          key={d.date}
-                          value={d.date}
-                          variant="outline"
-                          disabled={d.state !== 'open'}
-                          aria-label={
-                            stateWord ? words.location.dayDisabled(label, stateWord) : label
-                          }
-                          className={cn(DAY_CHIP, d.state !== 'open' && 'opacity-60')}
-                        >
-                          <span>{label}</span>
-                          {StateIcon && stateWord ? (
-                            <span className="flex items-center gap-1 text-xs font-medium">
-                              <StateIcon aria-hidden="true" className="size-3" />
-                              {stateWord}
-                            </span>
-                          ) : null}
-                        </ToggleGroupItem>
-                      );
-                    })}
-                  </ToggleGroup>
-                  {hasMore ? (
-                    <Popover open={moreOpen} onOpenChange={setMoreOpen}>
-                      <PopoverTrigger
-                        render={
-                          <Button
-                            type="button"
-                            variant="outline"
-                            aria-pressed={Boolean(day && !dayInStrip)}
-                            className={DAY_CHIP}
-                          />
-                        }
-                      >
-                        <CalendarDaysIcon aria-hidden="true" className="size-4" />
-                        <span>
-                          {day && !dayInStrip ? dayChipLabel(day, now) : words.location.moreDates}
-                        </span>
-                      </PopoverTrigger>
-                      <PopoverContent align="end" className="w-auto p-0">
-                        {moreOpen ? (
-                          <MoreDatesCalendar
-                            days={data.days}
-                            selected={day}
-                            onPick={(date) => {
-                              pickDay(date);
-                              setMoreOpen(false);
-                            }}
-                          />
-                        ) : null}
-                      </PopoverContent>
-                    </Popover>
-                  ) : null}
+                  />
                 </div>
-              </Scroller>
+              ) : null}
             </div>
 
             {notice ? (
@@ -358,36 +340,29 @@ export function WhenPicker({
                     <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                       {words.location.periods[group.period]}
                     </span>
-                    <ToggleGroup
-                      value={value.at ? [value.at] : []}
-                      onValueChange={(next) => {
-                        const picked = next[0];
-                        if (picked) onChange({ mode: 'schedule', at: picked });
-                      }}
-                      aria-label={words.location.periods[group.period]}
-                      spacing={2}
-                      className="flex flex-wrap"
-                    >
-                      {group.slots.map((slot) => {
+                    <TimeChips
+                      label={words.location.periods[group.period]}
+                      value={value.at}
+                      onValueChange={(at) => onChange({ mode: 'schedule', at })}
+                      pressedClassName={PRESSED}
+                      chips={group.slots.map((slot): SlotChip => {
                         const full = slot.state === 'full';
-                        return (
-                          <ToggleGroupItem
-                            key={slot.at}
-                            value={slot.at}
-                            variant="outline"
-                            disabled={full}
-                            className={cn(TIME_CHIP, full && 'opacity-60')}
-                          >
-                            <span className={full ? 'line-through' : undefined}>
-                              {formatClock(slot.at)}
-                            </span>
-                            {full ? (
-                              <span className="text-xs font-medium">{words.location.slotFull}</span>
-                            ) : null}
-                          </ToggleGroupItem>
-                        );
+                        const left = slot.left ?? null;
+                        const few = !full && left !== null && left <= FEW_LEFT;
+                        return {
+                          value: slot.at,
+                          label: formatClock(slot.at),
+                          detail: full
+                            ? words.location.slotFull
+                            : few
+                              ? words.location.slotLeft(left)
+                              : undefined,
+                          tone: few ? 'warning' : 'muted',
+                          disabled: full,
+                          struck: full,
+                        };
                       })}
-                    </ToggleGroup>
+                    />
                   </div>
                 ))}
               </div>

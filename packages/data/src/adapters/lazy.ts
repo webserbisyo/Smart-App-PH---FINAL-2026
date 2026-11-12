@@ -55,6 +55,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     advanceOrder: async (input) => (await real()).ownerOrders.advanceOrder(input),
     recallOrder: async (input) => (await real()).ownerOrders.recallOrder(input),
     rescheduleOrder: async (input) => (await real()).ownerOrders.rescheduleOrder(input),
+    getRescheduleSchedule: async (input) => (await real()).ownerOrders.getRescheduleSchedule(input),
     saveOwnerNote: async (input) => (await real()).ownerOrders.saveOwnerNote(input),
     cancelOrder: async (input) => (await real()).ownerOrders.cancelOrder(input),
     saveDeliveryInfo: async (input) => (await real()).ownerOrders.saveDeliveryInfo(input),

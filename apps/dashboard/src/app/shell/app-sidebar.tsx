@@ -11,6 +11,9 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
 } from '@smartapp/ui/components/sidebar';
 import type { NavItem } from '@smartapp/ui/lib/nav';
@@ -18,7 +21,15 @@ import { useShop } from '../shop.js';
 import type { NavItems } from '../use-nav-items.js';
 import { AccountMenu } from './account-menu.js';
 
-function SidebarLink({ item, withTooltip }: { item: NavItem; withTooltip: boolean }) {
+function SidebarLink({
+  item,
+  withTooltip,
+  sub,
+}: {
+  item: NavItem;
+  withTooltip: boolean;
+  sub?: NavItem | null | undefined;
+}) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -32,6 +43,27 @@ function SidebarLink({ item, withTooltip }: { item: NavItem; withTooltip: boolea
       </SidebarMenuButton>
       {item.count !== undefined && item.count > 0 ? (
         <SidebarMenuBadge>{item.count}</SidebarMenuBadge>
+      ) : null}
+      {sub ? (
+        // A sub-link (Orders > Calendar, T85); the icon rail hides it.
+        <SidebarMenuSub>
+          <SidebarMenuSubItem>
+            <SidebarMenuSubButton
+              isActive={sub.active}
+              render={sub.link}
+              className="pointer-coarse:h-11"
+            >
+              {sub.icon}
+              <span>{sub.label}</span>
+              {sub.count !== undefined ? (
+                <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                  <span aria-hidden="true">{sub.count}</span>
+                  <span className="sr-only">{words.nav.calendarCount(sub.count)}</span>
+                </span>
+              ) : null}
+            </SidebarMenuSubButton>
+          </SidebarMenuSubItem>
+        </SidebarMenuSub>
       ) : null}
     </SidebarMenuItem>
   );
@@ -87,7 +119,12 @@ export function AppSidebar({
         <SidebarGroup>
           <SidebarMenu aria-label={words.shell.mainNav} className="gap-1">
             {nav.all.map((item) => (
-              <SidebarLink key={item.id} item={item} withTooltip={withTooltip} />
+              <SidebarLink
+                key={item.id}
+                item={item}
+                withTooltip={withTooltip}
+                sub={item.id === 'orders' ? nav.ordersCalendar : null}
+              />
             ))}
           </SidebarMenu>
         </SidebarGroup>

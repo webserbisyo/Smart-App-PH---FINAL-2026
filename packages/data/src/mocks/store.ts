@@ -748,11 +748,12 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     });
   }
 
-  function computeBookings(s: ShopState) {
+  // Booked times and items. `exceptId` leaves one order out, so moving it never competes with itself (T85).
+  function computeBookings(s: ShopState, exceptId?: string) {
     const slotCounts: Record<string, number> = {};
     const itemCounts: Record<string, Record<string, number>> = {};
     for (const o of s.orders) {
-      if (o.receipt.status === 'cancelled') continue;
+      if (o.receipt.status === 'cancelled' || o.id === exceptId) continue;
       if (o.receipt.scheduledAt) {
         slotCounts[o.receipt.scheduledAt] = (slotCounts[o.receipt.scheduledAt] ?? 0) + 1;
       }
@@ -1487,6 +1488,19 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return ownerOrder(s, order);
       }),
 
+    getRescheduleSchedule: ({ slug, orderId }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const order = orderById(s, orderId);
+        return scheduleDays(
+          s.shop.storefront,
+          order.receipt.lines,
+          s.shop.catalog.items,
+          computeBookings(s, order.id),
+          now(),
+        );
+      }),
+
     rescheduleOrder: ({ slug, orderId, scheduledAt, override }) =>
       run('orders', () => {
         const s = requireShop(slug);
@@ -1516,11 +1530,13 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             s.shop.storefront,
             order.receipt.lines,
             s.shop.catalog.items,
-            computeBookings(s),
+            computeBookings(s, order.id),
             now(),
           );
           const day = sched.days.find((d) => d.date === date);
           const slot = day?.slots.find((sl) => sl.at === scheduledAt);
+          // An item that needs more notice is its own reason, not a full time (T85).
+          if (day?.state === 'too_soon') fail('notice_too_short', 409);
           if (!day || day.state !== 'open' || !slot || slot.state !== 'open') {
             fail('slot_full', 409);
           }

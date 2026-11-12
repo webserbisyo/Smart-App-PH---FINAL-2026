@@ -493,6 +493,12 @@
 }
 
 /* Thin progress track (receipt pay countdown, c-progress-2). */
+/* A band on the Event Calendar's time grid (closed hours, full times), placed in hours via cssVars (T85). */
+@utility ec-band {
+  top: calc(var(--ec-hour-height) * var(--band-top));
+  height: calc(var(--ec-hour-height) * var(--band-len));
+}
+
 @utility progress-thin {
   & [data-slot='progress-track'] {
     height: var(--spacing);

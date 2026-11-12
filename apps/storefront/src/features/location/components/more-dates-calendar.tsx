@@ -27,6 +27,8 @@ export default function MoreDatesCalendar({ days, selected, onPick }: MoreDatesC
     <div className="flex flex-col gap-2">
       <Calendar
         mode="single"
+        // Sits on the sheet's card, not the shop's page colour.
+        className="bg-transparent"
         selected={selectedDate}
         {...(month ? { defaultMonth: month } : {})}
         {...(fromDate ? { startMonth: fromDate } : {})}

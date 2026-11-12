@@ -7,7 +7,7 @@ import { cn } from 'cn';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 
 // The shop's Page inbox in Meta Business Suite: where a Facebook Page's Messenger chats are answered.
-const PAGE_INBOX_URL = 'https://business.facebook.com/latest/inbox/all';
+export const PAGE_INBOX_URL = 'https://business.facebook.com/latest/inbox/all';
 
 const W = ordersWords.messenger;
 

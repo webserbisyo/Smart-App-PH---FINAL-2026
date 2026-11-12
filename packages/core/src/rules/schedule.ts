@@ -184,13 +184,15 @@ export function scheduleDays(
       for (let s = firstSlotMs; s < interval.end.getTime(); s += stepMs) {
         const slotIso = new Date(s).toISOString();
         let slotState: 'open' | 'full' = 'open';
+        let left: number | null = null;
         if (storefront.ordersPerSlot !== null && storefront.ordersPerSlot !== undefined) {
           const bookedOrders = bookings.slotCounts[slotIso] ?? 0;
-          if (bookedOrders >= storefront.ordersPerSlot) {
+          left = Math.max(0, storefront.ordersPerSlot - bookedOrders);
+          if (left === 0) {
             slotState = 'full';
           }
         }
-        slots.push({ at: slotIso, state: slotState });
+        slots.push({ at: slotIso, state: slotState, left });
       }
     }
 
@@ -216,6 +218,7 @@ export function scheduleDays(
       // Mark all slots full if daily limit exceeded
       for (const slot of slots) {
         slot.state = 'full';
+        slot.left = 0;
       }
     } else {
       dayState = 'open';

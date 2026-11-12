@@ -25,6 +25,7 @@ import {
   formatPeso,
   hasReference,
   isFinal,
+  manilaDate,
   isPayLater,
   moveTargets,
   ordersWords,
@@ -124,7 +125,13 @@ import { TimeChip } from '@/app/orders/time-chip';
 import { useNow } from '@/app/orders/use-now';
 import { useStepChange } from '@/app/orders/use-step-change';
 import { useOnlineStatus } from '@/app/use-online-status';
-import { ChangeTimeDialog } from './change-time-dialog.js';
+import {
+  ChangeTimeBody,
+  ChangeTimeFooter,
+  ChangeTimeHeader,
+  useChangeTime,
+} from './change-time.js';
+import { WhenCard } from './when-card.js';
 import { MessengerOrderButton } from './messenger-inbox.js';
 
 const CANCEL_REASON_KEYS = ['sold_out', 'closing_early', 'customer_asked', 'other'] as const;
@@ -188,7 +195,12 @@ export interface OrderPanelProps {
 export function OrderPanel({ orderId, seed, slug, kind, shopName, onClose }: OrderPanelProps) {
   // Keep the last order while the panel slides away.
   const [lastId, setLastId] = React.useState(orderId);
-  if (orderId && orderId !== lastId) setLastId(orderId);
+  // The panel shows the order, or slides to Change time in place (T85).
+  const [mode, setMode] = React.useState<'order' | 'time'>('order');
+  if (orderId && orderId !== lastId) {
+    setLastId(orderId);
+    setMode('order');
+  }
   const id = orderId ?? lastId ?? '';
   const open = orderId !== undefined;
   const detailQuery = useOrderDetail(slug, id);
@@ -205,31 +217,64 @@ export function OrderPanel({ orderId, seed, slug, kind, shopName, onClose }: Ord
         }
       : base;
 
-  const title = order
-    ? ordersWords.panel.title(orderNoLabel(order.orderNo))
-    : ordersWords.panel.close;
+  const today = manilaDate(useNow(60_000));
+  const ct = useChangeTime({
+    slug,
+    order,
+    active: open && mode === 'time',
+    shopName,
+    today,
+    onMoved: () => setMode('order'),
+  });
+  const timeMode = mode === 'time' && ct !== null && order !== undefined && canReschedule(order);
+  const openTime = () => setMode('time');
+
+  const title = timeMode
+    ? ordersWords.changeTime.dialogTitle
+    : order
+      ? ordersWords.panel.title(orderNoLabel(order.orderNo))
+      : ordersWords.panel.close;
 
   return (
     <ResponsiveSheet
       open={open}
       onOpenChange={(next) => {
-        if (!next) onClose();
+        if (next) return;
+        // The phone's back gesture (and Escape) steps back from Change time before closing.
+        if (timeMode) {
+          setMode('order');
+          return;
+        }
+        setMode('order');
+        onClose();
       }}
       title={title}
       header={
-        order ? (
+        timeMode ? (
+          <ChangeTimeHeader ct={ct} onBack={() => setMode('order')} />
+        ) : order ? (
           <PanelHeader order={order} kind={kind} onClose={onClose} />
         ) : (
           <HeaderSkeleton onClose={onClose} />
         )
       }
       footer={
-        order && !detailQuery.isError ? (
-          <PanelFooter order={order} detail={detail} slug={slug} kind={kind} onClose={onClose} />
+        timeMode ? (
+          <ChangeTimeFooter ct={ct} />
+        ) : order && !detailQuery.isError ? (
+          <PanelFooter
+            order={order}
+            slug={slug}
+            kind={kind}
+            onClose={onClose}
+            onChangeTime={openTime}
+          />
         ) : undefined
       }
     >
-      {order ? (
+      {timeMode ? (
+        <ChangeTimeBody ct={ct} />
+      ) : order ? (
         <PanelBody
           order={order}
           detail={detail}
@@ -239,6 +284,7 @@ export function OrderPanel({ orderId, seed, slug, kind, shopName, onClose }: Ord
           loading={detailQuery.isLoading}
           failed={detailQuery.isError}
           onRetry={() => void detailQuery.refetch()}
+          onChangeTime={openTime}
         />
       ) : detailQuery.isError ? (
         <div className="flex flex-col items-center gap-3 p-8 text-center">
@@ -355,6 +401,7 @@ interface PanelBodyProps {
   loading: boolean;
   failed: boolean;
   onRetry: () => void;
+  onChangeTime: () => void;
 }
 
 function Section({
@@ -388,6 +435,7 @@ function PanelBody({
   loading,
   failed,
   onRetry,
+  onChangeTime,
 }: PanelBodyProps) {
   const markSeen = useMarkSeen(slug).mutate;
   const sentFor = React.useRef<string | null>(null);
@@ -400,6 +448,7 @@ function PanelBody({
 
   return (
     <div>
+      {order.scheduledAt ? <WhenCard order={order} onChange={onChangeTime} /> : null}
       <StepsSection order={order} detail={detail} kind={kind} />
       {failed ? (
         <div className="m-4 flex flex-col items-start gap-2 rounded-xl border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive-soft-foreground">
@@ -1166,23 +1215,22 @@ function ActivitySection({ detail }: { detail: OwnerOrder | undefined }) {
 
 function PanelFooter({
   order,
-  detail,
   slug,
   kind,
   onClose,
+  onChangeTime,
 }: {
   order: BoardOrder;
-  detail: OwnerOrder | undefined;
   slug: string;
   kind: ShopKind;
   onClose: () => void;
+  onChangeTime: () => void;
 }) {
   const online = useOnlineStatus();
   const { advance, payAndComplete } = useStepChange({ slug, kind });
   const step = useAsyncAction();
   const printer = usePrintTicket(slug);
   const cancel = useCancelOrder(slug);
-  const [timeOpen, setTimeOpen] = React.useState(false);
   const [cancelOpen, setCancelOpen] = React.useState(false);
   const [reasonKey, setReasonKey] = React.useState<CancelReasonKey>('sold_out');
   const [otherText, setOtherText] = React.useState('');
@@ -1287,7 +1335,7 @@ function PanelFooter({
             </DropdownMenuSub>
           ) : null}
           {canReschedule(order) ? (
-            <DropdownMenuItem onClick={() => setTimeOpen(true)}>
+            <DropdownMenuItem onClick={onChangeTime}>
               <CalendarClockIcon />
               {w.changeTime}
             </DropdownMenuItem>
@@ -1309,14 +1357,6 @@ function PanelFooter({
       </DropdownMenu>
 
       {printer.node}
-      {detail || canReschedule(order) ? (
-        <ChangeTimeDialog
-          open={timeOpen}
-          onOpenChange={setTimeOpen}
-          slug={slug}
-          orderId={order.id}
-        />
-      ) : null}
 
       <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <AlertDialogContent>

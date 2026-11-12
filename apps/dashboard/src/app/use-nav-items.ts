@@ -1,10 +1,11 @@
 import { createElement } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { UserIcon } from 'lucide-react';
-import { vocab, words } from '@smartapp/core';
+import { CalendarDaysIcon, UserIcon } from 'lucide-react';
+import { manilaDate, vocab, words } from '@smartapp/core';
 import type { NavItem } from '@smartapp/ui/lib/nav';
 import { env } from './env.js';
-import { useOpenOrders } from '@smartapp/data';
+import { useOpenOrders, useStorefront } from '@smartapp/data';
+import { calendarLink } from './orders/calendar-link.js';
 import { CATALOG_ICONS, FOOTER_ICONS, NAV, type NavPath } from './nav.js';
 import { useShop } from './shop.js';
 
@@ -29,14 +30,26 @@ export interface NavItems {
   viewMyShop: NavItem;
   shareMyShop: NavItem;
   account: NavItem;
+  // Under Orders in the sidebar, for shops that take orders for later days (T85).
+  ordersCalendar: NavItem | null;
 }
 
 export function useNavItems({ onShare }: { onShare: () => void }): NavItems {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const onCalendar = useRouterState({
+    select: (state) =>
+      state.location.pathname === '/orders' && state.location.search.view === 'bookings',
+  });
   const shop = useShop();
   const shopVocab = vocab(shop.kind);
   const { data: openOrders } = useOpenOrders(shop.slug);
   const openCount = openOrders?.length ?? 0;
+  const { data: storefront } = useStorefront(shop.slug);
+  const takesLater = (storefront?.storefront.daysAhead ?? 1) > 1;
+  const today = manilaDate(new Date());
+  const laterCount = (openOrders ?? []).filter(
+    (o) => o.scheduledAt !== null && manilaDate(o.dueAt) > today,
+  ).length;
 
   const all = NAV.map((def): NavItem & { placement: string } => {
     const icon = def.icon === 'catalog' ? CATALOG_ICONS[shopVocab.catalogIcon] : def.icon;
@@ -82,5 +95,15 @@ export function useNavItems({ onShare }: { onShare: () => void }): NavItems {
       link: navLink('/settings/account'),
       active: isActivePath(pathname, '/settings/account'),
     },
+    ordersCalendar: takesLater
+      ? {
+          id: 'orders-calendar',
+          label: words.nav.calendar,
+          icon: createElement(CalendarDaysIcon),
+          link: calendarLink(),
+          active: onCalendar,
+          count: laterCount > 0 ? laterCount : undefined,
+        }
+      : null,
   };
 }

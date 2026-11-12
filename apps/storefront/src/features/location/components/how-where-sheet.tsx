@@ -55,7 +55,7 @@ import { useShop } from '../../shell/components/shop-context';
 import { ORDER_TYPE_ICON } from './order-type-icons';
 import { useLocationChoice } from './use-location-choice';
 import { WhenPicker, type WhenValue } from './when-picker';
-import type { WhenMode } from '../when-rules';
+import { whenSummary, type WhenMode } from '../when-rules';
 import { notify } from '@smartapp/ui/compositions/notify';
 
 const TYPE_COLS: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' };
@@ -505,7 +505,9 @@ function HowWhereForm({
             (type === 'delivery' && Boolean(isDeliveryDisabled))
           }
         >
-          {words.location.save}
+          {type !== 'walk_in' && when.mode === 'schedule' && when.at
+            ? words.location.saveWhen(whenSummary(type, when.at, now))
+            : words.location.save}
         </Button>
       </ResponsiveDialogFooter>
     </form>

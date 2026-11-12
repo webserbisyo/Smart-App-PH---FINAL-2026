@@ -294,8 +294,8 @@ export function OrdersScreen() {
               slug={shop.slug}
               today={today}
               now={now}
-              hours={sf.hours}
-              slotMinutes={sf.slotMinutes}
+              kind={shop.kind}
+              rules={sf}
               online={isOnline}
               matches={matchesShown}
               onOpen={openOrder}

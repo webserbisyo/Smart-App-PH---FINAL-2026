@@ -58,3 +58,13 @@ export function useBookingRules(slug: string) {
     enabled: Boolean(slug),
   });
 }
+
+/** Where an order can move (T85): the shop's days and times with this order's own spot counted as free. */
+export function useRescheduleSchedule(slug: string, orderId: string, enabled = true) {
+  const { ownerOrders } = useAdapters();
+  return useQuery({
+    queryKey: ownerOrdersQk.rescheduleSchedule(slug, orderId),
+    queryFn: () => ownerOrders.getRescheduleSchedule({ slug, orderId }),
+    enabled: enabled && Boolean(slug && orderId),
+  });
+}

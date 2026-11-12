@@ -5,6 +5,8 @@ import { ScheduleDayStateEnum, ScheduleSlotStateEnum } from './enums.js';
 export const ScheduleSlotSchema = z.object({
   at: IsoDateTimeSchema,
   state: ScheduleSlotStateEnum,
+  // Orders this time can still take (T85): null when the shop has no per-time limit.
+  left: z.number().int().nonnegative().nullable().optional(),
 });
 export type ScheduleSlot = z.infer<typeof ScheduleSlotSchema>;
 

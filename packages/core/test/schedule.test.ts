@@ -92,6 +92,29 @@ describe('scheduleDays (decision T48)', () => {
     expect(day?.state).toBe('open');
   });
 
+  it('each slot says how many orders it can still take (T85)', () => {
+    const now = mnl('2026-10-26 10:00');
+    const slot = mnl('2026-10-27 06:00');
+    const sf = with_(lola.storefront, { ordersPerSlot: 3 });
+    const s = scheduleDays(
+      sf,
+      [],
+      lola.catalog.items,
+      { slotCounts: { [slot]: 1 }, itemCounts: {} },
+      now,
+    );
+    const day = s.days.find((d) => d.date === '2026-10-27');
+    expect(day?.slots.find((x) => x.at === slot)?.left).toBe(2);
+    const free = scheduleDays(
+      with_(lola.storefront, { ordersPerSlot: null }),
+      [],
+      lola.catalog.items,
+      noBookings,
+      now,
+    );
+    expect(free.days.find((d) => d.date === '2026-10-27')?.slots[0]?.left ?? null).toBeNull();
+  });
+
   it('daily limit counts the basket qty', () => {
     if (!cake) throw new Error('missing demo cake');
     const bookings = { slotCounts: {}, itemCounts: { '2026-10-31': { [cake.id]: 5 } } };

@@ -28,6 +28,8 @@ import {
 } from '@smartapp/ui/vendor/opensource-ui/booking-slot-calendar';
 import { useCoarsePointer } from '@/app/use-coarse-pointer';
 import { KitSection } from './kit-section.js';
+import { DayChips, TimeChips } from '@smartapp/ui/compositions/slot-chips';
+import { HourglassIcon } from 'lucide-react';
 
 interface DemoCard {
   id: string;
@@ -464,6 +466,16 @@ export function OrdersPrimitiveSections() {
         </div>
       </KitSection>
 
+      {/* 4b. Slot chips (T85) */}
+      <KitSection
+        title="Slot chips (our composition)"
+        library="composition (Scroller + Toggle Group)"
+        path="packages/ui/src/compositions/slot-chips.tsx"
+        usedIn="storefront When picker, order panel Change time, Orders Calendar phone day row (T85)"
+      >
+        <SlotChipsExample />
+      </KitSection>
+
       {/* 5. Booking slots */}
       <KitSection
         title="Booking Slot Calendar"
@@ -501,5 +513,53 @@ export function OrdersPrimitiveSections() {
         </div>
       </KitSection>
     </>
+  );
+}
+
+function SlotChipsExample() {
+  const [day, setDay] = useState<string | null>('sat');
+  const [time, setTime] = useState<string | null>('11');
+  return (
+    <div className="flex max-w-xl flex-col gap-4">
+      <DayChips
+        label="Pick a day"
+        value={day}
+        onValueChange={setDay}
+        pressedClassName="aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+        chips={[
+          {
+            value: 'fri',
+            label: 'Today',
+            detail: 'Too soon',
+            icon: <HourglassIcon className="size-3" />,
+            disabled: true,
+          },
+          { value: 'sat', label: 'Tomorrow', detail: '5 orders', tone: 'primary', current: true },
+          { value: 'sun', label: 'Sun 15', detail: 'Closed', disabled: true },
+          { value: 'mon', label: 'Mon 16', detail: 'Full', tone: 'danger', disabled: true },
+          { value: 'tue', label: 'Tue 17' },
+          { value: 'wed', label: 'Wed 18' },
+        ]}
+      />
+      <TimeChips
+        label="Pick a time"
+        value={time}
+        onValueChange={setTime}
+        pressedClassName="aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+        chips={[
+          { value: '9', label: '9:00 AM', detail: 'Now', current: true, disabled: true },
+          {
+            value: '10',
+            label: '10:00 AM',
+            detail: 'Full',
+            struck: true,
+            disabled: true,
+            tone: 'danger',
+          },
+          { value: '11', label: '11:00 AM', detail: '2 left', tone: 'warning' },
+          { value: '12', label: '12:00 PM' },
+        ]}
+      />
+    </div>
   );
 }

@@ -177,6 +177,8 @@ export interface OwnerOrdersAdapter {
     scheduledAt: string;
     override?: boolean | undefined;
   }): Promise<OwnerOrder>;
+  // The days and times this order can move to (T85): its own spot and items count as free.
+  getRescheduleSchedule(input: { slug: string; orderId: string }): Promise<Schedule>;
   saveOwnerNote(input: { slug: string; orderId: string; note: string | null }): Promise<OwnerOrder>;
   cancelOrder(input: { slug: string; orderId: string; reason: string }): Promise<OwnerOrder>;
   saveDeliveryInfo(input: {
