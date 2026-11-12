@@ -400,7 +400,7 @@ export function OrdersPrimitiveSections() {
         title="Event Calendar"
         library="ReUI"
         path="packages/ui/src/components/reui/event-calendar/event-calendar.tsx"
-        usedIn="kit (Orders in O3 to O6)"
+        usedIn="Orders Bookings view (T83): Week and Month on a laptop, List on phones, drag to change the time"
       >
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
@@ -469,7 +469,7 @@ export function OrdersPrimitiveSections() {
         title="Booking Slot Calendar"
         library="Opensource UI"
         path="packages/ui/src/vendor/opensource-ui/booking-slot-calendar.tsx"
-        usedIn="kit (Orders in O3 to O6)"
+        usedIn="kit only (the storefront When picker follows this pattern with installed parts, T83)"
       >
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">

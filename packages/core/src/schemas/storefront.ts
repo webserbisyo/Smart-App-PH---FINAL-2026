@@ -186,7 +186,8 @@ export const StorefrontSchema = z.object({
   orderTypes: z.array(OrderTypeEnum).min(1),
   prepMinutes: z.number().int().min(5).max(180).default(20),
   takeOrdersWhileClosed: z.boolean(),
-  daysAhead: z.number().int().min(1).max(60).default(1),
+  // New shops take orders up to 3 days ahead (T83); the owner changes it in Booking rules.
+  daysAhead: z.number().int().min(1).max(60).default(3),
   slotMinutes: SlotLengthSchema.default(30),
   ordersPerSlot: z.number().int().min(1).max(50).nullable().default(null),
   payments: z.array(PaymentAccountSchema).min(1),

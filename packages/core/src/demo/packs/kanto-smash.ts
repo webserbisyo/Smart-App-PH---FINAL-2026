@@ -321,7 +321,7 @@ export const KANTO_SMASH_PACK: ShopPack = {
     orderTypes: ['walk_in', 'pickup', 'delivery'],
     prepMinutes: 20,
     takeOrdersWhileClosed: true,
-    daysAhead: 1,
+    daysAhead: 3,
     slotMinutes: 15,
     ordersPerSlot: null,
     payments: [

@@ -144,7 +144,7 @@ export function scheduleDays(
   }
   const closedDates = new Set(storefront.closures.map((c) => c.date));
   const stepMs = (storefront.slotMinutes ?? 30) * MS_MINUTE;
-  const daysAhead = storefront.daysAhead ?? 1;
+  const daysAhead = storefront.daysAhead ?? 3;
 
   const days: ScheduleDay[] = [];
 

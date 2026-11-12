@@ -2,6 +2,7 @@ import * as React from 'react';
 import {
   BellIcon,
   BellOffIcon,
+  CalendarDaysIcon,
   ClockIcon,
   KanbanSquareIcon,
   ListIcon,
@@ -25,13 +26,15 @@ import { SearchField } from '@/app/search-field';
 import { BookingRulesSheet } from './booking-rules-sheet.js';
 import { BusyMenu } from './busy-menu.js';
 import { DevScenarioMenu } from './dev-scenario-menu.js';
-import { ORDER_VIEWS, type OrderView } from './search.js';
+import type { OrderView } from './search.js';
 
 const SEARCH_DEBOUNCE_MS = 250;
 
 export interface OrdersToolbarProps {
   slug: string;
   view: OrderView;
+  // The views this shop has (Bookings only when it takes orders ahead).
+  views: readonly OrderView[];
   onViewChange: (view: OrderView) => void;
   query: string;
   onQueryChange: (q: string) => void;
@@ -39,15 +42,16 @@ export interface OrdersToolbarProps {
   onSoundChange: (on: boolean) => void;
 }
 
-const VIEW_ICON = { board: KanbanSquareIcon, list: ListIcon } as const;
+const VIEW_ICON = { board: KanbanSquareIcon, list: ListIcon, bookings: CalendarDaysIcon } as const;
 
 /**
- * The one toolbar row (D2): Board/List, search, sound, Busy and "⋯". On phones the search folds into an
+ * The one toolbar row (D2): Board, List and Bookings, search, sound, Busy and "⋯". On phones the search folds into an
  * icon and opens over the row, so the first order stays near the top.
  */
 export function OrdersToolbar({
   slug,
   view,
+  views,
   onViewChange,
   query,
   onQueryChange,
@@ -89,14 +93,14 @@ export function OrdersToolbar({
       <ToggleGroup
         value={[view]}
         onValueChange={(value) => {
-          const next = ORDER_VIEWS.find((v) => v === value[0]);
+          const next = views.find((v) => v === value[0]);
           if (next) onViewChange(next);
         }}
         aria-label={ordersWords.views.label}
         spacing={1}
         className="shrink-0 rounded-xl border border-border/60 bg-muted/60 p-1"
       >
-        {ORDER_VIEWS.map((v) => {
+        {views.map((v) => {
           const Icon = VIEW_ICON[v];
           return (
             <ToggleGroupItem

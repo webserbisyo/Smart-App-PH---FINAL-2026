@@ -265,7 +265,7 @@ export const TALA_APPAREL_PACK: ShopPack = {
     orderTypes: ['pickup', 'delivery'],
     prepMinutes: 30,
     takeOrdersWhileClosed: true,
-    daysAhead: 3,
+    daysAhead: 7,
     slotMinutes: 60,
     ordersPerSlot: null,
     payments: [

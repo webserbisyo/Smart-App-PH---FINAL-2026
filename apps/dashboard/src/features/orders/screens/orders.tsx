@@ -32,8 +32,18 @@ import { ListView } from '../list-view.js';
 import { MessengerFab } from '../messenger-inbox.js';
 import { OrderPanel } from '../order-panel.js';
 import { OrdersToolbar } from '../orders-toolbar.js';
-import { PHONE_STAGES, useOrdersSearch, useSetOrdersSearch, type OrderFilter } from '../search.js';
+import {
+  ORDER_VIEWS,
+  PHONE_STAGES,
+  useOrdersSearch,
+  useSetOrdersSearch,
+  type OrderFilter,
+  type OrderView,
+} from '../search.js';
 import { TypeCards, type TypeTotals } from '../type-cards.js';
+
+// The Event Calendar (and date-fns) loads only when Bookings opens.
+const BookingsView = React.lazy(() => import('../bookings-view.js'));
 
 function matchesFilter(order: BoardOrder, filter: OrderFilter | undefined): boolean {
   if (!filter) return true;
@@ -49,7 +59,6 @@ export function OrdersScreen() {
   const shop = useShop();
   const search = useOrdersSearch();
   const setSearch = useSetOrdersSearch();
-  const view = search.view ?? 'board';
   const query = search.q ?? '';
   const isPhone = useFormFactor() === 'phone';
   const isOnline = useOnlineStatus();
@@ -66,7 +75,12 @@ export function OrdersScreen() {
     [open.data, now],
   );
 
-  const types: readonly OrderType[] = storefront.data?.storefront.orderTypes ?? ORDER_TYPES;
+  const sf = storefront.data?.storefront;
+  // Bookings (T83) only for shops that take orders more than a day ahead.
+  const takesBookings = (sf?.daysAhead ?? 1) > 1;
+  const views: readonly OrderView[] = takesBookings ? ORDER_VIEWS : ['board', 'list'];
+  const view = search.view && views.includes(search.view) ? search.view : 'board';
+  const types: readonly OrderType[] = sf?.orderTypes ?? ORDER_TYPES;
   const delivers = types.includes('delivery');
 
   const totals = React.useMemo(() => {
@@ -84,7 +98,8 @@ export function OrdersScreen() {
   const toCheck = React.useMemo(() => live.filter(needsProofCheck).length, [live]);
 
   const filter = search.filter === 'to_check' && toCheck === 0 ? undefined : search.filter;
-  const shown = React.useMemo(() => live.filter((o) => matchesFilter(o, filter)), [live, filter]);
+  const matchesShown = React.useCallback((o: BoardOrder) => matchesFilter(o, filter), [filter]);
+  const shown = React.useMemo(() => live.filter(matchesShown), [live, matchesShown]);
 
   const laterCount = React.useMemo(
     () =>
@@ -228,6 +243,7 @@ export function OrdersScreen() {
         <OrdersToolbar
           slug={shop.slug}
           view={view}
+          views={views}
           onViewChange={(next) => setSearch({ view: next })}
           query={query}
           onQueryChange={(q) => setSearch({ q: q || undefined }, { replace: true })}
@@ -251,7 +267,20 @@ export function OrdersScreen() {
       </div>
 
       <main className="flex-1 px-4 pt-3 md:px-6 md:pt-4">
-        {view === 'list' ? (
+        {view === 'bookings' && sf ? (
+          <React.Suspense fallback={<Skeleton className="h-160 w-full rounded-xl md:h-176" />}>
+            <BookingsView
+              slug={shop.slug}
+              today={today}
+              now={now}
+              hours={sf.hours}
+              slotMinutes={sf.slotMinutes}
+              online={isOnline}
+              matches={matchesShown}
+              onOpen={openOrder}
+            />
+          </React.Suspense>
+        ) : view === 'list' ? (
           <ListView
             slug={shop.slug}
             kind={shop.kind}

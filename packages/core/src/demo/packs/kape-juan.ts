@@ -288,7 +288,7 @@ export const KAPE_JUAN_PACK: ShopPack = {
     orderTypes: ['walk_in', 'pickup', 'delivery'],
     prepMinutes: 15,
     takeOrdersWhileClosed: true,
-    daysAhead: 7,
+    daysAhead: 3,
     slotMinutes: 30,
     ordersPerSlot: null,
     payments: [

@@ -2,8 +2,9 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
-// Orders v2 address (decision T54): one page, two views, the order panel on top.
-export const ORDER_VIEWS = ['board', 'list'] as const;
+// Orders v2 address (decision T54): one page, its views, the order panel on top. Bookings (T83) shows
+// only for shops that take orders more than a day ahead.
+export const ORDER_VIEWS = ['board', 'list', 'bookings'] as const;
 export type OrderView = (typeof ORDER_VIEWS)[number];
 
 export const ORDER_FILTERS = ['walk_in', 'pickup', 'delivery', 'to_check'] as const;

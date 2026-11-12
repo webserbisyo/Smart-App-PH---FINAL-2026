@@ -268,7 +268,7 @@ export const LOLA_REMY_PACK: ShopPack = {
     orderTypes: ['walk_in', 'pickup', 'delivery'],
     prepMinutes: 20,
     takeOrdersWhileClosed: true,
-    daysAhead: 30,
+    daysAhead: 14,
     slotMinutes: 60,
     ordersPerSlot: 4,
     payments: [

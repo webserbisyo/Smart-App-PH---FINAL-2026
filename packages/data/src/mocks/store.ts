@@ -1632,7 +1632,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const s = requireShop(slug);
         const sf = s.shop.storefront;
         return BookingRulesSchema.parse({
-          daysAhead: sf.daysAhead ?? 1,
+          daysAhead: sf.daysAhead ?? 3,
           slotMinutes: sf.slotMinutes ?? 30,
           ordersPerSlot: sf.ordersPerSlot ?? null,
           prepMinutes: sf.prepMinutes ?? 20,

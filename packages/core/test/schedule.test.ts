@@ -17,9 +17,23 @@ describe('scheduleDays (decision T48)', () => {
     expect(cake?.dailyLimit).toBe(6);
   });
 
+  it('demo shops book a realistic number of days ahead (T83)', () => {
+    expect(
+      Object.fromEntries(
+        Object.entries(SHOP_PACKS).map(([slug, p]) => [slug, p.storefront.daysAhead]),
+      ),
+    ).toMatchObject({
+      'kanto-smash': 3,
+      'kape-juan': 3,
+      aqualinis: 2,
+      'tala-apparel': 7,
+      'lola-remy': 14,
+    });
+  });
+
   it('daysAhead 1 gives today and tomorrow', () => {
     const s = scheduleDays(
-      kanto.storefront,
+      with_(kanto.storefront, { daysAhead: 1 }),
       [],
       kanto.catalog.items,
       noBookings,
@@ -32,9 +46,11 @@ describe('scheduleDays (decision T48)', () => {
 
   it('matches pickupSlots for an open shop on 15-minute slots with no limits', () => {
     const now = mnl('2026-10-26 10:00');
-    const s = scheduleDays(kanto.storefront, [], kanto.catalog.items, noBookings, now);
+    // pickupSlots covers today and tomorrow, so compare on a one-day-ahead shop.
+    const sf = with_(kanto.storefront, { daysAhead: 1 });
+    const s = scheduleDays(sf, [], kanto.catalog.items, noBookings, now);
     const slots = s.days.flatMap((d) => d.slots.map((x) => x.at));
-    expect(slots).toEqual(pickupSlots(kanto.storefront, now));
+    expect(slots).toEqual(pickupSlots(sf, now));
   });
 
   it('notice pushes the earliest day and names the item', () => {
@@ -51,7 +67,8 @@ describe('scheduleDays (decision T48)', () => {
     expect(s.days[2]).toMatchObject({ date: '2026-10-28', state: 'open' });
     expect(s.noticeItem).toEqual({ name: 'Chocolate Moist Cake', noticeDays: 2 });
     expect(s.earliest && s.earliest >= mnl('2026-10-28 05:00')).toBe(true);
-    expect(s.days).toHaveLength(31);
+    // Lola Remy takes orders up to 14 days ahead (T83): today plus 14.
+    expect(s.days).toHaveLength(15);
   });
 
   it('closures and closed weekdays are closed', () => {
