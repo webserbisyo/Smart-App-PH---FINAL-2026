@@ -196,7 +196,7 @@ export function readyAboutAt(order: ReadyEstimateOrder, prepMinutes: number): st
 }
 
 /**
- * The status track (c-stepper-26): placed, payment checked (transfers only), preparing, ready,
+ * The status track (c-timeline-3, R48): placed, payment checked (transfers only), preparing, ready,
  * out for delivery (delivery only), completed. Done steps show their Manila time, the step happening
  * now shows its time or "Now", and Ready shows "about 4:02 PM" when `readyAt` is known.
  */

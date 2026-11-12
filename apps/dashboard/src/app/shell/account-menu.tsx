@@ -1,7 +1,8 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { ChevronsUpDownIcon, LogOutIcon, UserIcon } from 'lucide-react';
+import { ChevronsUpDownIcon, LogOutIcon, UserIcon, WifiIcon, WifiOffIcon } from 'lucide-react';
 import { words } from '@smartapp/core';
 import type { UserClaims } from '@smartapp/data';
+import { AvatarBadge } from '@smartapp/ui/components/avatar';
 import { Button } from '@smartapp/ui/components/button';
 import {
   DropdownMenu,
@@ -14,6 +15,7 @@ import {
 } from '@smartapp/ui/components/dropdown-menu';
 import { SidebarMenuButton } from '@smartapp/ui/components/sidebar';
 import { MyAvatar } from '../owner-avatar.js';
+import { useOnlineStatus } from '../use-online-status.js';
 
 function userInitials(claims: UserClaims): string {
   const source = claims.fullName ?? claims.email;
@@ -43,7 +45,13 @@ export function AccountMenu({
   placement: 'sidebar' | 'top-bar';
 }) {
   const navigate = useNavigate();
-  const avatar = <MyAvatar fallbackName={claims.fullName ?? userInitials(claims)} />;
+  const online = useOnlineStatus();
+  const fallbackName = claims.fullName ?? userInitials(claims);
+  // ReUI c-avatar-6 status dot (T83): green while online; the menu says it in words.
+  const dot = (
+    <AvatarBadge className={online ? 'bg-success' : 'bg-muted-foreground'} aria-hidden="true" />
+  );
+  const avatar = <MyAvatar fallbackName={fallbackName} badge={dot} />;
 
   return (
     <DropdownMenu>
@@ -86,6 +94,17 @@ export function AccountMenu({
               {avatar}
               <UserLines claims={claims} />
             </div>
+            <p
+              role="status"
+              className="flex items-center gap-1.5 px-1 pb-1.5 text-xs text-muted-foreground"
+            >
+              {online ? (
+                <WifiIcon aria-hidden="true" className="size-3.5 text-success-text" />
+              ) : (
+                <WifiOffIcon aria-hidden="true" className="size-3.5" />
+              )}
+              {online ? words.shell.online : words.shell.offline}
+            </p>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

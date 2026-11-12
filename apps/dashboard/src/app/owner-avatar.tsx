@@ -7,6 +7,7 @@ import {
 } from '@smartapp/core';
 import { useOwnerProfile } from '@smartapp/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
+import type * as React from 'react';
 import { cn } from 'cn';
 import { orderPhotoSrc } from './orders/order-photo.js';
 
@@ -40,10 +41,13 @@ export function OwnerAvatarView({
   avatar,
   name,
   className,
+  badge,
 }: {
   avatar: OwnerAvatar;
   name: string;
   className?: string | undefined;
+  // An AvatarBadge, such as the online dot.
+  badge?: React.ReactNode;
 }) {
   const src = ownerAvatarSrc(avatar);
   const theme =
@@ -54,6 +58,7 @@ export function OwnerAvatarView({
       <AvatarFallback className={cn('bg-transparent font-semibold', theme)}>
         {personInitials(name) || '?'}
       </AvatarFallback>
+      {badge}
     </Avatar>
   );
 }
@@ -62,18 +67,26 @@ export function OwnerAvatarView({
 export function MyAvatar({
   fallbackName,
   className,
+  badge,
 }: {
   fallbackName: string;
   className?: string;
+  badge?: React.ReactNode;
 }) {
   const profile = useOwnerProfile();
   if (!profile.data)
     return (
       <Avatar className={className}>
         <AvatarFallback>{personInitials(fallbackName) || '?'}</AvatarFallback>
+        {badge}
       </Avatar>
     );
   return (
-    <OwnerAvatarView avatar={profile.data.avatar} name={profile.data.name} className={className} />
+    <OwnerAvatarView
+      avatar={profile.data.avatar}
+      name={profile.data.name}
+      className={className}
+      badge={badge}
+    />
   );
 }

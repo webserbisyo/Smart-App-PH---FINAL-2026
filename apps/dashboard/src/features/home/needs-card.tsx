@@ -34,6 +34,8 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@smartapp/ui/components/item';
+import { AnimatedList } from '@smartapp/ui/components/animated-list';
+import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { cn } from 'cn';
 import { HomeCard } from './home-card.js';
 
@@ -150,34 +152,49 @@ export function NeedsCard({
   const orders = React.useMemo(() => new Map(live.map((o) => [o.id, o])), [live]);
   const rows = all ? needs : needs.slice(0, shown);
   const hidden = needs.length - rows.length;
+  const reducedMotion = useReducedMotion();
+  const items = rows.map((need) => {
+    const look = LOOK[need.kind];
+    const Icon = look.icon;
+    return (
+      <div key={need.kind} role="listitem">
+        <Item variant="outline" className="min-h-14" render={<NeedLink need={need} />}>
+          <ItemMedia>
+            <IconTile variant="soft" size="sm" className={look.tone}>
+              <Icon aria-hidden="true" />
+            </IconTile>
+          </ItemMedia>
+          <ItemContent className="min-w-0">
+            <ItemTitle className="font-semibold">{W.rows[need.kind](need.count)}</ItemTitle>
+            <ItemDescription className="truncate">
+              {detail(need, orders, soldOut, storagePercent, now)}
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <ChevronRightIcon className="size-4 text-muted-foreground" aria-hidden="true" />
+          </ItemActions>
+        </Item>
+      </div>
+    );
+  });
   return (
     <HomeCard id="needs" title={W.title} hint={W.hint} className={className}>
-      <ul className="flex flex-col gap-2">
-        {rows.map((need) => {
-          const look = LOOK[need.kind];
-          const Icon = look.icon;
-          return (
-            <li key={need.kind}>
-              <Item variant="outline" className="min-h-14" render={<NeedLink need={need} />}>
-                <ItemMedia>
-                  <IconTile variant="soft" size="sm" className={look.tone}>
-                    <Icon aria-hidden="true" />
-                  </IconTile>
-                </ItemMedia>
-                <ItemContent className="min-w-0">
-                  <ItemTitle className="font-semibold">{W.rows[need.kind](need.count)}</ItemTitle>
-                  <ItemDescription className="truncate">
-                    {detail(need, orders, soldOut, storagePercent, now)}
-                  </ItemDescription>
-                </ItemContent>
-                <ItemActions>
-                  <ChevronRightIcon className="size-4 text-muted-foreground" aria-hidden="true" />
-                </ItemActions>
-              </Item>
-            </li>
-          );
-        })}
-      </ul>
+      {reducedMotion ? (
+        <div role="list" className="flex flex-col gap-2">
+          {items}
+        </div>
+      ) : (
+        // Magic UI Animated List (T83): the rows slide in one after another, worst first on top. A hidden
+        // copy in the same grid cell holds the full height from the start, so nothing below moves.
+        <div className="grid *:col-start-1 *:row-start-1">
+          <div aria-hidden="true" className="invisible flex flex-col gap-2">
+            {items}
+          </div>
+          <AnimatedList key={String(all)} delay={90} role="list" className="items-stretch gap-2">
+            {[...items].reverse()}
+          </AnimatedList>
+        </div>
+      )}
       {needs.length > shown ? (
         <Button
           variant="ghost"

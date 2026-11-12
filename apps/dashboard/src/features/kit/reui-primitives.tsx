@@ -13,8 +13,7 @@ import { Pattern as MessageThread } from './examples/c-message-5';
 import { Pattern as QuantityStepper } from './examples/c-number-field-3';
 import { Pattern as ScrollspyRail } from './examples/c-scrollspy-1';
 import { Pattern as ScrollspyChips } from './examples/c-scrollspy-2';
-import { Pattern as Checkpoints } from './examples/c-stepper-26';
-import { Pattern as LoadingStepper } from './examples/c-stepper-3';
+import { Pattern as VerticalSteps } from './examples/c-stepper-13';
 import { Pattern as Roadmap } from './examples/c-timeline-7';
 import { KitSection } from './kit-section.js';
 
@@ -57,8 +56,8 @@ const SECTIONS: readonly {
     title: 'Stepper',
     library: 'ReUI',
     file: 'reui/stepper.tsx',
-    usedIn: 'c-stepper-3, c-stepper-13, c-stepper-26 (kit)',
-    examples: [Checkpoints, LoadingStepper],
+    usedIn: 'c-stepper-13: the storefront install card, iPhone steps',
+    examples: [VerticalSteps],
   },
   {
     title: 'Timeline',
@@ -106,7 +105,7 @@ const SECTIONS: readonly {
     title: 'Frame',
     library: 'ReUI',
     file: 'reui/frame.tsx',
-    usedIn: 'c-frame-1, c-card-16 (kit)',
+    usedIn: 'Settings "Customers see" previews on a wide screen (T83), c-frame-1, c-card-16',
     examples: [StampFrame],
   },
   {

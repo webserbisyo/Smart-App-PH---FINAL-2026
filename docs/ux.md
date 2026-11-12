@@ -105,3 +105,14 @@ Every dashboard page follows these, so an owner always knows what happened.
 - **Words:** buttons are short verbs; while busy the same verb with -ing ("Deleting", never "Saving" on a delete); done in past tense with the name when short ("Saved Classic Smash", "1 item archived"). Errors say what to do next, worded from the error code. All in `words.ts` (`actionWords` for button states).
 - **Flows stay in place (T47):** Save keeps the owner where they are; a new record becomes its own page. A sheet opened inside a page (a new category, add-on group or variant from the item editor) saves only itself and returns there with the result picked. Lists keep their search, filter and scroll (search params plus the router's scroll restoration), and Back returns to the page the owner came from when it is under the same parent. After an add or edit, the saved row or card is outlined for a moment. In a form, Enter moves to the next field; only the Save button saves. Full-screen edit pages hide the phone dock.
 - **Restore:** an archived item comes back hidden, with "Show now" in the toast, so it never reaches customers by surprise. Only an item nobody ever ordered can be deleted forever.
+
+## 9. One motion plan (decision T83)
+
+The same few moves everywhere, all off under `prefers-reduced-motion` (the change happens at once):
+
+- **Timing:** the duration tokens, never a raw number: `duration-fast` for taps and toggles, `duration-base` for popovers, sheets and panels, `duration-slow` for reveals, `duration-celebrate` (500 ms) only for the one celebration. Nothing over 400 ms except that.
+- **Something new appears:** fade in and rise 8 px (`FadeUp` in `app/orders/order-motion.tsx`, `lib/motion` timings), with `ease-enter`; leaving uses `ease-exit` and runs shorter.
+- **Rows in a list:** Magic UI Animated List lets rows slide in one after another (Home Needs you, Members Latest at the counter). Keep the list's full height from the start so nothing below moves.
+- **Totals:** count up with Number Ticker through `CountUp`, still under reduced motion.
+- **Celebrations:** `celebrate` (canvas-confetti) once per real milestone: a stamp landing, a reward ready, a card filled. Never on page load.
+- **Theme switch:** the new look grows from where you tapped (`revealPage`, View Transitions); browsers without it change at once.

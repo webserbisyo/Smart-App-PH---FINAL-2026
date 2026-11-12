@@ -188,7 +188,7 @@ export function CatalogPrimitiveSections() {
         title="Button Group"
         library="shadcn (base-nova)"
         path="packages/ui/src/components/button-group.tsx"
-        usedIn="catalog items action group, kit"
+        usedIn="photo zoom in Change picture and the customer picture picker (T83), kit"
       >
         <div className="flex flex-col gap-3">
           <p className="text-xs text-muted-foreground">

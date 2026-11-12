@@ -10,9 +10,7 @@ import { Pattern as SharedFiles } from './examples/c-message-5';
 import { Pattern as Small } from './examples/c-progress-2';
 import { Pattern as TextParagraphs } from './examples/c-skeleton-3';
 import { Pattern as ChatMessages } from './examples/c-skeleton-10';
-import { Pattern as LoadingState3 } from './examples/c-stepper-3';
 import { Pattern as VerticalDescriptions } from './examples/c-stepper-13';
-import { Pattern as TimestampedCheckpoints } from './examples/c-stepper-26';
 import { Pattern as OrderStatus } from './examples/c-timeline-3';
 
 const EXAMPLES = {
@@ -26,9 +24,7 @@ const EXAMPLES = {
   'c-progress-2': Small,
   'c-skeleton-3': TextParagraphs,
   'c-skeleton-10': ChatMessages,
-  'c-stepper-3': LoadingState3,
   'c-stepper-13': VerticalDescriptions,
-  'c-stepper-26': TimestampedCheckpoints,
   'c-timeline-3': OrderStatus,
 };
 

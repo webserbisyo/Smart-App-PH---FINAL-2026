@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-12 Final thoughts part 5, components and motion (T83, pushed to main): Orders List pages through every order (it stopped at 10), Members grid shows every loaded row, Frame around the "Customers see" previews, Button Group photo zoom, Animated List in Needs you, online dot on the owner picture, theme switch reveal; Confetti, two kit steppers and an unused table removed; one motion plan
 - 2026-11-12 Final thoughts part 4, picture maker (T83, pushed to main): one Make your own maker for owners and customers (DiceBear Adventurer drawn on the device, loaded only in the picker, nine pieces, Surprise me); the choices and the drawing are saved, the 72 ready-made files are gone
 - 2026-11-12 Final thoughts part 3, Bookings (T83, pushed to main): an Orders Bookings view for shops that take orders on later days (ReUI Event Calendar, Week and Month on a laptop, List on phones, drag to change the time with Undo); demo shops book 2 to 14 days ahead and new shops 3
 - 2026-11-12 Final thoughts part 2, Home (T83, pushed to main): one period picker (quick picks or any dates in the last 60 days) for Sales with the cash check, Sales by hour or by day with the busiest line, a money donut (Ordered, Paid, Members) and Best sellers; the Today ring, the 7 or 30 day trend and the busy heat map leave Home for Insights; `getHomePeriod` in the mock and API adapters; skeleton from the same slots (layout shift 0.002 or less on every demo shop).

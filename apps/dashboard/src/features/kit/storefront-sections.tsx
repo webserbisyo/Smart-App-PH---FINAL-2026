@@ -24,7 +24,6 @@ import {
 import type { ImageSources } from '@smartapp/core/media';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
-import { Confetti } from '@smartapp/ui/components/confetti';
 import { GridPattern } from '@smartapp/ui/components/grid-pattern';
 import { NumberTicker } from '@smartapp/ui/components/number-ticker';
 import { QRCode, QRCodeSvg } from '@smartapp/ui/components/qr-code';
@@ -968,10 +967,10 @@ export function StorefrontSections() {
           </KitSection>
 
           <KitSection
-            title="Celebrate (canvas-confetti) · Confetti"
-            library="composition · Magic UI"
-            path="packages/ui/src/compositions/celebrate.ts · components/confetti.tsx"
-            usedIn="kit"
+            title="Celebrate (canvas-confetti)"
+            library="composition"
+            path="packages/ui/src/compositions/celebrate.ts"
+            usedIn="a stamp landing and a reward ready on the storefront; Magic UI Confetti was removed as a duplicate (T83)"
           >
             <div className="flex flex-wrap gap-2">
               <Button
@@ -988,16 +987,6 @@ export function StorefrontSections() {
               <Button variant="outline" onClick={() => void rewardReady()}>
                 rewardReady()
               </Button>
-            </div>
-            <div className="relative h-32 overflow-hidden rounded-lg border bg-card">
-              <Confetti
-                className="absolute inset-0 size-full"
-                manualstart={false}
-                globalOptions={{ disableForReducedMotion: true, resize: true }}
-              />
-              <p className="relative p-3 text-xs text-muted-foreground">
-                Magic UI Confetti canvas (fires once on load)
-              </p>
             </div>
           </KitSection>
 

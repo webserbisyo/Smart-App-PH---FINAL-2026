@@ -13,6 +13,7 @@ import {
 } from '@smartapp/ui/components/reui/data-grid/index';
 import { initials } from '@smartapp/ui/compositions/shop-image';
 import { cn } from 'cn';
+import { GRID_ALL_ROWS } from '@/app/grid-pager';
 import { AnimatePresence, FadeUp } from '@/app/orders/order-motion';
 import { StampDots } from './stamp-dots.js';
 import { lastInLabel } from './when.js';
@@ -140,7 +141,10 @@ export function PhoneRows({ rows, now, onOpen }: RowsProps) {
   );
 }
 
-/** Tablet and laptop: the ReUI Data Grid with the avatar cell (c-data-grid-2); a row opens the panel. */
+/**
+ * Tablet and laptop: the ReUI Data Grid with the avatar cell (c-data-grid-2); a row opens the panel. Every
+ * loaded row shows (the grid's own pages would stop at 10); Show more below loads the next ones.
+ */
 export function MembersGrid({ rows, now, onOpen }: RowsProps) {
   const columns = React.useMemo<ColumnDef<DataGridFeatures, CustomerRow, unknown>[]>(
     () => [
@@ -212,6 +216,7 @@ export function MembersGrid({ rows, now, onOpen }: RowsProps) {
     columns,
     data: rows,
     getRowId: (row) => row.id,
+    initialState: { pagination: { pageIndex: 0, pageSize: GRID_ALL_ROWS } },
   });
 
   return (

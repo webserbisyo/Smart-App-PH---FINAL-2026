@@ -37,6 +37,7 @@ import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { cn } from 'cn';
+import { GRID_I18N, GRID_PAGE_SIZE, GridPager } from '@/app/grid-pager';
 import { CustomerChip, ItemPhotos, PaymentChip, orderNoLabel } from '@/app/orders/order-card';
 import { dateFromKey, keyFromDate } from '@/app/day-key';
 import { AnimatePresence, FadeUp } from '@/app/orders/order-motion';
@@ -502,6 +503,7 @@ function OrdersGrid({ orders, kind, now, onOpen }: RowsProps) {
     columns,
     data: orders,
     getRowId: (row) => row.id,
+    initialState: { pagination: { pageIndex: 0, pageSize: GRID_PAGE_SIZE } },
   });
 
   return (
@@ -510,6 +512,7 @@ function OrdersGrid({ orders, kind, now, onOpen }: RowsProps) {
         <DataGrid
           table={table}
           recordCount={orders.length}
+          i18n={GRID_I18N}
           tableLayout={{ dense: false }}
           tableClassNames={{
             headerSticky:
@@ -520,6 +523,7 @@ function OrdersGrid({ orders, kind, now, onOpen }: RowsProps) {
           onRowClick={(row) => onOpen(row)}
         >
           <DataGridTable />
+          <GridPager count={orders.length} />
         </DataGrid>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { useBlocker } from '@tanstack/react-router';
 import { EyeIcon, WifiOffIcon } from 'lucide-react';
 import { errorWords, settingsWords, type ErrorCode, type OwnerSettings } from '@smartapp/core';
 import { ApiRequestError, errorCodeOf, useOwnerSettings } from '@smartapp/data';
+import { Frame, FrameHeader, FramePanel, FrameTitle } from '@smartapp/ui/components/reui/frame';
 import { ActionBar, ActionBarSelection } from '@smartapp/ui/components/action-bar';
 import {
   AlertDialog,
@@ -72,13 +73,18 @@ export function SettingsPage({
             <div className="flex min-w-0 flex-col gap-4 xl:col-span-3">{children}</div>
             <aside
               aria-label={W.customersSee}
-              className="hidden xl:sticky xl:top-4 xl:col-span-2 xl:flex xl:flex-col xl:gap-2"
+              className="hidden xl:sticky xl:top-4 xl:col-span-2 xl:block"
             >
-              <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                <EyeIcon className="size-3.5" aria-hidden />
-                {W.customersSee}
-              </p>
-              {preview}
+              {/* ReUI Frame (T83): the preview reads as a screen of its own, apart from the settings. */}
+              <Frame spacing="sm">
+                <FrameHeader>
+                  <FrameTitle className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    <EyeIcon className="size-3.5" aria-hidden />
+                    {W.customersSee}
+                  </FrameTitle>
+                </FrameHeader>
+                <FramePanel className="p-0">{preview}</FramePanel>
+              </Frame>
             </aside>
           </div>
         ) : (

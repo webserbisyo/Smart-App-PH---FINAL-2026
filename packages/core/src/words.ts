@@ -173,6 +173,9 @@ export const words = {
     back: 'Back',
     toggleSidebar: 'Show or hide the menu',
     accountMenu: 'Account menu',
+    // The dot on the owner's picture (ReUI c-avatar-6, T83): new orders only arrive live when online.
+    online: 'Online, new orders arrive live',
+    offline: 'Offline, new orders wait until you’re back',
     pageTitle: (page: string) => `${page} · Smart App PH`,
   },
   // The storefront app frame (T04): top bar, dock, basket, offline, platform and Not found pages.
@@ -999,6 +1002,7 @@ export const words = {
       cropTitle: 'Fit your photo',
       cropHint: 'Drag to move. Pinch or use the buttons to zoom.',
       cropArea: 'Photo crop area',
+      zoom: 'Zoom',
       zoomIn: 'Zoom in',
       zoomOut: 'Zoom out',
       usePhoto: 'Use this photo',
@@ -1385,6 +1389,16 @@ export const words = {
 } as const;
 
 // Dashboard-wide button states (docs/ux.md section 8): the verb, the verb while it runs, the result.
+// Page through a long table (ReUI Data Grid pagination, T83).
+export const gridWords = {
+  rowsPerPage: 'Rows per page',
+  info: (from: number, to: number, count: number) => `${from} to ${to} of ${count}`,
+  previous: 'Previous page',
+  next: 'Next page',
+  page: (n: number) => `Page ${n}`,
+  more: '…',
+} as const;
+
 export const actionWords = {
   saving: 'Saving',
   saved: 'Saved',
@@ -3096,6 +3110,7 @@ export const settingsWords = {
     cropTitle: 'Fit your photo',
     cropHint: 'Drag to move, pinch or use the buttons to zoom.',
     cropArea: 'Photo crop area',
+    zoom: 'Zoom',
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
     usePhoto: 'Use this photo',

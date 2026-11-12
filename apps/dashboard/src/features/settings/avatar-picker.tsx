@@ -15,6 +15,7 @@ import {
 } from '@smartapp/core';
 import { cropImage, errorCodeOf, useSaveProfile } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
+import { ButtonGroup, ButtonGroupText } from '@smartapp/ui/components/button-group';
 import { Cropper, CropperArea, CropperImage } from '@smartapp/ui/components/cropper';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
@@ -403,31 +404,31 @@ function PhotoTab({ onPicked }: { onPicked: (avatar: OwnerAvatar) => void }) {
               <CropperArea />
             </Cropper>
           </div>
-          <div className="flex items-center justify-center gap-3">
+          <ButtonGroup aria-label={W.zoom} className="self-center">
             <Button
               variant="outline"
               size="icon"
-              className="size-11 rounded-full"
+              className="size-11"
               aria-label={W.zoomOut}
               disabled={zoom <= MIN_ZOOM}
               onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25))}
             >
               <MinusIcon />
             </Button>
-            <span className="w-12 text-center text-sm text-muted-foreground tabular-nums">
+            <ButtonGroupText className="h-11 w-16 justify-center bg-background tabular-nums">
               {zoom.toFixed(1)}×
-            </span>
+            </ButtonGroupText>
             <Button
               variant="outline"
               size="icon"
-              className="size-11 rounded-full"
+              className="size-11"
               aria-label={W.zoomIn}
               disabled={zoom >= MAX_ZOOM}
               onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25))}
             >
               <PlusIcon />
             </Button>
-          </div>
+          </ButtonGroup>
           <div className="flex gap-2">
             <Button
               variant="outline"

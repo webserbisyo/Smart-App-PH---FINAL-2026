@@ -166,7 +166,8 @@ export const KIT_PATTERNS: readonly KitPattern[] = [
     id: 'c-avatar-6',
     name: 'Status Dots',
     screen: 'shell',
-    usedFor: 'Kit only: status dots',
+    usedFor:
+      'The online dot on the owner picture in the account menu, with the words in the menu (T83)',
     url: 'https://reui.io/patterns/avatar',
   },
   {
@@ -809,24 +810,10 @@ export const KIT_PATTERNS: readonly KitPattern[] = [
     url: 'https://reui.io/patterns/spinner',
   },
   {
-    id: 'c-stepper-3',
-    name: 'Loading State',
-    screen: 'receipt',
-    usedFor: 'Kit only: alternative to c-stepper-26 (decision D10)',
-    url: 'https://reui.io/patterns/stepper',
-  },
-  {
     id: 'c-stepper-13',
     name: 'Vertical Descriptions',
     screen: 'receipt',
     usedFor: 'Install card c-alert-18 + iPhone steps c-stepper-13',
-    url: 'https://reui.io/patterns/stepper',
-  },
-  {
-    id: 'c-stepper-26',
-    name: 'Timestamped Checkpoints',
-    screen: 'receipt',
-    usedFor: 'Status c-stepper-26 (timestamped)',
     url: 'https://reui.io/patterns/stepper',
   },
   {
@@ -876,7 +863,7 @@ export const KIT_PATTERNS: readonly KitPattern[] = [
     id: 'c-timeline-3',
     name: 'Order Status',
     screen: 'receipt',
-    usedFor: 'Kit only: alternative to c-stepper-26 (decision D10)',
+    usedFor: 'Kit only: alternative order status (the receipt uses c-timeline-3, R48)',
     url: 'https://reui.io/patterns/timeline',
   },
   {

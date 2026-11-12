@@ -73,7 +73,7 @@ export function MembersPrimitiveSections() {
         title="Animated List"
         library="Magic UI"
         path="packages/ui/src/components/animated-list.tsx"
-        usedIn="Members Latest at the counter: new lines slide in on top (T63)"
+        usedIn="Members Latest at the counter (T63) and Home Needs you (T83): rows slide in one after another; a plain list under reduced motion"
       >
         <FeedDemo />
       </KitSection>

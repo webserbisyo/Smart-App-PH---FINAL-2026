@@ -47,6 +47,7 @@ import {
   ResponsiveDialog,
   ResponsiveDialogFooter,
 } from '@smartapp/ui/compositions/responsive-dialog';
+import { revealPage } from '@smartapp/ui/lib/reveal-clip';
 import { setAppearance, useAppearance } from '@/app/appearance';
 import { OwnerAvatarView } from '@/app/owner-avatar';
 import { PageError } from '@/app/page-state';
@@ -91,6 +92,7 @@ function AccountForm({ profile }: { profile: OwnerProfile }) {
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const [passwordOpen, setPasswordOpen] = React.useState(false);
   const appearance = useAppearance();
+  const tapPoint = React.useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const nameProblem = draft.trim() ? undefined : W.nameRequired;
 
   return (
@@ -147,9 +149,13 @@ function AccountForm({ profile }: { profile: OwnerProfile }) {
         <ToggleGroup
           aria-label={W.appearanceCard}
           value={[appearance]}
+          onPointerDown={(event) => {
+            tapPoint.current = { x: event.clientX, y: event.clientY };
+          }}
           onValueChange={(value) => {
             const next = APPEARANCES.find((a) => a === value[0]);
-            if (next) setAppearance(next);
+            // The new look grows from where you tapped (View Transitions; at once under reduced motion).
+            if (next) void revealPage(tapPoint.current, () => setAppearance(next));
           }}
           className="grid w-full grid-cols-3"
         >
