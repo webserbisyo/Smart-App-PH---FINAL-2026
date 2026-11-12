@@ -11,7 +11,9 @@ import {
   MediaRefSchema,
 } from './common.js';
 import {
+  HomeBuyerEnum,
   HomeRangeEnum,
+  HomeStepEnum,
   OrderTypeEnum,
   PaceVerdictEnum,
   PaymentMethodEnum,
@@ -176,3 +178,59 @@ export const HomeTrendsSchema = z.object({
   heatDays: z.number().int().min(0).max(28),
 });
 export type HomeTrends = z.infer<typeof HomeTrendsSchema>;
+
+// ---------------------------------------------------------------------------------------------------
+// One period (decision T83): any dates from the period picker, plain facts with no comparisons.
+
+export const HomeMoneySchema = z.object({
+  sales: CentavosSchema,
+  orders: CountSchema,
+  // Null below HOME_AVERAGE_MIN_ORDERS orders (H4).
+  average: CentavosSchema.nullable(),
+  // Cash and COD already paid: what the drawer should hold for this period.
+  cash: CentavosSchema,
+  // GCash, Maya, bank and QR Ph already approved.
+  transfers: CentavosSchema,
+  // Transfers still waiting for the owner to check the photo.
+  toCheck: CentavosSchema,
+  toCheckOrders: CountSchema,
+  // Cash and COD not paid yet.
+  toCollect: CentavosSchema,
+});
+export type HomeMoney = z.infer<typeof HomeMoneySchema>;
+
+export const HomeSlotSchema = z.object({
+  date: IsoDateSchema,
+  // The hour for a one-day period, null for a day bar.
+  hour: z.number().int().min(0).max(23).nullable(),
+  sales: CentavosSchema,
+  orders: CountSchema,
+});
+export type HomeSlot = z.infer<typeof HomeSlotSchema>;
+
+export const HomeBuyerMixSchema = z.object({
+  buyer: HomeBuyerEnum,
+  orders: CountSchema,
+  sales: CentavosSchema,
+});
+export type HomeBuyerMix = z.infer<typeof HomeBuyerMixSchema>;
+
+export const HomePeriodDataSchema = z.object({
+  from: IsoDateSchema,
+  to: IsoDateSchema,
+  step: HomeStepEnum,
+  money: HomeMoneySchema,
+  slots: z.array(HomeSlotSchema),
+  mix: z.object({
+    types: z.array(HomeTypeMixSchema),
+    methods: z.array(HomeMethodMixSchema),
+    buyers: z.array(HomeBuyerMixSchema),
+  }),
+  best: z.array(HomeBestSellerSchema).max(5),
+  // The day with the most sales (null for one day or no orders) and the hour with the most orders.
+  busiestDay: IsoDateSchema.nullable(),
+  busiestHour: z.number().int().min(0).max(23).nullable(),
+  // The first date the picker offers (history kept for Home).
+  earliest: IsoDateSchema,
+});
+export type HomePeriodData = z.infer<typeof HomePeriodDataSchema>;

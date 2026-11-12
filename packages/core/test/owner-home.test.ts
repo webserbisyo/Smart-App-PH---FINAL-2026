@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   bestSellers,
   bucketDays,
+  buildHomePeriod,
   buildHomeTrends,
+  clampPeriod,
   countsAsSale,
   heatExtremes,
   homeNeeds,
@@ -13,6 +15,8 @@ import {
   median,
   needsProofCheck,
   paceVerdict,
+  periodDates,
+  periodOf,
   salesTotal,
   setupSteps,
   type HomeItem,
@@ -284,5 +288,99 @@ describe('trends (H12, H13) and setup', () => {
     };
     expect(setupSteps(all)).toBeNull();
     expect(setupSteps({ ...all, activeItems: 4 })?.find((s) => !s.done)?.step).toBe('items');
+  });
+});
+
+describe('one period (T83)', () => {
+  const now = at('2026-11-12', '15:00');
+  const sf = { hours: [{ day: 4, open: '10:00', close: '14:00' }], closures: [] };
+
+  it('turns quick picks into dates and keeps custom dates inside the kept history', () => {
+    expect(periodDates('today', '2026-11-12')).toEqual({ from: '2026-11-12', to: '2026-11-12' });
+    expect(periodDates('yesterday', '2026-11-12')).toEqual({
+      from: '2026-11-11',
+      to: '2026-11-11',
+    });
+    expect(periodDates('7d', '2026-11-12')).toEqual({ from: '2026-11-06', to: '2026-11-12' });
+    expect(periodDates('30d', '2026-11-12')).toEqual({ from: '2026-10-14', to: '2026-11-12' });
+    expect(periodDates('month', '2026-11-12')).toEqual({ from: '2026-11-01', to: '2026-11-12' });
+    expect(clampPeriod({ from: '2026-12-01', to: '2026-01-01' }, '2026-11-12')).toEqual({
+      from: '2026-09-14',
+      to: '2026-11-12',
+    });
+    expect(periodOf({ from: '2026-11-06', to: '2026-11-12' }, '2026-11-12')).toBe('7d');
+    expect(periodOf({ from: '2026-11-05', to: '2026-11-12' }, '2026-11-12')).toBe('custom');
+  });
+
+  it('splits money into cash in the drawer, transfers, to check and to collect', () => {
+    const sales = [
+      sale(at('2026-11-12', '10:15'), 10000, { method: 'cash' }),
+      sale(at('2026-11-12', '11:15'), 20000, { method: 'gcash' }),
+      sale(at('2026-11-12', '11:45'), 5000, { method: 'maya', paid: false }),
+      sale(at('2026-11-12', '16:10'), 3000, { method: 'cod', paid: false, member: true }),
+      sale(at('2026-11-11', '12:00'), 99900),
+    ];
+    const p = buildHomePeriod({
+      now,
+      dates: { from: '2026-11-12', to: '2026-11-12' },
+      storefront: sf,
+      sales,
+      items: [],
+    });
+    expect(p.step).toBe('hour');
+    expect(p.money).toEqual({
+      sales: 38000,
+      orders: 4,
+      average: 9500,
+      cash: 10000,
+      transfers: 20000,
+      toCheck: 5000,
+      toCheckOrders: 1,
+      toCollect: 3000,
+    });
+    // Open 10 to 2, stretched to the 4 PM order.
+    expect(p.slots.map((s) => s.hour)).toEqual([10, 11, 12, 13, 14, 15, 16]);
+    expect(p.busiestHour).toBe(11);
+    expect(p.busiestDay).toBeNull();
+    expect(p.mix.buyers).toEqual([
+      { buyer: 'member', orders: 1, sales: 3000 },
+      { buyer: 'guest', orders: 3, sales: 35000 },
+    ]);
+    expect(p.earliest).toBe('2026-09-14');
+  });
+
+  it('gives one slot per day for a longer period and names the busiest day', () => {
+    const sales = [
+      sale(at('2026-11-10', '12:00'), 5000),
+      sale(at('2026-11-11', '12:00'), 9000),
+      sale(at('2026-11-11', '13:00'), 1000),
+    ];
+    const p = buildHomePeriod({
+      now,
+      dates: { from: '2026-11-06', to: '2026-11-12' },
+      storefront: sf,
+      sales,
+      items: [],
+    });
+    expect(p.step).toBe('day');
+    expect(p.slots).toHaveLength(7);
+    expect(p.slots.find((s) => s.date === '2026-11-11')).toMatchObject({ sales: 10000, orders: 2 });
+    expect(p.busiestDay).toBe('2026-11-11');
+    expect(p.busiestHour).toBe(12);
+    expect(p.money.average).toBe(5000);
+  });
+
+  it('says nothing about averages or the busiest times with no orders', () => {
+    const p = buildHomePeriod({
+      now,
+      dates: { from: '2026-11-11', to: '2026-11-11' },
+      storefront: sf,
+      sales: [],
+      items: [],
+    });
+    expect(p.money.average).toBeNull();
+    expect(p.busiestHour).toBeNull();
+    expect(p.mix.buyers).toEqual([]);
+    expect(p.slots.map((s) => s.hour)).toEqual([]);
   });
 });

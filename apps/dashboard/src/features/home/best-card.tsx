@@ -1,16 +1,13 @@
-import * as React from 'react';
 import { MoonStarIcon } from 'lucide-react';
-import { formatPeso, homeWords, type HomeBestSeller, type HomeSummary } from '@smartapp/core';
+import { formatPeso, homeWords, type HomeBestSeller } from '@smartapp/core';
 import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import { initials } from '@smartapp/ui/compositions/shop-image';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
 import { orderPhotoSrc } from '@/app/orders/order-photo';
-import { HomeCard, Segmented } from './home-card.js';
+import { HomeCard } from './home-card.js';
 
 const W = homeWords.best;
-
-type Period = 'today' | 'week';
 
 function BestRow({ item, rank, top }: { item: HomeBestSeller; rank: number; top: number }) {
   const src = orderPhotoSrc(item.photo, 96);
@@ -54,53 +51,38 @@ function BestRow({ item, rank, top }: { item: HomeBestSeller; rank: number; top:
   );
 }
 
-/** Best sellers (H9): today or the last 7 days by how many were sold, and items that stopped selling. */
+/** Best sellers (H9) for the picked period (T83), by how many were sold, and items that stopped selling. */
 export function BestCard({
-  summary,
+  best,
+  idleItems,
+  periodText,
+  live,
   className,
 }: {
-  summary: HomeSummary;
+  best: readonly HomeBestSeller[];
+  idleItems: number;
+  periodText: string;
+  live: boolean;
   className?: string | undefined;
 }) {
-  // A closed day or an empty morning opens on the week, so the card is never blank by default.
-  const [period, setPeriod] = React.useState<Period>(() =>
-    summary.best.today.length > 0 ? 'today' : 'week',
-  );
-  const list = period === 'today' ? summary.best.today : summary.best.week;
-  const top = Math.max(1, ...list.map((i) => i.qty));
+  const top = Math.max(1, ...best.map((i) => i.qty));
   return (
-    <HomeCard
-      id="best"
-      title={W.title}
-      hint={W.hint}
-      className={className}
-      action={
-        <Segmented
-          label={W.period}
-          value={period}
-          onChange={setPeriod}
-          options={[
-            { value: 'today', label: W.today },
-            { value: 'week', label: W.week },
-          ]}
-        />
-      }
-    >
-      {list.length > 0 ? (
+    <HomeCard id="best" title={W.title} hint={`${periodText} · ${W.hint}`} className={className}>
+      {best.length > 0 ? (
         <ol className="flex flex-col gap-3">
-          {list.map((item, i) => (
+          {best.map((item, i) => (
             <BestRow key={item.itemId} item={item} rank={i + 1} top={top} />
           ))}
         </ol>
       ) : (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {period === 'today' ? W.emptyToday : W.emptyWeek}
+        <p className="flex min-h-40 flex-1 items-center justify-center text-center text-sm text-muted-foreground">
+          {live ? W.emptyToday : W.emptyPeriod}
         </p>
       )}
-      {summary.idleItems > 0 ? (
-        <p className="flex items-center gap-2 border-t pt-3 text-xs text-muted-foreground">
+      {idleItems > 0 ? (
+        <p className="mt-auto flex items-center gap-2 border-t pt-3 text-xs text-muted-foreground">
           <MoonStarIcon aria-hidden="true" className="size-4 shrink-0" />
-          {W.idle(summary.idleItems)}
+          {W.idle(idleItems)}
         </p>
       ) : null}
     </HomeCard>

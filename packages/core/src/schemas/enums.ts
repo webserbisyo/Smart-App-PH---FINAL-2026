@@ -337,6 +337,21 @@ export const HOME_RANGES = ['7d', '30d'] as const;
 export const HomeRangeEnum = z.enum(HOME_RANGES);
 export type HomeRange = z.infer<typeof HomeRangeEnum>;
 
+// Home's period picker (decision T83): quick picks, or any dates the owner picks in the calendar.
+export const HOME_PERIODS = ['today', 'yesterday', '7d', '30d', 'month', 'custom'] as const;
+export const HomePeriodEnum = z.enum(HOME_PERIODS);
+export type HomePeriod = z.infer<typeof HomePeriodEnum>;
+
+// One bar per hour for a single day, one per day for longer periods (T83).
+export const HOME_STEPS = ['hour', 'day'] as const;
+export const HomeStepEnum = z.enum(HOME_STEPS);
+export type HomeStep = z.infer<typeof HomeStepEnum>;
+
+// Who bought, for the money donut's Members tab (T83).
+export const HOME_BUYERS = ['member', 'guest'] as const;
+export const HomeBuyerEnum = z.enum(HOME_BUYERS);
+export type HomeBuyer = z.infer<typeof HomeBuyerEnum>;
+
 // The new-shop checklist on Home, in order.
 export const SETUP_STEPS = [
   'items',

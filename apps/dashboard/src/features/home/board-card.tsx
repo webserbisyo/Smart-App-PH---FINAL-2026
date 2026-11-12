@@ -187,7 +187,7 @@ export function BoardCard({
         </div>
       )}
 
-      <div className="flex items-center justify-between border-t pt-3 text-sm">
+      <div className="mt-auto flex items-center justify-between border-t pt-3 text-sm">
         <span className="text-muted-foreground">{W.doneToday}</span>
         <span className="font-semibold tabular-nums">
           {W.doneLine(done.length, formatPeso(salesTotal(done, now)))}

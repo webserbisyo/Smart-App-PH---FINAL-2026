@@ -10,8 +10,9 @@ import type {
   PaymentStatus,
   SetupStep,
   HomeRange,
+  HomePeriod,
 } from '../schemas/enums.js';
-import { HOME_NEED_KINDS, ORDER_TYPES, PAYMENT_METHODS } from '../schemas/enums.js';
+import { HOME_BUYERS, HOME_NEED_KINDS, ORDER_TYPES, PAYMENT_METHODS } from '../schemas/enums.js';
 import type {
   HomeBestSeller,
   HomeBookingDay,
@@ -24,6 +25,9 @@ import type {
   HomeTrendDay,
   HomeTrends,
   HomeTrendTotals,
+  HomeMoney,
+  HomePeriodData,
+  HomeSlot,
 } from '../schemas/owner-home.js';
 import type { Storefront } from '../schemas/storefront.js';
 import { awaitsTransfer, payWindowOver, statusStage } from './order-rules.js';
@@ -617,6 +621,180 @@ export function buildHomeTrends(input: HomeTrendsInput): HomeTrends {
     bestDay: best,
     heat: heatSum.map((row) => row.map((n) => Math.round((n / weeks) * 10) / 10)),
     heatDays,
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------
+// One period (decision T83): plain facts for any dates from the period picker, no comparisons
+
+// The longest period the picker offers: the history Home keeps (H14).
+export const HOME_PERIOD_MAX_DAYS = HOME_HISTORY_DAYS;
+const CASH_METHODS: ReadonlySet<PaymentMethod> = new Set(['cash', 'cod']);
+
+export interface PeriodDates {
+  from: string;
+  to: string;
+}
+
+/** The first and last date of a quick pick, from today (Manila); "custom" keeps the given dates. */
+export function periodDates(period: HomePeriod, today: string, custom?: PeriodDates): PeriodDates {
+  switch (period) {
+    case 'today':
+      return { from: today, to: today };
+    case 'yesterday': {
+      const y = addDays(today, -1);
+      return { from: y, to: y };
+    }
+    case '7d':
+      return { from: addDays(today, -6), to: today };
+    case '30d':
+      return { from: addDays(today, -29), to: today };
+    case 'month':
+      return { from: `${today.slice(0, 8)}01`, to: today };
+    case 'custom':
+      return clampPeriod(custom ?? { from: today, to: today }, today);
+  }
+}
+
+/** Keeps a period inside what Home has: never after today, never before the kept history, from first. */
+export function clampPeriod(dates: PeriodDates, today: string): PeriodDates {
+  const earliest = addDays(today, -(HOME_PERIOD_MAX_DAYS - 1));
+  const fit = (d: string) => (d > today ? today : d < earliest ? earliest : d);
+  const a = fit(dates.from);
+  const b = fit(dates.to);
+  return a <= b ? { from: a, to: b } : { from: b, to: a };
+}
+
+/** Which quick pick a pair of dates is, so the picker shows "Last 7 days" instead of two dates. */
+export function periodOf(dates: PeriodDates, today: string): HomePeriod {
+  const picks: readonly HomePeriod[] = ['today', 'yesterday', '7d', '30d', 'month'];
+  for (const pick of picks) {
+    const d = periodDates(pick, today);
+    if (d.from === dates.from && d.to === dates.to) return pick;
+  }
+  return 'custom';
+}
+
+function moneyOf(sales: readonly HomeSale[]): HomeMoney {
+  const m: HomeMoney = {
+    sales: 0,
+    orders: sales.length,
+    average: null,
+    cash: 0,
+    transfers: 0,
+    toCheck: 0,
+    toCheckOrders: 0,
+    toCollect: 0,
+  };
+  for (const s of sales) {
+    m.sales += s.total;
+    const cash = CASH_METHODS.has(s.method);
+    if (s.paid) {
+      if (cash) m.cash += s.total;
+      else m.transfers += s.total;
+    } else if (cash) {
+      m.toCollect += s.total;
+    } else {
+      m.toCheck += s.total;
+      m.toCheckOrders += 1;
+    }
+  }
+  m.average = m.orders >= HOME_AVERAGE_MIN_ORDERS ? Math.round(m.sales / m.orders) : null;
+  return m;
+}
+
+export interface HomePeriodInput {
+  now: Date;
+  dates: PeriodDates;
+  storefront: HomeHoursInput;
+  // Counted orders (H2) of the kept history, in any order.
+  sales: readonly HomeSale[];
+  items: readonly HomeItem[];
+}
+
+/**
+ * T83: one period's money (with the cash check), its sales by hour (one day) or by day, where the money
+ * came from (order type, payment, members), best sellers and the busiest day and hour.
+ */
+export function buildHomePeriod(input: HomePeriodInput): HomePeriodData {
+  const today = manilaDate(input.now);
+  const { from, to } = clampPeriod(input.dates, today);
+  const inPeriod = input.sales.filter((s) => {
+    const d = manilaDate(s.placedAt);
+    return d >= from && d <= to;
+  });
+  const days = bucketDays(inPeriod);
+  const oneDay = from === to;
+
+  let slots: HomeSlot[];
+  if (oneDay) {
+    const day = days.get(from);
+    const hours = new Set(openHoursOf(input.storefront, from));
+    day?.hours.forEach((h, hour) => {
+      if (h.orders > 0) hours.add(hour);
+    });
+    const list = [...hours].sort((a, b) => a - b);
+    const first = list[0];
+    const last = list[list.length - 1];
+    slots = [];
+    if (first !== undefined && last !== undefined) {
+      for (let h = first; h <= last; h += 1) {
+        slots.push({
+          date: from,
+          hour: h,
+          sales: day?.hours[h]?.sales ?? 0,
+          orders: day?.hours[h]?.orders ?? 0,
+        });
+      }
+    }
+  } else {
+    slots = [];
+    for (let d = from; d <= to; d = addDays(d, 1)) {
+      const day = days.get(d);
+      slots.push({ date: d, hour: null, sales: day?.sales ?? 0, orders: day?.orders ?? 0 });
+    }
+  }
+
+  const hourOrders = Array.from({ length: 24 }, () => 0);
+  for (const day of days.values()) {
+    day.hours.forEach((h, hour) => {
+      hourOrders[hour] = (hourOrders[hour] ?? 0) + h.orders;
+    });
+  }
+  let busiestHour: number | null = null;
+  hourOrders.forEach((n, hour) => {
+    if (n > 0 && (busiestHour === null || n > (hourOrders[busiestHour] ?? 0))) busiestHour = hour;
+  });
+  let busiestDay: string | null = null;
+  if (!oneDay) {
+    let top = 0;
+    for (const [date, day] of days) {
+      if (
+        day.sales > top ||
+        (day.sales === top && top > 0 && busiestDay !== null && date < busiestDay)
+      ) {
+        top = day.sales;
+        busiestDay = date;
+      }
+    }
+  }
+
+  const buyers = HOME_BUYERS.map((buyer) => {
+    const list = inPeriod.filter((s) => s.member === (buyer === 'member'));
+    return { buyer, orders: list.length, sales: list.reduce((n, s) => n + s.total, 0) };
+  }).filter((b) => b.orders > 0);
+
+  return {
+    from,
+    to,
+    step: oneDay ? 'hour' : 'day',
+    money: moneyOf(inPeriod),
+    slots,
+    mix: { ...homeMix(inPeriod), buyers },
+    best: bestSellers(inPeriod, input.items),
+    busiestDay,
+    busiestHour,
+    earliest: addDays(today, -(HOME_PERIOD_MAX_DAYS - 1)),
   };
 }
 

@@ -3,6 +3,7 @@
 import type {
   HomeRange,
   HomeSummary,
+  HomePeriodData,
   HomeTrends,
   AdjustStampsInput,
   Availability,
@@ -274,7 +275,10 @@ export interface OwnerSettingsAdapter {
 // listOrders, so Home and Orders always show the same orders.
 export interface OwnerHomeAdapter {
   getHome(): Promise<HomeSummary>;
+  // Kept for Insights (MVP B): Home itself no longer compares periods (T83).
   getHomeTrends(input: { range: HomeRange }): Promise<HomeTrends>;
+  // One period's plain facts for the Home period picker (T83); dates are Manila days.
+  getHomePeriod(input: { from: string; to: string }): Promise<HomePeriodData>;
 }
 
 // Owner Editor (decisions T72 to T75): one draft per shop, saved with the version it started from.

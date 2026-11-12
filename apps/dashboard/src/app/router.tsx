@@ -222,7 +222,8 @@ const findMemberRoute = shellPage(
   page(() => membersWords.find.title, members),
 );
 
-// Insights is hidden for launch (decision T69): old links and bookmarks open Home's trends with the same range.
+// Insights is hidden for launch (decision T69): old links and bookmarks open Home's sales for the same days
+// (T83).
 const insightsRoute = createRoute({
   getParentRoute: () => shellRoute,
   path: '/insights',
@@ -230,8 +231,8 @@ const insightsRoute = createRoute({
   beforeLoad: ({ search }) => {
     throw redirect({
       to: '/',
-      search: { range: search.range === '30d' ? '30d' : undefined },
-      hash: 'trends',
+      search: { period: search.range === '30d' ? '30d' : '7d' },
+      hash: 'sales',
       replace: true,
     });
   },

@@ -21,7 +21,10 @@ import { storefrontUrl } from '@/app/use-nav-items';
 
 const W = homeWords;
 
-/** The story line under the greeting: today in one sentence, then the worst thing that needs the owner. */
+/**
+ * The story line under the greeting: today in one plain sentence, then the worst thing that needs the owner.
+ * No comparison with other days (T83: those live in Insights).
+ */
 export function storyLine(
   summary: HomeSummary,
   needs: readonly HomeNeed[],
@@ -29,13 +32,12 @@ export function storyLine(
   now: Date,
 ): string {
   if (summary.setup && summary.daysWithOrders === 0) return W.hello.welcome;
-  const { today, pace, businessDate } = summary;
+  const { today } = summary;
   const closed = summary.openToday
     ? ''
     : `${W.hello.closed(open?.nextOpening ? openingWhen(open.nextOpening, now) : null)} `;
   if (!summary.openToday && today.orders === 0) return closed.trim();
-  if (today.orders === 0) return W.hello.quiet(businessDate, clockText(pace.usualFirstOrder));
-  const verdict = pace.verdict ? W.hello.pace[pace.verdict](businessDate) : W.hello.pace.none;
+  if (today.orders === 0) return `${closed}${W.hello.quiet}`;
   const first = needs[0];
   const tail =
     first?.kind === 'to_check'
@@ -43,16 +45,7 @@ export function storyLine(
       : first?.kind === 'late'
         ? ` ${W.hello.late(first.count)}`
         : '';
-  return `${closed}${W.hello.sales(formatPeso(today.sales), today.orders)}${verdict}${tail}`;
-}
-
-/** "13:40" from the API as "1:40 PM". */
-export function clockText(clock: string | null): string | null {
-  if (!clock) return null;
-  const [h = 0, m = 0] = clock.split(':').map(Number);
-  const suffix = h < 12 ? 'AM' : 'PM';
-  const h12 = h % 12 === 0 ? 12 : h % 12;
-  return m === 0 ? `${h12} ${suffix}` : `${h12}:${String(m).padStart(2, '0')} ${suffix}`;
+  return `${closed}${W.hello.sales(formatPeso(today.sales), today.orders)}${tail}`;
 }
 
 export function HomeHello({

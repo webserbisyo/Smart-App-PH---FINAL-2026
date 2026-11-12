@@ -2,10 +2,13 @@
 // "Home (owner)". Every number is worked out on each read from orders, members' past orders, the stamp
 // history and the menu, with the shared rules in @smartapp/core (H14: nothing is stored).
 import {
+  buildHomePeriod,
   buildHomeSummary,
   buildHomeTrends,
   countsAsSale,
+  HomePeriodDataSchema,
   HomeRangeEnum,
+  IsoDateSchema,
   HomeSummarySchema,
   HomeTrendsSchema,
   isFinal,
@@ -175,6 +178,23 @@ export function createHomeMock(deps: HomeMockDeps): {
             range,
             sales: r.sales,
             joinedAt: r.s.members.map((m) => m.joinedAt),
+          }),
+        );
+      });
+    },
+
+    getHomePeriod: async (input) => {
+      const slug = await deps.ownerShop();
+      const dates = { from: IsoDateSchema.parse(input.from), to: IsoDateSchema.parse(input.to) };
+      return deps.run('home', () => {
+        const r = read(slug);
+        return HomePeriodDataSchema.parse(
+          buildHomePeriod({
+            now: r.now,
+            dates,
+            storefront: r.shop.storefront,
+            sales: r.sales,
+            items: homeItems(r.shop, r.now),
           }),
         );
       });

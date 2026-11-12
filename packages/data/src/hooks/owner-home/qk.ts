@@ -5,4 +5,5 @@ export const ownerHomeQk = {
   all: ['owner-home'] as const,
   summary: () => ['owner-home', 'summary'] as const,
   trends: (range: HomeRange) => ['owner-home', 'trends', range] as const,
+  period: (from: string, to: string) => ['owner-home', 'period', from, to] as const,
 };

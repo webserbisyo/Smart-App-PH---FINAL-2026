@@ -27,3 +27,21 @@ export function useHomeTrends(range: HomeRange) {
     placeholderData: keepPreviousData,
   });
 }
+
+/**
+ * One period from the Home period picker (T83). Today keeps the board's 15 s refresh; past periods
+ * change only when an order is changed late, so 5 minutes is fresh enough. The last period stays on
+ * screen while the next one loads, so the cards never jump.
+ */
+export function useHomePeriod(dates: { from: string; to: string }, today: string) {
+  const { ownerHome } = useAdapters();
+  const live = dates.to >= today;
+  return useQuery({
+    queryKey: ownerHomeQk.period(dates.from, dates.to),
+    queryFn: () => ownerHome.getHomePeriod(dates),
+    staleTime: live ? 0 : HOME_TRENDS_STALE_MS,
+    refetchInterval: live ? HOME_REFRESH_MS : false,
+    refetchOnWindowFocus: live,
+    placeholderData: keepPreviousData,
+  });
+}

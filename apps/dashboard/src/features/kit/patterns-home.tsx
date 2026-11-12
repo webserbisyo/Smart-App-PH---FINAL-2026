@@ -11,6 +11,7 @@ import { Pattern as IconLink } from './examples/c-card-17';
 import { Pattern as Autoplay } from './examples/c-carousel-5';
 import { Pattern as DotsNavigation } from './examples/c-carousel-11';
 import { Pattern as EventsCalendar } from './examples/c-empty-20';
+import { Pattern as RangePickerPresets } from './examples/c-calendar-29';
 import { Pattern as NavigationLinks } from './examples/c-item-4';
 import { Pattern as CardGrid } from './examples/c-skeleton-8';
 import { Pattern as EmployeeProfile } from './examples/c-table-16';
@@ -27,6 +28,7 @@ const EXAMPLES = {
   'c-carousel-5': Autoplay,
   'c-carousel-11': DotsNavigation,
   'c-empty-20': EventsCalendar,
+  'c-calendar-29': RangePickerPresets,
   'c-item-4': NavigationLinks,
   'c-skeleton-8': CardGrid,
   'c-table-16': EmployeeProfile,

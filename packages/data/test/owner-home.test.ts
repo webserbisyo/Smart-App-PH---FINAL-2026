@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  HomePeriodDataSchema,
   HomeSummarySchema,
   HomeTrendsSchema,
   HEAT_MIN_DAYS,
@@ -118,5 +119,42 @@ describe('ownerHome mock adapter', () => {
         shopStore('kanto-smash', { offline: true }).store.ownerHome.getHomeTrends({ range: '7d' }),
       ),
     ).toBe('offline');
+  });
+});
+
+describe('ownerHome period (T83)', () => {
+  it.each(SHOPS)('%s: today, 7 days and a month parse and add up', async (slug) => {
+    const { store } = shopStore(slug);
+    const home = await store.ownerHome.getHome();
+    const today = await store.ownerHome.getHomePeriod({ from: '2026-11-06', to: '2026-11-06' });
+    expect(HomePeriodDataSchema.safeParse(today).success).toBe(true);
+    expect(today.step).toBe('hour');
+    // Same sales rule as the summary and the Orders footer (H2).
+    expect(today.money.sales).toBe(home.today.sales);
+    const m = today.money;
+    expect(m.cash + m.transfers + m.toCheck + m.toCollect).toBe(m.sales);
+    expect(today.slots.reduce((n, s) => n + s.sales, 0)).toBe(m.sales);
+    const week = await store.ownerHome.getHomePeriod({ from: '2026-10-31', to: '2026-11-06' });
+    expect(week.step).toBe('day');
+    expect(week.slots).toHaveLength(7);
+    expect(week.slots.reduce((n, s) => n + s.orders, 0)).toBe(week.money.orders);
+    expect(week.mix.buyers.reduce((n, b) => n + b.sales, 0)).toBe(week.money.sales);
+    expect(week.busiestDay).not.toBeNull();
+  });
+
+  it('keeps a picked period inside the kept history', async () => {
+    const { store } = shopStore('kanto-smash');
+    const p = await store.ownerHome.getHomePeriod({ from: '2025-01-01', to: '2027-01-01' });
+    expect(p.from).toBe(p.earliest);
+    expect(p.to).toBe('2026-11-06');
+    expect(p.slots).toHaveLength(60);
+  });
+
+  it('a new shop gets an empty period, not an error', async () => {
+    const { store } = shopStore('kanto-smash', { empty: true });
+    const p = await store.ownerHome.getHomePeriod({ from: '2026-10-31', to: '2026-11-06' });
+    expect(p.money.orders).toBe(0);
+    expect(p.busiestDay).toBeNull();
+    expect(p.best).toEqual([]);
   });
 });

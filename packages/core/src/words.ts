@@ -3259,23 +3259,10 @@ export const settingsWords = {
   },
 } as const;
 
-// Owner Home (decisions T69 to T71). Today is compared in words only; the 7 and 30 days in %.
+// Owner Home (decisions T69 to T71, T83): plain facts for the picked period, no comparisons.
 const plural = (n: number, one: string, many: string): string => (n === 1 ? one : many);
-const WEEKDAYS = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-] as const;
-const weekdayLong = (date: string): string =>
-  WEEKDAYS[new Date(`${date}T00:00:00Z`).getUTCDay()] ?? '';
 
 export const homeWords = {
-  weekday: weekdayLong,
-  usualDay: (date: string) => `a usual ${weekdayLong(date)}`,
   hello: {
     greeting: (hour: number, name: string | null) => {
       const part = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
@@ -3284,18 +3271,9 @@ export const homeWords = {
     welcome:
       'Welcome to Smart App PH. Finish these steps and share your link to get your first order.',
     closed: (opens: string | null) => (opens ? `Closed today. Opens ${opens}.` : 'Closed today.'),
-    quiet: (date: string, first: string | null) =>
-      first
-        ? `No orders yet today. A usual ${weekdayLong(date)}’s first order comes around ${first}.`
-        : 'No orders yet today.',
+    quiet: 'No orders yet today.',
     sales: (sales: string, orders: number) =>
-      `${sales} so far from ${orders} ${plural(orders, 'order', 'orders')}`,
-    pace: {
-      ahead: (date: string) => `, ahead of a usual ${weekdayLong(date)}.`,
-      about: (date: string) => `, about the same as a usual ${weekdayLong(date)}.`,
-      behind: (date: string) => `, behind a usual ${weekdayLong(date)}.`,
-      none: '.',
-    },
+      `${sales} so far today from ${orders} ${plural(orders, 'order', 'orders')}.`,
     toCheck: (n: number) => `${n} ${plural(n, 'payment', 'payments')} to check.`,
     late: (n: number) => `${n} ${plural(n, 'order is', 'orders are')} late.`,
     shareShop: 'Share shop',
@@ -3352,55 +3330,8 @@ export const homeWords = {
     more: (names: string, more: number) => (more > 0 ? `${names} and ${more} more` : names),
     allClear: 'Nothing needs you right now.',
   },
-  today: {
-    sales: 'Sales today',
-    orders: (n: number) => `${n} ${plural(n, 'order', 'orders')}`,
-    usualByNow: 'usual by now',
-    pace: { ahead: 'Ahead', about: 'About usual', behind: 'Behind' },
-    paceLine: (date: string, byNow: string, time: string, day: string) =>
-      `A usual ${weekdayLong(date)} has ${byNow} by ${time} and ends near ${day}.`,
-    firstOrder: (date: string, time: string) =>
-      `A usual ${weekdayLong(date)}’s first order comes around ${time}.`,
-    learning: (days: number) =>
-      days === 0
-        ? 'After 3 weeks of orders, Home compares today with a usual day.'
-        : `Home compares today with a usual day once 3 of the last 4 weeks had orders (${days} so far).`,
-    paceAria: (percent: number) => `${percent}% of a usual day`,
-    soFar: 'so far today',
-    gap: (verdict: 'ahead' | 'about' | 'behind', amount: string, date: string) =>
-      verdict === 'about'
-        ? `About the same as a usual ${weekdayLong(date)} at this hour.`
-        : `${amount} ${verdict === 'ahead' ? 'ahead of' : 'behind'} a usual ${weekdayLong(date)} at this hour.`,
-    endsNear: (date: string, day: string) => `A usual ${weekdayLong(date)} ends near ${day}.`,
-    ringToday: 'Today',
-    ringUsual: 'Usual by now',
-    ringAria: (sales: string, byNow: string) => `${sales} today. A usual day has ${byNow} by now.`,
-    tiles: {
-      orders: 'Orders today',
-      openNow: (n: number) => (n === 0 ? 'All done, none open' : `${n} still open`),
-      toCollect: 'Not paid yet',
-      toCollectHint: 'Cash and pay on delivery',
-      collected: (amount: string) => `${amount} already paid`,
-      members: 'Stamps today',
-      membersHint: (joined: number) =>
-        joined === 0
-          ? 'No new members yet'
-          : `${joined} new ${plural(joined, 'member', 'members')}`,
-      cardOff: 'Stamp card is off',
-    },
-  },
+  // Hour names for the sales chart.
   hours: {
-    title: 'Hour by hour',
-    hint: (date: string) => `Today against a usual ${weekdayLong(date)}`,
-    lastDay: (day: string) => `Closed today. This is ${day}.`,
-    sales: 'Sales',
-    orders: 'Orders',
-    today: 'Today',
-    usual: (date: string) => `A usual ${weekdayLong(date)}`,
-    now: 'now',
-    busiest: 'Busiest so far:',
-    busiestDay: 'Busiest hour:',
-    empty: 'Bars fill in as orders come in.',
     hour: (h: number) => {
       const suffix = h < 12 || h === 24 ? 'AM' : 'PM';
       const h12 = h % 12 === 0 ? 12 : h % 12;
@@ -3410,7 +3341,69 @@ export const homeWords = {
       const h12 = h % 12 === 0 ? 12 : h % 12;
       return `${h12}${h < 12 ? 'a' : 'p'}`;
     },
-    ordersCount: (n: number) => `${Math.round(n * 10) / 10} ${plural(n, 'order', 'orders')}`,
+  },
+  // The period picker (T83): one set of dates for Sales, the money split and best sellers.
+  period: {
+    label: 'Show sales for',
+    picks: {
+      today: 'Today',
+      yesterday: 'Yesterday',
+      '7d': 'Last 7 days',
+      '30d': 'Last 30 days',
+      month: 'This month',
+      custom: 'Pick dates',
+    },
+    range: (from: string, to: string) => (from === to ? from : `${from} – ${to}`),
+    pickFirst: 'Tap the first day, then the last.',
+    pickLast: 'Now tap the last day.',
+    apply: 'Show these dates',
+    limit: 'Home keeps the last 60 days. Older numbers come with Insights.',
+    live: 'Live',
+  },
+  money: {
+    title: 'Sales',
+    orders: (n: number) => `${n} ${plural(n, 'order', 'orders')}`,
+    average: 'Average order',
+    averageNone: 'After 3 orders',
+    cashNow: 'Cash in the drawer should be',
+    cashPast: 'Cash taken',
+    cashHint: 'Cash and COD, paid',
+    transfers: 'GCash, Maya and bank',
+    toCheck: (n: number) => `${n} not paid yet`,
+    allChecked: 'All paid',
+    toCollect: 'Still to collect',
+    toCollectHint: 'Cash and COD, not paid yet',
+    nothingToCollect: 'Nothing left to collect',
+    openOrders: 'Open Orders',
+    salesAria: (amount: string, orders: number) =>
+      `${amount} from ${orders} ${plural(orders, 'order', 'orders')}`,
+  },
+  sales: {
+    byHour: 'Sales by hour',
+    byDay: 'Sales by day',
+    now: 'now',
+    rushSoFar: 'Rush so far:',
+    rush: 'Busiest hour:',
+    busiestDay: (day: string, sales: string) => `Busiest day: ${day}, ${sales}.`,
+    usualHour: (hour: string) => `Most orders came around ${hour}.`,
+    empty: 'Bars fill in as orders come in.',
+    emptyPast: 'No orders on these dates.',
+    closed: 'Closed this day, no orders.',
+    tipOrders: (n: number) => `${n} ${plural(n, 'order', 'orders')}`,
+    chartAria: (period: string, total: string) => `Sales for ${period}: ${total}`,
+  },
+  donut: {
+    title: 'Where the money came from',
+    tabs: { types: 'Ordered', methods: 'Paid', buyers: 'Members' },
+    tabsLabel: 'Split sales by',
+    buyer: { member: 'Members', guest: 'Not members' },
+    total: 'total',
+    row: (label: string, orders: number) =>
+      `${label} · ${orders} ${plural(orders, 'order', 'orders')}`,
+    percent: (n: number) => `${n}%`,
+    aria: (rows: string) => `Share of sales: ${rows}`,
+    ariaRow: (label: string, percent: number) => `${label} ${percent}%`,
+    empty: 'Shows once there are orders.',
   },
   board: {
     title: 'On the board',
@@ -3426,23 +3419,17 @@ export const homeWords = {
   },
   best: {
     title: 'Best sellers',
-    hint: 'By how many were sold',
-    period: 'Period',
-    today: 'Today',
-    week: '7 days',
+    hint: 'by how many were sold',
     soldOut: 'Sold out',
     sold: (n: number) => `${n} sold`,
     rowAria: (rank: number, name: string, qty: number, sales: string) =>
       `${rank}. ${name}: ${qty} sold, ${sales}`,
     idle: (n: number) => `${n} ${plural(n, 'item hasn’t', 'items haven’t')} sold in 14 days.`,
-    emptyToday: 'Nothing sold yet today. Switch to 7 days.',
-    emptyWeek: 'Nothing sold in the last 7 days.',
+    emptyToday: 'Nothing sold yet today.',
+    emptyPeriod: 'Nothing sold on these dates.',
   },
+  // Names of order types and payments in the money split.
   mix: {
-    title: 'How they ordered and paid',
-    hint: 'Today, share of sales',
-    types: 'Order type',
-    methods: 'Payment',
     type: { walk_in: 'Walk-in', pickup: 'Pickup', delivery: 'Delivery' },
     method: {
       cash: 'Cash',
@@ -3452,11 +3439,6 @@ export const homeWords = {
       bank: 'Bank',
       qr_ph: 'QR Ph',
     },
-    row: (label: string, orders: number) => `${label} · ${orders}`,
-    percent: (n: number) => `${n}%`,
-    barAria: (rows: string) => `Share of today’s sales: ${rows}`,
-    barRow: (label: string, percent: number) => `${label} ${percent}%`,
-    empty: 'Shows once today has orders.',
   },
   members: {
     title: 'Members today',
@@ -3479,43 +3461,6 @@ export const homeWords = {
     dayAria: (day: string, n: number, total: string) =>
       `${day}: ${n} ${plural(n, 'booking', 'bookings')}, ${total}`,
     none: '–',
-  },
-  trends: {
-    title: (days: number) => `Last ${days} days`,
-    hint: (days: number) => `Against the ${days} days before (dotted)`,
-    range: { '7d': '7 days', '30d': '30 days' },
-    sales: 'Sales',
-    orders: 'Orders',
-    average: 'Average order',
-    joined: 'New members',
-    change: (n: number) => `${n > 0 ? '+' : '−'}${Math.abs(n)}%`,
-    changeAria: (n: number) => `${n > 0 ? 'Up' : 'Down'} ${Math.abs(n)}% against the days before`,
-    diff: (n: number) => `${n > 0 ? '+' : '−'}${Math.abs(n)}`,
-    diffAria: (n: number) => `${Math.abs(n)} ${n > 0 ? 'more' : 'fewer'} than the days before`,
-    same: 'Same as before',
-    today: 'Today',
-    bestDay: (day: string, sales: string, orders: number) =>
-      `Best day: ${day}, ${sales} from ${orders} ${plural(orders, 'order', 'orders')}.`,
-    before: 'Days before',
-    rangeLabel: 'Range',
-    chartAria: (days: number) =>
-      `Daily sales for the last ${days} days, against the ${days} days before`,
-    tipOrders: (n: number) => `${n} ${plural(n, 'order', 'orders')}`,
-    empty: 'Your first week fills in here.',
-  },
-  busy: {
-    title: 'When you’re busy',
-    hint: 'Orders per hour, average of the last 4 weeks',
-    fewer: 'Fewer',
-    more: 'More',
-    sentence: (busiest: string, quietest: string | null) =>
-      quietest ? `Busiest: ${busiest}. Quietest open hour: ${quietest}.` : `Busiest: ${busiest}.`,
-    slot: (weekday: number, hour: string) => `${WEEKDAYS[weekday] ?? ''}s ${hour}`,
-    rowLabel: (weekday: number) => (WEEKDAYS[weekday] ?? '').slice(0, 3),
-    cell: (weekday: number, hour: string, orders: number) =>
-      `${WEEKDAYS[weekday] ?? ''}s ${hour}: about ${Math.round(orders * 10) / 10} ${plural(orders, 'order', 'orders')}`,
-    mapAria: 'Orders per hour by weekday, last 4 weeks',
-    waiting: (days: number) => `Fills in after two weeks of orders (${days} of 14 days so far).`,
   },
   empty: {
     title: 'Your numbers start here',

@@ -9,13 +9,16 @@ const BarDemo = React.lazy(() =>
 const AreaDemo = React.lazy(() =>
   import('./examples/evil-charts').then((m) => ({ default: m.EvilAreaDemo })),
 );
+const PieDemo = React.lazy(() =>
+  import('./examples/evil-charts').then((m) => ({ default: m.EvilPieDemo })),
+);
 const RadialDemo = React.lazy(() =>
   import('./examples/evil-charts').then((m) => ({ default: m.EvilRadialDemo })),
 );
 
 const EVIL = 'packages/ui/src/components/evilcharts/charts';
 
-/** Home pieces on /kit: the installed evilcharts Bar, Area and Radial charts (T77). */
+/** Home pieces on /kit: the installed evilcharts Bar, Area, Pie and Radial charts (T77, T83). */
 export function HomePrimitiveSections() {
   return (
     <>
@@ -23,7 +26,7 @@ export function HomePrimitiveSections() {
         title="evilcharts Bar chart"
         library="evilcharts (shadcn registry @evilcharts) on Recharts 3.8.0 + motion, lazy-loaded"
         path={`${EVIL}/recharts-bar-chart.tsx`}
-        usedIn="Home Hour by hour: a usual day hatched beside today's gradient bars (T77)"
+        usedIn="Home Sales by hour or by day: one gradient bar per slot with a now line (T83)"
       >
         <React.Suspense fallback={<Skeleton className="h-56 w-full max-w-lg rounded-xl" />}>
           <BarDemo />
@@ -33,17 +36,27 @@ export function HomePrimitiveSections() {
         title="evilcharts Area chart"
         library="evilcharts (shadcn registry @evilcharts) on Recharts 3.8.0 + motion, lazy-loaded"
         path={`${EVIL}/recharts-area-chart.tsx`}
-        usedIn="Home Last 7 or 30 days: sales as a gradient over the days before (T77)"
+        usedIn="Not on a screen since T83 (Home no longer compares periods); kept for Insights in Blueprint B"
       >
         <React.Suspense fallback={<Skeleton className="h-56 w-full max-w-lg rounded-xl" />}>
           <AreaDemo />
         </React.Suspense>
       </KitSection>
       <KitSection
+        title="evilcharts Pie chart"
+        library="evilcharts (shadcn registry @evilcharts) on Recharts 3.8.0 + motion, lazy-loaded"
+        path={`${EVIL}/recharts-pie-chart.tsx`}
+        usedIn="Home Where the money came from: a gradient donut with Ordered, Paid and Members tabs (T83)"
+      >
+        <React.Suspense fallback={<Skeleton className="size-48 rounded-full" />}>
+          <PieDemo />
+        </React.Suspense>
+      </KitSection>
+      <KitSection
         title="evilcharts Radial chart"
         library="evilcharts (shadcn registry @evilcharts) on Recharts 3.8.0, lazy-loaded"
         path={`${EVIL}/recharts-radial-chart.tsx`}
-        usedIn="Home Today ring: today against a usual day by this hour (T77)"
+        usedIn="Not on a screen since T83 (the Today ring left Home); kept for Insights in Blueprint B"
       >
         <React.Suspense fallback={<Skeleton className="size-48 rounded-full" />}>
           <RadialDemo />

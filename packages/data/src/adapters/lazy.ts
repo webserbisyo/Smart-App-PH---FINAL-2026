@@ -137,6 +137,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
   const ownerHome: OwnerHomeAdapter = {
     getHome: async () => (await real()).ownerHome.getHome(),
     getHomeTrends: async (input) => (await real()).ownerHome.getHomeTrends(input),
+    getHomePeriod: async (input) => (await real()).ownerHome.getHomePeriod(input),
   };
 
   const ownerEditor: OwnerEditorAdapter = {

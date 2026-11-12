@@ -38,6 +38,7 @@ import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-gro
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { cn } from 'cn';
 import { CustomerChip, ItemPhotos, PaymentChip, orderNoLabel } from '@/app/orders/order-card';
+import { dateFromKey, keyFromDate } from '@/app/day-key';
 import { AnimatePresence, FadeUp } from '@/app/orders/order-motion';
 import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
 import { StageChip } from '@/app/orders/stage-chip';
@@ -102,12 +103,6 @@ function StatusChip({ status, kind }: { status: ListStatus; kind: ShopKind }) {
     );
   }
   return <StageChip stage={status} kind={kind} />;
-}
-
-/** Sales count only what wasn't cancelled or expired. */
-function dateFromKey(key: string): Date {
-  const [y = 1970, m = 1, d = 1] = key.split('-').map(Number);
-  return new Date(y, m - 1, d, 12);
 }
 
 /**
@@ -297,7 +292,7 @@ export function ListView({
               disabled={{ after: dateFromKey(today) }}
               onSelect={(d) => {
                 if (!d) return;
-                const key = manilaDate(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12));
+                const key = keyFromDate(d);
                 setSearch(
                   { day: key === today ? undefined : key, status: undefined },
                   { replace: true },

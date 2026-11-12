@@ -1,5 +1,6 @@
 import { EvilAreaChart } from '@smartapp/ui/components/evilcharts/charts/recharts-area-chart';
 import { EvilBarChart } from '@smartapp/ui/components/evilcharts/charts/recharts-bar-chart';
+import { EvilPieChart } from '@smartapp/ui/components/evilcharts/charts/recharts-pie-chart';
 import { EvilRadialChart } from '@smartapp/ui/components/evilcharts/charts/recharts-radial-chart';
 
 // Kit sample numbers only (pesos), shaped like Home's (T77).
@@ -24,6 +25,11 @@ const DAYS = [
 const RING = [
   { name: 'usual', value: 49600 },
   { name: 'today', value: 56500 },
+];
+const MIX = [
+  { name: 'pickup', sales: 18200 },
+  { name: 'walk_in', sales: 12400 },
+  { name: 'delivery', sales: 6900 },
 ];
 const grey = 'color-mix(in oklab, var(--muted-foreground) 45%, transparent)';
 
@@ -94,6 +100,28 @@ export function EvilRadialDemo() {
       >
         <EvilRadialChart.RadialBar dataKey="value" barSize={12} cornerRadius={8} />
       </EvilRadialChart>
+    </div>
+  );
+}
+
+/** evilcharts Pie: a gradient donut, Home's "Where the money came from" (T83). */
+export function EvilPieDemo() {
+  return (
+    <div className="size-48">
+      <EvilPieChart
+        data={MIX}
+        config={{
+          pickup: { label: 'Pickup', colors: { light: ['var(--chart-1)'] } },
+          walk_in: { label: 'Walk-in', colors: { light: ['var(--chart-2)'] } },
+          delivery: { label: 'Delivery', colors: { light: ['var(--chart-3)'] } },
+        }}
+        dataKey="sales"
+        nameKey="name"
+        className="aspect-square size-full"
+      >
+        <EvilPieChart.Pie innerRadius="62%" outerRadius="96%" cornerRadius={6} paddingAngle={3} />
+        <EvilPieChart.Tooltip />
+      </EvilPieChart>
     </div>
   );
 }

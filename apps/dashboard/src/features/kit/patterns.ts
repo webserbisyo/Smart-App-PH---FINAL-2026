@@ -844,6 +844,14 @@ export const KIT_PATTERNS: readonly KitPattern[] = [
     url: 'https://reui.io/patterns/table',
   },
   {
+    id: 'c-calendar-29',
+    name: 'Range Picker Presets',
+    screen: 'home',
+    usedFor:
+      'Dashboard Home period picker c-calendar-29 (quick picks beside a range calendar, T83)',
+    url: 'https://reui.io/patterns/calendar',
+  },
+  {
     id: 'c-tabs-2',
     name: 'Line Variant',
     screen: 'rewards',

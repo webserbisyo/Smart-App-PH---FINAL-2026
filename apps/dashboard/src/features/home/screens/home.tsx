@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { QrCodeIcon, SparklesIcon, WifiOffIcon } from 'lucide-react';
 import { errorWords, formatClock, homeWords, words } from '@smartapp/core';
-import { errorCodeOf, useStorefront } from '@smartapp/data';
+import { errorCodeOf, useHomePeriod as useHomePeriodData, useStorefront } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
@@ -15,26 +15,28 @@ import { storefrontUrl } from '@/app/use-nav-items';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { useOwnerFirstName } from '@/app/use-owner-name';
 import { BestCard } from '../best-card.js';
-import { BoardCard, isOpenOnBoard } from '../board-card.js';
-import { BusyCard } from '../busy-card.js';
+import { BoardCard } from '../board-card.js';
 import { ComingCard, hasBookings } from '../coming-card.js';
-import { CARD } from '../home-card.js';
+import { CARD, HomeCard } from '../home-card.js';
 import { HomeHello, PauseNotice } from '../home-hello.js';
-import { HourCard } from '../hour-card.js';
+import { HOME_GRID, HOME_MAIN, HOME_PAIR, HOME_SIDE, HOME_SLOTS as slots } from '../home-layout.js';
 import { MembersCard } from '../members-card.js';
 import { MixCard } from '../mix-card.js';
+import { MoneyCard } from '../money-card.js';
 import { NeedsCard } from '../needs-card.js';
+import { PeriodPicker, periodLabel } from '../period-picker.js';
+import { SalesCard } from '../sales-card.js';
+import { useHomePeriodSearch, useSetHomePeriod } from '../search.js';
 import { SetupCard } from '../setup-card.js';
-import { TodayCard } from '../today-card.js';
-import { TrendsCard } from '../trends-card.js';
 import { useHomeView } from '../use-home-view.js';
 
 const W = homeWords;
 
 /**
- * Home (decisions T69 to T71): the owner's day at a glance. Today against a usual weekday, what needs
- * them, the board, and how the day went hour by hour. Numbers come from getHome; the board from the
- * same open orders as Orders, so the two never disagree.
+ * Home (decisions T69 to T71, T83): the owner's day at a glance. What needs them, then sales for the picked
+ * period with the cash check, the board, where the money came from, best sellers and members today. Plain
+ * facts only: comparisons with other days live in Insights. The board comes from the same open orders as
+ * Orders, so the two never disagree.
  */
 export function HomeScreen() {
   const shop = useShop();
@@ -43,12 +45,16 @@ export function HomeScreen() {
   const isPhone = useFormFactor() === 'phone';
   const view = useHomeView();
   const storefront = useStorefront(shop.slug);
-  const { summary, home, now, needs, live } = view;
+  const { summary, home, now, needs, live, today } = view;
+  const { period, dates } = useHomePeriodSearch(today);
+  const setPeriod = useSetHomePeriod();
+  const periodData = useHomePeriodData(dates, today);
+  const periodText = periodLabel(period, dates);
+  const liveDates = dates.to === today;
 
   const delivers = storefront.data?.storefront.orderTypes.includes('delivery') ?? true;
   const activeItems =
     storefront.data?.catalog.items.filter((i) => i.status === 'active').length ?? 0;
-  const openNow = live.filter((o) => isOpenOnBoard(o, now)).length;
   const updated = home.dataUpdatedAt > 0 ? formatClock(new Date(home.dataUpdatedAt)) : null;
 
   let body: React.ReactNode;
@@ -67,50 +73,98 @@ export function HomeScreen() {
     const fresh = summary.daysWithOrders === 0;
     const hasNeeds = needs.length > 0;
     const booked = hasBookings(summary.comingUp);
+    // Members closes whichever column is shorter: under the sales cards when Needs you fills the right.
+    const members = <MembersCard members={summary.members} className={slots.members} />;
+    const picker = (
+      <PeriodPicker period={period} dates={dates} today={today} onChange={setPeriod} />
+    );
+    const data = periodData.data;
     body = (
       <div className="flex flex-col gap-3 md:gap-4">
         {summary.setup ? <SetupCard steps={summary.setup} activeItems={activeItems} /> : null}
         {fresh ? (
           <FirstDay slug={shop.slug} />
         ) : (
-          <div className="grid items-start gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
-            {hasNeeds ? (
-              <NeedsCard
-                needs={needs}
-                live={live}
-                soldOut={summary.soldOut}
-                storagePercent={view.storagePercent}
-                now={now}
-                shown={isPhone ? 3 : 4}
-                className="md:col-span-2 lg:col-span-1 lg:col-start-3 lg:row-start-1"
-              />
-            ) : null}
-            <TodayCard
-              summary={summary}
-              openNow={openNow}
-              className={cn(
-                'md:col-span-2 lg:row-start-1',
-                hasNeeds ? 'lg:col-span-2 lg:col-start-1' : 'lg:col-span-3',
+          <div className={HOME_GRID}>
+            <div className={HOME_MAIN}>
+              {data ? (
+                <MoneyCard
+                  money={data.money}
+                  periodText={periodText}
+                  live={liveDates}
+                  action={picker}
+                  className={slots.money}
+                />
+              ) : periodData.isError ? (
+                <PeriodError
+                  id="sales-total"
+                  title={homeWords.money.title}
+                  action={picker}
+                  onRetry={() => void periodData.refetch()}
+                  className={slots.money}
+                />
+              ) : (
+                <MoneySkeleton action={picker} className={slots.money} />
               )}
-            />
-            <HourCard summary={summary} className="md:col-span-2" />
-            {/* The board is tall, so on wide screens it spans the rows of Hour by hour and the trend. */}
-            <BoardCard
-              live={live}
-              todays={view.todays}
-              kind={shop.kind}
-              delivers={delivers}
-              now={now}
-              className="md:col-span-2 lg:col-span-1 lg:row-span-2"
-            />
-            <TrendsCard className="md:col-span-2" />
-            <BestCard summary={summary} className="md:col-span-2 lg:col-span-1" />
-            <MixCard summary={summary} />
-            <MembersCard members={summary.members} />
-            {booked ? (
-              <ComingCard days={summary.comingUp} className="md:col-span-2 lg:col-span-1" />
-            ) : null}
-            <BusyCard className={cn('md:col-span-2', booked ? 'lg:col-span-2' : 'lg:col-span-3')} />
+              {data ? (
+                <SalesCard
+                  data={data}
+                  periodText={periodText}
+                  live={liveDates}
+                  asOf={now}
+                  className={slots.sales}
+                />
+              ) : (
+                <ChartSkeleton className={slots.sales} />
+              )}
+              <div className={HOME_PAIR}>
+                {data ? (
+                  <MixCard
+                    data={data}
+                    periodText={periodText}
+                    cardOn={summary.members.cardOn}
+                    className={slots.mix}
+                  />
+                ) : (
+                  <ListSkeleton className={slots.mix} />
+                )}
+                {data ? (
+                  <BestCard
+                    best={data.best}
+                    idleItems={summary.idleItems}
+                    periodText={periodText}
+                    live={liveDates}
+                    className={slots.best}
+                  />
+                ) : (
+                  <ListSkeleton className={slots.best} />
+                )}
+              </div>
+              {hasNeeds ? members : null}
+            </div>
+            <div className={HOME_SIDE}>
+              {hasNeeds ? (
+                <NeedsCard
+                  needs={needs}
+                  live={live}
+                  soldOut={summary.soldOut}
+                  storagePercent={view.storagePercent}
+                  now={now}
+                  shown={isPhone ? 3 : 4}
+                  className={slots.needs}
+                />
+              ) : null}
+              <BoardCard
+                live={live}
+                todays={view.todays}
+                kind={shop.kind}
+                delivers={delivers}
+                now={now}
+                className={cn(slots.board, hasNeeds && 'lg:flex-1')}
+              />
+              {hasNeeds ? null : members}
+            </div>
+            {booked ? <ComingCard days={summary.comingUp} className={slots.coming} /> : null}
           </div>
         )}
       </div>
@@ -142,6 +196,32 @@ export function HomeScreen() {
   );
 }
 
+/** A period card that couldn't load: the picker stays, with Try again. */
+function PeriodError({
+  id,
+  title,
+  action,
+  onRetry,
+  className,
+}: {
+  id: string;
+  title: string;
+  action: React.ReactNode;
+  onRetry: () => void;
+  className: string;
+}) {
+  return (
+    <HomeCard id={id} title={title} action={action} className={className}>
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 py-6 text-center">
+        <p className="text-sm text-muted-foreground">{W.states.errorCard}</p>
+        <Button variant="outline" className="h-11 md:h-9" onClick={onRetry}>
+          {W.states.tryAgain}
+        </Button>
+      </div>
+    </HomeCard>
+  );
+}
+
 /** A new shop's first day: one calm card instead of empty charts. */
 function FirstDay({ slug }: { slug: string }) {
   const [open, setOpen] = React.useState(false);
@@ -164,37 +244,72 @@ function FirstDay({ slug }: { slug: string }) {
   );
 }
 
-function HomeSkeleton() {
+// The skeleton is built from the same slots and the same fixed heights as the cards (T83), so nothing
+// moves when the numbers arrive.
+function MoneySkeleton({
+  action,
+  className,
+}: {
+  action?: React.ReactNode | undefined;
+  className: string;
+}) {
   return (
-    <div
-      className="grid items-start gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3"
-      aria-busy="true"
-      aria-hidden="true"
-    >
-      <div className={cn(CARD, 'md:col-span-2 lg:row-start-1')}>
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-12 w-48" />
-        <Skeleton className="h-3 w-full rounded-full" />
-        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
-          ))}
+    <div className={cn(CARD, className)} aria-busy="true">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-1.5 pt-1">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-3 w-24" />
         </div>
+        {action ?? <Skeleton className="h-11 w-36 rounded-lg md:h-9" />}
       </div>
-      <div className={cn(CARD, 'md:col-span-2 lg:col-span-1 lg:col-start-3 lg:row-start-1')}>
-        <Skeleton className="h-4 w-24" />
+      <Skeleton className="h-10 w-48 md:h-12" />
+      <div className="grid gap-2 sm:grid-cols-3 md:gap-3">
         {Array.from({ length: 3 }, (_, i) => (
-          <Skeleton key={i} className="h-14 rounded-lg" />
+          <Skeleton key={i} className="h-28 rounded-xl" />
         ))}
       </div>
-      <div className={cn(CARD, 'md:col-span-2')}>
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-52 w-full rounded-lg md:h-60" />
+    </div>
+  );
+}
+
+function ChartSkeleton({ className }: { className: string }) {
+  return (
+    <div className={cn(CARD, className)} aria-busy="true" aria-hidden="true">
+      <Skeleton className="h-4 w-28" />
+      <Skeleton className="h-3 w-20" />
+      <Skeleton className="h-52 w-full flex-1 rounded-lg md:h-60" />
+      <Skeleton className="h-3 w-40" />
+    </div>
+  );
+}
+
+function ListSkeleton({ className }: { className: string }) {
+  return (
+    <div className={cn(CARD, className)} aria-busy="true" aria-hidden="true">
+      <Skeleton className="h-4 w-28" />
+      <Skeleton className="h-3 w-20" />
+      {Array.from({ length: 4 }, (_, i) => (
+        <Skeleton key={i} className="h-10 rounded-lg" />
+      ))}
+    </div>
+  );
+}
+
+function HomeSkeleton() {
+  return (
+    <div className={HOME_GRID} aria-busy="true" aria-hidden="true">
+      <div className={HOME_MAIN}>
+        <MoneySkeleton className={slots.money} />
+        <ChartSkeleton className={slots.sales} />
+        <div className={HOME_PAIR}>
+          <ListSkeleton className={slots.mix} />
+          <ListSkeleton className={slots.best} />
+        </div>
       </div>
-      <div className={cn(CARD, 'md:col-span-2 lg:col-span-1')}>
-        <Skeleton className="h-4 w-28" />
-        <Skeleton className="h-16 w-full rounded-lg" />
-        <Skeleton className="h-40 w-full rounded-lg" />
+      <div className={HOME_SIDE}>
+        <ListSkeleton className={slots.needs} />
+        <ListSkeleton className={slots.board} />
+        <ListSkeleton className={slots.members} />
       </div>
     </div>
   );

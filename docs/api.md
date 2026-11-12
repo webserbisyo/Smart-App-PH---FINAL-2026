@@ -177,9 +177,14 @@ Orders always show the same orders.
 | --------------- | ------------------------ | -------------------------------------------------------------------------- |
 | `getHome`       | GET `/owner/home`        | → `HomeSummary` (today, pace, hours, best sellers, mix, members, bookings) |
 | `getHomeTrends` | GET `/owner/home/trends` | `{ range: '7d' \| '30d' }` → `HomeTrends` (days, days before, busy hours)  |
+| `getHomePeriod` | GET `/owner/home/period` | `{ from, to }` (Manila dates) → `HomePeriodData` (money, slots, mix, best) |
 
-The Insights page is hidden for launch (T69); `/insights` opens Home's trends. The sales report and the orders CSV
-move to Blueprint B with the full Insights page.
+`getHomePeriod` (T83) answers the Home period picker: plain facts for the dates, never a comparison. Dates outside
+the last 60 days (H14) or after today are pulled in; one day gives hourly slots, longer periods give daily slots.
+`getHomeTrends` stays for the full Insights page in Blueprint B, where comparisons now live (T83).
+
+The Insights page is hidden for launch (T69); `/insights` opens Home. The sales report and the orders CSV move to
+Blueprint B with the full Insights page.
 
 ## Editor (owner)
 
