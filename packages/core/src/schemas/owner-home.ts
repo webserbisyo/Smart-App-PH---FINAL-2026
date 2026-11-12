@@ -12,11 +12,13 @@ import {
 } from './common.js';
 import {
   HomeBuyerEnum,
+  HomePlaceKindEnum,
   HomeRangeEnum,
   HomeStepEnum,
   OrderTypeEnum,
   PaceVerdictEnum,
   PaymentMethodEnum,
+  PhBankEnum,
   SetupStepEnum,
 } from './enums.js';
 
@@ -182,20 +184,44 @@ export type HomeTrends = z.infer<typeof HomeTrendsSchema>;
 // ---------------------------------------------------------------------------------------------------
 // One period (decision T83): any dates from the period picker, plain facts with no comparisons.
 
-export const HomeMoneySchema = z.object({
+// Most places Home shows as rings; the rest fold into "Other" (T84).
+export const HOME_PLACES_MAX = 6;
+
+const PaySplit = {
   sales: CentavosSchema,
   orders: CountSchema,
-  // Null below HOME_AVERAGE_MIN_ORDERS orders (H4).
-  average: CentavosSchema.nullable(),
-  // Cash and COD already paid: what the drawer should hold for this period.
-  cash: CentavosSchema,
-  // GCash, Maya, bank and QR Ph already approved.
-  transfers: CentavosSchema,
-  // Transfers still waiting for the owner to check the photo.
+  paid: CentavosSchema,
+  // Transfers with a photo waiting for the owner's check (the same orders as Needs you).
   toCheck: CentavosSchema,
   toCheckOrders: CountSchema,
-  // Cash and COD not paid yet.
-  toCollect: CentavosSchema,
+  // Cash and COD not collected yet, and transfers with no photo yet.
+  notPaid: CentavosSchema,
+  notPaidOrders: CountSchema,
+};
+
+// One place money lands (T84): the drawer or one of the shop's accounts, in the order the shop set them up.
+export const HomePlaceSchema = z.object({
+  // "drawer", "other" or the account's id.
+  key: z.string().min(1).max(40),
+  kind: HomePlaceKindEnum,
+  bank: PhBankEnum.nullable(),
+  // Last 4 digits of the account or mobile number.
+  ending: z.string().length(4).nullable(),
+  // The place's colour: drawer and accounts take 0 to 4 in order, Other takes 5. Fixed, never by size.
+  slot: z
+    .number()
+    .int()
+    .min(0)
+    .max(HOME_PLACES_MAX - 1),
+  ...PaySplit,
+});
+export type HomePlace = z.infer<typeof HomePlaceSchema>;
+
+export const HomeMoneySchema = z.object({
+  ...PaySplit,
+  // Null below HOME_AVERAGE_MIN_ORDERS orders (H4).
+  average: CentavosSchema.nullable(),
+  places: z.array(HomePlaceSchema).max(HOME_PLACES_MAX),
 });
 export type HomeMoney = z.infer<typeof HomeMoneySchema>;
 
@@ -223,7 +249,6 @@ export const HomePeriodDataSchema = z.object({
   slots: z.array(HomeSlotSchema),
   mix: z.object({
     types: z.array(HomeTypeMixSchema),
-    methods: z.array(HomeMethodMixSchema),
     buyers: z.array(HomeBuyerMixSchema),
   }),
   best: z.array(HomeBestSellerSchema).max(5),

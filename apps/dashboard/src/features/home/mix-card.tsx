@@ -1,32 +1,25 @@
 import * as React from 'react';
 import {
-  formatPeso,
+  ORDER_TYPES,
   homeWords,
   sharePercent,
   type HomeBuyer,
   type HomePeriodData,
 } from '@smartapp/core';
-import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { cssVars } from '@smartapp/ui/lib/css-vars';
+import { cn } from 'cn';
+import { placeTone, type PlaceTone } from '@/app/pay-place';
 import { HomeCard, Segmented } from './home-card.js';
-import type { DonutSlice } from './mix-donut.js';
+import { PesoTicker, ShareRings } from './money-card.js';
 
 const W = homeWords.donut;
 const M = homeWords.mix;
-// Recharts loads only when Home shows (T57).
-const MixDonut = React.lazy(() => import('./mix-donut.js'));
 
-type Split = 'types' | 'methods' | 'buyers';
-const SPLITS: readonly Split[] = ['types', 'methods', 'buyers'];
+type Split = 'types' | 'buyers';
+const SPLITS: readonly Split[] = ['types', 'buyers'];
 
-// One colour per place, biggest first; the sixth payment kind (rare) shares the last one.
-const COLORS = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)',
-  'var(--chart-4)',
-  'var(--chart-5)',
-] as const;
+// Fixed colours by what they are, never by size (T84): order types take the first three chart colours in
+// their usual order; members take aqua (the loyalty colour) and everyone else grey.
+const BUYER_SLOT: Readonly<Record<HomeBuyer, number>> = { member: 2, guest: 5 };
 const BUYER_LABEL: Readonly<Record<HomeBuyer, string>> = W.buyer;
 
 interface Row {
@@ -34,36 +27,31 @@ interface Row {
   label: string;
   orders: number;
   sales: number;
+  tone: PlaceTone;
 }
 
 function rowsOf(split: Split, mix: HomePeriodData['mix']): Row[] {
-  const rows: Row[] =
-    split === 'types'
-      ? mix.types.map((t) => ({
-          key: t.type,
-          label: M.type[t.type],
-          orders: t.orders,
-          sales: t.sales,
-        }))
-      : split === 'methods'
-        ? mix.methods.map((m) => ({
-            key: m.method,
-            label: M.method[m.method],
-            orders: m.orders,
-            sales: m.sales,
-          }))
-        : mix.buyers.map((b) => ({
-            key: b.buyer,
-            label: BUYER_LABEL[b.buyer],
-            orders: b.orders,
-            sales: b.sales,
-          }));
-  return rows.filter((r) => r.sales > 0).sort((a, b) => b.sales - a.sales);
+  if (split === 'types')
+    return ORDER_TYPES.flatMap((type, i) => {
+      const t = mix.types.find((x) => x.type === type);
+      return t && t.orders > 0
+        ? [{ key: type, label: M.type[type], orders: t.orders, sales: t.sales, tone: placeTone(i) }]
+        : [];
+    });
+  return mix.buyers
+    .filter((b) => b.orders > 0)
+    .map((b) => ({
+      key: b.buyer,
+      label: BUYER_LABEL[b.buyer],
+      orders: b.orders,
+      sales: b.sales,
+      tone: placeTone(BUYER_SLOT[b.buyer]),
+    }));
 }
 
 /**
- * Where the money came from (T83): one donut with three tabs, how they ordered, how they paid and members
- * against everyone else, for the picked period. Replaces the two share bars.
+ * Where the money came from (T83, T84): how they ordered, and members against everyone else, for the
+ * picked period. The same rings and rows as the Sales card, each in its own fixed colour.
  */
 export function MixCard({
   data,
@@ -82,61 +70,44 @@ export function MixCard({
   const shown = splits.includes(split) ? split : 'types';
   const rows = rowsOf(shown, data.mix);
   const total = data.money.sales;
-  const slices: DonutSlice[] = rows.map((r, i) => ({
-    key: r.key,
-    label: r.label,
-    sales: r.sales,
-    color: COLORS[Math.min(i, COLORS.length - 1)] ?? 'var(--chart-5)',
-  }));
   return (
     <HomeCard id="mix" title={W.title} hint={periodText} className={className}>
-      <div className="flex">
-        <Segmented
-          label={W.tabsLabel}
-          value={shown}
-          onChange={setSplit}
-          options={splits.map((s) => ({ value: s, label: W.tabs[s] }))}
-        />
-      </div>
+      {splits.length > 1 ? (
+        <div className="flex">
+          <Segmented
+            label={W.tabsLabel}
+            value={shown}
+            onChange={setSplit}
+            options={splits.map((s) => ({ value: s, label: W.tabs[s] }))}
+          />
+        </div>
+      ) : null}
       {rows.length === 0 ? (
         <p className="flex min-h-40 flex-1 items-center justify-center text-center text-sm text-muted-foreground">
           {W.empty}
         </p>
       ) : (
-        <div className="flex flex-1 flex-col items-center gap-4">
-          <div
-            role="img"
-            aria-label={W.aria(
+        <div className="flex flex-1 flex-col gap-3">
+          <ShareRings
+            label={W.aria(
               rows.map((r) => W.ariaRow(r.label, sharePercent(r.sales, total))).join(', '),
             )}
-            className="relative size-40 shrink-0"
-          >
-            <React.Suspense fallback={<Skeleton className="size-full rounded-full" />}>
-              <MixDonut slices={slices} />
-            </React.Suspense>
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"
-            >
-              <span className="text-base font-extrabold tracking-tight tabular-nums">
-                {formatPeso(total)}
-              </span>
-              <span className="text-xs text-muted-foreground">{W.total}</span>
-            </div>
-          </div>
-          <ul aria-hidden="true" className="flex w-full min-w-0 flex-col gap-2 text-sm">
-            {slices.map((s, i) => (
-              <li key={s.key} className="flex min-w-0 items-center gap-2">
+            rings={rows.map((r) => ({
+              key: r.key,
+              label: r.label,
+              percent: sharePercent(r.sales, total),
+              tone: r.tone,
+            }))}
+          />
+          <ul className="flex w-full min-w-0 flex-col gap-2 text-sm">
+            {rows.map((r) => (
+              <li key={r.key} className="flex min-w-0 items-center gap-2">
                 <span
-                  style={cssVars({ '--dot': s.color })}
-                  className="size-2.5 shrink-0 rounded-full bg-(--dot)"
+                  aria-hidden="true"
+                  className={cn('size-2.5 shrink-0 rounded-full', r.tone.bg)}
                 />
-                <span className="truncate text-muted-foreground">
-                  {W.row(s.label, rows[i]?.orders ?? 0)}
-                </span>
-                <span className="ml-auto font-semibold tabular-nums">
-                  {W.percent(sharePercent(s.sales, total))}
-                </span>
+                <span className="truncate text-muted-foreground">{W.row(r.label, r.orders)}</span>
+                <PesoTicker centavos={r.sales} className="ml-auto font-semibold" />
               </li>
             ))}
           </ul>

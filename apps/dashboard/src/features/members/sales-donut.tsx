@@ -11,8 +11,8 @@ const W = membersWords.sales;
 
 const config = {
   amount: { label: W.title },
-  members: { label: W.members, color: 'var(--chart-2)' },
-  guests: { label: W.guests, color: 'var(--chart-5)' },
+  members: { label: W.members, color: 'var(--chart-3)' },
+  guests: { label: W.guests, color: 'var(--chart-6)' },
 } satisfies ChartConfig;
 
 const average = (total: number, orders: number): number =>
@@ -39,7 +39,7 @@ export default function SalesDonut({ sales }: { sales: MemberSales }) {
       amount: sales.members,
       orders: sales.memberOrders,
       avg: memberAvg,
-      dot: 'bg-chart-2',
+      dot: 'bg-chart-3',
     },
     {
       who: 'guests',
@@ -47,7 +47,7 @@ export default function SalesDonut({ sales }: { sales: MemberSales }) {
       amount: sales.guests,
       orders: sales.guestOrders,
       avg: guestAvg,
-      dot: 'bg-chart-5',
+      dot: 'bg-chart-6',
     },
   ];
   return (

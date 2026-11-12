@@ -11,6 +11,9 @@ import type {
   SetupStep,
   HomeRange,
   HomePeriod,
+  HomePayState,
+  HomePlaceKind,
+  PhBank,
 } from '../schemas/enums.js';
 import { HOME_BUYERS, HOME_NEED_KINDS, ORDER_TYPES, PAYMENT_METHODS } from '../schemas/enums.js';
 import type {
@@ -27,10 +30,18 @@ import type {
   HomeTrendTotals,
   HomeMoney,
   HomePeriodData,
+  HomePlace,
   HomeSlot,
 } from '../schemas/owner-home.js';
-import type { Storefront } from '../schemas/storefront.js';
-import { awaitsTransfer, payWindowOver, statusStage } from './order-rules.js';
+import { HOME_PLACES_MAX } from '../schemas/owner-home.js';
+import type { PaymentAccount, Storefront } from '../schemas/storefront.js';
+import {
+  accountEnding,
+  awaitsTransfer,
+  isTransfer,
+  payWindowOver,
+  statusStage,
+} from './order-rules.js';
 import { ticketTime } from './order-timing.js';
 import { addDays, clockMinutes, manilaDate, manilaParts, weekdayOf } from './time.js';
 
@@ -212,9 +223,18 @@ export interface HomeSale {
   total: number;
   type: OrderType;
   method: PaymentMethod;
-  paid: boolean;
+  // Paid, a photo to check, or not paid yet (T84).
+  pay: HomePayState;
+  // The shop account it was paid to (T84); null for cash and COD.
+  accountId: string | null;
   member: boolean;
   lines: readonly HomeSaleLine[];
+}
+
+/** T84: where an order's money is. A photo waiting for the owner is To check, the same as Needs you. */
+export function homePayState(paymentStatus: PaymentStatus, method: PaymentMethod): HomePayState {
+  if (paymentStatus === 'paid') return 'paid';
+  return paymentStatus === 'pending' && isTransfer(method) ? 'to_check' : 'not_paid';
 }
 
 /** A booking for a later day that still counts (H2), for Coming up. */
@@ -488,7 +508,7 @@ export function buildHomeSummary(input: HomeSummaryInput): HomeSummary {
   const days = bucketDays(input.sales);
   const todaySales = input.sales.filter((s) => manilaDate(s.placedAt) === today);
   const salesSum = todaySales.reduce((n, s) => n + s.total, 0);
-  const collected = todaySales.reduce((n, s) => (s.paid ? n + s.total : n), 0);
+  const collected = todaySales.reduce((n, s) => (s.pay === 'paid' ? n + s.total : n), 0);
   const openToday = openHoursOf(input.storefront, today).length > 0;
   const weekStart = addDays(today, -(SPARK_DAYS - 1));
   const week = input.sales.filter((s) => manilaDate(s.placedAt) >= weekStart);
@@ -629,7 +649,6 @@ export function buildHomeTrends(input: HomeTrendsInput): HomeTrends {
 
 // The longest period the picker offers: the history Home keeps (H14).
 export const HOME_PERIOD_MAX_DAYS = HOME_HISTORY_DAYS;
-const CASH_METHODS: ReadonlySet<PaymentMethod> = new Set(['cash', 'cod']);
 
 export interface PeriodDates {
   from: string;
@@ -675,32 +694,118 @@ export function periodOf(dates: PeriodDates, today: string): HomePeriod {
   return 'custom';
 }
 
-function moneyOf(sales: readonly HomeSale[]): HomeMoney {
-  const m: HomeMoney = {
+/** The shop's accounts as Home reads them (T84). */
+export type HomeAccount = Pick<PaymentAccount, 'id' | 'method' | 'bank' | 'accountNumber'>;
+
+interface PlaceDraft {
+  key: string;
+  kind: HomePlaceKind;
+  bank: PhBank | null;
+  ending: string | null;
+}
+
+type Split = Omit<HomeMoney, 'average' | 'places'>;
+
+function emptySplit(): Split {
+  return {
     sales: 0,
-    orders: sales.length,
-    average: null,
-    cash: 0,
-    transfers: 0,
+    orders: 0,
+    paid: 0,
     toCheck: 0,
     toCheckOrders: 0,
-    toCollect: 0,
+    notPaid: 0,
+    notPaidOrders: 0,
   };
+}
+
+function addSale(m: Split, s: HomeSale): void {
+  m.sales += s.total;
+  m.orders += 1;
+  if (s.pay === 'paid') m.paid += s.total;
+  else if (s.pay === 'to_check') {
+    m.toCheck += s.total;
+    m.toCheckOrders += 1;
+  } else {
+    m.notPaid += s.total;
+    m.notPaidOrders += 1;
+  }
+}
+
+function placeKind(method: PaymentMethod): HomePlaceKind {
+  return method === 'cash' || method === 'cod' ? 'drawer' : method;
+}
+
+/**
+ * T84: where the period's money is. The drawer (cash and COD) first when the shop takes them, then each
+ * account in the order the shop set them up; past the fifth place, and for accounts since removed, Other.
+ * Places with no orders stay, so the rings sit in the same spot every day.
+ */
+export function moneyOf(sales: readonly HomeSale[], accounts: readonly HomeAccount[]): HomeMoney {
+  const total = emptySplit();
+  const drafts: PlaceDraft[] = [];
+  if (
+    accounts.some((a) => placeKind(a.method) === 'drawer') ||
+    sales.some((s) => placeKind(s.method) === 'drawer')
+  )
+    drafts.push({ key: 'drawer', kind: 'drawer', bank: null, ending: null });
+  for (const a of accounts) {
+    if (placeKind(a.method) === 'drawer') continue;
+    drafts.push({
+      key: a.id,
+      kind: placeKind(a.method),
+      bank: a.bank,
+      ending: accountEnding(a.accountNumber),
+    });
+  }
+  // Five places get their own ring; any more share Other with removed accounts.
+  const own = drafts.length > HOME_PLACES_MAX - 1 ? drafts.slice(0, HOME_PLACES_MAX - 2) : drafts;
+  const folded = new Set(drafts.slice(own.length).map((d) => d.key));
+  const splits = new Map<string, Split>(own.map((d) => [d.key, emptySplit()]));
+  let other: Split | null = folded.size > 0 ? emptySplit() : null;
+  const firstOf = new Map<PaymentMethod, string>();
+  for (const a of accounts) if (!firstOf.has(a.method)) firstOf.set(a.method, a.id);
+
   for (const s of sales) {
-    m.sales += s.total;
-    const cash = CASH_METHODS.has(s.method);
-    if (s.paid) {
-      if (cash) m.cash += s.total;
-      else m.transfers += s.total;
-    } else if (cash) {
-      m.toCollect += s.total;
-    } else {
-      m.toCheck += s.total;
-      m.toCheckOrders += 1;
+    addSale(total, s);
+    const kind = placeKind(s.method);
+    // An order with no account on record counts toward the first account for its method; one paid to an
+    // account the shop has since removed counts toward Other.
+    const key =
+      kind === 'drawer'
+        ? 'drawer'
+        : s.accountId === null
+          ? (firstOf.get(s.method) ?? null)
+          : accounts.some((a) => a.id === s.accountId && a.method === s.method)
+            ? s.accountId
+            : null;
+    const split = key === null ? undefined : splits.get(key);
+    if (split) addSale(split, s);
+    else {
+      other ??= emptySplit();
+      addSale(other, s);
     }
   }
-  m.average = m.orders >= HOME_AVERAGE_MIN_ORDERS ? Math.round(m.sales / m.orders) : null;
-  return m;
+
+  const places: HomePlace[] = own.map((d, slot) => ({
+    ...d,
+    slot,
+    ...(splits.get(d.key) ?? emptySplit()),
+  }));
+  if (other)
+    places.push({
+      key: 'other',
+      kind: 'other',
+      bank: null,
+      ending: null,
+      slot: HOME_PLACES_MAX - 1,
+      ...other,
+    });
+  return {
+    ...total,
+    average:
+      total.orders >= HOME_AVERAGE_MIN_ORDERS ? Math.round(total.sales / total.orders) : null,
+    places,
+  };
 }
 
 export interface HomePeriodInput {
@@ -710,6 +815,8 @@ export interface HomePeriodInput {
   // Counted orders (H2) of the kept history, in any order.
   sales: readonly HomeSale[];
   items: readonly HomeItem[];
+  // The shop's ways to pay, in the order it set them up (T84).
+  accounts: readonly HomeAccount[];
 }
 
 /**
@@ -788,9 +895,9 @@ export function buildHomePeriod(input: HomePeriodInput): HomePeriodData {
     from,
     to,
     step: oneDay ? 'hour' : 'day',
-    money: moneyOf(inPeriod),
+    money: moneyOf(inPeriod, input.accounts),
     slots,
-    mix: { ...homeMix(inPeriod), buyers },
+    mix: { types: homeMix(inPeriod).types, buyers },
     best: bestSellers(inPeriod, input.items),
     busiestDay,
     busiestHour,

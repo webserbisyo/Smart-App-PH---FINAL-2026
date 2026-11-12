@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BasketSchema } from '../src/schemas/basket.js';
 import { OrderPayloadSchema, OrderReceiptSchema, QuoteSchema } from '../src/schemas/order.js';
 import { MemberAccountSchema, RewardClaimSchema } from '../src/schemas/loyalty.js';
-import { BookingRulesSchema } from '../src/schemas/storefront.js';
+import { BookingRulesSchema, PaymentAccountsSchema } from '../src/schemas/storefront.js';
 import { BoardOrderSchema } from '../src/schemas/owner-orders.js';
 import { ErrorCode, errorWords } from '../src/errors.js';
 
@@ -99,6 +99,8 @@ describe('schemas', () => {
         rewardTitle: null,
         payment: {
           method: 'gcash',
+          accountId: 'ks-pay-gcash',
+          bank: null,
           accountName: 'Paolo R.',
           accountNumber: '0917 000 0001',
           qr: null,
@@ -147,6 +149,37 @@ describe('schemas', () => {
         createdAt: '2026-10-26T04:00:00.000Z',
       }).success,
     ).toBe(true);
+  });
+
+  it('payment accounts: unique ids, a bank for each bank account, at most 3 banks (T84)', () => {
+    const account = (id: string, method: 'cash' | 'gcash' | 'bank', bank: 'bdo' | null) => ({
+      id,
+      method,
+      bank,
+      accountName: method === 'cash' ? null : 'Ana',
+      accountNumber: method === 'cash' ? null : '0000 1111',
+      qr: null,
+      sample: false,
+    });
+    const ok = [
+      account('c', 'cash', null),
+      account('b1', 'bank', 'bdo'),
+      account('b2', 'bank', 'bdo'),
+    ];
+    expect(PaymentAccountsSchema.safeParse(ok).success).toBe(true);
+    expect(PaymentAccountsSchema.safeParse([...ok, account('c', 'gcash', null)]).success).toBe(
+      false,
+    );
+    expect(PaymentAccountsSchema.safeParse([account('b', 'bank', null)]).success).toBe(false);
+    expect(PaymentAccountsSchema.safeParse([account('g', 'gcash', 'bdo')]).success).toBe(false);
+    expect(
+      PaymentAccountsSchema.safeParse([account('g1', 'gcash', null), account('g2', 'gcash', null)])
+        .success,
+    ).toBe(false);
+    expect(
+      PaymentAccountsSchema.safeParse(['1', '2', '3', '4'].map((id) => account(id, 'bank', 'bdo')))
+        .success,
+    ).toBe(false);
   });
 
   it('booking rules schema enforces 15, 30, 60 slot lengths', () => {

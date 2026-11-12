@@ -3,6 +3,7 @@ import {
   bestSellers,
   bucketDays,
   buildHomePeriod,
+  homePayState,
   buildHomeTrends,
   clampPeriod,
   countsAsSale,
@@ -19,6 +20,7 @@ import {
   periodOf,
   salesTotal,
   setupSteps,
+  type HomeAccount,
   type HomeItem,
   type HomeSale,
   type NeedOrder,
@@ -32,7 +34,8 @@ function sale(placedAt: string, total: number, patch: Partial<HomeSale> = {}): H
     total,
     type: 'pickup',
     method: 'gcash',
-    paid: true,
+    pay: 'paid',
+    accountId: null,
     member: false,
     lines: [{ itemId: 'a', name: 'Adobo', qty: 1, lineTotal: total }],
     ...patch,
@@ -312,12 +315,22 @@ describe('one period (T83)', () => {
     expect(periodOf({ from: '2026-11-05', to: '2026-11-12' }, '2026-11-12')).toBe('custom');
   });
 
-  it('splits money into cash in the drawer, transfers, to check and to collect', () => {
+  const accounts: HomeAccount[] = [
+    { id: 'cash', method: 'cash', bank: null, accountNumber: null },
+    { id: 'g1', method: 'gcash', bank: null, accountNumber: '0917 000 4821' },
+    { id: 'm1', method: 'maya', bank: null, accountNumber: '0917 000 0377' },
+    { id: 'bdo', method: 'bank', bank: 'bdo', accountNumber: '0000 1234 5601' },
+    { id: 'bpi', method: 'bank', bank: 'bpi', accountNumber: '0000 9876 5402' },
+  ];
+
+  it('splits money into paid, to check and not paid, by the drawer and each account (T84)', () => {
     const sales = [
       sale(at('2026-11-12', '10:15'), 10000, { method: 'cash' }),
-      sale(at('2026-11-12', '11:15'), 20000, { method: 'gcash' }),
-      sale(at('2026-11-12', '11:45'), 5000, { method: 'maya', paid: false }),
-      sale(at('2026-11-12', '16:10'), 3000, { method: 'cod', paid: false, member: true }),
+      sale(at('2026-11-12', '11:15'), 20000, { method: 'gcash', accountId: 'g1' }),
+      sale(at('2026-11-12', '11:45'), 5000, { method: 'maya', pay: 'to_check' }),
+      sale(at('2026-11-12', '12:10'), 4000, { method: 'bank', accountId: 'bpi' }),
+      sale(at('2026-11-12', '12:20'), 1500, { method: 'gcash', pay: 'not_paid', accountId: 'g1' }),
+      sale(at('2026-11-12', '16:10'), 3000, { method: 'cod', pay: 'not_paid', member: true }),
       sale(at('2026-11-11', '12:00'), 99900),
     ];
     const p = buildHomePeriod({
@@ -326,27 +339,83 @@ describe('one period (T83)', () => {
       storefront: sf,
       sales,
       items: [],
+      accounts,
     });
     expect(p.step).toBe('hour');
-    expect(p.money).toEqual({
-      sales: 38000,
-      orders: 4,
-      average: 9500,
-      cash: 10000,
-      transfers: 20000,
+    expect(p.money).toMatchObject({
+      sales: 43500,
+      orders: 6,
+      average: 7250,
+      paid: 34000,
       toCheck: 5000,
       toCheckOrders: 1,
-      toCollect: 3000,
+      notPaid: 4500,
+      notPaidOrders: 2,
     });
+    expect(p.money.places.map((x) => [x.key, x.kind, x.slot, x.sales, x.ending])).toEqual([
+      ['drawer', 'drawer', 0, 13000, null],
+      ['g1', 'gcash', 1, 21500, '4821'],
+      ['m1', 'maya', 2, 5000, '0377'],
+      ['bdo', 'bank', 3, 0, '5601'],
+      ['bpi', 'bank', 4, 4000, '5402'],
+    ]);
+    expect(p.money.places[0]).toMatchObject({ paid: 10000, notPaid: 3000, notPaidOrders: 1 });
+    expect(p.money.places[1]).toMatchObject({ paid: 20000, notPaid: 1500, toCheck: 0 });
+    expect(p.money.places[2]).toMatchObject({ toCheck: 5000, toCheckOrders: 1 });
+    expect(p.money.places[4]?.bank).toBe('bpi');
     // Open 10 to 2, stretched to the 4 PM order.
     expect(p.slots.map((s) => s.hour)).toEqual([10, 11, 12, 13, 14, 15, 16]);
+    // 11 and 12 both have two orders; the earlier hour wins.
     expect(p.busiestHour).toBe(11);
     expect(p.busiestDay).toBeNull();
     expect(p.mix.buyers).toEqual([
       { buyer: 'member', orders: 1, sales: 3000 },
-      { buyer: 'guest', orders: 3, sales: 35000 },
+      { buyer: 'guest', orders: 5, sales: 40500 },
     ]);
     expect(p.earliest).toBe('2026-09-14');
+  });
+
+  it('puts money paid to a removed account under Other, and past five places folds the rest', () => {
+    const removed = buildHomePeriod({
+      now,
+      dates: { from: '2026-11-12', to: '2026-11-12' },
+      storefront: sf,
+      sales: [sale(at('2026-11-12', '11:00'), 2500, { method: 'bank', accountId: 'gone' })],
+      items: [],
+      accounts,
+    });
+    expect(removed.money.places.at(-1)).toMatchObject({
+      key: 'other',
+      kind: 'other',
+      slot: 5,
+      sales: 2500,
+    });
+
+    const many: HomeAccount[] = [
+      ...accounts,
+      { id: 'q1', method: 'qr_ph', bank: null, accountNumber: null },
+      { id: 'mb', method: 'bank', bank: 'metrobank', accountNumber: '1111 2222' },
+    ];
+    const folded = buildHomePeriod({
+      now,
+      dates: { from: '2026-11-12', to: '2026-11-12' },
+      storefront: sf,
+      sales: [
+        sale(at('2026-11-12', '11:00'), 700, { method: 'qr_ph', accountId: 'q1' }),
+        sale(at('2026-11-12', '11:30'), 300, { method: 'bank', accountId: 'mb' }),
+      ],
+      items: [],
+      accounts: many,
+    });
+    expect(folded.money.places.map((x) => x.key)).toEqual(['drawer', 'g1', 'm1', 'bdo', 'other']);
+    expect(folded.money.places.at(-1)).toMatchObject({ sales: 1000, orders: 2, slot: 5 });
+  });
+
+  it('counts a photo sent as To check and a transfer with no photo as Not paid yet', () => {
+    expect(homePayState('pending', 'gcash')).toBe('to_check');
+    expect(homePayState('unpaid', 'gcash')).toBe('not_paid');
+    expect(homePayState('pending', 'cash')).toBe('not_paid');
+    expect(homePayState('paid', 'cod')).toBe('paid');
   });
 
   it('gives one slot per day for a longer period and names the busiest day', () => {
@@ -361,6 +430,7 @@ describe('one period (T83)', () => {
       storefront: sf,
       sales,
       items: [],
+      accounts,
     });
     expect(p.step).toBe('day');
     expect(p.slots).toHaveLength(7);
@@ -377,6 +447,7 @@ describe('one period (T83)', () => {
       storefront: sf,
       sales: [],
       items: [],
+      accounts,
     });
     expect(p.money.average).toBeNull();
     expect(p.busiestHour).toBeNull();

@@ -4,6 +4,7 @@ import {
   addDays,
   canQuickAdd,
   defaultPicks,
+  isTransfer,
   manilaDate,
   manilaToDate,
   openHoursOf,
@@ -1395,6 +1396,7 @@ function earlierTodayDrafts(shop: PublicShop, now: Date): DraftOrder[] {
   );
   const rng = mulberry32(seed);
   const drafts: DraftOrder[] = [];
+  const transfers = shop.storefront.payments.filter((p) => isTransfer(p.method));
   for (const hour of openHoursOf({ hours: shop.storefront.hours, closures: [] }, today)) {
     const count = Math.min(6, Math.max(1, Math.round(1 + (peaks.get(hour) ?? 0))));
     for (let k = 0; k < count; k += 1) {
@@ -1406,6 +1408,9 @@ function earlierTodayDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       const lines = orderableLines(shop, now, rng, int(rng, 2, 4));
       if (lines.length === 0) continue;
       const guest = drafts.length;
+      // Every third order is a transfer, taking the shop's accounts in turn (T84), so Home shows each
+      // wallet and bank with money in it.
+      const account = k % 3 === 0 ? transfers[guest % Math.max(1, transfers.length)] : undefined;
       drafts.push({
         lines,
         token: token(rng),
@@ -1418,7 +1423,8 @@ function earlierTodayDrafts(shop: PublicShop, now: Date): DraftOrder[] {
         type,
         status: 'completed',
         paymentStatus: 'paid',
-        paymentMethod: methodFor(shop, type, k % 3 === 0 ? 'gcash' : 'cash'),
+        paymentMethod: account?.method ?? methodFor(shop, type, 'cash'),
+        paymentAccountId: account?.id ?? null,
         ...(type === 'delivery'
           ? { deliveryFee: delivery.fee, deliveryAddress: delivery.address }
           : {}),

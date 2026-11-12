@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { FilterXIcon, ReceiptTextIcon, Share2Icon, WifiOffIcon } from 'lucide-react';
+import { FilterXIcon, ReceiptTextIcon, Share2Icon, WifiOffIcon, XIcon } from 'lucide-react';
 import type { BoardOrder, OrderType } from '@smartapp/core';
 import {
   ORDER_TYPES,
@@ -24,6 +24,7 @@ import { useNow } from '@/app/orders/use-now';
 import { useOrderSound } from '@/app/orders/use-order-sound';
 import { useStepChange } from '@/app/orders/use-step-change';
 import { PageEmpty, PageError } from '@/app/page-state';
+import { paidTo, placeNameOf } from '@/app/pay-place';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { useShop } from '@/app/shop';
 import { storefrontUrl } from '@/app/use-nav-items';
@@ -98,7 +99,14 @@ export function OrdersScreen() {
   const toCheck = React.useMemo(() => live.filter(needsProofCheck).length, [live]);
 
   const filter = search.filter === 'to_check' && toCheck === 0 ? undefined : search.filter;
-  const matchesShown = React.useCallback((o: BoardOrder) => matchesFilter(o, filter), [filter]);
+  // Paid to one place (T84), from Home's money rows. An account the shop removed shows nothing to filter.
+  const accounts = React.useMemo(() => sf?.payments ?? [], [sf]);
+  const payName = search.pay ? placeNameOf(search.pay, accounts) : null;
+  const pay = payName ? search.pay : undefined;
+  const matchesShown = React.useCallback(
+    (o: BoardOrder) => matchesFilter(o, filter) && (!pay || paidTo(o, pay, accounts)),
+    [filter, pay, accounts],
+  );
   const shown = React.useMemo(() => live.filter(matchesShown), [live, matchesShown]);
 
   const laterCount = React.useMemo(
@@ -109,11 +117,9 @@ export function OrdersScreen() {
   );
 
   const done = React.useMemo(() => {
-    const list = (todays.data ?? []).filter(
-      (o) => o.status === 'completed' && matchesFilter(o, filter),
-    );
+    const list = (todays.data ?? []).filter((o) => o.status === 'completed' && matchesShown(o));
     return { count: list.length, total: list.reduce((sum, o) => sum + o.total, 0) };
-  }, [todays.data, filter]);
+  }, [todays.data, matchesShown]);
 
   // The phone list starts on the first stage with work in it, unless the owner picked one.
   const phoneStage = React.useMemo(() => {
@@ -167,8 +173,9 @@ export function OrdersScreen() {
     if (await copyText(url)) notify({ title: words.share.copied, tone: 'success' });
   };
 
-  const hasFilters = filter !== undefined || query !== '';
-  const clearFilters = () => setSearch({ filter: undefined, q: undefined }, { replace: true });
+  const hasFilters = filter !== undefined || query !== '' || pay !== undefined;
+  const clearFilters = () =>
+    setSearch({ filter: undefined, q: undefined, pay: undefined }, { replace: true });
 
   let boardBody: React.ReactNode;
   if (open.isPending) {
@@ -264,6 +271,20 @@ export function OrdersScreen() {
           value={filter}
           onChange={(next) => setSearch({ filter: next }, { replace: true })}
         />
+
+        {payName ? (
+          <div className="flex">
+            <Button
+              variant="secondary"
+              aria-label={ordersWords.states.paidToClear(payName)}
+              onClick={() => setSearch({ pay: undefined }, { replace: true })}
+              className="h-11 gap-1.5 rounded-full md:h-8"
+            >
+              {ordersWords.states.paidTo(payName)}
+              <XIcon aria-hidden="true" />
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <main className="flex-1 px-4 pt-3 md:px-6 md:pt-4">
@@ -287,7 +308,7 @@ export function OrdersScreen() {
             now={now}
             query={query}
             filter={filter}
-            matches={(o) => matchesFilter(o, filter)}
+            matches={matchesShown}
             onOpen={openOrder}
             onClearFilters={hasFilters ? clearFilters : undefined}
           />

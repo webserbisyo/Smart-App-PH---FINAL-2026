@@ -4,7 +4,7 @@ Tokens are defined as plain CSS variables in `:root` and `.dark` in `packages/ui
 
 ## Base (shadcn names)
 
-`background`, `foreground`, `card`, `popover`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `border`, `input`, `ring`, `sidebar-*`, `chart-1..5`. The `sidebar-*` tokens point at existing ones (`card`, `primary`, `accent`, `border`, `ring`) in light and dark, so the sidebar has no colours of its own. Start from shadcn `neutral`, then set:
+`background`, `foreground`, `card`, `popover`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `border`, `input`, `ring`, `sidebar-*`, `chart-1..6`. The `sidebar-*` tokens point at existing ones (`card`, `primary`, `accent`, `border`, `ring`) in light and dark, so the sidebar has no colours of its own. Start from shadcn `neutral`, then set:
 
 | Token     | Meaning                                                | Light start            | Dark start             |
 | --------- | ------------------------------------------------------ | ---------------------- | ---------------------- |
@@ -30,7 +30,7 @@ Each meaning colour also gets:
 - `-text`: coloured text on a card or the page (plain `text-success` on white fails contrast).
 - `-soft` and `-soft-foreground`: tinted background and its text, for badges and alerts. Library badge and alert variants are mapped to these once.
 
-Also: `faint-foreground`, `border-strong`, `overlay` (scrim behind sheets), `skeleton`, `chart-1..5` with fixed meanings per report.
+Also: `faint-foreground`, `border-strong`, `overlay` (scrim behind sheets), `skeleton`, `chart-1..6` (T84): one checked set in this order, blue, orange, aqua, violet, pink, then grey for Other, with dark steps; each thing a chart shows keeps one colour (a payment place by its setup order, members aqua), never one by size, and status colours (success, warning, destructive) never stand in for chart colours.
 
 For the ReUI primitives (decision T28): `destructive-text`, `destructive-soft` and `destructive-soft-foreground` (destructive had no soft pair), `invert` / `invert-foreground` (near-black surface with light text in both themes, also light text on a photo scrim) and `focus` / `focus-foreground` (same values as `primary`). ReUI uses `-foreground` for dark text on a tint; ours means text on the solid colour, so `reui/badge` and `reui/alert` are mapped to `-soft`, `-soft-foreground` and `-text` once.
 

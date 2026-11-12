@@ -6,6 +6,7 @@ import {
   PaymentAccountSchema,
   type PaymentAccount,
   type PaymentMethod,
+  type PhBank,
 } from '@smartapp/core';
 import { checkPlaceOrderEligibility, resolvePaymentOptions } from './checkout-rules';
 
@@ -13,9 +14,13 @@ function makePayment(
   method: PaymentMethod,
   accountName: string | null = null,
   accountNumber: string | null = null,
+  bank: PhBank | null = method === 'bank' ? 'bdo' : null,
+  id = `pay-${method}`,
 ): PaymentAccount {
   return PaymentAccountSchema.parse({
+    id,
     method,
+    bank,
     accountName,
     accountNumber,
     qr: null,
@@ -90,6 +95,27 @@ describe('resolvePaymentOptions', () => {
     expect(gcash?.isRecommended).toBe(true);
     expect(maya?.isRecommended).toBe(false);
     expect(bank?.isRecommended).toBe(false);
+  });
+
+  it('shows one bank as Bank transfer, and each bank by name when there are two or more (T84)', () => {
+    const one = resolvePaymentOptions(sampleSf, 'pickup', 100_000).find((o) => o.method === 'bank');
+    expect(one?.label).toBe('Bank transfer');
+    expect(one?.accountId).toBe('pay-bank');
+
+    const twoBanks = {
+      ...sampleSf,
+      payments: [
+        ...sampleSf.payments,
+        makePayment('bank', 'Juan Dela Cruz', '0000 1111 22', 'bpi', 'pay-bpi'),
+      ],
+    };
+    const banks = resolvePaymentOptions(twoBanks, 'pickup', 100_000).filter(
+      (o) => o.method === 'bank',
+    );
+    expect(banks.map((o) => [o.accountId, o.label])).toEqual([
+      ['pay-bank', 'BDO'],
+      ['pay-bpi', 'BPI'],
+    ]);
   });
 });
 

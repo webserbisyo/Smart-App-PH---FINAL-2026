@@ -14,6 +14,7 @@ import {
   manilaDate,
   settingsWords,
   weekHours,
+  paymentLabel,
   words,
   type Closure,
   type OpeningRange,
@@ -140,16 +141,14 @@ export function PaymentsPreview({
           <ul className="flex flex-col gap-2">
             {payments.map((p, i) => (
               <li
-                key={p.method}
+                key={p.id}
                 data-picked={i === 0 ? '' : undefined}
                 className="flex min-h-11 items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm data-picked:border-shop-10 data-picked:bg-shop-10-soft"
               >
                 <span className="text-muted-foreground [&_svg]:size-4">
                   {METHOD_ICON[p.method]}
                 </span>
-                <span className="font-medium text-foreground">
-                  {words.shop.paymentMethod[p.method]}
-                </span>
+                <span className="font-medium text-foreground">{paymentLabel(p)}</span>
               </li>
             ))}
           </ul>

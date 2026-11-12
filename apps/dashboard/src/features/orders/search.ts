@@ -39,6 +39,8 @@ export const OrdersSearchSchema = z.object({
   day: DaySchema.optional().catch(undefined),
   status: z.enum(LIST_STATUSES).optional().catch(undefined),
   q: z.string().max(80).optional().catch(undefined),
+  // Paid to one place (T84): "drawer" or an account id, from Home's money rows.
+  pay: z.string().min(1).max(40).optional().catch(undefined),
 });
 export type OrdersSearch = z.infer<typeof OrdersSearchSchema>;
 
@@ -53,6 +55,7 @@ export function useOrdersSearch(): OrdersSearch {
     day: search.day,
     status: search.status,
     q: search.q,
+    pay: search.pay,
   });
 }
 

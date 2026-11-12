@@ -195,6 +195,7 @@ export function createHomeMock(deps: HomeMockDeps): {
             storefront: r.shop.storefront,
             sales: r.sales,
             items: homeItems(r.shop, r.now),
+            accounts: r.shop.storefront.payments,
           }),
         );
       });

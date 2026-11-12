@@ -58,6 +58,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Editor: live preview of the real shop page, parts list, draft and Publish, logo colours and Color Picker, banners, announcement (decisions T72 to T75; 4 parts pushed to main 2026-11-06)
 - [x] Editor style designer: Pick a style from the logo, Fine-tune any page, card and button colour, logo trim, shape and white removal (decision T76; 3 parts pushed to main 2026-11-06)
 - [x] Final polish of every page: Home charts, scroll hints and touch sizes, phone editor dock, fonts, customer avatars, payment photo chat, page-by-page fixes (decisions T77 to T82; 7 parts on main)
+- [x] Money cards: Paid, To check and Not paid yet bar, one ring per payment place, up to 3 banks from a bank list, checkout asks which bank (decision T84; pushed to main 2026-11-12)
 
 ## Phase 4: Backend, area by area
 

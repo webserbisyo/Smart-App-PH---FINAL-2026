@@ -72,7 +72,7 @@ export default function ProgressChart({ progress, goal, selected, onPick }: Prog
             {data.map((d) => (
               <Cell
                 key={d.stamps}
-                fill={d.stamps >= goal ? 'var(--chart-2)' : 'var(--color-members)'}
+                fill={d.stamps >= goal ? 'var(--chart-3)' : 'var(--color-members)'}
                 fillOpacity={selected === null || selected === d.stamps ? 1 : 0.35}
               />
             ))}

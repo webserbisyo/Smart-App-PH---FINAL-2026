@@ -4,9 +4,9 @@ import {
   formatPeso,
   imageSources,
   isTransfer,
+  paymentLabel,
   pesoAmountText,
   words,
-  PaymentMethodEnum,
   type PaymentMethod,
   type Storefront,
 } from '@smartapp/core';
@@ -31,8 +31,9 @@ import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 interface CheckoutPayProps {
   sf: Storefront;
   options: PaymentOption[];
-  selectedMethod: PaymentMethod | null;
-  onSelectMethod: (method: PaymentMethod) => void;
+  // The picked account's id (T84): each way to pay, and each bank, is its own option.
+  selected: string | null;
+  onSelect: (option: PaymentOption) => void;
   totalCentavos: number;
   error?: string | undefined;
 }
@@ -88,21 +89,21 @@ function DetailRow({
 export function CheckoutPay({
   sf,
   options,
-  selectedMethod,
-  onSelectMethod,
+  selected,
+  onSelect,
   totalCentavos,
   error,
 }: CheckoutPayProps) {
-  const selectedConfig = sf.payments.find((p) => p.method === selectedMethod);
-  const isSelectedTransfer = selectedMethod ? isTransfer(selectedMethod) : false;
+  const selectedConfig = sf.payments.find((p) => p.id === selected);
+  const isSelectedTransfer = selectedConfig ? isTransfer(selectedConfig.method) : false;
 
   return (
     <CheckoutStep step={3} id="checkout-pay" title={words.checkout.paySection}>
       <RadioGroup
-        value={selectedMethod ?? ''}
+        value={selected ?? ''}
         onValueChange={(val) => {
-          const parsed = PaymentMethodEnum.safeParse(val);
-          if (parsed.success) onSelectMethod(parsed.data);
+          const option = options.find((o) => o.accountId === val);
+          if (option) onSelect(option);
         }}
         className="gap-2"
       >
@@ -110,8 +111,8 @@ export function CheckoutPay({
           const Icon = METHOD_ICON[opt.method];
           return (
             <FieldLabel
-              key={opt.method}
-              htmlFor={`pay-${opt.method}`}
+              key={opt.accountId}
+              htmlFor={`pay-${opt.accountId}`}
               className={`rounded-2xl ${opt.disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <Field
@@ -131,8 +132,8 @@ export function CheckoutPay({
                   ) : null}
                 </FieldTitle>
                 <RadioGroupItem
-                  value={opt.method}
-                  id={`pay-${opt.method}`}
+                  value={opt.accountId}
+                  id={`pay-${opt.accountId}`}
                   disabled={opt.disabled}
                 />
               </Field>
@@ -162,6 +163,13 @@ export function CheckoutPay({
             ) : null}
           </div>
 
+          {selectedConfig.method === 'bank' && selectedConfig.bank ? (
+            <DetailRow
+              label={words.checkout.bank}
+              value={paymentLabel(selectedConfig)}
+              copy={paymentLabel(selectedConfig)}
+            />
+          ) : null}
           {selectedConfig.accountName ? (
             <DetailRow
               label={words.checkout.accountName}
@@ -187,7 +195,7 @@ export function CheckoutPay({
             <figure className="flex flex-col items-center gap-2 py-2">
               <ShopImage
                 src={imageSources(selectedConfig.qr)}
-                alt={words.checkout.qrAlt(words.shop.paymentMethod[selectedConfig.method])}
+                alt={words.checkout.qrAlt(paymentLabel(selectedConfig))}
                 ratio="1:1"
                 sizes="192px"
                 fallbackText={sf.info.name}

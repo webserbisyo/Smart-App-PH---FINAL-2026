@@ -35,6 +35,7 @@ import {
   planGraceUntil,
   planStatus,
   startingAvatar,
+  paymentLabel,
   words,
   type CleanupKind,
   type DataExport,
@@ -453,7 +454,10 @@ export function createSettingsMock(deps: SettingsMockDeps) {
           ...orders.flatMap((x) =>
             x.proofs.map((p) => [
               x.receipt.orderNo,
-              words.shop.paymentMethod[x.receipt.paymentMethod],
+              paymentLabel({
+                method: x.receipt.paymentMethod,
+                bank: x.receipt.payment?.bank ?? null,
+              }),
               p.status,
               p.referenceNo,
               formatManila(p.uploadedAt, 'datetime'),
@@ -648,11 +652,7 @@ export function createSettingsMock(deps: SettingsMockDeps) {
             (!p.accountName || !p.accountNumber),
         );
         if (missing.length > 0)
-          fail(
-            'invalid_input',
-            400,
-            Object.fromEntries(missing.map((p) => [p.method, ['missing']])),
-          );
+          fail('invalid_input', 400, Object.fromEntries(missing.map((p) => [p.id, ['missing']])));
         s.shop.storefront.payments = parsed.data.payments;
         s.shop.storefront.codMaxTotal = parsed.data.codMaxTotal;
         return settingsOf(s);

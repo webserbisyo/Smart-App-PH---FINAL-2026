@@ -51,6 +51,25 @@ export function isTransfer(method: PaymentMethod): boolean {
   return TRANSFER_METHODS.some((m) => m === method);
 }
 
+/**
+ * The shop account an order pays (T84): the one picked when it takes this method, else the first account
+ * for the method. Null when the shop has no account for it.
+ */
+export function paymentAccountFor<T extends { id: string; method: PaymentMethod }>(
+  payments: readonly T[],
+  method: PaymentMethod,
+  accountId?: string | null,
+): T | null {
+  const own = payments.filter((p) => p.method === method);
+  return own.find((p) => p.id === accountId) ?? own[0] ?? null;
+}
+
+/** The last 4 digits of an account or mobile number, for "•••• 4821". Null when it has fewer than 4. */
+export function accountEnding(accountNumber: string | null): string | null {
+  const digits = (accountNumber ?? '').replace(/\D/g, '');
+  return digits.length >= 4 ? digits.slice(-4) : null;
+}
+
 /** Cash and COD are paid later; transfers must be paid before the shop starts. */
 export function isPayLater(method: PaymentMethod): boolean {
   return !isTransfer(method);

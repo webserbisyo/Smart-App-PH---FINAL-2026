@@ -1,5 +1,6 @@
 import type { ShopKind } from './schemas/demo-shop.js';
 import type { IconKey } from './icons.js';
+import type { PaymentMethod, PhBank } from './schemas/enums.js';
 
 // Icon keys for the catalog nav item; apps map each key to a lucide icon.
 export const CATALOG_ICONS = ['utensils', 'package'] as const;
@@ -488,6 +489,7 @@ export const words = {
     recommended: 'Recommended',
     codLimitAlert: (limit: string) => `Orders above ${limit} need payment first`,
     transferDetails: 'Transfer details',
+    bank: 'Bank',
     accountName: 'Account name',
     accountNumber: 'Account number',
     copy: 'Copy',
@@ -1157,6 +1159,22 @@ export const words = {
       maya: 'Maya',
       bank: 'Bank transfer',
       qr_ph: 'QR Ph',
+    },
+    // The bank behind a bank transfer account (T84).
+    bank: {
+      bdo: 'BDO',
+      bpi: 'BPI',
+      metrobank: 'Metrobank',
+      landbank: 'Landbank',
+      pnb: 'PNB',
+      security_bank: 'Security Bank',
+      unionbank: 'UnionBank',
+      rcbc: 'RCBC',
+      chinabank: 'China Bank',
+      eastwest: 'EastWest',
+      gotyme: 'GoTyme',
+      seabank: 'SeaBank',
+      other: 'Other bank',
     },
     orderStatus: {
       placed: 'Placed',
@@ -2309,6 +2327,9 @@ export const ordersWords = {
     emptyBoardTitle: 'No orders yet',
     noMatches: 'No orders match',
     clearFilters: 'Clear filters',
+    // The Paid to filter from Home's money rows (T84).
+    paidTo: (place: string) => `Paid to ${place}`,
+    paidToClear: (place: string) => `Show all payments, not only ${place}`,
     shareMyShop: 'Share my shop',
     errorBoard: 'Couldn’t load orders.',
     errorList: 'Couldn’t load these orders.',
@@ -3019,7 +3040,13 @@ export const settingsWords = {
     lastMethod: 'Keep at least one way to pay on.',
     accountName: 'Account name',
     accountNumber: (method: string) => (method === 'bank' ? 'Account number' : 'Mobile number'),
-    bankName: 'Bank and account name',
+    // A shop can take up to three bank accounts, each with its bank from a list (T84).
+    bank: 'Bank',
+    bankPick: 'Pick a bank',
+    bankRequired: 'Pick the bank, so customers know where to send.',
+    addBank: 'Add another bank',
+    removeBank: (bank: string) => `Remove ${bank}`,
+    bankLimit: (n: number) => `Up to ${n} bank accounts.`,
     required: 'Fill this in, so customers know where to send.',
     qr: 'QR code (optional)',
     qrHelp: 'Kept sharp so it scans: 1000 px, high quality.',
@@ -3440,20 +3467,44 @@ export const homeWords = {
   money: {
     title: 'Sales',
     orders: (n: number) => `${n} ${plural(n, 'order', 'orders')}`,
-    average: 'Average order',
-    averageNone: 'After 3 orders',
-    cashNow: 'Cash in the drawer should be',
-    cashPast: 'Cash taken',
-    cashHint: 'Cash and COD, paid',
-    transfers: 'GCash, Maya and bank',
-    toCheck: (n: number) => `${n} not paid yet`,
-    allChecked: 'All paid',
-    toCollect: 'Still to collect',
-    toCollectHint: 'Cash and COD, not paid yet',
-    nothingToCollect: 'Nothing left to collect',
-    openOrders: 'Open Orders',
+    average: 'Average',
+    averageNone: 'after 3 orders',
+    // Paid, To check, Not paid yet (T84): one thin bar and three chips.
+    paid: 'Paid',
+    toCheck: (n: number) => (n === 0 ? 'To check' : `${n} to check`),
+    notPaid: (n: number) => (n === 0 ? 'Not paid yet' : `${n} not paid yet`),
+    statusAria: (paid: string, toCheck: string, notPaid: string) =>
+      `Paid ${paid}, to check ${toCheck}, not paid yet ${notPaid}`,
+    // Where it is: one ring per place, the drawer first, then each account (T84).
+    where: 'Where it is',
+    whereTap: 'Tap a row for its orders',
+    whereTotals: 'Totals for these dates',
+    ringAria: (place: string, percent: number, amount: string) =>
+      `${place}: ${percent}% of sales, ${amount}`,
+    rowAria: (place: string, amount: string, state: string) => `${place}, ${amount}. ${state}`,
+    drawerHint: 'Cash and COD',
+    ending: (digits: string) => `•••• ${digits}`,
+    inDrawer: (amount: string) => `${amount} in the drawer`,
+    taken: (amount: string) => `${amount} taken`,
+    cameIn: (amount: string) => `${amount} in`,
+    checkLine: (n: number, amount: string) => `${amount} to check (${n})`,
+    collectLine: (n: number, amount: string) => `${amount} to collect (${n})`,
+    notSentLine: (n: number, amount: string) => `${amount} not sent yet (${n})`,
+    allIn: 'All in',
+    nothingYet: 'No orders yet',
+    empty: 'The rings fill in as orders come in.',
+    onlyCash: 'Take GCash, Maya or a bank too? Add them in Settings, and each one shows here.',
+    addPayments: 'Add ways to pay',
     salesAria: (amount: string, orders: number) =>
       `${amount} from ${orders} ${plural(orders, 'order', 'orders')}`,
+  },
+  // Names of the places money lands (T84).
+  places: {
+    drawer: 'Drawer',
+    gcash: 'GCash',
+    maya: 'Maya',
+    qr_ph: 'QR Ph',
+    other: 'Other',
   },
   sales: {
     byHour: 'Sales by hour',
@@ -3471,7 +3522,7 @@ export const homeWords = {
   },
   donut: {
     title: 'Where the money came from',
-    tabs: { types: 'Ordered', methods: 'Paid', buyers: 'Members' },
+    tabs: { types: 'Ordered', buyers: 'Members' },
     tabsLabel: 'Split sales by',
     buyer: { member: 'Members', guest: 'Not members' },
     total: 'total',
@@ -3955,3 +4006,10 @@ export const editorWords = {
   undo: 'Undo',
   undone: 'Change undone',
 } as const;
+
+/** How customers and the owner see one way to pay (T84): a bank account by its bank, the rest by method. */
+export function paymentLabel(account: { method: PaymentMethod; bank: PhBank | null }): string {
+  return account.method === 'bank' && account.bank && account.bank !== 'other'
+    ? words.shop.bank[account.bank]
+    : words.shop.paymentMethod[account.method];
+}

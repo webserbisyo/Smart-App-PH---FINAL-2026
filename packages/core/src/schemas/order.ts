@@ -15,6 +15,7 @@ import {
   OrderTypeEnum,
   PaymentMethodEnum,
   PaymentStatusEnum,
+  PhBankEnum,
   ProofStatusEnum,
 } from './enums.js';
 
@@ -48,6 +49,8 @@ export const OrderPayloadSchema = z
     customer: CustomerDetailsSchema,
     delivery: DeliveryDetailsSchema.nullable(),
     paymentMethod: PaymentMethodEnum,
+    // Which of the shop's accounts (T84); left out, the first account for the method is used.
+    paymentAccountId: z.string().min(1).max(40).nullable().optional(),
     note: z
       .string()
       .max(NOTE_MAX * 2)
@@ -184,6 +187,9 @@ export type ReceiptLine = z.infer<typeof ReceiptLineSchema>;
 
 export const PaymentInstructionsSchema = z.object({
   method: PaymentMethodEnum,
+  // The shop's account the customer pays (T84), so Home can show each bank and wallet on its own.
+  accountId: z.string().min(1).max(40).nullable(),
+  bank: PhBankEnum.nullable(),
   accountName: z.string().nullable(),
   accountNumber: z.string().nullable(),
   qr: MediaRefSchema.nullable(),

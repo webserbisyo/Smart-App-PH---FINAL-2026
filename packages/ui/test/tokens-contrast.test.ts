@@ -244,3 +244,37 @@ describe('globals.css never redefines a token from tokens.css', () => {
     expect(redefined).toEqual([]);
   });
 });
+
+// Chart colours (T84): every mark reads at 3:1 on a card, in both themes, for the app and the dashboard.
+describe('Chart colours on cards (>= 3:1, decision T84)', () => {
+  const currentDir = import.meta.dirname ?? __dirname;
+  const css = readFileSync(resolve(currentDir, '../src/styles/tokens.css'), 'utf-8');
+  const [light = '', dark = ''] = css.split('.dark');
+  const read = (scope: string, token: string): [number, number, number] => {
+    const match = scope.match(new RegExp(`--${token}:\\s*([^;]+);`));
+    if (!match || !match[1]) throw new Error(`Token --${token} not found`);
+    return parseOklch(match[1]);
+  };
+  const dashboard = (selector: string): string => {
+    const start = css.indexOf(`${selector} {`);
+    return start === -1 ? '' : css.slice(start, css.indexOf('}', start));
+  };
+  const cards: readonly [string, string, string][] = [
+    ['light', light, light],
+    ['dark', dark, dark],
+    ['dashboard light', light, dashboard(":root[data-app='dashboard']") || light],
+    ['dashboard dark', dark, dashboard(":root[data-app='dashboard'].dark") || dark],
+  ];
+  for (const [name, charts, cardScope] of cards) {
+    for (let n = 1; n <= 6; n += 1) {
+      it(`${name}: chart-${n} on card`, () => {
+        const card = cardScope.includes('--card:') ? cardScope : charts;
+        const ratio = contrastRatio(
+          srgbToLuminance(...oklchToRgb(...read(card, 'card'))),
+          srgbToLuminance(...oklchToRgb(...read(charts, `chart-${n}`))),
+        );
+        expect(ratio).toBeGreaterThanOrEqual(3);
+      });
+    }
+  }
+});

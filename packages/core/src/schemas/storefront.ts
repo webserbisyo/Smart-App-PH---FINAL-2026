@@ -14,6 +14,7 @@ import {
   BannerLinkKindEnum,
   OrderTypeEnum,
   PaymentMethodEnum,
+  PhBankEnum,
   FontPairEnum,
   LogoShapeEnum,
   ShopSurfaceEnum,
@@ -131,8 +132,15 @@ export const ShopPauseSchema = z.object({
 });
 export type ShopPause = z.infer<typeof ShopPauseSchema>;
 
+// A shop may keep up to 3 bank accounts (T84); every other way to pay is one account.
+export const BANK_ACCOUNTS_MAX = 3;
+
 export const PaymentAccountSchema = z.object({
+  // Stays the same when the account is edited, so orders and Home know which account was paid.
+  id: z.string().min(1).max(40),
   method: PaymentMethodEnum,
+  // Bank transfers only: which bank (T84). Null for every other way to pay.
+  bank: PhBankEnum.nullable(),
   // Transfers: account name and number, optional QR. Cash and COD: both null.
   accountName: z.string().min(1).max(80).nullable(),
   accountNumber: z.string().min(1).max(40).nullable(),
@@ -141,6 +149,27 @@ export const PaymentAccountSchema = z.object({
   sample: z.boolean(),
 });
 export type PaymentAccount = z.infer<typeof PaymentAccountSchema>;
+
+/** The shop's ways to pay: ids unique, one account per way except banks (up to 3), each bank named. */
+export const PaymentAccountsSchema = z
+  .array(PaymentAccountSchema)
+  .min(1)
+  .superRefine((list, ctx) => {
+    const ids = new Set<string>();
+    const perMethod = new Map<string, number>();
+    list.forEach((a, index) => {
+      if (ids.has(a.id))
+        ctx.addIssue({ code: 'custom', message: 'duplicate_account', path: [index, 'id'] });
+      ids.add(a.id);
+      perMethod.set(a.method, (perMethod.get(a.method) ?? 0) + 1);
+      if ((a.method === 'bank') !== (a.bank !== null))
+        ctx.addIssue({ code: 'custom', message: 'bank_required', path: [index, 'bank'] });
+    });
+    for (const [method, count] of perMethod) {
+      if (count > (method === 'bank' ? BANK_ACCOUNTS_MAX : 1))
+        ctx.addIssue({ code: 'custom', message: 'too_many_accounts', path: [] });
+    }
+  });
 
 export const DistanceRowSchema = z
   .object({
@@ -190,7 +219,7 @@ export const StorefrontSchema = z.object({
   daysAhead: z.number().int().min(1).max(60).default(3),
   slotMinutes: SlotLengthSchema.default(30),
   ordersPerSlot: z.number().int().min(1).max(50).nullable().default(null),
-  payments: z.array(PaymentAccountSchema).min(1),
+  payments: PaymentAccountsSchema,
   codMaxTotal: CentavosSchema.nullable(),
   delivery: DeliverySettingsSchema,
   stampCard: PublicStampCardSchema,

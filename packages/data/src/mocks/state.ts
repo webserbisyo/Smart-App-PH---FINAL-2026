@@ -2,6 +2,7 @@
 import {
   formatPeso,
   isTransfer,
+  paymentAccountFor,
   manilaDate,
   timelineSteps,
   unitPrice,
@@ -174,6 +175,8 @@ export interface OrderSpec {
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
+  // Which of the shop's accounts (T84); left out, the first account for the method.
+  paymentAccountId?: string | null;
   lines: readonly BasketLine[];
   customer: { name: string; phone: string; email: string | null };
   scheduledAt?: string | null;
@@ -277,7 +280,11 @@ export function buildOrder(shop: PublicShop, spec: OrderSpec): OrderRecord {
   const total = subtotal - discount + deliveryFee;
   const endedAt = spec.status === 'expired' ? (spec.expiresAt ?? undefined) : undefined;
   const events = eventsFor(spec.type, spec.status, spec.placedAt, endedAt);
-  const account = shop.storefront.payments.find((p) => p.method === spec.paymentMethod);
+  const account = paymentAccountFor(
+    shop.storefront.payments,
+    spec.paymentMethod,
+    spec.paymentAccountId,
+  );
   const times = dueTimes({
     placedAt: spec.placedAt,
     scheduledAt: spec.scheduledAt ?? null,
@@ -312,6 +319,8 @@ export function buildOrder(shop: PublicShop, spec: OrderSpec): OrderRecord {
     payment: isTransfer(spec.paymentMethod)
       ? {
           method: spec.paymentMethod,
+          accountId: account?.id ?? null,
+          bank: account?.bank ?? null,
           accountName: account?.accountName ?? null,
           accountNumber: account?.accountNumber ?? null,
           qr: account?.qr ?? null,

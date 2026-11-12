@@ -37,16 +37,24 @@ const problem = (
 
 /** Methods an order type allows: cash at the counter for walk-in and pickup, COD for delivery only. */
 export function methodsFor(shop: PublicShop, type: OrderPayload['type']): PaymentMethod[] {
-  return shop.storefront.payments
+  const methods = shop.storefront.payments
     .map((p) => p.method)
     .filter((m) => (m === 'cash' ? type !== 'delivery' : m === 'cod' ? type === 'delivery' : true));
+  // A shop can keep more than one bank account (T84); each method is listed once.
+  return [...new Set(methods)];
 }
 
 export function quote(
   ctx: QuoteContext,
   payload: Pick<
     OrderPayload,
-    'type' | 'scheduledAt' | 'lines' | 'delivery' | 'paymentMethod' | 'useReward'
+    | 'type'
+    | 'scheduledAt'
+    | 'lines'
+    | 'delivery'
+    | 'paymentMethod'
+    | 'paymentAccountId'
+    | 'useReward'
   >,
 ): Quote {
   const { shop, now } = ctx;
@@ -113,7 +121,14 @@ export function quote(
       problems.push(problem('fulfillment_unavailable'));
   }
 
-  if (!methodsFor(shop, payload.type).includes(payload.paymentMethod))
+  // A picked account must be one of the shop's accounts for that method (T84).
+  const pickedAccount =
+    payload.paymentAccountId === undefined ||
+    payload.paymentAccountId === null ||
+    sf.payments.some(
+      (p) => p.id === payload.paymentAccountId && p.method === payload.paymentMethod,
+    );
+  if (!methodsFor(shop, payload.type).includes(payload.paymentMethod) || !pickedAccount)
     problems.push(problem('payment_unavailable'));
 
   let fee = 0;

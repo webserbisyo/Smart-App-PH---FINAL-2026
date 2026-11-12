@@ -53,6 +53,26 @@ export type PaymentMethod = z.infer<typeof PaymentMethodEnum>;
 // Methods paid by sending money first; only these expire unpaid (P3).
 export const TRANSFER_METHODS = ['gcash', 'maya', 'bank', 'qr_ph'] as const;
 
+// The bank behind a bank transfer account (T84), so each bank is its own place on Home. "other" is any bank
+// not listed; its account name tells it apart.
+export const PH_BANKS = [
+  'bdo',
+  'bpi',
+  'metrobank',
+  'landbank',
+  'pnb',
+  'security_bank',
+  'unionbank',
+  'rcbc',
+  'chinabank',
+  'eastwest',
+  'gotyme',
+  'seabank',
+  'other',
+] as const;
+export const PhBankEnum = z.enum(PH_BANKS);
+export type PhBank = z.infer<typeof PhBankEnum>;
+
 export const PROOF_STATUSES = ['pending', 'approved', 'rejected'] as const;
 export const ProofStatusEnum = z.enum(PROOF_STATUSES);
 export type ProofStatus = z.infer<typeof ProofStatusEnum>;
@@ -340,6 +360,18 @@ export const HomeStepEnum = z.enum(HOME_STEPS);
 export type HomeStep = z.infer<typeof HomeStepEnum>;
 
 // Who bought, for the money donut's Members tab (T83).
+// Where an order's money is on Home (T84): paid, a photo sent for the owner to check, or nothing yet
+// (cash and COD not collected, or a transfer with no photo).
+export const HOME_PAY_STATES = ['paid', 'to_check', 'not_paid'] as const;
+export const HomePayStateEnum = z.enum(HOME_PAY_STATES);
+export type HomePayState = z.infer<typeof HomePayStateEnum>;
+
+// The places money lands (T84): the drawer (cash and COD) or one of the shop's accounts; "other" holds
+// accounts past the fifth and accounts the shop has since removed.
+export const HOME_PLACE_KINDS = ['drawer', 'gcash', 'maya', 'bank', 'qr_ph', 'other'] as const;
+export const HomePlaceKindEnum = z.enum(HOME_PLACE_KINDS);
+export type HomePlaceKind = z.infer<typeof HomePlaceKindEnum>;
+
 export const HOME_BUYERS = ['member', 'guest'] as const;
 export const HomeBuyerEnum = z.enum(HOME_BUYERS);
 export type HomeBuyer = z.infer<typeof HomeBuyerEnum>;

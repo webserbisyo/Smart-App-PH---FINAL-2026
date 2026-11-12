@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-12 Money cards (T84, pushed to main): Home Sales shows Paid, To check and Not paid yet in one bar, then a ring and a row for the drawer and each GCash, Maya, QR Ph and bank account (tap a row for that day's orders, "Paid to" chip on Orders); Where the money came from uses the same rings (Ordered, Members); up to 3 bank accounts picked from a bank list in Settings, checkout asks which bank, orders remember the account; one checked set of 6 chart colours
 - 2026-11-12 Final thoughts part 5, components and motion (T83, pushed to main): Orders List pages through every order (it stopped at 10), Members grid shows every loaded row, Frame around the "Customers see" previews, Button Group photo zoom, Animated List in Needs you, online dot on the owner picture, theme switch reveal; Confetti, two kit steppers and an unused table removed; one motion plan
 - 2026-11-12 Final thoughts part 4, picture maker (T83, pushed to main): one Make your own maker for owners and customers (DiceBear Adventurer drawn on the device, loaded only in the picker, nine pieces, Surprise me); the choices and the drawing are saved, the 72 ready-made files are gone
 - 2026-11-12 Final thoughts part 3, Bookings (T83, pushed to main): an Orders Bookings view for shops that take orders on later days (ReUI Event Calendar, Week and Month on a laptop, List on phones, drag to change the time with Undo); demo shops book 2 to 14 days ahead and new shops 3

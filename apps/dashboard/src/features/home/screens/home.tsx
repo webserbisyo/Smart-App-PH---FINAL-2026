@@ -22,7 +22,7 @@ import { HomeHello, PauseNotice } from '../home-hello.js';
 import { HOME_GRID, HOME_MAIN, HOME_PAIR, HOME_SIDE, HOME_SLOTS as slots } from '../home-layout.js';
 import { MembersCard } from '../members-card.js';
 import { MixCard } from '../mix-card.js';
-import { MoneyCard } from '../money-card.js';
+import { MoneyCard, MoneyCardSkeleton } from '../money-card.js';
 import { NeedsCard } from '../needs-card.js';
 import { PeriodPicker, periodLabel } from '../period-picker.js';
 import { SalesCard } from '../sales-card.js';
@@ -51,6 +51,8 @@ export function HomeScreen() {
   const periodData = useHomePeriodData(dates, today);
   const periodText = periodLabel(period, dates);
   const liveDates = dates.to === today;
+  // One day: the money rows open that day's orders (T84).
+  const oneDay = dates.from === dates.to ? (liveDates ? 'today' : dates.to) : null;
 
   const delivers = storefront.data?.storefront.orderTypes.includes('delivery') ?? true;
   const activeItems =
@@ -91,7 +93,8 @@ export function HomeScreen() {
                 <MoneyCard
                   money={data.money}
                   periodText={periodText}
-                  live={liveDates}
+                  live={oneDay === 'today'}
+                  day={oneDay}
                   action={picker}
                   className={slots.money}
                 />
@@ -262,12 +265,7 @@ function MoneySkeleton({
         </div>
         {action ?? <Skeleton className="h-11 w-36 rounded-lg md:h-9" />}
       </div>
-      <Skeleton className="h-10 w-48 md:h-12" />
-      <div className="grid gap-2 sm:grid-cols-3 md:gap-3">
-        {Array.from({ length: 3 }, (_, i) => (
-          <Skeleton key={i} className="h-28 rounded-xl" />
-        ))}
-      </div>
+      <MoneyCardSkeleton />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   HomeTrendsSchema,
   HEAT_MIN_DAYS,
   manilaDate,
+  needsProofCheck,
   salesTotal,
 } from '@smartapp/core';
 import { setMockOwnerSlug } from '../src/mocks/store';
@@ -132,13 +133,28 @@ describe('ownerHome period (T83)', () => {
     // Same sales rule as the summary and the Orders footer (H2).
     expect(today.money.sales).toBe(home.today.sales);
     const m = today.money;
-    expect(m.cash + m.transfers + m.toCheck + m.toCollect).toBe(m.sales);
+    expect(m.paid + m.toCheck + m.notPaid).toBe(m.sales);
+    // Every order lands in one place (T84), and the places add up to the total.
+    expect(m.places.reduce((n, p) => n + p.sales, 0)).toBe(m.sales);
+    expect(m.places.reduce((n, p) => n + p.orders, 0)).toBe(m.orders);
+    for (const p of m.places) expect(p.paid + p.toCheck + p.notPaid).toBe(p.sales);
+    // To check is the same orders as Needs you (the old tile said 5 while Needs you said 3).
+    const list = await store.ownerOrders.listOrders({ slug, date: '2026-11-06' });
+    expect(m.toCheckOrders).toBe(list.filter((o) => needsProofCheck(o)).length);
     expect(today.slots.reduce((n, s) => n + s.sales, 0)).toBe(m.sales);
     const week = await store.ownerHome.getHomePeriod({ from: '2026-10-31', to: '2026-11-06' });
     expect(week.step).toBe('day');
     expect(week.slots).toHaveLength(7);
     expect(week.slots.reduce((n, s) => n + s.orders, 0)).toBe(week.money.orders);
     expect(week.mix.buyers.reduce((n, b) => n + b.sales, 0)).toBe(week.money.sales);
+    expect(week.money.places.reduce((n, p) => n + p.sales, 0)).toBe(week.money.sales);
+    // Rings keep their spot: the drawer first when the shop takes cash or COD, then accounts in order.
+    const accounts = (await store.ownerSettings.getSettings()).payments.payments;
+    const expected = [
+      ...(accounts.some((a) => a.method === 'cash' || a.method === 'cod') ? ['drawer'] : []),
+      ...accounts.filter((a) => a.method !== 'cash' && a.method !== 'cod').map((a) => a.id),
+    ];
+    expect(week.money.places.map((p) => p.key)).toEqual(expected);
     expect(week.busiestDay).not.toBeNull();
   });
 

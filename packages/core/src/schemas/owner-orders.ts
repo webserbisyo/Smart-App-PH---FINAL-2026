@@ -24,6 +24,8 @@ export const BoardOrderSchema = z.object({
   status: OrderStatusEnum,
   paymentStatus: PaymentStatusEnum,
   paymentMethod: PaymentMethodEnum,
+  // The shop account it is paid to (T84), for Home's "Tap a row for its orders". Null for cash and COD.
+  paymentAccountId: z.string().min(1).max(40).nullable().optional(),
   scheduledAt: IsoDateTimeSchema.nullable(),
   placedAt: IsoDateTimeSchema,
   customerName: z.string().min(1),

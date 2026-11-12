@@ -64,6 +64,7 @@ const RHYTHMS: Readonly<Record<string, ShopRhythm>> = {
       ['cash', 4],
       ['gcash', 4],
       ['maya', 1],
+      ['bank', 1],
       ['cod', 1],
     ],
     lines: [1, 3],

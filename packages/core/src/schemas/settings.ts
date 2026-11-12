@@ -28,7 +28,7 @@ import {
   ClosureSchema,
   DeliverySettingsSchema,
   OpeningRangeSchema,
-  PaymentAccountSchema,
+  PaymentAccountsSchema,
   ShopContactSchema,
 } from './storefront.js';
 
@@ -53,7 +53,7 @@ export const OrderingSettingsSchema = z.object({
 export type OrderingSettings = z.infer<typeof OrderingSettingsSchema>;
 
 export const PaymentSettingsSchema = z.object({
-  payments: z.array(PaymentAccountSchema).min(1),
+  payments: PaymentAccountsSchema,
   codMaxTotal: CentavosSchema.nullable(),
 });
 export type PaymentSettings = z.infer<typeof PaymentSettingsSchema>;

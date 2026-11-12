@@ -5,6 +5,7 @@ import {
   formatPeso,
   imageSources,
   pesoAmountText,
+  paymentLabel,
   words,
   type OrderReceipt,
   type PaymentInstructions,
@@ -116,9 +117,7 @@ function PaymentDetails({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <h3 className="text-sm font-semibold">
-        {words.receipt.pay.method(words.shop.paymentMethod[payment.method])}
-      </h3>
+      <h3 className="text-sm font-semibold">{words.receipt.pay.method(paymentLabel(payment))}</h3>
       <ul className="flex flex-col gap-2">
         {payment.accountName ? (
           <DetailRow label={words.checkout.accountName} value={payment.accountName} />

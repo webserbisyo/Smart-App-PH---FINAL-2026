@@ -29,6 +29,8 @@ export const CheckoutDraftSchema = z.object({
   email: z.string().max(120),
   rememberMe: z.boolean(),
   paymentMethod: PaymentMethodEnum.nullable(),
+  // Which of the shop's accounts, when it has more than one bank (T84). Older drafts have none.
+  paymentAccountId: z.string().min(1).max(40).nullable().optional(),
   note: z.string().max(NOTE_MAX * 2),
   scheduledAt: IsoDateTimeSchema.nullable(),
   useReward: z.boolean(),

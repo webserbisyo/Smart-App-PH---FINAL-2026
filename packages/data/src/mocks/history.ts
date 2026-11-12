@@ -5,6 +5,8 @@ import {
   addDays,
   countsAsSale,
   HOME_HISTORY_DAYS,
+  homePayState,
+  isTransfer,
   manilaDate,
   manilaToDate,
   openHoursOf,
@@ -65,7 +67,8 @@ export function saleOfOrder(o: OrderRecord): HomeSale {
     total: r.totals.total,
     type: r.type,
     method: r.paymentMethod,
-    paid: r.paymentStatus === 'paid',
+    pay: homePayState(r.paymentStatus, r.paymentMethod),
+    accountId: r.payment?.accountId ?? null,
     member: o.memberEmail !== null,
     lines: r.lines.map((l) => ({
       itemId: l.itemId,
@@ -79,6 +82,8 @@ export function saleOfOrder(o: OrderRecord): HomeSale {
 interface Picker {
   type: (rng: Rng) => OrderType;
   method: (rng: Rng, type: OrderType) => PaymentMethod;
+  // One of the shop's accounts for the method (banks can have several, T84); null for cash and COD.
+  account: (rng: Rng, method: PaymentMethod) => string | null;
 }
 
 function pickerFor(shop: PublicShop, rhythm: ShopRhythm): Picker {
@@ -91,6 +96,17 @@ function pickerFor(shop: PublicShop, rhythm: ShopRhythm): Picker {
       const ok = new Set(methodsFor(shop, type));
       const list = rhythm.methods.filter(([m]) => ok.has(m));
       return weighted(rng, list) ?? methodsFor(shop, type)[0] ?? 'cash';
+    },
+    account: (rng, method) => {
+      if (!isTransfer(method)) return null;
+      const own = shop.storefront.payments.filter((p) => p.method === method);
+      // The first account gets most transfers, like a shop's main bank.
+      return (
+        weighted(
+          rng,
+          own.map((p, i) => [p.id, i === 0 ? 3 : 1] as const),
+        ) ?? null
+      );
     },
   };
 }
@@ -115,12 +131,14 @@ function saleOfArchive(
       lineTotal: (item.variants[0]?.price ?? item.basePrice) * l.qty,
     });
   }
+  const method = picker.method(rng, type);
   return {
     placedAt: a.placedAt,
     total: a.total,
     type,
-    method: picker.method(rng, type),
-    paid: true,
+    method,
+    pay: 'paid',
+    accountId: picker.account(rng, method),
     member: a.customerEmail !== null && members.has(a.customerEmail),
     lines,
   };
@@ -173,12 +191,14 @@ function lightOrder(
   const type = picker.type(rng);
   const fee = type === 'delivery' ? (shop.storefront.delivery.zones[0]?.fee ?? 0) : 0;
   const list = [...lines.values()];
+  const method = picker.method(rng, type);
   return {
     placedAt: manilaToDate(date, clock).toISOString(),
     total: list.reduce((n, l) => n + l.lineTotal, 0) + fee,
     type,
-    method: picker.method(rng, type),
-    paid: true,
+    method,
+    pay: 'paid',
+    accountId: picker.account(rng, method),
     member: false,
     lines: list,
   };

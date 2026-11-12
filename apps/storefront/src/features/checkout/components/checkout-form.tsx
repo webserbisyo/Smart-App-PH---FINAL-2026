@@ -104,6 +104,10 @@ export function CheckoutForm({ now }: { now: string }) {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
     draft?.paymentMethod ?? null,
   );
+  // Which account (T84): a shop can take up to three banks.
+  const [paymentAccountId, setPaymentAccountId] = useState<string | null>(
+    draft?.paymentAccountId ?? null,
+  );
 
   // Reward and Note
   const [useReward, setUseReward] = useState(draft?.useReward ?? false);
@@ -143,6 +147,7 @@ export function CheckoutForm({ now }: { now: string }) {
       email: draft?.email ?? member?.email ?? '',
       rememberMe: draft?.rememberMe ?? true,
       paymentMethod: draft?.paymentMethod ?? null,
+      paymentAccountId: draft?.paymentAccountId ?? null,
       note: draft?.note ?? '',
       scheduledAt: queryScheduled || choice.scheduledAt,
       useReward: draft?.useReward ?? false,
@@ -166,6 +171,7 @@ export function CheckoutForm({ now }: { now: string }) {
       email,
       rememberMe: true,
       paymentMethod,
+      paymentAccountId,
       note,
       scheduledAt,
       useReward,
@@ -174,7 +180,18 @@ export function CheckoutForm({ now }: { now: string }) {
     if (serialized === lastSavedJsonRef.current) return;
     lastSavedJsonRef.current = serialized;
     storage.checkoutDraft.write(slug, payload);
-  }, [name, phone, email, rememberMe, paymentMethod, note, scheduledAt, useReward, slug]);
+  }, [
+    name,
+    phone,
+    email,
+    rememberMe,
+    paymentMethod,
+    paymentAccountId,
+    note,
+    scheduledAt,
+    useReward,
+    slug,
+  ]);
 
   // Evaluate member reward availability
   const readyReward = useMemo(() => {
@@ -269,14 +286,17 @@ export function CheckoutForm({ now }: { now: string }) {
     [sf, orderType, total],
   );
 
-  // Effective payment method: selected if valid, otherwise first enabled
-  const selectedPaymentMethod = useMemo(() => {
-    if (paymentMethod && paymentOptions.some((o) => o.method === paymentMethod && !o.disabled)) {
-      return paymentMethod;
-    }
-    const firstEnabled = paymentOptions.find((o) => !o.disabled);
-    return firstEnabled ? firstEnabled.method : null;
-  }, [paymentOptions, paymentMethod]);
+  // Effective payment: the picked account if still offered, else the picked method, else the first one.
+  const selectedOption = useMemo(() => {
+    const enabled = paymentOptions.filter((o) => !o.disabled);
+    return (
+      enabled.find((o) => o.accountId === paymentAccountId) ??
+      enabled.find((o) => o.method === paymentMethod) ??
+      enabled[0] ??
+      null
+    );
+  }, [paymentOptions, paymentMethod, paymentAccountId]);
+  const selectedPaymentMethod = selectedOption?.method ?? null;
 
   // Flagged lines count
   const flaggedCount = quote?.lines.filter((l) => l.problems.length > 0).length ?? 0;
@@ -346,6 +366,7 @@ export function CheckoutForm({ now }: { now: string }) {
             email: email.trim() || null,
           },
           paymentMethod: selectedPaymentMethod ?? 'cash',
+          paymentAccountId: selectedOption?.accountId ?? null,
         },
         clientKey: clientKeyRef.current,
       });
@@ -482,8 +503,11 @@ export function CheckoutForm({ now }: { now: string }) {
       <CheckoutPay
         sf={sf}
         options={paymentOptions}
-        selectedMethod={selectedPaymentMethod}
-        onSelectMethod={setPaymentMethod}
+        selected={selectedOption?.accountId ?? null}
+        onSelect={(option) => {
+          setPaymentMethod(option.method);
+          setPaymentAccountId(option.accountId);
+        }}
         totalCentavos={total}
       />
 

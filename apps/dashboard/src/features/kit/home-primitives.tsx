@@ -46,7 +46,7 @@ export function HomePrimitiveSections() {
         title="evilcharts Pie chart"
         library="evilcharts (shadcn registry @evilcharts) on Recharts 3.8.0 + motion, lazy-loaded"
         path={`${EVIL}/recharts-pie-chart.tsx`}
-        usedIn="Home Where the money came from: a gradient donut with Ordered, Paid and Members tabs (T83)"
+        usedIn="Not on a screen since T84 (Home money cards moved to rings); kept on the kit"
       >
         <React.Suspense fallback={<Skeleton className="size-48 rounded-full" />}>
           <PieDemo />
@@ -56,7 +56,7 @@ export function HomePrimitiveSections() {
         title="evilcharts Radial chart"
         library="evilcharts (shadcn registry @evilcharts) on Recharts 3.8.0, lazy-loaded"
         path={`${EVIL}/recharts-radial-chart.tsx`}
-        usedIn="Not on a screen since T83 (the Today ring left Home); kept for Insights in Blueprint B"
+        usedIn="Home Sales (one ring per place money lands: drawer, GCash, Maya, each bank) and Where the money came from (T84)"
       >
         <React.Suspense fallback={<Skeleton className="size-48 rounded-full" />}>
           <RadialDemo />

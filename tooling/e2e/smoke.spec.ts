@@ -623,8 +623,8 @@ test.describe('basket (T08)', () => {
     await page.locator('#checkout-name').fill('Maria Santos');
     await page.locator('#checkout-phone').fill('09181234567');
 
-    // Select COD
-    await page.locator('label[for="pay-cod"]').click();
+    // Select COD (each way to pay is keyed by its account id, T84)
+    await page.locator('label[for="pay-ks-pay-cod"]').click();
 
     const placeBtn = page.locator('#checkout-place-order');
     await expect(placeBtn).toBeEnabled({ timeout: 10_000 });
@@ -666,7 +666,7 @@ test.describe('basket (T08)', () => {
     await expect(page.getByText('Orders above ₱3,000 need payment first')).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.locator('#pay-cod')).toBeDisabled();
+    await expect(page.locator('#pay-ks-pay-cod')).toBeDisabled();
     expect(problems).toEqual([]);
   });
 

@@ -4,6 +4,7 @@ import {
   normalisePhPhone,
   openState,
   openingWhen,
+  paymentLabel,
   type OrderType,
   type PaymentMethod,
   type Quote,
@@ -12,6 +13,8 @@ import {
 import { words } from '@smartapp/core';
 
 export interface PaymentOption {
+  // The shop account this option pays (T84); a shop can have up to three banks.
+  accountId: string;
   method: PaymentMethod;
   label: string;
   disabled: boolean;
@@ -34,6 +37,8 @@ export function resolvePaymentOptions(
   totalCentavos: number,
 ): PaymentOption[] {
   let firstTransferSeen = false;
+  // With two or more banks, each shows by its bank so the customer picks which (T84).
+  const banks = sf.payments.filter((p) => p.method === 'bank').length;
 
   const results: PaymentOption[] = [];
 
@@ -67,9 +72,10 @@ export function resolvePaymentOptions(
       isRecommended = true;
     }
 
-    const label = words.shop.paymentMethod[method];
+    const label = banks > 1 ? paymentLabel(p) : words.shop.paymentMethod[method];
 
     results.push({
+      accountId: p.id,
       method,
       label,
       disabled,
