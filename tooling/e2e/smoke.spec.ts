@@ -40,6 +40,16 @@ async function settle(page: Page) {
   await page.waitForLoadState('networkidle');
 }
 
+// Opens the order chat from the pay card. A tap that lands before the page is ready does nothing, so tap
+// again until the chat is open.
+async function openOrderChat(page: Page) {
+  const chat = page.getByRole('dialog');
+  await expect(async () => {
+    if (!(await chat.isVisible())) await page.locator('#receipt-open-chat').click();
+    await expect(chat).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 15_000 });
+}
+
 async function layoutProblems(page: Page): Promise<string[]> {
   return page.evaluate(() => {
     const out: string[] = [];
@@ -816,7 +826,7 @@ test.describe('order receipt and payment proof (T10)', () => {
     await settle(page);
 
     // The photo is sent in the order chat (T81), opened from the pay card.
-    await page.locator('#receipt-open-chat').click();
+    await openOrderChat(page);
     const chat = page.getByRole('dialog');
     const fileInput = chat.locator('input[type="file"]');
     await expect(fileInput).toBeAttached();
@@ -843,7 +853,7 @@ test.describe('order receipt and payment proof (T10)', () => {
     const problems = watch(page);
     await page.goto(urlFor('dev', '/kape-juan/o/demo-placed-transfer'));
     await settle(page);
-    await page.locator('#receipt-open-chat').click();
+    await openOrderChat(page);
     await page
       .getByRole('dialog')
       .locator('input[type="file"]')
@@ -864,7 +874,7 @@ test.describe('order receipt and payment proof (T10)', () => {
     await expect(page.getByText('Payment not accepted')).toBeVisible();
     // The shop answered, so the chat head has a dot; the new photo goes in the chat.
     await expect(page.locator('#receipt-chat-head')).toHaveAccessibleName(/new reply/);
-    await page.locator('#receipt-open-chat').click();
+    await openOrderChat(page);
     await expect(page.locator('#receipt-upload-proof-button')).toBeVisible();
     expect(problems).toEqual([]);
   });
