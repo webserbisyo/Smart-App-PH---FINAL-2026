@@ -484,9 +484,7 @@ export function MembersScreen() {
               {CUSTOMER_FILTERS.map((f) => (
                 <ToggleGroupItem key={f} value={f} className={CHIP}>
                   {W.filters[f]}
-                  {view ? (
-                    <span className="tabular-nums opacity-80">{view.counts[f] ?? 0}</span>
-                  ) : null}
+                  {view ? <span className="tabular-nums">{view.counts[f] ?? 0}</span> : null}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
@@ -520,7 +518,7 @@ export function MembersScreen() {
         customerId={search.member}
         seed={seed}
         card={card}
-        brandColor={storefront.data?.storefront.look.brandColor}
+        look={storefront.data?.storefront.look}
         shopSlug={shop.slug}
         now={now}
         online={online}

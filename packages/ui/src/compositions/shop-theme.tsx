@@ -84,7 +84,8 @@ export function ShopTheme({
 }: ShopThemeProps) {
   const palette = shopPalette(brandColor, surface, pageColor, cardColor);
   const vars = { ...shopThemeVars(palette), ...fontPairVars(fontPair) };
-  // Cards, sheets and dialogs carry most of the words, so the app's dark tokens follow the cards (T76 C4).
+  // Cards, sheets and dialogs carry most of the words, so the app's dark tokens follow the cards (T76 C4). A light
+  // shop sets .light, so inside the dark dashboard it never inherits the dashboard's dark tokens (T83).
   const dark = palette.dark;
   return (
     <div
@@ -92,7 +93,7 @@ export function ShopTheme({
       data-surface={dark ? 'dark' : 'light'}
       data-surface-mix={palette.mixed ? 'mixed' : undefined}
       data-font-pair={fontPair}
-      className={cn('contents font-sans', dark && 'dark', className)}
+      className={cn('contents font-sans text-foreground', dark ? 'dark' : 'light', className)}
       style={cssVars(vars)}
       {...props}
     >

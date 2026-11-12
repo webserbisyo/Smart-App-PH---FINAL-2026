@@ -132,7 +132,7 @@ export function PrizeClaimsScreen() {
           {CLAIM_STATUSES.map((s) => (
             <ToggleGroupItem key={s} value={s} className={CHIP}>
               {W.filters[s]}
-              <span className="tabular-nums opacity-80">{count(s)}</span>
+              <span className="tabular-nums">{count(s)}</span>
             </ToggleGroupItem>
           ))}
         </ToggleGroup>

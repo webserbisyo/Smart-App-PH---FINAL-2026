@@ -1,4 +1,7 @@
-:root {
+:root,
+/* A light shop inside the dark dashboard (decision T83): every token resets to the light set, so a preview
+   never borrows the dashboard's dark greys. */
+.light {
   --font-sans: 'Plus Jakarta Sans Variable', sans-serif;
   --font-heading: 'Plus Jakarta Sans Variable', sans-serif;
 

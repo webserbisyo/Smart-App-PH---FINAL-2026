@@ -86,7 +86,7 @@ function StampTile({
       variant="outline"
       size={size}
       radius="full"
-      className="text-sm font-semibold text-muted-foreground tabular"
+      className="text-sm font-semibold text-card-foreground tabular"
     >
       {number}
     </IconTile>

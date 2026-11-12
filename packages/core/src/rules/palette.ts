@@ -202,13 +202,25 @@ function darkenForWhite(base: Oklch, floor: number): Oklch | null {
 }
 
 /** Moves the lightness of `base` until text of `against` (or on it) reaches 4.5:1. */
-function untilReadable(base: Oklch, against: string, direction: 'darker' | 'lighter'): Oklch {
-  const step = direction === 'darker' ? -DARKEN_STEP : DARKEN_STEP;
+// A small margin: the colour is written rounded, and the browser draws that rounded value (T83). When no
+// shade reaches the margin, the plain 4.5:1 rule decides.
+const READABLE_MARGIN = 0.1;
+
+function firstReadable(base: Oklch, against: string, step: number, min: number): Oklch | null {
   for (let l = base.l; l >= 0 && l <= 1; l += step) {
     const candidate = toGamut({ ...base, l });
-    if (contrastOf(candidate, against) >= MIN_TEXT_CONTRAST) return candidate;
+    if (contrastOf(candidate, against) >= min) return candidate;
   }
-  return toGamut({ ...base, l: direction === 'darker' ? 0.2 : 0.9 });
+  return null;
+}
+
+function untilReadable(base: Oklch, against: string, direction: 'darker' | 'lighter'): Oklch {
+  const step = direction === 'darker' ? -DARKEN_STEP : DARKEN_STEP;
+  return (
+    firstReadable(base, against, step, MIN_TEXT_CONTRAST + READABLE_MARGIN) ??
+    firstReadable(base, against, step, MIN_TEXT_CONTRAST) ??
+    toGamut({ ...base, l: direction === 'darker' ? 0.2 : 0.9 })
+  );
 }
 
 /** Black or white text, whichever reads better on `bg`; every colour has one of the two at 4.5:1 or more. */
@@ -384,6 +396,7 @@ export function shopPalette(
       muted: mutedOn(page, pageDark),
       link: direction(page, pageDark),
     },
-    cardMuted: cardBase || mixed ? mutedOn(card, dark) : null,
+    // Always set (T83): a dark shop's captions read at 4.5:1 on its own cards, never the app's grey.
+    cardMuted: mutedOn(card, dark),
   };
 }

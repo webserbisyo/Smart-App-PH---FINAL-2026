@@ -327,7 +327,7 @@ export function ListView({
               className="h-10 gap-1.5 rounded-full border border-border bg-card px-3 text-sm font-semibold text-muted-foreground aria-pressed:border-primary aria-pressed:bg-accent aria-pressed:text-foreground md:h-8"
             >
               {ordersWords.list.all}
-              <span className="tabular-nums opacity-80">{all.length}</span>
+              <span className="tabular-nums">{all.length}</span>
             </ToggleGroupItem>
             {shownStatuses.map((s) => (
               <ToggleGroupItem
@@ -336,7 +336,7 @@ export function ListView({
                 className="h-10 gap-1.5 rounded-full border border-border bg-card px-3 text-sm font-semibold text-muted-foreground aria-pressed:border-primary aria-pressed:bg-accent aria-pressed:text-foreground md:h-8"
               >
                 {statusWord(s, kind)}
-                <span className="tabular-nums opacity-80">{counts[s]}</span>
+                <span className="tabular-nums">{counts[s]}</span>
               </ToggleGroupItem>
             ))}
           </ToggleGroup>

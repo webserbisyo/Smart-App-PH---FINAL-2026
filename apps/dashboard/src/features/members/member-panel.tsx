@@ -25,6 +25,7 @@ import {
   type MemberDetail,
   type OwnerLedgerEntry,
   type StampCardSettings,
+  type ShopLook,
 } from '@smartapp/core';
 import { errorCodeOf, useGiveClaim, useMember, useSaveMemberNote } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
@@ -47,7 +48,6 @@ import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-but
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { ResponsiveSheet } from '@smartapp/ui/compositions/responsive-sheet';
-import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import type { Point } from '@smartapp/ui/compositions/celebrate';
 import { StampCard } from '@smartapp/ui/compositions/stamp-card';
 import { cn } from 'cn';
@@ -55,6 +55,7 @@ import { env } from '@/app/env';
 import { Notice } from '@/app/notice';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { storefrontUrl } from '@/app/use-nav-items';
+import { ShopLookTheme } from '@/app/shop-look';
 import { AdjustDialog } from './adjust-dialog.js';
 import { MemberAvatar } from './member-rows.js';
 import { daysSince, lastInLabel } from './when.js';
@@ -67,7 +68,7 @@ export interface MemberPanelProps {
   // The row the owner tapped: the header shows at once while the rest loads.
   seed: CustomerRow | undefined;
   card: StampCardSettings | undefined;
-  brandColor: string | undefined;
+  look: ShopLook | undefined;
   shopSlug: string;
   now: Date;
   online: boolean;
@@ -195,7 +196,7 @@ function PanelHeader({
 function PanelBody({
   member,
   card,
-  brandColor,
+  look,
   shopSlug,
   now,
   online,
@@ -298,7 +299,7 @@ function PanelBody({
       <p className="-mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
         {W.panel.customerSees}
       </p>
-      {brandColor ? <ShopTheme brandColor={brandColor}>{stampCard}</ShopTheme> : stampCard}
+      <ShopLookTheme look={look}>{stampCard}</ShopLookTheme>
 
       <div className="-mt-1 flex flex-col items-center gap-1 text-center text-sm text-muted-foreground">
         {member.pendingStamps > 0 ? <p>{W.panel.pending(member.pendingStamps)}</p> : null}

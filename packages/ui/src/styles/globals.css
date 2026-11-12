@@ -261,7 +261,8 @@
   }
 }
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* A .light shop preview inside the dark dashboard drops the dark: styles too (decision T83). */
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
 @custom-variant pointer-coarse (@media (pointer: coarse));
 @custom-variant hover-hover (@media (hover: hover));
 @custom-variant keyboard-open (&:where([data-keyboard="open"], [data-keyboard="open"] *));
@@ -1070,6 +1071,10 @@
 
 .dark {
   color-scheme: dark;
+}
+
+.light {
+  color-scheme: light;
 }
 
 @layer base {

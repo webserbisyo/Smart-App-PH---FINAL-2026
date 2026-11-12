@@ -24,6 +24,7 @@ import {
   type StampCardSettings,
   type StampCardStatus,
   type StampRule,
+  type ShopLook,
 } from '@smartapp/core';
 import {
   ApiRequestError,
@@ -69,12 +70,12 @@ import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-gro
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
-import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import { StampCard } from '@smartapp/ui/compositions/stamp-card';
 import { env } from '@/app/env';
 import { Notice } from '@/app/notice';
 import { PageError } from '@/app/page-state';
 import { PesoInput } from '@/app/peso-input';
+import { ShopLookTheme } from '@/app/shop-look';
 import { useShop } from '@/app/shop';
 import { useDockClearance } from '@/app/use-dock-clearance';
 import { useOnlineStatus } from '@/app/use-online-status';
@@ -125,7 +126,7 @@ export function StampCardScreen() {
         key={JSON.stringify({ rule: card.rule, reward: card.reward })}
         card={card}
         items={items.data ?? []}
-        brandColor={storefront.data?.storefront.look.brandColor}
+        look={storefront.data?.storefront.look}
         catalog={vocab(shop.kind).catalog}
         online={online}
       />
@@ -172,13 +173,13 @@ function freeItemReward(item: OwnerItem, variantId: string | null, base: Reward)
 function StampCardEditor({
   card,
   items,
-  brandColor,
+  look,
   catalog,
   online,
 }: {
   card: StampCardSettings;
   items: OwnerItem[];
-  brandColor: string | undefined;
+  look: ShopLook | undefined;
   catalog: string;
   online: boolean;
 }) {
@@ -269,7 +270,7 @@ function StampCardEditor({
       <StatusSection status={card.status} online={online} />
 
       <aside className="flex flex-col gap-3 lg:sticky lg:top-4 lg:col-span-2 lg:col-start-4 lg:row-span-3 lg:row-start-1">
-        <Preview draft={draft} brandColor={brandColor} status={card.status} />
+        <Preview draft={draft} look={look} status={card.status} />
         {impact &&
         (impact.readyNow > 0 ||
           impact.loseReady > 0 ||
@@ -650,11 +651,11 @@ function StatusSection({ status, online }: { status: StampCardStatus; online: bo
 /** The storefront card as members will see it, in the shop's colours, with a few stamps on it. */
 function Preview({
   draft,
-  brandColor,
+  look,
   status,
 }: {
   draft: Draft;
-  brandColor: string | undefined;
+  look: ShopLook | undefined;
   status: StampCardStatus;
 }) {
   const { rule, reward } = draft;
@@ -691,7 +692,7 @@ function Preview({
         ) : null}
       </div>
       <div className={status === 'off' ? 'opacity-60' : undefined}>
-        {brandColor ? <ShopTheme brandColor={brandColor}>{card}</ShopTheme> : card}
+        <ShopLookTheme look={look}>{card}</ShopLookTheme>
       </div>
     </div>
   );

@@ -24,15 +24,14 @@ import { useNow, useStorefront } from '@smartapp/data';
 import { Card, CardContent } from '@smartapp/ui/components/card';
 import { IconTile } from '@smartapp/ui/components/reui/icon-tile';
 import { InfoList } from '@smartapp/ui/compositions/info-list';
-import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
+import { ShopLookTheme } from '@/app/shop-look';
 
 // "Customers see" previews beside a settings form on laptops (decision T64). They draw from the
 // unsaved draft in the shop's own colours, so the owner sees a change before saving it.
 
 function Themed({ slug, children }: { slug: string; children: React.ReactNode }) {
   const storefront = useStorefront(slug);
-  const brandColor = storefront.data?.storefront.look.brandColor;
-  return brandColor ? <ShopTheme brandColor={brandColor}>{children}</ShopTheme> : <>{children}</>;
+  return <ShopLookTheme look={storefront.data?.storefront.look}>{children}</ShopLookTheme>;
 }
 
 function PreviewTile({ icon, label }: { icon: React.ReactNode; label: string }) {

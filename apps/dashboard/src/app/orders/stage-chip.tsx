@@ -23,7 +23,7 @@ export function StageChip({ stage, kind, count, className }: StageChipProps) {
     >
       <StageIcon stage={stage} kind={kind} />
       {stageLabel(stage, kind)}
-      {count !== undefined ? <span className="tabular-nums opacity-80">{count}</span> : null}
+      {count !== undefined ? <span className="tabular-nums">{count}</span> : null}
     </Badge>
   );
 }

@@ -567,10 +567,7 @@ export function ItemsList() {
                 <ToggleGroupItem
                   key={tab}
                   value={tab}
-                  className={cn(
-                    'h-11 gap-1 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground hover:bg-transparent hover:text-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs sm:gap-1.5 sm:px-3 md:h-8',
-                    counts[tab] === 0 && filter !== tab && 'opacity-50',
-                  )}
+                  className="h-11 gap-1 rounded-lg px-2.5 text-sm font-semibold text-muted-foreground hover:bg-transparent hover:text-foreground aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-xs sm:gap-1.5 sm:px-3 md:h-8"
                 >
                   {filterLabel[tab]}
                   <span className="text-xs text-muted-foreground tabular">{counts[tab]}</span>
