@@ -992,6 +992,10 @@ export const words = {
       setsLabel: 'Face styles',
       pick: (index: number) => `Face ${index}`,
       upload: 'Use my photo',
+      make: 'Make my own',
+      makeTitle: 'Make your picture',
+      makeHint: 'Pick each piece. It stays on this phone.',
+      useMade: 'Use this picture',
       cropTitle: 'Fit your photo',
       cropHint: 'Drag to move. Pinch or use the buttons to zoom.',
       cropArea: 'Photo crop area',
@@ -2752,6 +2756,46 @@ export const membersWords = {
 } as const;
 
 // Owner Settings (decisions T64 to T68): Your shop, You and Plan.
+// The picture maker (T83), the same for owners and customers. The lists follow the drawing's own order.
+export const avatarMakerWords = {
+  partsLabel: 'Piece to change',
+  parts: {
+    hair: 'Hair',
+    hairColor: 'Hair colour',
+    skin: 'Skin',
+    eyes: 'Eyes',
+    eyebrows: 'Eyebrows',
+    mouth: 'Mouth',
+    glasses: 'Glasses',
+    earrings: 'Earrings',
+    extra: 'Extras',
+  },
+  choice: (part: string, n: number) => `${part} ${n}`,
+  none: 'None',
+  hairColors: [
+    'Auburn',
+    'Copper',
+    'Red',
+    'Platinum',
+    'Blonde',
+    'Ash brown',
+    'Brown',
+    'Dark brown',
+    'Black',
+    'Grey',
+    'Green',
+    'Teal',
+    'Pink',
+    'Plum',
+  ],
+  skins: ['Light', 'Medium', 'Brown', 'Dark'],
+  extras: ['None', 'Moustache', 'Blush', 'Beauty mark', 'Freckles'],
+  surprise: 'Surprise me',
+  loading: 'Getting the pieces ready',
+  failed: 'Couldn’t load the pieces. Check your connection, then try again.',
+  tryAgain: 'Try again',
+} as const;
+
 export const settingsWords = {
   title: 'Settings',
   sections: 'Settings sections',
@@ -3046,14 +3090,7 @@ export const settingsWords = {
     face: (n: number) => `Face ${n}`,
     surprise: 'Surprise me',
     initialsLine: (initials: string) => `Your initials, ${initials}, on the colour you pick.`,
-    hair: 'Hair',
-    hairs: { short: 'Short', bob: 'Bob', curly: 'Curly', long: 'Long', bun: 'Bun', wavy: 'Wavy' },
-    hairColor: 'Hair colour',
-    hairColors: { black: 'Black', brown: 'Brown', golden: 'Golden' },
-    glasses: 'Glasses',
-    earrings: 'Earrings',
-    makeLine:
-      'A ready-made picture, so it shows instantly everywhere and uses none of your storage.',
+    makeLine: 'Pick each piece. It is drawn on your device and uses none of your storage.',
     photoLine: 'We fit it in a circle and keep a 256 px copy, about 20 KB of your storage.',
     pickPhoto: 'Pick a photo',
     cropTitle: 'Fit your photo',
@@ -3077,7 +3114,8 @@ export const settingsWords = {
     use: 'Use this picture',
     cancel: 'Cancel',
     saved: 'Picture saved',
-    credit: 'Faces by DiceBear. Bright faces by Micah Lanier (CC BY 4.0).',
+    credit:
+      'Faces by DiceBear. Bright faces by Micah Lanier, Make your own by Lisa Wischofsky (CC BY 4.0).',
     yourPicture: 'Your picture',
   },
   notifications: {

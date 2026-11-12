@@ -2,6 +2,8 @@
 // memory fallback when storage is blocked, and a subscribe API for useSyncExternalStore.
 import { z } from 'zod';
 import {
+  AvatarMakeSchema,
+  AvatarSvgSchema,
   BasketLineSchema,
   CheckoutDraftSchema,
   IsoDateTimeSchema,
@@ -120,6 +122,8 @@ export const CustomerAvatarSchema = z.discriminatedUnion('kind', [
     kind: z.literal('photo'),
     dataUrl: z.string().startsWith('data:image/').max(400_000),
   }),
+  // Made in the picture maker (T83): the choices, to open it again, and the drawing.
+  z.object({ kind: z.literal('made'), make: AvatarMakeSchema, svg: AvatarSvgSchema }),
 ]);
 export type CustomerAvatar = z.infer<typeof CustomerAvatarSchema>;
 

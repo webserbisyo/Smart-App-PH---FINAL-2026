@@ -1,13 +1,16 @@
 'use client';
 
 import { useId, useRef, useState, type ChangeEvent } from 'react';
-import { CameraIcon, MinusIcon, PlusIcon } from 'lucide-react';
+import { CameraIcon, MinusIcon, PlusIcon, SmilePlusIcon } from 'lucide-react';
 import {
   AVATAR_SETS,
   AvatarSetEnum,
+  STARTING_MAKE,
   avatarChoices,
   avatarSetOf,
+  avatarSvgSrc,
   words,
+  type AvatarMake,
   type AvatarSet,
 } from '@smartapp/core';
 import {
@@ -15,6 +18,7 @@ import {
   compressImage,
   cropImage,
   saveMyAvatar,
+  useMySavedAvatar,
   type CustomerAvatar,
   type PixelArea,
 } from '@smartapp/data';
@@ -24,6 +28,7 @@ import { Cropper, CropperArea, CropperImage } from '@smartapp/ui/components/crop
 import { Spinner } from '@smartapp/ui/components/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
+import { AvatarMaker } from '@smartapp/ui/compositions/avatar-maker';
 import { notify } from '@smartapp/ui/compositions/notify';
 import {
   ResponsiveDialog,
@@ -47,13 +52,14 @@ export interface AvatarPickerDialogProps {
   readonly onOpenChange: (open: boolean) => void;
 }
 
-type Step = 'pick' | 'crop';
+type Step = 'pick' | 'crop' | 'make';
 
 function draftOf(src: string): CustomerAvatar {
   return src.startsWith('data:') ? { kind: 'photo', dataUrl: src } : { kind: 'face', path: src };
 }
 
 function srcOf(draft: CustomerAvatar): string {
+  if (draft.kind === 'made') return avatarSvgSrc(draft.svg);
   return draft.kind === 'photo' ? draft.dataUrl : draft.path;
 }
 
@@ -62,8 +68,8 @@ function setOf(src: string): AvatarSet {
 }
 
 /**
- * The picker itself (decisions R23, R24, T80): four face styles of 12 (DiceBear), or their own photo fitted
- * in a circle with the DiceUI Cropper. Loaded by AvatarPicker; it mounts afresh on each open, so every
+ * The picker itself (decisions R23, R24, T80, T83): four face styles of 12 (DiceBear), a picture made in the
+ * shared picture maker, or their own photo fitted in a circle with the DiceUI Cropper. Loaded by AvatarPicker; it mounts afresh on each open, so every
  * open starts from the picture shown now.
  */
 export function AvatarPickerDialog({
@@ -76,7 +82,12 @@ export function AvatarPickerDialog({
   const fileRef = useRef<HTMLInputElement>(null);
   const hintId = useId();
   const [step, setStep] = useState<Step>('pick');
-  const [draft, setDraft] = useState<CustomerAvatar>(() => draftOf(current));
+  const saved = useMySavedAvatar(slug);
+  const [draft, setDraft] = useState<CustomerAvatar>(() => saved ?? draftOf(current));
+  // The maker's picture: its choices and, once drawn, the drawing.
+  const [made, setMade] = useState<{ make: AvatarMake; svg: string | null }>(() =>
+    saved?.kind === 'made' ? saved : { make: STARTING_MAKE, svg: null },
+  );
   const [set, setSet] = useState<AvatarSet>(() => setOf(current));
   const [source, setSource] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -137,11 +148,50 @@ export function AvatarPickerDialog({
       <ResponsiveDialog
         open={open}
         onOpenChange={onOpenChange}
-        title={step === 'crop' ? W.cropTitle : W.title}
-        description={step === 'crop' ? W.cropHint : W.hint}
+        title={step === 'crop' ? W.cropTitle : step === 'make' ? W.makeTitle : W.title}
+        description={step === 'crop' ? W.cropHint : step === 'make' ? W.makeHint : W.hint}
         scroll
       >
-        {step === 'crop' && source ? (
+        {step === 'make' ? (
+          <div id="avatar-make" className="flex flex-col gap-4">
+            <Avatar className="size-20 self-center bg-shop-10-soft ring-4 ring-member-soft">
+              {made.svg ? <AvatarImage src={avatarSvgSrc(made.svg)} alt="" /> : null}
+              <AvatarFallback className="bg-member text-xl font-semibold text-member-foreground">
+                {initials(name)}
+              </AvatarFallback>
+            </Avatar>
+            <AvatarMaker
+              value={made.make}
+              tileClassName="bg-shop-10-soft"
+              onChange={(make, svg) => setMade({ make, svg })}
+            />
+            <ResponsiveDialogFooter>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 flex-1 rounded-full text-base"
+                  onClick={() => setStep('pick')}
+                >
+                  {W.back}
+                </Button>
+                <Button
+                  type="button"
+                  id="avatar-use-made"
+                  className="h-12 flex-1 rounded-full text-base font-semibold"
+                  disabled={!made.svg}
+                  onClick={() => {
+                    if (!made.svg) return;
+                    setDraft({ kind: 'made', make: made.make, svg: made.svg });
+                    setStep('pick');
+                  }}
+                >
+                  {W.useMade}
+                </Button>
+              </div>
+            </ResponsiveDialogFooter>
+          </div>
+        ) : step === 'crop' && source ? (
           <div id="avatar-crop" className="flex flex-col gap-4">
             <div className="relative h-72 overflow-hidden rounded-2xl bg-muted sm:h-80">
               <Cropper
@@ -249,6 +299,16 @@ export function AvatarPickerDialog({
                     <CameraIcon aria-hidden="true" className="size-4" />
                   )}
                   {W.upload}
+                </Button>
+                <Button
+                  type="button"
+                  id="avatar-make-open"
+                  variant="outline"
+                  className="h-11 gap-2 rounded-full"
+                  onClick={() => setStep('make')}
+                >
+                  <SmilePlusIcon aria-hidden="true" className="size-4" />
+                  {W.make}
                 </Button>
                 {error ? (
                   <p role="alert" className="text-sm text-destructive-text">

@@ -1,6 +1,7 @@
 // Hooks for data kept on the phone. Every component and tab sees the same basket (useSyncExternalStore).
 import { useSyncExternalStore } from 'react';
 import {
+  avatarSvgSrc,
   defaultAvatar,
   isFinal,
   lineIdentity,
@@ -308,10 +309,16 @@ export function useMyAvatar(slug: string, fallbackKey: string): string {
   const { value } = useDeviceEntry(getDeviceStorage().customerAvatar, slug);
   if (value?.kind === 'photo') return value.dataUrl;
   if (value?.kind === 'face') return value.path;
+  if (value?.kind === 'made') return avatarSvgSrc(value.svg);
   return defaultAvatar(fallbackKey);
 }
 
-/** Saves the picked face or cropped photo on this phone; null goes back to the default face. */
+/** The member's saved picture on this phone as it was picked, or null for the default face. */
+export function useMySavedAvatar(slug: string): CustomerAvatar | null {
+  return useDeviceEntry(getDeviceStorage().customerAvatar, slug).value ?? null;
+}
+
+/** Saves the picked face, cropped photo or made picture on this phone; null goes back to the default face. */
 export function saveMyAvatar(slug: string, avatar: CustomerAvatar | null): void {
   const entry = getDeviceStorage().customerAvatar;
   if (avatar) entry.write(slug, avatar);

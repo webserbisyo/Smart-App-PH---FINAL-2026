@@ -20,6 +20,7 @@ export * from './schemas/shop-pack.js';
 export * from './schemas/owner-orders.js';
 export * from './schemas/schedule.js';
 export * from './schemas/members.js';
+export * from './schemas/avatar-make.js';
 export * from './schemas/settings.js';
 export * from './schemas/owner-home.js';
 export * from './schemas/editor.js';

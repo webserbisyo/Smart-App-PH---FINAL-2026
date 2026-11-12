@@ -272,14 +272,6 @@ export const AVATAR_THEMES = [
 export const AvatarThemeEnum = z.enum(AVATAR_THEMES);
 export type AvatarTheme = z.infer<typeof AvatarThemeEnum>;
 
-// Make your own: six hair styles of the Soft (Lorelei) face in three colours.
-export const AVATAR_HAIRS = ['short', 'bob', 'curly', 'long', 'bun', 'wavy'] as const;
-export const AvatarHairEnum = z.enum(AVATAR_HAIRS);
-export type AvatarHair = z.infer<typeof AvatarHairEnum>;
-export const AVATAR_HAIR_COLORS = ['black', 'brown', 'golden'] as const;
-export const AvatarHairColorEnum = z.enum(AVATAR_HAIR_COLORS);
-export type AvatarHairColor = z.infer<typeof AvatarHairColorEnum>;
-
 // Where a shop's 500 MB goes (T66). Customer payment proofs are never blocked, even when full.
 export const STORAGE_KINDS = ['menu', 'proofs', 'look', 'qr', 'profile'] as const;
 export const StorageKindEnum = z.enum(STORAGE_KINDS);

@@ -4,7 +4,7 @@
 import type { DistanceRow, OpeningRange } from '../schemas/storefront.js';
 import type { OwnerAvatar } from '../schemas/settings.js';
 import type { PlanStatus, StorageLevel } from '../schemas/enums.js';
-import { AVATAR_HAIR_COLORS, AVATAR_HAIRS } from '../schemas/enums.js';
+import { avatarSvgSrc } from '../schemas/avatar-make.js';
 import { addDays, clockMinutes, manilaDate } from './time.js';
 
 // ---------- hours ----------
@@ -193,15 +193,11 @@ export function imageKindName(kind: ImageKind): string {
 export const OWNER_AVATAR_DIR = '/avatars/owner';
 export const OWNER_FACES_PER_STYLE = 12;
 
-/** The file of a face or a Make your own picture; null for initials and photos (the photo has its own ref). */
+/** The image of a face or a made picture; null for initials and photos (the photo has its own ref). */
 export function ownerAvatarFile(avatar: OwnerAvatar): string | null {
   if (avatar.kind === 'face')
     return `${OWNER_AVATAR_DIR}/${avatar.style}-${String(avatar.face).padStart(2, '0')}.webp`;
-  if (avatar.kind === 'custom') {
-    const hair = AVATAR_HAIRS.indexOf(avatar.hair);
-    const color = AVATAR_HAIR_COLORS.indexOf(avatar.hairColor);
-    return `${OWNER_AVATAR_DIR}/make/${hair}${color}${avatar.glasses ? 1 : 0}${avatar.earrings ? 1 : 0}.webp`;
-  }
+  if (avatar.kind === 'custom') return avatarSvgSrc(avatar.svg);
   return null;
 }
 

@@ -1,6 +1,7 @@
 // Owner Settings (decisions T64 to T68): the shop's facts, hours, ordering, delivery and payments; the owner's
 // profile and emails; the Pro plan, storage and exports. The shop always comes from the owner's login (T34).
 import { z } from 'zod';
+import { AvatarMakeSchema, AvatarSvgSchema } from './avatar-make.js';
 import { ShopKindEnum } from './demo-shop.js';
 import {
   CentavosSchema,
@@ -10,8 +11,6 @@ import {
   MediaRefSchema,
 } from './common.js';
 import {
-  AvatarHairColorEnum,
-  AvatarHairEnum,
   AvatarThemeEnum,
   CleanupKindEnum,
   ExportRangeEnum,
@@ -91,11 +90,10 @@ export const OwnerAvatarSchema = z.discriminatedUnion('kind', [
     theme: AvatarThemeEnum,
   }),
   z.object({
+    // Made on the device (T83): the choices to open the maker again, and the drawing to show.
     kind: z.literal('custom'),
-    hair: AvatarHairEnum,
-    hairColor: AvatarHairColorEnum,
-    glasses: z.boolean(),
-    earrings: z.boolean(),
+    make: AvatarMakeSchema,
+    svg: AvatarSvgSchema,
     theme: AvatarThemeEnum,
   }),
   z.object({ kind: z.literal('initials'), theme: AvatarThemeEnum }),

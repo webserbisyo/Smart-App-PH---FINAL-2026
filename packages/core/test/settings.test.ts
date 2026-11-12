@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AVATAR_SVG_MAX,
+  AvatarMakeSchema,
+  AvatarSvgSchema,
+  STARTING_MAKE,
   OwnerAvatarSchema,
   copyDayToAll,
   distanceRowFor,
@@ -122,22 +126,30 @@ describe('uploads (T65)', () => {
 });
 
 describe('owner picture (T68)', () => {
-  it('points faces and Make your own at shipped files; photos and initials have none', () => {
+  it('points faces at shipped files and made pictures at their drawing; photos and initials have none', () => {
     expect(ownerAvatarFile({ kind: 'face', style: 'pixel', face: 5, theme: 'sun' })).toBe(
       '/avatars/owner/pixel-05.webp',
     );
     expect(
-      ownerAvatarFile({
-        kind: 'custom',
-        hair: 'curly',
-        hairColor: 'brown',
-        glasses: true,
-        earrings: false,
-        theme: 'mint',
-      }),
-    ).toBe('/avatars/owner/make/2110.webp');
+      ownerAvatarFile({ kind: 'custom', make: STARTING_MAKE, svg: '<svg></svg>', theme: 'mint' }),
+    ).toBe('data:image/svg+xml;charset=utf-8,%3Csvg%3E%3C%2Fsvg%3E');
     expect(ownerAvatarFile({ kind: 'initials', theme: 'navy' })).toBeNull();
     expect(personInitials('Juan Dela Cruz')).toBe('JC');
     expect(OwnerAvatarSchema.safeParse(startingAvatar('Kris')).success).toBe(true);
+  });
+});
+
+describe('made picture (T83)', () => {
+  it('keeps each piece in range and only safe drawings', () => {
+    expect(AvatarMakeSchema.safeParse(STARTING_MAKE).success).toBe(true);
+    expect(AvatarMakeSchema.safeParse({ ...STARTING_MAKE, hair: 45 }).success).toBe(false);
+    expect(AvatarMakeSchema.safeParse({ ...STARTING_MAKE, glasses: 5 }).success).toBe(true);
+    expect(AvatarSvgSchema.safeParse('<svg viewBox="0 0 1 1"></svg>').success).toBe(true);
+    expect(AvatarSvgSchema.safeParse('<img src=x>').success).toBe(false);
+    expect(AvatarSvgSchema.safeParse('<svg><script>alert(1)</script></svg>').success).toBe(false);
+    expect(AvatarSvgSchema.safeParse('<svg onload="x()"></svg>').success).toBe(false);
+    expect(AvatarSvgSchema.safeParse(`<svg>${'a'.repeat(AVATAR_SVG_MAX)}</svg>`).success).toBe(
+      false,
+    );
   });
 });

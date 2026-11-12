@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { CameraIcon, MinusIcon, PlusIcon, ShuffleIcon } from 'lucide-react';
 import {
-  AVATAR_HAIR_COLORS,
-  AVATAR_HAIRS,
   OWNER_AVATAR_STYLES,
+  STARTING_MAKE,
   OWNER_FACES_PER_STYLE,
   UPLOAD_ACCEPT,
   errorWords,
   ownerAvatarFile,
   settingsWords,
+  type AvatarMake,
   type AvatarTheme,
   type OwnerAvatar,
   type OwnerAvatarStyle,
@@ -16,10 +16,10 @@ import {
 import { cropImage, errorCodeOf, useSaveProfile } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Cropper, CropperArea, CropperImage } from '@smartapp/ui/components/cropper';
-import { Switch } from '@smartapp/ui/components/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
+import { AvatarMaker } from '@smartapp/ui/compositions/avatar-maker';
 import { notify } from '@smartapp/ui/compositions/notify';
 import {
   ResponsiveDialog,
@@ -60,8 +60,9 @@ async function dataUrlToFile(dataUrl: string): Promise<File> {
 }
 
 /**
- * Change picture (decision T68): Faces (6 styles × 12, or initials), Make your own from ready-made
- * pieces, or a photo fitted in a circle and kept at 256 px. Faces and made pictures use no storage.
+ * Change picture (decisions T68, T83): Faces (6 styles × 12, or initials), Make your own (the shared
+ * picture maker, drawn on the device), or a photo fitted in a circle and kept at 256 px. Faces and made
+ * pictures use no storage.
  */
 export function AvatarPicker({
   open,
@@ -104,17 +105,11 @@ function PickerBody({
   const [style, setStyle] = React.useState<StyleChoice>(
     current.kind === 'face' ? current.style : current.kind === 'initials' ? 'initials' : 'soft',
   );
-  const [made, setMade] = React.useState(
+  // The made picture, kept while switching tabs; its drawing arrives once the maker has loaded.
+  const [made, setMade] = React.useState<{ make: AvatarMake; svg: string | null }>(
     current.kind === 'custom'
-      ? current
-      : {
-          kind: 'custom' as const,
-          hair: AVATAR_HAIRS[0],
-          hairColor: AVATAR_HAIR_COLORS[0],
-          glasses: false,
-          earrings: false,
-          theme,
-        },
+      ? { make: current.make, svg: current.svg }
+      : { make: STARTING_MAKE, svg: null },
   );
   const saveProfile = useSaveProfile();
   const action = useAsyncAction();
@@ -125,7 +120,6 @@ function PickerBody({
   const pickTheme = (t: AvatarTheme) => {
     setTheme(t);
     setDraft((d) => withTheme(d, t));
-    setMade((m) => ({ ...m, theme: t }));
   };
 
   const pickStyle = (next: StyleChoice) => {
@@ -175,7 +169,8 @@ function PickerBody({
           const next = TABS.find((t) => t === value);
           if (!next) return;
           setTab(next);
-          if (next === 'make') setDraft({ ...made, theme });
+          if (next === 'make' && made.svg)
+            setDraft({ kind: 'custom', make: made.make, svg: made.svg, theme });
           if (next === 'faces') pickStyle(style);
         }}
         className="gap-4"
@@ -264,61 +259,16 @@ function PickerBody({
 
         <TabsContent value="make" className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">{W.makeLine}</p>
-          <PieceRow label={W.hair}>
-            <ToggleGroup
-              aria-label={W.hair}
-              value={[made.hair]}
-              onValueChange={(value) => {
-                const hair = AVATAR_HAIRS.find((h) => h === value[0]);
-                if (!hair) return;
-                const next = { ...made, hair };
-                setMade(next);
-                setDraft(next);
+          {tab === 'make' ? (
+            <AvatarMaker
+              value={made.make}
+              tileClassName={AVATAR_BG[theme]}
+              onChange={(make, svg) => {
+                setMade({ make, svg });
+                setDraft({ kind: 'custom', make, svg, theme });
               }}
-              className="flex-wrap justify-start"
-            >
-              {AVATAR_HAIRS.map((h) => (
-                <ToggleGroupItem key={h} value={h} className="h-11 px-3 md:h-9">
-                  {W.hairs[h]}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </PieceRow>
-          <PieceRow label={W.hairColor}>
-            <ToggleGroup
-              aria-label={W.hairColor}
-              value={[made.hairColor]}
-              onValueChange={(value) => {
-                const hairColor = AVATAR_HAIR_COLORS.find((c) => c === value[0]);
-                if (!hairColor) return;
-                const next = { ...made, hairColor };
-                setMade(next);
-                setDraft(next);
-              }}
-              className="flex-wrap justify-start"
-            >
-              {AVATAR_HAIR_COLORS.map((c) => (
-                <ToggleGroupItem key={c} value={c} className="h-11 px-3 md:h-9">
-                  {W.hairColors[c]}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          </PieceRow>
-          <div className="flex flex-wrap gap-6">
-            {(['glasses', 'earrings'] as const).map((piece) => (
-              <label key={piece} className="flex min-h-11 items-center gap-3 text-sm font-medium">
-                <Switch
-                  checked={made[piece]}
-                  onCheckedChange={(on) => {
-                    const next = { ...made, [piece]: on };
-                    setMade(next);
-                    setDraft(next);
-                  }}
-                />
-                {W[piece]}
-              </label>
-            ))}
-          </div>
+            />
+          ) : null}
         </TabsContent>
 
         <TabsContent value="photo">
@@ -369,15 +319,6 @@ function PickerBody({
           </AsyncButton>
         </div>
       </ResponsiveDialogFooter>
-    </div>
-  );
-}
-
-function PieceRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-sm font-medium text-foreground">{label}</p>
-      {children}
     </div>
   );
 }

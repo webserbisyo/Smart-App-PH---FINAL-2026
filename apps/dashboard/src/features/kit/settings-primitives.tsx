@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { STARTING_MAKE, avatarSvgSrc, type AvatarMake } from '@smartapp/core';
+import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
 import {
   CompareSlider,
   CompareSliderAfter,
@@ -26,7 +28,32 @@ import {
   TimePickerSeparator,
   TimePickerTrigger,
 } from '@smartapp/ui/components/time-picker';
+import { AvatarMaker } from '@smartapp/ui/compositions/avatar-maker';
 import { KitSection } from './kit-section.js';
+
+function MakerDemo() {
+  const [made, setMade] = React.useState<{ make: AvatarMake; svg: string | null }>({
+    make: STARTING_MAKE,
+    svg: null,
+  });
+  return (
+    <div className="flex max-w-xl flex-col gap-4">
+      <Avatar className="size-20 bg-avatar-sky">
+        {made.svg ? <AvatarImage src={avatarSvgSrc(made.svg)} alt="" /> : null}
+        <AvatarFallback className="bg-avatar-sky">JM</AvatarFallback>
+      </Avatar>
+      <AvatarMaker
+        value={made.make}
+        tileClassName="bg-avatar-sky"
+        onChange={(make, svg) => setMade({ make, svg })}
+      />
+      <p className="text-xs text-muted-foreground tabular-nums">
+        Saved as {JSON.stringify(made.make)} and a {Math.round((made.svg?.length ?? 0) / 1000)} KB
+        drawing
+      </p>
+    </div>
+  );
+}
 
 function TimeDemo() {
   const [value, setValue] = React.useState('09:00');
@@ -71,10 +98,18 @@ function GaugeDemo({ used, tone }: { used: number; tone: string }) {
   );
 }
 
-/** Settings pieces on /kit (T64 to T66): DiceUI Time Picker, Gauge and Compare Slider. */
+/** Settings pieces on /kit (T64 to T66, T83): DiceUI Time Picker, Gauge, Compare Slider and the picture maker. */
 export function SettingsPrimitiveSections() {
   return (
     <>
+      <KitSection
+        title="Picture maker"
+        library="composition (Toggle Group, Skeleton, DiceBear Adventurer)"
+        path="packages/ui/src/compositions/avatar-maker.tsx"
+        usedIn="Settings Change picture, Make your own, and the storefront Account picture, Make my own (T83)"
+      >
+        <MakerDemo />
+      </KitSection>
       <KitSection
         title="Time Picker"
         library="DiceUI (base-nova)"
