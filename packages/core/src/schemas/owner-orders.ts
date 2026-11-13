@@ -1,7 +1,13 @@
 import { z } from 'zod';
 import { CentavosSchema, IdSchema, IsoDateTimeSchema, MediaRefSchema } from './common.js';
-import { OrderStatusEnum, OrderTypeEnum, PaymentMethodEnum, PaymentStatusEnum } from './enums.js';
-import { OrderReceiptSchema, ProofSchema } from './order.js';
+import {
+  ChatLockEnum,
+  OrderStatusEnum,
+  OrderTypeEnum,
+  PaymentMethodEnum,
+  PaymentStatusEnum,
+} from './enums.js';
+import { OrderMessageSchema, OrderReceiptSchema, ProofSchema } from './order.js';
 
 // One line on the kitchen / packing ticket (up to 8 on the card).
 export const TicketLineSchema = z.object({
@@ -75,3 +81,28 @@ export const PaymentSchema = z.object({
   proofs: z.array(ProofSchema),
 });
 export type Payment = z.infer<typeof PaymentSchema>;
+
+// One row of the owner's Chats list (T87). One chat per order for now; `key` is the member's or the
+// order's, so a member's chat can run across orders once live chat arrives (MVP B) with no new list.
+export const ChatSummarySchema = z.object({
+  key: z.string().min(1),
+  orderId: IdSchema,
+  orderNo: z.number().int().min(1),
+  status: OrderStatusEnum,
+  customerName: z.string().min(1),
+  customerPhone: z.string().min(1),
+  isMember: z.boolean(),
+  isFirstOrder: z.boolean(),
+  memberStamps: z
+    .object({ have: z.number().int().nonnegative(), goal: z.number().int().positive() })
+    .nullable(),
+  // The newest line, from either side.
+  last: OrderMessageSchema,
+  // Since when the customer's newest line has waited for the shop (null once the shop answered).
+  waitingSince: IsoDateTimeSchema.nullable(),
+  // The customer's lines the shop has not seen yet.
+  unseen: z.number().int().nonnegative(),
+  photosUsed: z.number().int().nonnegative(),
+  lock: ChatLockEnum,
+});
+export type ChatSummary = z.infer<typeof ChatSummarySchema>;

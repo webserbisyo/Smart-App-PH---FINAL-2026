@@ -1,29 +1,27 @@
 import * as React from 'react';
 import {
   CalendarClockIcon,
-  CheckIcon,
   ChevronDownIcon,
   CircleXIcon,
   ExternalLinkIcon,
-  ImageOffIcon,
-  LockIcon,
+  ImageIcon,
+  MessageCircleIcon,
   MessageSquareTextIcon,
   MoreHorizontalIcon,
   PhoneIcon,
   PrinterIcon,
-  ShieldCheckIcon,
   TruckIcon,
   XIcon,
 } from 'lucide-react';
 import type { BoardOrder, OrderStatus, OwnerOrder, ShopKind } from '@smartapp/core';
 import {
+  PROOFS_PER_ORDER,
   canCancel,
   canReschedule,
   errorWords,
   formatClock,
   formatManila,
   formatPeso,
-  hasReference,
   isFinal,
   manilaDate,
   isPayLater,
@@ -39,7 +37,6 @@ import {
   useMarkSeen,
   useOrderDetail,
   useRecordPayment,
-  useReviewPayment,
   useSaveDeliveryInfo,
   useSaveOwnerNote,
 } from '@smartapp/data';
@@ -54,7 +51,6 @@ import {
 } from '@smartapp/ui/components/alert-dialog';
 import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
 import { Badge } from '@smartapp/ui/components/reui/badge';
-import { Bubble, BubbleContent } from '@smartapp/ui/components/bubble';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Collapsible,
@@ -73,12 +69,6 @@ import {
 } from '@smartapp/ui/components/dropdown-menu';
 import { Field, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
-import {
-  Message,
-  MessageContent,
-  MessageFooter,
-  MessageGroup,
-} from '@smartapp/ui/components/message';
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import {
@@ -89,6 +79,7 @@ import {
   StepperSeparator,
   StepperTitle,
 } from '@smartapp/ui/components/reui/stepper';
+import { Tabs, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import {
   Timeline,
@@ -133,9 +124,9 @@ import {
 } from './change-time.js';
 import { WhenCard } from './when-card.js';
 import { MessengerOrderButton } from './messenger-inbox.js';
+import { ChatFooter, ChatThread, chatWaits, scrollBox } from './order-chat.js';
 
 const CANCEL_REASON_KEYS = ['sold_out', 'closing_early', 'customer_asked', 'other'] as const;
-const REJECT_REASON_KEYS = ['amount', 'unclear', 'account', 'missing'] as const;
 type CancelReasonKey = (typeof CANCEL_REASON_KEYS)[number];
 
 /** The board's card shape from the full order, for an order opened from a link (no card loaded yet). */
@@ -187,8 +178,13 @@ export interface OrderPanelProps {
   shopName: string;
   // The Calendar asked for Change time on a day (an order dropped where its time isn't open, T86).
   timeRequest?: { orderId: string; day: string } | null | undefined;
+  // Order or Chat (T87); the address keeps it, so the Chats list can open an order on its chat.
+  tab: PanelTab;
+  onTabChange: (tab: PanelTab) => void;
   onClose: () => void;
 }
+
+export type PanelTab = 'order' | 'chat';
 
 /**
  * The order panel (D5): a right Sheet from 768 px, a bottom Drawer below. The header, steps and payment
@@ -201,6 +197,8 @@ export function OrderPanel({
   kind,
   shopName,
   timeRequest,
+  tab,
+  onTabChange,
   onClose,
 }: OrderPanelProps) {
   // Keep the last order while the panel slides away.
@@ -251,71 +249,112 @@ export function OrderPanel({
       ? ordersWords.panel.title(orderNoLabel(order.orderNo))
       : ordersWords.panel.close;
 
+  const chat = tab === 'chat' && !timeMode;
+
   return (
-    <ResponsiveSheet
-      open={open}
-      onOpenChange={(next) => {
-        if (next) return;
-        // The phone's back gesture (and Escape) steps back from Change time before closing.
-        if (timeMode) {
+    // The tabs wrap the whole panel (header, body and footer reach it through the portal); `contents`
+    // keeps the wrapper out of the page's layout.
+    <Tabs
+      value={tab}
+      onValueChange={(next) => onTabChange(next === 'chat' ? 'chat' : 'order')}
+      className="contents"
+    >
+      <ResponsiveSheet
+        open={open}
+        onOpenChange={(next) => {
+          if (next) return;
+          // The phone's back gesture (and Escape) steps back from Change time before closing.
+          if (timeMode) {
+            setMode('order');
+            return;
+          }
           setMode('order');
-          return;
+          onClose();
+        }}
+        title={title}
+        header={
+          timeMode ? (
+            <ChangeTimeHeader ct={ct} onBack={() => setMode('order')} />
+          ) : order ? (
+            <>
+              <PanelHeader order={order} kind={kind} onClose={onClose} />
+              <PanelTabs order={order} />
+            </>
+          ) : (
+            <HeaderSkeleton onClose={onClose} />
+          )
         }
-        setMode('order');
-        onClose();
-      }}
-      title={title}
-      header={
-        timeMode ? (
-          <ChangeTimeHeader ct={ct} onBack={() => setMode('order')} />
+        footer={
+          timeMode ? (
+            <ChangeTimeFooter ct={ct} />
+          ) : order && !detailQuery.isError && chat ? (
+            <ChatFooter order={order} detail={detail} slug={slug} />
+          ) : order && !detailQuery.isError ? (
+            <PanelFooter
+              order={order}
+              slug={slug}
+              kind={kind}
+              onClose={onClose}
+              onChangeTime={openTime}
+              onOpenChat={() => onTabChange('chat')}
+            />
+          ) : undefined
+        }
+      >
+        {timeMode ? (
+          <ChangeTimeBody ct={ct} />
+        ) : order && chat ? (
+          <ChatThread order={order} detail={detail} slug={slug} kind={kind} active={open && chat} />
         ) : order ? (
-          <PanelHeader order={order} kind={kind} onClose={onClose} />
-        ) : (
-          <HeaderSkeleton onClose={onClose} />
-        )
-      }
-      footer={
-        timeMode ? (
-          <ChangeTimeFooter ct={ct} />
-        ) : order && !detailQuery.isError ? (
-          <PanelFooter
+          <PanelBody
             order={order}
+            detail={detail}
             slug={slug}
             kind={kind}
-            onClose={onClose}
+            shopName={shopName}
+            loading={detailQuery.isLoading}
+            failed={detailQuery.isError}
+            onRetry={() => void detailQuery.refetch()}
             onChangeTime={openTime}
+            onOpenChat={() => onTabChange('chat')}
           />
-        ) : undefined
-      }
-    >
-      {timeMode ? (
-        <ChangeTimeBody ct={ct} />
-      ) : order ? (
-        <PanelBody
-          order={order}
-          detail={detail}
-          slug={slug}
-          kind={kind}
-          shopName={shopName}
-          loading={detailQuery.isLoading}
-          failed={detailQuery.isError}
-          onRetry={() => void detailQuery.refetch()}
-          onChangeTime={openTime}
-        />
-      ) : detailQuery.isError ? (
-        <div className="flex flex-col items-center gap-3 p-8 text-center">
-          <p className="text-sm text-muted-foreground">{ordersWords.panel.notFound}</p>
-          <Button variant="outline" className="h-11 md:h-9" onClick={onClose}>
-            {ordersWords.panel.close}
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-4 p-4">
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <Skeleton className="h-40 w-full rounded-xl" />
-        </div>
-      )}
-    </ResponsiveSheet>
+        ) : detailQuery.isError ? (
+          <div className="flex flex-col items-center gap-3 p-8 text-center">
+            <p className="text-sm text-muted-foreground">{ordersWords.panel.notFound}</p>
+            <Button variant="outline" className="h-11 md:h-9" onClick={onClose}>
+              {ordersWords.panel.close}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4 p-4">
+            <Skeleton className="h-16 w-full rounded-xl" />
+            <Skeleton className="h-40 w-full rounded-xl" />
+          </div>
+        )}
+      </ResponsiveSheet>
+    </Tabs>
+  );
+}
+
+/** Order | Chat under the header (T87): a red dot on Chat while a payment photo waits. */
+function PanelTabs({ order }: { order: BoardOrder }) {
+  const waits = chatWaits(order);
+  return (
+    <div className="border-b px-4 py-2">
+      <TabsList className="grid w-full grid-cols-2 group-data-horizontal/tabs:h-11 md:group-data-horizontal/tabs:h-9">
+        <TabsTrigger value="order">{ordersWords.chat.orderTab}</TabsTrigger>
+        <TabsTrigger value="chat" className="gap-1.5">
+          <MessageCircleIcon aria-hidden="true" />
+          {ordersWords.chat.chatTab}
+          {waits ? (
+            <>
+              <span className="size-2 rounded-full bg-destructive" aria-hidden="true" />
+              <span className="sr-only">{ordersWords.chat.photoWaiting}</span>
+            </>
+          ) : null}
+        </TabsTrigger>
+      </TabsList>
+    </div>
   );
 }
 
@@ -418,6 +457,7 @@ interface PanelBodyProps {
   failed: boolean;
   onRetry: () => void;
   onChangeTime: () => void;
+  onOpenChat: () => void;
 }
 
 function Section({
@@ -452,6 +492,7 @@ function PanelBody({
   failed,
   onRetry,
   onChangeTime,
+  onOpenChat,
 }: PanelBodyProps) {
   const markSeen = useMarkSeen(slug).mutate;
   const sentFor = React.useRef<string | null>(null);
@@ -462,8 +503,19 @@ function PanelBody({
     }
   }, [order.id, order.seenAt, markSeen]);
 
+  // Back from the Chat tab, the order reads from the top again.
+  const top = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    // After the sheet's own layout pass, which would keep the chat's scroll.
+    const frame = requestAnimationFrame(() => {
+      const box = scrollBox(top.current);
+      if (box) box.scrollTop = 0;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
-    <div>
+    <div ref={top}>
       {order.scheduledAt ? <WhenCard order={order} onChange={onChangeTime} /> : null}
       <StepsSection order={order} detail={detail} kind={kind} />
       {failed ? (
@@ -474,7 +526,13 @@ function PanelBody({
           </Button>
         </div>
       ) : null}
-      <PaymentSection order={order} detail={detail} slug={slug} loading={loading} />
+      <PaymentSection
+        order={order}
+        detail={detail}
+        slug={slug}
+        loading={loading}
+        onOpenChat={onOpenChat}
+      />
       <ItemsSection order={order} detail={detail} shopName={shopName} loading={loading} />
       <CustomerSection order={order} detail={detail} loading={loading} />
       {order.type === 'delivery' ? (
@@ -599,29 +657,30 @@ function StepsSection({
   );
 }
 
+/**
+ * Payment on the Order tab (T87): how it is paid and where it stands. The photos and the checks live on
+ * the Chat tab, the way the customer sees them; a photo waiting says so here with a way across.
+ */
 function PaymentSection({
   order,
   detail,
   slug,
   loading,
+  onOpenChat,
 }: {
   order: BoardOrder;
   detail: OwnerOrder | undefined;
   slug: string;
   loading: boolean;
+  onOpenChat: () => void;
 }) {
   const now = useNow(1_000);
   const online = useOnlineStatus();
-  const review = useReviewPayment(slug);
   const record = useRecordPayment(slug);
-  const approve = useAsyncAction();
   const recordAction = useAsyncAction();
-  const [rejectOpen, setRejectOpen] = React.useState(false);
-  const [rejectReason, setRejectReason] = React.useState('');
-  const [zoom, setZoom] = React.useState<string | null>(null);
-  const [broken, setBroken] = React.useState<ReadonlySet<string>>(() => new Set());
   const proofs = detail?.proofs ?? [];
-  const pending = proofs.find((p) => p.status === 'pending');
+  const waits = chatWaits(order);
+  const C = ordersWords.chat;
 
   const fail = (err: unknown) => notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
 
@@ -630,125 +689,23 @@ function PaymentSection({
       title={ordersWords.panel.paymentSection}
       action={<PaymentChip order={order} now={now} />}
     >
-      {loading && !detail ? <Skeleton className="h-16 w-full rounded-xl" /> : null}
-      {proofs.length > 0 ? (
-        // The payment chat (T81): the customer's photos on the left, the shop's answers on the right,
-        // the same lines the customer sees in their order chat.
-        <MessageGroup className="gap-3">
-          {proofs.map((proof) => (
-            <React.Fragment key={proof.id}>
-              <Message>
-                <MessageContent>
-                  <button
-                    type="button"
-                    onClick={() => setZoom(proof.path)}
-                    className="size-28 shrink-0 overflow-hidden rounded-xl border bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    aria-label={ordersWords.detail.viewProof}
-                  >
-                    {broken.has(proof.id) ? (
-                      <ImageOffIcon
-                        className="m-auto size-6 text-muted-foreground"
-                        aria-hidden="true"
-                      />
-                    ) : (
-                      <img
-                        src={proof.path}
-                        alt={ordersWords.detail.proofAlt(orderNoLabel(order.orderNo))}
-                        className="size-full object-cover"
-                        onError={() => setBroken((prev) => new Set([...prev, proof.id]))}
-                      />
-                    )}
-                  </button>
-                  <Bubble variant="muted">
-                    {hasReference(proof.referenceNo) ? (
-                      <BubbleContent className="flex flex-col gap-0.5">
-                        <span className="text-xs text-muted-foreground">
-                          {ordersWords.detail.reference}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span className="font-mono font-semibold">{proof.referenceNo}</span>
-                          <CopyButton value={proof.referenceNo} iconOnly className="size-8" />
-                        </span>
-                      </BubbleContent>
-                    ) : (
-                      <BubbleContent className="text-muted-foreground">
-                        {ordersWords.detail.noReference}
-                      </BubbleContent>
-                    )}
-                  </Bubble>
-                  <MessageFooter className="tabular-nums">
-                    {formatClock(proof.uploadedAt)} ·{' '}
-                    {proof.status === 'pending'
-                      ? ordersWords.detail.proofPending
-                      : proof.status === 'approved'
-                        ? ordersWords.detail.proofApproved
-                        : ordersWords.detail.proofRejected}
-                  </MessageFooter>
-                  {broken.has(proof.id) ? (
-                    <p className="text-xs text-muted-foreground">
-                      {ordersWords.detail.proofMissing}
-                    </p>
-                  ) : null}
-                </MessageContent>
-              </Message>
-              {proof.status === 'pending' ? null : (
-                <Message align="end">
-                  <MessageContent>
-                    <Bubble variant={proof.status === 'approved' ? 'default' : 'destructive'}>
-                      <BubbleContent className="flex items-start gap-1.5">
-                        {proof.status === 'approved' ? (
-                          <CheckIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                        ) : (
-                          <XIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                        )}
-                        {proof.status === 'approved'
-                          ? ordersWords.detail.youApproved
-                          : ordersWords.detail.youRejected(
-                              proof.rejectReason ?? ordersWords.detail.proofRejected,
-                            )}
-                      </BubbleContent>
-                    </Bubble>
-                  </MessageContent>
-                </Message>
-              )}
-            </React.Fragment>
-          ))}
-        </MessageGroup>
-      ) : null}
-
-      {pending && order.paymentStatus === 'pending' ? (
-        <div className="space-y-2">
-          <p className="flex items-start gap-1.5 rounded-lg bg-warning-soft px-2.5 py-2 text-xs text-warning-soft-foreground">
-            <ShieldCheckIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-            {ordersWords.detail.checkGcash}
-          </p>
-          <div className="flex gap-2">
-            <AsyncButton
-              status={approve.status}
-              busyLabel={ordersWords.detail.approvingPayment}
-              doneLabel={ordersWords.detail.approvedPayment}
-              disabled={!online}
-              onClick={() =>
-                approve
-                  .run(async () => {
-                    await review.mutateAsync({ orderId: order.id, approve: true });
-                    notify({ title: ordersWords.detail.approvedPayment, tone: 'success' });
-                  })
-                  .catch(fail)
-              }
-              className="h-11 flex-1 font-semibold md:h-9"
-            >
-              {ordersWords.detail.approvePayment}
-            </AsyncButton>
-            <Button
-              variant="outline"
-              disabled={!online}
-              onClick={() => setRejectOpen(true)}
-              className="h-11 text-destructive-text md:h-9"
-            >
-              {ordersWords.detail.rejectPayment}
-            </Button>
-          </div>
+      {loading && !detail ? <Skeleton className="h-12 w-full rounded-xl" /> : null}
+      {waits ? (
+        // The button to check it is the footer's main one.
+        <p className="flex items-center gap-2 rounded-xl border border-warning/40 bg-warning-soft p-3 text-sm font-semibold text-warning-soft-foreground">
+          <ImageIcon className="size-4 shrink-0" aria-hidden="true" />
+          {C.photoWaiting}
+        </p>
+      ) : proofs.length > 0 ? (
+        <div className="flex items-center gap-2 text-sm">
+          <ImageIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="min-w-0 flex-1 text-muted-foreground tabular-nums">
+            {C.used(proofs.length, PROOFS_PER_ORDER)}
+          </span>
+          <Button variant="outline" onClick={onOpenChat} className="h-11 gap-1.5 md:h-9">
+            <MessageCircleIcon aria-hidden="true" />
+            {C.openChat}
+          </Button>
         </div>
       ) : null}
 
@@ -774,84 +731,6 @@ function PaymentSection({
           {ordersWords.detail.recordCash}
         </AsyncButton>
       ) : null}
-
-      <AlertDialog open={rejectOpen} onOpenChange={setRejectOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{ordersWords.detail.rejectTitle}</AlertDialogTitle>
-            <AlertDialogDescription>{ordersWords.detail.rejectReason}</AlertDialogDescription>
-          </AlertDialogHeader>
-          {/* Reason chips (T81): one tap writes a full sentence the owner can still change. */}
-          <div className="flex flex-wrap gap-2">
-            {REJECT_REASON_KEYS.map((key) => {
-              const reason = ordersWords.detail.rejectReasons[key];
-              const picked = rejectReason === reason.text;
-              return (
-                <Button
-                  key={key}
-                  type="button"
-                  variant={picked ? 'secondary' : 'outline'}
-                  aria-pressed={picked}
-                  onClick={() => setRejectReason(reason.text)}
-                  className="h-11 rounded-full px-3.5 aria-pressed:border-destructive/40 aria-pressed:bg-destructive-soft aria-pressed:text-destructive-soft-foreground md:h-9"
-                >
-                  {picked ? <CheckIcon aria-hidden="true" /> : null}
-                  {reason.label}
-                </Button>
-              );
-            })}
-          </div>
-          <Textarea
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            rows={3}
-            maxLength={300}
-            className="text-base md:text-sm"
-            aria-label={ordersWords.detail.rejectReasonLabel}
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel>{ordersWords.detail.keepOrder}</AlertDialogCancel>
-            <Button
-              variant="destructive"
-              disabled={rejectReason.trim() === '' || review.isPending}
-              onClick={() => {
-                review
-                  .mutateAsync({
-                    orderId: order.id,
-                    approve: false,
-                    rejectReason: rejectReason.trim(),
-                  })
-                  .then(() => {
-                    setRejectOpen(false);
-                    setRejectReason('');
-                    notify({ title: ordersWords.detail.paymentRejected, tone: 'info' });
-                  })
-                  .catch(fail);
-              }}
-            >
-              {review.isPending
-                ? ordersWords.detail.rejectingPayment
-                : ordersWords.detail.rejectPayment}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <ResponsiveDialog
-        open={zoom !== null}
-        onOpenChange={(next) => {
-          if (!next) setZoom(null);
-        }}
-        title={ordersWords.detail.viewProof}
-      >
-        {zoom ? (
-          <img
-            src={zoom}
-            alt={ordersWords.detail.proofAlt(orderNoLabel(order.orderNo))}
-            className="w-full rounded-xl border object-contain"
-          />
-        ) : null}
-      </ResponsiveDialog>
     </Section>
   );
 }
@@ -1235,12 +1114,14 @@ function PanelFooter({
   kind,
   onClose,
   onChangeTime,
+  onOpenChat,
 }: {
   order: BoardOrder;
   slug: string;
   kind: ShopKind;
   onClose: () => void;
   onChangeTime: () => void;
+  onOpenChat: () => void;
 }) {
   const online = useOnlineStatus();
   const { advance, payAndComplete } = useStepChange({ slug, kind });
@@ -1286,12 +1167,12 @@ function PanelFooter({
     );
   }
   if (action.kind === 'check_payment') {
-    // The Approve button sits with the proof above; the footer says why nothing can start yet.
+    // Nothing can start before the payment is checked, and the check lives in the chat (T87).
     main = (
-      <p className="flex min-h-12 flex-1 items-center gap-2 text-sm font-medium text-muted-foreground md:min-h-11">
-        <LockIcon className="size-4 shrink-0" aria-hidden="true" />
-        {ordersWords.ticket.locked}
-      </p>
+      <Button onClick={onOpenChat} className="h-12 flex-1 gap-2 text-base font-semibold md:h-11">
+        <MessageCircleIcon aria-hidden="true" />
+        {ordersWords.chat.checkPayment}
+      </Button>
     );
   }
 

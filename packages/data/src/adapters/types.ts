@@ -39,6 +39,7 @@ import type {
   OwnerItem,
   OwnerOptionGroup,
   OwnerOrder,
+  ChatSummary,
   OwnerVariantTemplate,
   PauseMode,
   Payment,
@@ -157,6 +158,10 @@ export interface OwnerOrdersAdapter {
   markSeen(input: { slug: string; orderId: string }): Promise<BoardOrder>;
   getOrderDetail(input: { slug: string; orderId: string }): Promise<OwnerOrder>;
   getProofUrl(input: { slug: string; path: string }): Promise<string>;
+  // The Chats list (T87): open orders' chats and today's finished ones, waiting first.
+  listChats(input: { slug: string }): Promise<ChatSummary[]>;
+  // The owner opened an order's chat: the customer's lines count as seen.
+  markChatSeen(input: { slug: string; orderId: string }): Promise<ChatSummary>;
   reviewPayment(input: {
     slug: string;
     orderId: string;

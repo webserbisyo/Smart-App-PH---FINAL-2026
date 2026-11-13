@@ -260,3 +260,17 @@ export function useSaveBookingRules(slug: string) {
     },
   });
 }
+
+// The owner opened an order's chat (T87): its lines count as seen, on the list and in the order.
+export function useMarkChatSeen(slug: string) {
+  const { ownerOrders } = useAdapters();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { orderId: string }) =>
+      ownerOrders.markChatSeen({ slug, orderId: input.orderId }),
+    onSuccess: (_chat, vars) => {
+      qc.invalidateQueries({ queryKey: ownerOrdersQk.chats(slug) });
+      qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
+    },
+  });
+}

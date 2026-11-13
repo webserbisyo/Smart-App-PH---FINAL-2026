@@ -41,6 +41,8 @@ export const OrdersSearchSchema = z.object({
   filter: z.enum(ORDER_FILTERS).optional().catch(undefined),
   stage: z.enum(PHONE_STAGES).optional().catch(undefined),
   order: z.string().min(1).max(64).optional().catch(undefined),
+  // The order panel's Chat tab (T87); the Order tab when absent.
+  tab: z.enum(['chat']).optional().catch(undefined),
   day: DaySchema.optional().catch(undefined),
   cal: z.enum(CALENDAR_VIEWS).optional().catch(undefined),
   calDay: DateSchema.optional().catch(undefined),
@@ -59,6 +61,7 @@ export function useOrdersSearch(): OrdersSearch {
     filter: search.filter,
     stage: search.stage,
     order: search.order,
+    tab: search.tab,
     day: search.day,
     cal: search.cal,
     calDay: search.calDay,

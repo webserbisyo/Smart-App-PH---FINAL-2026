@@ -342,7 +342,7 @@ export function ShellKitSections() {
         title="Tabs"
         library={shadcn}
         path="packages/ui/src/components/tabs.tsx"
-        usedIn="page-header, Change time parts of the day (T86), kit"
+        usedIn="page-header, Change time parts of the day (T86), order panel Order | Chat (T87), kit"
       >
         <Tabs defaultValue="board" className="max-w-md">
           <TabsList>

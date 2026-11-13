@@ -205,6 +205,13 @@ export interface OrderSpec {
   pickupCode?: string;
 }
 
+// When the shop saw a sample proof (T87): checked ones a minute after they came in; a waiting one only
+// once the owner has opened the order since.
+function proofSeenAt(spec: OrderSpec, proof: Proof): string | null {
+  if (proof.status !== 'pending') return addMinutes(proof.uploadedAt, 1);
+  return spec.seenAt && spec.seenAt >= proof.uploadedAt ? spec.seenAt : null;
+}
+
 export function threadFor(spec: OrderSpec, events: OrderEvent[]): OrderMessage[] {
   const messages: OrderMessage[] = [];
   for (const proof of spec.proofs ?? []) {
@@ -215,6 +222,9 @@ export function threadFor(spec: OrderSpec, events: OrderEvent[]): OrderMessage[]
       status: null,
       proof,
       text: null,
+      from: 'customer',
+      via: 'app',
+      seenAt: proofSeenAt(spec, proof),
     });
     if (proof.status === 'rejected' && proof.rejectReason) {
       messages.push({
@@ -224,6 +234,9 @@ export function threadFor(spec: OrderSpec, events: OrderEvent[]): OrderMessage[]
         status: null,
         proof: null,
         text: words.shop.thread.paymentRejected(proof.rejectReason),
+        from: 'shop',
+        via: 'app',
+        seenAt: null,
       });
     }
     if (proof.status === 'approved') {
@@ -234,6 +247,9 @@ export function threadFor(spec: OrderSpec, events: OrderEvent[]): OrderMessage[]
         status: null,
         proof: null,
         text: words.shop.thread.paymentApproved,
+        from: 'shop',
+        via: 'app',
+        seenAt: null,
       });
     }
   }
@@ -245,6 +261,9 @@ export function threadFor(spec: OrderSpec, events: OrderEvent[]): OrderMessage[]
       status: event.status,
       proof: null,
       text: null,
+      from: 'system',
+      via: 'app',
+      seenAt: null,
     });
   }
   if (spec.rider) {
@@ -256,6 +275,9 @@ export function threadFor(spec: OrderSpec, events: OrderEvent[]): OrderMessage[]
       status: null,
       proof: null,
       text: words.shop.thread.rider(spec.rider.name),
+      from: 'shop',
+      via: 'app',
+      seenAt: null,
     });
   }
   if (spec.trackingUrl) {
@@ -267,6 +289,9 @@ export function threadFor(spec: OrderSpec, events: OrderEvent[]): OrderMessage[]
       status: null,
       proof: null,
       text: words.shop.thread.tracking,
+      from: 'shop',
+      via: 'app',
+      seenAt: null,
     });
   }
   return messages.sort((a, b) => a.at.localeCompare(b.at));
@@ -346,6 +371,9 @@ export function buildOrder(shop: PublicShop, spec: OrderSpec): OrderRecord {
       status: null,
       proof: null,
       text: words.shop.thread.refunded(formatPeso(refund.amount), refund.reason),
+      from: 'shop',
+      via: 'app',
+      seenAt: null,
     });
   }
   return {

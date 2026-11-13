@@ -68,3 +68,27 @@ export function useRescheduleSchedule(slug: string, orderId: string, enabled = t
     enabled: enabled && Boolean(slug && orderId),
   });
 }
+
+// The Chats list (T87): refreshed like the board, so a new photo shows within seconds.
+export function useChats(slug: string, enabled = true) {
+  const { ownerOrders } = useAdapters();
+  return useQuery({
+    queryKey: ownerOrdersQk.chats(slug),
+    queryFn: () => ownerOrders.listChats({ slug }),
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
+    refetchIntervalInBackground: false,
+    enabled: Boolean(slug) && enabled,
+  });
+}
+
+// A payment photo's address. Signed links run out, so it is fetched when shown, not stored.
+export function useProofUrl(slug: string, path: string | null) {
+  const { ownerOrders } = useAdapters();
+  return useQuery({
+    queryKey: ownerOrdersQk.proofUrl(slug, path ?? ''),
+    queryFn: () => ownerOrders.getProofUrl({ slug, path: path ?? '' }),
+    staleTime: 5 * 60_000,
+    enabled: Boolean(slug && path),
+  });
+}

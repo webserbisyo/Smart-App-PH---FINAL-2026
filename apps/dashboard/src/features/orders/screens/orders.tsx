@@ -30,7 +30,7 @@ import { useShop } from '@/app/shop';
 import { storefrontUrl } from '@/app/use-nav-items';
 import { Board, groupByStage } from '../board.js';
 import { ListView } from '../list-view.js';
-import { MessengerFab } from '../messenger-inbox.js';
+import { ChatsButton, ChatsSheet } from '../chats-sheet.js';
 import { OrderPanel } from '../order-panel.js';
 import { OrdersToolbar } from '../orders-toolbar.js';
 import {
@@ -151,10 +151,17 @@ export function OrdersScreen() {
   const openOrder = React.useCallback(
     (order: BoardOrder) => {
       setClicked(order);
-      setSearch({ order: order.id });
+      // From "photos to check", the order opens on its chat, where the check is (T87).
+      setSearch({ order: order.id, tab: filter === 'to_check' ? 'chat' : undefined });
     },
-    [setSearch],
+    [setSearch, filter],
   );
+  // The Chats list opens an order on its Chat tab (T87).
+  const [chatsOpen, setChatsOpen] = React.useState(false);
+  const openChat = (orderId: string) => {
+    setChatsOpen(false);
+    setSearch({ order: orderId, tab: 'chat' });
+  };
   // An order dropped on a day where its time isn't open: its panel opens on Change time, on that day.
   const [timeRequest, setTimeRequest] = React.useState<{ orderId: string; day: string } | null>(
     null,
@@ -163,13 +170,13 @@ export function OrdersScreen() {
     (order: BoardOrder, day: string) => {
       setClicked(order);
       setTimeRequest({ orderId: order.id, day });
-      setSearch({ order: order.id });
+      setSearch({ order: order.id, tab: undefined });
     },
     [setSearch],
   );
   const closeOrder = React.useCallback(() => {
     setTimeRequest(null);
-    setSearch({ order: undefined }, { replace: true });
+    setSearch({ order: undefined, tab: undefined }, { replace: true });
   }, [setSearch]);
 
   const handleShare = async () => {
@@ -341,7 +348,13 @@ export function OrdersScreen() {
         )}
       </main>
 
-      <MessengerFab />
+      <ChatsButton slug={shop.slug} onClick={() => setChatsOpen(true)} />
+      <ChatsSheet
+        slug={shop.slug}
+        open={chatsOpen}
+        onOpenChange={setChatsOpen}
+        onOpenChat={openChat}
+      />
 
       <OrderPanel
         orderId={search.order}
@@ -350,6 +363,10 @@ export function OrdersScreen() {
         kind={shop.kind}
         shopName={shop.name}
         timeRequest={timeRequest}
+        tab={search.tab ?? 'order'}
+        onTabChange={(next) =>
+          setSearch({ tab: next === 'chat' ? 'chat' : undefined }, { replace: true })
+        }
         onClose={closeOrder}
       />
     </div>

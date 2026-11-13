@@ -154,6 +154,22 @@ export const MESSAGE_KINDS = ['proof', 'status', 'rider', 'tracking', 'schedule'
 export const MessageKindEnum = z.enum(MESSAGE_KINDS);
 export type MessageKind = z.infer<typeof MessageKindEnum>;
 
+// Who wrote an order chat line (T87): the customer, the shop (a person) or the system (a status line).
+export const MESSAGE_FROM = ['customer', 'shop', 'system'] as const;
+export const MessageFromEnum = z.enum(MESSAGE_FROM);
+export type MessageFrom = z.infer<typeof MessageFromEnum>;
+
+// Where a chat line was sent (T87): in the app now; Messenger once live chat arrives (MVP B).
+export const MESSAGE_VIA = ['app', 'messenger'] as const;
+export const MessageViaEnum = z.enum(MESSAGE_VIA);
+export type MessageVia = z.infer<typeof MessageViaEnum>;
+
+// Why the chat's typing box is locked (T87): photos and the shop's answers only for now; later the
+// Messenger reply window, and orders that are closed.
+export const CHAT_LOCKS = ['photos_only', 'window_closed', 'order_closed'] as const;
+export const ChatLockEnum = z.enum(CHAT_LOCKS);
+export type ChatLock = z.infer<typeof ChatLockEnum>;
+
 // Time slot lengths for advance orders and pickup scheduling (T48).
 export const SLOT_LENGTHS = [15, 30, 60] as const;
 export const SlotLengthSchema = z.union([z.literal(15), z.literal(30), z.literal(60)]);

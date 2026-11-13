@@ -112,7 +112,7 @@ const SECTIONS: readonly {
     title: 'Bubble',
     library: 'shadcn (base-nova)',
     file: 'bubble.tsx',
-    usedIn: 'c-message-5 (kit)',
+    usedIn: 'c-message-5 (kit), storefront order chat, Orders order panel Chat tab (T87)',
     examples: [MessageThread],
   },
 ];

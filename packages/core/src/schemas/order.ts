@@ -9,7 +9,9 @@ import {
 } from './common.js';
 import {
   LineProblemCodeEnum,
+  MessageFromEnum,
   MessageKindEnum,
+  MessageViaEnum,
   OpenStateKindEnum,
   OrderStatusEnum,
   OrderTypeEnum,
@@ -168,6 +170,11 @@ export const OrderMessageSchema = z.object({
   status: OrderStatusEnum.nullable(),
   proof: ProofSchema.nullable(),
   text: z.string().max(300).nullable(),
+  // T87: who wrote it, where it was sent, and when the other side saw it. Defaults keep older saved
+  // receipts readable.
+  from: MessageFromEnum.default('system'),
+  via: MessageViaEnum.default('app'),
+  seenAt: IsoDateTimeSchema.nullable().default(null),
 });
 export type OrderMessage = z.infer<typeof OrderMessageSchema>;
 

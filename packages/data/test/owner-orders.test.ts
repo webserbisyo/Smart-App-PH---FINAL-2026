@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   BoardOrderSchema,
   BookingRulesSchema,
+  ChatSummarySchema,
   DayLoadSchema,
+  formatPeso,
   OpenStateSchema,
 } from '@smartapp/core';
 import { errorCode, mnl, testStore } from './helpers.js';
@@ -439,6 +441,36 @@ describe('ownerOrders mock adapter', () => {
     expect(resumed.busyUntil).toBeNull();
   });
 
+  it('listChats puts waiting chats first, markChatSeen clears them, proofs draw as sample receipts (T87)', async () => {
+    const { store } = testStore(mnl('2026-10-26 12:00'));
+    const slug = 'kanto-smash';
+    const chats = await store.ownerOrders.listChats({ slug });
+    expect(chats.length).toBeGreaterThan(0);
+    for (const chat of chats) expect(ChatSummarySchema.safeParse(chat).success).toBe(true);
+    const firstDone = chats.findIndex((c) => c.waitingSince === null);
+    if (firstDone >= 0) expect(chats.slice(firstDone).every((c) => !c.waitingSince)).toBe(true);
+
+    const unseen = chats.find((c) => c.unseen > 0);
+    expect(unseen).toBeDefined();
+    if (!unseen) return;
+    const seen = await store.ownerOrders.markChatSeen({ slug, orderId: unseen.orderId });
+    expect(seen.unseen).toBe(0);
+    expect(seen.waitingSince).toBe(unseen.waitingSince);
+
+    const detail = await store.ownerOrders.getOrderDetail({ slug, orderId: unseen.orderId });
+    const proof = detail.proofs.at(-1);
+    expect(proof).toBeDefined();
+    if (!proof) return;
+    const url = await store.ownerOrders.getProofUrl({ slug, path: proof.path });
+    expect(url.startsWith('data:image/svg+xml')).toBe(true);
+    expect(decodeURIComponent(url)).toContain(formatPeso(detail.totals.total));
+
+    // Answering the photo ends the wait.
+    await store.ownerOrders.reviewPayment({ slug, orderId: unseen.orderId, approve: true });
+    const after = await store.ownerOrders.listChats({ slug });
+    expect(after.find((c) => c.orderId === unseen.orderId)?.waitingSince).toBeNull();
+  });
+
   it('createApiOwnerOrdersAdapter implements all methods returning promises', () => {
     const adapter = createApiOwnerOrdersAdapter({
       baseUrl: 'http://localhost:4000',
@@ -452,6 +484,8 @@ describe('ownerOrders mock adapter', () => {
       'markSeen',
       'getOrderDetail',
       'getProofUrl',
+      'listChats',
+      'markChatSeen',
       'reviewPayment',
       'recordPayment',
       'advanceOrder',

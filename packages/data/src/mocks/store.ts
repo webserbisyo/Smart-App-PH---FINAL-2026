@@ -95,6 +95,13 @@ import {
   type VariantTemplate,
   PROOFS_PER_ORDER,
   hasReference,
+  ChatSummarySchema,
+  chatKey,
+  chatLock,
+  lastLine,
+  orderProofs,
+  unseenCount,
+  waitingSince,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
 import { getAuthClient, getClaims } from '../auth';
@@ -151,6 +158,8 @@ const SENDS_PER_HOUR = 5;
 const CODE_MINUTES = 10;
 const PAY_MINUTES = 30;
 const MAX_PROOFS = PROOFS_PER_ORDER;
+// How long the demo shop takes to open a new payment photo (T87).
+const DEMO_SEEN_MS = 10_000;
 const UNPAID_LIMIT = 3;
 
 export interface MockPersistence {
@@ -451,6 +460,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         status: 'expired',
         proof: null,
         text: words.shop.thread.expired,
+        from: 'system',
+        via: 'app',
+        seenAt: null,
       });
       giveBackRedeemed(s, order, r.expiresAt);
     }
@@ -783,6 +795,36 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     });
   }
 
+  // The customer's lines count as seen once the owner opens the chat or answers it (T87).
+  function seeChat(o: OrderRecord, at: string): void {
+    for (const m of o.receipt.messages) {
+      if (m.from === 'customer' && m.seenAt === null) m.seenAt = at;
+    }
+  }
+
+  // One row of the Chats list (T87).
+  function chatSummary(s: ShopState, o: OrderRecord) {
+    const board = toBoardOrder(s, o);
+    const messages = o.receipt.messages;
+    const last = lastLine(messages);
+    return ChatSummarySchema.parse({
+      key: chatKey({ id: o.id, isMember: board.isMember, customerPhone: o.customerPhone }),
+      orderId: o.id,
+      orderNo: o.receipt.orderNo,
+      status: o.receipt.status,
+      customerName: o.receipt.customerName,
+      customerPhone: o.customerPhone,
+      isMember: board.isMember,
+      isFirstOrder: o.isFirstOrder,
+      memberStamps: board.memberStamps,
+      last,
+      waitingSince: waitingSince(messages),
+      unseen: unseenCount(messages),
+      photosUsed: orderProofs(messages).length,
+      lock: chatLock(o.receipt.status),
+    });
+  }
+
   function payment(o: OrderRecord) {
     return PaymentSchema.parse({
       orderId: o.id,
@@ -803,6 +845,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       status,
       proof: null,
       text: null,
+      from: 'system',
+      via: 'app',
+      seenAt: null,
     });
   }
 
@@ -982,9 +1027,22 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       }),
 
     getOrder: ({ slug, token }) =>
-      run('storefront', () =>
-        OrderReceiptSchema.parse(orderByToken(requireShop(slug), token).receipt),
-      ),
+      run('storefront', () => {
+        const order = orderByToken(requireShop(slug), token);
+        // Demo only (T87): stands in for the owner opening the chat, 10 s after a photo comes in, so
+        // the customer sees "seen by the shop" without a second browser.
+        const t = now().getTime();
+        let seen = false;
+        for (const m of order.receipt.messages) {
+          const due = Date.parse(m.at) + DEMO_SEEN_MS;
+          if (m.from === 'customer' && m.seenAt === null && t >= due) {
+            m.seenAt = new Date(due).toISOString();
+            seen = true;
+          }
+        }
+        if (seen) persist();
+        return OrderReceiptSchema.parse(order.receipt);
+      }),
 
     listMyOrders: ({ slug, tokens }) =>
       run('storefront', () => {
@@ -1073,6 +1131,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           status: null,
           proof,
           text: null,
+          from: 'customer',
+          via: 'app',
+          seenAt: null,
         });
         persist();
         return payment(order);
@@ -1362,10 +1423,56 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return ownerOrder(s, orderById(s, orderId));
       }),
 
+    // The demo has no stored photos: each proof is drawn as a sample receipt with its order's amount
+    // and reference. A photo the shop said no to shows a short amount, so the reason reads true (T87).
     getProofUrl: ({ slug, path }) =>
       run('orders', () => {
-        requireShop(slug);
-        return `https://example.com/mock-proofs/${encodeURIComponent(path)}`;
+        const s = requireShop(slug);
+        const order = s.orders.find((o) => o.proofs.some((p) => p.path === path));
+        const proof = order?.proofs.find((p) => p.path === path);
+        if (!order || !proof) fail('not_found', 404);
+        const total = order.receipt.totals.total;
+        return {
+          method: words.shop.paymentMethod[order.receipt.paymentMethod],
+          amount: proof.status === 'rejected' ? Math.round((total * 0.9) / 100) * 100 : total,
+          reference: hasReference(proof.referenceNo) ? proof.referenceNo : '—',
+          shopName: s.shop.storefront.info.name,
+          at: proof.uploadedAt,
+        };
+        // The drawing (and its words) load only on the owner's side, never in the storefront bundle.
+      }).then(async (receipt) => (await import('./proof-photo')).sampleReceiptUrl(receipt)),
+
+    listChats: ({ slug }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        if (scenario().empty || scenario().ordersMode === 'empty') return [];
+        const today = manilaDate(now());
+        return s.orders
+          .filter(
+            (o) =>
+              (!isFinal(o.receipt.status) || o.businessDate === today) &&
+              o.receipt.messages.some((m) => m.from !== 'system'),
+          )
+          .map((o) => chatSummary(s, o))
+          .sort((a, b) => {
+            if (a.waitingSince && b.waitingSince)
+              return a.waitingSince.localeCompare(b.waitingSince);
+            if (a.waitingSince) return -1;
+            if (b.waitingSince) return 1;
+            return b.last.at.localeCompare(a.last.at);
+          })
+          .slice(0, 50);
+      }),
+
+    markChatSeen: ({ slug, orderId }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const order = orderById(s, orderId);
+        const at = now().toISOString();
+        seeChat(order, at);
+        order.seenAt ??= at;
+        persist();
+        return chatSummary(s, order);
       }),
 
     reviewPayment: ({ slug, orderId, approve, rejectReason }) =>
@@ -1385,6 +1492,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             status: null,
             proof: null,
             text: words.shop.thread.paymentApproved,
+            from: 'shop',
+            via: 'app',
+            seenAt: null,
           });
         } else {
           const reason = rejectReason?.trim();
@@ -1403,8 +1513,13 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             status: null,
             proof: null,
             text: words.shop.thread.paymentRejected(reason),
+            from: 'shop',
+            via: 'app',
+            seenAt: null,
           });
         }
+        // Answering a photo means the shop saw it.
+        seeChat(order, at);
         // Keep the thread's proof copies in step with the proof list.
         for (const m of order.receipt.messages) {
           const p = m.proof ? order.proofs.find((x) => x.id === m.proof?.id) : undefined;
@@ -1559,6 +1674,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           status: null,
           proof: null,
           text: words.receipt.thread.scheduleChanged(formattedDate),
+          from: 'shop',
+          via: 'app',
+          seenAt: null,
         });
         persist();
         return ownerOrder(s, order);
@@ -1594,6 +1712,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             status: null,
             proof: null,
             text: words.shop.thread.refunded(formatPeso(r.totals.total), why),
+            from: 'shop',
+            via: 'app',
+            seenAt: null,
           });
         } else {
           r.messages.push({
@@ -1603,6 +1724,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             status: null,
             proof: null,
             text: words.shop.thread.cancelled(why),
+            from: 'shop',
+            via: 'app',
+            seenAt: null,
           });
         }
         giveBackRedeemed(s, order, at);
@@ -1630,6 +1754,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             status: null,
             proof: null,
             text: words.shop.thread.rider(riderName.trim()),
+            from: 'shop',
+            via: 'app',
+            seenAt: null,
           });
         }
         if (trackingUrl) {
@@ -1641,6 +1768,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             status: null,
             proof: null,
             text: words.shop.thread.tracking,
+            from: 'shop',
+            via: 'app',
+            seenAt: null,
           });
         }
         persist();

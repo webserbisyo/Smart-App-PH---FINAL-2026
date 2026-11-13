@@ -12,11 +12,7 @@ export const PAGE_INBOX_URL = 'https://business.facebook.com/latest/inbox/all';
 const W = ordersWords.messenger;
 
 // The link opens the inbox by itself; with an order open, its line is copied to paste into the chat.
-function onOpen(order: BoardOrder | undefined) {
-  if (!order) {
-    notify({ title: W.opened, tone: 'info' });
-    return;
-  }
+function onOpen(order: BoardOrder) {
   const line = W.orderLine(
     orderNoLabel(order.orderNo),
     formatPeso(order.total),
@@ -24,21 +20,6 @@ function onOpen(order: BoardOrder | undefined) {
   );
   void copyText(line).then((ok) =>
     notify(ok ? { title: W.copied(line), tone: 'success' } : { title: W.opened, tone: 'info' }),
-  );
-}
-
-/** The floating Messenger button on Orders (T81): above the dock on phones, bottom right from tablets. */
-export function MessengerFab() {
-  return (
-    <Button
-      nativeButton={false}
-      render={<a href={PAGE_INBOX_URL} target="_blank" rel="noopener noreferrer" />}
-      aria-label={W.label}
-      onClick={() => onOpen(undefined)}
-      className="fixed right-4 above-dock z-30 size-14 rounded-full shadow-lg md:right-6 md:bottom-6"
-    >
-      <MessengerIcon className="size-6" />
-    </Button>
   );
 }
 

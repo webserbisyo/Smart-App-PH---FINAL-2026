@@ -1,6 +1,7 @@
 import {
   BoardOrderSchema,
   BookingRulesSchema,
+  ChatSummarySchema,
   DayLoadSchema,
   OpenStateSchema,
   OwnerOrderSchema,
@@ -91,6 +92,23 @@ export function createApiOwnerOrdersAdapter({
         { method: 'GET', headers },
       );
       return res.url;
+    },
+
+    async listChats() {
+      const headers = await authHeaders();
+      return fetchApi(`${baseUrl}/owner/chats`, z.array(ChatSummarySchema), {
+        method: 'GET',
+        headers,
+      });
+    },
+
+    async markChatSeen(input) {
+      const headers = await authHeaders();
+      return fetchApi(
+        `${baseUrl}/owner/chats/${encodeURIComponent(input.orderId)}/seen`,
+        ChatSummarySchema,
+        { method: 'POST', headers },
+      );
     },
 
     async reviewPayment(input) {

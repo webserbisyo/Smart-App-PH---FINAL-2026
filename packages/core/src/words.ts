@@ -734,6 +734,8 @@ export const words = {
       scheduleChanged: (timeText: string) => `Time changed to ${timeText}`,
       // Under a proof bubble: where the shop's check stands.
       proofState: { pending: 'Checking', approved: 'Approved', rejected: 'Not approved' },
+      // A photo still waiting (T87): whether the shop has opened it yet.
+      proofSeen: { unseen: 'Sent · not seen yet', seen: 'Checking · seen by the shop' },
     },
     // The order chat (T81): a chat head on the receipt opens the shop's answers and the payment photos.
     chat: {
@@ -1983,6 +1985,18 @@ export const catalogWords = {
   duplicatedCategory: (name: string) => `Copied ${name}`,
 } as const;
 
+// The demo's sample receipt picture (T87): never a real app's look, and it says so. Its own export, so
+// the storefront bundle (which carries the mock store) never pulls in all of ordersWords.
+export const sampleReceiptWords = {
+  title: 'Sample receipt',
+  note: 'Demo picture · not a real transfer',
+  transfer: (method: string) => `${method} transfer`,
+  amount: 'Amount sent',
+  reference: 'Ref no.',
+  sentTo: 'Sent to',
+  date: 'Date',
+};
+
 export const ordersWords = {
   views: {
     label: 'Orders view',
@@ -2140,6 +2154,76 @@ export const ordersWords = {
       `Order ${orderNo} · ${total} · ${name}`,
     copied: (line: string) => `Copied “${line}”. Paste it in Messenger.`,
     opened: 'Opening your Page inbox in Messenger.',
+  },
+  // The order chat on the owner's side (T87): the customer's thread, mirrored, with the checks at the bottom.
+  chat: {
+    tabs: 'Order or chat',
+    orderTab: 'Order',
+    chatTab: 'Chat',
+    photoWaiting: 'A payment photo is waiting',
+    you: 'You',
+    guest: 'Guest',
+    member: 'Member',
+    memberStamps: (have: number, goal: number) => `${have}/${goal} stamps`,
+    memberChip: (have: number, goal: number) => `Member ${have}/${goal}`,
+    firstOrder: 'First order',
+    memberPage: 'Member page',
+    placed: (time: string) => `Order placed · ${time}`,
+    // The shop's opening line on a transfer order: the same words the customer sees.
+    payAsk: (amount: string, method: string) =>
+      `Please send exactly ${amount} by ${method}, then send a photo of your receipt here.`,
+    photo: 'Payment photo',
+    photoAlt: (orderNo: string) => `Payment photo for order ${orderNo}`,
+    photoLoading: 'Loading the photo…',
+    photoMissing: 'The photo didn’t load. Check the reference number instead.',
+    zoom: 'See the photo bigger',
+    reference: (ref: string) => `Ref ${ref}`,
+    noReference: 'No reference number given',
+    photoState: {
+      pending: 'Waiting for your check',
+      approved: 'Approved',
+      rejected: 'Not approved',
+    },
+    checkHint: (amount: string, method: string) =>
+      `Check ${amount} in your own ${method} app before you approve.`,
+    approve: (amount: string) => `Approve ${amount}`,
+    approving: 'Approving…',
+    approved: 'Payment approved',
+    notApproved: 'Not approved',
+    reasonsTitle: 'Why is it not approved?',
+    reasonsHint: 'The customer reads this in the chat. Change it if you like.',
+    reasonLabel: 'Message to the customer',
+    send: 'Send',
+    sending: 'Sending…',
+    sent: 'Sent. The customer can send a new photo.',
+    back: 'Back',
+    locked: 'Photos and your answers only, for now. For anything else, open Messenger.',
+    lockedClosed: 'This order is finished. Its chat stays here to look back on.',
+    used: (n: number, max: number) => `${n} of ${max} photos used`,
+    checkPayment: 'Check payment photo',
+    openChat: 'Open chat',
+    // The Chats list behind the floating button (T87).
+    list: {
+      title: 'Chats',
+      subtitle: 'Payment photos and your answers, newest first. Waiting ones on top.',
+      fab: 'Chats',
+      fabWaiting: (n: number) => `Chats, ${n} waiting`,
+      close: 'Close chats',
+      waiting: (minutes: number) =>
+        minutes < 60
+          ? `Waiting ${Math.max(1, minutes)} min`
+          : `Waiting ${Math.floor(minutes / 60)} h ${minutes % 60} min`,
+      unseen: (n: number) => `${n} new`,
+      orderNo: (no: string) => `Order ${no}`,
+      lastPhoto: 'Sent a payment photo',
+      lastYou: (text: string) => `You: ${text}`,
+      empty: 'No chats yet',
+      emptyHint: 'When a customer sends a payment photo, it shows up here.',
+      error: 'Couldn’t load your chats.',
+      tryAgain: 'Try again',
+      messengerInbox: 'Messenger inbox',
+      messengerHint: 'Questions about orders come in on Messenger for now.',
+    },
   },
   typeCards: {
     label: 'Filter by order type',

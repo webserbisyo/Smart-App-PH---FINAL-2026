@@ -311,7 +311,12 @@ export function StorefrontPrimitiveSections() {
         </div>
       </KitSection>
 
-      <KitSection title="Message" library={SHADCN} path={P('message')} usedIn="kit">
+      <KitSection
+        title="Message"
+        library={SHADCN}
+        path={P('message')}
+        usedIn="kit, storefront order chat, Orders order panel Chat tab (T87)"
+      >
         <MessageGroup className="max-w-md">
           <Message>
             <MessageContent>
@@ -330,7 +335,12 @@ export function StorefrontPrimitiveSections() {
         </MessageGroup>
       </KitSection>
 
-      <KitSection title="Marker" library={SHADCN} path={P('marker')} usedIn="kit">
+      <KitSection
+        title="Marker"
+        library={SHADCN}
+        path={P('marker')}
+        usedIn="kit, storefront order chat, Orders order panel Chat tab (T87)"
+      >
         <div className="grid max-w-md gap-3">
           <Marker>
             <MarkerIcon>
@@ -420,7 +430,12 @@ export function StorefrontPrimitiveSections() {
         </AlertDialog>
       </KitSection>
 
-      <KitSection title="Attachment" library={SHADCN} path={P('attachment')} usedIn="kit">
+      <KitSection
+        title="Attachment"
+        library={SHADCN}
+        path={P('attachment')}
+        usedIn="kit, storefront order chat, Orders order panel Chat tab payment photo (T87)"
+      >
         <AttachmentGroup>
           <Attachment state="done">
             <AttachmentMedia>

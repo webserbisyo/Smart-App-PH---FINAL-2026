@@ -34,6 +34,7 @@ import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { cn } from '@smartapp/ui/lib/utils';
 import {
   CalendarClock,
+  CheckIcon,
   CircleCheckIcon,
   HourglassIcon,
   ImageIcon,
@@ -57,6 +58,8 @@ export interface OrderThreadProps {
 
 const PROOF_STATE = {
   pending: { icon: HourglassIcon, className: 'text-info-text' },
+  // T87: a photo the shop has not opened yet.
+  sent: { icon: CheckIcon, className: 'text-muted-foreground' },
   approved: { icon: CircleCheckIcon, className: 'text-success-text' },
   rejected: { icon: XCircle, className: 'text-destructive-text' },
 } as const;
@@ -66,16 +69,20 @@ function ProofMessage({
   slug,
   proof,
   time,
+  seen,
   onView,
 }: {
   slug: string;
   proof: Proof;
   time: string;
+  // When the shop opened it (T87).
+  seen: boolean;
   onView: (src: string) => void;
 }) {
   const preview = useProofPreview(slug, proof.path);
   const T = words.receipt.thread;
-  const state = PROOF_STATE[proof.status];
+  const waiting = proof.status === 'pending';
+  const state = PROOF_STATE[waiting && !seen ? 'sent' : proof.status];
   const StateIcon = state.icon;
   return (
     <Message align="end">
@@ -116,7 +123,9 @@ function ProofMessage({
         </Bubble>
         <MessageFooter className="gap-1.5 tabular">
           <StateIcon aria-hidden="true" className={cn('size-3.5', state.className)} />
-          <span>{T.proofState[proof.status]}</span>
+          <span>
+            {waiting ? T.proofSeen[seen ? 'seen' : 'unseen'] : T.proofState[proof.status]}
+          </span>
           <span aria-hidden="true">·</span>
           <span>{time}</span>
         </MessageFooter>
@@ -198,6 +207,7 @@ export function OrderThread({ order }: OrderThreadProps) {
                 slug={slug}
                 proof={msg.proof}
                 time={time}
+                seen={msg.seenAt !== null}
                 onView={setViewing}
               />
             );
