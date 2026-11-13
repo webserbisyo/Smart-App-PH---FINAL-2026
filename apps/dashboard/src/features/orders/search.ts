@@ -29,6 +29,11 @@ export const LIST_STATUSES = [
 ] as const;
 export type ListStatus = (typeof LIST_STATUSES)[number];
 
+// The Calendar's own view and day (T86), so Back steps out of a day the way it came in.
+export const CALENDAR_VIEWS = ['week', 'day', 'month'] as const;
+export type CalendarMode = (typeof CALENDAR_VIEWS)[number];
+const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
 const DaySchema = z.union([z.enum(DAY_PRESETS), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]);
 
 export const OrdersSearchSchema = z.object({
@@ -37,6 +42,8 @@ export const OrdersSearchSchema = z.object({
   stage: z.enum(PHONE_STAGES).optional().catch(undefined),
   order: z.string().min(1).max(64).optional().catch(undefined),
   day: DaySchema.optional().catch(undefined),
+  cal: z.enum(CALENDAR_VIEWS).optional().catch(undefined),
+  calDay: DateSchema.optional().catch(undefined),
   status: z.enum(LIST_STATUSES).optional().catch(undefined),
   q: z.string().max(80).optional().catch(undefined),
   // Paid to one place (T84): "drawer" or an account id, from Home's money rows.
@@ -53,6 +60,8 @@ export function useOrdersSearch(): OrdersSearch {
     stage: search.stage,
     order: search.order,
     day: search.day,
+    cal: search.cal,
+    calDay: search.calDay,
     status: search.status,
     q: search.q,
     pay: search.pay,

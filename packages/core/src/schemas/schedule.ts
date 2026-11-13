@@ -7,6 +7,8 @@ export const ScheduleSlotSchema = z.object({
   state: ScheduleSlotStateEnum,
   // Orders this time can still take (T85): null when the shop has no per-time limit.
   left: z.number().int().nonnegative().nullable().optional(),
+  // Orders already on this time. Only on the owner's schedule for moving an order (T86).
+  booked: z.number().int().nonnegative().optional(),
 });
 export type ScheduleSlot = z.infer<typeof ScheduleSlotSchema>;
 
@@ -14,6 +16,8 @@ export const ScheduleDaySchema = z.object({
   date: IsoDateSchema,
   state: ScheduleDayStateEnum,
   slots: z.array(ScheduleSlotSchema),
+  // Orders already on this day. Only on the owner's schedule for moving an order (T86).
+  booked: z.number().int().nonnegative().optional(),
 });
 export type ScheduleDay = z.infer<typeof ScheduleDaySchema>;
 

@@ -49,6 +49,7 @@ import {
   BoardOrderSchema,
   BookingRulesSchema,
   OpenStateSchema,
+  ownerScheduleDays,
   scheduleDays,
   parseMapsLink,
   PaymentSchema,
@@ -1492,7 +1493,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       run('orders', () => {
         const s = requireShop(slug);
         const order = orderById(s, orderId);
-        return scheduleDays(
+        return ownerScheduleDays(
           s.shop.storefront,
           order.receipt.lines,
           s.shop.catalog.items,
@@ -1526,7 +1527,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           });
         }
         if (!override) {
-          const sched = scheduleDays(
+          // The owner's window: any open day in the next 60, not the customers' days ahead (T86).
+          const sched = ownerScheduleDays(
             s.shop.storefront,
             order.receipt.lines,
             s.shop.catalog.items,

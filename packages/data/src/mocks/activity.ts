@@ -12,6 +12,7 @@ import {
   pickupSlots,
   shopRhythm,
   validateLinePicks,
+  weekdayOf,
   type BasketLine,
   type CustomerAddress,
   type OrderStatus,
@@ -210,6 +211,22 @@ interface DraftOrder extends Omit<
   customer?: OrderSpec['customer'];
 }
 
+/** A walk-up customer who is not a member (no email on file). */
+function guestFor(i: number): { name: string; phone: string; email: null } {
+  return {
+    name: GUESTS[i % GUESTS.length] ?? 'Guest',
+    phone: `+63918000${String(4000 + i).padStart(4, '0')}`,
+    email: null,
+  };
+}
+
+/** `minutes` from now, moved up to the shop's next booking time: a booked order always sits on one (T86). */
+function slotAfter(shop: PublicShop, iso: string, minutes: number): string {
+  const step = (shop.storefront.slotMinutes ?? 30) * 60_000;
+  const at = new Date(iso).getTime() + minutes * 60_000;
+  return new Date(Math.ceil(at / step) * step).toISOString();
+}
+
 function proof(
   id: string,
   status: Proof['status'],
@@ -384,7 +401,7 @@ function kantoSmashDrafts(shop: PublicShop, now: Date): DraftOrder[] {
     {
       customerIndex: 1,
       placedAt: addMinutes(iso, -10),
-      scheduledAt: addMinutes(iso, 120),
+      scheduledAt: slotAfter(shop, iso, 120),
       type: pickup,
       status: 'placed',
       paymentStatus: 'paid',
@@ -393,7 +410,7 @@ function kantoSmashDrafts(shop: PublicShop, now: Date): DraftOrder[] {
     {
       customerIndex: 2,
       placedAt: addMinutes(iso, -8),
-      scheduledAt: addMinutes(iso, 180),
+      scheduledAt: slotAfter(shop, iso, 180),
       type: pickup,
       status: 'placed',
       paymentStatus: 'unpaid',
@@ -626,7 +643,55 @@ function kantoSmashDrafts(shop: PublicShop, now: Date): DraftOrder[] {
     }
   }
 
-  return [...openDrafts, ...historyToday, ...pastDays];
+  // Booked for the next 3 days (T86): lunch and dinner rushes, with several orders on the same time and
+  // on times 15 minutes apart, so the week board shows how busy times stack.
+  const today = manilaDate(now);
+  const ahead = (
+    day: number,
+    clock: string,
+    customerIndex: number,
+    patch: Partial<DraftOrder> = {},
+  ): DraftOrder => ({
+    customerIndex,
+    placedAt: addMinutes(iso, -30 - day * 20 - customerIndex),
+    scheduledAt: manilaToDate(addDays(today, day), clock).toISOString(),
+    type: pickup,
+    status: 'placed',
+    paymentStatus: 'paid',
+    paymentMethod: gcash,
+    ...patch,
+  });
+  const toDeliver = {
+    type: 'delivery' as const,
+    paymentStatus: 'unpaid' as const,
+    paymentMethod: cod,
+  };
+  const bookedAhead: DraftOrder[] = [
+    ahead(1, '11:30', 3),
+    ahead(1, '11:30', 5, { customer: guestFor(0), isFirstOrder: true }),
+    ahead(1, '11:30', 7, { lineCount: 3, note: 'For the office. Please label each box.' }),
+    ahead(1, '11:45', 0, { customer: guestFor(1) }),
+    ahead(1, '12:00', 8, {
+      ...toDeliver,
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+    }),
+    ahead(1, '18:30', 4, { paymentStatus: 'unpaid', paymentMethod: cash }),
+    ahead(1, '19:00', 9, { customer: guestFor(2), isFirstOrder: true }),
+    ahead(2, '12:00', 6),
+    ahead(2, '12:15', 2, { customer: guestFor(3) }),
+    ahead(2, '12:15', 1, { qtyBoost: 2, note: 'Birthday lunch, extra tissue please.' }),
+    ahead(2, '17:45', 5, {
+      ...toDeliver,
+      deliveryFee: delivery.fee,
+      deliveryAddress: delivery.address,
+    }),
+    ahead(3, '13:00', 0, { paymentStatus: 'unpaid', paymentMethod: cash }),
+    ahead(3, '19:30', 3, { customer: guestFor(4), isFirstOrder: true }),
+    ahead(3, '19:30', 8),
+  ];
+
+  return [...openDrafts, ...bookedAhead, ...historyToday, ...pastDays];
 }
 
 function lolaRemyDrafts(shop: PublicShop, now: Date): DraftOrder[] {
@@ -754,7 +819,10 @@ function lolaRemyDrafts(shop: PublicShop, now: Date): DraftOrder[] {
   const partyOrder: DraftOrder = {
     customerIndex: 5,
     placedAt: addMinutes(iso, -150),
-    scheduledAt: manilaToDate(addDays(todayDate, 4), '14:00').toISOString(),
+    scheduledAt: manilaToDate(
+      addDays(todayDate, 4),
+      weekdayOf(addDays(todayDate, 4)) === 0 ? '10:00' : '14:00',
+    ).toISOString(),
     type: pickup,
     status: 'placed',
     paymentStatus: 'paid',
@@ -776,7 +844,9 @@ function lolaRemyDrafts(shop: PublicShop, now: Date): DraftOrder[] {
   ];
   const moreScheduled: DraftOrder[] = scheduledDaysOffsets.map((offset, idx) => {
     const day = addDays(todayDate, offset);
-    const hour = 8 + (idx % 8);
+    // Inside the bakery's hours: mornings and afternoons, and mornings only on Sunday.
+    const hours = weekdayOf(day) === 0 ? [8, 9, 10, 11] : [8, 9, 10, 11, 14, 15, 16, 17];
+    const hour = hours[idx % hours.length] ?? 9;
     const timeStr = `${String(hour).padStart(2, '0')}:00`;
     return {
       customerIndex: (idx + 6) % NAMES.length,
@@ -1057,7 +1127,29 @@ function talaApparelDrafts(shop: PublicShop, now: Date): DraftOrder[] {
     }
   }
 
-  return [bigOrder, ...otherOpen, ...pastDays];
+  // Pickups booked for the coming week (T86), an hour apart: fittings and gift pickups.
+  const today = manilaDate(now);
+  const bookedAhead: DraftOrder[] = [
+    [1, '11:00', 2],
+    [1, '15:00', 4],
+    [2, '11:00', 6],
+    [3, '14:00', 1],
+    [3, '14:00', 8],
+    [5, '16:00', 3],
+    [6, '10:00', 7],
+  ].map(([day = 1, clock = '11:00', customerIndex = 0], idx): DraftOrder => ({
+    customerIndex: Number(customerIndex),
+    placedAt: addMinutes(iso, -60 - idx * 25),
+    scheduledAt: manilaToDate(addDays(today, Number(day)), String(clock)).toISOString(),
+    type: pickup,
+    status: 'placed',
+    paymentStatus: idx % 3 === 0 ? 'unpaid' : 'paid',
+    paymentMethod: idx % 3 === 0 ? methodFor(shop, pickup, 'cash') : idx % 2 === 0 ? bank : gcash,
+    ...(idx === 3 ? { note: 'Gift for my sister. Please wrap it.' } : {}),
+    ...(idx === 5 ? { isFirstOrder: true } : {}),
+  }));
+
+  return [bigOrder, ...otherOpen, ...bookedAhead, ...pastDays];
 }
 
 function aqualinisDrafts(shop: PublicShop, now: Date): DraftOrder[] {
@@ -1324,7 +1416,7 @@ function defaultActivityDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       status: 'placed',
       paymentStatus: 'unpaid',
       paymentMethod: methodFor(shop, pickup, 'cash'),
-      scheduledAt: addMinutes(iso, 120),
+      scheduledAt: slotAfter(shop, iso, 120),
     },
     {
       customerIndex: 2,
@@ -1333,7 +1425,7 @@ function defaultActivityDrafts(shop: PublicShop, now: Date): DraftOrder[] {
       status: 'placed',
       paymentStatus: 'unpaid',
       paymentMethod: methodFor(shop, pickup, 'cash'),
-      scheduledAt: addMinutes(iso, 180),
+      scheduledAt: slotAfter(shop, iso, 180),
     },
   ];
 

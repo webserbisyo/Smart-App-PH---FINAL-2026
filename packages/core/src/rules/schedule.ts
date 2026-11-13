@@ -245,3 +245,45 @@ export function scheduleDays(
     noticeItem,
   };
 }
+
+/** The owner can move an order to any open day this far ahead; `daysAhead` only limits customers (T86). */
+export const OWNER_MOVE_DAYS = 60;
+
+/**
+ * The days and times an owner can move an order to (T86): the next 60 days whatever the customers'
+ * booking window is, also while the shop is closed, busy or paused. Closed days, full times and items
+ * that need notice still count. Each day and time says how many orders are already on it.
+ */
+export function ownerScheduleDays(
+  storefront: StorefrontScheduleInput,
+  lines: readonly ScheduleLineInput[],
+  items: readonly ScheduleItemInput[] | Record<string, ScheduleItemInput>,
+  bookings: ScheduleBookingsInput,
+  now: string | Date,
+): Schedule {
+  const schedule = scheduleDays(
+    {
+      ...storefront,
+      daysAhead: OWNER_MOVE_DAYS,
+      takeOrdersWhileClosed: true,
+      pause: { ...storefront.pause, busyUntil: null, paused: false },
+    },
+    lines,
+    items,
+    bookings,
+    now,
+  );
+  const perDay = new Map<string, number>();
+  for (const [at, count] of Object.entries(bookings.slotCounts)) {
+    const date = manilaDate(at);
+    perDay.set(date, (perDay.get(date) ?? 0) + count);
+  }
+  return {
+    ...schedule,
+    days: schedule.days.map((day) => ({
+      ...day,
+      booked: perDay.get(day.date) ?? 0,
+      slots: day.slots.map((slot) => ({ ...slot, booked: bookings.slotCounts[slot.at] ?? 0 })),
+    })),
+  };
+}

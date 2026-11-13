@@ -185,6 +185,8 @@ export interface OrderPanelProps {
   slug: string;
   kind: ShopKind;
   shopName: string;
+  // The Calendar asked for Change time on a day (an order dropped where its time isn't open, T86).
+  timeRequest?: { orderId: string; day: string } | null | undefined;
   onClose: () => void;
 }
 
@@ -192,7 +194,15 @@ export interface OrderPanelProps {
  * The order panel (D5): a right Sheet from 768 px, a bottom Drawer below. The header, steps and payment
  * state come from the card the owner tapped, so it opens instantly; the rest loads into its own sections.
  */
-export function OrderPanel({ orderId, seed, slug, kind, shopName, onClose }: OrderPanelProps) {
+export function OrderPanel({
+  orderId,
+  seed,
+  slug,
+  kind,
+  shopName,
+  timeRequest,
+  onClose,
+}: OrderPanelProps) {
   // Keep the last order while the panel slides away.
   const [lastId, setLastId] = React.useState(orderId);
   // The panel shows the order, or slides to Change time in place (T85).
@@ -200,6 +210,11 @@ export function OrderPanel({ orderId, seed, slug, kind, shopName, onClose }: Ord
   if (orderId && orderId !== lastId) {
     setLastId(orderId);
     setMode('order');
+  }
+  const [seenRequest, setSeenRequest] = React.useState(timeRequest ?? null);
+  if (timeRequest && timeRequest !== seenRequest && timeRequest.orderId === orderId) {
+    setSeenRequest(timeRequest);
+    setMode('time');
   }
   const id = orderId ?? lastId ?? '';
   const open = orderId !== undefined;
@@ -224,6 +239,7 @@ export function OrderPanel({ orderId, seed, slug, kind, shopName, onClose }: Ord
     active: open && mode === 'time',
     shopName,
     today,
+    startDay: timeRequest && timeRequest.orderId === id ? timeRequest.day : undefined,
     onMoved: () => setMode('order'),
   });
   const timeMode = mode === 'time' && ct !== null && order !== undefined && canReschedule(order);

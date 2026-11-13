@@ -155,10 +155,22 @@ export function OrdersScreen() {
     },
     [setSearch],
   );
-  const closeOrder = React.useCallback(
-    () => setSearch({ order: undefined }, { replace: true }),
+  // An order dropped on a day where its time isn't open: its panel opens on Change time, on that day.
+  const [timeRequest, setTimeRequest] = React.useState<{ orderId: string; day: string } | null>(
+    null,
+  );
+  const openChangeTime = React.useCallback(
+    (order: BoardOrder, day: string) => {
+      setClicked(order);
+      setTimeRequest({ orderId: order.id, day });
+      setSearch({ order: order.id });
+    },
     [setSearch],
   );
+  const closeOrder = React.useCallback(() => {
+    setTimeRequest(null);
+    setSearch({ order: undefined }, { replace: true });
+  }, [setSearch]);
 
   const handleShare = async () => {
     const url = storefrontUrl(shop.slug);
@@ -298,7 +310,19 @@ export function OrdersScreen() {
               rules={sf}
               online={isOnline}
               matches={matchesShown}
+              view={search.cal}
+              date={search.calDay}
+              onNavigate={(place, options) =>
+                setSearch(
+                  {
+                    ...(place.view ? { cal: place.view } : {}),
+                    ...(place.date ? { calDay: place.date } : {}),
+                  },
+                  options,
+                )
+              }
               onOpen={openOrder}
+              onChangeTime={openChangeTime}
             />
           </React.Suspense>
         ) : view === 'list' ? (
@@ -325,6 +349,7 @@ export function OrdersScreen() {
         slug={shop.slug}
         kind={shop.kind}
         shopName={shop.name}
+        timeRequest={timeRequest}
         onClose={closeOrder}
       />
     </div>
