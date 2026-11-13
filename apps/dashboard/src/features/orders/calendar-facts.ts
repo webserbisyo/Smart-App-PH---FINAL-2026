@@ -24,7 +24,6 @@ const W = ordersWords.bookings;
 export const RANGE_DAYS = 60;
 export const WEEK_DAYS = 7;
 
-
 export const PERIODS = ['morning', 'afternoon', 'evening'] as const;
 
 export type ScheduleRules = Pick<
@@ -95,7 +94,9 @@ export const byTime = (a: BoardOrder, b: BoardOrder) =>
 export function dayFacts(orders: readonly BoardOrder[], slotMinutes: number): DayFacts {
   const byDay = new Map<string, BoardOrder[]>();
   const perSlot = new Map<string, BoardOrder[]>();
-  const sorted = [...orders].sort((a, b) => a.dueAt.localeCompare(b.dueAt) || a.orderNo - b.orderNo);
+  const sorted = [...orders].sort(
+    (a, b) => a.dueAt.localeCompare(b.dueAt) || a.orderNo - b.orderNo,
+  );
   for (const o of sorted) {
     const day = manilaDate(o.dueAt);
     byDay.set(day, [...(byDay.get(day) ?? []), o]);

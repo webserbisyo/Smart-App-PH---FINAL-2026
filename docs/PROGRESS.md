@@ -60,6 +60,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Final polish of every page: Home charts, scroll hints and touch sizes, phone editor dock, fonts, customer avatars, payment photo chat, page-by-page fixes (decisions T77 to T82; 7 parts on main)
 - [x] Money cards: Paid, To check and Not paid yet bar, one ring per payment place, up to 3 banks from a bank list, checkout asks which bank (decision T84; pushed to main 2026-11-12)
 - [x] Scheduled orders calendar: customer-coloured calendar cards with photos, What to make, phone List / 3 days / Month, Change time inside the order panel, shared day and time chips (decision T85; pushed to main 2026-11-12)
+- [x] Orders calendar v2: week board with orders stacked by time, Week / Day / Month on every screen, Go to date, Change time with a month and time tabs, moves up to 60 days ahead (decision T86; pushed to main 2026-11-13)
 
 ## Phase 4: Backend, area by area
 

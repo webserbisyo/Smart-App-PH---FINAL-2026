@@ -2060,7 +2060,6 @@ export const ordersWords = {
       agenda: 'List',
     },
     viewLabel: 'Calendar view',
-    phoneViews: { list: 'List', days: '3 days', month: 'Month' },
     dayStrip: 'Pick a day',
     dayTotal: (n: number, total: string) => `${n} ${n === 1 ? 'order' : 'orders'} · ${total}`,
     dayCount: (n: number) => `${n} ${n === 1 ? 'order' : 'orders'}`,

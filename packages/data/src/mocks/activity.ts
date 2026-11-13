@@ -4,12 +4,12 @@ import {
   addDays,
   canQuickAdd,
   defaultPicks,
+  intervalsForDate,
   isTransfer,
   manilaDate,
   manilaToDate,
   openHoursOf,
   openState,
-  pickupSlots,
   shopRhythm,
   validateLinePicks,
   weekdayOf,
@@ -224,7 +224,15 @@ function guestFor(i: number): { name: string; phone: string; email: null } {
 function slotAfter(shop: PublicShop, iso: string, minutes: number): string {
   const step = (shop.storefront.slotMinutes ?? 30) * 60_000;
   const at = new Date(iso).getTime() + minutes * 60_000;
-  return new Date(Math.ceil(at / step) * step).toISOString();
+  const rounded = Math.ceil(at / step) * step;
+  // The first booking time from then on while the shop is open (late at night: the next morning).
+  for (let day = 0; day < 8; day += 1) {
+    for (const open of intervalsForDate(shop.storefront, addDays(manilaDate(iso), day))) {
+      const first = Math.max(rounded, Math.ceil(open.start.getTime() / step) * step);
+      if (first < open.end.getTime()) return new Date(first).toISOString();
+    }
+  }
+  return new Date(rounded).toISOString();
 }
 
 function proof(
@@ -245,14 +253,13 @@ function demoReceiptDrafts(shop: PublicShop, now: Date): DraftOrder[] {
   const delivery = deliveryFor(shop);
   // Juan's demo receipts use a separate number, so the unpaid-order limit never blocks a tester typing his phone.
   const juan = { name: DEMO_CUSTOMER.name, phone: '+639170009999', email: DEMO_CUSTOMER.email };
+  // On one of the shop's booking times while it is open (T86): the next one after the prep time when the
+  // shop is closed now, else tomorrow from 10 AM.
   const scheduled = (() => {
-    const slots = pickupSlots(shop.storefront, now);
     const state = openState(shop.storefront, now);
-    if (state.state === 'closed' && slots[0]) return slots[0];
+    if (state.state === 'closed') return slotAfter(shop, iso, shop.storefront.prepMinutes);
     const tomorrow = addDays(manilaDate(now), 1);
-    return (
-      slots.find((s) => manilaDate(s) === tomorrow) ?? manilaToDate(tomorrow, '10:00').toISOString()
-    );
+    return slotAfter(shop, manilaToDate(tomorrow, '10:00').toISOString(), 0);
   })();
   const base = { customer: juan };
   return [

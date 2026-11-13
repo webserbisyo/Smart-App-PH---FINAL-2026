@@ -236,7 +236,7 @@ export function CatalogPrimitiveSections() {
         title="Popover"
         library="shadcn (base-nova)"
         path="packages/ui/src/components/popover.tsx"
-        usedIn="catalog column visibility picker, kit"
+        usedIn="catalog column visibility picker, Orders List and Calendar Go to date, kit"
       >
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">Floating overlay panel:</p>

@@ -97,7 +97,8 @@ export default function BookingsView({
   const view: CalendarMode = viewParam ?? (isPhone ? 'day' : 'week');
   const date = clampDay(dateParam ?? today, today, lastDay);
   const start = weekStartOf(date, today);
-  const days = React.useMemo(() => weekDays(start, lastDay), [start, lastDay]);
+  // The React Compiler keeps one list per page of days, so a dropped card stays put until the server answers.
+  const days = weekDays(start, lastDay);
 
   if (query.isPending) return <Skeleton className="h-160 w-full rounded-xl md:h-176" />;
   if (query.isError) {

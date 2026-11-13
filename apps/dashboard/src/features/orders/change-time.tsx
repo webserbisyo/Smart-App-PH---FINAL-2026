@@ -310,11 +310,8 @@ interface MonthFacts {
 const MonthFactsContext = React.createContext<MonthFacts | null>(null);
 
 /** A day of the month: its number, how many orders are on it, crossed out when closed, "Full" in red. */
-function MonthDayButton({
-  className,
-  children: _children,
-  ...props
-}: React.ComponentProps<typeof CalendarDayButton>) {
+// The calendar's own day label is replaced by the number and the count below.
+function MonthDayButton({ className, ...props }: React.ComponentProps<typeof CalendarDayButton>) {
   const facts = React.useContext(MonthFactsContext);
   const key = keyFromDate(props.day.date);
   const day = facts?.days.get(key);

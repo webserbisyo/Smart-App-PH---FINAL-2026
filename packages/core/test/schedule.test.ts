@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { pickupSlots, scheduleDays, SHOP_PACKS, type Storefront } from '../src/index.js';
+import {
+  OWNER_MOVE_DAYS,
+  ownerScheduleDays,
+  pickupSlots,
+  scheduleDays,
+  SHOP_PACKS,
+  type Storefront,
+} from '../src/index.js';
 
 // Manila time helper: "2026-10-26 12:00" → ISO UTC. 2026-10-26 is a Monday.
 const mnl = (local: string) => new Date(`${local.replace(' ', 'T')}:00+08:00`).toISOString();
@@ -178,5 +185,45 @@ describe('scheduleDays (decision T48)', () => {
       mnl('2026-10-26 10:00'),
     );
     expect(s.earliest).toBe(mnl('2026-10-26 11:00'));
+  });
+});
+
+describe('ownerScheduleDays (decision T86)', () => {
+  const now = mnl('2026-10-26 10:00');
+
+  it('gives the owner 60 days whatever the customers can book', () => {
+    const s = ownerScheduleDays(kanto.storefront, [], kanto.catalog.items, noBookings, now);
+    expect(kanto.storefront.daysAhead).toBe(3);
+    expect(s.days).toHaveLength(OWNER_MOVE_DAYS + 1);
+    expect(s.days.at(-1)?.date).toBe('2026-12-25');
+  });
+
+  it('still keeps closed days closed', () => {
+    const s = ownerScheduleDays(lola.storefront, [], lola.catalog.items, noBookings, now);
+    const closed = s.days.filter((d) => d.state === 'closed');
+    for (const d of closed) expect(d.slots).toEqual([]);
+  });
+
+  it('counts the orders already on each day and time', () => {
+    const at = mnl('2026-10-28 11:00');
+    const s = ownerScheduleDays(
+      kanto.storefront,
+      [],
+      kanto.catalog.items,
+      { slotCounts: { [at]: 2 }, itemCounts: {} },
+      now,
+    );
+    const day = s.days.find((d) => d.date === '2026-10-28');
+    expect(day?.booked).toBe(2);
+    expect(day?.slots.find((x) => x.at === at)?.booked).toBe(2);
+    expect(s.days.find((d) => d.date === '2026-10-29')?.booked).toBe(0);
+  });
+
+  it('lets the owner move orders while the shop is paused', () => {
+    const paused = with_(kanto.storefront, { pause: { busyUntil: null, paused: true } });
+    expect(scheduleDays(paused, [], kanto.catalog.items, noBookings, now).days).toEqual([]);
+    expect(
+      ownerScheduleDays(paused, [], kanto.catalog.items, noBookings, now).days.length,
+    ).toBeGreaterThan(0);
   });
 });

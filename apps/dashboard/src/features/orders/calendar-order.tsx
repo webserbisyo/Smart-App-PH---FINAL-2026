@@ -16,7 +16,6 @@ import {
   type ShopKind,
 } from '@smartapp/core';
 import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
-import { AvatarGroup } from '@smartapp/ui/components/avatar-group';
 import { Button } from '@smartapp/ui/components/button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import {
@@ -57,66 +56,6 @@ export function CustomerAvatar({
         {initials(order.customerName)}
       </AvatarFallback>
     </Avatar>
-  );
-}
-
-/** Up to 3 customers' initials for a month day, then "+N" (the installed Avatar Group's overflow). */
-export function CustomerStack({ orders }: { orders: readonly BoardOrder[] }) {
-  if (orders.length === 0) return null;
-  return (
-    <AvatarGroup size={24} max={4} aria-hidden="true">
-      {orders.map((o) => (
-        <CustomerAvatar key={o.id} order={o} className="ring-2 ring-card" />
-      ))}
-    </AvatarGroup>
-  );
-}
-
-/**
- * One order on the time grid (T85): the edge colour says who ordered, then their name, the time and how
- * it goes out, and the item photos when the block is tall enough. Words and icons back every colour.
- */
-export function CalendarEventCard({ order, dragging }: { order: BoardOrder; dragging: boolean }) {
-  const kind = customerKind(order);
-  const TypeIcon = ORDER_TYPE_ICON[order.type];
-  const toCheck = needsProofCheck(order);
-  return (
-    <div
-      data-slot="calendar-order"
-      className={cn(
-        'flex size-full min-w-0 flex-col gap-0.5 overflow-hidden rounded-md border border-l-4 bg-card px-1.5 py-1 text-left text-xs text-card-foreground shadow-xs',
-        CUSTOMER_LOOK[kind].bar,
-        dragging && 'shadow-lg ring-2 ring-primary',
-      )}
-    >
-      <span className="flex min-w-0 items-center gap-1">
-        <CustomerAvatar order={order} />
-        <span className="truncate text-sm font-semibold">{order.customerName}</span>
-      </span>
-      <span className="flex min-w-0 items-center gap-1 text-muted-foreground">
-        <TypeIcon aria-hidden="true" className="size-3 shrink-0" />
-        <span className="truncate tabular-nums">
-          {formatClock(order.dueAt)} · {orderNoLabel(order.orderNo)}
-        </span>
-        {toCheck ? (
-          <ShieldAlertIcon
-            className="size-3.5 shrink-0 text-warning-text"
-            role="img"
-            aria-label={W.toCheck}
-          />
-        ) : null}
-      </span>
-      <span className="mt-0.5 flex min-w-0 items-center gap-1">
-        {/* The total wins on a narrow card; the photos give way. */}
-        <span className="flex min-w-0 overflow-hidden">
-          <ItemPhotos order={order} />
-        </span>
-        <span className="ml-auto shrink-0 font-semibold tabular-nums">
-          {formatPeso(order.total)}
-        </span>
-      </span>
-      <span className="sr-only">{customerLabel(kind)}</span>
-    </div>
   );
 }
 

@@ -44,8 +44,7 @@ export function useMoveOrder(slug: string, today: string) {
       .catch((err: unknown) => {
         const code = errorCodeOf(err);
         notify({
-          title:
-            code === 'slot_full' ? ordersWords.changeTime.errors.slot_full : errorWords(code),
+          title: code === 'slot_full' ? ordersWords.changeTime.errors.slot_full : errorWords(code),
           tone: 'error',
         });
         return false;

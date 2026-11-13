@@ -271,7 +271,7 @@ export function OrdersPrimitiveSections() {
         title="Kanban"
         library="ReUI"
         path="packages/ui/src/components/reui/kanban.tsx"
-        usedIn="kit (Orders in O3 to O6)"
+        usedIn="Orders Board, Orders Calendar week board (T86), kit"
       >
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
@@ -364,7 +364,7 @@ export function OrdersPrimitiveSections() {
         title="Calendar"
         library="shadcn"
         path="packages/ui/src/components/calendar.tsx"
-        usedIn="kit (Orders in O3 to O6)"
+        usedIn="Orders List date, Orders Calendar Go to date, Change time month with order counts (T86)"
       >
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
@@ -402,7 +402,7 @@ export function OrdersPrimitiveSections() {
         title="Event Calendar"
         library="ReUI"
         path="packages/ui/src/components/reui/event-calendar/event-calendar.tsx"
-        usedIn="Orders Bookings view (T83): Week and Month on a laptop, List on phones, drag to change the time"
+        usedIn="Orders Calendar Month view (T86): orders and pesos per day, tap a day to open it"
       >
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
@@ -471,7 +471,7 @@ export function OrdersPrimitiveSections() {
         title="Slot chips (our composition)"
         library="composition (Scroller + Toggle Group)"
         path="packages/ui/src/compositions/slot-chips.tsx"
-        usedIn="storefront When picker, order panel Change time, Orders Calendar phone day row (T85)"
+        usedIn="storefront When picker (day and time chips), Change time times, Orders Calendar Day strip (T86)"
       >
         <SlotChipsExample />
       </KitSection>
