@@ -73,6 +73,8 @@ const MOCK_VALUES = [
   'plan-paused',
   'storage-full',
   'export-fail',
+  'stage-setting-up',
+  'stage-asked',
   'home-quiet',
   'home-new',
   'home-closed',
@@ -134,6 +136,13 @@ export function parseMockScenario(params: URLSearchParams): UrlScenario {
       break;
     case 'export-fail':
       out.scenario.exportFails = true;
+      break;
+    // Going live (T89): the owner's shop still setting up, or waiting for the founder.
+    case 'stage-setting-up':
+      out.scenario.stage = 'setting_up';
+      break;
+    case 'stage-asked':
+      out.scenario.stage = 'asked';
       break;
     // Home (T69): a quiet morning before any shop opens, a new shop, closed today, a failed read, slow.
     case 'home-quiet':

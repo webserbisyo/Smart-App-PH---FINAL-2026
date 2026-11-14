@@ -339,6 +339,10 @@ export type PlanStatus = z.infer<typeof PlanStatusEnum>;
 
 export const PLAN_PAY_METHODS = ['gcash', 'maya'] as const;
 export const PlanPayMethodEnum = z.enum(PLAN_PAY_METHODS);
+// How a plan payment arrived: the owner sends GCash or Maya; the founder may record a bank transfer or cash (T88).
+export const PLAN_PAID_VIA = ['gcash', 'maya', 'bank', 'cash'] as const;
+export const PlanPaidViaEnum = z.enum(PLAN_PAID_VIA);
+export type PlanPaidVia = z.infer<typeof PlanPaidViaEnum>;
 export type PlanPayMethod = z.infer<typeof PlanPayMethodEnum>;
 
 export const PLAN_PAYMENT_STATUSES = ['pending', 'approved', 'rejected'] as const;
@@ -418,3 +422,156 @@ export const HOME_NEED_KINDS = [
 ] as const;
 export const HomeNeedKindEnum = z.enum(HOME_NEED_KINDS);
 export type HomeNeedKind = z.infer<typeof HomeNeedKindEnum>;
+
+// ---------- Super Admin, sign-up and Meta tracking (decisions T88 to T92) ----------
+
+// Where a shop is with Smart App PH. The owner sets up at once; the founder's approval turns the public
+// link on and starts the trial (T89). The plan's own states stay in PLAN_STATUSES.
+export const SHOP_STAGES = ['setting_up', 'asked', 'live', 'closed'] as const;
+export const ShopStageEnum = z.enum(SHOP_STAGES);
+export type ShopStage = z.infer<typeof ShopStageEnum>;
+
+// Where a sign-up came from, read from the ad link (T90).
+export const SIGNUP_CHANNELS = ['facebook_ad', 'link', 'direct'] as const;
+export const SignupChannelEnum = z.enum(SIGNUP_CHANNELS);
+export type SignupChannel = z.infer<typeof SignupChannelEnum>;
+
+// Why the founder closes a shop (T88).
+export const CLOSE_REASONS = [
+  'not_paying',
+  'owner_asked',
+  'duplicate',
+  'not_real',
+  'other',
+] as const;
+export const CloseReasonEnum = z.enum(CLOSE_REASONS);
+export type CloseReason = z.infer<typeof CloseReasonEnum>;
+
+export const CLOSE_WHEN = ['now', 'period_end'] as const;
+export const CloseWhenEnum = z.enum(CLOSE_WHEN);
+export type CloseWhen = z.infer<typeof CloseWhenEnum>;
+
+// Why a plan payment is not approved: picked, never typed (T88).
+export const PLAN_REJECT_REASONS = [
+  'amount_short',
+  'unreadable',
+  'reference_not_found',
+  'wrong_account',
+] as const;
+export const PlanRejectReasonEnum = z.enum(PLAN_REJECT_REASONS);
+export type PlanRejectReason = z.infer<typeof PlanRejectReasonEnum>;
+
+// The Billing chat between a shop and Smart App PH (T88): who wrote a line and what it is.
+export const BILLING_FROM = ['owner', 'admin', 'system'] as const;
+export const BillingFromEnum = z.enum(BILLING_FROM);
+export type BillingFrom = z.infer<typeof BillingFromEnum>;
+
+export const BILLING_KINDS = [
+  'payment',
+  'approved',
+  'rejected',
+  'note',
+  'reminder',
+  'extra_days',
+  'support',
+  'live',
+] as const;
+export const BillingKindEnum = z.enum(BILLING_KINDS);
+export type BillingKind = z.infer<typeof BillingKindEnum>;
+
+// Help mode: why the founder opens a shop as its owner (T91).
+export const SUPPORT_REASONS = ['set_up', 'fix_problem', 'owner_asked'] as const;
+export const SupportReasonEnum = z.enum(SUPPORT_REASONS);
+export type SupportReason = z.infer<typeof SupportReasonEnum>;
+
+// One line on a shop's Activity tab (T88).
+export const SHOP_ACTIVITY_KINDS = [
+  'signed_up',
+  'asked',
+  'approved',
+  'payment_sent',
+  'payment_approved',
+  'payment_rejected',
+  'payment_recorded',
+  'reminder',
+  'extra_days',
+  'support',
+  'closed',
+  'reopened',
+  'created_by_admin',
+] as const;
+export const ShopActivityKindEnum = z.enum(SHOP_ACTIVITY_KINDS);
+export type ShopActivityKind = z.infer<typeof ShopActivityKindEnum>;
+
+// The Shops list's chips (T88), in order.
+export const ADMIN_SHOP_FILTERS = [
+  'needs_you',
+  'leads',
+  'setting_up',
+  'trial',
+  'active',
+  'due',
+  'overdue',
+  'paused',
+  'closed',
+  'all',
+] as const;
+export const AdminShopFilterEnum = z.enum(ADMIN_SHOP_FILTERS);
+export type AdminShopFilter = z.infer<typeof AdminShopFilterEnum>;
+
+// Small warnings on a shop row (T88).
+export const ADMIN_FLAGS = ['stuck_setup', 'quiet', 'storage_high'] as const;
+export const AdminFlagEnum = z.enum(ADMIN_FLAGS);
+export type AdminFlag = z.infer<typeof AdminFlagEnum>;
+
+// The founder's "Needs you" rows, most urgent first (T88).
+export const ADMIN_NEED_KINDS = [
+  'payment',
+  'go_live',
+  'tracking_failed',
+  'overdue',
+  'trial_ending',
+  'due',
+  'storage',
+  'stuck',
+] as const;
+export const AdminNeedKindEnum = z.enum(ADMIN_NEED_KINDS);
+export type AdminNeedKind = z.infer<typeof AdminNeedKindEnum>;
+
+// The Payments page tabs (T88).
+export const ADMIN_PAYMENT_VIEWS = ['to_check', 'all'] as const;
+export const AdminPaymentViewEnum = z.enum(ADMIN_PAYMENT_VIEWS);
+export type AdminPaymentView = z.infer<typeof AdminPaymentViewEnum>;
+
+// Meta events from first visit to paying shop (T90). Names are Meta's own standard events.
+export const TRACK_EVENT_NAMES = [
+  'PageView',
+  'Lead',
+  'CompleteRegistration',
+  'SubmitApplication',
+  'StartTrial',
+  'AddPaymentInfo',
+  'Subscribe',
+  'Purchase',
+  'Contact',
+] as const;
+export const TrackEventNameEnum = z.enum(TRACK_EVENT_NAMES);
+export type TrackEventName = z.infer<typeof TrackEventNameEnum>;
+
+// The events a browser may report; the rest only ever start on the server (T90).
+export const BROWSER_TRACK_EVENTS = [
+  'PageView',
+  'Lead',
+  'CompleteRegistration',
+  'Contact',
+] as const;
+export const BrowserTrackEventEnum = z.enum(BROWSER_TRACK_EVENTS);
+export type BrowserTrackEvent = z.infer<typeof BrowserTrackEventEnum>;
+
+export const TRACK_STATUSES = ['queued', 'sent', 'failed', 'skipped'] as const;
+export const TrackStatusEnum = z.enum(TRACK_STATUSES);
+export type TrackStatus = z.infer<typeof TrackStatusEnum>;
+
+export const TRACK_VIA = ['browser_server', 'server', 'browser'] as const;
+export const TrackViaEnum = z.enum(TRACK_VIA);
+export type TrackVia = z.infer<typeof TrackViaEnum>;

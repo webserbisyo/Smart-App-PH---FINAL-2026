@@ -107,6 +107,11 @@ export function formatManila(value: string | Date, format: ManilaFormat = 'datet
   }
 }
 
+/** The Manila month's short name, "Nov". */
+export function monthName(value: string | Date): string {
+  return MONTH_NAMES[manilaParts(value).month - 1] ?? '';
+}
+
 /** Whole minutes from now until `value` (negative when it has passed). */
 export function minutesUntil(value: string | Date, now: string | Date): number {
   return Math.ceil((toDate(value).getTime() - toDate(now).getTime()) / MS_MINUTE);

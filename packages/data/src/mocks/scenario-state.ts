@@ -16,6 +16,7 @@ export const MOCK_AREAS = [
   'settings',
   'home',
   'editor',
+  'platform',
   'all',
 ] as const;
 // Settings demo states (T66, T67): the plan's place in its month, and a full storage.
@@ -46,6 +47,8 @@ export const MockScenarioSchema = z.object({
   storage: z.enum(MOCK_STORAGE_STATES).default('default'),
   // The next export fails, so the screen's failed state can be seen.
   exportFails: z.boolean().default(false),
+  // The owner's shop stage (T89): live by default.
+  stage: z.enum(['live', 'setting_up', 'asked']).default('live'),
 });
 export type MockScenario = z.infer<typeof MockScenarioSchema>;
 
@@ -62,6 +65,7 @@ export const DEFAULT_SCENARIO: MockScenario = {
   plan: 'default',
   storage: 'default',
   exportFails: false,
+  stage: 'live',
 };
 
 let current: MockScenario = DEFAULT_SCENARIO;

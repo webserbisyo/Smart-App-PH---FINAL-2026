@@ -24,6 +24,7 @@ export * from './schemas/avatar-make.js';
 export * from './schemas/settings.js';
 export * from './schemas/owner-home.js';
 export * from './schemas/editor.js';
+export * from './schemas/platform.js';
 export * from './rules/money.js';
 export * from './rules/time.js';
 export * from './rules/hours.js';
@@ -49,6 +50,7 @@ export * from './rules/members.js';
 export * from './rules/settings.js';
 export * from './rules/owner-home.js';
 export * from './rules/editor.js';
+export * from './rules/platform.js';
 export * from './demo/rhythm.js';
 export { SHOP_PACKS } from './demo/packs/index.js';
 export {

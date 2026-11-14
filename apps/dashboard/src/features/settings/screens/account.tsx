@@ -13,6 +13,7 @@ import {
   APPEARANCES,
   errorWords,
   settingsWords,
+  supportWords,
   type Appearance,
   type OwnerProfile,
   type SendCodeResult,
@@ -52,6 +53,7 @@ import { setAppearance, useAppearance } from '@/app/appearance';
 import { OwnerAvatarView } from '@/app/owner-avatar';
 import { PageError } from '@/app/page-state';
 import { useShop } from '@/app/shop';
+import { useSupport } from '@/app/support';
 import { AvatarPicker } from '../avatar-picker.js';
 import {
   SaveBar,
@@ -91,6 +93,7 @@ function AccountForm({ profile }: { profile: OwnerProfile }) {
   const section = useSectionSave(settingsWords.sectionTitles.account);
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const [passwordOpen, setPasswordOpen] = React.useState(false);
+  const helping = useSupport() !== null;
   const appearance = useAppearance();
   const tapPoint = React.useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const nameProblem = draft.trim() ? undefined : W.nameRequired;
@@ -170,9 +173,14 @@ function AccountForm({ profile }: { profile: OwnerProfile }) {
 
       <SettingsCard
         title={W.passwordCard}
-        description={settingsWords.account.passwordLine}
+        description={helping ? supportWords.locked : settingsWords.account.passwordLine}
         action={
-          <Button variant="outline" className="h-11 md:h-9" onClick={() => setPasswordOpen(true)}>
+          <Button
+            variant="outline"
+            className="h-11 md:h-9"
+            disabled={helping}
+            onClick={() => setPasswordOpen(true)}
+          >
             <KeyRoundIcon />
             {W.changePassword}
           </Button>
@@ -208,6 +216,8 @@ function AccountForm({ profile }: { profile: OwnerProfile }) {
 
 function SessionsCard() {
   const navigate = useNavigate();
+  // Help mode (T91): deleting stays with the owner.
+  const helping = useSupport() !== null;
   const signOutAll = useSignOutEverywhere();
   const requestDelete = useRequestAccountDelete();
   const [ask, setAsk] = React.useState<'signout' | 'delete' | null>(null);
@@ -251,6 +261,7 @@ function SessionsCard() {
           <Button
             variant="outline"
             className="h-11 text-destructive-text md:h-9"
+            disabled={helping}
             onClick={() => setAsk('delete')}
           >
             <Trash2Icon />

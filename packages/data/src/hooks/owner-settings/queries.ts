@@ -29,13 +29,13 @@ export function useNotificationPrefs() {
   });
 }
 
-/** The plan; while a payment waits to be checked it looks again every 10 s. */
+/** The plan and its Billing chat; while a payment waits to be checked it looks again every 10 s, else every minute. */
 export function usePlan() {
   const { ownerSettings } = useAdapters();
   return useQuery({
     queryKey: ownerSettingsQk.plan(),
     queryFn: () => ownerSettings.getPlan(),
-    refetchInterval: (query) => (query.state.data?.pending ? 10_000 : false),
+    refetchInterval: (query) => (query.state.data?.pending ? 10_000 : 60_000),
   });
 }
 

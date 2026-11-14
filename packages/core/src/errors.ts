@@ -70,6 +70,10 @@ export const ErrorCode = [
   'hours_overlap',
   // Editor (owner)
   'draft_conflict',
+  // Sign-up, going live and Super Admin (T88 to T91)
+  'setup_incomplete',
+  'support_locked',
+  'name_mismatch',
 ] as const;
 
 export const ErrorCodeEnum = z.enum(ErrorCode);

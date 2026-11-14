@@ -9,7 +9,9 @@ import type {
   OwnerMembersAdapter,
   OwnerOrdersAdapter,
   OwnerSamplesAdapter,
+  OnboardingAdapter,
   OwnerSettingsAdapter,
+  PlatformAdapter,
   StorefrontAdapter,
 } from './types';
 
@@ -130,6 +132,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
       (await real()).ownerSettings.saveNotificationPrefs(input),
     getPlan: async () => (await real()).ownerSettings.getPlan(),
     submitPlanPayment: async (input) => (await real()).ownerSettings.submitPlanPayment(input),
+    sendPlanNote: async (input) => (await real()).ownerSettings.sendPlanNote(input),
     getStorage: async () => (await real()).ownerSettings.getStorage(),
     previewCleanup: async (input) => (await real()).ownerSettings.previewCleanup(input),
     runCleanup: async (input) => (await real()).ownerSettings.runCleanup(input),
@@ -151,6 +154,41 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     createPreviewToken: async () => (await real()).ownerEditor.createPreviewToken(),
   };
 
+  const onboarding: OnboardingAdapter = {
+    saveSignupLead: async (input) => (await real()).onboarding.saveSignupLead(input),
+    registerShop: async (input) => (await real()).onboarding.registerShop(input),
+    trackEvent: async (input) => (await real()).onboarding.trackEvent(input),
+    getOnboarding: async () => (await real()).onboarding.getOnboarding(),
+    askToGoLive: async () => (await real()).onboarding.askToGoLive(),
+  };
+
+  const platform: PlatformAdapter = {
+    getAdminToday: async () => (await real()).platform.getAdminToday(),
+    listAdminShops: async (input) => (await real()).platform.listAdminShops(input),
+    getAdminShop: async (input) => (await real()).platform.getAdminShop(input),
+    listLeads: async () => (await real()).platform.listLeads(),
+    markLeadContacted: async (input) => (await real()).platform.markLeadContacted(input),
+    approveGoLive: async (input) => (await real()).platform.approveGoLive(input),
+    reviewPlanPayment: async (input) => (await real()).platform.reviewPlanPayment(input),
+    recordPlanPayment: async (input) => (await real()).platform.recordPlanPayment(input),
+    extendPlan: async (input) => (await real()).platform.extendPlan(input),
+    sendPlanReminder: async (input) => (await real()).platform.sendPlanReminder(input),
+    sendBillingNote: async (input) => (await real()).platform.sendBillingNote(input),
+    closeShop: async (input) => (await real()).platform.closeShop(input),
+    reopenShop: async (input) => (await real()).platform.reopenShop(input),
+    deleteShop: async (input) => (await real()).platform.deleteShop(input),
+    createClientShop: async (input) => (await real()).platform.createClientShop(input),
+    startSupport: async (input) => (await real()).platform.startSupport(input),
+    endSupport: async () => (await real()).platform.endSupport(),
+    listAdminPayments: async (input) => (await real()).platform.listAdminPayments(input),
+    getTracking: async () => (await real()).platform.getTracking(),
+    setTracking: async (input) => (await real()).platform.setTracking(input),
+    retryTrackEvents: async () => (await real()).platform.retryTrackEvents(),
+    sendTestEvent: async () => (await real()).platform.sendTestEvent(),
+    getPlatformSetup: async () => (await real()).platform.getPlatformSetup(),
+    savePlatformSetup: async (input) => (await real()).platform.savePlatformSetup(input),
+  };
+
   return {
     storefront,
     customerAuth,
@@ -161,5 +199,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     ownerSettings,
     ownerHome,
     ownerEditor,
+    onboarding,
+    platform,
   };
 }

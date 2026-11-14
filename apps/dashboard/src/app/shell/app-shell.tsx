@@ -15,6 +15,7 @@ import { usePageTitle } from '../use-page-title.js';
 import { storefrontUrl, useNavItems } from '../use-nav-items.js';
 import { AppSidebar } from './app-sidebar.js';
 import { ShareShopSheet } from './share-shop-sheet.js';
+import { SupportBanner } from './support-banner.js';
 import { TopBar } from './top-bar.js';
 
 // The installed sidebar keeps its open/collapsed choice in this cookie.
@@ -48,6 +49,7 @@ function Shell({ claims }: { claims: UserClaims }) {
       >
         {words.shell.skipToContent}
       </a>
+      <SupportBanner />
       <SidebarProvider
         defaultOpen={sidebarStartsOpen()}
         style={cssVars({

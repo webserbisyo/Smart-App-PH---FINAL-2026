@@ -6,7 +6,7 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router';
-import { membersWords, settingsWords, words } from '@smartapp/core';
+import { adminWords, membersWords, settingsWords, words } from '@smartapp/core';
 import { LoginScreen } from '../features/auth/screens/login.js';
 import { SignupScreen } from '../features/auth/screens/signup.js';
 import { CatalogAddOnsScreen } from '../features/catalog/screens/add-ons.js';
@@ -40,7 +40,12 @@ import { SettingsIndexScreen } from '../features/settings/screens/settings-index
 import { SettingsLayout } from '../features/settings/screens/settings-layout.js';
 import { ShopSettingsScreen } from '../features/settings/screens/shop.js';
 import { StorageSettingsScreen } from '../features/settings/screens/storage.js';
+import { AdminPaymentsSearchSchema, AdminShopsSearchSchema } from '../features/admin/search.js';
 import { setMockOwnerSlug } from '@smartapp/data';
+import { requireAdmin } from './admin.js';
+import { NotFoundPage } from './not-found.js';
+import { AdminShell } from './shell/admin-shell.js';
+import { currentSupport } from './support.js';
 import { rememberPreviousPath } from './back.js';
 import { requireAuth, requireGuest, signOut } from './guards.js';
 import type { PageMeta } from './page-meta.js';
@@ -57,7 +62,8 @@ const members = { to: '/members', title: () => s.members.title } as const;
 const settings = { to: '/settings', title: () => s.settings.title } as const;
 const st = settingsWords.sectionTitles;
 
-const rootRoute = createRootRoute({ component: Outlet });
+// A wrong link, and every Super Admin page for anyone else (rule 12), shows the same Not found.
+const rootRoute = createRootRoute({ component: Outlet, notFoundComponent: NotFoundPage });
 
 // Outside the shell.
 const loginRoute = createRoute({
@@ -107,6 +113,10 @@ const shellRoute = createRoute({
   id: 'shell',
   beforeLoad: async () => {
     const claims = await requireAuth();
+    // The founder lands in Super Admin (T88) unless helping a shop or signed in with a demo shop.
+    if (claims.isAdmin && !claims.demoShop && !currentSupport()) {
+      throw redirect({ to: '/admin' });
+    }
     const shop = resolveShop(claims);
     if (shop.slug) {
       setMockOwnerSlug(shop.slug);
@@ -279,11 +289,81 @@ const settingsChildren = [
   settingsPage('/storage', StorageSettingsScreen, st.storage),
 ] as const;
 
+// Super Admin (decision T88): its own shell, only for the platform admin account.
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin',
+  beforeLoad: async () => ({ claims: await requireAdmin() }),
+  component: AdminLayout,
+});
+
+function AdminLayout() {
+  const { claims } = adminRoute.useRouteContext();
+  return <AdminShell claims={claims} />;
+}
+
+const an = adminWords.nav;
+const adminChildren = [
+  createRoute({
+    getParentRoute: () => adminRoute,
+    path: '/',
+    // Owners never download Super Admin.
+    component: lazyRouteComponent(
+      () => import('../features/admin/screens/today.js'),
+      'AdminTodayScreen',
+    ),
+    staticData: page(() => an.today),
+  }),
+  createRoute({
+    getParentRoute: () => adminRoute,
+    path: '/shops',
+    validateSearch: AdminShopsSearchSchema,
+    // Owners never download Super Admin.
+    component: lazyRouteComponent(
+      () => import('../features/admin/screens/shops.js'),
+      'AdminShopsScreen',
+    ),
+    staticData: page(() => an.shops),
+  }),
+  createRoute({
+    getParentRoute: () => adminRoute,
+    path: '/payments',
+    validateSearch: AdminPaymentsSearchSchema,
+    // Owners never download Super Admin.
+    component: lazyRouteComponent(
+      () => import('../features/admin/screens/payments.js'),
+      'AdminPaymentsScreen',
+    ),
+    staticData: page(() => an.payments),
+  }),
+  createRoute({
+    getParentRoute: () => adminRoute,
+    path: '/tracking',
+    // Owners never download Super Admin.
+    component: lazyRouteComponent(
+      () => import('../features/admin/screens/tracking.js'),
+      'AdminTrackingScreen',
+    ),
+    staticData: page(() => an.tracking),
+  }),
+  createRoute({
+    getParentRoute: () => adminRoute,
+    path: '/setup',
+    // Owners never download Super Admin.
+    component: lazyRouteComponent(
+      () => import('../features/admin/screens/setup.js'),
+      'AdminSetupScreen',
+    ),
+    staticData: page(() => an.setup),
+  }),
+] as const;
+
 const baseRoutes = [
   loginRoute,
   signupRoute,
   logoutRoute,
   editorRoute,
+  adminRoute.addChildren(adminChildren),
   shellRoute.addChildren([
     homeRoute,
     ordersRoute,

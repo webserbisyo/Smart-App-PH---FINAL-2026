@@ -58,10 +58,14 @@ export {
   type ApiOwnerEditorOptions,
 } from './adapters/api/owner-editor';
 export { createApiStorefrontAdapter, type ApiStorefrontOptions } from './adapters/api/storefront';
-export { setMockOwnerSlug } from './mocks/store';
+export { setMockOwnerSlug, setMockSupportSession } from './mocks/store';
 export * from './hooks/owner-catalog/index';
 export * from './hooks/owner-orders/index';
 export * from './hooks/owner-members/index';
 export * from './hooks/owner-settings/index';
 export * from './hooks/owner-home/index';
 export * from './hooks/owner-editor/index';
+export * from './hooks/onboarding/index';
+export * from './hooks/platform/index';
+export { createApiOnboardingAdapter, type ApiOnboardingOptions } from './adapters/api/onboarding';
+export { createApiPlatformAdapter, type ApiPlatformOptions } from './adapters/api/platform';

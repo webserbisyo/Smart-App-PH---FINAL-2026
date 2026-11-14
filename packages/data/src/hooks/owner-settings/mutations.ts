@@ -9,6 +9,7 @@ import type {
   OwnerSettings,
   PaymentSettings,
   SaveProfileInput,
+  SendBillingNoteInput,
   ShopFacts,
   SubmitPlanPaymentInput,
 } from '@smartapp/core';
@@ -121,6 +122,16 @@ export function useSubmitPlanPayment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: SubmitPlanPaymentInput) => ownerSettings.submitPlanPayment(input),
+    onSuccess: (plan) => qc.setQueryData(ownerSettingsQk.plan(), plan),
+  });
+}
+
+/** A note in the Billing chat (T88). */
+export function useSendPlanNote() {
+  const { ownerSettings } = useAdapters();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SendBillingNoteInput) => ownerSettings.sendPlanNote(input),
     onSuccess: (plan) => qc.setQueryData(ownerSettingsQk.plan(), plan),
   });
 }

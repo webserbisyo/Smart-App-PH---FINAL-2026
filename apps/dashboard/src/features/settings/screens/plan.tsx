@@ -15,12 +15,15 @@ import {
 import {
   PLAN_MONTH_CHOICES,
   PLAN_PAY_METHODS,
+  billingWords,
   errorWords,
   formatManila,
   formatPeso,
   formatStorage,
+  planAmount,
   planCoversUntil,
   settingsWords,
+  supportWords,
   words,
   type Plan,
   type PlanMonths,
@@ -28,7 +31,13 @@ import {
   type PlanPaymentStatus,
   type PlanStatus,
 } from '@smartapp/core';
-import { errorCodeOf, usePlan, useStorage, useSubmitPlanPayment } from '@smartapp/data';
+import {
+  errorCodeOf,
+  usePlan,
+  useSendPlanNote,
+  useStorage,
+  useSubmitPlanPayment,
+} from '@smartapp/data';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
@@ -43,9 +52,11 @@ import {
   ResponsiveDialogFooter,
 } from '@smartapp/ui/compositions/responsive-dialog';
 import { cn } from 'cn';
+import { BillingComposer, BillingThread } from '@/app/billing-thread';
 import { ImageUploadRow, type UploadedImage } from '@/app/image-upload-row';
 import { Notice, type NoticeTone } from '@/app/notice';
 import { PageError } from '@/app/page-state';
+import { useSupport } from '@/app/support';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { SettingsCard, SettingsPage, SettingsSkeleton } from '../settings-ui.js';
 import { dayLabel } from '../status.js';
@@ -142,6 +153,8 @@ function PlanView({ plan }: { plan: Plan }) {
   const storage = useStorage();
   const online = useOnlineStatus();
   const [payOpen, setPayOpen] = React.useState(false);
+  const helping = useSupport() !== null;
+  const sendNote = useSendPlanNote();
   const look = STATE_LOOK[plan.status];
   const notice = planNotice(plan);
   const urgent = plan.status !== 'active';
@@ -174,7 +187,7 @@ function PlanView({ plan }: { plan: Plan }) {
             <Button
               className="h-11 font-semibold md:h-9"
               variant={urgent ? 'default' : 'outline'}
-              disabled={!online}
+              disabled={!online || helping}
               onClick={() => setPayOpen(true)}
             >
               <WalletIcon />
@@ -182,6 +195,7 @@ function PlanView({ plan }: { plan: Plan }) {
             </Button>
           )}
         </div>
+        {helping ? <p className="text-xs text-muted-foreground">{supportWords.locked}</p> : null}
         <dl className="grid gap-3 sm:grid-cols-2">
           {planDates(plan).map((row) => (
             <div key={row.label} className="flex flex-col gap-0.5 rounded-lg bg-muted/60 px-3 py-2">
@@ -205,6 +219,22 @@ function PlanView({ plan }: { plan: Plan }) {
             </dd>
           </div>
         </dl>
+      </SettingsCard>
+
+      <SettingsCard title={billingWords.title}>
+        <p className="text-sm text-muted-foreground">{billingWords.ownerHint}</p>
+        <BillingThread
+          thread={plan.thread}
+          payments={plan.history}
+          viewer="owner"
+          ownerName={billingWords.you}
+        />
+        <BillingComposer
+          onSend={async (text) => {
+            await sendNote.mutateAsync({ text });
+            notify({ title: billingWords.noteSent, tone: 'success' });
+          }}
+        />
       </SettingsCard>
 
       <SettingsCard title={W.includedCard}>
@@ -285,7 +315,9 @@ function PayForm({ plan, onClose }: { plan: Plan; onClose: () => void }) {
   const [proof, setProof] = React.useState<UploadedImage | null>(null);
   const [tried, setTried] = React.useState(false);
 
-  const amount = formatPeso(plan.priceMonthly * months);
+  // Pay 6 months, get 1 free (T92), when the founder has it on.
+  const priceOf = (n: number) => planAmount(n, plan.priceMonthly, plan.sixMonthBonus);
+  const amount = formatPeso(priceOf(months));
   const methodName = words.shop.paymentMethod[method];
   const number = method === 'gcash' ? plan.payTo.gcash : plan.payTo.maya;
   const refProblem = reference.trim().length >= 6 ? undefined : W.referenceBad;
@@ -330,8 +362,13 @@ function PayForm({ plan, onClose }: { plan: Plan; onClose: () => void }) {
             <ToggleGroupItem key={n} value={String(n)} className="h-auto flex-col gap-0 py-2">
               <span className="text-sm font-semibold">{W.monthsOption(n)}</span>
               <span className="text-xs text-muted-foreground tabular-nums">
-                {formatPeso(plan.priceMonthly * n)}
+                {formatPeso(priceOf(n))}
               </span>
+              {n === 6 && plan.sixMonthBonus ? (
+                <span className="text-xs font-semibold text-success-text">
+                  {billingWords.freeMonth}
+                </span>
+              ) : null}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>

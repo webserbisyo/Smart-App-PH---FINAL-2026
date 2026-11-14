@@ -60,6 +60,7 @@ export function createApiOwnerSettingsAdapter({
       call('/owner/notifications', NotificationPrefsSchema, 'PUT', input),
     getPlan: () => call('/owner/plan', PlanSchema, 'GET'),
     submitPlanPayment: (input) => call('/owner/plan/payments', PlanSchema, 'POST', input),
+    sendPlanNote: (input) => call('/owner/plan/notes', PlanSchema, 'POST', input),
     getStorage: () => call('/owner/storage', StorageSummarySchema, 'GET'),
     previewCleanup: ({ kind }) =>
       call(`/owner/storage/cleanup?kind=${encodeURIComponent(kind)}`, CleanupPreviewSchema, 'GET'),

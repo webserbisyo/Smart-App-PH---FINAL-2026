@@ -12,14 +12,18 @@ import {
 } from './common.js';
 import {
   AvatarThemeEnum,
+  BillingFromEnum,
+  BillingKindEnum,
   CleanupKindEnum,
   ExportRangeEnum,
   ExportStatusEnum,
   OrderTypeEnum,
   OwnerAvatarStyleEnum,
   PlanMonthsSchema,
+  PlanPaidViaEnum,
   PlanPaymentStatusEnum,
   PlanPayMethodEnum,
+  PlanRejectReasonEnum,
   PlanStatusEnum,
   StorageKindEnum,
 } from './enums.js';
@@ -127,12 +131,16 @@ export const PlanPaymentSchema = z.object({
   id: IdSchema,
   months: PlanMonthsSchema,
   amount: CentavosSchema,
-  method: PlanPayMethodEnum,
+  method: PlanPaidViaEnum,
   reference: z.string().min(1).max(40),
   status: PlanPaymentStatusEnum,
   submittedAt: IsoDateTimeSchema,
   // The last day this payment pays for, once approved.
   coversUntil: IsoDateSchema,
+  // Why it was not approved (T88).
+  rejectReason: PlanRejectReasonEnum.nullable().default(null),
+  // The owner's photo of the payment, for the founder to check (null when recorded by hand).
+  proofUrl: z.string().max(200_000).nullable().default(null),
 });
 export type PlanPayment = z.infer<typeof PlanPaymentSchema>;
 
@@ -143,9 +151,27 @@ export const PlanPayToSchema = z.object({
 });
 export type PlanPayTo = z.infer<typeof PlanPayToSchema>;
 
+// One line of the Billing chat between a shop and Smart App PH (T88). A payment line points at its payment;
+// the founder's answers and the system's lines carry their own words on the screen, from `kind`.
+export const BillingMessageSchema = z.object({
+  id: IdSchema,
+  at: IsoDateTimeSchema,
+  from: BillingFromEnum,
+  kind: BillingKindEnum,
+  paymentId: IdSchema.nullable(),
+  // A note's text (at most 300 characters); the other kinds use it for an optional short note.
+  text: z.string().max(300).nullable(),
+  reason: PlanRejectReasonEnum.nullable(),
+  // extra_days: how many days were given; live: none.
+  days: z.number().int().positive().nullable(),
+});
+export type BillingMessage = z.infer<typeof BillingMessageSchema>;
+
 export const PlanSchema = z.object({
   name: z.literal('pro'),
   priceMonthly: CentavosSchema,
+  // Pay 6 months, get 1 free (T92): 6 months cost 5 times the monthly price.
+  sixMonthBonus: z.boolean().default(false),
   storageLimitBytes: z.number().int().positive(),
   status: PlanStatusEnum,
   trialEndsAt: IsoDateTimeSchema.nullable(),
@@ -156,8 +182,13 @@ export const PlanSchema = z.object({
   payTo: PlanPayToSchema,
   pending: PlanPaymentSchema.nullable(),
   history: z.array(PlanPaymentSchema),
+  // The Billing chat (T88), oldest first.
+  thread: z.array(BillingMessageSchema).default([]),
 });
 export type Plan = z.infer<typeof PlanSchema>;
+
+export const SendBillingNoteInputSchema = z.object({ text: z.string().trim().min(1).max(300) });
+export type SendBillingNoteInput = z.infer<typeof SendBillingNoteInputSchema>;
 
 export const SubmitPlanPaymentInputSchema = z.object({
   months: PlanMonthsSchema,

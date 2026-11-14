@@ -24,11 +24,14 @@ export function TopBar({
   page,
   claims,
   onOpenMenu,
+  admin = false,
 }: {
   formFactor: FormFactor;
   page: ReturnType<typeof usePageMeta>;
   claims: UserClaims;
   onOpenMenu: () => void;
+  // Super Admin's own pages (T88): the account menu has no owner Account link.
+  admin?: boolean | undefined;
 }) {
   const onBack = useBackToParent(page.parent?.to);
   if (formFactor === 'phone') {
@@ -47,7 +50,7 @@ export function TopBar({
           </Button>
         ) : null}
         <p className="min-w-0 flex-1 truncate px-2 text-lg font-semibold">{page.title}</p>
-        <AccountMenu claims={claims} placement="top-bar" />
+        <AccountMenu claims={claims} placement="top-bar" admin={admin} />
       </header>
     );
   }

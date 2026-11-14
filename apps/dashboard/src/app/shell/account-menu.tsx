@@ -1,6 +1,13 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { ChevronsUpDownIcon, LogOutIcon, UserIcon, WifiIcon, WifiOffIcon } from 'lucide-react';
-import { words } from '@smartapp/core';
+import {
+  ChevronsUpDownIcon,
+  LayoutDashboardIcon,
+  LogOutIcon,
+  UserIcon,
+  WifiIcon,
+  WifiOffIcon,
+} from 'lucide-react';
+import { adminWords, words } from '@smartapp/core';
 import type { UserClaims } from '@smartapp/data';
 import { AvatarBadge } from '@smartapp/ui/components/avatar';
 import { Button } from '@smartapp/ui/components/button';
@@ -40,9 +47,12 @@ function UserLines({ claims }: { claims: UserClaims }) {
 export function AccountMenu({
   claims,
   placement,
+  admin = false,
 }: {
   claims: UserClaims;
   placement: 'sidebar' | 'top-bar';
+  // On Super Admin's own pages (T88): no owner Account link.
+  admin?: boolean | undefined;
 }) {
   const navigate = useNavigate();
   const online = useOnlineStatus();
@@ -108,10 +118,18 @@ export function AccountMenu({
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link to="/settings/account" />}>
-          <UserIcon />
-          {words.nav.account}
-        </DropdownMenuItem>
+        {admin ? null : (
+          <DropdownMenuItem render={<Link to="/settings/account" />}>
+            <UserIcon />
+            {words.nav.account}
+          </DropdownMenuItem>
+        )}
+        {claims.isAdmin && !admin ? (
+          <DropdownMenuItem render={<Link to="/admin" />}>
+            <LayoutDashboardIcon />
+            {adminWords.area}
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem onClick={() => void navigate({ to: '/logout' })}>
           <LogOutIcon />
           {words.auth.logout}

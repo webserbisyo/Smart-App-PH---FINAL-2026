@@ -14,10 +14,10 @@ import {
   OwnerSettingsSchema,
   PaymentSettingsSchema,
   PlanSchema,
-  PRO_PRICE_MONTHLY,
   PRO_STORAGE_BYTES,
   PROOF_KEEP_DAYS,
   SaveProfileInputSchema,
+  SendBillingNoteInputSchema,
   SendCodeResultSchema,
   ShopFactsSchema,
   StorageSummarySchema,
@@ -32,11 +32,13 @@ import {
   manilaDate,
   normalisePhPhone,
   planCoversUntil,
+  planAmount,
   planGraceUntil,
   planStatus,
   startingAvatar,
   paymentLabel,
   words,
+  type BillingMessage,
   type CleanupKind,
   type DataExport,
   type ErrorCode,
@@ -45,6 +47,7 @@ import {
   type OwnerProfile,
   type OwnerSettings,
   type PlanPayment,
+  type PlanPayTo,
   type StorageKind,
   type StorageSummary,
   type UploadKind,
@@ -59,8 +62,6 @@ const KB = 1024;
 const DAY = 86_400_000;
 const RESEND_SECONDS = 60;
 const PASSWORD_CODE = '123456';
-// The founder checks plan payments by hand; the demo approves one after this long so the flow moves on.
-const PLAN_APPROVE_MS = 15_000;
 // The mock's export is ready after this long.
 const EXPORT_MS = 2_500;
 
@@ -74,6 +75,18 @@ export interface SettingsMockDeps {
   fail: (code: ErrorCode, status?: number, fieldErrors?: Record<string, string[]>) => never;
   seed: number;
   production: boolean;
+  // The platform's price, the 6-month bonus and where owners pay (Super Admin › Setup, T92).
+  setup: () => { priceMonthly: number; sixMonthBonus: boolean; payTo: PlanPayTo };
+  // The founder is helping in this shop (help mode, T91): password, email, plan payments and deleting lock.
+  helping: () => boolean;
+}
+
+/** One shop's plan book, shared with Super Admin so an approval there shows on the owner's Plan at once. */
+export interface PlanBook {
+  trialEndsAt: string | null;
+  paidUntil: string | null;
+  history: PlanPayment[];
+  thread: BillingMessage[];
 }
 
 interface StoredFile {
@@ -95,6 +108,7 @@ interface OwnerState {
   trialEndsAt: string | null;
   paidUntil: string | null;
   history: PlanPayment[];
+  thread: BillingMessage[];
   files: StoredFile[];
   unused: { files: number; bytes: number };
   exports: DataExport[];
@@ -168,7 +182,6 @@ const DEFAULT_STORY: Story = {
 };
 
 // Smart App PH's own pay-to numbers in the demo; sample numbers until the founder sets real ones.
-const PAY_TO = { accountName: 'Smart App PH', gcash: '0917 000 0399', maya: '0917 000 0399' };
 
 function hashOf(text: string): number {
   let hash = 0;
@@ -218,6 +231,29 @@ export function createSettingsMock(deps: SettingsMockDeps) {
     return `${prefix}_${seq.toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
   };
 
+  function billingLine(
+    from: BillingMessage['from'],
+    kind: BillingMessage['kind'],
+    at: string,
+    extra: Partial<Omit<BillingMessage, 'from' | 'kind' | 'at' | 'id'>> = {},
+  ): BillingMessage {
+    return {
+      id: id('bm'),
+      at,
+      from,
+      kind,
+      paymentId: null,
+      text: null,
+      reason: null,
+      days: null,
+      ...extra,
+    };
+  }
+
+  function locked(): void {
+    if (deps.helping()) fail('support_locked', 403);
+  }
+
   function seedFiles(slug: string, story: Story, rng: Rng): StoredFile[] {
     const t = now().getTime();
     const files: StoredFile[] = [];
@@ -258,7 +294,7 @@ export function createSettingsMock(deps: SettingsMockDeps) {
       history.push({
         id: `${slug}-plan-${m}`,
         months: 1,
-        amount: PRO_PRICE_MONTHLY,
+        amount: deps.setup().priceMonthly,
         method: m % 3 === 2 ? 'maya' : 'gcash',
         reference: String(1_000_000_000_000 + Math.floor(rng() * 8_999_999_999_999)),
         status: 'approved',
@@ -266,7 +302,20 @@ export function createSettingsMock(deps: SettingsMockDeps) {
           now().getTime() - (30 * m + 31 - (story.paidDays ?? 0)) * DAY,
         ).toISOString(),
         coversUntil: covers,
+        rejectReason: null,
+        proofUrl: null,
       });
+    }
+    // The Billing chat so far: each past payment and its approval, oldest first.
+    const thread: BillingMessage[] = [];
+    for (const p of [...history].reverse()) {
+      const at = new Date(p.submittedAt).getTime();
+      thread.push(
+        billingLine('owner', 'payment', new Date(at).toISOString(), { paymentId: p.id }),
+        billingLine('admin', 'approved', new Date(at + 3 * 3_600_000).toISOString(), {
+          paymentId: p.id,
+        }),
+      );
     }
     const state: OwnerState = {
       slug,
@@ -276,6 +325,7 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         story.paidDays === null ? new Date(now().getTime() + 9 * DAY).toISOString() : null,
       paidUntil,
       history,
+      thread,
       files: seedFiles(s.shop.storefront.slug, story, rng),
       unused: {
         files: story.unused,
@@ -513,17 +563,8 @@ export function createSettingsMock(deps: SettingsMockDeps) {
   function planOf(o: OwnerState) {
     const t = now();
     const today = manilaDate(t);
-    // A payment the founder hasn't checked: the demo approves it after a short wait.
-    for (const p of o.history) {
-      if (
-        p.status === 'pending' &&
-        new Date(p.submittedAt).getTime() + PLAN_APPROVE_MS <= t.getTime()
-      ) {
-        p.status = 'approved';
-        o.paidUntil = p.coversUntil;
-        o.trialEndsAt = null;
-      }
-    }
+    const setup = deps.setup();
+    // A payment waits until the founder approves it in Super Admin (T88).
     let trialEndsAt = o.trialEndsAt;
     let paidUntil = o.paidUntil;
     switch (scenario().plan) {
@@ -550,15 +591,17 @@ export function createSettingsMock(deps: SettingsMockDeps) {
     const end = paidUntil ?? (trialEndsAt ? manilaDate(trialEndsAt) : null);
     return PlanSchema.parse({
       name: 'pro',
-      priceMonthly: PRO_PRICE_MONTHLY,
+      priceMonthly: setup.priceMonthly,
+      sixMonthBonus: setup.sixMonthBonus,
       storageLimitBytes: PRO_STORAGE_BYTES,
       status: planStatus({ trialEndsAt, paidUntil }, t),
       trialEndsAt,
       paidUntil,
       graceUntil: planGraceUntil(end),
-      payTo: PAY_TO,
+      payTo: setup.payTo,
       pending,
       history: [...o.history].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
+      thread: o.thread,
     });
   }
 
@@ -704,6 +747,7 @@ export function createSettingsMock(deps: SettingsMockDeps) {
     resetPasswordWithCode: async ({ code, newPassword }) => {
       const { o } = await current();
       return run('settings', () => {
+        locked();
         if (!o.codeSentAt) fail('invalid_code', 400);
         if (now().getTime() - new Date(o.codeSentAt).getTime() > 10 * 60_000)
           fail('code_expired', 400);
@@ -721,7 +765,10 @@ export function createSettingsMock(deps: SettingsMockDeps) {
 
     requestAccountDelete: async () => {
       await current();
-      return run('settings', () => ({ ok: true as const }));
+      return run('settings', () => {
+        locked();
+        return { ok: true as const };
+      });
     },
 
     getNotificationPrefs: async () => {
@@ -746,7 +793,10 @@ export function createSettingsMock(deps: SettingsMockDeps) {
 
     submitPlanPayment: async (input) => {
       const { o } = await current();
+      // The demo's photo of the payment (kept out of first-load JS, like the order chat's).
+      const { sampleReceiptUrl } = await import('./proof-photo');
       return run('settings', () => {
+        locked();
         const parsed = SubmitPlanPaymentInputSchema.safeParse(input);
         if (!parsed.success) fail('invalid_input', 400, { reference: ['invalid'] });
         const ref = parsed.data.reference.replace(/[\s-]/g, '');
@@ -757,16 +807,41 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         )
           fail('duplicate_reference', 409);
         if (o.history.some((p) => p.status === 'pending')) fail('payment_not_pending', 409);
-        o.history.push({
+        const setup = deps.setup();
+        const amount = planAmount(parsed.data.months, setup.priceMonthly, setup.sixMonthBonus);
+        const at = now().toISOString();
+        const payment: PlanPayment = {
           id: id('plan'),
           months: parsed.data.months,
-          amount: PRO_PRICE_MONTHLY * parsed.data.months,
+          amount,
           method: parsed.data.method,
           reference: parsed.data.reference,
           status: 'pending',
-          submittedAt: now().toISOString(),
+          submittedAt: at,
           coversUntil: planCoversUntil(o.paidUntil, parsed.data.months, now()),
-        });
+          rejectReason: null,
+          proofUrl: sampleReceiptUrl({
+            method: words.shop.paymentMethod[parsed.data.method],
+            amount,
+            reference: parsed.data.reference,
+            shopName: setup.payTo.accountName,
+            at,
+          }),
+        };
+        o.history.push(payment);
+        o.thread.push(billingLine('owner', 'payment', at, { paymentId: payment.id }));
+        return planOf(o);
+      });
+    },
+
+    sendPlanNote: async (input) => {
+      const { o } = await current();
+      return run('settings', () => {
+        const parsed = SendBillingNoteInputSchema.safeParse(input);
+        if (!parsed.success) fail('invalid_input', 400, { text: ['invalid'] });
+        o.thread.push(
+          billingLine('owner', 'note', now().toISOString(), { text: parsed.data.text }),
+        );
         return planOf(o);
       });
     },
@@ -847,6 +922,13 @@ export function createSettingsMock(deps: SettingsMockDeps) {
 
   return {
     adapter,
+    /** The plan book Super Admin reads and changes (T88). */
+    book: (slug: string): Promise<PlanBook> => owner(slug),
+    billingLine,
+    /** Bytes the shop keeps, for the admin's storage column. */
+    async storageUsed(slug: string): Promise<number> {
+      return summaryOf(await owner(slug)).usedBytes;
+    },
     /**
      * Checks room for an upload (T66) and records the file. Proofs and plan receipts never count against
      * the limit; anything else waits when storage is full.

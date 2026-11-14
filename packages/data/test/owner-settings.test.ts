@@ -170,11 +170,12 @@ describe('ownerSettings mock adapter (T64 to T68)', () => {
     expect(after.usedBytes - before.usedBytes).toBe(180_000);
   });
 
-  it('plan: trial shop, payment waits, then the demo approves it', async () => {
-    const { store, clock } = shopStore('aqualinis');
+  it('plan: trial shop, payment waits until Super Admin approves it (T88)', async () => {
+    const { store } = shopStore('aqualinis');
     const plan = await store.ownerSettings.getPlan();
     expect(PlanSchema.safeParse(plan).success).toBe(true);
     expect(plan.status).toBe('trial');
+    expect(plan.sixMonthBonus).toBe(true);
     const sent = await store.ownerSettings.submitPlanPayment({
       months: 3,
       method: 'gcash',
@@ -182,6 +183,8 @@ describe('ownerSettings mock adapter (T64 to T68)', () => {
       proofPath: 'uploads/plan_proof/x.webp',
     });
     expect(sent.pending?.amount).toBe(119_700);
+    expect(sent.pending?.proofUrl).toMatch(/^data:image\/svg/);
+    expect(sent.thread.at(-1)?.kind).toBe('payment');
     expect(
       await errorCode(
         store.ownerSettings.submitPlanPayment({
@@ -192,11 +195,34 @@ describe('ownerSettings mock adapter (T64 to T68)', () => {
         }),
       ),
     ).toBe('payment_not_pending');
-    clock.now = new Date(new Date(START).getTime() + 20_000);
+    // It never approves itself.
+    expect((await store.ownerSettings.getPlan()).pending).not.toBeNull();
+    const pendingId = sent.pending?.id ?? '';
+    await store.platform.reviewPlanPayment({
+      shopId: 'shop_aqualinis',
+      paymentId: pendingId,
+      verdict: 'approve',
+      amount: null,
+      amountReason: null,
+    });
     const approved = await store.ownerSettings.getPlan();
     expect(approved.pending).toBeNull();
     expect(approved.status).toBe('active');
     expect(approved.paidUntil).toBe('2027-02-05');
+    expect(approved.thread.at(-1)?.kind).toBe('approved');
+  });
+
+  it('plan: 6 months cost 5 with the bonus, and a note lands in the Billing chat', async () => {
+    const { store } = shopStore('aqualinis');
+    const sent = await store.ownerSettings.submitPlanPayment({
+      months: 6,
+      method: 'maya',
+      reference: '5555 456 789 012',
+      proofPath: 'uploads/plan_proof/z.webp',
+    });
+    expect(sent.pending?.amount).toBe(199_500);
+    const noted = await store.ownerSettings.sendPlanNote({ text: 'Sent from my sister’s Maya' });
+    expect(noted.thread.at(-1)).toMatchObject({ from: 'owner', kind: 'note' });
   });
 
   it('plan scenarios: due, overdue, paused', async () => {

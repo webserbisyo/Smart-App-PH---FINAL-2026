@@ -1,7 +1,12 @@
 import * as React from 'react';
 import { QrCodeIcon, SparklesIcon, WifiOffIcon } from 'lucide-react';
 import { errorWords, formatClock, homeWords, words } from '@smartapp/core';
-import { errorCodeOf, useHomePeriod as useHomePeriodData, useStorefront } from '@smartapp/data';
+import {
+  errorCodeOf,
+  useHomePeriod as useHomePeriodData,
+  useOnboarding,
+  useStorefront,
+} from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
@@ -27,6 +32,7 @@ import { NeedsCard } from '../needs-card.js';
 import { PeriodPicker, periodLabel } from '../period-picker.js';
 import { SalesCard } from '../sales-card.js';
 import { useHomePeriodSearch, useSetHomePeriod } from '../search.js';
+import { GoLiveCard } from '../go-live-card.js';
 import { SetupCard } from '../setup-card.js';
 import { useHomeView } from '../use-home-view.js';
 
@@ -45,6 +51,8 @@ export function HomeScreen() {
   const isPhone = useFormFactor() === 'phone';
   const view = useHomeView();
   const storefront = useStorefront(shop.slug);
+  // Going live (T89): until the founder approves, the go-live card leads the page.
+  const onboarding = useOnboarding();
   const { summary, home, now, needs, live, today } = view;
   const { period, dates } = useHomePeriodSearch(today);
   const setPeriod = useSetHomePeriod();
@@ -83,7 +91,11 @@ export function HomeScreen() {
     const data = periodData.data;
     body = (
       <div className="flex flex-col gap-3 md:gap-4">
-        {summary.setup ? <SetupCard steps={summary.setup} activeItems={activeItems} /> : null}
+        {onboarding.data && onboarding.data.stage !== 'live' ? (
+          <GoLiveCard onboarding={onboarding.data} />
+        ) : summary.setup ? (
+          <SetupCard steps={summary.setup} activeItems={activeItems} />
+        ) : null}
         {fresh ? (
           <FirstDay slug={shop.slug} />
         ) : (

@@ -102,6 +102,9 @@ import {
   orderProofs,
   unseenCount,
   waitingSince,
+  PRO_PRICE_MONTHLY,
+  SETUP_MIN_ITEMS,
+  type SupportSession,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
 import { getAuthClient, getClaims } from '../auth';
@@ -132,6 +135,8 @@ import { getDeviceStorage } from '../device-storage';
 import { createEditorMock } from './editor';
 import { createHomeMock } from './home';
 import { createSettingsMock } from './settings';
+import type { PlatformMock } from './platform';
+import { defaultPlatformSetup } from './platform-setup';
 import { registerTrickleHandler } from './scenario';
 import { getMockScenario, type DemoCustomerState, type MockScenario } from './scenario-state';
 import {
@@ -277,6 +282,13 @@ export type MockStore = DataAdapters & {
 };
 
 let activeMockOwnerSlug: string | null = null;
+// The founder's help-mode session (T91) while it lasts; the dashboard keeps it for the tab.
+let activeSupport: SupportSession | null = null;
+
+/** Help mode (T91): the dashboard tells the mock which shop the founder is helping in, or null. */
+export function setMockSupportSession(session: SupportSession | null): void {
+  activeSupport = session;
+}
 
 export function setMockOwnerSlug(slug: string | null): void {
   activeMockOwnerSlug = slug;
@@ -590,8 +602,15 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     return memberOf(s, state.session?.email);
   }
 
+  // The founder's Setup (T92): price, trial days, the 6-month bonus and where owners pay.
+  let platformSetup = defaultPlatformSetup(PRO_PRICE_MONTHLY);
+  const helping = () =>
+    activeSupport !== null && new Date(activeSupport.endsAt).getTime() > now().getTime();
+
   // Owner Settings, storage and plan (T64 to T68); shop facts stay in the shop's storefront.
   const settingsMock = createSettingsMock({
+    setup: () => platformSetup,
+    helping,
     run: (area, fn) => run(area, fn),
     requireShop: (slug) => requireShop(slug),
     ownerShop: () => resolveOwnerShopSlug(),
@@ -628,6 +647,93 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     storage: () => getDeviceStorage().editorDraft,
     rng: () => rng,
   });
+
+  // Super Admin, sign-up and going live (T88 to T92): loaded on first use, never in the storefront's first JS.
+  function shopFacts(slug: string) {
+    const s = requireShop(slug);
+    const sf = s.shop.storefront;
+    const t = now().getTime();
+    const placed = s.orders.map((o) => new Date(o.receipt.placedAt).getTime());
+    const last = placed.length > 0 ? Math.max(...placed.filter((x) => x <= t), 0) : 0;
+    return {
+      steps: [
+        {
+          step: 'items' as const,
+          done: s.shop.catalog.items.filter((i) => i.status === 'active').length >= SETUP_MIN_ITEMS,
+        },
+        { step: 'look' as const, done: sf.info.logo !== null && sf.look.brandColor.length > 0 },
+        { step: 'hours' as const, done: sf.hours.length > 0 },
+        { step: 'payments' as const, done: sf.payments.length > 0 },
+      ],
+      orders7d: placed.filter((x) => x <= t && x > t - 7 * 86_400_000).length,
+      members: s.members.length,
+      lastActiveAt: last > 0 ? new Date(last).toISOString() : null,
+    };
+  }
+
+  let platformMock: Promise<PlatformMock> | null = null;
+  const loadPlatform = () =>
+    (platformMock ??= import('./platform').then((m) =>
+      m.createPlatformMock({
+        run: (area, fn) => run(area, fn),
+        fail,
+        now: () => now(),
+        seed,
+        scenario: () => scenario(),
+        setup: platformSetup,
+        ownerShop: () => resolveOwnerShopSlug(),
+        ownerClaims: async () => {
+          const client = getAuthClient();
+          return client ? getClaims(client) : null;
+        },
+        book: (slug) => settingsMock.book(slug),
+        billingLine: settingsMock.billingLine,
+        storageUsed: (slug) => settingsMock.storageUsed(slug),
+        shopFacts,
+        support: {
+          get: () => (helping() ? activeSupport : null),
+          set: (session) => {
+            activeSupport = session;
+          },
+        },
+      }),
+    ));
+
+  const onboarding: DataAdapters['onboarding'] = {
+    saveSignupLead: async (input) => (await loadPlatform()).onboarding.saveSignupLead(input),
+    registerShop: async (input) => (await loadPlatform()).onboarding.registerShop(input),
+    trackEvent: async (input) => (await loadPlatform()).onboarding.trackEvent(input),
+    getOnboarding: async () => (await loadPlatform()).onboarding.getOnboarding(),
+    askToGoLive: async () => (await loadPlatform()).onboarding.askToGoLive(),
+  };
+
+  // Every Super Admin method waits for the module, then runs it.
+  const platform: DataAdapters['platform'] = {
+    getAdminToday: async () => (await loadPlatform()).platform.getAdminToday(),
+    listAdminShops: async (input) => (await loadPlatform()).platform.listAdminShops(input),
+    getAdminShop: async (input) => (await loadPlatform()).platform.getAdminShop(input),
+    listLeads: async () => (await loadPlatform()).platform.listLeads(),
+    markLeadContacted: async (input) => (await loadPlatform()).platform.markLeadContacted(input),
+    approveGoLive: async (input) => (await loadPlatform()).platform.approveGoLive(input),
+    reviewPlanPayment: async (input) => (await loadPlatform()).platform.reviewPlanPayment(input),
+    recordPlanPayment: async (input) => (await loadPlatform()).platform.recordPlanPayment(input),
+    extendPlan: async (input) => (await loadPlatform()).platform.extendPlan(input),
+    sendPlanReminder: async (input) => (await loadPlatform()).platform.sendPlanReminder(input),
+    sendBillingNote: async (input) => (await loadPlatform()).platform.sendBillingNote(input),
+    closeShop: async (input) => (await loadPlatform()).platform.closeShop(input),
+    reopenShop: async (input) => (await loadPlatform()).platform.reopenShop(input),
+    deleteShop: async (input) => (await loadPlatform()).platform.deleteShop(input),
+    createClientShop: async (input) => (await loadPlatform()).platform.createClientShop(input),
+    startSupport: async (input) => (await loadPlatform()).platform.startSupport(input),
+    endSupport: async () => (await loadPlatform()).platform.endSupport(),
+    listAdminPayments: async (input) => (await loadPlatform()).platform.listAdminPayments(input),
+    getTracking: async () => (await loadPlatform()).platform.getTracking(),
+    setTracking: async (input) => (await loadPlatform()).platform.setTracking(input),
+    retryTrackEvents: async () => (await loadPlatform()).platform.retryTrackEvents(),
+    sendTestEvent: async () => (await loadPlatform()).platform.sendTestEvent(),
+    getPlatformSetup: async () => (await loadPlatform()).platform.getPlatformSetup(),
+    savePlatformSetup: async (input) => (await loadPlatform()).platform.savePlatformSetup(input),
+  };
 
   let idSeq = 0;
   function newId(prefix: string): string {
@@ -678,7 +784,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       | 'members'
       | 'settings'
       | 'home'
-      | 'editor',
+      | 'editor'
+      | 'platform',
     fn: () => T,
   ): Promise<T> {
     const sc = scenario();
@@ -2685,10 +2792,14 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     ownerSettings: settingsMock.adapter,
     ownerHome: homeMock.adapter,
     ownerEditor: editorMock.adapter,
+    onboarding,
+    platform,
     now,
     reset() {
       state = { shops: new Map(), session: null, codes: {} };
       settingsMock.reset();
+      platformMock = null;
+      platformSetup = defaultPlatformSetup(PRO_PRICE_MONTHLY);
       homeMock.reset();
       if (persistence) editorMock.reset();
       appliedAs = new Map();

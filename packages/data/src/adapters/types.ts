@@ -76,6 +76,33 @@ import type {
   PublishStorefrontInput,
   SaveStorefrontDraftInput,
   StorefrontDraftState,
+  AdminLead,
+  AdminPaymentList,
+  AdminShopDetail,
+  AdminShopList,
+  AdminToday,
+  BillingNoteInput,
+  CloseShopInput,
+  CreateClientInput,
+  DeleteShopInput,
+  ExtendDaysInput,
+  LeadIdInput,
+  ListAdminPaymentsInput,
+  ListAdminShopsInput,
+  OwnerOnboarding,
+  PlatformSetup,
+  RecordPlanPaymentInput,
+  RegisterShopInput,
+  ReviewPlanPaymentInput,
+  SendBillingNoteInput,
+  SetTrackingInput,
+  ShopIdInput,
+  SignupLeadInput,
+  SignupLeadResult,
+  StartSupportInput,
+  SupportSession,
+  TrackInput,
+  TrackingSummary,
 } from '@smartapp/core';
 
 export interface PlacedOrder {
@@ -271,6 +298,8 @@ export interface OwnerSettingsAdapter {
   saveNotificationPrefs(input: NotificationPrefs): Promise<NotificationPrefs>;
   getPlan(): Promise<Plan>;
   submitPlanPayment(input: SubmitPlanPaymentInput): Promise<Plan>;
+  // The Billing chat (T88): a short note to Smart App PH.
+  sendPlanNote(input: SendBillingNoteInput): Promise<Plan>;
   getStorage(): Promise<StorageSummary>;
   previewCleanup(input: { kind: CleanupKind }): Promise<CleanupPreview>;
   runCleanup(input: { kind: CleanupKind; token: string }): Promise<StorageSummary>;
@@ -297,6 +326,44 @@ export interface OwnerEditorAdapter {
   createPreviewToken(): Promise<PreviewToken>;
 }
 
+// Sign-up and going live (T89, T90): the public sign-up steps, the browser events the server sends on to
+// Meta, and the owner's go-live checklist. registerShop needs the new owner's login.
+export interface OnboardingAdapter {
+  saveSignupLead(input: SignupLeadInput): Promise<SignupLeadResult>;
+  registerShop(input: RegisterShopInput): Promise<OwnerOnboarding>;
+  trackEvent(input: TrackInput): Promise<{ ok: true }>;
+  getOnboarding(): Promise<OwnerOnboarding>;
+  askToGoLive(): Promise<OwnerOnboarding>;
+}
+
+// Super Admin (decisions T88 to T92): the platform admin only; anyone else gets Not found (rule 12).
+export interface PlatformAdapter {
+  getAdminToday(): Promise<AdminToday>;
+  listAdminShops(input: ListAdminShopsInput): Promise<AdminShopList>;
+  getAdminShop(input: ShopIdInput): Promise<AdminShopDetail>;
+  listLeads(): Promise<AdminLead[]>;
+  markLeadContacted(input: LeadIdInput): Promise<AdminLead>;
+  approveGoLive(input: ShopIdInput): Promise<AdminShopDetail>;
+  reviewPlanPayment(input: ReviewPlanPaymentInput): Promise<AdminShopDetail>;
+  recordPlanPayment(input: RecordPlanPaymentInput): Promise<AdminShopDetail>;
+  extendPlan(input: ExtendDaysInput): Promise<AdminShopDetail>;
+  sendPlanReminder(input: ShopIdInput): Promise<AdminShopDetail>;
+  sendBillingNote(input: BillingNoteInput): Promise<AdminShopDetail>;
+  closeShop(input: CloseShopInput): Promise<AdminShopDetail>;
+  reopenShop(input: ShopIdInput): Promise<AdminShopDetail>;
+  deleteShop(input: DeleteShopInput): Promise<{ ok: true }>;
+  createClientShop(input: CreateClientInput): Promise<AdminShopDetail>;
+  startSupport(input: StartSupportInput): Promise<SupportSession>;
+  endSupport(): Promise<{ ok: true }>;
+  listAdminPayments(input: ListAdminPaymentsInput): Promise<AdminPaymentList>;
+  getTracking(): Promise<TrackingSummary>;
+  setTracking(input: SetTrackingInput): Promise<TrackingSummary>;
+  retryTrackEvents(): Promise<TrackingSummary>;
+  sendTestEvent(): Promise<TrackingSummary>;
+  getPlatformSetup(): Promise<PlatformSetup>;
+  savePlatformSetup(input: PlatformSetup): Promise<PlatformSetup>;
+}
+
 export interface DataAdapters {
   storefront: StorefrontAdapter;
   customerAuth: CustomerAuthAdapter;
@@ -307,4 +374,6 @@ export interface DataAdapters {
   ownerSettings: OwnerSettingsAdapter;
   ownerHome: OwnerHomeAdapter;
   ownerEditor: OwnerEditorAdapter;
+  onboarding: OnboardingAdapter;
+  platform: PlatformAdapter;
 }

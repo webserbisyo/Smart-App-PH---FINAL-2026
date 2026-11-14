@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import { DEMO_SHOPS, words, type ShopKind } from '@smartapp/core';
 import { setMockOwnerSlug, type UserClaims } from '@smartapp/data';
+import { currentSupport } from './support.js';
 import { warmPreview } from './warm-preview.js';
 
 export interface CurrentShop {
@@ -18,9 +19,12 @@ function makeInitials(name: string): string {
   return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
 }
 
-// The owner's demo shop until shops come from the API; a food shop by default.
+// The owner's demo shop until shops come from the API; a food shop by default. In help mode (T91) the
+// founder sees the shop they opened instead.
 export function resolveShop(claims: UserClaims): CurrentShop {
-  const found = DEMO_SHOPS.find((shop) => shop.slug === claims.demoShop);
+  const helping = claims.isAdmin ? currentSupport() : null;
+  const slug0 = helping?.slug ?? claims.demoShop;
+  const found = DEMO_SHOPS.find((shop) => shop.slug === slug0);
   const name = found?.name ?? words.shell.myShop;
   const slug = found?.slug ?? '';
   if (slug) {

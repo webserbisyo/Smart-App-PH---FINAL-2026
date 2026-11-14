@@ -21,6 +21,8 @@ export interface UserClaims {
   email: string;
   fullName?: string | undefined;
   demoShop?: string | undefined;
+  // The platform admin (Super Admin, T88): set in the account's app_metadata, never by the user.
+  isAdmin?: boolean | undefined;
 }
 
 export async function getClaims(client: SupabaseClient<Database>): Promise<UserClaims | null> {
@@ -39,11 +41,19 @@ export async function getClaims(client: SupabaseClient<Database>): Promise<UserC
       typeof data.user.app_metadata['demo_shop'] === 'string'
         ? data.user.app_metadata['demo_shop']
         : undefined,
+    isAdmin: data.user.app_metadata['platform_admin'] === true,
   };
 }
 
 function hasMessage(err: unknown): err is { message: unknown } {
   return typeof err === 'object' && err !== null && 'message' in err;
+}
+
+/** A wrong or old sign-up code (T89): one of two codes, never Supabase's own text. */
+export function mapCodeError(err: unknown): ApiError {
+  const raw = hasMessage(err) ? String(err.message).toLowerCase() : '';
+  const code = raw.includes('expired') ? 'code_expired' : 'invalid_code';
+  return { status: 400, code, message: errorWords(code) };
 }
 
 export function mapAuthError(err: unknown, isLogin = false): ApiError {
