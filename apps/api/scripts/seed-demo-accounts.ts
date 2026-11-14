@@ -80,6 +80,27 @@ async function seedDemoAccounts(): Promise<void> {
       console.log(`${ownerEmail}: created`);
     }
   }
+
+  // Super Admin (decision T88): the founder's own account gets the platform admin flag. It must exist
+  // first (sign up or log in once); this never creates it or touches its password.
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  if (adminEmail) {
+    const admin = existingUsers.find((u) => u.email?.toLowerCase() === adminEmail);
+    if (!admin) {
+      console.error(
+        `ADMIN_EMAIL: no account for ${adminEmail} yet. Sign up once, then run this again.`,
+      );
+      process.exit(1);
+    }
+    const { error: adminError } = await supabase.auth.admin.updateUserById(admin.id, {
+      app_metadata: { ...admin.app_metadata, platform_admin: true },
+    });
+    if (adminError) {
+      console.error(`Failed to mark ${adminEmail} as Super Admin:`, adminError.message);
+      process.exit(1);
+    }
+    console.log(`${adminEmail}: Super Admin`);
+  }
 }
 
 void seedDemoAccounts();

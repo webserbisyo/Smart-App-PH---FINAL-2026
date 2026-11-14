@@ -129,12 +129,12 @@ export function useSetTracking() {
 
 export function useRetryTrackEvents() {
   const { platform } = useAdapters();
-  return useTrackingMutation((_: void) => platform.retryTrackEvents());
+  return useTrackingMutation<void>(() => platform.retryTrackEvents());
 }
 
 export function useSendTestEvent() {
   const { platform } = useAdapters();
-  return useTrackingMutation((_: void) => platform.sendTestEvent());
+  return useTrackingMutation<void>(() => platform.sendTestEvent());
 }
 
 export function useSavePlatformSetup() {

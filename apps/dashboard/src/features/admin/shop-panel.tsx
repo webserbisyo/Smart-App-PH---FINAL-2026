@@ -23,8 +23,8 @@ import {
   formatPhPhone,
   formatStorage,
   PLAN_REJECT_REASONS,
+  signupWords,
   supportWords,
-  words,
   type AdminShopDetail,
   type AdminShopRow,
   type PlanPayment,
@@ -248,7 +248,7 @@ function Overview({ shop, onClose }: { shop: AdminShopDetail; onClose: () => voi
         </span>
       ),
     },
-    { id: 'kind', label: P.kind, value: words.nav.catalog(shop.kind) },
+    { id: 'kind', label: P.kind, value: signupWords.shop.kinds[shop.kind] },
     { id: 'city', label: P.city, value: shop.city },
     ...(shop.facebookPage ? [{ id: 'fb', label: P.facebook, value: shop.facebookPage }] : []),
     { id: 'source', label: P.source, value: sourceText(shop.source) },

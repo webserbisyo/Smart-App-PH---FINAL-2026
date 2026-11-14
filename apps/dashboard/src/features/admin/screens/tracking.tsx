@@ -28,6 +28,7 @@ import {
   useTracking,
 } from '@smartapp/data';
 import { Badge } from '@smartapp/ui/components/badge';
+import { Button } from '@smartapp/ui/components/button';
 import {
   Card,
   CardContent,
@@ -99,11 +100,11 @@ export function AdminTrackingScreen() {
     const data = tracking.data;
     body = (
       <div className="grid gap-3 md:gap-4 lg:grid-cols-5">
-        <div className="flex flex-col gap-3 md:gap-4 lg:col-span-2">
+        <div className="flex min-w-0 flex-col gap-3 md:gap-4 lg:col-span-2">
           <StatusCard data={data} />
           <ByAdCard data={data} />
         </div>
-        <EventsCard data={data} className="lg:col-span-3" />
+        <EventsCard data={data} className="min-w-0 lg:col-span-3" />
       </div>
     );
   }
@@ -238,7 +239,7 @@ function RetryButton({ failedCount }: { failedCount: number }) {
 function ByAdCard({ data }: { data: TrackingSummary }) {
   const C = T.columns;
   return (
-    <Card className="gap-3">
+    <Card className="min-w-0 gap-3">
       <CardHeader>
         <CardTitle>{T.byAd}</CardTitle>
         <CardDescription>{T.byAdHint}</CardDescription>
@@ -281,7 +282,10 @@ function ByAdCard({ data }: { data: TrackingSummary }) {
   );
 }
 
+const EVENTS_PAGE = 15;
+
 function EventsCard({ data, className }: { data: TrackingSummary; className?: string }) {
+  const [shown, setShown] = React.useState(EVENTS_PAGE);
   return (
     <Card className={cn('gap-3', className)}>
       <CardHeader>
@@ -296,11 +300,22 @@ function EventsCard({ data, className }: { data: TrackingSummary; className?: st
             className="py-8 md:py-10"
           />
         ) : (
-          <ul className="flex flex-col divide-y">
-            {data.events.map((event) => (
-              <EventRow key={event.id} event={event} />
-            ))}
-          </ul>
+          <>
+            <ul className="flex flex-col divide-y">
+              {data.events.slice(0, shown).map((event) => (
+                <EventRow key={event.id} event={event} />
+              ))}
+            </ul>
+            {data.events.length > shown ? (
+              <Button
+                variant="outline"
+                className="mt-2 h-11 w-full md:h-9"
+                onClick={() => setShown((n) => n + EVENTS_PAGE)}
+              >
+                {T.showMore(Math.min(EVENTS_PAGE, data.events.length - shown))}
+              </Button>
+            ) : null}
+          </>
         )}
       </CardContent>
     </Card>

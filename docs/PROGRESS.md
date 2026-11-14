@@ -62,6 +62,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Scheduled orders calendar: customer-coloured calendar cards with photos, What to make, phone List / 3 days / Month, Change time inside the order panel, shared day and time chips (decision T85; pushed to main 2026-11-12)
 - [x] Orders calendar v2: week board with orders stacked by time, Week / Day / Month on every screen, Go to date, Change time with a month and time tabs, moves up to 60 days ahead (decision T86; pushed to main 2026-11-13)
 - [x] Order chat for the owner: Order | Chat tabs, Approve / Not approved at the bottom, Chats list with waiting time, guest vs member, seen by the shop, message model ready for live chat (decision T87; pushed to main 2026-11-13)
+- [x] Super Admin, sign-up and Meta tracking: /admin (Today, Shops, Payments, Tracking, Setup), 3-step sign-up, go-live approval, Billing chat, Open as owner, ₱399 plan (decisions T88 to T92; frontend with mock data pushed to main 2026-11-14; API and tables in Phase 4)
 
 ## Phase 4: Backend, area by area
 

@@ -616,7 +616,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     ownerShop: () => resolveOwnerShopSlug(),
     ownerClaims: async () => {
       const client = getAuthClient();
-      return client ? getClaims(client) : null;
+      const claims = client ? await getClaims(client) : null;
+      // The founder's own account is never a shop owner's profile (T88).
+      return claims?.isAdmin ? null : claims;
     },
     now: () => now(),
     scenario: () => scenario(),

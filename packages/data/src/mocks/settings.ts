@@ -2,6 +2,7 @@
 // docs/api.md "Settings (owner)". Shop facts live in the shop's storefront (so the storefront shows them at
 // once); the owner's profile, emails, plan, stored files and exports live here, per shop.
 import {
+  DEMO_SHOPS,
   BookingRulesSchema,
   CleanupPreviewSchema,
   CreateExportInputSchema,
@@ -283,8 +284,10 @@ export function createSettingsMock(deps: SettingsMockDeps) {
     const s = requireShop(slug);
     const story = STORIES[slug] ?? DEFAULT_STORY;
     const rng = mulberry32(deps.seed + hashOf(slug));
+    // In help mode the signed-in account is the founder's: the profile is still the shop owner's own.
     const claims = await deps.ownerClaims().catch(() => null);
-    const name = claims?.fullName?.trim() || words.shell.myShop;
+    const demoOwner = claims ? undefined : DEMO_SHOPS.find((d) => d.slug === slug)?.ownerName;
+    const name = claims?.fullName?.trim() || demoOwner || words.shell.myShop;
     const email = claims?.email ?? `owner@${slug}.example.com`;
     const today = manilaDate(now());
     const paidUntil = story.paidDays === null ? null : addDays(today, story.paidDays);

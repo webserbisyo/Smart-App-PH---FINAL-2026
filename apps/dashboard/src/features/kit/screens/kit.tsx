@@ -32,6 +32,7 @@ import { MembersPrimitiveSections } from '../members-primitives.js';
 import { HomePrimitiveSections } from '../home-primitives.js';
 import { SettingsPrimitiveSections } from '../settings-primitives.js';
 import { EditorPrimitiveSections } from '../editor-primitives.js';
+import { AdminPrimitiveSections } from '../admin-primitives.js';
 
 interface TokenSwatch {
   name: string;
@@ -376,6 +377,7 @@ export default function KitPage() {
 
         <div id="kit-settings" className="scroll-mt-20" />
         <SettingsPrimitiveSections />
+        <AdminPrimitiveSections />
 
         <Separator />
 

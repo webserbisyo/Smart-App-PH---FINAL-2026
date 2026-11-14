@@ -284,7 +284,7 @@ export function SignupForm({
                         step > n
                           ? 'bg-primary text-primary-foreground'
                           : step === n
-                            ? 'bg-primary/10 text-primary ring-2 ring-primary'
+                            ? 'bg-card text-primary ring-2 ring-primary ring-inset'
                             : 'bg-muted text-muted-foreground',
                       )}
                     >

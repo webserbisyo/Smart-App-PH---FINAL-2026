@@ -36,7 +36,7 @@ Each module = one database task, one API task, then one task per screen.
 | M13 | Customers extended  | notes, block, export, anonymize, synced favourites and carts, customer Google sign-in       |
 | M14 | Full reports        | breakdowns, CSV                                                                             |
 | M15 | Shipping            | by region                                                                                   |
-| M16 | Platform            | `/admin`, approvals, support mode, billing states                                           |
+| M16 | Platform            | `/admin`, approvals, support mode, billing states (moved into MVP A by T88 to T92)          |
 | M17 | Integrations        | PayMongo, Meta Conversions API, Google Sheets                                               |
 | M18 | Native app          | Capacitor build of the dashboard, Bluetooth printers                                        |
 | M19 | Loyalty extras      | reward tiers, stamps per peso spent, stamp expiry, double-stamp days                        |

@@ -4814,6 +4814,7 @@ export const adminWords = {
     testSent: 'Test sent',
     testSentLine: 'Look for it in Events Manager, Test events.',
     meta: 'Meta',
+    showMore: (n: number) => `Show ${n} more`,
     value: (amount: string) => amount,
     names: {
       PageView: 'Page view',

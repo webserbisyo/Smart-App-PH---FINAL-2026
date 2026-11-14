@@ -113,8 +113,8 @@ export function AdminTodayScreen() {
     const data = today.data;
     body = (
       <div className="grid gap-3 md:gap-4 lg:grid-cols-5">
-        <NeedsCard needs={data.needs} className="lg:col-span-3" />
-        <div className="flex flex-col gap-3 md:gap-4 lg:col-span-2">
+        <NeedsCard needs={data.needs} className="min-w-0 lg:col-span-3" />
+        <div className="flex min-w-0 flex-col gap-3 md:gap-4 lg:col-span-2">
           <StatsGrid data={data} now={now} />
           <FunnelCard funnel={data.funnel} />
         </div>
@@ -273,12 +273,12 @@ function NeedRow({ need }: { need: AdminNeed }) {
           <button
             type="button"
             onClick={open}
-            className="min-w-0 truncate text-left font-semibold after:absolute after:inset-0 focus-visible:outline-none"
+            className="line-clamp-2 min-w-0 text-left font-semibold after:absolute after:inset-0 focus-visible:outline-none"
           >
             {text.title}
           </button>
         </ItemTitle>
-        <ItemDescription className="truncate">{text.line}</ItemDescription>
+        <ItemDescription className="line-clamp-2">{text.line}</ItemDescription>
       </ItemContent>
       <ItemActions className="relative z-10 shrink-0">
         {direct ? (
@@ -357,7 +357,9 @@ function StatsGrid({ data, now }: { data: AdminToday; now: Date }) {
           className="group min-w-0 rounded-xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <Stat className="h-full gap-y-0.5 rounded-xl p-3 shadow-xs transition duration-base group-hover:-translate-y-0.5 group-hover:shadow-md motion-reduce:transition-none motion-reduce:group-hover:translate-y-0 md:p-4">
-            <StatLabel className="truncate text-xs md:text-sm">{card.label}</StatLabel>
+            <StatLabel className="text-xs leading-snug text-balance md:text-sm">
+              {card.label}
+            </StatLabel>
             <StatIndicator
               variant="icon"
               aria-hidden="true"
@@ -368,9 +370,7 @@ function StatsGrid({ data, now }: { data: AdminToday; now: Date }) {
             <StatValue className="truncate text-xl font-extrabold tabular-nums md:text-2xl">
               {card.value}
             </StatValue>
-            {card.note ? (
-              <StatDescription className="line-clamp-2 text-xs">{card.note}</StatDescription>
-            ) : null}
+            {card.note ? <StatDescription className="text-xs">{card.note}</StatDescription> : null}
           </Stat>
         </Link>
       ))}

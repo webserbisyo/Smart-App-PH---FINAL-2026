@@ -28,7 +28,7 @@ export function SupportBanner() {
   const qc = useQueryClient();
   const now = useSyncExternalStore(subscribeMinute, nowMinute, () => 0);
   const left = session
-    ? Math.max(0, Math.ceil((new Date(session.endsAt).getTime() - now) / 60_000))
+    ? Math.min(60, Math.max(0, Math.ceil((new Date(session.endsAt).getTime() - now) / 60_000)))
     : 0;
 
   const leave = async (expired: boolean) => {
@@ -50,7 +50,7 @@ export function SupportBanner() {
     <Banner
       dismissible={false}
       role="status"
-      className="sticky top-0 z-30 flex items-center gap-2.5 rounded-none border-b border-warning/30 bg-warning-soft px-4 py-2 pt-safe text-warning-text"
+      className="sticky top-0 z-30 flex items-center gap-2.5 rounded-none border-b border-warning/30 bg-warning-soft px-4 py-2 pt-safe text-warning-text md:fixed md:top-auto md:bottom-4 md:left-1/2 md:w-max md:max-w-2xl md:-translate-x-1/2 md:rounded-full md:border md:py-1.5 md:pt-1.5 md:pr-1.5 md:shadow-lg"
     >
       <BannerIcon>
         <LifeBuoyIcon className="size-4" aria-hidden="true" />
