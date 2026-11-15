@@ -173,18 +173,23 @@ export default function BookingsView({
                   ? W.hintTablet
                   : W.hint}
         </p>
-        <CustomerLegend />
+        {view === 'month' ? null : <CustomerLegend />}
       </div>
 
       {view === 'month' ? (
         <MonthView
+          kind={kind}
           date={date}
           facts={facts}
           rules={rules}
           today={today}
+          now={now}
           lastDay={lastDay}
           compact={isPhone}
-          onPickDay={openDay}
+          onPickDay={go}
+          onOpenDay={openDay}
+          onOpen={onOpen}
+          onWhatToMake={setWhatDay}
         />
       ) : view === 'day' ? (
         <DayView

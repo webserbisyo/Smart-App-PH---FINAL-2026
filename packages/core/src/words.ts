@@ -2015,6 +2015,17 @@ export const ordersWords = {
     hintPhone: 'Tap an order to open it or change its time.',
     hintDay: 'Click an order to open it or change its time.',
     hintMonth: 'Pick a day to see its orders.',
+    // The month (T93): day tiles with a count, a busy tint, and the picked day's orders beside or under.
+    weekdayShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    monthDays: 'Days of the month',
+    monthOrders: 'Booked',
+    monthPesos: 'Booked total',
+    monthBusiest: 'Busiest day',
+    monthNone: 'None yet',
+    busier: 'Darker days are busier',
+    openDayButton: 'Open day',
+    dayTileAria: (day: string, summary: string, isToday: boolean) =>
+      `${isToday ? 'Today, ' : ''}${day}, ${summary}`,
     // The calendar's top bar (T86): Today, arrows that stop at today and day 60, Go to date, the views.
     views: { week: 'Week', day: 'Day', month: 'Month' },
     goToDate: 'Go to date',

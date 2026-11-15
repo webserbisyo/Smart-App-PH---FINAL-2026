@@ -146,6 +146,19 @@ export function isFullDay(rules: ScheduleRules, facts: DayFacts, date: string): 
   return true;
 }
 
+/** How many orders a day can take (open booking times × the per-time limit), or null with no limit. */
+export function dayCapacity(rules: ScheduleRules, date: string): number | null {
+  const limit = rules.ordersPerSlot;
+  if (limit === null) return null;
+  let slots = 0;
+  for (const [from, to] of openMinutes(rules, date)) {
+    for (let m = slotStart(from, rules.slotMinutes); m < to; m += rules.slotMinutes) {
+      if (m >= from) slots += 1;
+    }
+  }
+  return slots * limit;
+}
+
 export interface TimeGroup {
   // Minutes from midnight, the label's time.
   minutes: number;
