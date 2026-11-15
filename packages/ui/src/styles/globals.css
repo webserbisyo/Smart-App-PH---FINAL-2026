@@ -533,6 +533,18 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Phone panels with a half stop (T93): the installed Drawer moves the whole panel down at half height, so
+   the pinned bottom bar rises by the same amount (--sheet-lift, set by ResponsiveSheet) and the body gets
+   that much room underneath. The buttons and the newest lines stay on screen at half height. */
+@utility drawer-snap-lift {
+  translate: 0 calc(-1 * var(--sheet-lift, 0px));
+  transition: translate var(--duration-slow) var(--ease-standard);
+}
+
+@utility drawer-snap-room {
+  padding-bottom: var(--sheet-lift, 0px);
+}
+
 @utility pb-dock {
   padding-bottom: calc(
     env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2

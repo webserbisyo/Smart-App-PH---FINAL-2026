@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import {
   CalendarClockIcon,
   CheckIcon,
+  IdCardIcon,
   ImageOffIcon,
   LinkIcon,
   LockIcon,
@@ -52,6 +53,8 @@ import { CUSTOMER_LOOK, CustomerKindChip, customerKind } from '@/app/orders/cust
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { stageLabel } from '@/app/orders/stage';
 import { StageIcon } from '@/app/orders/stage-icon';
+import { TimeChip } from '@/app/orders/time-chip';
+import { useNow } from '@/app/orders/use-now';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { CustomerAvatar } from './calendar-order.js';
 import { MessengerOrderButton } from './messenger-inbox.js';
@@ -80,20 +83,24 @@ export function chatWaits(order: BoardOrder): boolean {
 // ---------------------------------------------------------------- who is chatting
 
 /**
- * Who the owner is talking to (T87), pinned on top of the chat: a member wears the mint ring with their
- * stamps and a link to their page; a guest stays grey with their phone, and a first order says so.
+ * The Chat tab's header (T87, leaner in T93): who the owner is talking to, with the order in one line under
+ * the name. A member wears the mint ring and links to their page; a guest stays grey. The phone, the steps
+ * and the receipt stay on the Order tab, so the thread gets the height.
  */
-export function ChatPerson({
+export function ChatHeader({
   order,
   detail,
+  close,
 }: {
   order: BoardOrder;
   detail: OwnerOrder | undefined;
+  close: React.ReactNode;
 }) {
+  const now = useNow(30_000);
   const kind = customerKind(order);
   const phone = detail?.customerPhone ?? null;
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 border-b px-4 pt-1 pb-3 md:pt-3">
       <CustomerAvatar
         order={order}
         size="default"
@@ -111,32 +118,36 @@ export function ChatPerson({
                 CUSTOMER_LOOK.guest.chip,
               )}
             >
-              {W.guest}
+              {order.isFirstOrder ? W.firstOrder : W.guest}
             </span>
           )}
         </p>
-        <p className="truncate text-xs text-muted-foreground tabular-nums">
-          {[
-            phone,
-            order.memberStamps
-              ? W.memberStamps(order.memberStamps.have, order.memberStamps.goal)
-              : null,
-            !order.isMember && order.isFirstOrder ? W.firstOrder : null,
-          ]
-            .filter(Boolean)
-            .join(' · ')}
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground tabular-nums">
+          <span className="min-w-0 truncate">
+            {[
+              orderNoLabel(order.orderNo),
+              ordersWords.types[order.type],
+              formatPeso(order.total),
+              words.shop.paymentMethod[order.paymentMethod],
+            ].join(' · ')}
+          </span>
+          <TimeChip order={order} now={now} />
         </p>
       </div>
       {order.isMember && phone ? (
         <Button
           variant="ghost"
+          size="icon"
           nativeButton={false}
           render={<Link to="/members" search={{ q: phone }} />}
-          className="h-11 shrink-0 px-2.5 text-sm font-semibold text-primary md:h-9"
+          aria-label={W.memberPage}
+          title={W.memberPage}
+          className="size-11 shrink-0 text-primary md:size-9"
         >
-          {W.memberPage}
+          <IdCardIcon aria-hidden="true" />
         </Button>
       ) : null}
+      {close}
     </div>
   );
 }
@@ -220,6 +231,13 @@ function CustomerPhoto({
           <span aria-hidden="true">·</span>
           <span>{formatClock(at)}</span>
         </MessageFooter>
+        {proof.status === 'pending' && chatWaits(order) ? (
+          // The reminder sits with the photo it is about (T93); the bar below keeps only the two buttons.
+          <p className="flex items-start gap-1.5 rounded-lg bg-warning-soft px-2.5 py-2 text-xs text-warning-soft-foreground">
+            <ShieldCheckIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+            {W.checkHint(formatPeso(order.total), words.shop.paymentMethod[order.paymentMethod])}
+          </p>
+        ) : null}
       </MessageContent>
     </Message>
   );
@@ -376,15 +394,6 @@ export function ChatThread({
 
   return (
     <div className="flex flex-col">
-      <div className="sticky top-0 z-10 border-b bg-popover px-4 py-3">
-        <ChatPerson order={order} detail={detail} />
-        <p className="mt-2 truncate rounded-lg bg-muted px-2.5 py-1.5 text-xs text-muted-foreground tabular-nums">
-          <span className="font-semibold text-foreground">
-            {W.list.orderNo(orderNoLabel(order.orderNo))}
-          </span>
-          {` · ${formatPeso(order.total)} · ${words.shop.paymentMethod[order.paymentMethod]} · ${order.itemsSummary}`}
-        </p>
-      </div>
       <MessageGroup className="gap-4 px-4 py-4">
         <Line icon={<ReceiptTextIcon />}>{W.placed(formatClock(order.placedAt))}</Line>
         {isTransfer(order.paymentMethod) ? (
@@ -438,17 +447,12 @@ export function ChatFooter({
   const [rejecting, setRejecting] = React.useState(false);
   const [reason, setReason] = React.useState('');
   const amount = formatPeso(order.total);
-  const method = words.shop.paymentMethod[order.paymentMethod];
   const used = detail?.proofs.length ?? 0;
   const fail = (err: unknown) => notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
 
   if (chatWaits(order) && !rejecting) {
     return (
       <div className="flex flex-col gap-2">
-        <p className="flex items-start gap-1.5 rounded-lg bg-warning-soft px-2.5 py-2 text-xs text-warning-soft-foreground">
-          <ShieldCheckIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-          {W.checkHint(amount, method)}
-        </p>
         <div className="flex gap-2">
           <AsyncButton
             status={approve.status}

@@ -109,7 +109,6 @@ import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
 import { usePrintTicket } from '@/app/orders/print-ticket';
 import { STAGE_LOOK, stageLabel } from '@/app/orders/stage';
-import { StageChip } from '@/app/orders/stage-chip';
 import { StageIcon } from '@/app/orders/stage-icon';
 import { stepLabels } from '@/app/orders/step-labels';
 import { TimeChip } from '@/app/orders/time-chip';
@@ -124,7 +123,7 @@ import {
 } from './change-time.js';
 import { WhenCard } from './when-card.js';
 import { MessengerOrderButton } from './messenger-inbox.js';
-import { ChatFooter, ChatThread, chatWaits, scrollBox } from './order-chat.js';
+import { ChatFooter, ChatHeader, ChatThread, chatWaits, scrollBox } from './order-chat.js';
 
 const CANCEL_REASON_KEYS = ['sold_out', 'closing_early', 'customer_asked', 'other'] as const;
 type CancelReasonKey = (typeof CANCEL_REASON_KEYS)[number];
@@ -275,9 +274,14 @@ export function OrderPanel({
         header={
           timeMode ? (
             <ChangeTimeHeader ct={ct} onBack={() => setMode('order')} />
+          ) : order && chat ? (
+            <>
+              <ChatHeader order={order} detail={detail} close={<CloseButton onClose={onClose} />} />
+              <PanelTabs order={order} />
+            </>
           ) : order ? (
             <>
-              <PanelHeader order={order} kind={kind} onClose={onClose} />
+              <PanelHeader order={order} onClose={onClose} />
               <PanelTabs order={order} />
             </>
           ) : (
@@ -388,50 +392,27 @@ function HeaderSkeleton({ onClose }: { onClose: () => void }) {
   );
 }
 
-function PanelHeader({
-  order,
-  kind,
-  onClose,
-}: {
-  order: BoardOrder;
-  kind: ShopKind;
-  onClose: () => void;
-}) {
+/**
+ * The Order tab's header (T93): number, type and total on one line, then the due time and the pickup code.
+ * The stage and the placed time live in the steps right below, so they are not said twice.
+ */
+function PanelHeader({ order, onClose }: { order: BoardOrder; onClose: () => void }) {
   const now = useNow(30_000);
   const TypeIcon = ORDER_TYPE_ICON[order.type];
-  const stage = statusStage(order.status);
-  const no = orderNoLabel(order.orderNo);
   return (
-    <div className="relative border-b px-4 pt-3 pb-4">
+    <div className="border-b px-4 pt-1 pb-3 md:pt-3">
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-          <TypeIcon className="size-4" aria-hidden="true" />
-          {ordersWords.types[order.type]}
+        <p className="text-2xl font-bold tracking-tight tabular-nums">
+          {orderNoLabel(order.orderNo)}
+        </p>
+        <span className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-muted-foreground">
+          <TypeIcon className="size-4 shrink-0" aria-hidden="true" />
+          <span className="truncate">{ordersWords.types[order.type]}</span>
         </span>
-        {stage ? (
-          <StageChip stage={stage} kind={kind} />
-        ) : (
-          <Badge
-            variant="destructive-light"
-            size="lg"
-            radius="full"
-            className="gap-1 font-semibold"
-          >
-            <CircleXIcon aria-hidden="true" />
-            {words.shop.orderStatus[order.status]}
-          </Badge>
-        )}
-        <span className="ml-auto" />
+        <p className="ml-auto text-2xl font-bold tabular-nums">{formatPeso(order.total)}</p>
         <CloseButton onClose={onClose} />
       </div>
-      <div className="mt-1 flex items-end justify-between gap-3">
-        <p className="text-3xl font-bold tracking-tight tabular-nums">{no}</p>
-        <p className="text-2xl font-bold tabular-nums">{formatPeso(order.total)}</p>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
-        <span className="tabular-nums">
-          {ordersWords.panel.placed(formatClock(order.placedAt))}
-        </span>
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
         <TimeChip order={order} now={now} />
         <span className="ml-auto inline-flex items-center gap-1.5">
           <span className="text-xs">{ordersWords.panel.pickupCode}</span>
@@ -514,6 +495,17 @@ function PanelBody({
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  const waits = chatWaits(order);
+  const payment = (
+    <PaymentSection
+      order={order}
+      detail={detail}
+      slug={slug}
+      loading={loading}
+      onOpenChat={onOpenChat}
+    />
+  );
+
   return (
     <div ref={top}>
       {order.scheduledAt ? <WhenCard order={order} onChange={onChangeTime} /> : null}
@@ -526,14 +518,10 @@ function PanelBody({
           </Button>
         </div>
       ) : null}
-      <PaymentSection
-        order={order}
-        detail={detail}
-        slug={slug}
-        loading={loading}
-        onOpenChat={onOpenChat}
-      />
+      {/* Items come first; the payment goes above them only while a photo waits for the check (T93). */}
+      {waits ? payment : null}
       <ItemsSection order={order} detail={detail} shopName={shopName} loading={loading} />
+      {waits ? null : payment}
       <CustomerSection order={order} detail={detail} loading={loading} />
       {order.type === 'delivery' ? (
         <DeliverySection detail={detail} slug={slug} loading={loading} />
@@ -690,13 +678,8 @@ function PaymentSection({
       action={<PaymentChip order={order} now={now} />}
     >
       {loading && !detail ? <Skeleton className="h-12 w-full rounded-xl" /> : null}
-      {waits ? (
-        // The button to check it is the footer's main one.
-        <p className="flex items-center gap-2 rounded-xl border border-warning/40 bg-warning-soft p-3 text-sm font-semibold text-warning-soft-foreground">
-          <ImageIcon className="size-4 shrink-0" aria-hidden="true" />
-          {C.photoWaiting}
-        </p>
-      ) : proofs.length > 0 ? (
+      {/* A waiting photo is said by the chip, and the footer's main button checks it (T93). */}
+      {!waits && proofs.length > 0 ? (
         <div className="flex items-center gap-2 text-sm">
           <ImageIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <span className="min-w-0 flex-1 text-muted-foreground tabular-nums">
@@ -769,7 +752,7 @@ function ItemsSection({
         </p>
       ) : null}
       {detail ? (
-        <div className="px-1 pt-2 pb-3">
+        <div className="px-1 pt-2 pb-3 [&_[data-slot=thermal-receipt-card-divider]]:hidden [&_[data-slot=thermal-receipt-card-header]]:hidden">
           <ThermalReceiptCard
             storeName={shopName}
             orderId={orderNoLabel(detail.orderNo)}
@@ -782,12 +765,7 @@ function ItemsSection({
               : {})}
             totalLabel={w.total}
             total={formatPeso(detail.totals.total)}
-            code={
-              <span className="text-center">
-                <span className="block text-xs">{w.pickupCode}</span>
-                <span className="block text-xl font-bold tracking-widest">{detail.pickupCode}</span>
-              </span>
-            }
+            code={false}
           />
         </div>
       ) : loading ? (
