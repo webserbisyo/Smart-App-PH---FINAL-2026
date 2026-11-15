@@ -89,7 +89,7 @@ export const BANNER_TEXT_MAX: Record<BannerTextField, number> = { title: 40, des
 
 /**
  * Editor → preview: the whole draft, the part to outline, the part under the pointer, the banner to show,
- * the page to show.
+ * the page to show, and "play the opening screen into the page" (T94; `run` goes up each time).
  */
 export const EditorToPreviewSchema = z.discriminatedUnion('type', [
   z.object({ channel, type: z.literal('draft'), content: StorefrontContentSchema }),
@@ -97,6 +97,7 @@ export const EditorToPreviewSchema = z.discriminatedUnion('type', [
   z.object({ channel, type: z.literal('hover'), section: EditorSectionEnum.nullable() }),
   z.object({ channel, type: z.literal('banner'), index: z.number().int().min(0).max(2) }),
   z.object({ channel, type: z.literal('page'), page: PreviewPageEnum }),
+  z.object({ channel, type: z.literal('opening'), run: z.number().int().min(1) }),
 ]);
 export type EditorToPreview = z.infer<typeof EditorToPreviewSchema>;
 

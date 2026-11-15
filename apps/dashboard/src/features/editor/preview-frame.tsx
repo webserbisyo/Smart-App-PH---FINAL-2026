@@ -63,6 +63,8 @@ export interface PreviewFrameProps {
   onPage: (page: PreviewPage) => void;
   /** A banner's words typed straight onto the preview (T78). */
   onText: (index: number, field: BannerTextField, value: string) => void;
+  /** Goes up each time the owner taps Watch it open (T94). */
+  openingRun: number;
   /** Phone screens: the page fills the space with no device border. */
   bare?: boolean | undefined;
 }
@@ -82,6 +84,7 @@ export function PreviewFrame({
   page,
   onPage,
   onText,
+  openingRun,
   bare = false,
 }: PreviewFrameProps) {
   const boxRef = React.useRef<HTMLDivElement>(null);
@@ -156,6 +159,12 @@ export function PreviewFrame({
   React.useEffect(() => {
     if (session > 0) send({ channel: EDITOR_CHANNEL, type: 'page', page });
   }, [session, page, send]);
+
+  React.useEffect(() => {
+    if (session > 0 && openingRun > 0) {
+      send({ channel: EDITOR_CHANNEL, type: 'opening', run: openingRun });
+    }
+  }, [session, openingRun, send]);
 
   const width = DEVICE_WIDTH[device];
   const scale = box.width > 0 ? Math.min(1, box.width / width) : 1;

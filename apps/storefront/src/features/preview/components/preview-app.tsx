@@ -7,6 +7,8 @@ import {
   BANNER_TEXT_MAX,
   EditorSectionEnum,
   editorPreviewWords,
+  imageSources,
+  srcsetUrls,
   vocab,
   type Banner,
   type BannerTextField,
@@ -23,6 +25,7 @@ import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import type { BannerTextSlots } from '../../home/components/home-banners';
 import { HomeSections } from '../../home/components/home-sections';
+import { SplashScreen } from '../../install/components/app-splash';
 import { ShopProvider, useShop } from '../../shell/components/shop-context';
 import { ShopShell } from '../../shell/components/shop-shell';
 import { editorChannel, readEditorMessage, tellEditor } from '../preview-messages';
@@ -91,6 +94,44 @@ function tapOf(target: EventTarget | null, page: PreviewPage, slug: string): Tap
   const header = target.closest('header');
   if (header && target.closest('[aria-haspopup="menu"]')) return { kind: 'page', page: 'account' };
   return header ? { kind: 'section', section: 'brand' } : null;
+}
+
+// The splash draws the logo's biggest picture.
+function logoUrl(ref: string | null): string | null {
+  const sources = imageSources(ref);
+  return sources ? (srcsetUrls(sources.webp).at(-1) ?? null) : null;
+}
+
+/**
+ * The opening screen while the owner works on it (T94): it holds, replaying the logo's motion whenever a
+ * choice changes; "Watch it open" plays it into the page, as customers see it on a fast phone.
+ */
+function OpeningPreview({ shop, run }: { shop: PublicShop; run: number }) {
+  const { info, look } = shop.storefront;
+  const icon = logoUrl(info.logo);
+  const key = JSON.stringify([
+    look.opening,
+    look.brandColor,
+    look.surface,
+    look.pageColor,
+    info,
+    icon,
+  ]);
+  // The look and run last held; a change holds again, a new run plays into the page.
+  const [held, setHeld] = useState({ key, run });
+  if (held.key !== key) setHeld({ key, run });
+  const play: 'hold' | 'open' = held.key === key && held.run !== run ? 'open' : 'hold';
+  return (
+    <SplashScreen
+      key={`${key}:${play === 'open' ? run : 'hold'}`}
+      name={info.name}
+      tagline={info.tagline}
+      icon={icon}
+      look={look}
+      className="splash-preview"
+      play={play}
+    />
+  );
 }
 
 function prefersReducedMotion(): boolean {
@@ -190,6 +231,8 @@ export function PreviewApp({
   const [hovered, setHovered] = useState<EditorSection | null>(null);
   const [show, setShow] = useState<{ index: number; at: number } | undefined>(undefined);
   const [page, setPage] = useState<PreviewPage>('home');
+  // Goes up each time the owner taps Watch it open (T94).
+  const [openingRun, setOpeningRun] = useState(0);
   const scrollTo = useRef<EditorSection | null>(null);
   // Goes up on every select from the Editor, so the same part scrolls into view again (the frame resized).
   const [scrollTick, setScrollTick] = useState(0);
@@ -227,6 +270,9 @@ export function PreviewApp({
         case 'page':
           setPage(message.page);
           window.scrollTo({ top: 0 });
+          break;
+        case 'opening':
+          setOpeningRun(message.run);
           break;
       }
     };
@@ -339,6 +385,7 @@ export function PreviewApp({
         <AppToaster>
           <ShopProvider initialShop={shop} preview previewPage={page}>
             <InfoSheetSync open={page === 'about'} onClosed={backHome} />
+            {selected === 'opening' ? <OpeningPreview shop={shop} run={openingRun} /> : null}
             <ShopShell>
               <PreviewPageBody
                 page={page}

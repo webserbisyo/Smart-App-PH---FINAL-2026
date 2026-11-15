@@ -1,4 +1,5 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
+import { DEFAULT_OPENING } from '../../schemas/storefront.js';
 import { ALL_SECTIONS_ON, category, days, group, makeItems, peso, templates } from './build.js';
 
 const P = 'lr';
@@ -255,7 +256,7 @@ export const LOLA_REMY_PACK: ShopPack = {
         endsAt: null,
       },
       sections: { ...ALL_SECTIONS_ON, membersCount: false },
-      opening: { background: 'page', color: null, motion: 'pulse', showName: true },
+      opening: { ...DEFAULT_OPENING, motion: 'pulse', appName: 'Lola Remy', showTagline: true },
     },
     // Opens 5 AM: the closed-shop scheduling demo.
     // A bakery with a lunch break, and a half day on Sunday (decision R26 demo hours).

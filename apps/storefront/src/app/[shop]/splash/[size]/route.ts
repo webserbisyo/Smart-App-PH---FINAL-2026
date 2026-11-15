@@ -1,6 +1,12 @@
 import { createElement, type CSSProperties, type ReactNode } from 'react';
 import { ImageResponse } from 'next/og';
-import { DEMO_MEDIA, isDemoShopSlug, openingColours } from '@smartapp/core';
+import {
+  appNameOf,
+  DEMO_MEDIA,
+  isDemoShopSlug,
+  OPENING_LOGO_PX,
+  openingColours,
+} from '@smartapp/core';
 import { getStorefrontForServer } from '@smartapp/data/server';
 import { splashScreen } from '@/features/install/install-rules';
 
@@ -37,15 +43,18 @@ export async function GET(request: Request, { params }: RouteProps): Promise<Res
   const shop = getStorefrontForServer(slug);
   if (!screen || !shop) return new Response(null, { status: 404 });
 
-  const { name } = shop.storefront.info;
   const { look } = shop.storefront;
+  // The owner's app name, else the shop name; the tagline when the owner shows it (T94).
+  const name = appNameOf(shop.storefront.info.name, look.opening);
+  const tagline = look.opening.showTagline ? shop.storefront.info.tagline : null;
   // The owner's opening colour (decision T93), in hex for the image renderer.
   const colours = openingColours(look);
   const { ratio } = screen;
   const width = screen.width * ratio;
   const height = screen.height * ratio;
-  // The icon is 96 CSS px, as the page's splash draws it, so the two line up.
-  const icon = 96 * ratio;
+  // The icon is the owner's logo size in CSS px, as the page's splash draws it, so the two line up.
+  const logoPx = OPENING_LOGO_PX[look.opening.logoSize];
+  const icon = logoPx * ratio;
   const hasLogo = isDemoShopSlug(slug) && DEMO_MEDIA[slug].logo;
   const iconSrc = hasLogo
     ? await iconDataUrl(new URL(`/demo/${slug}/brand/icon-512.png`, request.url))
@@ -57,8 +66,8 @@ export async function GET(request: Request, { params }: RouteProps): Promise<Res
         src: iconSrc,
         width: icon,
         height: icon,
-        // rounded-3xl and gap-4, as the page's splash.
-        style: { borderRadius: 24 * ratio, marginBottom: 16 * ratio },
+        // rounded-2xl / 3xl / 4xl (a quarter of the logo) and gap-4, as the page's splash.
+        style: { borderRadius: (logoPx / 4) * ratio, marginBottom: 16 * ratio },
       })
     : null;
 
@@ -82,6 +91,19 @@ export async function GET(request: Request, { params }: RouteProps): Promise<Res
           'span',
           { fontSize: 20 * ratio, fontWeight: 700, maxWidth: '80%', textAlign: 'center' },
           name,
+        )
+      : null,
+    tagline
+      ? el(
+          'span',
+          {
+            fontSize: 14 * ratio,
+            opacity: 0.8,
+            maxWidth: '80%',
+            textAlign: 'center',
+            marginTop: 4 * ratio,
+          },
+          tagline,
         )
       : null,
   );

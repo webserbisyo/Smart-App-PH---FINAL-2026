@@ -2,7 +2,7 @@
 // test-blank: nothing set up. test-stress: long text, big amounts, many items.
 import type { Item } from '../schemas/catalog.js';
 import type { ShopPack } from '../schemas/shop-pack.js';
-import type { Storefront } from '../schemas/storefront.js';
+import { DEFAULT_OPENING, type Storefront } from '../schemas/storefront.js';
 import {
   ALL_SECTIONS_ON,
   category,
@@ -53,7 +53,7 @@ const BLANK_STOREFRONT: Storefront = {
     bannerSeconds: 5,
     announcement: null,
     sections: ALL_SECTIONS_ON,
-    opening: { background: 'page', color: null, motion: 'fade', showName: true },
+    opening: DEFAULT_OPENING,
   },
   hours: days(DAILY, '09:00', '21:00'),
   closures: [],

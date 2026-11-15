@@ -1,6 +1,12 @@
 import type { Metadata } from 'next';
 import { Suspense, type ReactNode } from 'react';
-import { DEMO_MEDIA, DEMO_SHOP_SLUGS, isDemoShopSlug, shopPalette } from '@smartapp/core';
+import {
+  appNameOf,
+  DEMO_MEDIA,
+  DEMO_SHOP_SLUGS,
+  isDemoShopSlug,
+  shopPalette,
+} from '@smartapp/core';
 import { getStorefrontForServer } from '@smartapp/data/server';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
@@ -40,6 +46,8 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
   if (!shop) return {};
   const { name, tagline } = shop.storefront.info;
   const files = brandFiles(slug);
+  // The installed app's name: the owner's app name, else the shop name (T94).
+  const appName = appNameOf(name, shop.storefront.look.opening);
   return {
     title: name,
     description: tagline ?? name,
@@ -47,7 +55,7 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
     manifest: `/${slug}/manifest.webmanifest`,
     appleWebApp: {
       capable: true,
-      title: shortName(name),
+      title: shortName(appName),
       statusBarStyle: 'default',
       // The launch picture per iPhone screen: the shop's icon on its opening colour (R51, T93).
       startupImage: IOS_SCREENS.map((screen) => ({
@@ -89,6 +97,7 @@ async function ShopFrame({ params, children }: ShopLayoutProps) {
       />
       <AppSplash
         name={shop.storefront.info.name}
+        tagline={shop.storefront.info.tagline}
         icon={brandFiles(slug)?.splash ?? null}
         look={shop.storefront.look}
       />

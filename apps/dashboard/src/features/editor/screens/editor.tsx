@@ -189,6 +189,16 @@ function EditorWorkspace({
     [phone],
   );
   const showBanner = React.useCallback((index: number) => setBanner({ index, at: Date.now() }), []);
+  // Watch it open (T94): the preview plays the opening screen into the page.
+  const [openingRun, setOpeningRun] = React.useState(0);
+  const watchOpening = React.useCallback(() => setOpeningRun((n) => n + 1), []);
+  // The opening screen exists only in the installed phone app, so its part shows on Phone; picking Laptop
+  // leaves the part.
+  const shownDevice: PreviewDevice = selected === 'opening' ? 'phone' : device;
+  const pickDevice = (next: PreviewDevice) => {
+    setDevice(next);
+    if (next !== 'phone' && selected === 'opening') setSelected(null);
+  };
   const { update } = editor;
   const typeBanner = React.useCallback(
     (index: number, field: BannerTextField, value: string) =>
@@ -206,6 +216,7 @@ function EditorWorkspace({
     shop: shopData,
     catalogName,
     showBanner,
+    watchOpening,
     onSelect: select,
   };
   const count = editor.changes.length;
@@ -214,7 +225,7 @@ function EditorWorkspace({
   const preview = (
     <PreviewFrame
       slug={shop.slug}
-      device={phone ? 'phone' : device}
+      device={phone ? 'phone' : shownDevice}
       content={editor.content}
       selected={selected}
       hovered={hovered}
@@ -223,6 +234,7 @@ function EditorWorkspace({
       page={page}
       onPage={setPage}
       onText={typeBanner}
+      openingRun={openingRun}
       bare={phone}
     />
   );
@@ -249,8 +261,8 @@ function EditorWorkspace({
         canRedo={editor.canRedo}
         onUndo={editor.undo}
         onRedo={editor.redo}
-        device={device}
-        onDevice={setDevice}
+        device={shownDevice}
+        onDevice={pickDevice}
         compact={phone}
         shopLink={shopLink}
         canDiscard={!sameContent(editor.content, editor.published)}

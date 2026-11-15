@@ -35,6 +35,13 @@ export type OpeningBackground = z.infer<typeof OpeningBackgroundEnum>;
 export const OPENING_MOTIONS = ['fade', 'pop', 'rise', 'pulse', 'none'] as const;
 export const OpeningMotionEnum = z.enum(OPENING_MOTIONS);
 export type OpeningMotion = z.infer<typeof OpeningMotionEnum>;
+// What shows under the logo while a slow page gets ready (decision T94).
+export const OPENING_LOADERS = ['dots', 'bar', 'ring', 'none'] as const;
+export const OpeningLoaderEnum = z.enum(OPENING_LOADERS);
+export type OpeningLoader = z.infer<typeof OpeningLoaderEnum>;
+export const OPENING_LOGO_SIZES = ['small', 'medium', 'large'] as const;
+export const OpeningLogoSizeEnum = z.enum(OPENING_LOGO_SIZES);
+export type OpeningLogoSize = z.infer<typeof OpeningLogoSizeEnum>;
 
 // The shop's font pair, one heading and one body font for every page (decision T79).
 export const FONT_PAIRS = [

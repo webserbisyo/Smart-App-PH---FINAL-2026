@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GiftIcon, MailIcon, StampIcon } from 'lucide-react';
@@ -34,9 +34,13 @@ import { stampBurst } from '@smartapp/ui/compositions/celebrate';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
 import { StampCard } from '@smartapp/ui/compositions/stamp-card';
-import { InstallCard } from '../../install/components/install-card';
 import { useShop } from '../../shell/components/shop-context';
 import { maskEmail } from '../rewards-rules';
+
+// The install card shows only after the customer joins, so its code loads then, as on the receipt (R49).
+const InstallCard = lazy(() =>
+  import('../../install/components/install-card').then((m) => ({ default: m.InstallCard })),
+);
 
 const W = words.join;
 
@@ -218,7 +222,9 @@ export function JoinFlow() {
             {words.rewards.order(vocab(shop.storefront.info.kind).catalog)}
           </Button>
         )}
-        <InstallCard slug={slug} shopName={shop.storefront.info.name} />
+        <Suspense fallback={null}>
+          <InstallCard slug={slug} shopName={shop.storefront.info.name} />
+        </Suspense>
       </div>
     );
   }

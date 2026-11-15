@@ -65,6 +65,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Super Admin, sign-up and Meta tracking: /admin (Today, Shops, Payments, Tracking, Setup), 3-step sign-up, go-live approval, Billing chat, Open as owner, ₱399 plan (decisions T88 to T92; frontend with mock data pushed to main 2026-11-14; API and tables in Phase 4)
 
 - [x] Final verdicts: calendar Month tiles, full-height phone panels, customise any face, Editor Opening screen, dashboard manifest, Storage Files, phone audit fixes (decision T93; pushed to main 2026-11-15)
+- [x] Opening screen v2: preview holds on the splash, loader for slow pages, App name, logo size and tagline (decision T94; pushed to main 2026-11-15)
 
 ## Phase 4: Backend, area by area
 

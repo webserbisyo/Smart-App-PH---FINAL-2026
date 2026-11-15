@@ -19,6 +19,8 @@ import {
   LogoShapeEnum,
   OpeningBackgroundEnum,
   OpeningMotionEnum,
+  OpeningLoaderEnum,
+  OpeningLogoSizeEnum,
   ShopSurfaceEnum,
   SlotLengthSchema,
   StampCardStatusEnum,
@@ -88,17 +90,27 @@ export const SectionSwitchesSchema = z.object({
 });
 export type SectionSwitches = z.infer<typeof SectionSwitchesSchema>;
 
-// The installed app's opening screen (decision T93): the page colour by default, the brand colour or any
-// colour as choices; a short logo motion; the name under the logo.
+// A colour as #rrggbb, shared by every colour field (one schema, less code on the customer's phone).
+const HexColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i);
+
+// The longest app name (T94); the home screen label still cuts it to about 12 (SHORT_NAME_MAX).
+export const OPENING_NAME_MAX = 30;
+
+// The installed app's opening screen (decisions T93, T94): the page colour by default, the brand colour or
+// any colour as choices; a short logo motion; the name and tagline under the logo; a loader for slow pages.
 export const OpeningScreenSchema = z.object({
   background: OpeningBackgroundEnum,
   // Only for "custom".
-  color: z
-    .string()
-    .regex(/^#[0-9a-f]{6}$/i)
-    .nullable(),
+  color: HexColorSchema.nullable(),
   motion: OpeningMotionEnum,
   showName: z.boolean(),
+  // Shows only when the page takes longer than a second (T94).
+  loader: OpeningLoaderEnum.default('dots'),
+  logoSize: OpeningLogoSizeEnum.default('medium'),
+  // The installed app's name (splash, home screen label, iPhone pictures); null uses the shop name. Receipts,
+  // chats and Messenger keep the shop name from Settings (T64).
+  appName: z.string().max(OPENING_NAME_MAX).nullable().default(null),
+  showTagline: z.boolean().default(false),
 });
 export type OpeningScreen = z.infer<typeof OpeningScreenSchema>;
 export const DEFAULT_OPENING: OpeningScreen = {
@@ -106,24 +118,20 @@ export const DEFAULT_OPENING: OpeningScreen = {
   color: null,
   motion: 'fade',
   showName: true,
+  loader: 'dots',
+  logoSize: 'medium',
+  appName: null,
+  showTagline: false,
 };
 
 export const ShopLookSchema = z.object({
-  brandColor: z.string().regex(/^#[0-9a-f]{6}$/i),
+  brandColor: HexColorSchema,
   // Light or dark page (decision R2). With a page colour the Editor sets it from that colour (T76 C4).
   surface: ShopSurfaceEnum.default('light'),
   // Optional page colour for the 60 (decisions R52, T76); null keeps the neutral page.
-  pageColor: z
-    .string()
-    .regex(/^#[0-9a-f]{6}$/i)
-    .nullable()
-    .default(null),
+  pageColor: HexColorSchema.nullable().default(null),
   // Optional card colour for the 30 (T76 C3); null lets the cards follow the page.
-  cardColor: z
-    .string()
-    .regex(/^#[0-9a-f]{6}$/i)
-    .nullable()
-    .default(null),
+  cardColor: HexColorSchema.nullable().default(null),
   // The logo's frame (T76 C7).
   logoShape: LogoShapeEnum.default('circle'),
   // One font pair for the whole shop (decision T79).

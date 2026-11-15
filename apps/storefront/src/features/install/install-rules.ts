@@ -6,8 +6,13 @@ export type InstallPlatform = (typeof INSTALL_PLATFORMS)[number];
 // The card stays hidden this long after the customer hides it (per shop).
 export const INSTALL_DISMISS_DAYS = 30;
 const DAY_MS = 86_400_000;
-// A home screen label fits about 12 characters.
-export const SHORT_NAME_MAX = 12;
+// The home screen label moved to core (T94) so the Editor counts it the same way.
+export { SHORT_NAME_MAX, shortName } from '@smartapp/core';
+
+// The installed app's splash (T94): its element id, and how long the logo's motion needs (80 ms wait + the
+// slow duration) before the splash may leave.
+export const SPLASH_ID = 'app-splash';
+export const SPLASH_MIN_MS = 450;
 
 /** iPhone and iPad Safari: no install prompt, so the card shows the Share steps. Other iOS browsers: none. */
 export function isIosSafari(userAgent: string): boolean {
@@ -41,20 +46,6 @@ export function installCardVisible(input: {
     new Date(input.now).getTime() - new Date(input.dismissedAt).getTime() >
     INSTALL_DISMISS_DAYS * DAY_MS
   );
-}
-
-/** The home screen label: the shop's name when it fits, else its first words, else cut at 12. */
-export function shortName(name: string): string {
-  const clean = name.trim().replace(/\s+/g, ' ');
-  if (clean.length <= SHORT_NAME_MAX) return clean;
-  const words = clean.split(' ');
-  let out = '';
-  for (const word of words) {
-    const next = out ? `${out} ${word}` : word;
-    if (next.length > SHORT_NAME_MAX) break;
-    out = next;
-  }
-  return out || clean.slice(0, SHORT_NAME_MAX);
 }
 
 /**

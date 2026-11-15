@@ -1,4 +1,5 @@
 import {
+  appNameOf,
   DEMO_MEDIA,
   DEMO_SHOP_SLUGS,
   isDemoShopSlug,
@@ -6,9 +7,9 @@ import {
   openingColours,
   parseOklch,
   shopPalette,
+  shortName,
 } from '@smartapp/core';
 import { getStorefrontForServer } from '@smartapp/data/server';
-import { shortName } from '@/features/install/install-rules';
 
 interface ManifestContext {
   params: Promise<{ shop: string }>;
@@ -58,10 +59,12 @@ export async function GET(_request: Request, { params }: ManifestContext) {
   const page = hex(palette.shop60);
   // Android draws its launch screen in this colour: the owner's opening colour (decision T93).
   const opening = openingColours(look, palette).background;
+  // The owner's app name, else the shop name (T94).
+  const appName = appNameOf(name, look.opening);
   const manifest = {
     id: `/${slug}`,
-    name,
-    short_name: shortName(name),
+    name: appName,
+    short_name: shortName(appName),
     description: tagline ?? name,
     start_url: `/${slug}`,
     scope: `/${slug}/`,

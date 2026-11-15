@@ -1,4 +1,5 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
+import { DEFAULT_OPENING } from '../../schemas/storefront.js';
 import {
   ALL_SECTIONS_ON,
   category,
@@ -257,7 +258,7 @@ export const TALA_APPAREL_PACK: ShopPack = {
       bannerSeconds: 6,
       announcement: null,
       sections: { ...ALL_SECTIONS_ON, membersCount: false },
-      opening: { background: 'page', color: null, motion: 'fade', showName: false },
+      opening: { ...DEFAULT_OPENING, showName: false, loader: 'bar' },
     },
     // Open every day so the demo is open when people try it (decision R47).
     hours: days(DAILY, '09:00', '21:00'),

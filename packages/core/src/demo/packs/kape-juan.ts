@@ -1,4 +1,5 @@
 import type { ShopPack } from '../../schemas/shop-pack.js';
+import { DEFAULT_OPENING } from '../../schemas/storefront.js';
 import {
   ALL_SECTIONS_ON,
   category,
@@ -278,7 +279,7 @@ export const KAPE_JUAN_PACK: ShopPack = {
         endsAt: '2026-11-01T16:00:00.000Z',
       },
       sections: { ...ALL_SECTIONS_ON, membersCount: false },
-      opening: { background: 'page', color: null, motion: 'fade', showName: true },
+      opening: { ...DEFAULT_OPENING, loader: 'ring' },
     },
     hours: days(DAILY, '07:00', '22:00'),
     closures: [
