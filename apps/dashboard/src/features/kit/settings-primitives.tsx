@@ -5,6 +5,7 @@ import {
   avatarSvgSrc,
   type AvatarMake,
   type FaceRecipe,
+  type OwnerAvatar,
 } from '@smartapp/core';
 import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
 import {
@@ -36,6 +37,8 @@ import {
 } from '@smartapp/ui/components/time-picker';
 import { AvatarMaker } from '@smartapp/ui/compositions/avatar-maker';
 import { FaceCustomiser } from '@smartapp/ui/compositions/face-customiser';
+import { FacePicker } from '@smartapp/ui/compositions/face-picker';
+import { PersonAvatar } from '@smartapp/ui/compositions/person-avatar';
 import { KitSection } from './kit-section.js';
 
 function MakerDemo() {
@@ -78,6 +81,21 @@ function CustomiserDemo() {
         tileClassName="bg-avatar-mint"
         onChange={(recipe, svg) => setMade({ recipe, svg })}
       />
+    </div>
+  );
+}
+
+function FacePickerDemo() {
+  const [avatar, setAvatar] = React.useState<OwnerAvatar>({
+    kind: 'face',
+    style: 'people',
+    face: 2,
+    theme: 'sky',
+  });
+  return (
+    <div className="flex max-w-xl flex-col gap-4">
+      <PersonAvatar avatar={avatar} name="Juan Morales" className="size-20 text-xl" />
+      <FacePicker value={avatar} name="Juan Morales" onChange={setAvatar} />
     </div>
   );
 }
@@ -133,7 +151,7 @@ export function SettingsPrimitiveSections() {
         title="Picture maker"
         library="composition (Toggle Group, Skeleton, DiceBear Adventurer)"
         path="packages/ui/src/compositions/avatar-maker.tsx"
-        usedIn="The storefront Account picture, Make my own (T83)"
+        usedIn="Kit only since T95 (members now pick with the Face Picker); older made pictures still show"
       >
         <MakerDemo />
       </KitSection>
@@ -141,9 +159,17 @@ export function SettingsPrimitiveSections() {
         title="Face Customiser"
         library="composition (DiceBear 9.4.3, one style loaded on demand)"
         path="packages/ui/src/compositions/face-customiser.tsx"
-        usedIn="Settings Change picture, Customise this face (T93)"
+        usedIn="Settings Change picture and the storefront picture picker, Customise this face (T93, T95)"
       >
         <CustomiserDemo />
+      </KitSection>
+      <KitSection
+        title="Face Picker"
+        library="composition (Toggle Group, Scroller, Face Customiser, Person Avatar)"
+        path="packages/ui/src/compositions/face-picker.tsx"
+        usedIn="Settings Change picture, the storefront picture picker and Join More faces (T95)"
+      >
+        <FacePickerDemo />
       </KitSection>
       <KitSection
         title="Time Picker"

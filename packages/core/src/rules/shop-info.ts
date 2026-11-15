@@ -1,5 +1,12 @@
 // The Shop info sheet: the week's hours day by day, closures as lines, default member avatars.
-import { AVATAR_SETS, type AvatarSet, type Weekday } from '../schemas/enums.js';
+import {
+  AVATAR_SETS,
+  AVATAR_THEMES,
+  type AvatarSet,
+  type OwnerAvatarStyle,
+  type Weekday,
+} from '../schemas/enums.js';
+import type { OwnerAvatar } from '../schemas/owner-avatar.js';
 import type { Closure, OpeningRange } from '../schemas/storefront.js';
 import { words } from '../words.js';
 import {
@@ -133,6 +140,24 @@ function avatarPath(index: number): string {
 /** The same face for the same person every time. */
 export function defaultAvatar(key: string): string {
   return avatarPath(hashOf(key) % DEFAULT_AVATAR_COUNT);
+}
+
+// ---------- member faces (T95): the same faces and shape as the owner's picture ----------
+
+// A member who skips the picture gets a Fun face (no person, so no guess about who they are), the same
+// one every time. Navy and Blue stay for the owner's own picture.
+const SKIP_STYLE: OwnerAvatarStyle = 'fun';
+const SKIP_THEMES = AVATAR_THEMES.slice(0, 6);
+
+/** The face a member gets when they skip the picture: the same one for the same email. */
+export function defaultMemberFace(key: string): OwnerAvatar {
+  const hash = hashOf(key);
+  return {
+    kind: 'face',
+    style: SKIP_STYLE,
+    face: (hash % 12) + 1,
+    theme: SKIP_THEMES[Math.floor(hash / 12) % SKIP_THEMES.length] ?? 'sky',
+  };
 }
 
 // Faces in each set of the avatar picker (tooling/scripts/default-avatars.ts makes the files).

@@ -28,6 +28,7 @@ import type {
   ItemStatus,
   LatLng,
   MemberAccount,
+  OwnerAvatar,
   OpenState,
   OptionGroupDraft,
   OrderPayload,
@@ -156,8 +157,13 @@ export interface StorefrontAdapter {
     name: string;
     phone: string;
     orderToken?: string | undefined;
+    // The face picked on the join form (T95); left out when skipped.
+    avatar?: OwnerAvatar | undefined;
   }): Promise<MemberAccount>;
   getMyAccount(input: { slug: string }): Promise<MemberAccount | null>;
+  // The member's picture (T95): a face, a customised face, initials or a photo; null goes back to the
+  // Fun face the shop gives.
+  saveMyAvatar(input: { slug: string; avatar: OwnerAvatar | null }): Promise<MemberAccount>;
   saveAddress(input: { slug: string; address: CustomerAddress }): Promise<CustomerAddress[]>;
   removeAddress(input: { slug: string; id: string }): Promise<CustomerAddress[]>;
   claimReward(input: { slug: string }): Promise<RewardClaim>;

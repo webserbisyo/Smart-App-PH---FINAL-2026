@@ -2,13 +2,7 @@
 
 import * as React from 'react';
 import { RotateCcwIcon, ShuffleIcon } from 'lucide-react';
-import {
-  FACE_NONE,
-  FACE_PARTS,
-  avatarSvgSrc,
-  settingsWords,
-  type FaceRecipe,
-} from '@smartapp/core';
+import { FACE_NONE, FACE_PARTS, avatarSvgSrc, faceWords, type FaceRecipe } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { Scroller } from '@smartapp/ui/components/scroller';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
@@ -17,7 +11,7 @@ import { loadFaceLibrary, type FaceLibrary } from '@smartapp/ui/lib/face-draw';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
 import { cn } from 'cn';
 
-const W = settingsWords.avatar;
+const W = faceWords;
 
 // Small pieces show the face closer, so the change is easy to see.
 const CLOSE_UP = new Set([

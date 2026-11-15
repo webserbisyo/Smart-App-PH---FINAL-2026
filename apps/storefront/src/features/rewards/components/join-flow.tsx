@@ -1,6 +1,7 @@
 'use client';
 
 import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GiftIcon, MailIcon, StampIcon } from 'lucide-react';
@@ -12,6 +13,7 @@ import {
   vocab,
   words,
   type MemberAccount,
+  type OwnerAvatar,
 } from '@smartapp/core';
 import {
   errorCodeOf,
@@ -38,6 +40,13 @@ import { useShop } from '../../shell/components/shop-context';
 import { maskEmail } from '../rewards-rules';
 
 // The install card shows only after the customer joins, so its code loads then, as on the receipt (R49).
+// The face row sits under the form's fields, so it loads after the first paint (decision R49); the
+// same height stands in until then.
+const JoinFace = dynamic(() => import('./join-face').then((m) => m.JoinFace), {
+  ssr: false,
+  loading: () => <div aria-hidden="true" className="h-48" />,
+});
+
 const InstallCard = lazy(() =>
   import('../../install/components/install-card').then((m) => ({ default: m.InstallCard })),
 );
@@ -77,6 +86,8 @@ export function JoinFlow() {
   const [codeError, setCodeError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [joined, setJoined] = useState<MemberAccount | null>(null);
+  // The face picked on the form (T95); null skips it.
+  const [face, setFace] = useState<OwnerAvatar | null>(null);
   const codeRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -136,7 +147,7 @@ export function JoinFlow() {
       {
         onSuccess: () => {
           join.mutate(
-            { name: name.trim(), phone, orderToken: tokens.at(-1) },
+            { name: name.trim(), phone, orderToken: tokens.at(-1), avatar: face ?? undefined },
             {
               onSuccess: (member) => {
                 setJoined(member);
@@ -350,6 +361,7 @@ export function JoinFlow() {
                   <FieldDescription id="join-email-hint">{W.emailHint}</FieldDescription>
                 )}
               </Field>
+              <JoinFace slug={slug} name={name.trim()} value={face} onChange={setFace} />
             </FieldGroup>
 
             {formError ? (

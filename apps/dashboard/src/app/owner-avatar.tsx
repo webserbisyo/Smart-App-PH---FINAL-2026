@@ -1,12 +1,7 @@
-import {
-  AVATAR_THEMES,
-  ownerAvatarFile,
-  personInitials,
-  type AvatarTheme,
-  type OwnerAvatar,
-} from '@smartapp/core';
+import { personInitials, type OwnerAvatar } from '@smartapp/core';
 import { useOwnerProfile } from '@smartapp/data';
-import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
+import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
+import { PersonAvatar } from '@smartapp/ui/compositions/person-avatar';
 import type * as React from 'react';
 import { cn } from 'cn';
 import { orderPhotoSrc } from './orders/order-photo.js';
@@ -14,27 +9,14 @@ import { orderPhotoSrc } from './orders/order-photo.js';
 // The owner's picture (decision T68): a ready-made face or a picture made from pieces on a theme
 // colour, the initials, or their own photo. Ready-made files ship with the app, so they show at once.
 
-export const AVATAR_BG: Record<AvatarTheme, string> = {
-  sky: 'bg-avatar-sky text-avatar-ink',
-  mint: 'bg-avatar-mint text-avatar-ink',
-  sun: 'bg-avatar-sun text-avatar-ink',
-  blush: 'bg-avatar-blush text-avatar-ink',
-  lilac: 'bg-avatar-lilac text-avatar-ink',
-  sand: 'bg-avatar-sand text-avatar-ink',
-  navy: 'bg-avatar-navy text-avatar-ink-on-dark',
-  brand: 'bg-avatar-brand text-avatar-ink-on-dark',
-};
-export const THEME_ORDER: readonly AvatarTheme[] = AVATAR_THEMES;
-
 // A new photo shows from this device until the page reloads (the mock keeps no file).
 const localPhotos = new Map<string, string>();
 export function rememberPhoto(ref: string, preview: string): void {
   localPhotos.set(ref, preview);
 }
 
-export function ownerAvatarSrc(avatar: OwnerAvatar): string | null {
-  if (avatar.kind === 'photo') return localPhotos.get(avatar.ref) ?? orderPhotoSrc(avatar.ref, 256);
-  return ownerAvatarFile(avatar);
+function photoSrc(ref: string): string | null {
+  return localPhotos.get(ref) ?? orderPhotoSrc(ref, 256);
 }
 
 export function OwnerAvatarView({
@@ -49,17 +31,14 @@ export function OwnerAvatarView({
   // An AvatarBadge, such as the online dot.
   badge?: React.ReactNode;
 }) {
-  const src = ownerAvatarSrc(avatar);
-  const theme =
-    avatar.kind === 'photo' ? 'bg-muted text-muted-foreground' : AVATAR_BG[avatar.theme];
   return (
-    <Avatar className={cn(theme, className)}>
-      {src ? <AvatarImage src={src} alt="" className="object-cover" /> : null}
-      <AvatarFallback className={cn('bg-transparent font-semibold', theme)}>
-        {personInitials(name) || '?'}
-      </AvatarFallback>
-      {badge}
-    </Avatar>
+    <PersonAvatar
+      avatar={avatar}
+      name={name}
+      photoSrc={photoSrc}
+      className={className}
+      badge={badge}
+    />
   );
 }
 
@@ -88,5 +67,42 @@ export function MyAvatar({
       className={className}
       badge={badge}
     />
+  );
+}
+
+/**
+ * A customer's picture on orders, chats and Members (T95): a member's face, or a guest's initials tinted
+ * by who they are.
+ */
+export function CustomerFace({
+  avatar,
+  name,
+  size,
+  className,
+  initialsClassName,
+}: {
+  avatar: OwnerAvatar | null;
+  name: string;
+  size?: 'default' | 'sm' | 'lg' | undefined;
+  className?: string | undefined;
+  // The initials' colours (guests, and while a face loads).
+  initialsClassName?: string | undefined;
+}) {
+  if (avatar)
+    return (
+      <PersonAvatar
+        avatar={avatar}
+        name={name}
+        size={size}
+        photoSrc={photoSrc}
+        className={cn('shrink-0', className)}
+      />
+    );
+  return (
+    <Avatar size={size ?? 'default'} className={cn('shrink-0', className)}>
+      <AvatarFallback className={cn('font-semibold', initialsClassName)}>
+        {personInitials(name) || '?'}
+      </AvatarFallback>
+    </Avatar>
   );
 }

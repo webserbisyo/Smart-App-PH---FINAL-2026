@@ -1,8 +1,7 @@
 // Owner Settings (decisions T64 to T68): the shop's facts, hours, ordering, delivery and payments; the owner's
 // profile and emails; the Pro plan, storage and exports. The shop always comes from the owner's login (T34).
 import { z } from 'zod';
-import { AvatarSvgSchema } from './avatar-make.js';
-import { FaceRecipeSchema } from './face-recipe.js';
+import { OwnerAvatarSchema } from './owner-avatar.js';
 import { ShopKindEnum } from './demo-shop.js';
 import {
   CentavosSchema,
@@ -12,7 +11,6 @@ import {
   MediaRefSchema,
 } from './common.js';
 import {
-  AvatarThemeEnum,
   BillingFromEnum,
   BillingKindEnum,
   CleanupKindEnum,
@@ -21,7 +19,6 @@ import {
   ExportRangeEnum,
   ExportStatusEnum,
   OrderTypeEnum,
-  OwnerAvatarStyleEnum,
   PlanMonthsSchema,
   PlanPaidViaEnum,
   PlanPaymentStatusEnum,
@@ -89,25 +86,8 @@ export type OwnerSettings = z.infer<typeof OwnerSettingsSchema>;
 
 // ---------- the owner (You group) ----------
 
-// A face is a tiny record that points at a file the app ships (0 KB of storage); a photo is an upload.
-export const OwnerAvatarSchema = z.discriminatedUnion('kind', [
-  z.object({
-    kind: z.literal('face'),
-    style: OwnerAvatarStyleEnum,
-    face: z.number().int().min(1).max(12),
-    theme: AvatarThemeEnum,
-  }),
-  z.object({
-    // A face changed on the device (T93): its recipe to open it again, and the drawing to show.
-    kind: z.literal('custom'),
-    recipe: FaceRecipeSchema,
-    svg: AvatarSvgSchema,
-    theme: AvatarThemeEnum,
-  }),
-  z.object({ kind: z.literal('initials'), theme: AvatarThemeEnum }),
-  z.object({ kind: z.literal('photo'), ref: MediaRefSchema, bytes: z.number().int().min(0) }),
-]);
-export type OwnerAvatar = z.infer<typeof OwnerAvatarSchema>;
+// The owner's picture: its own module (owner-avatar.ts), as members use the same shape (T95).
+export { OwnerAvatarSchema, type OwnerAvatar } from './owner-avatar.js';
 
 export const OwnerProfileSchema = z.object({
   name: z.string().trim().min(1).max(80),

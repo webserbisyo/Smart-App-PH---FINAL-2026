@@ -19,6 +19,7 @@ import {
   useSeenStamps,
 } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
+import { Skeleton } from '@smartapp/ui/components/skeleton';
 import {
   CircularProgress,
   CircularProgressIndicator,
@@ -32,7 +33,6 @@ import { StampCard } from '@smartapp/ui/compositions/stamp-card';
 import { useShop } from '../../shell/components/shop-context';
 import { capReached, rewardRound, ruleLine } from '../rewards-rules';
 import { RewardCard } from './reward-card';
-import { MemberQr, StampHistory } from './rewards-parts';
 import { RewardsSkeleton } from './rewards-skeleton';
 import { SukiInvite } from './suki-invite';
 
@@ -41,6 +41,13 @@ import { SukiInvite } from './suki-invite';
 const NumberTicker = lazy(() =>
   import('@smartapp/ui/components/number-ticker').then((m) => ({ default: m.NumberTicker })),
 );
+
+// History and Member QR are tabs behind the card, and the QR maker is big, so both load after the page
+// (decision R49).
+const StampHistory = lazy(() =>
+  import('./rewards-parts').then((m) => ({ default: m.StampHistory })),
+);
+const MemberQr = lazy(() => import('./rewards-parts').then((m) => ({ default: m.MemberQr })));
 
 const W = words.rewards;
 const S = words.shop.stamps;
@@ -277,11 +284,15 @@ export function RewardsScreen() {
           </TabsContent>
 
           <TabsContent value="history">
-            <StampHistory history={member.history} />
+            <Suspense fallback={<Skeleton className="h-48 w-full rounded-3xl" />}>
+              <StampHistory history={member.history} />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="qr">
-            <MemberQr account={member} />
+            <Suspense fallback={<Skeleton className="mx-auto size-64 rounded-3xl" />}>
+              <MemberQr account={member} />
+            </Suspense>
           </TabsContent>
         </Tabs>
       )}

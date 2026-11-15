@@ -64,7 +64,7 @@ export function NearList({
                   aria-label={W.openMember(row.name)}
                   className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
-                  <MemberAvatar name={row.name} member />
+                  <MemberAvatar name={row.name} member avatar={row.avatar} />
                   <span className="flex min-w-0 flex-col gap-1">
                     <span className="truncate text-sm font-semibold">{row.name}</span>
                     <StampDots balance={row.balance} goal={row.goal} />
@@ -107,7 +107,7 @@ export function NearList({
               aria-label={W.openMember(row.name)}
               className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
-              <MemberAvatar name={row.name} member />
+              <MemberAvatar name={row.name} member avatar={row.avatar} />
               <span className="flex min-w-0 flex-col gap-1">
                 <span className="truncate text-sm font-semibold">
                   {row.name}

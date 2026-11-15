@@ -37,6 +37,7 @@ import {
 import {
   guestId,
   memberBalance,
+  memberFace,
   memberId,
   type MemberRecord,
   type ShopState,
@@ -197,6 +198,7 @@ export function customerRow(s: ShopState, p: Person, now: Date): CustomerRow {
   return CustomerRowSchema.parse({
     id: p.id,
     isMember: m !== null,
+    avatar: m ? memberFace(m) : null,
     name: p.name,
     phone: formatPhPhone(p.phone),
     memberCode: m?.memberCode ?? null,

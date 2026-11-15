@@ -7,6 +7,7 @@ import {
   PaymentMethodEnum,
   PaymentStatusEnum,
 } from './enums.js';
+import { OwnerAvatarSchema } from './owner-avatar.js';
 import { OrderMessageSchema, OrderReceiptSchema, ProofSchema } from './order.js';
 
 // One line on the kitchen / packing ticket (up to 8 on the card).
@@ -56,6 +57,8 @@ export const BoardOrderSchema = z.object({
   memberStamps: z
     .object({ have: z.number().int().nonnegative(), goal: z.number().int().positive() })
     .nullable(),
+  // A member's face (T95); null for guests, who show their initials.
+  customerAvatar: OwnerAvatarSchema.nullable().default(null),
 });
 export type BoardOrder = z.infer<typeof BoardOrderSchema>;
 
@@ -96,6 +99,7 @@ export const ChatSummarySchema = z.object({
   memberStamps: z
     .object({ have: z.number().int().nonnegative(), goal: z.number().int().positive() })
     .nullable(),
+  customerAvatar: OwnerAvatarSchema.nullable().default(null),
   // The newest line, from either side.
   last: OrderMessageSchema,
   // Since when the customer's newest line has waited for the shop (null once the shop answered).

@@ -128,7 +128,7 @@ export function TopSukiCard({
                 >
                   {index === 0 ? <TrophyIcon className="size-3.5" /> : index + 1}
                 </span>
-                <MemberAvatar name={t.row.name} member />
+                <MemberAvatar name={t.row.name} member avatar={t.row.avatar} />
                 <span className="min-w-0 flex-1 truncate text-sm font-semibold">{t.row.name}</span>
                 <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
                   {W.top.visits(t.visits)}

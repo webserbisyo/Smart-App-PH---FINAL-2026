@@ -26,6 +26,7 @@ import { StageIcon } from './stage-icon.js';
 import { STAGE_LOOK } from './stage.js';
 import { stepLabels } from './step-labels.js';
 import { TimeChip } from './time-chip.js';
+import { CustomerFace } from '../owner-avatar.js';
 
 export { orderNoLabel };
 
@@ -337,11 +338,12 @@ function OrderCardView({
 
         {/* Customer: the name wins; the member chip wraps under it on a narrow card. */}
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <Avatar size="sm" className="shrink-0">
-            <AvatarFallback className="bg-secondary font-semibold text-secondary-foreground">
-              {initials(order.customerName)}
-            </AvatarFallback>
-          </Avatar>
+          <CustomerFace
+            avatar={order.customerAvatar}
+            name={order.customerName}
+            size="sm"
+            initialsClassName="bg-secondary text-secondary-foreground"
+          />
           <span className="max-w-full min-w-0 flex-1 basis-24 truncate text-sm font-semibold">
             {order.customerName}
           </span>

@@ -33,6 +33,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     resolveMapsLink: async (input) => (await real()).storefront.resolveMapsLink(input),
     joinAsMember: async (input) => (await real()).storefront.joinAsMember(input),
     getMyAccount: async (input) => (await real()).storefront.getMyAccount(input),
+    saveMyAvatar: async (input) => (await real()).storefront.saveMyAvatar(input),
     saveAddress: async (input) => (await real()).storefront.saveAddress(input),
     removeAddress: async (input) => (await real()).storefront.removeAddress(input),
     claimReward: async (input) => (await real()).storefront.claimReward(input),

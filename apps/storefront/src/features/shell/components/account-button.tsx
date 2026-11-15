@@ -2,11 +2,12 @@
 
 import { lazy, Suspense } from 'react';
 import { GiftIcon, UserRoundIcon } from 'lucide-react';
-import { words } from '@smartapp/core';
-import { useMyAccount, useMyAvatar } from '@smartapp/data';
+import { useMyAccount, useMyPicture } from '@smartapp/data';
+import { ownerAvatarFile, personInitials, words } from '@smartapp/core';
 import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
 import { Button } from '@smartapp/ui/components/button';
-import { initials } from '@smartapp/ui/compositions/shop-image';
+import { AVATAR_BG, directPhotoSrc } from '@smartapp/ui/compositions/avatar-theme';
+import { cn } from '@smartapp/ui/lib/utils';
 import { useLaterPart } from '../use-when-idle';
 import { useShop } from './shop-context';
 
@@ -21,7 +22,20 @@ const TRIGGER_CLASS = 'relative size-11 shrink-0 rounded-full';
 export function AccountButton() {
   const { slug, shop } = useShop();
   const account = useMyAccount(slug).data;
-  const avatar = useMyAvatar(slug, account?.email ?? slug);
+  const picture = useMyPicture(slug, account);
+  const avatar = picture.kind === 'avatar' ? picture.avatar : null;
+  const src =
+    picture.kind === 'file'
+      ? picture.src
+      : avatar?.kind === 'photo'
+        ? directPhotoSrc(avatar.ref)
+        : avatar
+          ? ownerAvatarFile(avatar)
+          : null;
+  const look =
+    avatar && avatar.kind !== 'photo'
+      ? AVATAR_BG[avatar.theme]
+      : 'bg-shop-10-soft text-shop-10-soft-foreground';
   const stampsOn = shop.storefront.stampCard.status !== 'off';
   const rewardReady = Boolean(account?.rewardReady);
   const menu = useLaterPart();
@@ -33,10 +47,11 @@ export function AccountButton() {
   const face = (
     <>
       {account ? (
-        <Avatar className="size-9 bg-shop-10-soft">
-          <AvatarImage src={avatar} alt="" />
-          <AvatarFallback className="bg-shop-10-soft text-sm font-semibold text-shop-10-soft-foreground">
-            {initials(account.name)}
+        // The picture drawn inline (not PersonAvatar): this button is on every page's first paint.
+        <Avatar className={cn('size-9', look)}>
+          {src ? <AvatarImage src={src} alt="" className="object-cover" /> : null}
+          <AvatarFallback className={cn('text-sm font-semibold', look)}>
+            {personInitials(account.name)}
           </AvatarFallback>
         </Avatar>
       ) : (

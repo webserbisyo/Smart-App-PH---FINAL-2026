@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { ClockIcon, GiftIcon, SparklesIcon, StarIcon, UserIcon } from 'lucide-react';
-import { formatPeso, membersWords, type CustomerRow } from '@smartapp/core';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
+import { formatPeso, membersWords, type CustomerRow, type OwnerAvatar } from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import {
   DataGrid,
@@ -11,12 +10,12 @@ import {
   type ColumnDef,
   type DataGridFeatures,
 } from '@smartapp/ui/components/reui/data-grid/index';
-import { initials } from '@smartapp/ui/compositions/shop-image';
 import { cn } from 'cn';
 import { GRID_ALL_ROWS } from '@/app/grid-pager';
 import { AnimatePresence, FadeUp } from '@/app/orders/order-motion';
 import { StampDots } from './stamp-dots.js';
 import { lastInLabel } from './when.js';
+import { CustomerFace } from '@/app/owner-avatar';
 
 const W = membersWords;
 
@@ -73,15 +72,23 @@ export function RowStatus({ row }: { row: CustomerRow }) {
   return null;
 }
 
-export function MemberAvatar({ name, member }: { name: string; member: boolean }) {
+export function MemberAvatar({
+  name,
+  member,
+  avatar = null,
+}: {
+  name: string;
+  member: boolean;
+  // The member's face (T95); guests show their initials.
+  avatar?: OwnerAvatar | null | undefined;
+}) {
   return (
-    <Avatar className="size-9 shrink-0">
-      <AvatarFallback
-        className={member ? 'bg-member-soft text-member-soft-foreground' : 'bg-muted'}
-      >
-        {initials(name)}
-      </AvatarFallback>
-    </Avatar>
+    <CustomerFace
+      avatar={avatar}
+      name={name}
+      className="size-9"
+      initialsClassName={member ? 'bg-member-soft text-member-soft-foreground' : 'bg-muted'}
+    />
   );
 }
 
@@ -109,7 +116,7 @@ export function PhoneRows({ rows, now, onOpen }: RowsProps) {
                   'border-member/50 bg-member-soft/40',
               )}
             >
-              <MemberAvatar name={row.name} member={row.isMember} />
+              <MemberAvatar name={row.name} member={row.isMember} avatar={row.avatar} />
               <span className="flex min-w-0 flex-1 flex-col gap-1">
                 <span className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate font-semibold">{row.name}</span>
@@ -153,7 +160,11 @@ export function MembersGrid({ rows, now, onOpen }: RowsProps) {
         header: W.cols.member,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-3">
-            <MemberAvatar name={row.original.name} member={row.original.isMember} />
+            <MemberAvatar
+              name={row.original.name}
+              member={row.original.isMember}
+              avatar={row.original.avatar}
+            />
             <span className="flex min-w-0 flex-col">
               <span className="truncate font-medium">{row.original.name}</span>
               <span className="text-xs text-muted-foreground tabular-nums">

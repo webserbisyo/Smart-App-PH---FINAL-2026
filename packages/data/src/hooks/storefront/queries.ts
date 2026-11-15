@@ -8,6 +8,7 @@ import {
   type OrderPayload,
   type OrderReceipt,
   type OrderType,
+  type OwnerAvatar,
   type PaymentMethod,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
@@ -193,12 +194,26 @@ export function useJoin(slug: string) {
   return useMutation({
     networkMode: 'always',
     retry: false,
-    mutationFn: (input: { name: string; phone: string; orderToken?: string | undefined }) =>
-      storefront.joinAsMember({ slug, ...input }),
+    mutationFn: (input: {
+      name: string;
+      phone: string;
+      orderToken?: string | undefined;
+      avatar?: OwnerAvatar | undefined;
+    }) => storefront.joinAsMember({ slug, ...input }),
     onSuccess: (account) => {
       client.setQueryData(qk.account(slug), account);
       void client.invalidateQueries({ queryKey: qk.myOrdersAll(slug) });
     },
+  });
+}
+
+/** Saves the member's picture on their account (T95); null goes back to the Fun face. */
+export function useSaveMyAvatar(slug: string) {
+  const { storefront } = useAdapters();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (avatar: OwnerAvatar | null) => storefront.saveMyAvatar({ slug, avatar }),
+    onSuccess: (account) => client.setQueryData(qk.account(slug), account),
   });
 }
 

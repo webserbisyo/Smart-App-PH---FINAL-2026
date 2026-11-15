@@ -27,6 +27,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.resolve(__dirname, '../../apps/storefront/public/avatars');
 // The owner's faces (T68, T93), 7 styles × 12, with no background: the owner's theme colour shows behind.
 const OWNER_DIR = path.resolve(__dirname, '../../apps/dashboard/public/avatars/owner');
+// Members pick from the same faces (T95), so the storefront ships a copy.
+const MEMBER_DIR = path.resolve(__dirname, '../../apps/storefront/public/avatars/owner');
 
 // One seed per file; the same seed always draws the same face.
 const SEEDS = [
@@ -133,16 +135,18 @@ async function main() {
     console.log(`Wrote ${SEEDS.length} default avatars to ${OUTPUT_DIR}`);
   }
   if (wants('owner')) {
-    fs.mkdirSync(OWNER_DIR, { recursive: true });
-    for (const [set, draw] of Object.entries(OWNER_SETS)) {
-      let index = 0;
-      for (const seed of PICKER_SEEDS) {
-        index += 1;
-        await write(draw(seed), PICKER_SIZE, `${set}-${String(index).padStart(2, '0')}`, OWNER_DIR);
+    for (const dir of [OWNER_DIR, MEMBER_DIR]) {
+      fs.mkdirSync(dir, { recursive: true });
+      for (const [set, draw] of Object.entries(OWNER_SETS)) {
+        let index = 0;
+        for (const seed of PICKER_SEEDS) {
+          index += 1;
+          await write(draw(seed), PICKER_SIZE, `${set}-${String(index).padStart(2, '0')}`, dir);
+        }
       }
     }
     console.log(
-      `Wrote ${Object.keys(OWNER_SETS).length * PICKER_SEEDS.length} owner faces to ${OWNER_DIR}`,
+      `Wrote ${Object.keys(OWNER_SETS).length * PICKER_SEEDS.length} owner faces to ${OWNER_DIR} and ${MEMBER_DIR}`,
     );
   }
   for (const [set, draw] of Object.entries(PICKER_SETS)) {

@@ -50,7 +50,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@smartapp/ui/components/alert-dialog';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Button } from '@smartapp/ui/components/button';
 import {
@@ -99,7 +98,6 @@ import {
   ResponsiveDialogFooter,
 } from '@smartapp/ui/compositions/responsive-dialog';
 import { ResponsiveSheet } from '@smartapp/ui/compositions/responsive-sheet';
-import { initials } from '@smartapp/ui/compositions/shop-image';
 import {
   ThermalReceiptCard,
   type ThermalReceiptItem,
@@ -125,6 +123,7 @@ import {
 import { WhenCard } from './when-card.js';
 import { MessengerOrderButton } from './messenger-inbox.js';
 import { ChatFooter, ChatHeader, ChatThread, chatWaits, scrollBox } from './order-chat.js';
+import { CustomerFace } from '@/app/owner-avatar';
 
 const CANCEL_REASON_KEYS = [
   'sold_out',
@@ -172,6 +171,8 @@ function boardShape(o: OwnerOrder): BoardOrder {
     lastStepAt: o.lastStepAt,
     expiresAt: o.expiresAt,
     memberStamps: null,
+    // The face shows once the card loads; the link opens with initials.
+    customerAvatar: null,
   };
 }
 
@@ -813,11 +814,12 @@ function CustomerSection({
   return (
     <Section title={ordersWords.panel.customerSection}>
       <div className="flex items-center gap-3">
-        <Avatar size="lg">
-          <AvatarFallback className="bg-secondary font-semibold text-secondary-foreground">
-            {initials(order.customerName)}
-          </AvatarFallback>
-        </Avatar>
+        <CustomerFace
+          avatar={order.customerAvatar}
+          name={order.customerName}
+          size="lg"
+          initialsClassName="bg-secondary text-secondary-foreground"
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{order.customerName}</p>
           {detail ? (

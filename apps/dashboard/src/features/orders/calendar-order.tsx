@@ -17,14 +17,12 @@ import {
   type BoardOrder,
   type ShopKind,
 } from '@smartapp/core';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
 import { Button } from '@smartapp/ui/components/button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import {
   ResponsiveDialog,
   ResponsiveDialogFooter,
 } from '@smartapp/ui/compositions/responsive-dialog';
-import { initials } from '@smartapp/ui/compositions/shop-image';
 import { copyText } from '@smartapp/ui/lib/copy-text';
 import { cn } from 'cn';
 import { dayLong } from '@/app/orders/calendar-days';
@@ -38,10 +36,11 @@ import { ItemPhotos, PaymentChip } from '@/app/orders/order-card';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
 import { StageChip } from '@/app/orders/stage-chip';
+import { CustomerFace } from '@/app/owner-avatar';
 
 const W = ordersWords.bookings;
 
-/** The customer's initials, tinted by who they are (member, first order, guest). */
+/** A member's face, or the customer's initials tinted by who they are (first order, guest). */
 export function CustomerAvatar({
   order,
   size = 'sm',
@@ -51,13 +50,14 @@ export function CustomerAvatar({
   size?: 'sm' | 'default';
   className?: string | undefined;
 }) {
-  const look = CUSTOMER_LOOK[customerKind(order)];
   return (
-    <Avatar size={size} className={cn('shrink-0', className)}>
-      <AvatarFallback className={cn('font-semibold', look.avatar)}>
-        {initials(order.customerName)}
-      </AvatarFallback>
-    </Avatar>
+    <CustomerFace
+      avatar={order.customerAvatar}
+      name={order.customerName}
+      size={size}
+      className={className}
+      initialsClassName={CUSTOMER_LOOK[customerKind(order)].avatar}
+    />
   );
 }
 

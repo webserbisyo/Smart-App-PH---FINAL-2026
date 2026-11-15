@@ -96,6 +96,7 @@ import {
   PROOFS_PER_ORDER,
   hasReference,
   ChatSummarySchema,
+  OwnerAvatarSchema,
   chatKey,
   chatLock,
   lastLine,
@@ -143,6 +144,7 @@ import {
   addMinutes,
   buildOrder,
   memberBalance,
+  memberFace,
   memberId,
   nextOrderNo,
   receiptLines,
@@ -256,6 +258,7 @@ const PersistedSchema = z.object({
       claims: z.array(StoredClaimSchema),
       byCustomer: z.boolean(),
       note: z.string().nullable().default(null),
+      avatar: OwnerAvatarSchema.nullable().default(null),
     }),
   ),
   rewardsLeft: z.record(z.string(), z.number()),
@@ -408,7 +411,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       codes: state.codes,
       orders: [...state.shops.values()].flatMap((s) => s.orders.filter((o) => o.byCustomer)),
       members: [...state.shops.values()].flatMap((s) =>
-        s.members.filter((m) => m.byCustomer).map((m) => ({ ...m, note: m.note ?? null })),
+        s.members
+          .filter((m) => m.byCustomer)
+          .map((m) => ({ ...m, note: m.note ?? null, avatar: m.avatar ?? null })),
       ),
       rewardsLeft: Object.fromEntries(
         [...state.shops.entries()].flatMap(([slug, s]) =>
@@ -595,6 +600,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       claims: [...member.claims]
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         .map((c) => RewardClaimSchema.parse(c)),
+      avatar: member.avatar ?? null,
     });
   }
 
@@ -867,6 +873,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
               goal: card.rule.stampsNeeded,
             }
           : null,
+      customerAvatar: member ? memberFace(member) : null,
     });
   }
 
@@ -926,6 +933,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       isMember: board.isMember,
       isFirstOrder: o.isFirstOrder,
       memberStamps: board.memberStamps,
+      customerAvatar: board.customerAvatar,
       last,
       waitingSince: waitingSince(messages),
       unseen: unseenCount(messages),
@@ -1275,7 +1283,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return LatLngSchema.parse(spot);
       }),
 
-    joinAsMember: ({ slug, name, phone, orderToken }) =>
+    joinAsMember: ({ slug, name, phone, orderToken, avatar }) =>
       run('account', () => {
         const s = requireShop(slug);
         const session = state.session;
@@ -1310,6 +1318,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           addresses: [],
           claims: [],
           byCustomer: true,
+          // Skipped: the shop shows their Fun face (T95).
+          avatar: avatar ? OwnerAvatarSchema.parse(avatar) : null,
         };
         s.members.push(member);
         // A guest order links only by its token or the same email, never by phone alone (P8).
@@ -1334,6 +1344,19 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const s = requireShop(slug);
         const member = currentMember(s);
         return member ? accountFor(s, member) : null;
+      }),
+
+    // The member's picture (T95). The API takes a photo through the upload step; the mock keeps the small
+    // crop itself as the ref.
+    saveMyAvatar: ({ slug, avatar }) =>
+      run('account', () => {
+        const s = requireShop(slug);
+        const member = currentMember(s);
+        if (!member) fail('not_signed_in', 401);
+        member.avatar = avatar === null ? null : OwnerAvatarSchema.parse(avatar);
+        member.byCustomer = true;
+        persist();
+        return accountFor(s, member);
       }),
 
     saveAddress: ({ slug, address }) =>

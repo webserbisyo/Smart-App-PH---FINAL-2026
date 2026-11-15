@@ -13,6 +13,7 @@ import {
   OrderStatusEnum,
   StampCardStatusEnum,
 } from './enums.js';
+import { OwnerAvatarSchema } from './owner-avatar.js';
 import { PublicStampCardSchema } from './storefront.js';
 
 // The whole stamp card as the owner saves it: status, earn rule and reward (pieces included).
@@ -89,6 +90,8 @@ export const CustomerRowSchema = z.object({
   lastOrderAt: IsoDateTimeSchema.nullable(),
   joinedAt: IsoDateTimeSchema.nullable(),
   prizeToGive: z.boolean(),
+  // A member's face (T95); null for guests, who show their initials.
+  avatar: OwnerAvatarSchema.nullable().default(null),
 });
 export type CustomerRow = z.infer<typeof CustomerRowSchema>;
 

@@ -11,7 +11,7 @@ import {
   ShieldCheckIcon,
 } from 'lucide-react';
 import { artPath, errorWords, formatManila, words } from '@smartapp/core';
-import { errorCodeOf, useMyAccount, useMyAvatar, useSignOutCustomer } from '@smartapp/data';
+import { errorCodeOf, useMyAccount, useMyPicture, useSignOutCustomer } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
@@ -43,7 +43,7 @@ export function AccountScreen() {
   const signOut = useSignOutCustomer();
   const confirm = useLaterPart();
   const member = account.data;
-  const avatar = useMyAvatar(slug, member?.email ?? slug);
+  const avatar = useMyPicture(slug, member);
   const stampsOn = shop.storefront.stampCard.status !== 'off';
 
   if (account.isPending) {

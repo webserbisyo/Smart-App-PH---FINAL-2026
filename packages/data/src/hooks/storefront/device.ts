@@ -2,7 +2,7 @@
 import { useSyncExternalStore } from 'react';
 import {
   avatarSvgSrc,
-  defaultAvatar,
+  defaultMemberFace,
   isFinal,
   lineIdentity,
   QTY_MAX,
@@ -11,13 +11,13 @@ import {
   type LastAddress,
   type OrderReceipt,
   type OrderType,
+  type OwnerAvatar,
 } from '@smartapp/core';
 import {
   getDeviceStorage,
   pruneOrderTokens,
   pruneSavedReceipts,
   LAST_SHOP_SCOPE,
-  type CustomerAvatar,
   type DeviceEntry,
   type LastShop,
   type ReadResult,
@@ -304,23 +304,24 @@ export function useProofPreview(slug: string, path: string): string | null {
   return value?.find((p) => p.path === path)?.dataUrl ?? null;
 }
 
-/** The member's picture on this phone: the picked face or cropped photo, else their default face. */
-export function useMyAvatar(slug: string, fallbackKey: string): string {
+// The member's picture (T95): on their account now. A face picked on this phone before then is still shown
+// until they pick again; it is a file, not a face record, so it shows as it was.
+export type MyPicture = { kind: 'avatar'; avatar: OwnerAvatar } | { kind: 'file'; src: string };
+
+/** The member's picture: the one on their account, else one saved on this phone earlier, else their Fun face. */
+export function useMyPicture(
+  slug: string,
+  account: { email: string; avatar: OwnerAvatar | null } | null | undefined,
+): MyPicture {
   const { value } = useDeviceEntry(getDeviceStorage().customerAvatar, slug);
-  if (value?.kind === 'photo') return value.dataUrl;
-  if (value?.kind === 'face') return value.path;
-  if (value?.kind === 'made') return avatarSvgSrc(value.svg);
-  return defaultAvatar(fallbackKey);
+  if (account?.avatar) return { kind: 'avatar', avatar: account.avatar };
+  if (value?.kind === 'photo') return { kind: 'file', src: value.dataUrl };
+  if (value?.kind === 'face') return { kind: 'file', src: value.path };
+  if (value?.kind === 'made') return { kind: 'file', src: avatarSvgSrc(value.svg) };
+  return { kind: 'avatar', avatar: defaultMemberFace(account?.email ?? slug) };
 }
 
-/** The member's saved picture on this phone as it was picked, or null for the default face. */
-export function useMySavedAvatar(slug: string): CustomerAvatar | null {
-  return useDeviceEntry(getDeviceStorage().customerAvatar, slug).value ?? null;
-}
-
-/** Saves the picked face, cropped photo or made picture on this phone; null goes back to the default face. */
-export function saveMyAvatar(slug: string, avatar: CustomerAvatar | null): void {
-  const entry = getDeviceStorage().customerAvatar;
-  if (avatar) entry.write(slug, avatar);
-  else entry.remove(slug);
+/** Forgets a picture saved on this phone before pictures moved to the account (T95). */
+export function forgetPhonePicture(slug: string): void {
+  getDeviceStorage().customerAvatar.remove(slug);
 }

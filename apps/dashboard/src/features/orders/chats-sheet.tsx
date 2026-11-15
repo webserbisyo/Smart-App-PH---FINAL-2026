@@ -2,7 +2,6 @@ import * as React from 'react';
 import { ClockIcon, MessageCircleIcon, XIcon } from 'lucide-react';
 import { formatClock, minutesUntil, ordersWords, words, type ChatSummary } from '@smartapp/core';
 import { useChats } from '@smartapp/data';
-import { Avatar, AvatarFallback } from '@smartapp/ui/components/avatar';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Empty,
@@ -14,13 +13,13 @@ import {
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { MessengerIcon } from '@smartapp/ui/compositions/messenger-icon';
 import { ResponsiveSheet } from '@smartapp/ui/compositions/responsive-sheet';
-import { initials } from '@smartapp/ui/compositions/shop-image';
 import { cn } from 'cn';
 import { CUSTOMER_LOOK, customerKind } from '@/app/orders/customer-kind';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { useNow } from '@/app/orders/use-now';
 import { useCardDragging } from './drag-state.js';
 import { PAGE_INBOX_URL } from './messenger-inbox.js';
+import { CustomerFace } from '@/app/owner-avatar';
 
 const W = ordersWords.chat.list;
 const C = ordersWords.chat;
@@ -52,17 +51,12 @@ function ChatRow({
         onClick={() => onOpen(chat.orderId)}
         className="flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors duration-fast hover:bg-muted/60 focus-visible:bg-muted focus-visible:outline-none"
       >
-        <Avatar
-          size="default"
-          className={cn(
-            'shrink-0',
-            chat.isMember && 'ring-2 ring-member ring-offset-2 ring-offset-popover',
-          )}
-        >
-          <AvatarFallback className={cn('font-semibold', look.avatar)}>
-            {initials(chat.customerName)}
-          </AvatarFallback>
-        </Avatar>
+        <CustomerFace
+          avatar={chat.customerAvatar}
+          name={chat.customerName}
+          className={cn(chat.isMember && 'ring-2 ring-member ring-offset-2 ring-offset-popover')}
+          initialsClassName={look.avatar}
+        />
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
             <span className="truncate font-semibold">{chat.customerName}</span>

@@ -6,6 +6,7 @@ import {
   manilaDate,
   manilaToDate,
   memberQrUrl,
+  type OwnerAvatar,
   type PublicShop,
 } from '@smartapp/core';
 import { int, pick, token, type Rng } from './rng';
@@ -57,6 +58,21 @@ export const MEMBER_NAMES = [
   'Xandra Cruz',
   'Yeng Morales',
 ] as const;
+
+// The faces the first ten demo members picked when they joined (T95). The rest skipped, so they show
+// their Fun face (defaultMemberFace).
+const DEMO_FACES: readonly OwnerAvatar[] = [
+  { kind: 'face', style: 'people', face: 7, theme: 'blush' },
+  { kind: 'face', style: 'people', face: 4, theme: 'sun' },
+  { kind: 'face', style: 'bright', face: 2, theme: 'mint' },
+  { kind: 'face', style: 'sketch', face: 6, theme: 'sky' },
+  { kind: 'face', style: 'soft', face: 9, theme: 'lilac' },
+  { kind: 'face', style: 'adventure', face: 10, theme: 'sand' },
+  { kind: 'face', style: 'people', face: 10, theme: 'mint' },
+  { kind: 'face', style: 'bright', face: 3, theme: 'sky' },
+  { kind: 'face', style: 'adventure', face: 2, theme: 'blush' },
+  { kind: 'face', style: 'pixel', face: 6, theme: 'sun' },
+];
 
 const GUEST_NAMES = [
   'Arnel Santiago',
@@ -427,6 +443,7 @@ export function generateCommunity(
         addresses: [],
         claims,
         byCustomer: false,
+        avatar: DEMO_FACES[i] ?? null,
         note: i % 8 === 0 ? (NOTES[(i / 8) % NOTES.length] ?? null) : null,
       });
     });

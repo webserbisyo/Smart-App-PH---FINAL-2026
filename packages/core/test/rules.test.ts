@@ -21,7 +21,8 @@ import {
   validateLinePicks,
 } from '../src/rules/options.js';
 import { deliveryFee, distanceM, parseMapsLink, roundKm } from '../src/rules/delivery.js';
-import { weekHours } from '../src/rules/shop-info.js';
+import { defaultMemberFace, weekHours } from '../src/rules/shop-info.js';
+import { JOIN_FACES } from '../src/rules/face-parts.js';
 import {
   boardColumn,
   canAdvance,
@@ -574,5 +575,12 @@ describe('canRecall, canReschedule, pickupCode (decision T50, T51, T52)', () => 
     for (const char of ['0', 'O', '1', 'I', 'L']) {
       expect(code1.includes(char)).toBe(false);
     }
+  });
+
+  it('gives a member who skips the picture the same Fun face every time (T95)', () => {
+    const face = defaultMemberFace('juan@example.com');
+    expect(face).toEqual(defaultMemberFace('juan@example.com'));
+    expect(face.kind === 'face' && face.style).toBe('fun');
+    expect(JOIN_FACES).toHaveLength(6);
   });
 });

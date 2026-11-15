@@ -18,6 +18,7 @@ import {
   type OrderReceipt,
   type OrderStatus,
   type OrderType,
+  type OwnerAvatar,
   type PaymentMethod,
   type PaymentStatus,
   type Proof,
@@ -26,6 +27,7 @@ import {
   type RewardClaim,
   type Rider,
   type VariantTemplate,
+  defaultMemberFace,
   dueTimes,
   pickupCode,
 } from '@smartapp/core';
@@ -94,6 +96,13 @@ export interface MemberRecord {
   byCustomer: boolean;
   // The owner's note for the counter ("less ice").
   note?: string | null | undefined;
+  // The face they picked (T95); null or missing shows defaultMemberFace.
+  avatar?: OwnerAvatar | null | undefined;
+}
+
+/** The member's face on the shop's side (T95): the one they picked, else their Fun face. */
+export function memberFace(m: MemberRecord): OwnerAvatar {
+  return m.avatar ?? defaultMemberFace(m.email);
 }
 
 export interface ShopState {

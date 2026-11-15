@@ -6,6 +6,7 @@ import {
   LatLngSchema,
   MediaRefSchema,
 } from './common.js';
+import { OwnerAvatarSchema } from './owner-avatar.js';
 import {
   ClaimStatusEnum,
   LedgerKindEnum,
@@ -91,6 +92,9 @@ export const MemberAccountSchema = z.object({
   history: z.array(LedgerEntrySchema),
   // Prize claims (custom prizes), newest first: the code and QR the counter checks.
   claims: z.array(RewardClaimSchema),
+  // The member's picture (T95), the same shape as the owner's; null until they pick one (the shop then
+  // shows defaultMemberFace).
+  avatar: OwnerAvatarSchema.nullable().default(null),
 });
 export type MemberAccount = z.infer<typeof MemberAccountSchema>;
 

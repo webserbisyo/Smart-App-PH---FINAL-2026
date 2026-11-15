@@ -142,7 +142,7 @@ function PanelHeader({
   return (
     <div className="flex items-start gap-3 border-b px-4 pt-3 pb-3">
       {row ? (
-        <MemberAvatar name={row.name} member={row.isMember} />
+        <MemberAvatar name={row.name} member={row.isMember} avatar={row.avatar} />
       ) : (
         <Skeleton className="size-9 rounded-full" />
       )}
