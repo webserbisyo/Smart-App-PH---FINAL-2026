@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
       capable: true,
       title: shortName(name),
       statusBarStyle: 'default',
-      // The launch picture per iPhone screen: the shop's icon on its page colour (decision R51).
+      // The launch picture per iPhone screen: the shop's icon on its opening colour (R51, T93).
       startupImage: IOS_SCREENS.map((screen) => ({
         url: `/${slug}/splash/${splashSizeName(screen)}`,
         media: splashMedia(screen),
@@ -87,7 +87,11 @@ async function ShopFrame({ params, children }: ShopLayoutProps) {
         name="theme-color"
         content={shopPalette(brandColor, surface, pageColor, cardColor).shop60}
       />
-      <AppSplash name={shop.storefront.info.name} icon={brandFiles(slug)?.splash ?? null} />
+      <AppSplash
+        name={shop.storefront.info.name}
+        icon={brandFiles(slug)?.splash ?? null}
+        look={shop.storefront.look}
+      />
       <ShopApp shop={shop}>{children}</ShopApp>
     </ShopTheme>
   );

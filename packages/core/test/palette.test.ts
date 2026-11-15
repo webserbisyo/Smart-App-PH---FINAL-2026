@@ -3,6 +3,7 @@ import {
   BRAND_COLOR_PRESETS,
   contrastRatio,
   DEFAULT_BRAND_COLOR,
+  openingColours,
   PALETTE_BLACK,
   PALETTE_WHITE,
   shopPalette,
@@ -198,5 +199,33 @@ describe('shopPalette', () => {
       ...(p.tint ? Object.values(p.tint) : []),
     ];
     for (const value of values) expect(value).toMatch(/^oklch\(/);
+  });
+});
+
+describe('openingColours', () => {
+  const look = {
+    brandColor: '#d32f2f',
+    surface: 'light' as const,
+    pageColor: '#fff4e0',
+    cardColor: null,
+  };
+  it('uses the page colour by default', () => {
+    const c = openingColours({ ...look, opening: { background: 'page', color: null } });
+    expect(c.background).toBe('#fff4e0');
+    expect(contrastRatio(c.background, c.foreground)).toBeGreaterThanOrEqual(4.5);
+  });
+  it('uses the brand with its button words', () => {
+    const c = openingColours({ ...look, opening: { background: 'brand', color: null } });
+    expect(c.background).not.toBe('#fff4e0');
+    expect(contrastRatio(c.background, c.foreground)).toBeGreaterThanOrEqual(4.5);
+  });
+  it('gives a custom colour black or white words, and falls back to the page without one', () => {
+    const dark = openingColours({ ...look, opening: { background: 'custom', color: '#102040' } });
+    expect(dark).toEqual({ background: '#102040', foreground: '#ffffff' });
+    const light = openingColours({ ...look, opening: { background: 'custom', color: '#FFE066' } });
+    expect(light.background).toBe('#ffe066');
+    expect(contrastRatio(light.background, light.foreground)).toBeGreaterThanOrEqual(4.5);
+    const none = openingColours({ ...look, opening: { background: 'custom', color: null } });
+    expect(none.background).toBe('#fff4e0');
   });
 });

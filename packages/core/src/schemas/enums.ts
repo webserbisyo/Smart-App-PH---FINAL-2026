@@ -28,6 +28,14 @@ export const LOGO_SHAPES = ['circle', 'rounded'] as const;
 export const LogoShapeEnum = z.enum(LOGO_SHAPES);
 export type LogoShape = z.infer<typeof LogoShapeEnum>;
 
+// The opening screen of the installed shop app (decision T93): its background and the logo's motion.
+export const OPENING_BACKGROUNDS = ['page', 'brand', 'custom'] as const;
+export const OpeningBackgroundEnum = z.enum(OPENING_BACKGROUNDS);
+export type OpeningBackground = z.infer<typeof OpeningBackgroundEnum>;
+export const OPENING_MOTIONS = ['fade', 'pop', 'rise', 'pulse', 'none'] as const;
+export const OpeningMotionEnum = z.enum(OPENING_MOTIONS);
+export type OpeningMotion = z.infer<typeof OpeningMotionEnum>;
+
 // The shop's font pair, one heading and one body font for every page (decision T79).
 export const FONT_PAIRS = [
   'malinaw',

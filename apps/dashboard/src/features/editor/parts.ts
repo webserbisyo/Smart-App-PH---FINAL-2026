@@ -7,6 +7,7 @@ import {
   LayoutGridIcon,
   MegaphoneIcon,
   PaletteIcon,
+  SmartphoneIcon,
   TextIcon,
   UsersIcon,
   type LucideIcon,
@@ -24,7 +25,7 @@ const S = editorWords.partStatus;
 
 // The list follows the page from top to bottom (decision T72).
 export const PART_GROUPS = [
-  { id: 'look', parts: ['brand'] },
+  { id: 'look', parts: ['brand', 'opening'] },
   { id: 'top', parts: ['banners', 'announcement'] },
   { id: 'home', parts: ['rewards', 'categories', 'bestSellers', 'favourites'] },
   { id: 'info', parts: ['info', 'about', 'membersCount'] },
@@ -32,6 +33,7 @@ export const PART_GROUPS = [
 
 export const PART_ICONS: Record<EditorSection, LucideIcon> = {
   brand: PaletteIcon,
+  opening: SmartphoneIcon,
   banners: ImagesIcon,
   announcement: MegaphoneIcon,
   rewards: GiftIcon,
@@ -62,6 +64,11 @@ export function partStatus(
       const page = look.pageColor ? colourName(look.pageColor) : editorWords.surfaces[look.surface];
       return content.logo ? S.brand(colour, page) : S.brandNoLogo(colour, page);
     }
+    case 'opening':
+      return S.opening(
+        editorWords.opening.backgrounds[look.opening.background],
+        editorWords.opening.motions[look.opening.motion],
+      );
     case 'banners':
       return S.banners(look.banners.length, look.bannerSeconds);
     case 'announcement':

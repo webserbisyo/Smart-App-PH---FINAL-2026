@@ -173,6 +173,7 @@ export const AQUALINIS_PACK: ShopPack = {
         endsAt: null,
       },
       sections: { ...ALL_SECTIONS_ON, membersCount: false },
+      opening: { background: 'page', color: null, motion: 'rise', showName: true },
     },
     hours: [...days([1, 2, 3, 4, 5, 6], '06:00', '21:00'), ...days([0], '07:00', '21:00')],
     closures: [],

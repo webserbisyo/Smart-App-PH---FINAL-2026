@@ -622,9 +622,11 @@
   z-index: var(--z-splash);
 }
 
-/* The installed app's launch (decision R51): the shop's icon and name on its page colour, the same picture
-   iPhone shows while the app starts, fading into the page as soon as it paints (80 ms hold, 300 ms fade,
-   the icon growing a little). Only in the installed app; never in a browser tab or under reduced motion. */
+/* The installed app's launch (decisions R51, T93): the shop's icon and name on its opening colour, the
+   same picture iPhone shows while the app starts, fading into the page as soon as it paints (80 ms hold,
+   300 ms fade). The logo moves as the owner picked (`data-motion` on the splash): fade (grows a little),
+   pop, rise, pulse or none; pop and pulse finish before the fade. Only in the installed app; never in a
+   browser tab or under reduced motion. */
 @keyframes splash-out {
   to {
     opacity: 0;
@@ -638,18 +640,62 @@
   }
 }
 
+@keyframes splash-pop {
+  40% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes splash-rise {
+  to {
+    transform: translateY(calc(var(--spacing) * -4));
+  }
+}
+
+@keyframes splash-pulse {
+  25%,
+  75% {
+    transform: scale(1.08);
+  }
+  50% {
+    transform: scale(0.96);
+  }
+}
+
 @utility app-splash {
   display: none;
   pointer-events: none;
   @media (display-mode: standalone) {
     display: flex;
     animation: splash-out var(--duration-slow) var(--ease-standard) 80ms both;
-    & > * {
-      animation: splash-grow var(--duration-slow) var(--ease-standard) 80ms both;
+    &:is([data-motion='pop'], [data-motion='pulse']) {
+      animation-delay: calc(var(--duration-slow) + 80ms);
     }
   }
   @media (prefers-reduced-motion: reduce) {
     display: none;
+  }
+}
+
+/* The logo's motion, from the nearest `data-motion` (the splash, or the Editor's preview). */
+@utility splash-logo {
+  animation: none var(--duration-slow) var(--ease-standard) backwards;
+  [data-motion='fade'] & {
+    animation-name: splash-grow;
+    animation-delay: 80ms;
+  }
+  [data-motion='pop'] & {
+    animation-name: splash-pop;
+  }
+  [data-motion='rise'] & {
+    animation-name: splash-rise;
+    animation-delay: 80ms;
+  }
+  [data-motion='pulse'] & {
+    animation-name: splash-pulse;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
 }
 

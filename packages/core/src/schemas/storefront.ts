@@ -17,6 +17,8 @@ import {
   PhBankEnum,
   FontPairEnum,
   LogoShapeEnum,
+  OpeningBackgroundEnum,
+  OpeningMotionEnum,
   ShopSurfaceEnum,
   SlotLengthSchema,
   StampCardStatusEnum,
@@ -86,6 +88,26 @@ export const SectionSwitchesSchema = z.object({
 });
 export type SectionSwitches = z.infer<typeof SectionSwitchesSchema>;
 
+// The installed app's opening screen (decision T93): the page colour by default, the brand colour or any
+// colour as choices; a short logo motion; the name under the logo.
+export const OpeningScreenSchema = z.object({
+  background: OpeningBackgroundEnum,
+  // Only for "custom".
+  color: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullable(),
+  motion: OpeningMotionEnum,
+  showName: z.boolean(),
+});
+export type OpeningScreen = z.infer<typeof OpeningScreenSchema>;
+export const DEFAULT_OPENING: OpeningScreen = {
+  background: 'page',
+  color: null,
+  motion: 'fade',
+  showName: true,
+};
+
 export const ShopLookSchema = z.object({
   brandColor: z.string().regex(/^#[0-9a-f]{6}$/i),
   // Light or dark page (decision R2). With a page colour the Editor sets it from that colour (T76 C4).
@@ -110,6 +132,7 @@ export const ShopLookSchema = z.object({
   bannerSeconds: z.number().int().min(3).max(10).default(5),
   announcement: AnnouncementSchema.nullable(),
   sections: SectionSwitchesSchema,
+  opening: OpeningScreenSchema.default(DEFAULT_OPENING),
 });
 export type ShopLook = z.infer<typeof ShopLookSchema>;
 

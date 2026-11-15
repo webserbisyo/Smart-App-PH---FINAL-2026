@@ -3876,6 +3876,7 @@ export const homeWords = {
 // The Editor (decisions N7, N8, N13, T72 to T75): the owner changes the shop page on a live preview.
 const EDITOR_SECTION_NAMES = {
   brand: 'Logo and colours',
+  opening: 'Opening screen',
   banners: 'Banners',
   announcement: 'Announcement',
   rewards: 'Stamp card',
@@ -3976,6 +3977,8 @@ export const editorWords = {
   partStatus: {
     brand: (colour: string, page: string) => `${colour} buttons · ${page.toLowerCase()} page`,
     noLogo: 'no logo yet',
+    opening: (background: string, motion: string) =>
+      `${background} colour · ${motion.toLowerCase()}`,
     banners: (n: number, seconds: number) =>
       n === 0 ? 'None yet · your logo panel shows' : `${n} of 3 · ${seconds} s each`,
     off: 'Off',
@@ -4195,6 +4198,26 @@ export const editorWords = {
     add: 'Write a message',
     remove: 'Remove message',
   },
+  opening: {
+    intro:
+      'What customers see for a moment while your installed app opens, before your page shows.',
+    background: 'Colour',
+    backgrounds: { page: 'Page', brand: 'Brand', custom: 'Your own' },
+    backgroundHelp: {
+      page: 'Opens straight into your page with no change of colour. Best for most shops.',
+      brand: 'A bold start in your button colour.',
+      custom: 'Any colour you like. Words turn black or white so they read.',
+    },
+    customColour: 'Opening colour',
+    motion: 'Logo motion',
+    motions: { fade: 'Fade', pop: 'Pop', rise: 'Rise', pulse: 'Pulse', none: 'None' },
+    showName: 'Show your shop name',
+    showNameHelp: 'Under your logo. Shops with no logo always show the name.',
+    preview: 'Preview',
+    play: 'Play',
+    playAria: 'Play the opening screen',
+    note: 'Customers who already installed your shop see a new colour within a day or two. Phones set to reduce motion skip the motion.',
+  },
   about: {
     label: 'About your shop',
     placeholder: 'Who you are, what you sell, what makes you different.',
@@ -4236,6 +4259,7 @@ export const editorWords = {
     logoShape: (shape: 'circle' | 'rounded') =>
       shape === 'circle' ? 'Logo shape: circle' : 'Logo shape: rounded square',
     fontPair: (name: string) => `Fonts: ${name}`,
+    opening: 'Opening screen changed',
     banners: (from: number, to: number) =>
       from === to ? 'Banners changed' : `Banners: ${from} → ${to}`,
     bannerSeconds: (n: number) => `Each banner shows ${n} seconds`,

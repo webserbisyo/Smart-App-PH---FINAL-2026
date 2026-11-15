@@ -7,6 +7,8 @@ import { ShopLookSchema } from './storefront.js';
 // The parts of the shop page the owner can pick in the Editor, in the order they show on the page.
 export const EDITOR_SECTIONS = [
   'brand',
+  // Not on the page: the installed app's opening screen (decision T93), in the Look group.
+  'opening',
   'banners',
   'announcement',
   'rewards',

@@ -257,6 +257,7 @@ export const TALA_APPAREL_PACK: ShopPack = {
       bannerSeconds: 6,
       announcement: null,
       sections: { ...ALL_SECTIONS_ON, membersCount: false },
+      opening: { background: 'page', color: null, motion: 'fade', showName: false },
     },
     // Open every day so the demo is open when people try it (decision R47).
     hours: days(DAILY, '09:00', '21:00'),

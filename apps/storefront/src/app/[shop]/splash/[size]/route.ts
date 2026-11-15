@@ -1,17 +1,11 @@
 import { createElement, type CSSProperties, type ReactNode } from 'react';
 import { ImageResponse } from 'next/og';
-import { DEMO_MEDIA, isDemoShopSlug, oklchToHex, parseOklch, shopPalette } from '@smartapp/core';
+import { DEMO_MEDIA, isDemoShopSlug, openingColours } from '@smartapp/core';
 import { getStorefrontForServer } from '@smartapp/data/server';
 import { splashScreen } from '@/features/install/install-rules';
 
 interface RouteProps {
   params: Promise<{ shop: string; size: string }>;
-}
-
-// The image renderer takes plain colours; the palette is OKLCH (as the manifest route does).
-function hex(value: string): string {
-  const color = parseOklch(value);
-  return color ? oklchToHex(color) : value;
 }
 
 // The image renderer will not fetch from this server's own address (its SSRF guard), so the icon is
@@ -33,7 +27,7 @@ function el(type: string, style: CSSProperties, ...children: ReactNode[]) {
 }
 
 /**
- * The installed app's launch picture on iPhone (decision R51): the shop's icon on its page colour with its
+ * The installed app's launch picture on iPhone (decision R51): the shop's icon on its opening colour with its
  * name, the same colour as the manifest's background, so the app opens in the shop's colours instead of
  * white. One per iPhone screen; the page's splash then fades from this same picture into the shop.
  */
@@ -44,8 +38,9 @@ export async function GET(request: Request, { params }: RouteProps): Promise<Res
   if (!screen || !shop) return new Response(null, { status: 404 });
 
   const { name } = shop.storefront.info;
-  const { brandColor, surface, pageColor, cardColor } = shop.storefront.look;
-  const p = shopPalette(brandColor, surface, pageColor, cardColor);
+  const { look } = shop.storefront;
+  // The owner's opening colour (decision T93), in hex for the image renderer.
+  const colours = openingColours(look);
   const { ratio } = screen;
   const width = screen.width * ratio;
   const height = screen.height * ratio;
@@ -76,17 +71,19 @@ export async function GET(request: Request, { params }: RouteProps): Promise<Res
       justifyContent: 'center',
       width: '100%',
       height: '100%',
-      backgroundColor: hex(p.shop60),
-      color: hex(p.page.foreground),
+      backgroundColor: colours.background,
+      color: colours.foreground,
       fontFamily: 'sans-serif',
     },
     mark,
-    // A long name wraps inside the screen, centred.
-    el(
-      'span',
-      { fontSize: 20 * ratio, fontWeight: 700, maxWidth: '80%', textAlign: 'center' },
-      name,
-    ),
+    // A long name wraps inside the screen, centred. Hidden when the owner turned it off (with a logo).
+    look.opening.showName || !mark
+      ? el(
+          'span',
+          { fontSize: 20 * ratio, fontWeight: 700, maxWidth: '80%', textAlign: 'center' },
+          name,
+        )
+      : null,
   );
 
   return new ImageResponse(picture, {

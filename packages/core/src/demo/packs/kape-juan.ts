@@ -278,6 +278,7 @@ export const KAPE_JUAN_PACK: ShopPack = {
         endsAt: '2026-11-01T16:00:00.000Z',
       },
       sections: { ...ALL_SECTIONS_ON, membersCount: false },
+      opening: { background: 'page', color: null, motion: 'fade', showName: true },
     },
     hours: days(DAILY, '07:00', '22:00'),
     closures: [

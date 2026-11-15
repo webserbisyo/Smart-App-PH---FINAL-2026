@@ -11,6 +11,7 @@ export type SectionSwitchKey = keyof SectionSwitches;
 // the logo and colours are always on.
 const SECTION_SWITCHES: Record<EditorSection, readonly SectionSwitchKey[]> = {
   brand: [],
+  opening: [],
   banners: ['banners'],
   announcement: ['announcement'],
   rewards: ['rewards'],
@@ -90,6 +91,7 @@ export type EditorChange =
   | { kind: 'cardColor'; to: string | null }
   | { kind: 'logoShape'; to: LogoShape }
   | { kind: 'fontPair'; to: FontPair }
+  | { kind: 'opening' }
   | { kind: 'banners'; from: number; to: number }
   | { kind: 'bannerSeconds'; to: number }
   | { kind: 'announcement'; how: 'added' | 'removed' | 'changed' }
@@ -120,6 +122,7 @@ export function editorChanges(
     out.push({ kind: 'cardColor', to: b.cardColor });
   if (a.logoShape !== b.logoShape) out.push({ kind: 'logoShape', to: b.logoShape });
   if (a.fontPair !== b.fontPair) out.push({ kind: 'fontPair', to: b.fontPair });
+  if (stable(a.opening) !== stable(b.opening)) out.push({ kind: 'opening' });
   if ((published.tagline ?? '') !== (draft.tagline ?? '')) out.push({ kind: 'tagline' });
   if (stable(a.banners) !== stable(b.banners))
     out.push({ kind: 'banners', from: a.banners.length, to: b.banners.length });

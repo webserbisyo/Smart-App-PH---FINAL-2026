@@ -313,6 +313,7 @@ export const KANTO_SMASH_PACK: ShopPack = {
       // The hours already say this; the slot stays for real shop news (decision R13).
       announcement: null,
       sections: ALL_SECTIONS_ON,
+      opening: { background: 'brand', color: null, motion: 'pop', showName: true },
     },
     // Opens at 9 AM so the demo is open when people try it (decision R47).
     hours: [...days([1, 2, 3, 4], '09:00', '22:00'), ...days([5, 6, 0], '09:00', '24:00')],

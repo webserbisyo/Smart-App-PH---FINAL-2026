@@ -6,6 +6,7 @@ import { AboutPanel } from './panels/about-panel.js';
 import { AnnouncementPanel } from './panels/announcement-panel.js';
 import { BannersPanel } from './panels/banners-panel.js';
 import { BrandPanel } from './panels/brand-panel.js';
+import { OpeningPanel } from './panels/opening-panel.js';
 import { OwnedPanel, isOwnedSection } from './panels/owned-panel.js';
 import type { PanelProps } from './panels/types.js';
 import { stampCardOff } from './parts.js';
@@ -17,6 +18,8 @@ function PanelBody({ section, ...props }: PanelProps & { section: EditorSection 
   switch (section) {
     case 'brand':
       return <BrandPanel {...props} />;
+    case 'opening':
+      return <OpeningPanel {...props} />;
     case 'banners':
       return <BannersPanel {...props} />;
     case 'announcement':

@@ -3,6 +3,7 @@ import {
   DEMO_SHOP_SLUGS,
   isDemoShopSlug,
   oklchToHex,
+  openingColours,
   parseOklch,
   shopPalette,
 } from '@smartapp/core';
@@ -51,9 +52,12 @@ export async function GET(_request: Request, { params }: ManifestContext) {
   const shop = getStorefrontForServer(slug);
   if (!shop) return new Response(null, { status: 404 });
   const { name, tagline } = shop.storefront.info;
-  const { brandColor, surface, pageColor, cardColor } = shop.storefront.look;
+  const { look } = shop.storefront;
+  const palette = shopPalette(look.brandColor, look.surface, look.pageColor, look.cardColor);
   // The page colour, as the theme-color meta in [shop]/layout, so the status bar never changes colour.
-  const page = hex(shopPalette(brandColor, surface, pageColor, cardColor).shop60);
+  const page = hex(palette.shop60);
+  // Android draws its launch screen in this colour: the owner's opening colour (decision T93).
+  const opening = openingColours(look, palette).background;
   const manifest = {
     id: `/${slug}`,
     name,
@@ -66,7 +70,7 @@ export async function GET(_request: Request, { params }: ManifestContext) {
     lang: 'en-PH',
     dir: 'ltr',
     theme_color: page,
-    background_color: page,
+    background_color: opening,
     icons: icons(slug),
   };
   return Response.json(manifest, { headers: { 'Content-Type': 'application/manifest+json' } });

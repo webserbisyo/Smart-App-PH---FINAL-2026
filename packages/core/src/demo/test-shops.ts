@@ -53,6 +53,7 @@ const BLANK_STOREFRONT: Storefront = {
     bannerSeconds: 5,
     announcement: null,
     sections: ALL_SECTIONS_ON,
+    opening: { background: 'page', color: null, motion: 'fade', showName: true },
   },
   hours: days(DAILY, '09:00', '21:00'),
   closures: [],

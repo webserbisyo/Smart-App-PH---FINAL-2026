@@ -400,3 +400,35 @@ export function shopPalette(
     cardMuted: mutedOn(card, dark),
   };
 }
+
+/**
+ * The installed app's opening colours (decision T93), as hex for manifests and launch pictures: the page
+ * colour (60) by default, or the brand (10), or the owner's own colour with black or white words.
+ */
+export function openingColours(
+  look: {
+    brandColor: string;
+    surface: ShopSurface;
+    pageColor: string | null;
+    cardColor: string | null;
+    opening: { background: 'page' | 'brand' | 'custom'; color: string | null };
+  },
+  palette: ShopPalette = shopPalette(look.brandColor, look.surface, look.pageColor, look.cardColor),
+): { background: string; foreground: string } {
+  const toHex = (value: string) => {
+    const color = parseOklch(value);
+    return color ? oklchToHex(color) : value;
+  };
+  const { background, color } = look.opening;
+  if (background === 'custom' && color && hexToOklch(color)) {
+    const words =
+      contrastRatio(color, PALETTE_WHITE) >= contrastRatio(color, PALETTE_BLACK)
+        ? PALETTE_WHITE
+        : PALETTE_BLACK;
+    return { background: color.toLowerCase(), foreground: toHex(words) };
+  }
+  if (background === 'brand') {
+    return { background: toHex(palette.shop10), foreground: toHex(palette.shop10Foreground) };
+  }
+  return { background: toHex(palette.shop60), foreground: toHex(palette.page.foreground) };
+}
