@@ -279,10 +279,18 @@ export function ListView({
               <Button
                 type="button"
                 variant={preset ? 'outline' : 'secondary'}
-                className="h-11 gap-1.5 px-3 font-semibold md:h-9"
+                className={cn(
+                  'h-11 gap-1.5 px-3 font-semibold md:h-9',
+                  preset && 'w-11 px-0 md:w-auto md:px-3',
+                )}
               >
                 <CalendarIcon aria-hidden="true" />
-                {preset ? ordersWords.list.pickDate : formatManila(dateFromKey(date), 'date')}
+                {/* Phones: just the icon, so it shares the days row (T93). */}
+                {preset ? (
+                  <span className="sr-only md:not-sr-only">{ordersWords.list.pickDate}</span>
+                ) : (
+                  formatManila(dateFromKey(date), 'date')
+                )}
               </Button>
             }
           />

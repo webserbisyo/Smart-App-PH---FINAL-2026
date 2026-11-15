@@ -27,6 +27,7 @@ import { IconTile } from '@smartapp/ui/components/reui/icon-tile';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { CountUp } from '@smartapp/ui/compositions/count-up';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
+import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { cn } from 'cn';
 import { PLACE_ICON, placeName, placeTone, type PlaceTone } from '@/app/pay-place';
 import { HomeCard } from './home-card.js';
@@ -238,6 +239,28 @@ function Rings({ places, sales }: { places: readonly HomePlace[]; sales: number 
   );
 }
 
+function ShareBar({ places, sales }: { places: readonly HomePlace[]; sales: number }) {
+  return (
+    <div
+      role="img"
+      aria-label={places
+        .map((p) => W.ringAria(nameOf(p), sharePercent(p.sales, sales), formatPeso(p.sales)))
+        .join(', ')}
+      className="flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full bg-muted"
+    >
+      {places
+        .filter((p) => p.sales > 0)
+        .map((p) => (
+          <span
+            key={p.key}
+            style={cssVars({ '--part': `${(p.sales / Math.max(1, sales)) * 100}%` })}
+            className={cn('block h-full w-(--part) min-w-1 rounded-full', placeTone(p.slot).bg)}
+          />
+        ))}
+    </div>
+  );
+}
+
 function PlaceRow({
   place,
   live,
@@ -317,6 +340,7 @@ function Where({ money, live, day }: { money: HomeMoney; live: boolean; day: str
   const empty = money.orders === 0;
   // A shop that only takes cash sees where GCash, Maya or a bank would show.
   const onlyCash = places.length > 0 && places.every((p) => p.kind === 'drawer');
+  const isPhone = useFormFactor() === 'phone';
   return (
     <section aria-labelledby="sales-where" className="flex flex-col gap-3 border-t pt-3">
       <div className="flex items-baseline justify-between gap-3">
@@ -327,7 +351,16 @@ function Where({ money, live, day }: { money: HomeMoney; live: boolean; day: str
           <span className="text-xs text-muted-foreground">{W.whereTap}</span>
         ) : null}
       </div>
-      {places.length > 0 ? <Rings places={places} sales={money.sales} /> : null}
+      {places.length > 0 && !empty ? (
+        <>
+          {/* Phones: one thin bar over the rows; the rings repeated the rows (T93). */}
+          {isPhone ? (
+            <ShareBar places={places} sales={money.sales} />
+          ) : (
+            <Rings places={places} sales={money.sales} />
+          )}
+        </>
+      ) : null}
       {empty ? (
         <p className="text-center text-sm text-muted-foreground">{W.empty}</p>
       ) : (

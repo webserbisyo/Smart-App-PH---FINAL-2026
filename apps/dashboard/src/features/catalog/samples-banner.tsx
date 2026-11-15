@@ -36,6 +36,16 @@ export interface SamplesBannerProps {
 
 // One banner for the sample menu instead of a "Sample" tag on every row (decision T42).
 // Remove samples touches the menu only: the shop's look and stamp card stay.
+const SEEN_KEY = 'smartapp.dashboard.samplesSeen';
+
+function readSeen(): boolean {
+  try {
+    return window.localStorage.getItem(SEEN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export function SamplesBanner({ items, categories }: SamplesBannerProps) {
   const { data: groups = [] } = useOwnerOptionGroups();
   const removeItem = useRemoveItem();
@@ -44,6 +54,15 @@ export function SamplesBanner({ items, categories }: SamplesBannerProps) {
   const removeGroup = useRemoveOptionGroup();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const removeAction = useAsyncAction();
+  // The full card shows on the first visit; after that it is one line (T93), remembered on this device.
+  const [seen] = React.useState(readSeen);
+  React.useEffect(() => {
+    try {
+      window.localStorage.setItem(SEEN_KEY, '1');
+    } catch {
+      // Private mode: the full card shows again next time, which is fine.
+    }
+  }, []);
 
   const samples = items.filter((item) => item.sample && item.status !== 'archived');
   if (samples.length === 0) return null;
@@ -86,30 +105,50 @@ export function SamplesBanner({ items, categories }: SamplesBannerProps) {
 
   return (
     <>
-      <Notice
-        tone="brand"
-        className="rounded-2xl sm:items-center md:p-4"
-        icon={
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <SparklesIcon className="size-4" />
-          </span>
-        }
-        action={
+      {seen ? (
+        <div
+          data-slot="samples-line"
+          className="flex min-h-11 items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 py-1 pr-1 pl-3"
+        >
+          <SparklesIcon aria-hidden="true" className="size-4 shrink-0 text-primary" />
+          <p className="min-w-0 flex-1 truncate text-sm font-medium">
+            {catalogWords.samplesCompact(samples.length)}
+          </p>
           <Button
             type="button"
-            variant="outline"
-            className="h-11 w-full shrink-0 bg-card sm:w-auto md:h-9"
+            variant="ghost"
+            className="h-11 shrink-0 font-semibold md:h-9"
             onClick={() => setConfirmOpen(true)}
           >
             {catalogWords.removeSamples}
           </Button>
-        }
-      >
-        <p className="text-sm font-semibold text-foreground">{catalogWords.samplesBannerTitle}</p>
-        <p className="text-sm text-muted-foreground">
-          {catalogWords.samplesBannerHint(samples.length)}
-        </p>
-      </Notice>
+        </div>
+      ) : (
+        <Notice
+          tone="brand"
+          className="rounded-2xl sm:items-center md:p-4"
+          icon={
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <SparklesIcon className="size-4" />
+            </span>
+          }
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full shrink-0 bg-card sm:w-auto md:h-9"
+              onClick={() => setConfirmOpen(true)}
+            >
+              {catalogWords.removeSamples}
+            </Button>
+          }
+        >
+          <p className="text-sm font-semibold text-foreground">{catalogWords.samplesBannerTitle}</p>
+          <p className="text-sm text-muted-foreground">
+            {catalogWords.samplesBannerHint(samples.length)}
+          </p>
+        </Notice>
+      )}
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>

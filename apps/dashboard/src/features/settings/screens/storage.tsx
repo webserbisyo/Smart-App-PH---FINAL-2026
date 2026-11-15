@@ -51,6 +51,11 @@ import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
 import { Card, CardContent } from '@smartapp/ui/components/card';
 import { Checkbox } from '@smartapp/ui/components/checkbox';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@smartapp/ui/components/collapsible';
 import { FileUpload, FileUploadTrigger } from '@smartapp/ui/components/file-upload';
 import {
   Gauge,
@@ -165,7 +170,20 @@ function StorageView({ summary }: { summary: StorageSummary }) {
       <div ref={exportRef} className="scroll-mt-4">
         <SaveCopy lastExport={summary.lastExport} onClean={() => setConfirm('exported_proofs')} />
       </div>
-      <TryUpload />
+      {/* A test tool, so it waits behind a link (T93). */}
+      <Collapsible>
+        <CollapsibleTrigger
+          render={
+            <Button type="button" variant="link" className="h-11 gap-1.5 self-start px-0 md:h-9" />
+          }
+        >
+          <ImageUpIcon />
+          {W.howSmaller}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-2">
+          <TryUpload />
+        </CollapsibleContent>
+      </Collapsible>
 
       <CleanupConfirm kind={confirm} onClose={() => setConfirm(null)} onSaveCopy={goToExport} />
     </SettingsPage>
@@ -435,7 +453,18 @@ function CleanupConfirm({
               )
             }
           >
-            {data.savedCopy ? W.hasCopy : W.noCopy}
+            {data.savedCopy ? (
+              W.hasCopy
+            ) : (
+              <span className="flex flex-col items-start gap-2">
+                {W.noCopy}
+                {/* In the warning, not the footer: three buttons don't fit the dialog's width (T93). */}
+                <Button variant="outline" className="h-11 bg-card md:h-9" onClick={onSaveCopy}>
+                  <DownloadIcon />
+                  {W.saveCopyFirst}
+                </Button>
+              </span>
+            )}
           </Notice>
         ) : null}
         {preview.isError ? (
@@ -445,12 +474,6 @@ function CleanupConfirm({
         ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel className="h-11 md:h-9">{W.cancel}</AlertDialogCancel>
-          {data && isProofs && !data.savedCopy ? (
-            <Button variant="outline" className="h-11 md:h-9" onClick={onSaveCopy}>
-              <DownloadIcon />
-              {W.saveCopyFirst}
-            </Button>
-          ) : null}
           <AsyncButton
             variant="destructive"
             status={action.status}

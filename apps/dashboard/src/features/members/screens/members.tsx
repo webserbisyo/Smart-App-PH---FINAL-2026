@@ -281,6 +281,43 @@ export function MembersScreen() {
     </section>
   ) : null;
 
+  // Phones: the search sits right under the numbers, above the strip and the insights (T93).
+  const searchRow = (
+    <div id="members-list" className="flex scroll-mt-20 gap-2">
+      <SearchField
+        value={q}
+        onChange={(next) => setSearch({ q: next || undefined }, { replace: true })}
+        placeholder={W.search.placeholder}
+        clearLabel={W.search.clear}
+        ariaLabel={W.search.label}
+        className="flex-1"
+      />
+      <Select
+        value={sort}
+        onValueChange={(value) => {
+          const next = MEMBER_SORTS.find((s) => s === value);
+          setSearch({ sort: next === 'last_order' ? undefined : next }, { replace: true });
+        }}
+      >
+        <SelectTrigger
+          aria-label={W.sort.label}
+          className="w-32 shrink-0 bg-card text-base md:w-40 md:text-sm data-size-default:h-11 md:data-size-default:h-9"
+        >
+          <SelectValue>
+            {(value: unknown) => W.sort[MEMBER_SORTS.find((s) => s === value) ?? 'last_order']}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {MEMBER_SORTS.map((s) => (
+            <SelectItem key={s} value={s} className="min-h-11 md:min-h-8">
+              {W.sort[s]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
   return (
     <div className="flex min-h-full flex-col pb-24 md:pb-8">
       <PageHeader title={words.screens.members.title} tabs={tabs} />
@@ -358,6 +395,8 @@ export function MembersScreen() {
           </div>
         ) : null}
 
+        {isPhone ? searchRow : null}
+
         {showNear && view && isPhone ? (
           <NearList
             layout="strip"
@@ -432,39 +471,7 @@ export function MembersScreen() {
           )
         ) : null}
 
-        <div id="members-list" className="flex scroll-mt-20 gap-2">
-          <SearchField
-            value={q}
-            onChange={(next) => setSearch({ q: next || undefined }, { replace: true })}
-            placeholder={W.search.placeholder}
-            clearLabel={W.search.clear}
-            ariaLabel={W.search.label}
-            className="flex-1"
-          />
-          <Select
-            value={sort}
-            onValueChange={(value) => {
-              const next = MEMBER_SORTS.find((s) => s === value);
-              setSearch({ sort: next === 'last_order' ? undefined : next }, { replace: true });
-            }}
-          >
-            <SelectTrigger
-              aria-label={W.sort.label}
-              className="w-32 shrink-0 bg-card text-base md:w-40 md:text-sm data-size-default:h-11 md:data-size-default:h-9"
-            >
-              <SelectValue>
-                {(value: unknown) => W.sort[MEMBER_SORTS.find((s) => s === value) ?? 'last_order']}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {MEMBER_SORTS.map((s) => (
-                <SelectItem key={s} value={s} className="min-h-11 md:min-h-8">
-                  {W.sort[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {isPhone ? null : searchRow}
 
         <div className="flex flex-col gap-1.5">
           <Scroller orientation="horizontal" hideScrollbar className="-mx-4 px-4 md:mx-0 md:px-0">

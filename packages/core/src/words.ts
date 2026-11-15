@@ -1924,6 +1924,7 @@ export const catalogWords = {
   iconStyleSaved: 'Icon style updated',
   morePresets: 'More presets',
   samplesBannerTitle: 'You are looking at sample items',
+  samplesCompact: (count: number) => `${count} sample ${count === 1 ? 'item' : 'items'}`,
   samplesBannerHint: (count: number) =>
     `${count} ${count === 1 ? 'item is a sample' : 'items are samples'}. Edit them, or remove them once you add your own.`,
   removeSamples: 'Remove samples',
@@ -2147,6 +2148,7 @@ export const ordersWords = {
     soundOff: 'Order sound is off. Tap to turn it on.',
     soundTurnedOn: 'Order sound on',
     soundTurnedOff: 'Order sound off',
+    orderSound: 'Order sound',
     more: 'More',
     orderTimes: 'Order times',
   },
@@ -3562,6 +3564,7 @@ export const settingsWords = {
     failed: "We couldn't make your export. Try again.",
     expired: 'This link has expired. Make a new export.',
     tryTitle: 'Try a photo upload',
+    howSmaller: 'How photos are made smaller',
     tryLine: 'See how much smaller a menu photo gets before it uses your storage.',
     errorTitle: "Couldn't load your storage",
   },

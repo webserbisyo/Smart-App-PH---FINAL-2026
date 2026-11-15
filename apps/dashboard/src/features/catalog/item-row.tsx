@@ -78,16 +78,22 @@ export function LabeledSwitch({
   ariaLabel,
   checked,
   onCheckedChange,
+  stacked = false,
 }: {
   label: string;
   // Names the item for screen readers, since every row has the same visible word.
   ariaLabel?: string | undefined;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
+  // The word under the switch, small, so it fits beside an item's name on phones (T93).
+  stacked?: boolean;
 }) {
   return (
     <label
-      className="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-muted-foreground md:min-h-9"
+      className={cn(
+        'flex min-h-11 cursor-pointer items-center text-muted-foreground md:min-h-9',
+        stacked ? 'w-16 flex-col justify-center gap-1 text-center text-xs' : 'gap-2 text-sm',
+      )}
       onClick={(e) => e.stopPropagation()}
     >
       <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={ariaLabel} />
@@ -117,12 +123,13 @@ export function ItemRow({
     soldOut && item.variants.every((v) => v.soldOutUntil === null)
       ? catalogWords.soldOutSwitchUntil
       : catalogWords.soldOutSwitchToday;
-  const soldOutSwitch = (
+  const soldOutSwitch = (stacked: boolean) => (
     <LabeledSwitch
-      label={soldOutLabel}
+      label={stacked ? catalogWords.soldOutBadge : soldOutLabel}
       ariaLabel={catalogWords.soldOutSwitchAria(item.name)}
       checked={soldOut}
       onCheckedChange={(checked) => actions.setSoldOut(item, checked)}
+      stacked={stacked}
     />
   );
   const showSwitch = item.status !== 'archived' && !isReordering && !selecting;
@@ -159,7 +166,7 @@ export function ItemRow({
         highlighted && 'ring-2 ring-primary/40',
       )}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+      <div className="flex w-full min-w-0 flex-1 items-center gap-3 md:w-auto">
         {selecting ? (
           <Checkbox
             checked={selected}
@@ -189,9 +196,10 @@ export function ItemRow({
           <div className="flex flex-wrap gap-1 empty:hidden">
             <ItemStatusBadges item={item} />
           </div>
-          {/* Phones: the switch sits under the price, so the card is one row shorter. */}
-          {showSwitch ? <div className="md:hidden">{soldOutSwitch}</div> : null}
         </div>
+
+        {/* Phones: the switch sits beside the name, so four items fit on a screen (T93). */}
+        {showSwitch ? <div className="shrink-0 md:hidden">{soldOutSwitch(true)}</div> : null}
 
         {isReordering ? (
           <div className="flex shrink-0 items-center">
@@ -242,7 +250,7 @@ export function ItemRow({
         </div>
       ) : showSwitch ? (
         <div className="hidden items-center gap-2 md:flex">
-          {soldOutSwitch}
+          {soldOutSwitch(false)}
           <ItemMenu item={item} actions={actions} />
         </div>
       ) : null}

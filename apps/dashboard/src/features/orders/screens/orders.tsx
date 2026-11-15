@@ -275,6 +275,7 @@ export function OrdersScreen() {
           onQueryChange={(q) => setSearch({ q: q || undefined }, { replace: true })}
           soundOn={soundEnabled}
           onSoundChange={(on) => (on ? enableSound() : disableSound())}
+          chats={<ChatsButton inline slug={shop.slug} onClick={() => setChatsOpen(true)} />}
         />
 
         {!isOnline ? (

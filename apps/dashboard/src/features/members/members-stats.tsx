@@ -75,7 +75,44 @@ interface CardProps {
   aria: string;
 }
 
-function StatCard({ label, icon, tone, value, note, pressed, onClick, aria }: CardProps) {
+function StatCard({
+  label,
+  icon,
+  tone,
+  value,
+  note,
+  pressed,
+  onClick,
+  aria,
+  line,
+}: CardProps & { line: boolean }) {
+  if (line) {
+    // Phone (T93): one short pill per number, all on one line under the headline.
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={pressed}
+        aria-label={aria}
+        className={cn(
+          'flex h-11 shrink-0 items-center gap-2 rounded-full border bg-card py-1 pr-3.5 pl-1 text-left shadow-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+          pressed && 'border-primary ring-1 ring-primary',
+        )}
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            'flex size-8 items-center justify-center rounded-full [&_svg]:size-4',
+            tone,
+          )}
+        >
+          {icon}
+        </span>
+        <span className="text-base font-extrabold tabular-nums">{value}</span>
+        <span className="text-sm text-muted-foreground">{label}</span>
+      </button>
+    );
+  }
   return (
     <button
       type="button"
@@ -138,7 +175,7 @@ export function MembersStats({
   filter: CustomerFilter;
   smallCard: boolean;
   onPick: (pick: StatPick) => void;
-  // Phone: one swipeable row instead of a 2 × 2 grid, so the list starts higher up.
+  // Phone: one swipeable line of small pills instead of a 2 × 2 grid, so the list starts higher up.
   row?: boolean;
 }) {
   const { pulse } = view;
@@ -161,6 +198,7 @@ export function MembersStats({
           </>
         }
         onClick={() => onPick('all')}
+        line={row}
       />
       <StatCard
         label={W.stats.ready}
@@ -171,6 +209,7 @@ export function MembersStats({
         note={<span className="truncate">{W.stats.readyNote(ready)}</span>}
         pressed={filter === 'ready'}
         onClick={() => onPick(filter === 'ready' ? 'all' : 'ready')}
+        line={row}
       />
       <StatCard
         label={W.stats.almost}
@@ -181,6 +220,7 @@ export function MembersStats({
         note={<span className="truncate">{W.stats.almostNote(smallCard)}</span>}
         pressed={filter === 'almost'}
         onClick={() => onPick(filter === 'almost' ? 'all' : 'almost')}
+        line={row}
       />
       <StatCard
         label={W.stats.sales}
@@ -202,6 +242,7 @@ export function MembersStats({
           </>
         }
         onClick={() => onPick('sales')}
+        line={row}
       />
     </Wrap>
   );
@@ -221,7 +262,7 @@ function Wrap({ row, children }: { row: boolean; children: React.ReactNode }) {
   return (
     <section aria-label={W.stats.label}>
       <Scroller orientation="horizontal" hideScrollbar className="-mx-4 px-4">
-        <div className="flex w-max gap-2 pb-1 *:w-44">{children}</div>
+        <div className="flex w-max gap-2 py-0.5">{children}</div>
       </Scroller>
     </section>
   );

@@ -254,11 +254,9 @@ function DayTile({
           <span className="rounded-full bg-foreground px-1.5 text-xs font-bold text-background tabular-nums">
             {list.length}
           </span>
-          {compact ? null : (
-            <span className="max-w-full truncate text-xs font-medium tabular-nums">
-              {full ? W.full : formatPeso(sumOf(list))}
-            </span>
-          )}
+          {full && !compact ? (
+            <span className="max-w-full truncate text-xs font-semibold">{W.full}</span>
+          ) : null}
         </span>
       ) : word && !compact ? (
         <span className="truncate text-xs text-muted-foreground">{word}</span>

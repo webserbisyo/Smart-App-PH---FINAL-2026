@@ -656,7 +656,8 @@ function VariantForm({
               {unlinksOnKeep ? <p className="mt-2">{catalogWords.changeKeepNote}</p> : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          {/* Two choices plus Cancel: stacked, since three in a row overflow the dialog (T93). */}
+          <AlertDialogFooter className="sm:flex-col-reverse sm:items-stretch">
             <AlertDialogCancel className="h-11 md:h-9">{catalogWords.cancel}</AlertDialogCancel>
             <AsyncButton
               type="button"

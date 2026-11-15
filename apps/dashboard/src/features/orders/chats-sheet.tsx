@@ -208,14 +208,45 @@ export function ChatsSheet({
 }
 
 /** The floating button on Orders (T87): opens the Chats list, with how many wait for an answer. */
-export function ChatsButton({ slug, onClick }: { slug: string; onClick: () => void }) {
+export function ChatsButton({
+  slug,
+  onClick,
+  inline = false,
+}: {
+  slug: string;
+  onClick: () => void;
+  // In the toolbar row (phones, T93) instead of floating at the corner (tablets and laptops).
+  inline?: boolean;
+}) {
   const chats = useChats(slug);
   const waiting = (chats.data ?? []).filter((c) => c.waitingSince !== null).length;
+  if (inline) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onClick}
+        aria-label={waiting > 0 ? W.fabWaiting(waiting) : W.fab}
+        className="relative size-11"
+      >
+        <MessageCircleIcon />
+        {waiting > 0 ? (
+          <span
+            aria-hidden="true"
+            className="absolute top-0.5 right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold text-destructive-foreground tabular-nums ring-2 ring-background"
+          >
+            {waiting}
+          </span>
+        ) : null}
+      </Button>
+    );
+  }
   return (
     <Button
       onClick={onClick}
       aria-label={waiting > 0 ? W.fabWaiting(waiting) : W.fab}
-      className="fixed right-4 above-dock z-30 size-14 rounded-full shadow-lg md:right-6 md:bottom-6"
+      className="fixed right-4 above-dock z-30 hidden size-14 rounded-full shadow-lg md:right-6 md:bottom-6 md:inline-flex"
     >
       <MessageCircleIcon className="size-6" />
       {waiting > 0 ? (

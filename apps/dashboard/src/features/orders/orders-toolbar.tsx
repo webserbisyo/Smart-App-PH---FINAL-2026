@@ -14,6 +14,7 @@ import { ordersWords } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -40,6 +41,8 @@ export interface OrdersToolbarProps {
   onQueryChange: (q: string) => void;
   soundOn: boolean;
   onSoundChange: (on: boolean) => void;
+  // Phones: the Chats button sits in this row instead of floating over the orders (T93).
+  chats?: React.ReactNode;
 }
 
 const VIEW_ICON = { board: KanbanSquareIcon, list: ListIcon, bookings: CalendarDaysIcon } as const;
@@ -57,6 +60,7 @@ export function OrdersToolbar({
   onQueryChange,
   soundOn,
   onSoundChange,
+  chats,
 }: OrdersToolbarProps) {
   const [text, setText] = React.useState(query);
   const [searchOpen, setSearchOpen] = React.useState(query !== '');
@@ -87,6 +91,13 @@ export function OrdersToolbar({
   );
 
   const SoundIcon = soundOn ? BellIcon : BellOffIcon;
+  const toggleSound = () => {
+    onSoundChange(!soundOn);
+    notify({
+      title: soundOn ? ordersWords.toolbar.soundTurnedOff : ordersWords.toolbar.soundTurnedOn,
+      tone: 'info',
+    });
+  };
 
   return (
     <div className="relative flex items-center gap-2" data-slot="orders-toolbar">
@@ -131,6 +142,8 @@ export function OrdersToolbar({
           <SearchIcon />
         </Button>
 
+        {chats ? <div className="md:hidden">{chats}</div> : null}
+
         <Tooltip>
           <TooltipTrigger
             render={
@@ -140,16 +153,11 @@ export function OrdersToolbar({
                 size="icon"
                 aria-pressed={soundOn}
                 aria-label={soundOn ? ordersWords.toolbar.soundOn : ordersWords.toolbar.soundOff}
-                onClick={() => {
-                  onSoundChange(!soundOn);
-                  notify({
-                    title: soundOn
-                      ? ordersWords.toolbar.soundTurnedOff
-                      : ordersWords.toolbar.soundTurnedOn,
-                    tone: 'info',
-                  });
-                }}
-                className={cn('relative size-11 md:size-9', !soundOn && 'text-muted-foreground')}
+                onClick={toggleSound}
+                className={cn(
+                  'relative hidden size-11 md:inline-flex md:size-9',
+                  !soundOn && 'text-muted-foreground',
+                )}
               >
                 <SoundIcon />
                 {!soundOn ? (
@@ -173,13 +181,25 @@ export function OrdersToolbar({
                 variant="ghost"
                 size="icon"
                 aria-label={ordersWords.toolbar.more}
-                className="size-11 md:size-9"
+                className="relative size-11 md:size-9"
               >
                 <MoreHorizontalIcon />
+                {/* Phones keep the sound switch in this menu; the dot says it is off. */}
+                {!soundOn ? (
+                  <span className="absolute top-2 right-2 size-2 rounded-full bg-warning md:hidden" />
+                ) : null}
               </Button>
             }
           />
           <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuCheckboxItem
+              checked={soundOn}
+              onCheckedChange={toggleSound}
+              className="md:hidden"
+            >
+              <SoundIcon />
+              {ordersWords.toolbar.orderSound}
+            </DropdownMenuCheckboxItem>
             <DropdownMenuItem onClick={() => setTimesOpen(true)}>
               <ClockIcon />
               {ordersWords.toolbar.orderTimes}
