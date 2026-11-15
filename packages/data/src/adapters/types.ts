@@ -178,8 +178,11 @@ export interface OwnerOrdersAdapter {
   listOrders(
     input:
       | { slug: string; open: true; q?: string | undefined }
-      | { slug: string; date: string; q?: string | undefined },
+      // Orders made from one business day to another, both included (T95: at most 92 days).
+      | { slug: string; from: string; to: string; q?: string | undefined },
   ): Promise<BoardOrder[]>;
+  // The Calendar (T95): every order due in the range, walk-in, order now and booked; cancelled and
+  // expired left out.
   listScheduled(input: {
     slug: string;
     from: string;

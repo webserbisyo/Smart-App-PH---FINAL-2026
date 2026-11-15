@@ -14,12 +14,13 @@ import { Button } from '@smartapp/ui/components/button';
 import { Calendar } from '@smartapp/ui/components/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@smartapp/ui/components/popover';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
+import { Switch } from '@smartapp/ui/components/switch';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { cn } from 'cn';
 import { dateFromKey, keyFromDate } from '@/app/day-key';
 import { CustomerLegend } from '@/app/orders/customer-kind';
-import { PageEmpty, PageError } from '@/app/page-state';
+import { PageError } from '@/app/page-state';
 import { DayView } from './calendar-day.js';
 import {
   RANGE_DAYS,
@@ -47,8 +48,8 @@ export interface CalendarPlace {
 }
 
 /**
- * The Calendar (T86, replaces T85's hour grid): orders for the next 60 days as a week board, one day or a
- * month, with the same switch on every screen. A laptop opens on Week and drags a card to another day; a
+ * The Calendar (T86, replaces T85's hour grid; T95): every order from 60 days back to 60 days ahead as a
+ * week board, one day or a month, with the same switch on every screen. Past days are read only. A laptop opens on Week and drags a card to another day; a
  * phone opens on Day, shows Week as one list, and changes times from the order's panel.
  */
 export default function BookingsView({
@@ -83,10 +84,17 @@ export default function BookingsView({
   const formFactor = useFormFactor();
   const isPhone = formFactor === 'phone';
   const lastDay = addDays(today, RANGE_DAYS);
-  const query = useScheduledOrders(slug, today, lastDay);
+  // Past days are open to look back at (T95), read only.
+  const firstDay = addDays(today, -RANGE_DAYS);
+  const query = useScheduledOrders(slug, firstDay, lastDay);
+  // Every order counts on its day (T95); Booked only shows the ones customers booked ahead.
+  const [bookedOnly, setBookedOnly] = React.useState(false);
   const orders = React.useMemo(
-    () => (query.data?.orders ?? []).filter((o) => o.dueAt >= now.toISOString() && matches(o)),
-    [query.data, now, matches],
+    () =>
+      (query.data?.orders ?? []).filter(
+        (o) => matches(o) && (!bookedOnly || o.scheduledAt !== null),
+      ),
+    [query.data, matches, bookedOnly],
   );
   const facts = React.useMemo(
     () => dayFacts(orders, rules.slotMinutes),
@@ -95,7 +103,7 @@ export default function BookingsView({
   const [whatDay, setWhatDay] = React.useState<string | null>(null);
 
   const view: CalendarMode = viewParam ?? (isPhone ? 'day' : 'week');
-  const date = clampDay(dateParam ?? today, today, lastDay);
+  const date = clampDay(dateParam ?? today, firstDay, lastDay);
   const start = weekStartOf(date, today);
   // The React Compiler keeps one list per page of days, so a dropped card stays put until the server answers.
   const days = weekDays(start, lastDay);
@@ -111,15 +119,6 @@ export default function BookingsView({
       />
     );
   }
-  if (orders.length === 0) {
-    return (
-      <PageEmpty
-        variant="box"
-        icon={<CalendarDaysIcon className="size-8 text-muted-foreground" />}
-        title={W.empty}
-      />
-    );
-  }
 
   const step = (dir: -1 | 1): string => {
     if (view === 'day') return addDays(date, dir);
@@ -128,10 +127,10 @@ export default function BookingsView({
   };
   const canEarlier =
     view === 'day'
-      ? date > today
+      ? date > firstDay
       : view === 'month'
-        ? monthKey(date) > monthKey(today)
-        : start > today;
+        ? monthKey(date) > monthKey(firstDay)
+        : start > firstDay;
   const canLater =
     view === 'day'
       ? date < lastDay
@@ -139,7 +138,7 @@ export default function BookingsView({
         ? monthKey(date) < monthKey(lastDay)
         : addDays(start, WEEK_DAYS) <= lastDay;
   const go = (next: string) =>
-    onNavigate({ date: clampDay(next, today, lastDay) }, { replace: true });
+    onNavigate({ date: clampDay(next, firstDay, lastDay) }, { replace: true });
   const openDay = (d: string) => onNavigate({ view: 'day', date: d });
 
   return (
@@ -149,6 +148,7 @@ export default function BookingsView({
         label={rangeLabel(view, date, days)}
         date={date}
         today={today}
+        firstDay={firstDay}
         lastDay={lastDay}
         isPhone={isPhone}
         canEarlier={canEarlier}
@@ -173,7 +173,20 @@ export default function BookingsView({
                   ? W.hintTablet
                   : W.hint}
         </p>
-        {view === 'month' ? null : <CustomerLegend />}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {view === 'month' ? null : <CustomerLegend />}
+          <label className="flex min-h-11 items-center gap-2 text-sm font-medium md:min-h-0">
+            <Switch
+              checked={bookedOnly}
+              onCheckedChange={setBookedOnly}
+              aria-describedby="calendar-booked-only-hint"
+            />
+            {W.bookedOnly}
+            <span id="calendar-booked-only-hint" className="sr-only">
+              {W.bookedOnlyHint}
+            </span>
+          </label>
+        </div>
       </div>
 
       {view === 'month' ? (
@@ -184,6 +197,7 @@ export default function BookingsView({
           rules={rules}
           today={today}
           now={now}
+          firstDay={firstDay}
           lastDay={lastDay}
           compact={isPhone}
           onPickDay={go}
@@ -255,6 +269,7 @@ function CalendarBar({
   label,
   date,
   today,
+  firstDay,
   lastDay,
   isPhone,
   canEarlier,
@@ -269,6 +284,7 @@ function CalendarBar({
   label: string;
   date: string;
   today: string;
+  firstDay: string;
   lastDay: string;
   isPhone: boolean;
   canEarlier: boolean;
@@ -340,14 +356,15 @@ function CalendarBar({
               </Button>
             }
           />
-          <PopoverContent align="end" className="w-auto p-0">
+          {/* Below its button, lined up with its left edge (T95), so the legend and day list stay in view. */}
+          <PopoverContent side="bottom" align="start" className="w-auto p-0">
             <Calendar
               mode="single"
               selected={dateFromKey(date)}
               defaultMonth={dateFromKey(date)}
-              startMonth={dateFromKey(today)}
+              startMonth={dateFromKey(firstDay)}
               endMonth={dateFromKey(lastDay)}
-              disabled={{ before: dateFromKey(today), after: dateFromKey(lastDay) }}
+              disabled={{ before: dateFromKey(firstDay), after: dateFromKey(lastDay) }}
               onSelect={(d) => {
                 if (!d) return;
                 onPickDate(keyFromDate(d));

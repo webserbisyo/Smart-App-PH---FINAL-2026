@@ -116,6 +116,12 @@
   --color-stage-done: var(--stage-done);
   --color-stage-done-soft: var(--stage-done-soft);
   --color-stage-done-text: var(--stage-done-text);
+  --color-heat-1: var(--heat-1);
+  --color-heat-1-foreground: var(--heat-1-foreground);
+  --color-heat-2: var(--heat-2);
+  --color-heat-2-foreground: var(--heat-2-foreground);
+  --color-heat-3: var(--heat-3);
+  --color-heat-3-foreground: var(--heat-3-foreground);
 
   --color-shop-60: var(--shop-60);
   --color-shop-30: var(--shop-30);
@@ -490,6 +496,23 @@
 @utility max-h-vh-* {
   max-height: calc(--value(integer) * 1vh);
   max-height: calc(--value(integer) * 1dvh);
+}
+
+/* A panel that fills the screen below the page's own controls, never under 420 px (the Orders list
+   table, T95): `max-h-fill-92` leaves 92 spacing steps above it. */
+@utility max-h-fill-* {
+  max-height: max(calc(var(--spacing) * 105), calc(100vh - var(--spacing) * --value(integer)));
+  max-height: max(calc(var(--spacing) * 105), calc(100dvh - var(--spacing) * --value(integer)));
+}
+
+/* Diagonal stripes for a day the shop is closed (Orders calendar, T95): the border colour on the muted one. */
+@utility bg-stripes {
+  background-color: var(--color-muted);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--color-border) 0 2px,
+    transparent 2px 8px
+  );
 }
 
 /* Thin progress track (receipt pay countdown, c-progress-2). */

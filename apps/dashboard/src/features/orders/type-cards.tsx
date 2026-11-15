@@ -1,6 +1,7 @@
-import { ShieldAlertIcon } from 'lucide-react';
+import { CalendarClockIcon, ChevronRightIcon, ShieldAlertIcon } from 'lucide-react';
 import type { OrderType } from '@smartapp/core';
 import { formatPeso, ordersWords } from '@smartapp/core';
+import { Button } from '@smartapp/ui/components/button';
 import { IconTile } from '@smartapp/ui/components/reui/icon-tile';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { Scroller } from '@smartapp/ui/components/scroller';
@@ -10,8 +11,11 @@ import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
 import { ORDER_FILTERS, type OrderFilter } from './search.js';
 
 export interface TypeTotals {
+  // On today's Board (T95).
   count: number;
   total: number;
+  // Booked for a later time, not on the Board yet.
+  booked: number;
 }
 
 export interface TypeCardsProps {
@@ -22,13 +26,23 @@ export interface TypeCardsProps {
   toCheck: number;
   value: OrderFilter | undefined;
   onChange: (value: OrderFilter | undefined) => void;
+  // Opens the Calendar (or the List's Upcoming) from "+N booked".
+  onShowBooked: () => void;
 }
 
 /**
  * Type cards (D3): one card per order type with icon, word, count and total. No "All": tap a card to
  * filter, tap it again to clear. Built from the installed Toggle Group and ReUI Icon Tile.
  */
-export function TypeCards({ types, totals, toCheck, value, onChange }: TypeCardsProps) {
+export function TypeCards({
+  types,
+  totals,
+  toCheck,
+  value,
+  onChange,
+  onShowBooked,
+}: TypeCardsProps) {
+  const booked = types.reduce((n, type) => n + totals[type].booked, 0);
   // The cards load after the row, so the edge fade re-checks when they grow (T77).
   const scrollerRef = useScrollerRecheck<HTMLDivElement>();
   const itemClass =
@@ -41,70 +55,86 @@ export function TypeCards({ types, totals, toCheck, value, onChange }: TypeCards
       hideScrollbar
       className="-mx-4 px-4 md:mx-0 md:px-0"
     >
-      <ToggleGroup
-        value={value ? [value] : []}
-        onValueChange={(next) => {
-          const picked = ORDER_FILTERS.find((f) => f === next[0]);
-          onChange(picked);
-        }}
-        aria-label={ordersWords.typeCards.label}
-        spacing={2}
-        className="w-max py-0.5"
-      >
-        {types.map((type) => {
-          const Icon = ORDER_TYPE_ICON[type];
-          const t = totals[type];
-          return (
-            <ToggleGroupItem key={type} value={type} className={itemClass}>
+      <div className="flex w-max items-center">
+        <ToggleGroup
+          value={value ? [value] : []}
+          onValueChange={(next) => {
+            const picked = ORDER_FILTERS.find((f) => f === next[0]);
+            onChange(picked);
+          }}
+          aria-label={ordersWords.typeCards.label}
+          spacing={2}
+          className="w-max py-0.5"
+        >
+          {types.map((type) => {
+            const Icon = ORDER_TYPE_ICON[type];
+            const t = totals[type];
+            return (
+              <ToggleGroupItem key={type} value={type} className={itemClass}>
+                <IconTile
+                  variant="soft"
+                  size="sm"
+                  aria-hidden="true"
+                  className="hidden sm:inline-flex"
+                >
+                  <Icon />
+                </IconTile>
+                <Icon aria-hidden="true" className="sm:hidden" />
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-sm leading-tight font-semibold">
+                    {ordersWords.types[type]}
+                    <span className="ml-1.5 text-muted-foreground tabular-nums sm:hidden">
+                      {t.count}
+                    </span>
+                  </span>
+                  <span className="hidden text-xs text-muted-foreground tabular-nums sm:block">
+                    {ordersWords.typeCards.openCount(t.count)} · {formatPeso(t.total)}
+                    {t.booked > 0 ? ` · ${ordersWords.typeCards.booked(t.booked)}` : ''}
+                  </span>
+                </span>
+              </ToggleGroupItem>
+            );
+          })}
+          {toCheck > 0 ? (
+            <ToggleGroupItem
+              value="to_check"
+              className={cn(
+                itemClass,
+                'border-warning/40 bg-warning-soft text-warning-soft-foreground hover:bg-warning-soft aria-pressed:border-warning aria-pressed:bg-warning-soft aria-pressed:ring-warning',
+              )}
+            >
               <IconTile
                 variant="soft"
                 size="sm"
                 aria-hidden="true"
-                className="hidden sm:inline-flex"
+                className="hidden bg-warning/20 sm:inline-flex"
               >
-                <Icon />
+                <ShieldAlertIcon />
               </IconTile>
-              <Icon aria-hidden="true" className="sm:hidden" />
+              <ShieldAlertIcon aria-hidden="true" className="sm:hidden" />
               <span className="flex min-w-0 flex-col">
                 <span className="text-sm leading-tight font-semibold">
-                  {ordersWords.types[type]}
-                  <span className="ml-1.5 text-muted-foreground tabular-nums sm:hidden">
-                    {t.count}
-                  </span>
+                  <span className="tabular-nums">{ordersWords.typeCards.toCheck(toCheck)}</span>
                 </span>
-                <span className="hidden text-xs text-muted-foreground tabular-nums sm:block">
-                  {ordersWords.typeCards.openCount(t.count)} · {formatPeso(t.total)}
-                </span>
+                <span className="hidden text-xs sm:block">{ordersWords.typeCards.toCheckHint}</span>
               </span>
             </ToggleGroupItem>
-          );
-        })}
-        {toCheck > 0 ? (
-          <ToggleGroupItem
-            value="to_check"
-            className={cn(
-              itemClass,
-              'border-warning/40 bg-warning-soft text-warning-soft-foreground hover:bg-warning-soft aria-pressed:border-warning aria-pressed:bg-warning-soft aria-pressed:ring-warning',
-            )}
+          ) : null}
+        </ToggleGroup>
+        {booked > 0 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            // Laptop cards already say "+N booked"; the phone's short cards don't, so the link sits there.
+            className="ms-1 h-11 shrink-0 gap-1.5 self-center px-3 text-sm font-semibold text-primary sm:hidden"
+            onClick={onShowBooked}
           >
-            <IconTile
-              variant="soft"
-              size="sm"
-              aria-hidden="true"
-              className="hidden bg-warning/20 sm:inline-flex"
-            >
-              <ShieldAlertIcon />
-            </IconTile>
-            <ShieldAlertIcon aria-hidden="true" className="sm:hidden" />
-            <span className="flex min-w-0 flex-col">
-              <span className="text-sm leading-tight font-semibold">
-                <span className="tabular-nums">{ordersWords.typeCards.toCheck(toCheck)}</span>
-              </span>
-              <span className="hidden text-xs sm:block">{ordersWords.typeCards.toCheckHint}</span>
-            </span>
-          </ToggleGroupItem>
+            <CalendarClockIcon aria-hidden="true" />
+            {ordersWords.typeCards.bookedLater(booked)}
+            <ChevronRightIcon aria-hidden="true" />
+          </Button>
         ) : null}
-      </ToggleGroup>
+      </div>
     </Scroller>
   );
 }

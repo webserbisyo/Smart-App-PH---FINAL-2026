@@ -1,7 +1,8 @@
-import { BanIcon, ChevronRightIcon } from 'lucide-react';
+import { BanIcon, CalendarX2Icon, ChevronRightIcon } from 'lucide-react';
 import {
   addDays,
   formatPeso,
+  isStillOpenPast,
   ordersWords,
   weekdayOf,
   type BoardOrder,
@@ -31,13 +32,17 @@ const W = ordersWords.bookings;
 
 type Load = 0 | 1 | 2 | 3;
 
-// How busy a day looks: no tint, then three steps of the brand colour (the number says the rest).
+// How busy a day looks (T95): no tint, then three steps of amber to orange, never the brand colour. Blue is
+// only today and the picked day; Full is red with its word and icon; Closed is striped.
 const LOAD_LOOK: Record<Load, string> = {
   0: 'bg-card aria-pressed:bg-card',
-  1: 'bg-primary/15 aria-pressed:bg-primary/15',
-  2: 'bg-primary/30 aria-pressed:bg-primary/30',
-  3: 'bg-primary/50 aria-pressed:bg-primary/50',
+  1: 'bg-heat-1 text-heat-1-foreground hover:bg-heat-1/85 aria-pressed:bg-heat-1',
+  2: 'bg-heat-2 text-heat-2-foreground hover:bg-heat-2/85 aria-pressed:bg-heat-2',
+  3: 'bg-heat-3 text-heat-3-foreground hover:bg-heat-3/85 aria-pressed:bg-heat-3',
 };
+const FULL_LOOK =
+  'border-destructive/60 bg-destructive/15 text-destructive hover:bg-destructive/20 aria-pressed:bg-destructive/15';
+const CLOSED_LOOK = 'bg-stripes text-muted-foreground aria-pressed:bg-stripes';
 
 /** A day's share of what it can take, or of the busiest day this month when the shop sets no limit. */
 function loadOf(count: number, capacity: number | null, busiest: number): Load {
@@ -48,11 +53,11 @@ function loadOf(count: number, capacity: number | null, busiest: number): Load {
   return 1;
 }
 
-/** The weeks on screen, Sunday first: from this week (or the month's first) to the month's last. */
-function monthWeeks(date: string, today: string): (string | null)[][] {
+/** The weeks on screen, Sunday first: from the month's first (or the first day the Calendar reaches) to its last. */
+function monthWeeks(date: string, firstDay: string): (string | null)[][] {
   const first = monthStart(date, 0);
   const last = addDays(monthStart(date, 1), -1);
-  const from = today > first ? today : first;
+  const from = firstDay > first ? firstDay : first;
   let day = addDays(from, -weekdayOf(from));
   const weeks: (string | null)[][] = [];
   while (day <= last) {
@@ -78,6 +83,7 @@ export function MonthView({
   rules,
   today,
   now,
+  firstDay,
   lastDay,
   compact,
   onPickDay,
@@ -92,6 +98,7 @@ export function MonthView({
   rules: ScheduleRules;
   today: string;
   now: Date;
+  firstDay: string;
   lastDay: string;
   compact: boolean;
   onPickDay: (date: string) => void;
@@ -99,23 +106,22 @@ export function MonthView({
   onOpen: (order: BoardOrder) => void;
   onWhatToMake: (date: string) => void;
 }) {
-  const weeks = monthWeeks(date, today);
-  const shown = weeks.flat().filter((d): d is string => d !== null && d >= today && d <= lastDay);
+  const weeks = monthWeeks(date, firstDay);
+  const shown = weeks
+    .flat()
+    .filter((d): d is string => d !== null && d >= firstDay && d <= lastDay);
   const counts = shown.map((d) => facts.byDay.get(d)?.length ?? 0);
   const busiest = Math.max(0, ...counts);
-  const busiestDay = busiest > 0 ? shown[counts.indexOf(busiest)] : undefined;
-  const booked = shown.flatMap((d) => facts.byDay.get(d) ?? []);
+  const all = shown.flatMap((d) => facts.byDay.get(d) ?? []);
+  const booked = all.filter((o) => o.scheduledAt !== null);
 
   return (
     <div className="flex flex-col gap-3 lg:grid lg:grid-cols-5 lg:items-start lg:gap-4">
       <div className="flex min-w-0 flex-col gap-3 lg:col-span-3">
         <dl data-slot="month-summary" className="grid grid-cols-3 gap-2">
-          <MonthStat label={W.monthOrders} value={W.dayCount(booked.length)} />
-          <MonthStat label={W.monthPesos} value={formatPeso(sumOf(booked))} />
-          <MonthStat
-            label={W.monthBusiest}
-            value={busiestDay ? dayLabel(busiestDay) : W.monthNone}
-          />
+          <MonthStat label={W.monthOrders} value={W.dayCount(all.length)} />
+          <MonthStat label={W.monthBooked} value={W.dayCount(booked.length)} />
+          <MonthStat label={W.monthPesos} value={formatPeso(sumOf(all))} />
         </dl>
 
         <div
@@ -154,6 +160,7 @@ export function MonthView({
                     facts={facts}
                     rules={rules}
                     today={today}
+                    firstDay={firstDay}
                     lastDay={lastDay}
                     busiest={busiest}
                     compact={compact}
@@ -163,13 +170,21 @@ export function MonthView({
           </ToggleGroup>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 pt-1 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span aria-hidden="true" className="size-3 rounded-sm bg-primary/15" />
-              <span aria-hidden="true" className="size-3 rounded-sm bg-primary/30" />
-              <span aria-hidden="true" className="size-3 rounded-sm bg-primary/50" />
-              {W.busier}
+              {W.quiet}
+              <span aria-hidden="true" className="size-3 rounded-sm bg-heat-1" />
+              <span aria-hidden="true" className="size-3 rounded-sm bg-heat-2" />
+              <span aria-hidden="true" className="size-3 rounded-sm bg-heat-3" />
+              {W.busy}
+            </span>
+            <span className="flex items-center gap-1 text-destructive">
+              <CalendarX2Icon aria-hidden="true" className="size-3" />
+              {W.full}
             </span>
             <span className="flex items-center gap-1">
-              <BanIcon aria-hidden="true" className="size-3" />
+              <span
+                aria-hidden="true"
+                className="size-3 rounded-sm border border-border bg-stripes"
+              />
               {W.closed}
             </span>
           </div>
@@ -206,6 +221,7 @@ function DayTile({
   facts,
   rules,
   today,
+  firstDay,
   lastDay,
   busiest,
   compact,
@@ -214,6 +230,7 @@ function DayTile({
   facts: DayFacts;
   rules: ScheduleRules;
   today: string;
+  firstDay: string;
   lastDay: string;
   busiest: number;
   compact: boolean;
@@ -222,8 +239,10 @@ function DayTile({
   const closed = isClosedDay(rules, day);
   const full = isFullDay(rules, facts, day);
   const isToday = day === today;
-  const out = day < today || day > lastDay;
-  const load: Load = full ? 3 : loadOf(list.length, dayCapacity(rules, day), busiest);
+  const out = day < firstDay || day > lastDay;
+  const past = day < today;
+  const stale = list.some((o) => isStillOpenPast(o, today));
+  const load: Load = loadOf(list.length, dayCapacity(rules, day), busiest);
   const word = closed ? W.closed : full ? W.full : null;
   return (
     <ToggleGroupItem
@@ -232,7 +251,8 @@ function DayTile({
       aria-label={W.dayTileAria(dayLong(day), daySummary(rules, facts, day), isToday)}
       className={cn(
         'relative flex h-auto min-h-14 min-w-0 flex-col items-stretch justify-between gap-1 overflow-hidden rounded-lg border border-border/60 p-1 text-left whitespace-normal hover:bg-muted aria-pressed:ring-2 aria-pressed:ring-primary md:min-h-20 md:p-1.5',
-        closed ? 'bg-muted/60 aria-pressed:bg-muted/60' : LOAD_LOOK[load],
+        closed ? CLOSED_LOOK : full ? FULL_LOOK : LOAD_LOOK[load],
+        past && 'opacity-75 aria-pressed:opacity-100',
       )}
     >
       <span className="flex min-w-0 items-start justify-between gap-1">
@@ -240,13 +260,20 @@ function DayTile({
           className={cn(
             'flex size-6 shrink-0 items-center justify-center rounded-full text-sm font-semibold tabular-nums',
             isToday && 'bg-primary font-bold text-primary-foreground',
-            closed && !isToday && 'text-muted-foreground',
           )}
         >
           {Number(day.slice(8))}
         </span>
-        {closed ? (
-          <BanIcon aria-hidden="true" className="mt-1 size-3 shrink-0 text-muted-foreground" />
+        {stale ? (
+          <span
+            role="img"
+            aria-label={W.stillOpen}
+            className="mt-1 size-2.5 shrink-0 rounded-full bg-destructive ring-2 ring-card"
+          />
+        ) : closed ? (
+          <BanIcon aria-hidden="true" className="mt-1 size-3 shrink-0" />
+        ) : full ? (
+          <CalendarX2Icon aria-hidden="true" className="mt-1 size-3 shrink-0" />
         ) : null}
       </span>
       {list.length > 0 ? (
@@ -259,7 +286,7 @@ function DayTile({
           ) : null}
         </span>
       ) : word && !compact ? (
-        <span className="truncate text-xs text-muted-foreground">{word}</span>
+        <span className="truncate text-xs">{word}</span>
       ) : null}
     </ToggleGroupItem>
   );

@@ -39,7 +39,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
 
       // Fallback: search date
       const dateStr = order.placedAt.slice(0, 10);
-      const dayOrders = await ownerOrders.listOrders({ slug, date: dateStr });
+      const dayOrders = await ownerOrders.listOrders({ slug, from: dateStr, to: dateStr });
       const foundInDay = dayOrders.find((o) => o.token === order.token);
       return foundInDay ? foundInDay.id : null;
     } catch {

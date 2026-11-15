@@ -84,18 +84,23 @@ export function OrdersScreen() {
   const types: readonly OrderType[] = sf?.orderTypes ?? ORDER_TYPES;
   const delivers = types.includes('delivery');
 
+  // The cards count what is on today's Board (T95); later bookings show as "+N booked".
   const totals = React.useMemo(() => {
     const out: Record<OrderType, TypeTotals> = {
-      walk_in: { count: 0, total: 0 },
-      pickup: { count: 0, total: 0 },
-      delivery: { count: 0, total: 0 },
+      walk_in: { count: 0, total: 0, booked: 0 },
+      pickup: { count: 0, total: 0, booked: 0 },
+      delivery: { count: 0, total: 0, booked: 0 },
     };
     for (const o of live) {
+      if (boardColumn(o, now) === 'scheduled') {
+        out[o.type].booked += 1;
+        continue;
+      }
       out[o.type].count += 1;
       out[o.type].total += o.total;
     }
     return out;
-  }, [live]);
+  }, [live, now]);
   const toCheck = React.useMemo(() => live.filter(needsProofCheck).length, [live]);
 
   const filter = search.filter === 'to_check' && toCheck === 0 ? undefined : search.filter;
@@ -290,6 +295,13 @@ export function OrdersScreen() {
           toCheck={toCheck}
           value={filter}
           onChange={(next) => setSearch({ filter: next }, { replace: true })}
+          onShowBooked={() =>
+            setSearch(
+              takesBookings
+                ? { view: 'bookings', order: undefined }
+                : { view: 'list', day: 'upcoming', from: undefined, to: undefined },
+            )
+          }
         />
 
         {payName ? (

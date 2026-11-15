@@ -33,6 +33,7 @@ import { STAGE_LOOK, stageLabel } from '@/app/orders/stage';
 import { StageChip } from '@/app/orders/stage-chip';
 import { StageIcon } from '@/app/orders/stage-icon';
 import { refusedMoveWords } from '@/app/orders/use-step-change';
+import { setCardDragging } from './drag-state.js';
 import { PHONE_STAGES, type PhoneStage } from './search.js';
 
 export type BoardStage = Exclude<OrderStage, 'done'>;
@@ -270,10 +271,15 @@ function KanbanBoardView({
         onDragStart={(event) => {
           hold(grouped);
           setActiveId(String(event.active.id));
+          setCardDragging(true);
         }}
-        onDragEnd={() => setActiveId(null)}
+        onDragEnd={() => {
+          setActiveId(null);
+          setCardDragging(false);
+        }}
         onDragCancel={() => {
           setActiveId(null);
+          setCardDragging(false);
           setHeld(null);
         }}
       >

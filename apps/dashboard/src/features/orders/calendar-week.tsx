@@ -27,6 +27,7 @@ import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { cn } from 'cn';
 import { dayChipLabel, dayLong } from '@/app/orders/calendar-days';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
+import { setCardDragging } from './drag-state.js';
 import {
   byTime,
   clockOf,
@@ -132,6 +133,12 @@ export function WeekBoard({
     const to = meta.overContainer;
     if (!order || to === manilaDate(order.dueAt)) return restore();
     const no = orderNoLabel(order.orderNo);
+    // Past days are read only (T95).
+    if (to < today) {
+      restore();
+      notify({ title: W.pastDrop(no), tone: 'error' });
+      return;
+    }
     if (isClosedDay(rules, to)) {
       restore();
       notify({ title: W.closedDrop(closedWords(rules, to), no), tone: 'error' });
@@ -168,10 +175,15 @@ export function WeekBoard({
         onDragStart={(event) => {
           hold(grouped);
           setActiveId(String(event.active.id));
+          setCardDragging(true);
         }}
-        onDragEnd={() => setActiveId(null)}
+        onDragEnd={() => {
+          setActiveId(null);
+          setCardDragging(false);
+        }}
         onDragCancel={() => {
           setActiveId(null);
+          setCardDragging(false);
           setHeld(null);
         }}
       >
@@ -242,6 +254,7 @@ function DayColumn({
 }) {
   const closed = isClosedDay(rules, day);
   const isToday = day === today;
+  const past = day < today;
   const groups = timeGroups(orders, rules, facts);
   const nowMinutes = clockOf(now);
   // The Now line sits above the first time still ahead, or under the last one.
@@ -258,6 +271,7 @@ function DayColumn({
       className={cn(
         'flex w-44 shrink-0 flex-col rounded-2xl border border-transparent bg-muted/50 transition duration-base lg:w-auto lg:min-w-0 lg:flex-1',
         closed && 'bg-muted/25',
+        past && 'bg-muted/30',
         picked && 'border-primary/40',
         dropping && 'border-dashed border-primary bg-primary/5',
         dimmed && 'opacity-40',
@@ -313,7 +327,7 @@ function DayColumn({
         {nowAt === 0 ? <NowLine now={now} className="px-0.5" /> : null}
         {orders.length === 0 ? (
           <p className="rounded-xl border border-dashed px-2 py-6 text-center text-xs text-muted-foreground">
-            {closed ? W.closed : W.noOrdersYet}
+            {closed ? W.closed : past ? W.noOrders : W.noOrdersYet}
           </p>
         ) : null}
         {groups.map((group, index) => (

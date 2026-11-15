@@ -105,6 +105,15 @@
   --stage-done-soft: oklch(0.95 0.008 265);
   --stage-done-text: oklch(0.45 0.03 260);
 
+  /* How busy a day is on the Orders calendar (T95): amber to orange, not the brand, one hue family
+     checked for contrast and colour blindness. Light mode gets deeper as it fills. */
+  --heat-1: oklch(0.776 0.145 70.5);
+  --heat-1-foreground: oklch(0.213 0.087 260.9);
+  --heat-2: oklch(0.696 0.153 56.2);
+  --heat-2-foreground: oklch(0.213 0.087 260.9);
+  --heat-3: oklch(0.553 0.153 43.9);
+  --heat-3-foreground: oklch(1 0 0);
+
   --faint-foreground: oklch(0.65 0 0);
   --overlay: oklch(0 0 0 / 0.5);
   /* Shade under words on a photo (banners) and the words on it; the same in both themes. */
@@ -289,6 +298,14 @@
   --stage-done: oklch(0.6 0.02 265);
   --stage-done-soft: oklch(0.28 0.03 262);
   --stage-done-text: oklch(0.86 0.015 265);
+
+  /* Dark mode gets brighter as a day fills (T95). */
+  --heat-1: oklch(0.476 0.089 74.2);
+  --heat-1-foreground: oklch(0.967 0.008 271.3);
+  --heat-2: oklch(0.611 0.127 63.1);
+  --heat-2-foreground: oklch(0.154 0.033 270.1);
+  --heat-3: oklch(0.764 0.151 62.4);
+  --heat-3-foreground: oklch(0.154 0.033 270.1);
 
   --faint-foreground: oklch(0.5 0 0);
   --overlay: oklch(0 0 0 / 0.7);

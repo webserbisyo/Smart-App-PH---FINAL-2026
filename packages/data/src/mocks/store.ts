@@ -1449,7 +1449,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         let list =
           'open' in input
             ? s.orders.filter((o) => !isFinal(o.receipt.status))
-            : s.orders.filter((o) => o.businessDate === input.date);
+            : s.orders.filter((o) => o.businessDate >= input.from && o.businessDate <= input.to);
         if (input.q) {
           const query = input.q.trim().toLowerCase();
           // "#012" and "012" find order 12, the way the owner reads the number.
@@ -1474,10 +1474,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const scheduled = s.orders
           .filter(
             (o) =>
-              // Open and done orders (the calendar's Show done); cancelled and expired never show.
+              // Every order due that day, booked or not (T95); cancelled and expired never show.
               o.receipt.status !== 'cancelled' &&
               o.receipt.status !== 'expired' &&
-              o.receipt.scheduledAt !== null &&
               manilaDate(o.receipt.dueAt) >= from &&
               manilaDate(o.receipt.dueAt) <= to,
           )

@@ -45,7 +45,7 @@ describe('ownerHome mock adapter', () => {
   it("today's sales match the Orders list footer for today (H2)", async () => {
     const { store } = shopStore('kanto-smash');
     const home = await store.ownerHome.getHome();
-    const list = await store.ownerOrders.listOrders({ slug: 'kanto-smash', date: '2026-11-06' });
+    const list = await store.ownerOrders.listOrders({ slug: 'kanto-smash', from: '2026-11-06', to: '2026-11-06' });
     expect(home.today.sales).toBe(salesTotal(list, NOW));
     expect(home.today.orders).toBe(list.filter((o) => salesTotal([o], NOW) > 0).length);
   });
@@ -139,7 +139,7 @@ describe('ownerHome period (T83)', () => {
     expect(m.places.reduce((n, p) => n + p.orders, 0)).toBe(m.orders);
     for (const p of m.places) expect(p.paid + p.toCheck + p.notPaid).toBe(p.sales);
     // To check is the same orders as Needs you (the old tile said 5 while Needs you said 3).
-    const list = await store.ownerOrders.listOrders({ slug, date: '2026-11-06' });
+    const list = await store.ownerOrders.listOrders({ slug, from: '2026-11-06', to: '2026-11-06' });
     expect(m.toCheckOrders).toBe(list.filter((o) => needsProofCheck(o)).length);
     expect(today.slots.reduce((n, s) => n + s.sales, 0)).toBe(m.sales);
     const week = await store.ownerHome.getHomePeriod({ from: '2026-10-31', to: '2026-11-06' });

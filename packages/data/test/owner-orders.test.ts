@@ -44,7 +44,8 @@ describe('ownerOrders mock adapter', () => {
 
     const dateOrders = await store.ownerOrders.listOrders({
       slug: 'kanto-smash',
-      date: '2026-10-26',
+      from: '2026-10-26',
+      to: '2026-10-26',
     });
     expect(dateOrders.length).toBeGreaterThan(0);
 
@@ -53,7 +54,8 @@ describe('ownerOrders mock adapter', () => {
     // Search by orderNo
     const byNo = await store.ownerOrders.listOrders({
       slug: 'kanto-smash',
-      date: '2026-10-26',
+      from: '2026-10-26',
+      to: '2026-10-26',
       q: String(first.orderNo),
     });
     expect(byNo.some((o) => o.id === first.id)).toBe(true);
@@ -61,7 +63,8 @@ describe('ownerOrders mock adapter', () => {
     // Search by customer name
     const byName = await store.ownerOrders.listOrders({
       slug: 'kanto-smash',
-      date: '2026-10-26',
+      from: '2026-10-26',
+      to: '2026-10-26',
       q: first.customerName.slice(0, 3),
     });
     expect(byName.some((o) => o.id === first.id)).toBe(true);
@@ -69,13 +72,14 @@ describe('ownerOrders mock adapter', () => {
     // Search by pickup code
     const byCode = await store.ownerOrders.listOrders({
       slug: 'kanto-smash',
-      date: '2026-10-26',
+      from: '2026-10-26',
+      to: '2026-10-26',
       q: first.pickupCode,
     });
     expect(byCode.some((o) => o.id === first.id)).toBe(true);
   });
 
-  it('listScheduled returns scheduled orders and daily loads', async () => {
+  it('listScheduled returns every order due in the range and daily loads (T95)', async () => {
     const { store } = testStore(mnl('2026-10-26 12:00'));
 
     const result = await store.ownerOrders.listScheduled({
@@ -87,7 +91,7 @@ describe('ownerOrders mock adapter', () => {
     expect(result.orders.length).toBeGreaterThan(0);
     for (const order of result.orders) {
       expect(BoardOrderSchema.safeParse(order).success).toBe(true);
-      expect(order.scheduledAt).not.toBeNull();
+      expect(order.status).not.toBe('cancelled');
     }
 
     expect(result.days.length).toBeGreaterThan(0);

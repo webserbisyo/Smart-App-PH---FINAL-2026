@@ -1,6 +1,7 @@
 // Order steps in one place. Screens never compare statuses themselves (foundation section 4).
 import type { OrderStatus, OrderType, PaymentMethod, PaymentStatus } from '../schemas/enums.js';
 import { TRANSFER_METHODS } from '../schemas/enums.js';
+import { manilaDate } from './time.js';
 
 export const TONES = ['info', 'warning', 'success', 'destructive', 'muted'] as const;
 export type Tone = (typeof TONES)[number];
@@ -220,10 +221,21 @@ export function canRecall(
   return diff >= 0 && diff <= 10_000;
 }
 
-/** Whether an order can be rescheduled (pickup/delivery in placed or preparing). */
+/** Whether an order can be rescheduled: pickup or delivery that is New, Preparing or Ready (T95). */
 export function canReschedule(order: { type: OrderType; status: OrderStatus }): boolean {
   if (order.type !== 'pickup' && order.type !== 'delivery') return false;
-  return order.status === 'placed' || order.status === 'preparing';
+  return order.status === 'placed' || order.status === 'preparing' || order.status === 'ready';
+}
+
+/**
+ * An order due on a day before today that was never finished (T95): the Calendar and the List mark it so
+ * the owner moves it, marks it done or cancels it.
+ */
+export function isStillOpenPast(
+  order: { status: OrderStatus; dueAt: string },
+  today: string,
+): boolean {
+  return !isFinal(order.status) && manilaDate(order.dueAt) < today;
 }
 
 export const PAY_WINDOW_MINUTES = 30;

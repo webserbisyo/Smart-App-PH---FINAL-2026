@@ -23,6 +23,7 @@ import {
   formatManila,
   formatPeso,
   isFinal,
+  isStillOpenPast,
   manilaDate,
   isPayLater,
   moveTargets,
@@ -125,7 +126,13 @@ import { WhenCard } from './when-card.js';
 import { MessengerOrderButton } from './messenger-inbox.js';
 import { ChatFooter, ChatHeader, ChatThread, chatWaits, scrollBox } from './order-chat.js';
 
-const CANCEL_REASON_KEYS = ['sold_out', 'closing_early', 'customer_asked', 'other'] as const;
+const CANCEL_REASON_KEYS = [
+  'sold_out',
+  'closing_early',
+  'customer_asked',
+  'no_show',
+  'other',
+] as const;
 type CancelReasonKey = (typeof CANCEL_REASON_KEYS)[number];
 
 /** The board's card shape from the full order, for an order opened from a link (no card loaded yet). */
@@ -508,7 +515,10 @@ function PanelBody({
 
   return (
     <div ref={top}>
-      {order.scheduledAt ? <WhenCard order={order} onChange={onChangeTime} /> : null}
+      {/* Booked orders, and any order from an earlier day still open (T95), show when they are due. */}
+      {order.scheduledAt || isStillOpenPast(order, manilaDate(new Date())) ? (
+        <WhenCard order={order} onChange={onChangeTime} />
+      ) : null}
       <StepsSection order={order} detail={detail} kind={kind} />
       {failed ? (
         <div className="m-4 flex flex-col items-start gap-2 rounded-xl border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive-soft-foreground">

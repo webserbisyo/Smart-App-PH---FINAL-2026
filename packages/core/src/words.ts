@@ -2021,11 +2021,20 @@ export const ordersWords = {
     // The month (T93): day tiles with a count, a busy tint, and the picked day's orders beside or under.
     weekdayShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     monthDays: 'Days of the month',
-    monthOrders: 'Booked',
-    monthPesos: 'Booked total',
-    monthBusiest: 'Busiest day',
-    monthNone: 'None yet',
-    busier: 'Darker days are busier',
+    // The month's top line (T95): every order, the booked ones, and their sales.
+    monthOrders: 'Orders',
+    monthBooked: 'Booked',
+    monthPesos: 'Sales',
+    // The legend (T95): amber to orange, Full in red, Closed striped.
+    quiet: 'Quiet',
+    busy: 'Busy',
+    // Booked only (T95): the Calendar counts every order; this shows the booked ones alone.
+    bookedOnly: 'Booked only',
+    bookedOnlyHint: 'Show only orders customers booked for a later time.',
+    // A past day (T95): read only, and what is still open on it.
+    pastDrop: (orderNo: string) =>
+      `${orderNo} can't move to a day that has passed. Pick today or later.`,
+    stillOpen: 'Still open',
     openDayButton: 'Open day',
     dayTileAria: (day: string, summary: string, isToday: boolean) =>
       `${isToday ? 'Today, ' : ''}${day}, ${summary}`,
@@ -2071,7 +2080,6 @@ export const ordersWords = {
     pickTime: (time: string, day: string) => `${time} is not open on ${day}. Pick a time.`,
     free: (from: string, to: string) => `Free from ${from} to ${to}`,
     orderList: (day: string) => `Orders on ${day}`,
-    empty: 'No orders for later days yet. They show here when customers order ahead.',
     moved: (orderNo: string, when: string) => `${orderNo} moved to ${when}`,
     undo: 'Undo',
     notPast: 'Pick a time from now on.',
@@ -2138,7 +2146,9 @@ export const ordersWords = {
     inDays: (n: number) => `In ${n} days`,
     change: 'Change',
     changeAria: 'Change the day or time',
-    fixed: 'Only New or Preparing pickup and delivery orders can change time.',
+    fixed: 'Only New, Preparing or Ready pickup and delivery orders can change time.',
+    // An order from an earlier day nobody finished (T95).
+    stillOpen: (day: string) => `Still open from ${day}. Move it, mark it done or cancel it.`,
   },
   toolbar: {
     searchPlaceholder: 'Search name, # or code',
@@ -2249,6 +2259,9 @@ export const ordersWords = {
     toCheck: (n: number) => `${n} ${plural(n, 'photo', 'photos')} to check`,
     toCheckHint: 'Approve or say why not',
     openCount: (count: number) => `${count} open`,
+    // Booked for later, not on today's Board (T95).
+    booked: (count: number) => `+${count} booked`,
+    bookedLater: (count: number) => `+${count} booked for later`,
   },
   stages: {
     label: 'Stage',
@@ -2512,6 +2525,7 @@ export const ordersWords = {
       sold_out: 'Sold out',
       closing_early: 'Shop closing early',
       customer_asked: 'Customer asked',
+      no_show: 'Customer didn’t come',
       other: 'Other',
     },
     cancelOther: 'Other reason',
@@ -2521,12 +2535,34 @@ export const ordersWords = {
     viewProof: 'Payment proof',
   },
   list: {
-    days: 'Day',
-    today: 'Today',
-    yesterday: 'Yesterday',
-    pickDate: 'Pick a date',
-    upcoming: 'Upcoming',
+    // The List's period picker (T95): Home's picker with the Orders picks.
+    picks: {
+      today: 'Today',
+      yesterday: 'Yesterday',
+      '7d': 'Last 7 days',
+      month: 'This month',
+      lastMonth: 'Last month',
+      upcoming: 'Upcoming',
+    },
+    period: {
+      label: 'Show orders for',
+      pickFirst: 'Tap the first day, then the last.',
+      pickLast: 'Now tap the last day.',
+      apply: 'Show these dates',
+      limit: 'Up to 92 days at a time, from a year back to 60 days ahead.',
+      range: (from: string, to: string) => (from === to ? from : `${from} – ${to}`),
+    },
     statusLabel: 'Status',
+    // A past order nobody finished (T95).
+    stillOpen: 'Still open',
+    stillOpenHint: 'From an earlier day. Move it, mark it done or cancel it.',
+    perPage: (n: number) => `${n} per page`,
+    perPageLabel: 'Rows per page',
+    range: (from: number, to: number, count: number) => `${from}–${to} of ${count}`,
+    previous: 'Previous page',
+    next: 'Next page',
+    showMore: (n: number) => `Show ${n} more`,
+    sortBy: (column: string) => `Sort by ${column}`,
     all: 'All',
     cancelled: 'Cancelled',
     expired: 'Expired',
@@ -2535,6 +2571,7 @@ export const ordersWords = {
     showToday: 'Show today',
     cols: {
       order: 'Order',
+      date: 'Date',
       time: 'Time',
       customer: 'Customer',
       items: 'Items',

@@ -34,7 +34,10 @@ export function createApiOwnerOrdersAdapter({
       const headers = await authHeaders();
       const params = new URLSearchParams();
       if ('open' in input && input.open) params.set('open', 'true');
-      if ('date' in input && input.date) params.set('date', input.date);
+      if ('from' in input) {
+        params.set('from', input.from);
+        params.set('to', input.to);
+      }
       if (input.q) params.set('q', input.q);
       const query = params.toString() ? `?${params.toString()}` : '';
       return fetchApi(`${baseUrl}/owner/orders${query}`, z.array(BoardOrderSchema), {

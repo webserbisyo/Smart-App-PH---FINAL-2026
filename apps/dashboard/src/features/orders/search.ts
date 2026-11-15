@@ -14,8 +14,9 @@ export type OrderFilter = (typeof ORDER_FILTERS)[number];
 export const PHONE_STAGES = ['new', 'preparing', 'ready', 'out'] as const;
 export type PhoneStage = (typeof PHONE_STAGES)[number];
 
-export const DAY_PRESETS = ['today', 'yesterday', 'upcoming'] as const;
-export type DayPreset = (typeof DAY_PRESETS)[number];
+// The List's quick periods (T95); a single day or picked dates (from, to) come as dates.
+export const LIST_PERIODS = ['today', 'yesterday', '7d', 'month', 'lastMonth', 'upcoming'] as const;
+export type ListPeriod = (typeof LIST_PERIODS)[number];
 
 // List view status chips (All when empty).
 export const LIST_STATUSES = [
@@ -34,7 +35,7 @@ export const CALENDAR_VIEWS = ['week', 'day', 'month'] as const;
 export type CalendarMode = (typeof CALENDAR_VIEWS)[number];
 const DateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-const DaySchema = z.union([z.enum(DAY_PRESETS), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]);
+const DaySchema = z.union([z.enum(LIST_PERIODS), DateSchema]);
 
 export const OrdersSearchSchema = z.object({
   view: z.enum(ORDER_VIEWS).optional().catch(undefined),
@@ -44,6 +45,9 @@ export const OrdersSearchSchema = z.object({
   // The order panel's Chat tab (T87); the Order tab when absent.
   tab: z.enum(['chat']).optional().catch(undefined),
   day: DaySchema.optional().catch(undefined),
+  // Picked dates in the List (T95), both included.
+  from: DateSchema.optional().catch(undefined),
+  to: DateSchema.optional().catch(undefined),
   cal: z.enum(CALENDAR_VIEWS).optional().catch(undefined),
   calDay: DateSchema.optional().catch(undefined),
   status: z.enum(LIST_STATUSES).optional().catch(undefined),
@@ -63,6 +67,8 @@ export function useOrdersSearch(): OrdersSearch {
     order: search.order,
     tab: search.tab,
     day: search.day,
+    from: search.from,
+    to: search.to,
     cal: search.cal,
     calDay: search.calDay,
     status: search.status,

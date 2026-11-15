@@ -19,6 +19,7 @@ import { cn } from 'cn';
 import { CUSTOMER_LOOK, customerKind } from '@/app/orders/customer-kind';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { useNow } from '@/app/orders/use-now';
+import { useCardDragging } from './drag-state.js';
 import { PAGE_INBOX_URL } from './messenger-inbox.js';
 
 const W = ordersWords.chat.list;
@@ -219,6 +220,7 @@ export function ChatsButton({
   inline?: boolean;
 }) {
   const chats = useChats(slug);
+  const dragging = useCardDragging();
   const waiting = (chats.data ?? []).filter((c) => c.waitingSince !== null).length;
   if (inline) {
     return (
@@ -246,7 +248,13 @@ export function ChatsButton({
     <Button
       onClick={onClick}
       aria-label={waiting > 0 ? W.fabWaiting(waiting) : W.fab}
-      className="fixed right-4 above-dock z-30 hidden size-14 rounded-full shadow-lg md:right-6 md:bottom-6 md:inline-flex"
+      // Out of the way while a card is dragged (T95), so it never covers a drop target.
+      aria-hidden={dragging || undefined}
+      tabIndex={dragging ? -1 : undefined}
+      className={cn(
+        'fixed right-4 above-dock z-30 hidden size-14 rounded-full shadow-lg transition-opacity duration-fast md:right-6 md:bottom-6 md:inline-flex',
+        dragging && 'pointer-events-none opacity-0',
+      )}
     >
       <MessageCircleIcon className="size-6" />
       {waiting > 0 ? (

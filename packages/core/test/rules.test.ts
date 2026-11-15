@@ -28,6 +28,7 @@ import {
   canCancel,
   canRecall,
   canReschedule,
+  isStillOpenPast,
   nextActions,
   payCountdown,
   statusTone,
@@ -537,7 +538,7 @@ describe('canRecall, canReschedule, pickupCode (decision T50, T51, T52)', () => 
     expect(canRecall({ status: 'completed', lastStepAt: stepAt }, after(1_000))).toBe(false);
   });
 
-  it('canReschedule only allows pickup and delivery in placed or preparing', () => {
+  it('canReschedule allows pickup and delivery in placed, preparing or ready (T95)', () => {
     expect(canReschedule({ type: 'pickup', status: 'placed' })).toBe(true);
     expect(canReschedule({ type: 'delivery', status: 'preparing' })).toBe(true);
 
@@ -546,10 +547,22 @@ describe('canRecall, canReschedule, pickupCode (decision T50, T51, T52)', () => 
     expect(canReschedule({ type: 'walk_in', status: 'preparing' })).toBe(false);
 
     // Later statuses are refused
-    expect(canReschedule({ type: 'pickup', status: 'ready' })).toBe(false);
+    expect(canReschedule({ type: 'pickup', status: 'ready' })).toBe(true);
     expect(canReschedule({ type: 'pickup', status: 'out_for_delivery' })).toBe(false);
     expect(canReschedule({ type: 'pickup', status: 'completed' })).toBe(false);
     expect(canReschedule({ type: 'pickup', status: 'cancelled' })).toBe(false);
+  });
+
+  it('isStillOpenPast marks open orders due before today (T95)', () => {
+    expect(isStillOpenPast({ status: 'ready', dueAt: mnl('2026-11-14 18:00') }, '2026-11-15')).toBe(
+      true,
+    );
+    expect(
+      isStillOpenPast({ status: 'completed', dueAt: mnl('2026-11-14 18:00') }, '2026-11-15'),
+    ).toBe(false);
+    expect(
+      isStillOpenPast({ status: 'placed', dueAt: mnl('2026-11-15 09:00') }, '2026-11-15'),
+    ).toBe(false);
   });
 
   it('pickupCode is deterministic, 4 characters, and Crockford-safe', () => {

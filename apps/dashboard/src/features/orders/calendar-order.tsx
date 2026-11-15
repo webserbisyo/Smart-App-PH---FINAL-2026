@@ -9,6 +9,8 @@ import {
 import {
   formatClock,
   formatPeso,
+  isStillOpenPast,
+  manilaDate,
   needsProofCheck,
   ordersWords,
   statusStage,
@@ -99,6 +101,13 @@ export function WeekOrderCard({
     >
       <span className="flex min-w-0 items-center gap-1">
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{order.customerName}</span>
+        {isStillOpenPast(order, manilaDate(new Date())) ? (
+          <span
+            role="img"
+            aria-label={W.stillOpen}
+            className="size-2.5 shrink-0 rounded-full bg-destructive"
+          />
+        ) : null}
         {toCheck ? (
           <ShieldAlertIcon
             className="size-3.5 shrink-0 text-warning-text"

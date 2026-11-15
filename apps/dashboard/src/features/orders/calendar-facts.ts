@@ -20,7 +20,7 @@ import type { CalendarMode } from './search.js';
 
 const W = ordersWords.bookings;
 
-/** The owner can look at, and move an order to, any day up to this far ahead (T86). */
+/** The owner can look at, and move an order to, any day up to this far ahead (T86); and look this far back (T95). */
 export const RANGE_DAYS = 60;
 export const WEEK_DAYS = 7;
 
@@ -206,9 +206,9 @@ export function timeGroups(
 
 // ---------------------------------------------------------------- Moving around
 
-/** The 7-day page a day falls on, counted from today: today to day 6, day 7 to day 13, and so on. */
+/** The 7-day page a day falls on, counted from today: today to day 6, day 7 to day 13; and back. */
 export function weekStartOf(date: string, today: string): string {
-  const n = Math.max(0, daysFrom(today, date));
+  const n = daysFrom(today, date);
   return addDays(today, Math.floor(n / WEEK_DAYS) * WEEK_DAYS);
 }
 

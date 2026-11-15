@@ -15,11 +15,16 @@ export function useOpenOrders(slug: string, q?: string) {
 }
 
 export function useOrdersByDate(slug: string, date: string, q?: string) {
+  return useOrdersInRange(slug, date, date, q);
+}
+
+/** Orders made from one business day to another (T95), for the List's period picker. */
+export function useOrdersInRange(slug: string, from: string, to: string, q?: string) {
   const { ownerOrders } = useAdapters();
   return useQuery({
-    queryKey: ownerOrdersQk.byDate(slug, date, q),
-    queryFn: () => ownerOrders.listOrders({ slug, date, q }),
-    enabled: Boolean(slug && date),
+    queryKey: ownerOrdersQk.byRange(slug, from, to, q),
+    queryFn: () => ownerOrders.listOrders({ slug, from, to, q }),
+    enabled: Boolean(slug && from && to),
   });
 }
 
