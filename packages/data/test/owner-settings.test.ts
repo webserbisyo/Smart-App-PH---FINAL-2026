@@ -121,6 +121,36 @@ describe('ownerSettings mock adapter (T64 to T68)', () => {
     expect(after.cleanups.find((c) => c.kind === 'old_proofs')?.files).toBe(0);
   });
 
+  it('Files lists each folder with its locks, and deletes only files that may go (T93)', async () => {
+    const { store } = shopStore('kanto-smash');
+    const before = await store.ownerSettings.getStorage();
+    const proofs = await store.ownerSettings.listStoredFiles({ folder: 'proofs' });
+    expect(proofs.files).toHaveLength(before.kinds.find((k) => k.kind === 'proofs')?.files ?? -1);
+    expect(proofs.files.every((f) => f.usedBy?.kind === 'order' && f.amount !== null)).toBe(true);
+    const locked = proofs.files.find((f) => f.lock !== null);
+    const free = proofs.files.filter((f) => f.lock === null).slice(0, 3);
+    expect(locked).toBeDefined();
+    expect(free).toHaveLength(3);
+    const menu = await store.ownerSettings.listStoredFiles({ folder: 'menu' });
+    expect(menu.files.some((f) => f.lock === 'in_use' && f.usedBy?.kind === 'item')).toBe(true);
+
+    expect(
+      await errorCode(
+        store.ownerSettings.deleteStoredFiles({ ids: [free[0]?.id ?? '', locked?.id ?? ''] }),
+      ),
+    ).toBe('file_locked');
+    const after = await store.ownerSettings.deleteStoredFiles({ ids: free.map((f) => f.id) });
+    const freed = free.reduce((total, f) => total + f.bytes, 0);
+    expect(after.usedBytes).toBe(before.usedBytes - freed);
+
+    const unused = await store.ownerSettings.listStoredFiles({ folder: 'unused' });
+    expect(unused.files).toHaveLength(before.unusedUploads.files);
+    const cleared = await store.ownerSettings.deleteStoredFiles({
+      ids: unused.files.map((f) => f.id),
+    });
+    expect(cleared.unusedUploads).toEqual({ files: 0, bytes: 0 });
+  });
+
   it('an export becomes ready, holds the proofs, then offers to delete them', async () => {
     const { store, clock } = shopStore('kanto-smash');
     const made = await store.ownerSettings.createExport({

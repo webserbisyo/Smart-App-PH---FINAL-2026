@@ -6,6 +6,10 @@ import {
   BookingRulesSchema,
   CleanupPreviewSchema,
   CreateExportInputSchema,
+  FilesDownloadSchema,
+  STORAGE_FOLDERS,
+  StoredFileIdsInputSchema,
+  StoredFileListSchema,
   DataExportSchema,
   DeliverySettingsSchema,
   HoursSettingsSchema,
@@ -49,7 +53,10 @@ import {
   type OwnerSettings,
   type PlanPayment,
   type PlanPayTo,
+  type FileLock,
+  type StorageFolder,
   type StorageKind,
+  type StoredFile as StoredFileView,
   type StorageSummary,
   type UploadKind,
 } from '@smartapp/core';
@@ -111,7 +118,8 @@ interface OwnerState {
   history: PlanPayment[];
   thread: BillingMessage[];
   files: StoredFile[];
-  unused: { files: number; bytes: number };
+  // Uploads never attached to anything; they clear by themselves every night.
+  unused: { id: string; bytes: number; at: string }[];
   exports: DataExport[];
   codeSentAt: string | null;
   // Bytes made on the phone for an export, kept so Download works until reload.
@@ -183,6 +191,16 @@ const DEFAULT_STORY: Story = {
 };
 
 // Smart App PH's own pay-to numbers in the demo; sample numbers until the founder sets real ones.
+
+// "#041", as the dashboard writes order numbers.
+const orderLabel = (orderNo: number) => `#${String(orderNo).padStart(3, '0')}`;
+// "Classic Smash" → "classic-smash", for sample file names.
+const slugify = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || 'file';
 
 function hashOf(text: string): number {
   let hash = 0;
@@ -330,10 +348,11 @@ export function createSettingsMock(deps: SettingsMockDeps) {
       history,
       thread,
       files: seedFiles(s.shop.storefront.slug, story, rng),
-      unused: {
-        files: story.unused,
-        bytes: Math.round(story.unused * 150 * KB * (0.8 + rng() * 0.4)),
-      },
+      unused: Array.from({ length: story.unused }, (_, i) => ({
+        id: `${s.shop.storefront.slug}-unused-${i}`,
+        bytes: Math.round(150 * KB * (0.6 + rng() * 0.8)),
+        at: new Date(now().getTime() - rng() * 0.9 * DAY).toISOString(),
+      })),
       exports: [],
       codeSentAt: null,
       exportBlobs: new Map(),
@@ -413,7 +432,8 @@ export function createSettingsMock(deps: SettingsMockDeps) {
     return exportedProofs(o);
   }
 
-  const sum = (files: readonly StoredFile[]) => files.reduce((total, f) => total + f.bytes, 0);
+  const sum = (files: readonly { bytes: number }[]) =>
+    files.reduce((total, f) => total + f.bytes, 0);
 
   function refreshExports(o: OwnerState): void {
     const t = now().getTime();
@@ -433,7 +453,8 @@ export function createSettingsMock(deps: SettingsMockDeps) {
       const files = o.files.filter((f) => f.kind === kind);
       return { kind, bytes: sum(files), files: files.length };
     });
-    let used = kinds.reduce((total, k) => total + k.bytes, 0) + o.unused.bytes;
+    const unused = { files: o.unused.length, bytes: sum(o.unused) };
+    let used = kinds.reduce((total, k) => total + k.bytes, 0) + unused.bytes;
     // Dev scenario: a shop over its limit (proofs still came in).
     if (scenario().storage === 'full' && used < PRO_STORAGE_BYTES + 12 * KB * KB) {
       const extra = PRO_STORAGE_BYTES + 12 * KB * KB - used;
@@ -450,10 +471,133 @@ export function createSettingsMock(deps: SettingsMockDeps) {
       limitBytes: PRO_STORAGE_BYTES,
       kinds,
       cleanups,
-      unusedUploads: o.unused,
+      unusedUploads: unused,
       proofDays: PROOF_KEEP_DAYS,
       lastExport: o.exports[o.exports.length - 1] ?? null,
     });
+  }
+
+  // ---------- files (T93) ----------
+
+  // What the Files tab shows for each stored file: what uses it, and whether it may go (the cleanup rules).
+  function filesOf(o: OwnerState, folder: StorageFolder): StoredFileView[] {
+    const s = requireShop(o.slug);
+    const t = now().getTime();
+    const day = (iso: string) => manilaDate(iso).replace(/-/g, '');
+    if (folder === 'unused') {
+      return o.unused.map((f, i) => ({
+        id: f.id,
+        folder,
+        name: `upload-${day(f.at)}-${i + 1}.webp`,
+        bytes: f.bytes,
+        uploadedAt: f.at,
+        ref: null,
+        usedBy: null,
+        lock: null,
+        amount: null,
+      }));
+    }
+    const files = o.files.filter((f) => f.kind === folder).sort((a, b) => b.at.localeCompare(a.at));
+    const { items, categories } = s.shop.catalog;
+    const look = s.shop.storefront.look;
+    const orders = [...s.orders].sort((a, b) =>
+      b.receipt.placedAt.localeCompare(a.receipt.placedAt),
+    );
+    let photo = 0;
+    return files.map((f, i): StoredFileView => {
+      const base = {
+        id: f.id,
+        folder,
+        bytes: f.bytes,
+        uploadedAt: f.at,
+        ref: null,
+        usedBy: null,
+        lock: null,
+        amount: null,
+      };
+      if (folder === 'proofs') {
+        const order = orders[i];
+        // Older proofs than the demo's orders count back from the newest order number.
+        const latest = orders[0]?.receipt.orderNo ?? 900;
+        const number = orderLabel(
+          order ? order.receipt.orderNo : ((((latest - i - 1) % 999) + 999) % 999) + 1,
+        );
+        const lock: FileLock | null = !f.finished
+          ? 'open_order'
+          : t - new Date(f.at).getTime() < 7 * DAY
+            ? 'recent'
+            : null;
+        return {
+          ...base,
+          name: `proof-${number.replace('#', '')}.jpg`,
+          usedBy: { kind: 'order', id: order?.id ?? f.id, label: number },
+          lock,
+          amount: order?.receipt.totals.total ?? (250 + ((i * 79) % 900)) * 100,
+        };
+      }
+      if (folder === 'menu') {
+        const item = f.archived ? undefined : items[photo++ % Math.max(1, items.length)];
+        if (!item) return { ...base, name: `archived-item-${i + 1}.webp` };
+        return {
+          ...base,
+          name: `${slugify(item.name)}.webp`,
+          ref: item.photos[0] ?? null,
+          usedBy: { kind: 'item', id: item.id, label: item.name },
+          lock: 'in_use',
+        };
+      }
+      if (folder === 'look') {
+        if (i === 0 && s.shop.storefront.info.logo)
+          return {
+            ...base,
+            name: 'logo.webp',
+            ref: s.shop.storefront.info.logo,
+            usedBy: { kind: 'logo', id: 'logo', label: s.shop.storefront.info.name },
+            lock: 'in_use',
+          };
+        const banner = look.banners[i - 1];
+        if (banner)
+          return {
+            ...base,
+            name: `banner-${i}.webp`,
+            ref: banner.ref,
+            usedBy: { kind: 'banner', id: `banner-${i}`, label: String(i) },
+            lock: 'in_use',
+          };
+        const category = categories[i - 1 - look.banners.length];
+        if (category)
+          return {
+            ...base,
+            name: `${slugify(category.name)}-icon.webp`,
+            usedBy: { kind: 'category', id: category.id, label: category.name },
+            lock: 'in_use',
+          };
+        // Older logos and banners the owner replaced.
+        return { ...base, name: `old-look-${i + 1}.webp` };
+      }
+      if (folder === 'qr') {
+        const place = s.shop.storefront.payments[i];
+        if (!place) return { ...base, name: `old-qr-${i + 1}.png` };
+        const label = words.shop.paymentMethod[place.method];
+        return {
+          ...base,
+          name: `${slugify(label)}-qr.png`,
+          usedBy: { kind: 'qr', id: place.method, label },
+          lock: 'in_use',
+        };
+      }
+      return {
+        ...base,
+        name: 'your-picture.webp',
+        usedBy: { kind: 'avatar', id: 'avatar', label: o.profile.name },
+        lock: 'in_use',
+      };
+    });
+  }
+
+  function pickedFiles(o: OwnerState, ids: readonly string[]): StoredFileView[] {
+    const wanted = new Set(ids);
+    return STORAGE_FOLDERS.flatMap((folder) => filesOf(o, folder)).filter((f) => wanted.has(f.id));
   }
 
   function cleanupToken(files: readonly StoredFile[]): string {
@@ -883,6 +1027,68 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         const gone = new Set(files.map((f) => f.id));
         o.files = o.files.filter((f) => !gone.has(f.id));
         return summaryOf(o);
+      });
+    },
+
+    listStoredFiles: async ({ folder }) => {
+      const { o } = await current();
+      return run('settings', () =>
+        StoredFileListSchema.parse({ folder, files: filesOf(o, folder) }),
+      );
+    },
+
+    deleteStoredFiles: async (input) => {
+      const { o } = await current();
+      return run('settings', () => {
+        locked();
+        const parsed = StoredFileIdsInputSchema.safeParse(input);
+        if (!parsed.success) fail('invalid_input', 400);
+        const files = pickedFiles(o, parsed.data.ids);
+        // Only files that may go, all of them, or nothing (the list may have moved since).
+        if (files.length !== new Set(parsed.data.ids).size || files.some((f) => f.lock !== null))
+          fail('file_locked', 409);
+        const gone = new Set(files.map((f) => f.id));
+        o.files = o.files.filter((f) => !gone.has(f.id));
+        o.unused = o.unused.filter((f) => !gone.has(f.id));
+        return summaryOf(o);
+      });
+    },
+
+    downloadStoredFiles: async (input) => {
+      const { o } = await current();
+      const { sampleReceiptUrl } = await import('./proof-photo');
+      return run('settings', () => {
+        const parsed = StoredFileIdsInputSchema.safeParse(input);
+        if (!parsed.success) fail('invalid_input', 400);
+        const files = pickedFiles(o, parsed.data.ids);
+        if (files.length === 0) fail('not_found', 404);
+        const shopName = requireShop(o.slug).shop.storefront.info.name;
+        // The demo has no real pictures to zip: each proof is the sample receipt, anything else a note.
+        const entries = files.map((f) => {
+          if (f.folder === 'proofs') {
+            const svg = decodeURIComponent(
+              sampleReceiptUrl({
+                method: words.shop.paymentMethod.gcash,
+                amount: f.amount ?? 0,
+                reference: f.id.slice(-10),
+                shopName,
+                at: f.uploadedAt,
+              }).split(',')[1] ?? '',
+            );
+            return { name: f.name.replace(/\.jpg$/, '.svg'), text: svg };
+          }
+          return { name: `${f.name}.txt`, text: `${f.name} · ${f.bytes} bytes · ${f.uploadedAt}` };
+        });
+        const zip = makeZip(entries, now());
+        const url =
+          typeof URL.createObjectURL === 'function'
+            ? URL.createObjectURL(new Blob([zip], { type: 'application/zip' }))
+            : 'data:application/zip;base64,';
+        return FilesDownloadSchema.parse({
+          fileName: `${o.slug}-files-${manilaDate(now())}.zip`,
+          url,
+          files: files.length,
+        });
       });
     },
 

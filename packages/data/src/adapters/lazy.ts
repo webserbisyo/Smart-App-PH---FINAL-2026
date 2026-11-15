@@ -136,6 +136,9 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     getStorage: async () => (await real()).ownerSettings.getStorage(),
     previewCleanup: async (input) => (await real()).ownerSettings.previewCleanup(input),
     runCleanup: async (input) => (await real()).ownerSettings.runCleanup(input),
+    listStoredFiles: async (input) => (await real()).ownerSettings.listStoredFiles(input),
+    deleteStoredFiles: async (input) => (await real()).ownerSettings.deleteStoredFiles(input),
+    downloadStoredFiles: async (input) => (await real()).ownerSettings.downloadStoredFiles(input),
     createExport: async (input) => (await real()).ownerSettings.createExport(input),
     getExport: async (input) => (await real()).ownerSettings.getExport(input),
   };

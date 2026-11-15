@@ -64,6 +64,8 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Order chat for the owner: Order | Chat tabs, Approve / Not approved at the bottom, Chats list with waiting time, guest vs member, seen by the shop, message model ready for live chat (decision T87; pushed to main 2026-11-13)
 - [x] Super Admin, sign-up and Meta tracking: /admin (Today, Shops, Payments, Tracking, Setup), 3-step sign-up, go-live approval, Billing chat, Open as owner, ₱399 plan (decisions T88 to T92; frontend with mock data pushed to main 2026-11-14; API and tables in Phase 4)
 
+- [x] Final verdicts: calendar Month tiles, full-height phone panels, customise any face, Editor Opening screen, dashboard manifest, Storage Files, phone audit fixes (decision T93; pushed to main 2026-11-15)
+
 ## Phase 4: Backend, area by area
 
 - [ ] Members area: customer account, picture and saved places in the database (today mock data and this phone only, decision R22)

@@ -7,5 +7,6 @@ export const ownerSettingsQk = {
   plan: () => ['owner-settings', 'plan'] as const,
   storage: () => ['owner-settings', 'storage'] as const,
   cleanup: (kind: string) => ['owner-settings', 'cleanup', kind] as const,
+  files: (folder: string) => ['owner-settings', 'files', folder] as const,
   export: (id: string) => ['owner-settings', 'export', id] as const,
 };

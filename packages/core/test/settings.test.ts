@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  fileInRange,
+  sortFiles,
   AVATAR_SVG_MAX,
   AvatarMakeSchema,
   AvatarSvgSchema,
@@ -151,5 +153,49 @@ describe('made picture (T83)', () => {
     expect(AvatarSvgSchema.safeParse(`<svg>${'a'.repeat(AVATAR_SVG_MAX)}</svg>`).success).toBe(
       false,
     );
+  });
+});
+
+describe('Storage › Files (T93)', () => {
+  // 15 Nov 2026, 10:00 in Manila.
+  const now = new Date('2026-11-15T02:00:00Z');
+  const at = (day: string) => `${day}T04:00:00.000Z`;
+  it('puts a file in the right date chip by its Manila upload day', () => {
+    expect(fileInRange(at('2026-11-01'), 'this_month', now)).toBe(true);
+    expect(fileInRange(at('2026-10-31'), 'this_month', now)).toBe(false);
+    expect(fileInRange(at('2026-10-31'), 'last_month', now)).toBe(true);
+    expect(fileInRange(at('2026-10-01'), 'last_month', now)).toBe(true);
+    expect(fileInRange(at('2026-09-30'), 'last_month', now)).toBe(false);
+    expect(fileInRange(at('2026-10-16'), 'older_30', now)).toBe(false);
+    expect(fileInRange(at('2026-10-15'), 'older_30', now)).toBe(true);
+    // 31 Oct 23:30 in Manila is 31 Oct, though UTC says 31 Oct 15:30.
+    expect(fileInRange('2026-10-31T15:30:00.000Z', 'this_month', now)).toBe(false);
+    expect(fileInRange('2026-10-31T16:30:00.000Z', 'this_month', now)).toBe(true);
+    const picked = { from: '2026-11-02', to: '2026-11-05' };
+    expect(fileInRange(at('2026-11-02'), 'pick', now, picked)).toBe(true);
+    expect(fileInRange(at('2026-11-05'), 'pick', now, picked)).toBe(true);
+    expect(fileInRange(at('2026-11-06'), 'pick', now, picked)).toBe(false);
+    expect(fileInRange(at('2025-01-01'), 'all', now)).toBe(true);
+  });
+  it('sorts newest, oldest or largest first', () => {
+    const file = (id: string, day: string, bytes: number) => ({
+      id,
+      folder: 'menu' as const,
+      name: id,
+      bytes,
+      uploadedAt: at(day),
+      ref: null,
+      usedBy: null,
+      lock: null,
+      amount: null,
+    });
+    const files = [
+      file('a', '2026-11-01', 10),
+      file('b', '2026-11-03', 30),
+      file('c', '2026-11-02', 30),
+    ];
+    expect(sortFiles(files, 'newest').map((f) => f.id)).toEqual(['b', 'c', 'a']);
+    expect(sortFiles(files, 'oldest').map((f) => f.id)).toEqual(['a', 'c', 'b']);
+    expect(sortFiles(files, 'largest').map((f) => f.id)).toEqual(['b', 'c', 'a']);
   });
 });

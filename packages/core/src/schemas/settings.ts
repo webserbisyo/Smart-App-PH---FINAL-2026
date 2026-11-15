@@ -16,6 +16,8 @@ import {
   BillingFromEnum,
   BillingKindEnum,
   CleanupKindEnum,
+  FileLockEnum,
+  FileUseEnum,
   ExportRangeEnum,
   ExportStatusEnum,
   OrderTypeEnum,
@@ -26,6 +28,7 @@ import {
   PlanPayMethodEnum,
   PlanRejectReasonEnum,
   PlanStatusEnum,
+  StorageFolderEnum,
   StorageKindEnum,
 } from './enums.js';
 import {
@@ -255,6 +258,50 @@ export const CleanupPreviewSchema = z.object({
   token: z.string().min(1),
 });
 export type CleanupPreview = z.infer<typeof CleanupPreviewSchema>;
+
+// ---------- files (T93) ----------
+
+/**
+ * One stored file in Storage › Files. The date is the day it was uploaded and never changes. `ref` is a
+ * picture the dashboard can show (menu and look photos); proofs show their order instead, and their
+ * pictures only open inside the order (customers' payment screenshots stay private).
+ */
+export const StoredFileSchema = z.object({
+  id: z.string().min(1),
+  folder: StorageFolderEnum,
+  name: z.string().min(1),
+  bytes: z.number().int().min(0),
+  uploadedAt: IsoDateTimeSchema,
+  ref: MediaRefSchema.nullable(),
+  usedBy: z
+    .object({ kind: FileUseEnum, id: z.string().min(1), label: z.string().min(1) })
+    .nullable(),
+  // Null: it can be deleted here.
+  lock: FileLockEnum.nullable(),
+  // Proofs: the order's total.
+  amount: CentavosSchema.nullable(),
+});
+export type StoredFile = z.infer<typeof StoredFileSchema>;
+
+export const StoredFileListSchema = z.object({
+  folder: StorageFolderEnum,
+  files: z.array(StoredFileSchema),
+});
+export type StoredFileList = z.infer<typeof StoredFileListSchema>;
+
+// Delete and Download take the ticked files; a locked one in the list refuses the whole call (file_locked).
+export const StoredFileIdsInputSchema = z.object({
+  ids: z.array(z.string().min(1)).min(1).max(500),
+});
+export type StoredFileIdsInput = z.infer<typeof StoredFileIdsInputSchema>;
+
+// A zip of the ticked files; the link works for 24 hours.
+export const FilesDownloadSchema = z.object({
+  fileName: z.string().min(1),
+  url: z.string().min(1),
+  files: z.number().int().min(1),
+});
+export type FilesDownload = z.infer<typeof FilesDownloadSchema>;
 
 export const CreateExportInputSchema = z.object({
   range: ExportRangeEnum,

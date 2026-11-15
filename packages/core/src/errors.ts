@@ -65,6 +65,7 @@ export const ErrorCode = [
   'file_too_large',
   'export_not_ready',
   'cleanup_changed',
+  'file_locked',
   'last_order_type',
   'last_payment_method',
   'hours_overlap',

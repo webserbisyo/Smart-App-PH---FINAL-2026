@@ -2,8 +2,8 @@
 // the Pro plan's dates, the real type inside an upload and the owner's picture. Pure functions, shared by
 // the screens, the mock and later NestJS.
 import type { DistanceRow, OpeningRange } from '../schemas/storefront.js';
-import type { OwnerAvatar } from '../schemas/settings.js';
-import type { PlanStatus, StorageLevel } from '../schemas/enums.js';
+import type { OwnerAvatar, StoredFile } from '../schemas/settings.js';
+import type { FileRange, FileSort, PlanStatus, StorageLevel } from '../schemas/enums.js';
 import { avatarSvgSrc } from '../schemas/avatar-make.js';
 import { addDays, clockMinutes, manilaDate } from './time.js';
 
@@ -114,6 +114,45 @@ export function formatStorage(bytes: number): string {
   if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
   if (mb > 0 && mb < 10) return `${Math.max(1, mb).toFixed(1).replace(/\.0$/, '')} MB`;
   return `${Math.round(mb)} MB`;
+}
+
+// ---------- files (T93) ----------
+
+/**
+ * Whether a file's upload day (Manila) is in the picked date chip: this month, last month, older than 30
+ * days, or the owner's own days (both ends included).
+ */
+export function fileInRange(
+  uploadedAt: string,
+  range: FileRange,
+  now: Date,
+  picked: { from: string; to: string } | null = null,
+): boolean {
+  const day = manilaDate(uploadedAt);
+  const today = manilaDate(now);
+  const thisMonth = `${today.slice(0, 7)}-01`;
+  switch (range) {
+    case 'all':
+      return true;
+    case 'this_month':
+      return day >= thisMonth;
+    case 'last_month':
+      return day < thisMonth && day >= `${addDays(thisMonth, -1).slice(0, 7)}-01`;
+    case 'older_30':
+      return day < addDays(today, -30);
+    case 'pick':
+      return picked === null || (day >= picked.from && day <= picked.to);
+  }
+}
+
+/** Newest first (the default), oldest first, or largest first; ties keep the newest first. */
+export function sortFiles(files: readonly StoredFile[], sort: FileSort): StoredFile[] {
+  const newest = (a: StoredFile, b: StoredFile) => b.uploadedAt.localeCompare(a.uploadedAt);
+  return [...files].sort((a, b) => {
+    if (sort === 'oldest') return -newest(a, b);
+    if (sort === 'largest') return b.bytes - a.bytes || newest(a, b);
+    return newest(a, b);
+  });
 }
 
 // ---------- the plan (T67) ----------

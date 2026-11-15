@@ -3,12 +3,14 @@
 import {
   CleanupPreviewSchema,
   DataExportSchema,
+  FilesDownloadSchema,
   NotificationPrefsSchema,
   OwnerProfileSchema,
   OwnerSettingsSchema,
   PlanSchema,
   SendCodeResultSchema,
   StorageSummarySchema,
+  StoredFileListSchema,
 } from '@smartapp/core';
 import { z } from 'zod';
 import { fetchApi } from '../../api-client';
@@ -65,6 +67,16 @@ export function createApiOwnerSettingsAdapter({
     previewCleanup: ({ kind }) =>
       call(`/owner/storage/cleanup?kind=${encodeURIComponent(kind)}`, CleanupPreviewSchema, 'GET'),
     runCleanup: (input) => call('/owner/storage/cleanup', StorageSummarySchema, 'POST', input),
+    listStoredFiles: ({ folder }) =>
+      call(
+        `/owner/storage/files?folder=${encodeURIComponent(folder)}`,
+        StoredFileListSchema,
+        'GET',
+      ),
+    deleteStoredFiles: (input) =>
+      call('/owner/storage/files/delete', StorageSummarySchema, 'POST', input),
+    downloadStoredFiles: (input) =>
+      call('/owner/storage/files/download', FilesDownloadSchema, 'POST', input),
     createExport: (input) => call('/owner/exports', DataExportSchema, 'POST', input),
     getExport: ({ id }) =>
       call(`/owner/exports/${encodeURIComponent(id)}`, DataExportSchema, 'GET'),

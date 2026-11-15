@@ -75,6 +75,7 @@ import {
 import { Separator } from '@smartapp/ui/components/separator';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Spinner } from '@smartapp/ui/components/spinner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { notify } from '@smartapp/ui/compositions/notify';
@@ -90,6 +91,7 @@ import { Notice } from '@/app/notice';
 import { PageError } from '@/app/page-state';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { SettingsCard, SettingsPage, SettingsSkeleton } from '../settings-ui.js';
+import { StorageFiles } from '../storage-files.js';
 
 const W = settingsWords.storage;
 // Menu photos keep 1080 px on the longest side (T65); the try-out uses the same step.
@@ -138,8 +140,12 @@ export function StorageSettingsScreen() {
   return <StorageView summary={storage.data} />;
 }
 
+const STORAGE_TABS = ['overview', 'files'] as const;
+type StorageTab = (typeof STORAGE_TABS)[number];
+
 function StorageView({ summary }: { summary: StorageSummary }) {
   const [confirm, setConfirm] = React.useState<CleanupKind | null>(null);
+  const [tab, setTab] = React.useState<StorageTab>('overview');
   const exportRef = React.useRef<HTMLDivElement>(null);
   const level = storageLevel(summary.usedBytes, summary.limitBytes);
 
@@ -165,25 +171,54 @@ function StorageView({ summary }: { summary: StorageSummary }) {
         </Notice>
       ) : null}
 
-      <Meter summary={summary} level={level} />
-      <Cleanups summary={summary} onClean={setConfirm} />
-      <div ref={exportRef} className="scroll-mt-4">
-        <SaveCopy lastExport={summary.lastExport} onClean={() => setConfirm('exported_proofs')} />
-      </div>
-      {/* A test tool, so it waits behind a link (T93). */}
-      <Collapsible>
-        <CollapsibleTrigger
-          render={
-            <Button type="button" variant="link" className="h-11 gap-1.5 self-start px-0 md:h-9" />
-          }
-        >
-          <ImageUpIcon />
-          {W.howSmaller}
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-2">
-          <TryUpload />
-        </CollapsibleContent>
-      </Collapsible>
+      {/* Overview is the meter, cleanups and the saved copy; Files opens each folder (T93). */}
+      <Tabs
+        value={tab}
+        onValueChange={(value) => {
+          const next = STORAGE_TABS.find((t) => t === value);
+          if (next) setTab(next);
+        }}
+        className="flex flex-col gap-4"
+      >
+        <TabsList className="grid w-full grid-cols-2 group-data-horizontal/tabs:h-auto sm:w-80">
+          {STORAGE_TABS.map((t) => (
+            <TabsTrigger key={t} value={t} className="h-11 md:h-9">
+              {W.tabs[t]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="overview" className="flex flex-col gap-4">
+          <Meter summary={summary} level={level} />
+          <Cleanups summary={summary} onClean={setConfirm} />
+          <div ref={exportRef} className="scroll-mt-4">
+            <SaveCopy
+              lastExport={summary.lastExport}
+              onClean={() => setConfirm('exported_proofs')}
+            />
+          </div>
+          {/* A test tool, so it waits behind a link (T93). */}
+          <Collapsible>
+            <CollapsibleTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-11 gap-1.5 self-start px-0 md:h-9"
+                />
+              }
+            >
+              <ImageUpIcon />
+              {W.howSmaller}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-2">
+              <TryUpload />
+            </CollapsibleContent>
+          </Collapsible>
+        </TabsContent>
+        <TabsContent value="files">
+          <StorageFiles summary={summary} />
+        </TabsContent>
+      </Tabs>
 
       <CleanupConfirm kind={confirm} onClose={() => setConfirm(null)} onSaveCopy={goToExport} />
     </SettingsPage>

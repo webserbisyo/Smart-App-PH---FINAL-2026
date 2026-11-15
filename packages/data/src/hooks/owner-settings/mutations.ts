@@ -11,6 +11,7 @@ import type {
   SaveProfileInput,
   SendBillingNoteInput,
   ShopFacts,
+  StoredFileIdsInput,
   SubmitPlanPaymentInput,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
@@ -154,5 +155,27 @@ export function useCreateExport() {
   return useMutation({
     mutationFn: (input: CreateExportInput) => ownerSettings.createExport(input),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ownerSettingsQk.storage() }),
+  });
+}
+
+/** Deletes the ticked files (T93); the meter and every folder read again. */
+export function useDeleteStoredFiles() {
+  const { ownerSettings } = useAdapters();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: StoredFileIdsInput) => ownerSettings.deleteStoredFiles(input),
+    onSuccess: (summary) => {
+      qc.setQueryData(ownerSettingsQk.storage(), summary);
+      void qc.invalidateQueries({ queryKey: ['owner-settings', 'files'] });
+      void qc.invalidateQueries({ queryKey: ['owner-settings', 'cleanup'] });
+    },
+  });
+}
+
+/** A zip of the ticked files (T93). */
+export function useDownloadStoredFiles() {
+  const { ownerSettings } = useAdapters();
+  return useMutation({
+    mutationFn: (input: StoredFileIdsInput) => ownerSettings.downloadStoredFiles(input),
   });
 }

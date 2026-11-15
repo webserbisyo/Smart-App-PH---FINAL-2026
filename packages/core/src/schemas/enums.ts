@@ -329,6 +329,31 @@ export const STORAGE_KINDS = ['menu', 'proofs', 'look', 'qr', 'profile'] as cons
 export const StorageKindEnum = z.enum(STORAGE_KINDS);
 export type StorageKind = z.infer<typeof StorageKindEnum>;
 
+// The Files tab's folders (T93): the kinds above, plus uploads never attached to anything.
+export const STORAGE_FOLDERS = ['menu', 'proofs', 'look', 'qr', 'profile', 'unused'] as const;
+export const StorageFolderEnum = z.enum(STORAGE_FOLDERS);
+export type StorageFolder = z.infer<typeof StorageFolderEnum>;
+
+// Why a file can't be deleted from Files: something on the shop uses it, its order is still open or
+// unpaid, or the proof is under 7 days old (the cleanup rule, unchanged).
+export const FILE_LOCKS = ['in_use', 'open_order', 'recent'] as const;
+export const FileLockEnum = z.enum(FILE_LOCKS);
+export type FileLock = z.infer<typeof FileLockEnum>;
+
+// What uses a file, so its lock links there.
+export const FILE_USES = ['item', 'logo', 'banner', 'category', 'qr', 'avatar', 'order'] as const;
+export const FileUseEnum = z.enum(FILE_USES);
+export type FileUse = z.infer<typeof FileUseEnum>;
+
+// The date chips over a folder; "pick" uses the owner's own dates.
+export const FILE_RANGES = ['all', 'this_month', 'last_month', 'older_30', 'pick'] as const;
+export const FileRangeEnum = z.enum(FILE_RANGES);
+export type FileRange = z.infer<typeof FileRangeEnum>;
+
+export const FILE_SORTS = ['newest', 'oldest', 'largest'] as const;
+export const FileSortEnum = z.enum(FILE_SORTS);
+export type FileSort = z.infer<typeof FileSortEnum>;
+
 // The cleanups the owner runs by hand; unconfirmed uploads clear by themselves every night. Exported proofs
 // are the proofs in a copy the owner just saved (early delete only after an export, P7).
 export const CLEANUP_KINDS = ['old_proofs', 'archived_photos', 'exported_proofs'] as const;

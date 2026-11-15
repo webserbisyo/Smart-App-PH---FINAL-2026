@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { CleanupKind } from '@smartapp/core';
+import type { CleanupKind, StorageFolder } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
 import { ownerSettingsQk } from './qk';
 
@@ -62,5 +62,18 @@ export function useCleanupPreview(kind: CleanupKind | null) {
     enabled: kind !== null,
     staleTime: 0,
     gcTime: 0,
+  });
+}
+
+/** One folder's files for Storage › Files (T93); null while no folder is open. */
+export function useStoredFiles(folder: StorageFolder | null) {
+  const { ownerSettings } = useAdapters();
+  return useQuery({
+    queryKey: ownerSettingsQk.files(folder ?? ''),
+    queryFn: () => {
+      if (!folder) throw new Error('no folder picked');
+      return ownerSettings.listStoredFiles({ folder });
+    },
+    enabled: folder !== null,
   });
 }

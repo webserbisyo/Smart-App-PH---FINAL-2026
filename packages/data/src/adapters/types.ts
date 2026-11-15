@@ -70,6 +70,10 @@ import type {
   SaveProfileInput,
   ShopFacts,
   StorageSummary,
+  StorageFolder,
+  StoredFileList,
+  StoredFileIdsInput,
+  FilesDownload,
   SubmitPlanPaymentInput,
   ContentVersion,
   PreviewToken,
@@ -303,6 +307,10 @@ export interface OwnerSettingsAdapter {
   getStorage(): Promise<StorageSummary>;
   previewCleanup(input: { kind: CleanupKind }): Promise<CleanupPreview>;
   runCleanup(input: { kind: CleanupKind; token: string }): Promise<StorageSummary>;
+  // Storage › Files (T93): one folder's files, deleting or zipping the ticked ones.
+  listStoredFiles(input: { folder: StorageFolder }): Promise<StoredFileList>;
+  deleteStoredFiles(input: StoredFileIdsInput): Promise<StorageSummary>;
+  downloadStoredFiles(input: StoredFileIdsInput): Promise<FilesDownload>;
   createExport(input: CreateExportInput): Promise<DataExport>;
   getExport(input: { id: string }): Promise<DataExport>;
 }
