@@ -289,8 +289,16 @@ export type UploadKind = z.infer<typeof UploadKindEnum>;
 
 // Owner Settings (decisions T64 to T68).
 
-// The owner's picture (T68): six DiceBear styles made once as files, our names for them.
-export const OWNER_AVATAR_STYLES = ['sketch', 'soft', 'bright', 'people', 'pixel', 'fun'] as const;
+// The owner's picture (T68, T93): seven DiceBear styles, each face made once as a file, our names for them.
+export const OWNER_AVATAR_STYLES = [
+  'sketch',
+  'soft',
+  'bright',
+  'people',
+  'pixel',
+  'fun',
+  'adventure',
+] as const;
 export const OwnerAvatarStyleEnum = z.enum(OWNER_AVATAR_STYLES);
 export type OwnerAvatarStyle = z.infer<typeof OwnerAvatarStyleEnum>;
 

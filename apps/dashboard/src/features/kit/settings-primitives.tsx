@@ -1,5 +1,11 @@
 import * as React from 'react';
-import { STARTING_MAKE, avatarSvgSrc, type AvatarMake } from '@smartapp/core';
+import {
+  OWNER_FACE_SEEDS,
+  STARTING_MAKE,
+  avatarSvgSrc,
+  type AvatarMake,
+  type FaceRecipe,
+} from '@smartapp/core';
 import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
 import {
   CompareSlider,
@@ -29,6 +35,7 @@ import {
   TimePickerTrigger,
 } from '@smartapp/ui/components/time-picker';
 import { AvatarMaker } from '@smartapp/ui/compositions/avatar-maker';
+import { FaceCustomiser } from '@smartapp/ui/compositions/face-customiser';
 import { KitSection } from './kit-section.js';
 
 function MakerDemo() {
@@ -51,6 +58,26 @@ function MakerDemo() {
         Saved as {JSON.stringify(made.make)} and a {Math.round((made.svg?.length ?? 0) / 1000)} KB
         drawing
       </p>
+    </div>
+  );
+}
+
+function CustomiserDemo() {
+  const [made, setMade] = React.useState<{ recipe: FaceRecipe; svg: string | null }>({
+    recipe: { style: 'soft', seed: OWNER_FACE_SEEDS[0], parts: {} },
+    svg: null,
+  });
+  return (
+    <div className="flex max-w-xl flex-col gap-4">
+      <Avatar className="size-20 bg-avatar-mint">
+        {made.svg ? <AvatarImage src={avatarSvgSrc(made.svg)} alt="" /> : null}
+        <AvatarFallback className="bg-avatar-mint">JM</AvatarFallback>
+      </Avatar>
+      <FaceCustomiser
+        value={made.recipe}
+        tileClassName="bg-avatar-mint"
+        onChange={(recipe, svg) => setMade({ recipe, svg })}
+      />
     </div>
   );
 }
@@ -106,9 +133,17 @@ export function SettingsPrimitiveSections() {
         title="Picture maker"
         library="composition (Toggle Group, Skeleton, DiceBear Adventurer)"
         path="packages/ui/src/compositions/avatar-maker.tsx"
-        usedIn="Settings Change picture, Make your own, and the storefront Account picture, Make my own (T83)"
+        usedIn="The storefront Account picture, Make my own (T83)"
       >
         <MakerDemo />
+      </KitSection>
+      <KitSection
+        title="Face Customiser"
+        library="composition (DiceBear 9.4.3, one style loaded on demand)"
+        path="packages/ui/src/compositions/face-customiser.tsx"
+        usedIn="Settings Change picture, Customise this face (T93)"
+      >
+        <CustomiserDemo />
       </KitSection>
       <KitSection
         title="Time Picker"

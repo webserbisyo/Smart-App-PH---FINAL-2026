@@ -506,6 +506,24 @@ importers:
       '@dicebear/core':
         specifier: 9.4.3
         version: 9.4.3
+      '@dicebear/lorelei':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/micah':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/notionists':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/open-peeps':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/pixel-art':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/thumbs':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
       '@diceui/checkbox-group':
         specifier: 1.0.0
         version: 1.0.0(@floating-ui/react@0.27.20(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -663,6 +681,21 @@ importers:
       '@dicebear/core':
         specifier: 9.4.3
         version: 9.4.3
+      '@dicebear/lorelei':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/micah':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/notionists':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/open-peeps':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
+      '@dicebear/pixel-art':
+        specifier: 9.4.3
+        version: 9.4.3(@dicebear/core@9.4.3)
       '@dicebear/thumbs':
         specifier: 9.4.3
         version: 9.4.3(@dicebear/core@9.4.3)
@@ -950,6 +983,36 @@ packages:
   '@dicebear/core@9.4.3':
     resolution: {integrity: sha512-9ITrQI57k3p5hKuU8HZJ1d0kPdrmTKEJDOdlKQ8CpaChbtmnD1R+dtWmNz5IesYThXM8F64pJ0ZvJ2rsY8Hciw==}
     engines: {node: '>=18.0.0'}
+
+  '@dicebear/lorelei@9.4.3':
+    resolution: {integrity: sha512-bpch2LRqrdL7gEgU2AW9NwoVKgBSrOUEQJx6FUV1UI6alM72BLaeu04uMqWQUXdh+Hc0SCnkj4Lg8nazSyI3oA==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      '@dicebear/core': ^9.0.0
+
+  '@dicebear/micah@9.4.3':
+    resolution: {integrity: sha512-+76eH3Scu8jfiSbhGjK3OBWeTK+qiuKxrlZFimevaIUzNe6UjqEeaiBUg9R7LPAx3CNIXJOLhuzkHPEkOSnXtg==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      '@dicebear/core': ^9.0.0
+
+  '@dicebear/notionists@9.4.3':
+    resolution: {integrity: sha512-O3qRZ2PIWDeqNKXr/p3S1AI2ODqu7HoRWdfRa9kUdklRgWxt7oMx2EyahAqKk7Fqhe+IXqJkwfKV5Ev5b4SgzQ==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      '@dicebear/core': ^9.0.0
+
+  '@dicebear/open-peeps@9.4.3':
+    resolution: {integrity: sha512-jv2hZPQ25/r+aFm0bf7omEUMFUy1JoSMr2luGdTnSBmefaIFD9vjCOxIyBjvY9f5SBTqwVgqhED/lJyo+n2NKQ==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      '@dicebear/core': ^9.0.0
+
+  '@dicebear/pixel-art@9.4.3':
+    resolution: {integrity: sha512-sGoG6MEs9ZWD+5+7OObVjp7IrF3E/UEKTg7T4kou9UXl2YXLVy8u8hHnAgTqWhiVZuyYozAVsK2E/oYvMigYBw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      '@dicebear/core': ^9.0.0
 
   '@dicebear/thumbs@9.4.3':
     resolution: {integrity: sha512-qS58CJl7YlWcO40omsSFdUQr08Nk4EzX6EwbYUJRFQVnzyOt52MoQOeCxEcH10o8mu8PCNKX3ZfeioV/yVn+NA==}
@@ -5425,6 +5488,26 @@ snapshots:
   '@dicebear/core@9.4.3':
     dependencies:
       '@types/json-schema': 7.0.15
+
+  '@dicebear/lorelei@9.4.3(@dicebear/core@9.4.3)':
+    dependencies:
+      '@dicebear/core': 9.4.3
+
+  '@dicebear/micah@9.4.3(@dicebear/core@9.4.3)':
+    dependencies:
+      '@dicebear/core': 9.4.3
+
+  '@dicebear/notionists@9.4.3(@dicebear/core@9.4.3)':
+    dependencies:
+      '@dicebear/core': 9.4.3
+
+  '@dicebear/open-peeps@9.4.3(@dicebear/core@9.4.3)':
+    dependencies:
+      '@dicebear/core': 9.4.3
+
+  '@dicebear/pixel-art@9.4.3(@dicebear/core@9.4.3)':
+    dependencies:
+      '@dicebear/core': 9.4.3
 
   '@dicebear/thumbs@9.4.3(@dicebear/core@9.4.3)':
     dependencies:

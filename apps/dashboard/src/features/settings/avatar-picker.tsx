@@ -1,15 +1,22 @@
 import * as React from 'react';
-import { CameraIcon, MinusIcon, PlusIcon, ShuffleIcon } from 'lucide-react';
+import {
+  ArrowLeftIcon,
+  CameraIcon,
+  MinusIcon,
+  PaletteIcon,
+  PlusIcon,
+  ShuffleIcon,
+} from 'lucide-react';
 import {
   OWNER_AVATAR_STYLES,
-  STARTING_MAKE,
+  OWNER_FACE_SEEDS,
   OWNER_FACES_PER_STYLE,
   UPLOAD_ACCEPT,
   errorWords,
   ownerAvatarFile,
   settingsWords,
-  type AvatarMake,
   type AvatarTheme,
+  type FaceRecipe,
   type OwnerAvatar,
   type OwnerAvatarStyle,
 } from '@smartapp/core';
@@ -17,10 +24,11 @@ import { cropImage, errorCodeOf, useSaveProfile } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { ButtonGroup, ButtonGroupText } from '@smartapp/ui/components/button-group';
 import { Cropper, CropperArea, CropperImage } from '@smartapp/ui/components/cropper';
+import { Scroller } from '@smartapp/ui/components/scroller';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
-import { AvatarMaker } from '@smartapp/ui/compositions/avatar-maker';
+import { FaceCustomiser } from '@smartapp/ui/compositions/face-customiser';
 import { notify } from '@smartapp/ui/compositions/notify';
 import {
   ResponsiveDialog,
@@ -31,9 +39,10 @@ import { uploadProblemText, useImageUpload } from '@/app/image-upload-row';
 import { AVATAR_BG, OwnerAvatarView, THEME_ORDER, rememberPhoto } from '@/app/owner-avatar';
 
 const W = settingsWords.avatar;
-const TABS = ['faces', 'make', 'photo'] as const;
+const TABS = ['faces', 'photo'] as const;
 type Tab = (typeof TABS)[number];
 type StyleChoice = OwnerAvatarStyle | 'initials';
+const STYLE_CHOICES: readonly StyleChoice[] = [...OWNER_AVATAR_STYLES, 'initials'];
 const PROFILE_SIDE = 256;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
@@ -49,10 +58,17 @@ function themeOf(avatar: OwnerAvatar): AvatarTheme {
   return avatar.kind === 'photo' ? 'sky' : avatar.theme;
 }
 
-function tabOf(avatar: OwnerAvatar): Tab {
-  if (avatar.kind === 'custom') return 'make';
-  if (avatar.kind === 'photo') return 'photo';
-  return 'faces';
+function styleOf(avatar: OwnerAvatar): StyleChoice {
+  if (avatar.kind === 'face') return avatar.style;
+  if (avatar.kind === 'custom') return avatar.recipe.style;
+  if (avatar.kind === 'initials') return 'initials';
+  return 'soft';
+}
+
+/** The default face a seed draws (face 1 when the seed is not one of ours). */
+function faceOfSeed(seed: string): number {
+  const index = OWNER_FACE_SEEDS.findIndex((s) => s === seed);
+  return index < 0 ? 1 : index + 1;
 }
 
 async function dataUrlToFile(dataUrl: string): Promise<File> {
@@ -61,9 +77,9 @@ async function dataUrlToFile(dataUrl: string): Promise<File> {
 }
 
 /**
- * Change picture (decisions T68, T83): Faces (6 styles × 12, or initials), Make your own (the shared
- * picture maker, drawn on the device), or a photo fitted in a circle and kept at 256 px. Faces and made
- * pictures use no storage.
+ * Change picture (decisions T68, T93): Faces (7 styles × 12, or initials), where any face can be
+ * customised piece by piece on the device, or a photo fitted in a circle and kept at 256 px. Faces and
+ * customised faces use no storage.
  */
 export function AvatarPicker({
   open,
@@ -81,7 +97,7 @@ export function AvatarPicker({
       open={open}
       onOpenChange={onOpenChange}
       title={W.title}
-      description={W.credit}
+      description={W.description}
       scroll
     >
       {open ? (
@@ -101,16 +117,12 @@ function PickerBody({
   onClose: () => void;
 }) {
   const [draft, setDraft] = React.useState<OwnerAvatar>(current);
-  const [tab, setTab] = React.useState<Tab>(tabOf(current));
+  const [tab, setTab] = React.useState<Tab>(current.kind === 'photo' ? 'photo' : 'faces');
   const [theme, setTheme] = React.useState<AvatarTheme>(themeOf(current));
-  const [style, setStyle] = React.useState<StyleChoice>(
-    current.kind === 'face' ? current.style : current.kind === 'initials' ? 'initials' : 'soft',
-  );
-  // The made picture, kept while switching tabs; its drawing arrives once the maker has loaded.
-  const [made, setMade] = React.useState<{ make: AvatarMake; svg: string | null }>(
-    current.kind === 'custom'
-      ? { make: current.make, svg: current.svg }
-      : { make: STARTING_MAKE, svg: null },
+  const [style, setStyle] = React.useState<StyleChoice>(styleOf(current));
+  // The face being customised; null shows the 12 faces.
+  const [recipe, setRecipe] = React.useState<FaceRecipe | null>(
+    current.kind === 'custom' ? current.recipe : null,
   );
   const saveProfile = useSaveProfile();
   const action = useAsyncAction();
@@ -125,9 +137,21 @@ function PickerBody({
 
   const pickStyle = (next: StyleChoice) => {
     setStyle(next);
+    setRecipe(null);
     if (next === 'initials') setDraft({ kind: 'initials', theme });
     else
       setDraft({ kind: 'face', style: next, face: draft.kind === 'face' ? draft.face : 1, theme });
+  };
+
+  const customise = (s: OwnerAvatarStyle) => {
+    const face = draft.kind === 'face' && draft.style === s ? draft.face : 1;
+    // No pieces yet: the customiser fills them in from the face's seed when its style has loaded.
+    setRecipe({ style: s, seed: OWNER_FACE_SEEDS[face - 1] ?? OWNER_FACE_SEEDS[0], parts: {} });
+  };
+
+  const backToFaces = (from: FaceRecipe) => {
+    setRecipe(null);
+    setDraft({ kind: 'face', style: from.style, face: faceOfSeed(from.seed), theme });
   };
 
   const surprise = () => {
@@ -136,6 +160,7 @@ function PickerBody({
     const t = THEME_ORDER[Math.floor(Math.random() * 6)] ?? 'sky';
     setStyle(s);
     setTheme(t);
+    setRecipe(null);
     setDraft({
       kind: 'face',
       style: s,
@@ -170,13 +195,11 @@ function PickerBody({
           const next = TABS.find((t) => t === value);
           if (!next) return;
           setTab(next);
-          if (next === 'make' && made.svg)
-            setDraft({ kind: 'custom', make: made.make, svg: made.svg, theme });
-          if (next === 'faces') pickStyle(style);
+          if (next === 'faces' && draft.kind === 'photo') pickStyle(style);
         }}
         className="gap-4"
       >
-        <TabsList className="grid w-full grid-cols-3 group-data-horizontal/tabs:h-auto">
+        <TabsList className="grid w-full grid-cols-2 group-data-horizontal/tabs:h-auto">
           {TABS.map((t) => (
             <TabsTrigger key={t} value={t} className="h-11 md:h-9">
               {W.tabs[t]}
@@ -185,25 +208,23 @@ function PickerBody({
         </TabsList>
 
         <TabsContent value="faces" className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
+          <Scroller orientation="horizontal" hideScrollbar className="-mx-1 px-1">
             <ToggleGroup
               aria-label={W.styleLabel}
               value={[style]}
               onValueChange={(value) => {
-                const next = [...OWNER_AVATAR_STYLES, 'initials' as const].find(
-                  (s) => s === value[0],
-                );
+                const next = STYLE_CHOICES.find((s) => s === value[0]);
                 if (next) pickStyle(next);
               }}
-              className="scrollbar-none min-w-0 flex-1 justify-start overflow-x-auto"
+              className="w-max"
             >
-              {[...OWNER_AVATAR_STYLES, 'initials' as const].map((s) => (
+              {STYLE_CHOICES.map((s) => (
                 <ToggleGroupItem key={s} value={s} className="h-11 shrink-0 px-3 md:h-9">
                   {W.styles[s]}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
-          </div>
+          </Scroller>
           {style === 'initials' ? (
             <p className="text-sm text-muted-foreground">
               {W.initialsLine(
@@ -215,13 +236,32 @@ function PickerBody({
                   .join(''),
               )}
             </p>
+          ) : recipe ? (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <Button
+                  variant="outline"
+                  className="h-11 md:h-9"
+                  onClick={() => backToFaces(recipe)}
+                >
+                  <ArrowLeftIcon />
+                  {W.backToFaces}
+                </Button>
+                <p className="min-w-0 flex-1 text-sm text-muted-foreground">{W.customiseLine}</p>
+              </div>
+              <FaceCustomiser
+                value={recipe}
+                tileClassName={AVATAR_BG[theme]}
+                onChange={(next, svg) => {
+                  setRecipe(next);
+                  setDraft({ kind: 'custom', recipe: next, svg, theme });
+                }}
+              />
+            </div>
           ) : (
             <>
-              <div
-                role="radiogroup"
-                aria-label={W.styles[style]}
-                className="grid grid-cols-4 gap-2 sm:grid-cols-6"
-              >
+              {/* Fixed-size tiles (T93): a square worked out from a column width overlapped in some browsers. */}
+              <div role="radiogroup" aria-label={W.styles[style]} className="flex flex-wrap gap-3">
                 {Array.from({ length: OWNER_FACES_PER_STYLE }, (_, i) => i + 1).map((face) => {
                   const picked =
                     draft.kind === 'face' && draft.style === style && draft.face === face;
@@ -235,7 +275,7 @@ function PickerBody({
                       aria-label={W.face(face)}
                       onClick={() => setDraft(avatar)}
                       className={cn(
-                        'aspect-square overflow-hidden rounded-full transition-transform outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-safe:active:scale-95',
+                        'size-16 shrink-0 overflow-hidden rounded-full transition-transform outline-none focus-visible:ring-3 focus-visible:ring-ring/50 motion-safe:active:scale-95',
                         AVATAR_BG[theme],
                         picked && 'ring-3 ring-primary ring-offset-2 ring-offset-background',
                       )}
@@ -250,26 +290,18 @@ function PickerBody({
                   );
                 })}
               </div>
-              <Button variant="outline" className="h-11 self-start md:h-9" onClick={surprise}>
-                <ShuffleIcon />
-                {W.surprise}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button className="h-11 md:h-9" onClick={() => customise(style)}>
+                  <PaletteIcon />
+                  {W.customise}
+                </Button>
+                <Button variant="outline" className="h-11 md:h-9" onClick={surprise}>
+                  <ShuffleIcon />
+                  {W.surprise}
+                </Button>
+              </div>
             </>
           )}
-        </TabsContent>
-
-        <TabsContent value="make" className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground">{W.makeLine}</p>
-          {tab === 'make' ? (
-            <AvatarMaker
-              value={made.make}
-              tileClassName={AVATAR_BG[theme]}
-              onChange={(make, svg) => {
-                setMade({ make, svg });
-                setDraft({ kind: 'custom', make, svg, theme });
-              }}
-            />
-          ) : null}
         </TabsContent>
 
         <TabsContent value="photo">
@@ -284,7 +316,7 @@ function PickerBody({
       {draft.kind !== 'photo' ? (
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium text-foreground">{W.colour}</p>
-          <div role="radiogroup" aria-label={W.colour} className="grid grid-cols-8 gap-2">
+          <div role="radiogroup" aria-label={W.colour} className="flex flex-wrap gap-2">
             {THEME_ORDER.map((t) => (
               <button
                 key={t}
@@ -294,7 +326,7 @@ function PickerBody({
                 aria-label={W.themes[t]}
                 onClick={() => pickTheme(t)}
                 className={cn(
-                  'aspect-square min-h-9 rounded-full border border-border outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                  'size-10 shrink-0 rounded-full border border-border outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
                   AVATAR_BG[t],
                   theme === t && 'ring-3 ring-primary ring-offset-2 ring-offset-background',
                 )}
@@ -303,6 +335,9 @@ function PickerBody({
           </div>
         </div>
       ) : null}
+
+      {/* The licence asks for credit; small print at the bottom (T93), not above the picture. */}
+      <p className="text-xs text-muted-foreground">{W.credit}</p>
 
       <ResponsiveDialogFooter>
         <div className="flex justify-end gap-2">
