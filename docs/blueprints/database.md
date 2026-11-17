@@ -1,6 +1,6 @@
 # Database blueprint (MVP A)
 
-Status: **proposed, waiting for the founder's yes on D1 to D9** (section 12). Nothing here is applied yet. The full illustrated version (diagrams, normalization walkthrough, data dictionary, sources) is the downloadable "Database blueprint" doc; this file is the short core plan that agents follow.
+Status: **approved 2026-11-17 (decision T96: D1 to D9 as recommended)**. Built step by step from section 10. The full illustrated version (diagrams, normalization walkthrough, data dictionary, sources) is the downloadable "Database blueprint" doc; this file is the short core plan that agents follow.
 
 This replaces the old schema in `SMART_APP_PH_BLUEPRINT.md` section 13 and `SYSTEM.md` section 7, which date from 2026-11-03 (before T49 to T95) and must not be built from.
 

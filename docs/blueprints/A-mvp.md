@@ -50,7 +50,7 @@ Area order in phase 4: shops and settings, catalog, orders and payments, members
 - A guest order links to a member only by its order token or the same email, never by phone alone.
 - Shop media paths never change (`<tenantId>/<folder>/<uuid>.webp`); images are compressed on the phone.
 - Every table: RLS on, explicit grants, policies, in the same migration. A cross-shop test per table.
-- The table plan, keys, access model and build order: `database.md` (proposed, waiting for the founder's yes on D1 to D9).
+- The table plan, keys, access model and build order: `database.md` (approved, T96).
 
 ## 5. Launch acceptance
 

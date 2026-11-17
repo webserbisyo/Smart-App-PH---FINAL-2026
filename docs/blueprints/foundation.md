@@ -1,6 +1,6 @@
 # Foundation blueprint
 
-The base every task builds on. Product scope lives in `A-mvp.md` (launch) and `B-full.md` (after launch). The database plan lives in `database.md` (proposed, waiting for the founder's yes).
+The base every task builds on. Product scope lives in `A-mvp.md` (launch) and `B-full.md` (after launch). The database plan lives in `database.md` (approved, T96).
 
 ## 1. Decisions
 

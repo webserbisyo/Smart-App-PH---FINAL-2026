@@ -23,16 +23,98 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "profiles": {
+            "platform_settings": {
                   Row: {
-                    "created_at": string,"full_name": string | null,"id": string
+                    "id": boolean,"messenger_url": string | null,"pay_to_gcash": string,"pay_to_maya": string,"pay_to_name": string,"price_monthly": number,"six_month_bonus": boolean,"tracking_sending": boolean,"tracking_test_mode": boolean,"trial_days": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"full_name"?: string | null,"id": string
+                    "id"?: boolean,"messenger_url"?: string | null,"pay_to_gcash"?: string,"pay_to_maya"?: string,"pay_to_name"?: string,"price_monthly"?: number,"six_month_bonus"?: boolean,"tracking_sending"?: boolean,"tracking_test_mode"?: boolean,"trial_days"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"full_name"?: string | null,"id"?: string
+                    "id"?: boolean,"messenger_url"?: string | null,"pay_to_gcash"?: string,"pay_to_maya"?: string,"pay_to_name"?: string,"price_monthly"?: number,"six_month_bonus"?: boolean,"tracking_sending"?: boolean,"tracking_test_mode"?: boolean,"trial_days"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"profiles": {
+                  Row: {
+                    "avatar": Json | null,"created_at": string,"full_name": string | null,"id": string,"phone": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "avatar"?: Json | null,"created_at"?: string,"full_name"?: string | null,"id": string,"phone"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "avatar"?: Json | null,"created_at"?: string,"full_name"?: string | null,"id"?: string,"phone"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"reserved_slugs": {
+                  Row: {
+                    "slug": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "slug": string
+                  }
+                  Update: {
+                    "slug"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"signup_leads": {
+                  Row: {
+                    "campaign": string | null,"channel": string,"contacted_at": string | null,"created_at": string,"email": string,"fbc": string | null,"fbp": string | null,"full_name": string,"id": string,"phone": string,"tenant_id": string | null,"terms_version": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "campaign"?: string | null,"channel": string,"contacted_at"?: string | null,"created_at"?: string,"email": string,"fbc"?: string | null,"fbp"?: string | null,"full_name": string,"id"?: string,"phone": string,"tenant_id"?: string | null,"terms_version": string
+                  }
+                  Update: {
+                    "campaign"?: string | null,"channel"?: string,"contacted_at"?: string | null,"created_at"?: string,"email"?: string,"fbc"?: string | null,"fbp"?: string | null,"full_name"?: string,"id"?: string,"phone"?: string,"tenant_id"?: string | null,"terms_version"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "signup_leads_tenant_fk"
+      columns: ["tenant_id"]
+isOneToOne: false
+      referencedRelation: "tenants"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"tenant_members": {
+                  Row: {
+                    "created_at": string,"notify_email": string | null,"notify_new_order": boolean,"notify_payment_to_check": boolean,"notify_plan_payment": boolean,"notify_storage": boolean,"role": string,"tenant_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"notify_email"?: string | null,"notify_new_order"?: boolean,"notify_payment_to_check"?: boolean,"notify_plan_payment"?: boolean,"notify_storage"?: boolean,"role"?: string,"tenant_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"notify_email"?: string | null,"notify_new_order"?: boolean,"notify_payment_to_check"?: boolean,"notify_plan_payment"?: boolean,"notify_storage"?: boolean,"role"?: string,"tenant_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tenant_members_tenant_id_fkey"
+      columns: ["tenant_id"]
+isOneToOne: false
+      referencedRelation: "tenants"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"tenants": {
+                  Row: {
+                    "asked_at": string | null,"campaign": string | null,"channel": string,"city": string,"close_reason": string | null,"closed_at": string | null,"closes_on": string | null,"created_at": string,"facebook_page": string | null,"id": string,"is_demo": boolean,"kind": string,"live_at": string | null,"name": string,"paid_until": string | null,"price_monthly": number,"reminded_at": string | null,"slug": string,"stage": string,"storage_limit_bytes": number,"trial_ends_at": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "asked_at"?: string | null,"campaign"?: string | null,"channel"?: string,"city"?: string,"close_reason"?: string | null,"closed_at"?: string | null,"closes_on"?: string | null,"created_at"?: string,"facebook_page"?: string | null,"id"?: string,"is_demo"?: boolean,"kind": string,"live_at"?: string | null,"name": string,"paid_until"?: string | null,"price_monthly": number,"reminded_at"?: string | null,"slug": string,"stage"?: string,"storage_limit_bytes"?: number,"trial_ends_at"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "asked_at"?: string | null,"campaign"?: string | null,"channel"?: string,"city"?: string,"close_reason"?: string | null,"closed_at"?: string | null,"closes_on"?: string | null,"created_at"?: string,"facebook_page"?: string | null,"id"?: string,"is_demo"?: boolean,"kind"?: string,"live_at"?: string | null,"name"?: string,"paid_until"?: string | null,"price_monthly"?: number,"reminded_at"?: string | null,"slug"?: string,"stage"?: string,"storage_limit_bytes"?: number,"trial_ends_at"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     
