@@ -8,6 +8,10 @@ Prices here are in pesos for reading. Store them as centavos (₱149 = `14900`).
 
 `slug, name, kind (food|retail), tagline, description, owner {name, email}, phone, address {line1, barangay, city, province, zip}, landmark, geo {lat, lng}, hours [day, open, close], orderTypes, payments, deliveryZones [name, fee], brandColor, stampRule {earn, goal, reward}, categories [name, items [name, price, variants?, note?]]`
 
+## Usual week and past orders (T71)
+
+Each demo shop also has a usual week in `packages/core/src/demo/rhythm.ts` (orders a day, busy days and hours, order types, payments, paydays for Tala). The mocks make 60 days of light past orders from it, never stored, so Home's pace, trends and busy hours have something to compare. The database seed (`database.md` §10) writes these past orders as real rows through the API, so the dev database shows the same Home as the mocks.
+
 ## Summary
 
 | #   | Shop                              | Slug           | Kind   | City        | Owner login                               |

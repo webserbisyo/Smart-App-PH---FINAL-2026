@@ -1,21 +1,21 @@
 # Foundation blueprint
 
-The base every task builds on. Product scope lives in `A-mvp.md` (launch) and `B-full.md` (after launch).
+The base every task builds on. Product scope lives in `A-mvp.md` (launch) and `B-full.md` (after launch). The database plan lives in `database.md` (proposed, waiting for the founder's yes).
 
 ## 1. Decisions
 
-| #   | Decision                                                                                                                       |
-| --- | ------------------------------------------------------------------------------------------------------------------------------ |
-| F1  | New repo and new Supabase project. Old repos are reference only, never copied wholesale.                                       |
-| F2  | Frontend first: build and see every screen with mock data, then wire the backend one area at a time.                           |
-| F3  | The only database work now is auth (sign up, log in, profiles) and 5 demo owner accounts.                                      |
-| F4  | NestJS API from day 1 (`apps/api`). It starts with health and auth checks and grows as areas are wired.                        |
-| F5  | Mock data uses the same Zod schemas as the API, so the swap is one switch per area.                                            |
-| F6  | UI only from installed libraries (shadcn on Base UI, ReUI, DiceUI, Magic UI). Hand-writing a component needs the founder's OK. |
-| F7  | `docs/components.md` lists every installed component and where it is used; `/kit` shows them all.                              |
-| F8  | One long-lived branch `main`. Agents work on `ag/<task>-<name>` and always open a PR into `main`.                              |
-| F9  | Icons: lucide (the default of all four libraries). Font: Plus Jakarta Sans.                                                    |
-| F10 | Docs stay short and general. Agents read only the docs a prompt names. Specific component picks live in each task's prompt.    |
+| #   | Decision                                                                                                                                                                          |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1  | New repo and new Supabase project. Old repos are reference only, never copied wholesale.                                                                                          |
+| F2  | Frontend first: build and see every screen with mock data, then wire the backend one area at a time.                                                                              |
+| F3  | The only database work now is auth (sign up, log in, profiles) and 5 demo owner accounts.                                                                                         |
+| F4  | NestJS API from day 1 (`apps/api`). It starts with health and auth checks and grows as areas are wired.                                                                           |
+| F5  | Mock data uses the same Zod schemas as the API, so the swap is one switch per area.                                                                                               |
+| F6  | UI only from installed libraries (shadcn on Base UI, ReUI, DiceUI, Magic UI). Hand-writing a component needs the founder's OK.                                                    |
+| F7  | `docs/components.md` lists every installed component and where it is used; `/kit` shows them all.                                                                                 |
+| F8  | One long-lived branch `main`. Agents work on `ag/<task>-<name>` and always open a PR into `main`. Amended by T40: work is pushed straight to `main` and a cloud thread checks it. |
+| F9  | Icons: lucide (the default of all four libraries). Font: Plus Jakarta Sans.                                                                                                       |
+| F10 | Docs stay short and general. Agents read only the docs a prompt names. Specific component picks live in each task's prompt.                                                       |
 
 ## 2. Stack
 
@@ -75,7 +75,7 @@ Auth (all phases): app -> @smartapp/data -> NestJS /auth -> Supabase Auth
 ## 5. Auth
 
 - Owners sign up and log in with email and password (Supabase Auth). Google sign-in comes in T01b. Customers (members) come later with a 6-digit email code. Auth emails always send codes, never links.
-- One error message for every failed login. Server code and route guards check the user with `getClaims()`, never `getSession()`. The storefront refreshes the session in `src/proxy.ts` through `@smartapp/data/server`.
+- One error message for every failed login. Server code and route guards check the user with `getClaims()`, never `getSession()`. The storefront refreshes the session in `src/proxy.ts` through `@smartapp/data/server`. (Amended by T34: login, codes and session refresh move behind NestJS; these Supabase calls in `packages/data` are the temporary exception until then.)
 - `public.profiles` is the only table now, created by a trigger on sign up, RLS: a user reads and edits only their own row.
 - Demo owners are created by an idempotent script (`apps/api/scripts/seed-demo-accounts.ts`) with the Supabase Admin API. The password comes from an env variable, never from the repo (the repo is public). Each demo user has `app_metadata.demo_shop = <slug>`.
 - The API checks the Supabase access token with `jose` against the project JWKS (`/auth/v1/.well-known/jwks.json`, asymmetric signing keys).
@@ -89,7 +89,7 @@ Auth (all phases): app -> @smartapp/data -> NestJS /auth -> Supabase Auth
 | Apps run on the founder's Mac; Vercel previews optional                            | Vercel prod from `main` (Pro plan; Hobby bans commercial use), `shop.webserbisyo.com`, `app.webserbisyo.com` |
 | API runs locally                                                                   | Railway Singapore, `api.webserbisyo.com`                                                                     |
 
-Migrations reach the dev project only when the founder runs `pnpm db:push` after merging; agents never run it. Local Docker Supabase is optional and not required for any task. Regions: Supabase Singapore, Vercel functions `sin1`, Railway Singapore. Before the first paying shop: branch protection on `main` (PR and green CI required) and Supabase backups.
+Migrations reach the dev project only when the founder runs `pnpm db:push` after merging; agents never run it. (`database.md` D9 proposes that CI applies them to dev after the tests pass; waiting for the founder.) Local Docker Supabase is optional and not required for any task. Regions: Supabase Singapore, Vercel functions `sin1`, Railway Singapore. Before the first paying shop: branch protection on `main` (PR and green CI required) and Supabase backups.
 
 ## 7. Way of working
 
@@ -108,7 +108,7 @@ Every prompt carries this line: "Use the planned library components. Install any
 | Nest cannot import TypeScript source from workspace packages | `@smartapp/core` builds to `dist` with `tsc`; Turbo builds dependencies first                                                                                                                                                                                                                |
 | Tenant data leaks through a forgotten filter                 | From the first route: every route needs `@Public()` or `@Can()` (a test fails otherwise); the shop comes from `tenant_members`, never the URL or body; JWT checks `iss`, `aud`, `exp`; later guards (Auth, Tenant, Permission) plus RLS in the same request transaction and cross-shop tests |
 | Open API surface                                             | helmet, CORS allow-list, 100 kB body limit, Zod on every input (unknown keys stripped), no customer data in logs                                                                                                                                                                             |
-| Two places for rules (Nest and SQL)                          | Money, stock and stamps stay in SQL functions; Nest validates, checks permission and calls them                                                                                                                                                                                              |
+| Two places for rules (Nest and SQL)                          | Money, counts (daily limit, prize quantity, order numbers) and stamps stay in SQL functions; Nest validates, checks permission and calls them (`database.md`)                                                                                                                                |
 | Extra latency (app -> Railway -> Supabase)                   | Same region (Singapore); public storefront reads cached in Next                                                                                                                                                                                                                              |
 | API down means everything is down, login included            | Health check with auto-restart on Railway; cached public shop pages                                                                                                                                                                                                                          |
 | Cost                                                         | Railway Hobby only from the first wired area; check pricing then                                                                                                                                                                                                                             |

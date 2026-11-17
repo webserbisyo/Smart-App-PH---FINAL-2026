@@ -33,7 +33,7 @@ Codes: `invalid_login`, `email_taken`, `weak_password`, `invalid_code`, `code_ex
 | Method            | HTTP                  | Input → Output                                                                                                                                                                                                                         |
 | ----------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `getMyShop`       | GET `/owner/shop`     | → `Shop \| null`                                                                                                                                                                                                                       |
-| `createMyShop`    | POST `/owner/shop`    | `{ kind, name, slug }` → `Shop` (status `pending`)                                                                                                                                                                                     |
+| `createMyShop`    | POST `/owner/shop`    | `{ kind, name, slug }` → `Shop` (stage `setting_up`, T89)                                                                                                                                                                              |
 | `isSlugFree`      | GET `/slugs/:slug`    | → `boolean`                                                                                                                                                                                                                            |
 | `saveSortOrder`   | PUT `/owner/sort`     | `{ kind, ids }`                                                                                                                                                                                                                        |
 | `createUploadUrl` | POST `/owner/uploads` | `{ kind: logo\|banner\|item\|category\|qr\|avatar\|plan_proof, bytes? }` → signed upload URL + `path` for exactly that size (shrunk on the phone, T65). Refuses `storage_full` when the 500 MB is used, never for a plan receipt (T66) |
@@ -73,15 +73,15 @@ Codes: `storage_full`, `file_not_image`, `file_too_large`, `export_not_ready`, `
 
 ## Catalog (owner)
 
-| Method                                                                   | HTTP                            | Input → Output                                                    |
-| ------------------------------------------------------------------------ | ------------------------------- | ----------------------------------------------------------------- |
-| `listCategories` / `saveCategory` / `removeCategory`                     | `/owner/categories`             | `Category` (with `icon`)                                          |
-| `listItems`                                                              | GET `/owner/items`              | → `CatalogItem[]` (photos, variants, add-on groups, every status) |
-| `saveItem`                                                               | PUT `/owner/items/:id`          | `ItemDraft` → `CatalogItem` (one transaction)                     |
-| `setItemStatus`                                                          | PATCH `/owner/items/:id/status` | `active\|hidden\|archived`                                        |
-| `setSoldOut` / `setStock`                                                | PATCH `/owner/variants/:id`     | `{ isSoldOut }` / `{ stockOnHand }` (logged)                      |
-| `listOptionGroups` / `saveOptionGroup` / `removeOptionGroup`             | `/owner/option-groups`          | `OptionGroup`                                                     |
-| `listVariantTemplates` / `saveVariantTemplate` / `removeVariantTemplate` | `/owner/variant-templates`      | `VariantTemplate` (reusable choices across items)                 |
+| Method                                                                   | HTTP                            | Input → Output                                                                                           |
+| ------------------------------------------------------------------------ | ------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `listCategories` / `saveCategory` / `removeCategory`                     | `/owner/categories`             | `Category` (with `icon`)                                                                                 |
+| `listItems`                                                              | GET `/owner/items`              | → `CatalogItem[]` (photos, variants, add-on groups, every status)                                        |
+| `saveItem`                                                               | PUT `/owner/items/:id`          | `ItemDraft` → `CatalogItem` (one transaction)                                                            |
+| `setItemStatus`                                                          | PATCH `/owner/items/:id/status` | `active\|hidden\|archived`                                                                               |
+| `setSoldOut`                                                             | PATCH `/owner/variants/:id`     | `{ isSoldOut }` (logged). No stock counts in A (N26); `setStock` waits for MVP B (database blueprint D3) |
+| `listOptionGroups` / `saveOptionGroup` / `removeOptionGroup`             | `/owner/option-groups`          | `OptionGroup`                                                                                            |
+| `listVariantTemplates` / `saveVariantTemplate` / `removeVariantTemplate` | `/owner/variant-templates`      | `VariantTemplate` (reusable choices across items)                                                        |
 
 Codes: `category_not_empty`, `item_has_orders` (archive instead), `variant_is_reward` (protects stamp card prize).
 

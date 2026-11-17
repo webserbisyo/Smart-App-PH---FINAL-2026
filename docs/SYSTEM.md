@@ -376,6 +376,8 @@ Every stamp change is a row in an append-only history with who, why and when. Ba
 
 ## 7. Data design
 
+> **Out of date, do not build from this section.** Written 2026-11-03 (decisions up to T49). The current database plan is `docs/blueprints/database.md`.
+
 ### 7.1 Rules
 
 - Every shop-owned table has `tenant_id` and row-level security; RLS, grants and policies are in the same migration as the table; one cross-shop test per table.

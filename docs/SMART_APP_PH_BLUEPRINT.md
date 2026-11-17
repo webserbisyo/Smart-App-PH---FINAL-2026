@@ -1133,6 +1133,8 @@ Nest modules in `apps/api/src/modules/` (guards, pipes and the error filter stay
 
 ## 13. Database schema
 
+> **Out of date, do not build from this section.** Written 2026-11-03 (decisions up to T48). The current database plan is `docs/blueprints/database.md`, which also lists what changed (T34 no pg_cron or Realtime, T46 variants, N26 no stock, T57 to T95).
+
 The target schema for MVP A. Today only `public.profiles` exists (T01). Each area lands in phase 4 as new migration files with RLS, grants and policies in the same file; this section is the plan those migrations follow. Names follow the code words (tenant, item, catalog, prep).
 
 ### 13.1 Conventions

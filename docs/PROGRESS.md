@@ -70,6 +70,8 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 
 ## Phase 4: Backend, area by area
 
+- [x] Database blueprint proposed: 54 tables in 8 areas, access model, build order, decisions D1 to D9 waiting for the founder (`docs/blueprints/database.md`, 2026-11-17)
+- [ ] Database build step 1 (platform core), after the founder's yes on D1 to D9
 - [ ] Members area: customer account, picture and saved places in the database (today mock data and this phone only, decision R22)
 
 ## Phase 5: Launch

@@ -118,12 +118,12 @@ Current decisions only. One line each; newest at the bottom of its section. Foun
 - N1 A closed or paused shop keeps the cart; "Take orders while closed" (default on) offers next-opening slots today or tomorrow for pickup and delivery only; no new order status (amended by T48: days ahead are a shop setting, default today and tomorrow).
 - N2 Offline: the cart and checkout details are kept; Place order waits for the connection and re-quotes. No background order sending (Safari and iOS have no Background Sync).
 - N3 Favourites are stored on the phone only; synced favourites and carts are B (M13).
-- N4 Up to 2 variant choices per item and 30 variants; add-on groups are a shared library with min and max picks (min 1 = required); "Goes well with" up to 4 items per item.
+- N4 Up to 2 variant choices per item and 30 variants; add-on groups are a shared library with min and max picks (min 1 = required); "Goes well with" up to 4 items per item. (Amended by T46: up to 3 choices, reusable variant templates.)
 - N5 One stamp card per shop with one active reward: discount, free item or custom prize. Manual stamps ±1 need a reason, owner only, at most 3 per member per Manila day.
 - N6 The member QR opens the member's page in the dashboard when scanned with the phone camera; no scanner in the app.
-- N7 Editor: fixed sections edited in place on a live preview, Draft and Publish, sections on or off; no reorder, fonts or custom blocks in A. (Amended by T64: contact facts are edited in Settings › Shop.)
+- N7 Editor: fixed sections edited in place on a live preview, Draft and Publish, sections on or off; no reorder, fonts or custom blocks in A. (Amended by T64: contact facts are edited in Settings › Shop. Amended by T76 and T79: each shop picks a style and one of 8 font pairs; T94 adds the opening screen.)
 - N8 Logo colour helper builds the 60/30/10 palette without an AI model; the AI brand assistant is B (M20).
-- N9 Dashboard navigation: Home, Orders, Menu or Products, Members, Editor, Insights, Settings.
+- N9 Dashboard navigation: Home, Orders, Menu or Products, Members, Editor, Insights, Settings. (Amended by T69: Insights is hidden for launch; `/insights` opens Home's trends.)
 - N10 The owner gets a new-order email in A.
 - N11 The receipt can be saved as an image (made on the server from the order with the Next.js built-in image response) or printed and saved as PDF; no new package.
 - N12 Settings has Notifications and Plan sections. (Amended by T64 and T67: three groups, one Pro plan.)
