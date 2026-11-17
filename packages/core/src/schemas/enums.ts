@@ -302,6 +302,17 @@ export const UPLOAD_KINDS = [
 export const UploadKindEnum = z.enum(UPLOAD_KINDS);
 export type UploadKind = z.infer<typeof UploadKindEnum>;
 
+// Every stored file's kind in `media_files` (database step 2, T96): the owner's uploads plus the two a
+// customer sends, a payment proof and a member's own photo (T95).
+export const MEDIA_KINDS = [...UPLOAD_KINDS, 'proof', 'member_photo'] as const;
+export const MediaKindEnum = z.enum(MEDIA_KINDS);
+export type MediaKind = z.infer<typeof MediaKindEnum>;
+
+// The Storage buckets: public to read through the CDN, or private behind short signed links.
+export const MEDIA_BUCKETS = ['menu', 'look', 'qr', 'profile', 'proofs', 'plan-proofs'] as const;
+export const MediaBucketEnum = z.enum(MEDIA_BUCKETS);
+export type MediaBucket = z.infer<typeof MediaBucketEnum>;
+
 // Owner Settings (decisions T64 to T68).
 
 // The owner's picture (T68, T93): seven DiceBear styles, each face made once as a file, our names for them.
