@@ -45,7 +45,11 @@ describe('ownerHome mock adapter', () => {
   it("today's sales match the Orders list footer for today (H2)", async () => {
     const { store } = shopStore('kanto-smash');
     const home = await store.ownerHome.getHome();
-    const list = await store.ownerOrders.listOrders({ slug: 'kanto-smash', from: '2026-11-06', to: '2026-11-06' });
+    const list = await store.ownerOrders.listOrders({
+      slug: 'kanto-smash',
+      from: '2026-11-06',
+      to: '2026-11-06',
+    });
     expect(home.today.sales).toBe(salesTotal(list, NOW));
     expect(home.today.orders).toBe(list.filter((o) => salesTotal([o], NOW) > 0).length);
   });

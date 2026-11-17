@@ -1,6 +1,6 @@
 # Database blueprint (MVP A)
 
-Status: **approved 2026-11-17 (decision T96: D1 to D9 as recommended)**. Built step by step from section 10. The full illustrated version (diagrams, normalization walkthrough, data dictionary, sources) is the downloadable "Database blueprint" doc; this file is the short core plan that agents follow.
+Status: **approved 2026-11-17 (decision T96: D1 to D9 as recommended); built 2026-11-17** as 7 migrations (`supabase/migrations/20261117100000` to `…160000`) with 99 pgTAP tests in `supabase/tests/`. Section 13 lists where the build differs from the first plan. The full illustrated version (diagrams, normalization walkthrough, data dictionary, sources) is the downloadable "Database blueprint" doc; this file is the short core plan that agents follow.
 
 This replaces the old schema in `SMART_APP_PH_BLUEPRINT.md` section 13 and `SYSTEM.md` section 7, which date from 2026-11-03 (before T49 to T95) and must not be built from.
 
@@ -44,16 +44,15 @@ browser ─HTTPS─► NestJS (Railway, Singapore) ─pooler 5432─► Postgres
 - Functions: business functions that move money, stock-like counts or stamps (`place_order`, `add_stamp`, `use_reward`, `claim_prize`, `next_order_no`) are `security invoker`, `set search_path = ''`, execute granted to `app_api` only. `security definer` only in the `private` schema for the two lookups that must cross the tenant wall (`private.tenant_by_slug`, `private.order_by_token`) and for the Auth trigger. This follows Supabase's guidance ("never create a security definer function in an exposed schema") and narrows AGENTS rule 8 to the private schema (D1).
 - Supabase secret key: only in `apps/api` env, used only for Auth admin calls and Storage signed URLs.
 
-## 4. Tables (54 in 8 areas)
+## 4. Tables (53 in 8 areas)
 
 Keys: PK primary key, FK foreign key, UQ unique. Every table also has `created_at timestamptz not null default now()` unless it is a pure junction.
 
-### 4.1 Platform (7)
+### 4.1 Platform (6)
 
 | Table               | Key columns and rules                                                                                                                                                                                                                                                                                                                                                   |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles` (exists) | PK `id` → `auth.users` cascade; `full_name`; add `avatar jsonb` with a CHECK on `kind` (T68, T93)                                                                                                                                                                                                                                                                       |
-| `platform_admins`   | PK `user_id` → `auth.users`. Who may open Super Admin (T88)                                                                                                                                                                                                                                                                                                             |
+| `profiles` (exists) | PK `id` → `auth.users` cascade; `full_name`; add `phone` (+63 9), `avatar jsonb` with a CHECK on `kind` (T68, T93) and `updated_at`. Super Admin access is `app_metadata.platform_admin` on the sign-in (T88), so there is no admins table                                                                                                                              |
 | `platform_settings` | one row (`id boolean PK check (id)`): `price_monthly` (₱399), `trial_days` (14), `six_month_bonus`, pay-to name, GCash and Maya numbers, Messenger link (T92)                                                                                                                                                                                                           |
 | `signup_leads`      | email, name, phone, `channel` (SIGNUP_CHANNELS), fbc/fbp click ids, consent time, `tenant_id` once converted. Kept 180 days unless converted (D6)                                                                                                                                                                                                                       |
 | `tenants`           | `slug` UQ (lowercase pattern CHECK), `name`, `kind` (food, retail), `stage` (SHOP_STAGES), `city`, `facebook_page`, `is_demo`, `price_monthly` locked at sign-up (T92), `storage_limit_bytes` (500 MB), `trial_ends_at`, `paid_until`, `asked_at`, `live_at`, `closes_on`, `close_reason` (CLOSE_REASONS), `closed_at`. Plan status is computed by `planStatus` in core |
@@ -62,16 +61,16 @@ Keys: PK primary key, FK foreign key, UQ unique. Every table also has `created_a
 
 ### 4.2 Shop setup (8)
 
-| Table                    | Key columns and rules                                                                                                                                                                                                                                                                                                                            |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `shop_settings`          | PK `tenant_id` (1:1): phone, email, address, lat/lng pin, pickup note, walk-in/pickup/delivery switches (at least one on), cash and COD switches, `cod_max_total`, booking rules (`days_ahead` 1–60, `slot_minutes` 15/30/60, `orders_per_slot`, `prep_minutes` 5–180, `take_orders_while_closed`), `free_delivery_from`, `busy_until`, `paused` |
-| `storefront_content`     | PK `tenant_id`: `draft jsonb`, `published jsonb`, `draft_version`, `published_version`, `published_at`. Saved and read whole, checked by `StorefrontContentSchema` (planned 1NF exception)                                                                                                                                                       |
-| `storefront_media`       | PK (`tenant_id`, `media_id`): the files the draft or published content uses (logo, banners, opening screen), rewritten on every save so a used file is locked                                                                                                                                                                                    |
-| `opening_hours`          | `weekday` 0–6 (Manila), `opens`, `closes` (`time`); overlap rules in core `hoursProblems`; at most 28 rows                                                                                                                                                                                                                                       |
-| `closures`               | `date`, reason; UQ (`tenant_id`, `date`)                                                                                                                                                                                                                                                                                                         |
-| `payment_accounts`       | `method` (TRANSFER_METHODS), `bank` (PH_BANKS, only when method = bank, at most 3 banks), account name and number, `qr_media_id`, `sort`, `removed_at` (kept so old orders still show where money went, T84)                                                                                                                                     |
-| `delivery_distance_rows` | `from_m`, `to_m`, `fee`, `eta_minutes`, `min_order`; at most 5, no gap or overlap (N25)                                                                                                                                                                                                                                                          |
-| `delivery_zones`         | `name`, `fee`, `eta_minutes`; at most 20                                                                                                                                                                                                                                                                                                         |
+| Table                    | Key columns and rules                                                                                                                                                                                                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shop_settings`          | PK `tenant_id` (1:1): phone, email, address, lat/lng pin, pickup note, walk-in/pickup/delivery switches (at least one on), `cod_max_total`, booking rules (`days_ahead` 1–60, `slot_minutes` 15/30/60, `orders_per_slot`, `prep_minutes` 5–180, `take_orders_while_closed`), `free_delivery_from`, `busy_until`, `paused` |
+| `storefront_content`     | PK `tenant_id`: `draft jsonb`, `published jsonb`, `draft_version`, `published_version`, `published_at`. Saved and read whole, checked by `StorefrontContentSchema` (planned 1NF exception)                                                                                                                                |
+| `storefront_media`       | PK (`tenant_id`, `media_id`): the files the draft or published content uses (logo, banners, opening screen), rewritten on every save so a used file is locked                                                                                                                                                             |
+| `opening_hours`          | `weekday` 0–6 (Manila), `opens`, `closes` (`time`); overlap rules in core `hoursProblems`; at most 28 rows                                                                                                                                                                                                                |
+| `closures`               | `date`, reason; UQ (`tenant_id`, `date`)                                                                                                                                                                                                                                                                                  |
+| `payment_accounts`       | `method` (PAYMENT_METHODS: cash and COD are rows too, with no name, number or QR; one live row per method except bank), `bank` (PH_BANKS, only when method = bank, at most 3 banks), account name and number, `qr_media_id`, `sort`, `removed_at` (kept so old orders still show where money went, T84)                   |
+| `delivery_distance_rows` | `from_m`, `to_m`, `fee`, `eta_text`, `min_order`; at most 5, no gap or overlap (N25)                                                                                                                                                                                                                                      |
+| `delivery_zones`         | `name`, `fee`, `eta_text`; at most 20                                                                                                                                                                                                                                                                                     |
 
 ### 4.3 Catalog (14)
 
@@ -94,11 +93,11 @@ Keys: PK primary key, FK foreign key, UQ unique. Every table also has `created_a
 
 ### 4.4 Members (3)
 
-| Table              | Key columns and rules                                                                                                                                                                                                                                                                           |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `members`          | `user_id` → `auth.users` (one sign-in across shops, D2), `email`, `name`, `phone` (+63 9), `member_code`, `avatar jsonb` (T95), `owner_note`, `erased_at`. UQ per shop on `user_id`, `lower(email)`, `member_code`, `phone`. Guests are not rows: an order keeps their name and phone (M12, P8) |
-| `member_addresses` | `member_id`, label, address line, house no, floor, landmark, lat/lng, `zone_id` (set null when the zone is removed)                                                                                                                                                                             |
-| `consents`         | append-only: `member_id` or `lead_id`, `kind` (terms, privacy, marketing), `version`, `given_at`, `withdrawn_at`                                                                                                                                                                                |
+| Table              | Key columns and rules                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `members`          | `user_id` → `auth.users` (one sign-in across shops, D2), `email`, `name`, `phone` (+63 9), `member_code`, `avatar jsonb` (T95), `erased_at` (erasing blanks email, phone and sign-in). UQ per shop on `user_id`, `email` (stored lowercase), the code typed any way (`KS-4100` = `ks 4100`) and its digits alone. `phone` is indexed, not unique (a family can share one). Guests are not rows: an order keeps their name and phone (M12, P8) |
+| `member_addresses` | `member_id`, label, address line, house no, floor, landmark, lat/lng, `zone_id` (set null when the zone is removed)                                                                                                                                                                                                                                                                                                                           |
+| `consents`         | append-only: `member_id`, `kind` (terms, privacy, marketing), `version`, `given` (a withdrawal is a new row with `given = false`), `created_at`. A lead's consent is its `terms_version`                                                                                                                                                                                                                                                      |
 
 ### 4.5 Orders (10)
 
@@ -193,12 +192,12 @@ Collect only what the order needs. Customer data never goes to logs. A member wh
 ## 10. Build order (one migration per step, each with RLS, grants, policies and pgTAP tests)
 
 1. Platform core: roles, `private.current_tenant()`, tenants, tenant_members, reserved_slugs, platform tables, revoke `public.rls_auto_enable()` (D7)
-2. Shop setup
+2. Shop setup, and `media_files` (other tables point at it from here on)
 3. Catalog
 4. Members and consents
 5. Orders, payments and push
 6. Stamp card
-7. Files, exports, billing, activity, help mode, tracking, outbox, audit
+7. Exports, billing, activity, help mode, tracking, outbox, audit
 
 Each step: write the migration, the pgTAP tests (cross-shop reads return nothing, append-only tables refuse update and delete, every guard in section 5), regenerate types, switch that area's adapter in `packages/data` from mock to API, run the e2e. Applied migrations are never edited; a mistake is fixed by a new migration. The seed (`seed:demo`) loads the 5 demo shops from `packages/core/src/demo` through the API, so the seed tests the API too.
 
@@ -206,7 +205,7 @@ Each step: write the migration, the pgTAP tests (cross-shop reads return nothing
 
 Dev = "Smart App PH MVP FINAL" (free; demo data; may pause after 7 quiet days). Before the first paying shop: a separate live project on Pro (daily backups kept 7 days; free has no downloadable backups) (D4), custom SMTP through Resend (built-in email sends only 2 an hour), OTP expiry 10 minutes, leaked-password protection on, Data API off, "automatically expose new tables" off.
 
-## 12. Decisions waiting for the founder
+## 12. Decisions (approved 2026-11-17, T96)
 
 | #   | Question                    | Recommendation                                                                                                                                                                                                                                                                               |
 | --- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -219,3 +218,15 @@ Dev = "Smart App PH MVP FINAL" (free; demo data; may pause after 7 quiet days). 
 | D7  | Dev DB clean-up             | a migration revokes `public.rls_auto_enable()` from `anon` and `authenticated`; the founder turns on leaked-password protection by hand                                                                                                                                                      |
 | D8  | Help mode                   | stays as built (T91), every action written to `audit_log`                                                                                                                                                                                                                                    |
 | D9  | Who applies migrations      | CI applies to the **dev** project after pgTAP passes on a local database (a by-hand GitHub secret); the live project only by the founder's manual action. Changes AGENTS rule 8 wording for dev only                                                                                         |
+
+## 13. As built: differences from the first plan (2026-11-17)
+
+- 53 tables, not 54: no `platform_admins` (T88 already uses `app_metadata.platform_admin`).
+- `media_files` is built in step 2, because shop settings, menu photos and payment QR codes point at it.
+- `payment_accounts` holds cash and COD too, so `shop_settings` has no cash and COD switches.
+- `members.phone` is not unique; `consents` uses `given` plus a new row instead of `withdrawn_at`; `members` has no `owner_note` (the screens have none).
+- New core lists mirrored by CHECKs: `MEDIA_KINDS`, `MEDIA_BUCKETS`, `EMAIL_KINDS`, `EMAIL_STATUSES`.
+- Guards are small `private` functions the API calls inside its transaction: `next_order_no`, `take_daily_count`, `give_back_daily_count`, `lock_slot`, `lock_stamp_balance`, `take_prize`, `give_back_prize`, plus `tenant_by_slug` and `slug_is_free` (security definer).
+- The prize item and variant keys are named `stamp_cards_reward_item_fk` and `stamp_cards_reward_variant_fk`, so the API answers `item_is_reward` from the key name, never from the message text.
+- Owners cannot approve their own plan payments, write the founder's Billing lines or Activity lines, or delete anything append-only: the tests prove each.
+- Composite keys `(tenant_id, x_id)` are indexed on `x_id`; the Supabase advisor may list them as "unindexed foreign keys" (info only).

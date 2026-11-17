@@ -256,7 +256,9 @@ create policy track_events_admin on public.track_events
 create table public.notification_outbox (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants (id) on delete cascade,
-  kind text not null check (kind in ('new_order', 'payment_to_check', 'storage', 'plan_payment')),
+  kind text not null check (kind in (
+    'new_order', 'payment_to_check', 'storage', 'plan_payment', 'shop_live', 'plan_reminder', 'plan_answer'
+  )),
   to_email text not null check (to_email = lower(to_email) and char_length(to_email) between 3 and 254),
   -- Ids and numbers the email needs (order no., amount); never a customer's name, phone or address.
   payload jsonb not null default '{}' check (jsonb_typeof(payload) = 'object'),

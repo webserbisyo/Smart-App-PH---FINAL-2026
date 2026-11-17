@@ -313,8 +313,17 @@ export const MEDIA_BUCKETS = ['menu', 'look', 'qr', 'profile', 'proofs', 'plan-p
 export const MediaBucketEnum = z.enum(MEDIA_BUCKETS);
 export type MediaBucket = z.infer<typeof MediaBucketEnum>;
 
-// The emails waiting to go to an owner (the outbox); one per switch in NotificationPrefs.
-export const EMAIL_KINDS = ['new_order', 'payment_to_check', 'storage', 'plan_payment'] as const;
+// The emails waiting to go to an owner (the outbox). The first four follow the owner's switches in
+// NotificationPrefs; "your shop is live", plan reminders and payment answers always go out (T88).
+export const EMAIL_KINDS = [
+  'new_order',
+  'payment_to_check',
+  'storage',
+  'plan_payment',
+  'shop_live',
+  'plan_reminder',
+  'plan_answer',
+] as const;
 export const EmailKindEnum = z.enum(EMAIL_KINDS);
 export type EmailKind = z.infer<typeof EmailKindEnum>;
 

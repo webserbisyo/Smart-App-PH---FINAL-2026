@@ -93,8 +93,22 @@ Open `/admin/setup` and fill in:
 
 These are from earlier decisions and are not done yet:
 
-- The tables for shops' stages, leads, plan payments, the Billing chat, activity, help sessions and Meta events: new migration files with RLS. **You run `pnpm db:push`** after you say yes to each.
+- ~~The tables for shops' stages, leads, plan payments, the Billing chat, activity, help sessions and Meta events.~~ Done 2026-11-17 (decision T96): all 53 tables are in `supabase/migrations/`. They reach the dev database by themselves once you add the 3 secrets in section 9.
 - A separate live database (today there is only the dev one).
 - The NestJS routes in `docs/api.md` for sign-up, Super Admin and tracking, and the job that sends Meta events and retries failed ones.
 - Emails from `codes@mail.webserbisyo.com` through Resend: the sign-up code, "your shop is live", reminders and payment answers (Super Admin › Setup lists them).
 - The job that deletes payment photos after 30 days.
+
+## 9. Let GitHub update the dev database (decision T96, D9)
+
+After every push to `main`, once the checks and the 99 database tests pass, GitHub applies any new migration to the **dev** database (Smart App PH MVP FINAL). It never touches a live database. Until you add these 3 secrets the step says "skipping" and nothing happens.
+
+1. Supabase › your account menu (top right) › **Account preferences** › **Access Tokens** › **Generate new token**. Name it `github-dev-migrations`. Copy it once.
+2. Supabase › project **Smart App PH MVP FINAL** › **Project Settings** › **Database** › **Database password**. If you no longer have it, press **Reset database password**, copy the new one and keep it in your password manager.
+3. GitHub › `webserbisyo/Smart-App-PH---FINAL-2026` › **Settings** › **Secrets and variables** › **Actions** › **New repository secret**, three times:
+   - `SUPABASE_ACCESS_TOKEN` = the token from step 1
+   - `SUPABASE_DB_PASSWORD` = the password from step 2
+   - `SUPABASE_DEV_PROJECT_REF` = `kthocqljhgybgstdjhaa`
+4. GitHub › **Actions** › the latest **Check** run on `main` › **Re-run all jobs**. The job "Apply migrations to the dev database" lists the migrations it applies. Tell me when it is green and I check the tables with the Supabase connector (look only).
+
+Never paste the token or the password in chat, a doc or the repo. If one leaks, make a new one and replace the secret.

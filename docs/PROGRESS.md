@@ -71,14 +71,14 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 ## Phase 4: Backend, area by area
 
 - [x] Database blueprint approved: 54 tables in 8 areas, access model, build order (`docs/blueprints/database.md`, decision T96, 2026-11-17)
-- [ ] Database step 1: platform core
-- [ ] Database step 2: shop setup
-- [ ] Database step 3: catalog
-- [ ] Database step 4: members
-- [ ] Database step 5: orders, payments and push
-- [ ] Database step 6: stamp card
-- [ ] Database step 7: files, billing, tracking and audit
-- [ ] CI applies migrations to the dev project (D9)
+- [x] Database step 1: platform core
+- [x] Database step 2: shop setup
+- [x] Database step 3: catalog
+- [x] Database step 4: members
+- [x] Database step 5: orders, payments and push
+- [x] Database step 6: stamp card
+- [x] Database step 7: exports, billing, tracking and audit
+- [x] CI applies migrations to the dev project (D9)
 - [ ] Members area: customer account, picture and saved places in the database (today mock data and this phone only, decision R22)
 
 ## Phase 5: Launch

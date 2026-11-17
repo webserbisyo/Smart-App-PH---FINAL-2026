@@ -6,7 +6,7 @@ Read `docs/blueprints/foundation.md` once. For a screen task also read `docs/ux.
 
 ## Now
 
-Frontend first with mock data. The database has only auth (profiles) and demo owner accounts. Screens get data from `@smartapp/data` hooks, which use mock adapters until an area is wired to the API.
+Frontend first with mock data. The database tables are built (53 tables, `docs/blueprints/database.md`, decision T96) but nothing reads them yet. Screens get data from `@smartapp/data` hooks, which use mock adapters until an area is wired to the API.
 
 ## Shape
 
@@ -28,7 +28,7 @@ Frontend first with mock data. The database has only auth (profiles) and demo ow
 5. **Types:** no `any`, no `as` casts, no `@ts-ignore` or `@ts-expect-error`. Closed lists are `as const` arrays plus a Zod enum, mirrored by a database CHECK (no Postgres enums).
 6. **Look:** Tailwind token classes only (`docs/design-tokens.md`). No arbitrary values (`p-[13px]`), no hex, no raw palette classes (`bg-red-500`), no inline `style` except CSS variables set through the typed `cssVars()` helper (shop colours, progress). No CSS modules or extra CSS files: the only stylesheet is `packages/ui/src/styles/globals.css`. Lucide icons only; status = icon + word + colour.
 7. **Words and numbers:** our visible text in `packages/core/src/words.ts` (dynamic text as functions). Plain English with local words where natural (Suki, Members); short verb buttons; an error says what to do next; never "Coming soon". Money in integer centavos; Manila time for display; never compare the shop type in code. Screens word errors from their `code`, never from the message text.
-8. **Database:** only new files in `supabase/migrations/`, with RLS, grants and policies in the same file. Never edit an applied migration. Trusted functions are `security definer` with `set search_path = ''`. Never change the database through a dashboard, SQL editor or MCP. Never run `pnpm db:push`: stop and ask the founder to run it. Types are regenerated on a machine with Docker, or copied from the CI diff when a migration changes.
+8. **Database:** only new files in `supabase/migrations/`, with RLS, grants and policies in the same file. Never edit an applied migration. Trusted functions are `security definer` with `set search_path = ''`. Never change the database through a dashboard, SQL editor or MCP. Never run `pnpm db:push`: after a push to `main` passes the checks and database tests, CI applies new migrations to the dev database only (T96, D9); the live database only by the founder. Types are regenerated on a machine with Docker, or copied from the CI diff when a migration changes.
 9. **Secrets:** never read, print or commit `.env*` files or keys. Only `.env.example` is committed. Each app checks its env with Zod at start.
 10. **Packages:** exact versions (no `^`), and no release younger than 7 days unless it is a security fix. pnpm settings live in `pnpm-workspace.yaml` (`minimumReleaseAge`, `allowBuilds`, `catalog`); `.npmrc` settings are ignored. No new package without the founder's yes, except what the shadcn CLI adds with a planned component.
 11. **Git:** branch `ag/t<nn>-<name>` from the latest `main`. Never push to `main`, never merge, never force-push. Always open the PR yourself (`gh pr create --base main`) and print its link.
