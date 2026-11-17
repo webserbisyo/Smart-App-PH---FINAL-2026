@@ -313,6 +313,15 @@ export const MEDIA_BUCKETS = ['menu', 'look', 'qr', 'profile', 'proofs', 'plan-p
 export const MediaBucketEnum = z.enum(MEDIA_BUCKETS);
 export type MediaBucket = z.infer<typeof MediaBucketEnum>;
 
+// The emails waiting to go to an owner (the outbox); one per switch in NotificationPrefs.
+export const EMAIL_KINDS = ['new_order', 'payment_to_check', 'storage', 'plan_payment'] as const;
+export const EmailKindEnum = z.enum(EMAIL_KINDS);
+export type EmailKind = z.infer<typeof EmailKindEnum>;
+
+export const EMAIL_STATUSES = ['queued', 'sent', 'failed'] as const;
+export const EmailStatusEnum = z.enum(EMAIL_STATUSES);
+export type EmailStatus = z.infer<typeof EmailStatusEnum>;
+
 // Owner Settings (decisions T64 to T68).
 
 // The owner's picture (T68, T93): seven DiceBear styles, each face made once as a file, our names for them.
