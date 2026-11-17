@@ -75,7 +75,7 @@ create table public.shop_settings (
   walk_in_on boolean not null default true,
   pickup_on boolean not null default true,
   delivery_on boolean not null default false,
-  days_ahead integer not null default 7 check (days_ahead between 1 and 60),
+  days_ahead integer not null default 3 check (days_ahead between 1 and 60),
   slot_minutes integer not null default 30 check (slot_minutes in (15, 30, 60)),
   orders_per_slot integer check (orders_per_slot between 1 and 50),
   prep_minutes integer not null default 20 check (prep_minutes between 5 and 180),
