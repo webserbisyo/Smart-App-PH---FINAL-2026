@@ -141,6 +141,59 @@ jobs:
           path: tooling/test-results
           retention-days: 7
 
+  ui-scan:
+    # Decision T99: every page in the route catalog and the five kit pages on the preview builds (the
+    # same builds as the public demo links), at 360, 768 and 1280 px, the dashboard in light and dark.
+    # Fails on JavaScript or console errors, failed requests and sideways scroll; the report and a
+    # screenshot of every page are uploaded either way (no pixel baselines).
+    name: UI scan (every page, 3 sizes, light and dark)
+    runs-on: ubuntu-latest
+    needs: check
+    env:
+      VITE_APP_ENV: preview
+      VITE_DATA_SOURCE: mock
+      VITE_SHOW_KIT: 'true'
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: preview
+      VITE_API_URL: https://api.example.invalid
+      VITE_STOREFRONT_URL: http://127.0.0.1:3200
+      NEXT_PUBLIC_APP_ENV: preview
+      NEXT_PUBLIC_DATA_SOURCE: mock
+      NEXT_PUBLIC_DASHBOARD_URL: http://127.0.0.1:4173
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build both apps in preview mode
+        run: pnpm turbo run build --filter=@smartapp/dashboard --filter=@smartapp/storefront
+
+      - name: Install Chromium
+        run: pnpm --filter @smartapp/tooling exec playwright install --with-deps chromium
+
+      - name: Run the UI scan
+        run: pnpm ui-scan
+
+      - name: Keep the report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-scan-report
+          path: tooling/test-results/ui-scan
+          retention-days: 14
+          if-no-files-found: ignore
+
   db:
     name: Supabase Migrations & Types Drift
     runs-on: ubuntu-latest

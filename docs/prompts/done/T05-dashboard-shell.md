@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T05: Dashboard shell (sidebar, tablet rail, phone dock) with empty pages
 
-Read first: AGENTS.md, docs/blueprints/foundation.md, docs/ux.md (sections 1 to 3), docs/design-tokens.md, docs/components.md, docs/SMART_APP_PH_BLUEPRINT.md sections 4.3 to 4.5 only.
+Read first: AGENTS.md, docs/blueprints/foundation.md, docs/ux.md (sections 1 to 3), docs/design-tokens.md, docs/components.md, docs/archive/SMART_APP_PH_BLUEPRINT.md sections 4.3 to 4.5 only.
 Reference only (read, never copy wholesale; rewrite with lucide icons and our tokens): old public repo webserbisyo/Smart-App-PH-MVP: packages/ui/src/patterns/BottomDock.tsx, MoreMenu.tsx, AppShell.tsx, packages/ui/src/hooks/use-form-factor.ts, use-keyboard-open.ts, apps/dashboard/src/app/shell/Shell.tsx, and the shell parts of packages/ui/src/styles/globals.css and tokens.css. A local copy may exist at ~/Project/smart-app-ph-mvp.
 
 GOAL

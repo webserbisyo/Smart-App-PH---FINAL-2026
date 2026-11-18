@@ -26,7 +26,7 @@ export function applyAppearance(appearance: Appearance = read()): void {
   document.documentElement.classList.toggle('dark', dark);
   document
     .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', dark ? '#040f2e' : '#f9fafd');
+    ?.setAttribute('content', dark ? '#1b1e24' : '#f9fafd'); // brand-guard-ignore: the phone's status bar takes a plain colour (page colour, T97)
 }
 
 export function setAppearance(appearance: Appearance): void {

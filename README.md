@@ -18,9 +18,9 @@ Flat monthly fee, no commission per order, and the shop owns its customer list. 
 How to read this list:
 
 - `[x]` means the feature works end to end on the dev database (not only on mock data). `[ ]` means not yet.
-- **A** = Launch MVP A (the first paying shops). **B** = Launch MVP B (after launch, built one module at a time behind a per-shop switch). Full scope and the reasons: [`docs/SYSTEM.md`](docs/SYSTEM.md) section 4.
+- **A** = Launch MVP A (the first paying shops). **B** = Launch MVP B (after launch, built one module at a time behind a per-shop switch). Full scope and the reasons: [`docs/archive/SYSTEM.md`](docs/archive/SYSTEM.md) section 4.
 - Tick a box in the same PR that makes the feature work on the dev database. Task progress stays in `docs/PROGRESS.md`; this list is per feature.
-- To add a feature: add one line in the right group with its letter, and add its row to the feature catalog in [`docs/SMART_APP_PH_BLUEPRINT.md`](docs/SMART_APP_PH_BLUEPRINT.md) section 3.4.
+- To add a feature: add one line in the right group with its letter, and add its row to the feature catalog in [`docs/archive/SMART_APP_PH_BLUEPRINT.md`](docs/archive/SMART_APP_PH_BLUEPRINT.md) section 3.4.
 
 ### Launch MVP A
 
@@ -93,7 +93,7 @@ How to read this list:
 
 ### Launch MVP B (after launch)
 
-Each module ships switched off per shop and turns on when ready, so live shops never break. Stubs to fill in: [`docs/SMART_APP_PH_BLUEPRINT.md`](docs/SMART_APP_PH_BLUEPRINT.md) section 17.
+Each module ships switched off per shop and turns on when ready, so live shops never break. Stubs to fill in: [`docs/archive/SMART_APP_PH_BLUEPRINT.md`](docs/archive/SMART_APP_PH_BLUEPRINT.md) section 17.
 
 #### Selling at the counter and in the back
 
@@ -153,7 +153,7 @@ Each module ships switched off per shop and turns on when ready, so live shops n
 | Email           | Resend (later in MVP A)                                                                                    |
 | Shared packages | `@smartapp/core` (schemas, rules, words), `@smartapp/ui` (tokens, components), `@smartapp/data` (data)     |
 
-Exact versions live in each `package.json`. Why each choice: [`docs/RESEARCH.md`](docs/RESEARCH.md) section 1.
+Exact versions live in each `package.json`. Why each choice: [`docs/archive/RESEARCH.md`](docs/archive/RESEARCH.md) section 1.
 
 ## Demo shops
 
@@ -172,17 +172,17 @@ Env files: copy each `apps/*/.env.example` to `.env.local` and fill in the value
 
 ## Docs
 
-| Doc                                                                              | What it is                                                                 |
-| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| [`AGENTS.md`](AGENTS.md)                                                         | Rules for AI agents (Antigravity, Claude); read on every task              |
-| [`docs/SYSTEM.md`](docs/SYSTEM.md)                                               | System paper: problem, objectives, scope A and B, flows, data, risks       |
-| [`docs/SMART_APP_PH_BLUEPRINT.md`](docs/SMART_APP_PH_BLUEPRINT.md)               | Build blueprint: sitemap, routes, page specs, flows, database, MVP B stubs |
-| [`docs/RESEARCH.md`](docs/RESEARCH.md)                                           | Ecosystem findings, library research, pilot metrics and test protocol      |
-| [`docs/blueprints/`](docs/blueprints/)                                           | Foundation, A-mvp and B-full blueprints (the short versions agents read)   |
-| [`docs/ux.md`](docs/ux.md), [`docs/design-tokens.md`](docs/design-tokens.md)     | UX rules and design tokens                                                 |
-| [`docs/api.md`](docs/api.md)                                                     | API contract for the mock and NestJS adapters                              |
-| [`docs/components.md`](docs/components.md)                                       | Installed components registry and the `/kit` page                          |
-| [`docs/decisions.md`](docs/decisions.md)                                         | Approved decisions                                                         |
-| [`docs/PROGRESS.md`](docs/PROGRESS.md), [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Task progress and merged changes                                           |
+| Doc                                                                              | What it is                                                               |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [`AGENTS.md`](AGENTS.md)                                                         | Rules for AI agents (Antigravity, Claude); read on every task            |
+| [`docs/README.md`](docs/README.md)                                               | The docs map: which doc answers which question, and what is archived     |
+| [`docs/blueprints/`](docs/blueprints/)                                           | Foundation, A-mvp and B-full blueprints (the short versions agents read) |
+| [`docs/ux.md`](docs/ux.md), [`docs/design-tokens.md`](docs/design-tokens.md)     | UX rules and design tokens                                               |
+| [`docs/api.md`](docs/api.md)                                                     | API contract for the mock and NestJS adapters                            |
+| [`docs/components.md`](docs/components.md)                                       | Installed components registry and the `/kit` page                        |
+| [`docs/decisions.md`](docs/decisions.md)                                         | Approved decisions                                                       |
+| [`docs/previews.md`](docs/previews.md)                                           | Public demo links on Vercel (sample data), step by step                  |
+| [`docs/archive/`](docs/archive/)                                                 | The long system paper, old blueprint and research (history, not rules)   |
+| [`docs/PROGRESS.md`](docs/PROGRESS.md), [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Task progress and merged changes                                         |
 
-Agents read only the docs a task prompt names; the three long docs above are for people and for planning.
+Agents read only the docs a task prompt names. The archived long docs are history: read them for background, never build from them.

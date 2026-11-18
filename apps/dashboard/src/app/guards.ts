@@ -1,8 +1,15 @@
 import { redirect } from '@tanstack/react-router';
 import { getClaims, type UserClaims } from '@smartapp/data';
+import { previewClaims, readPreviewViewer, writePreviewViewer } from './preview.js';
 import { supabase } from './supabase.js';
 
+// Written out (not imported) so Vite folds it and live builds drop the sample sign-in entirely (T100).
+const PREVIEW = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'preview';
+
 export async function requireAuth(): Promise<UserClaims> {
+  // Sample sign-in (T100): development and preview builds on sample data only; never asks Supabase.
+  const viewer = PREVIEW ? readPreviewViewer() : null;
+  if (PREVIEW && viewer) return previewClaims(viewer);
   const claims = await getClaims(supabase);
   if (!claims) {
     throw redirect({ to: '/login' });
@@ -11,6 +18,7 @@ export async function requireAuth(): Promise<UserClaims> {
 }
 
 export async function requireGuest(): Promise<void> {
+  if (PREVIEW && readPreviewViewer()) throw redirect({ to: '/' });
   const claims = await getClaims(supabase);
   if (claims) {
     throw redirect({ to: '/' });
@@ -18,6 +26,10 @@ export async function requireGuest(): Promise<void> {
 }
 
 export async function signOut(): Promise<never> {
+  if (PREVIEW && readPreviewViewer()) {
+    writePreviewViewer(null);
+    throw redirect({ to: '/login' });
+  }
   await supabase.auth.signOut();
   throw redirect({ to: '/login' });
 }

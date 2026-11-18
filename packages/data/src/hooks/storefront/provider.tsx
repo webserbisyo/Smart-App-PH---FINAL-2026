@@ -8,14 +8,21 @@ import { getDeviceStorage } from '../../device-storage';
 import type { DataSource } from '../../env';
 import { qk } from './qk';
 
-// Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
-declare const process: { env: { NODE_ENV?: string | undefined } };
+// Bundlers replace process.env.NODE_ENV and SMARTAPP_PREVIEW at build time (Next and Vite), so the sample-data
+// tools ship only in development and preview builds and drop out of live builds (decision T100).
+declare const process: {
+  env: { NODE_ENV?: string | undefined; SMARTAPP_PREVIEW?: string | undefined };
+};
 
 function DevScenario({ slug, source }: { slug: string; source: DataSource }) {
   const client = useQueryClient();
   const adapters = useAdapters();
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production' || source !== 'mock') return;
+    if (
+      (process.env.NODE_ENV === 'production' && process.env.SMARTAPP_PREVIEW !== '1') ||
+      source !== 'mock'
+    )
+      return;
     // The scenario writer loads only here, so production builds never contain it (decision T26).
     void import('../../mocks/scenario').then(({ loadMockScenario, readMockScenarioFromUrl }) => {
       loadMockScenario();

@@ -3,8 +3,11 @@
 import { z } from 'zod';
 import { IsoDateTimeSchema } from '@smartapp/core';
 
-// Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
-declare const process: { env: { NODE_ENV?: string | undefined } };
+// Bundlers replace process.env.NODE_ENV and SMARTAPP_PREVIEW at build time (Next and Vite), so the sample-data
+// tools ship only in development and preview builds and drop out of live builds (decision T100).
+declare const process: {
+  env: { NODE_ENV?: string | undefined; SMARTAPP_PREVIEW?: string | undefined };
+};
 
 export const MOCK_AREAS = [
   'storefront',
@@ -72,7 +75,10 @@ let current: MockScenario = DEFAULT_SCENARIO;
 const listeners = new Set<() => void>();
 
 export function isDevMock(dataSource: string): boolean {
-  return process.env.NODE_ENV !== 'production' && dataSource === 'mock';
+  return (
+    (process.env.NODE_ENV !== 'production' || process.env.SMARTAPP_PREVIEW === '1') &&
+    dataSource === 'mock'
+  );
 }
 
 export function getMockScenario(): MockScenario {

@@ -388,10 +388,31 @@ const routeTree =
   import.meta.env.DEV || import.meta.env.VITE_SHOW_KIT === 'true'
     ? rootRoute.addChildren([
         ...baseRoutes,
+        // The kit's five pages (decision T98), each its own lazy chunk.
         createRoute({
           getParentRoute: () => rootRoute,
           path: '/kit',
           component: lazyRouteComponent(() => import('../features/kit/screens/kit.js')),
+        }),
+        createRoute({
+          getParentRoute: () => rootRoute,
+          path: '/kit/dashboard',
+          component: lazyRouteComponent(() => import('../features/kit/screens/kit-dashboard.js')),
+        }),
+        createRoute({
+          getParentRoute: () => rootRoute,
+          path: '/kit/storefront',
+          component: lazyRouteComponent(() => import('../features/kit/screens/kit-storefront.js')),
+        }),
+        createRoute({
+          getParentRoute: () => rootRoute,
+          path: '/kit/tokens',
+          component: lazyRouteComponent(() => import('../features/kit/screens/kit-tokens.js')),
+        }),
+        createRoute({
+          getParentRoute: () => rootRoute,
+          path: '/kit/routes',
+          component: lazyRouteComponent(() => import('../features/kit/screens/kit-routes.js')),
         }),
       ])
     : rootRoute.addChildren(baseRoutes);

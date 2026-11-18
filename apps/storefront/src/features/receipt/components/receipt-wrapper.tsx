@@ -38,7 +38,7 @@ function emptySubscribe() {
 
 // Dev-only panel dynamically imported so it is completely excluded from production builds
 const DevControls =
-  process.env.NODE_ENV !== 'production'
+  process.env.NODE_ENV !== 'production' || process.env.SMARTAPP_PREVIEW === '1'
     ? dynamic(() => import('./demo-owner-panel').then((m) => m.DemoOwnerPanel), { ssr: false })
     : () => null;
 

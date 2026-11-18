@@ -67,6 +67,7 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Final verdicts: calendar Month tiles, full-height phone panels, customise any face, Editor Opening screen, dashboard manifest, Storage Files, phone audit fixes (decision T93; pushed to main 2026-11-15)
 - [x] Opening screen v2: preview holds on the splash, loader for slow pages, App name, logo size and tagline (decision T94; pushed to main 2026-11-15)
 - [x] Orders final pass and member faces: List dates and table, Calendar past days and busy colours, type cards, member faces on the account and on orders, join Pick your face (decision T95; pushed to main 2026-11-15)
+- [x] Stays adoption: layered neutral dashboard theme, five kit pages, Preview panel and public demo builds, UI skills, brand guard and UI scan, docs map and archive (decisions T97 to T101)
 
 ## Phase 4: Backend, area by area
 

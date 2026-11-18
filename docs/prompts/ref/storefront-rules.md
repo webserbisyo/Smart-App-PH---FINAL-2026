@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 # Storefront rules for MVP A (short form)
 
-Source: Storefront Blueprint (MVP A) v1.4, approved by the founder (S1 to S36, 20 and 23 Oct 2026), plus `docs/SMART_APP_PH_BLUEPRINT.md` sections 4, 6, 7 and 8. Agents read this file instead of the Google Doc. If this file and `docs/` disagree, stop and ask.
+Source: Storefront Blueprint (MVP A) v1.4, approved by the founder (S1 to S36, 20 and 23 Oct 2026), plus `docs/archive/SMART_APP_PH_BLUEPRINT.md` sections 4, 6, 7 and 8. Agents read this file instead of the Google Doc. If this file and `docs/` disagree, stop and ask.
 
 ## 1. Shell (S1, 7.1)
 - Top bar: logo, shop name, open state ("Open until 9 PM", "Closed · Opens 5 AM", "Busy · back 3:40 PM"), avatar (Account or Join). No bell (Storefront Blueprint v1.4 section 5; order updates live on the receipt and My orders).

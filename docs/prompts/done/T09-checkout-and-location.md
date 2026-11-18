@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T09: Checkout (How, Who, Pay) and delivery location without a map
 
-Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 2 and 4, docs/prompts/ref/storefront-components.md section 3 (How and where, Checkout), docs/SMART_APP_PH_BLUEPRINT.md sections 6.1, 6.2, 6.3 and 7.7.
+Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 2 and 4, docs/prompts/ref/storefront-components.md section 3 (How and where, Checkout), docs/archive/SMART_APP_PH_BLUEPRINT.md sections 6.1, 6.2, 6.3 and 7.7.
 
 FOUNDER DECISIONS USED (change before running)
  - Location (S27, S28): "Use my location" (GPS only on tap), "Fix pin in Google Maps" (open Google Maps, paste the shared link back), or a named zone; typed rider details; fee by straight-line km rows, else zone, else "Too far". No map, no Maps API, no geocoding.

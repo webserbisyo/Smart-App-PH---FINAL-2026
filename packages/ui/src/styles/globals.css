@@ -888,8 +888,8 @@
 }
 
 @utility heart-glow {
-  filter: drop-shadow(0 1px 1px color-mix(in oklch, var(--shop-10) 35%, transparent))
-    drop-shadow(0 2px 4px color-mix(in oklch, var(--shop-10) 20%, transparent));
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--shop-10) 35%, transparent))
+    drop-shadow(0 2px 4px color-mix(in srgb, var(--shop-10) 20%, transparent));
 }
 
 /* Frosted glass for the storefront top bar (once scrolled) and dock (decision R6, the look of
@@ -897,9 +897,9 @@
    missing. */
 @utility glass {
   background-color: var(--card);
-  border-color: color-mix(in oklch, var(--border) 70%, transparent);
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
   @supports (backdrop-filter: blur(1px)) {
-    background-color: color-mix(in oklch, var(--card) 72%, transparent);
+    background-color: color-mix(in srgb, var(--card) 72%, transparent);
     backdrop-filter: blur(16px) saturate(1.6);
   }
 }
@@ -910,7 +910,7 @@
 @utility frost {
   background-color: var(--background);
   @supports (backdrop-filter: blur(1px)) {
-    background-color: color-mix(in oklch, var(--background) 82%, transparent);
+    background-color: color-mix(in srgb, var(--background) 82%, transparent);
     backdrop-filter: blur(12px);
   }
   @media (prefers-reduced-transparency: reduce) {
@@ -1315,5 +1315,29 @@
     white-space: normal;
     overflow: visible;
     overflow-wrap: anywhere;
+  }
+}
+
+/* The Preview pill (decision T100): bottom left on phones, above the dock (chat buttons own the right
+   corner); bottom centre on a laptop (the sidebar owns the left). */
+@utility preview-pill-place {
+  left: 0.75rem;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+  @media (min-width: 1024px) {
+    left: 50%;
+    translate: -50% 0;
+    bottom: 1rem;
+  }
+}
+/* Tablet dashboard: clear the icon rail on the left (shadcn sidebar's 3rem icon width). */
+@media (min-width: 768px) and (max-width: 1023px) {
+  body:has([data-slot='sidebar-wrapper']) [data-slot='preview-pill'] {
+    left: calc(3rem + 0.75rem);
+  }
+}
+@media (max-width: 1023px) {
+  body:has([data-slot='storefront-dock']) [data-slot='preview-pill'],
+  body:has([data-slot='bottom-dock']) [data-slot='preview-pill'] {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--dock-height) + var(--dock-offset) * 2);
   }
 }

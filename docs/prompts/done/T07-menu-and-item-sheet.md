@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T07: Menu or Products page, item sheet (variants, add-ons, notes) and favourites
 
-Read first: AGENTS.md, docs/ux.md, docs/design-tokens.md, docs/components.md, docs/prompts/ref/storefront-rules.md section 3, docs/prompts/ref/storefront-components.md section 3 (Menu, Item sheet), docs/SMART_APP_PH_BLUEPRINT.md sections 5.2, 6.4, 7.3, 7.5, 8.1 and 8.3.
+Read first: AGENTS.md, docs/ux.md, docs/design-tokens.md, docs/components.md, docs/prompts/ref/storefront-rules.md section 3, docs/prompts/ref/storefront-components.md section 3 (Menu, Item sheet), docs/archive/SMART_APP_PH_BLUEPRINT.md sections 5.2, 6.4, 7.3, 7.5, 8.1 and 8.3.
 
 FOUNDER DECISIONS USED (change before running)
  - D13: add-on groups with min/max use DiceUI checkbox-group (Base UI build) with c-checkbox-11 rows; disabling unticked rows at the max is our code.

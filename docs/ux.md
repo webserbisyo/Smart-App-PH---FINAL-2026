@@ -93,6 +93,7 @@ Loading skeleton · empty with one line and one action · error with Try again �
 ## 7. Dashboard brand rules (decision T35)
 
 - One solid blue (`primary`) element per view: the main action or the hero number. Everything else neutral.
+- Surfaces are neutral layers (decision T97): side nav, page, card, popover, each on the one below it, in light and dark (`docs/design-tokens.md`). Never put a surface on the same colour as what is behind it; separate with a border or use `muted` for the inner one.
 - Phone: one primary and at most one secondary button per screen; frequent actions in a sticky bottom bar (48 px), destructive ones in menus, away from the thumb.
 - Mint (`member`) means stamps and rewards only, never success or links; success is the darker green.
 - Status is colour, icon and word together; red and green states always differ by icon shape too.

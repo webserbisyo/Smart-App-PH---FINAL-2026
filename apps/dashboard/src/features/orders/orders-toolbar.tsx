@@ -26,7 +26,6 @@ import { cn } from 'cn';
 import { SearchField } from '@/app/search-field';
 import { BookingRulesSheet } from './booking-rules-sheet.js';
 import { BusyMenu } from './busy-menu.js';
-import { DevScenarioMenu } from './dev-scenario-menu.js';
 import type { OrderView } from './search.js';
 
 const SEARCH_DEBOUNCE_MS = 250;
@@ -204,7 +203,6 @@ export function OrdersToolbar({
               <ClockIcon />
               {ordersWords.toolbar.orderTimes}
             </DropdownMenuItem>
-            <DevScenarioMenu />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

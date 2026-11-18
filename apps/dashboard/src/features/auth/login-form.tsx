@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { LoginSchema, words, type LoginInput } from '@smartapp/core';
+import { LoginSchema, previewWords, words, type LoginInput } from '@smartapp/core';
 import { useSignIn } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import {
@@ -21,6 +21,8 @@ import {
 } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { cn } from '@smartapp/ui/lib/utils';
+import { writePreviewViewer } from '@/app/preview';
+import { env } from '@/app/env';
 import { supabase } from '@/app/supabase';
 import { useOnlineStatus } from '@/app/use-online-status';
 
@@ -114,6 +116,26 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                   </Link>
                 </FieldDescription>
               </Field>
+              {/* Sample sign-in (T100): development and preview builds on sample data only. */}
+              {(import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'preview') &&
+              env.VITE_DATA_SOURCE === 'mock' ? (
+                <Field>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      writePreviewViewer('kanto-smash');
+                      void navigate({ to: '/' });
+                    }}
+                  >
+                    {previewWords.sampleSignIn}
+                  </Button>
+                  <FieldDescription className="text-center">
+                    {previewWords.sampleSignInLine}
+                  </FieldDescription>
+                </Field>
+              ) : null}
             </FieldGroup>
           </form>
         </CardContent>

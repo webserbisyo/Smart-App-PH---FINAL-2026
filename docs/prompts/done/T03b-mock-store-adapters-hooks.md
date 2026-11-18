@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T03b: Mock store, storefront adapters, device storage and data hooks (packages/data)
 
-Read first: AGENTS.md, docs/blueprints/foundation.md section 4, docs/api.md, docs/prompts/ref/storefront-rules.md, docs/SMART_APP_PH_BLUEPRINT.md sections 6, 8.2, 8.3 and 14.
+Read first: AGENTS.md, docs/blueprints/foundation.md section 4, docs/api.md, docs/prompts/ref/storefront-rules.md, docs/archive/SMART_APP_PH_BLUEPRINT.md sections 6, 8.2, 8.3 and 14.
 
 FOUNDER DECISIONS USED (change before running)
  - Mock state for things a customer creates (orders, proofs, member account) lives on the device, like the real phone data would; demo receipts in every state are generated from the packs so screenshots and tests can open them by a fixed token.

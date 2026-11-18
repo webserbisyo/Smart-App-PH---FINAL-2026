@@ -4,9 +4,11 @@ Smart App PH gives each small Philippine shop (food or retail) an installable or
 
 Read `docs/blueprints/foundation.md` once. For a screen task also read `docs/ux.md`; for data or API work also read `docs/api.md`. Read other docs only when the prompt names them.
 
+The docs map is `docs/README.md` (which doc answers what; `docs/archive/` is history, never build from it). For any UI work use the skills in `.agents/skills/` (also `.claude/skills/`): `smartapp-ui` before building, `smartapp-ui-writing` for any visible text, `smartapp-ui-check` before saying done.
+
 ## Now
 
-Frontend first with mock data. The database tables are built (53 tables, `docs/blueprints/database.md`, decision T96) but nothing reads them yet. Screens get data from `@smartapp/data` hooks, which use mock adapters until an area is wired to the API.
+Where we are (2026-11-18): every MVP A screen is built on sample data; the dashboard has the layered neutral theme (T97); `/kit` has five pages (T98); preview builds give public demo links with a Preview panel (T100, `docs/previews.md`). Frontend first with mock data. The database tables are built (53 tables, `docs/blueprints/database.md`, decision T96) but nothing reads them yet. Screens get data from `@smartapp/data` hooks, which use mock adapters until an area is wired to the API.
 
 ## Shape
 

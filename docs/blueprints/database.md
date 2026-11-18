@@ -2,7 +2,7 @@
 
 Status: **approved 2026-11-17 (decision T96: D1 to D9 as recommended); built 2026-11-17** as 7 migrations (`supabase/migrations/20261117100000` to `…160000`) with 99 pgTAP tests in `supabase/tests/`. Section 13 lists where the build differs from the first plan. The full illustrated version (diagrams, normalization walkthrough, data dictionary, sources) is the downloadable "Database blueprint" doc; this file is the short core plan that agents follow.
 
-This replaces the old schema in `SMART_APP_PH_BLUEPRINT.md` section 13 and `SYSTEM.md` section 7, which date from 2026-11-03 (before T49 to T95) and must not be built from.
+This replaces the old schema in `docs/archive/SMART_APP_PH_BLUEPRINT.md` section 13 and `docs/archive/SYSTEM.md` section 7, which date from 2026-11-03 (before T49 to T95) and must not be built from.
 
 Source-of-truth order when things disagree: `decisions.md` → `api.md` + the Zod schemas in `packages/core` → the built screens → this file. A disagreement is a stop-and-ask, never a silent pick.
 

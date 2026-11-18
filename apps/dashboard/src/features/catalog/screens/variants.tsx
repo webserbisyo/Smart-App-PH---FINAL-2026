@@ -51,7 +51,6 @@ import { PageEmpty, PageError } from '@/app/page-state';
 import { cn } from 'cn';
 import { useCatalogTabs } from '../tabs.js';
 import { VariantTemplateSheet } from '../variant-template-sheet.js';
-import { DevScenarioPanel } from '../dev-scenario-panel.js';
 
 export function CatalogVariantsScreen() {
   const { kind } = useShop();
@@ -344,8 +343,6 @@ export function CatalogVariantsScreen() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <DevScenarioPanel />
     </div>
   );
 }

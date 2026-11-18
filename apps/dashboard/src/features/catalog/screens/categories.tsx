@@ -46,7 +46,6 @@ import { FloatingAddButton } from '../floating-add-button.js';
 import { shopIconStyle } from '../icon-style.js';
 import { useCatalogTabs } from '../tabs.js';
 import { CategorySheet } from '../category-sheet.js';
-import { DevScenarioPanel } from '../dev-scenario-panel.js';
 import { cn } from 'cn';
 
 export function CatalogCategoriesScreen() {
@@ -419,8 +418,6 @@ export function CatalogCategoriesScreen() {
       {categories.length > 0 && !isReordering ? (
         <FloatingAddButton label={catalogWords.addCategory} onClick={handleOpenAdd} />
       ) : null}
-
-      <DevScenarioPanel />
     </div>
   );
 }

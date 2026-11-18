@@ -1,4 +1,5 @@
 import {
+  AppEnvSchema,
   CommitShaSchema,
   DashboardUrlSchema,
   DataSourceSchema,
@@ -7,6 +8,9 @@ import {
 
 // Checked at start. DATA_SOURCE picks the mock adapters or the API, area by area (default: mock).
 export const dataSource = DataSourceSchema.parse(process.env.NEXT_PUBLIC_DATA_SOURCE || undefined);
+
+// development, preview (hosted sample data with the Preview panel, T100) or production.
+export const appEnv = AppEnvSchema.parse(process.env.NEXT_PUBLIC_APP_ENV || undefined);
 
 // SERWIST_DEV=1 turns the service worker on in `next dev` (off by default, so hot reload stays sane).
 export const serwistDev = SwitchSchema.parse(process.env.SERWIST_DEV || undefined) === '1';

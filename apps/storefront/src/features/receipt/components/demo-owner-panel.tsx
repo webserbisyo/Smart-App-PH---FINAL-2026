@@ -27,7 +27,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
   const [isPending, setIsPending] = useState(false);
 
   // In production builds, this component should never render anything
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && process.env.SMARTAPP_PREVIEW !== '1') {
     return null;
   }
 

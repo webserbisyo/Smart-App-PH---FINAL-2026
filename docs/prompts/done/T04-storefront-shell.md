@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T04: Storefront shell (top bar, location bar, pill dock with cart, basket drawer) and the phone + desktop smoke tests
 
-Read first: AGENTS.md, docs/ux.md, docs/design-tokens.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 1, 2, 4 and 7, docs/prompts/ref/storefront-components.md section 3 (Shell, How and where), docs/SMART_APP_PH_BLUEPRINT.md sections 4.1, 4.2 and 7.1.
+Read first: AGENTS.md, docs/ux.md, docs/design-tokens.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 1, 2, 4 and 7, docs/prompts/ref/storefront-components.md section 3 (Shell, How and where), docs/archive/SMART_APP_PH_BLUEPRINT.md sections 4.1, 4.2 and 7.1.
 
 FOUNDER DECISIONS USED (change before running)
  - One floating pill dock: Home, Menu or Products, Rewards (hidden when the stamp card is Off), Orders. With items in the basket it grows a cart segment (up to 3 stacked thumbnails, count, ₱ total). No separate basket bar. Hidden on the item sheet, checkout, receipt and while the keyboard is open.

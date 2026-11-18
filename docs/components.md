@@ -31,6 +31,26 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 - ReUI Scrollspy watching the whole page reads the first scroll area it finds in the document, so a page that uses it has no `ScrollArea` (the kit uses plain jump links for this reason). It measures sections with `offsetTop`, so no positioned wrapper may sit between a section and `<body>`. The Menu passes `history={false}`, an offset measured from its sticky bar, and keys the spy by that offset, because the spy's click listeners are never removed.
 - Installed files are checked by their own rules (decision T27): `packages/ui/tsconfig.components.json` without `exactOptionalPropertyTypes`, and a scoped ESLint override. Never edit them; a file marked "patched" in the table had a founder-approved fix.
 
+## Choosing a part (Use for / Don't)
+
+Check this first: most "new component" needs are one of these. Each row names the part to reach for and the near miss to avoid.
+
+| You need                         | Use                                                        | Don't                                                         |
+| -------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------- |
+| A page title with actions        | `PageHeader` (composition)                                 | A hand-made header row per page                               |
+| A form or details on phone + PC  | `ResponsiveDialog` / `ResponsiveSheet`                     | A `Dialog` on phones (it covers the keyboard)                 |
+| Nothing to show yet              | `EmptyState` with one action                               | A blank card, or "Coming soon"                                |
+| Loading                          | `Skeleton` in the shape of the content                     | A spinner on a whole page                                     |
+| A status (order, payment, stock) | `Badge` or `Status` with token classes, icon + word        | Colour alone, or the raw colours some parts ship (list below) |
+| An order stage on the dashboard  | the classes in `apps/dashboard/src/app/orders/stage.ts`    | New stage colours per screen                                  |
+| A toast                          | `notify()`                                                 | Calling the toaster directly                                  |
+| Stamps, rewards                  | `StampCard`, `member` tokens                               | Mint for success or links                                     |
+| A shop's colours                 | `ShopTheme` and `shop-*` tokens                            | `--primary` in the storefront, or a colour typed into a page  |
+| A list of rows to pick from      | `Item` group, `NativeSelect` on phones                     | A data grid for under 20 rows                                 |
+| A big owner table                | ReUI `DataGrid`                                            | A plain `Table` with hand-made sorting                        |
+| A sample-data switch             | the Preview panel (`preview-panel`, T100)                  | A new dev-only menu on a screen                               |
+| Something delightful             | Magic UI, off core flows, under 400 ms, reduced-motion off | Looping or animated backgrounds in the dashboard              |
+
 ## Installed
 
 | Component                           | Library                    | Path                                                                                                                                               | Used in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Added                                                                                                 |
@@ -118,6 +138,7 @@ The shadcn CLI is an exact root devDependency, so every install uses the same pi
 | `page-header`                       | composition                | `packages/ui/src/compositions/page-header.tsx`                                                                                                     | every dashboard page, kit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | T05                                                                                                   |
 | `pending`                           | DiceUI                     | `packages/ui/src/components/pending.tsx`                                                                                                           | kit, checkout place order button, join Send code, Rewards Claim                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | T02                                                                                                   |
 | `popover`                           | shadcn (base-nova)         | `packages/ui/src/components/popover.tsx`                                                                                                           | catalog column visibility picker, kit, Orders List view date picker (T54), storefront When picker More dates (O6), Home period picker (T83), Orders Calendar Go to date (T86)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | T15b                                                                                                  |
+| `preview-panel`                     | composition                | `packages/ui/src/compositions/preview-panel.tsx`                                                                                                   | The one Preview pill and panel (decision T100) in both apps' dev and preview builds: `apps/dashboard/src/app/preview-switches.tsx` (view as, scenario, clock) and `apps/storefront/src/features/shell/components/preview-switches.tsx` (shop, view as, scenario, clock); built from Popover, Button, Field and NativeSelect; `?clean=1` hides it for screenshots                                                                                                                                                                                                                                                                                                  |
 | `product-card`                      | composition                | `packages/ui/src/compositions/product-card.tsx`                                                                                                    | storefront Menu, Home best sellers and favourites rows, kit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | R12                                                                                                   |
 | `progress`                          | shadcn (base-nova)         | `packages/ui/src/components/progress.tsx`                                                                                                          | kit, receipt proof upload, Prizes pieces left (T60), Home pace bar and collected bar (T69)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | T02, Super Admin 30-day funnel (T88)                                                                  |
 | `progressive-blur`                  | Magic UI                   | `packages/ui/src/components/progressive-blur.tsx`                                                                                                  | item sheet choices under the Add bar, kit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | R38                                                                                                   |
@@ -336,7 +357,11 @@ Changes from the ReUI source (T02b, decision D2): remote photos replaced with de
 | `c-toggle-group-4` | Custom Spacing | Item sheet | Retail axes c-toggle-group-4 |
 | `c-tooltip-12` | Disabled Button | Shell | Icon tooltips and disabled reasons c-tooltip-12 |
 
-## Vendored copies
+## Edits log
+
+Everything that is not a plain CLI install, so a reinstall never silently undoes it. Installed files themselves are never rewritten (AGENTS rule 1); their look is fixed at the use site with tokens.
+
+### Vendored copies
 
 Opensource UI parts are copied by hand from the official pages (the one founder-approved exception to "never copy by hand", decision N24) into `packages/ui/src/vendor/opensource-ui/`. Each file starts with its source URL, the date copied (2026-10-25) and "MIT, Opensource UI by Bidyut Kundu". Colours, shadows and inline styles were moved to tokens and `globals.css` utilities. Nothing auto-updates: re-copy by hand if the source changes.
 
@@ -348,7 +373,7 @@ Opensource UI parts are copied by hand from the official pages (the one founder-
 | `week-strip-calendar.tsx`   | https://opensourceui.in/components/week-strip-calendar                           |
 | `booking-slot-calendar.tsx` | https://opensourceui.in/components/booking-slot-calendar                         |
 
-## Hand-written (founder approved)
+### Hand-written (founder approved)
 
 Written by us only where no chosen library has the part, each with the founder's yes.
 
@@ -360,6 +385,16 @@ Written by us only where no chosen library has the part, each with the founder's
 | `apps/dashboard/src/features/editor/logo-tools.ts`                  | Logo clean-up on the device: trim empty edges and pad to a square on upload, and "Remove white background" (a flood fill from the edges through near-white only); no library in our stack does either without a server                                                                                                            | T76      |
 | `packages/core/src/rules/style-designer.ts`                         | "Pick a style": reads the logo with Material Color Utilities (quantizer, Score, Hct, DislikeAnalyzer) and builds and scores 8 styles with our palette rules; the package gives the colour science, the styles and scores are ours                                                                                                 | T76      |
 
+### Installed parts that ship raw colours
+
+The brand guard (`tooling/brand-guard.test.ts`, decision T99) skips `packages/ui/src/components/` because those files stay as installed. These ship their own colours, so where a screen uses one, give it token classes at the use site (for example `Status` with `bg-warning-soft text-warning-text`) and look at it in dark mode:
+
+`animated-shiny-text`, `banner`, `chart`, `cropper`, `grid-pattern`, `hitbox`, `number-ticker`, `progressive-blur`, `qr-code` (black on white on purpose: scanners need it), `scroller`, `shine-border`, `stat`, `status`, `reui/color-picker`, `reui/emoji-picker`, `reui/data-grid/data-grid-table`, `evilcharts/charts/recharts-pie-chart`, `evilcharts/charts/recharts-radial-chart`, `evilcharts/ui/recharts-chart`, `evilcharts/ui/recharts-legend`, `evilcharts/ui/recharts-tooltip`.
+
+### Installed but only on the kit so far
+
+Kept (nothing is deleted without checking), listed so nobody installs a second copy: `badge-overflow`, `evilcharts/charts/recharts-pie-chart`, `evilcharts/charts/recharts-area-chart`, `reui/event-calendar/event-calendar-nav`, `reui/event-calendar/event-calendar-content`, and the data grid extras `data-grid-table-dnd`, `data-grid-table-virtual`, `data-grid-cell-selection`, `data-grid-column-filter` (came with the data grid, not shown anywhere yet).
+
 ## Blocks
 
 | Block        | Command                                                             | Lives in                                                                                                                                                    | Added |
@@ -370,7 +405,14 @@ Written by us only where no chosen library has the part, each with the founder's
 
 ## The `/kit` page
 
-- Dashboard route `/kit`, available only when `import.meta.env.DEV` or `VITE_SHOW_KIT=true`. Not in production builds.
-- One section per installed component: name, library, a live example in its main states (default, disabled, loading, error), light and dark toggle, and where it is used.
-- Also shows the colour tokens (`docs/design-tokens.md`) as swatches with their names, every `STATUS_TONE` badge, and a shop-brand switcher for the 5 demo shops with the generated palette and its contrast result.
-- From the mock data task on: a "Mock data" panel with counts and Reset.
+Five pages in the dashboard app (decision T98), on when `import.meta.env.DEV` or `VITE_SHOW_KIT=true` (the preview build sets it; live builds never do, and CI checks `/kit` is not in them):
+
+| Page              | Shows                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `/kit`            | Base: the installed components both apps use, the app frame (dock, nav drawer, page header), ReUI parts                           |
+| `/kit/dashboard`  | Owner screens' parts, area by area (Home, Orders, Menu, Members, Settings, Admin, Editor)                                         |
+| `/kit/storefront` | Customer screens' parts in each demo shop's colours, hard shop colours (bright yellow, near black, dark page), library references |
+| `/kit/tokens`     | Surface layers, every colour token, edges, and each demo shop's 60 / 30 / 10 palette                                              |
+| `/kit/routes`     | Every page of both apps from `apps/dashboard/src/features/kit/route-catalog.ts`, the list the UI scan opens                       |
+
+Each page has the light / dark switch at the top. A new installed component gets a section on Base (shared) or on its app's page; a new route gets a line in `route-catalog.ts`.

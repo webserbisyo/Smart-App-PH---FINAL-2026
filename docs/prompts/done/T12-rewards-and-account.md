@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T12: Join with an email code, Rewards tab (stamp card, reward, history, member QR) and Account
 
-Read first: AGENTS.md, docs/ux.md, docs/design-tokens.md (member colour, highlight), docs/components.md, docs/api.md (joinAsMember, getMyAccount, claimReward, error codes), docs/prompts/ref/storefront-rules.md section 6, docs/prompts/ref/demo-menus.md "Rewards and stamp rules", docs/prompts/ref/storefront-components.md sections 3 (Rewards + account) and 4 (stamp-grid, otp-resend), docs/SMART_APP_PH_BLUEPRINT.md sections 5.4, 6.8 to 6.11, 7.4, 7.10 and 8.4.
+Read first: AGENTS.md, docs/ux.md, docs/design-tokens.md (member colour, highlight), docs/components.md, docs/api.md (joinAsMember, getMyAccount, claimReward, error codes), docs/prompts/ref/storefront-rules.md section 6, docs/prompts/ref/demo-menus.md "Rewards and stamp rules", docs/prompts/ref/storefront-components.md sections 3 (Rewards + account) and 4 (stamp-grid, otp-resend), docs/archive/SMART_APP_PH_BLUEPRINT.md sections 5.4, 6.8 to 6.11, 7.4, 7.10 and 8.4.
 
 FOUNDER DECISIONS USED (change before running)
  - The stamp card is the main selling point: it uses the member colour (not the shop colour), the stamp-grid composition from T02 and the stamp-press motion recipe; confetti (Magic UI confetti) fires once per reward, never under reduced motion.
@@ -42,7 +42,7 @@ Joining takes under 30 seconds on a phone, and a member always sees how many sta
  - Opt-ins (c-field-10 pattern switches): "Order updates on this phone" (push; hidden without push support), "Promos by email from this shop" and "Promos by text (SMS)" (both off by default; each saved as its own consent, newest wins). Saved at once with a toast; failures roll back.
  - Sign out (confirm c-alert-dialog-2 pattern): clears the member session on this phone; basket and favourites stay.
  - Privacy link (T14 route) with "To delete your data, contact the shop" (deletion is by contacting the shop in A). No account deletion screen in A.
- - Saved addresses are not here: Storefront Blueprint v1.4 moved saved places to MVP B; the last address is remembered on the phone (T09). Update the 7.10 line in docs/SMART_APP_PH_BLUEPRINT.md to say so.
+ - Saved addresses are not here: Storefront Blueprint v1.4 moved saved places to MVP B; the last address is remembered on the phone (T09). Update the 7.10 line in docs/archive/SMART_APP_PH_BLUEPRINT.md to say so.
 
 4. TESTS
  - Unit: stamp-grid slot states from (stamps, pending, rule); progress text for every reward type; limited badge thresholds (100, 21, 20, 1, 0); otp-resend timer with fake timers; confetti-once memory.

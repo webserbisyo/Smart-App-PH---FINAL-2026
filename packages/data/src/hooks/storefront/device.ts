@@ -25,8 +25,11 @@ import {
 } from '../../device-storage';
 import { getMockScenario, subscribeMockScenario } from '../../mocks/scenario-state';
 
-// Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
-declare const process: { env: { NODE_ENV?: string | undefined } };
+// Bundlers replace process.env.NODE_ENV and SMARTAPP_PREVIEW at build time (Next and Vite), so the sample-data
+// tools ship only in development and preview builds and drop out of live builds (decision T100).
+declare const process: {
+  env: { NODE_ENV?: string | undefined; SMARTAPP_PREVIEW?: string | undefined };
+};
 
 const EMPTY = { value: null, notice: null } as const;
 
@@ -249,7 +252,9 @@ function subscribeOnline(listener: () => void): () => void {
 }
 
 function onlineNow(): boolean {
-  const devOffline = process.env.NODE_ENV !== 'production' && getMockScenario().offline;
+  const devOffline =
+    (process.env.NODE_ENV !== 'production' || process.env.SMARTAPP_PREVIEW === '1') &&
+    getMockScenario().offline;
   return navigator.onLine && !devOffline;
 }
 
@@ -275,7 +280,9 @@ function subscribeClock(listener: () => void): () => void {
     for (const l of clockListeners) l();
   }, 15_000);
   const unsubscribeScenario =
-    process.env.NODE_ENV !== 'production' ? subscribeMockScenario(listener) : () => {};
+    process.env.NODE_ENV !== 'production' || process.env.SMARTAPP_PREVIEW === '1'
+      ? subscribeMockScenario(listener)
+      : () => {};
   return () => {
     clockListeners.delete(listener);
     unsubscribeScenario();
@@ -287,7 +294,10 @@ function subscribeClock(listener: () => void): () => void {
 }
 
 function clockSnapshot(): string {
-  const pinned = process.env.NODE_ENV !== 'production' ? getMockScenario().now : null;
+  const pinned =
+    process.env.NODE_ENV !== 'production' || process.env.SMARTAPP_PREVIEW === '1'
+      ? getMockScenario().now
+      : null;
   if (pinned) return pinned;
   clock ||= minuteNow();
   return clock;

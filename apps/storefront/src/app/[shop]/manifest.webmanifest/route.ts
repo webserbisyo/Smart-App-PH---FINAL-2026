@@ -23,7 +23,7 @@ export function generateStaticParams() {
 // Manifests take plain colours; the palette is OKLCH.
 function hex(value: string): string {
   const color = parseOklch(value);
-  return color ? oklchToHex(color) : '#ffffff';
+  return color ? oklchToHex(color) : '#ffffff'; // brand-guard-ignore: manifests need a plain colour
 }
 
 function icons(slug: string) {

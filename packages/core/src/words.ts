@@ -2141,17 +2141,6 @@ export const ordersWords = {
     more: 'More',
     orderTimes: 'Order times',
   },
-  // Test switches, shown only in development builds.
-  dev: {
-    title: 'Test scenarios',
-    rush: 'Lunch rush',
-    empty: 'Empty day',
-    trickle: 'New order every 20 s',
-    slow: 'Slow network (2 s)',
-    fail: 'Server error',
-    offline: 'Offline',
-    reset: 'Back to normal',
-  },
   // The floating Messenger button on Orders (T81): the Page inbox, with the open order copied to paste.
   messenger: {
     open: 'Open Messenger',
@@ -4979,3 +4968,61 @@ export const adminWords = {
   },
   csvName: (date: string) => `smart-app-payments-${date}.csv`,
 };
+
+// The Preview panel and sample sign-in (decision T100): development and preview builds only, so this has its
+// own small export and never rides along with `words` into a live bundle.
+export const previewWords = {
+  pill: 'Preview',
+  title: 'Preview · sample data',
+  close: 'Close preview panel',
+  viewAs: 'View as',
+  shop: 'Shop',
+  scenario: 'Scenario',
+  clock: 'Clock',
+  hint: 'Add ?clean=1 to the link to hide this for recordings.',
+  admin: 'Platform admin',
+  owner: (owner: string, shop: string) => `${owner} (${shop})`,
+  // The login page on sample data: open the dashboard as a demo owner, no account needed.
+  sampleSignIn: 'Look around with sample data',
+  sampleSignInLine: 'Opens Kanto Smash Burgers as its owner. Nothing is saved to a real shop.',
+  scenarios: {
+    none: 'Normal',
+    slow: 'Slow network',
+    error: 'Server error',
+    empty: 'Nothing yet (empty)',
+    offline: 'Offline',
+    closed: 'Shop closed',
+    nocard: 'No stamp card',
+    basket: 'Basket with 3 items',
+    'orders-rush': 'Orders: lunch rush',
+    'orders-empty': 'Orders: empty day',
+    'orders-trickle': 'Orders: new one every 20 s',
+    'plan-trial': 'Plan: free trial',
+    'plan-due': 'Plan: payment due',
+    'plan-overdue': 'Plan: overdue',
+    'plan-paused': 'Plan: paused',
+    'storage-full': 'Storage full',
+    'export-fail': 'Export fails',
+    'stage-setting-up': 'Shop still setting up',
+    'stage-asked': 'Waiting for approval',
+    'home-quiet': 'Home: quiet morning',
+    'home-new': 'Home: brand-new shop',
+    'home-closed': 'Home: closed today',
+    'home-error': 'Home: error',
+    'home-slow': 'Home: slow',
+  },
+  clocks: {
+    now: 'Now',
+    morning: 'Before opening (5:30 AM)',
+    lunch: 'Lunch rush (12:30 PM)',
+    evening: 'Evening (7:00 PM)',
+    late: 'After closing (11:30 PM)',
+  },
+  customers: {
+    guest: 'Guest (not a member)',
+    member: 'Member',
+    'member-ready': 'Member with a reward ready',
+    'member-pending': 'Member, stamp pending',
+    'member-capped': 'Member at the daily cap',
+  },
+} as const;

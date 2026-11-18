@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T14: Privacy notice, system pages and the final storefront check
 
-Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 6 and 7, docs/prompts/ref/storefront-components.md section 3 (Shop info, privacy, system), docs/SMART_APP_PH_BLUEPRINT.md sections 7.11, 7.12 and 16.1, docs/SYSTEM.md section 10, docs/RESEARCH.md (Data privacy).
+Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 6 and 7, docs/prompts/ref/storefront-components.md section 3 (Shop info, privacy, system), docs/archive/SMART_APP_PH_BLUEPRINT.md sections 7.11, 7.12 and 16.1, docs/archive/SYSTEM.md section 10, docs/archive/RESEARCH.md (Data privacy).
 
 FOUNDER DECISIONS USED (change before running)
  - One privacy notice per shop at /[shop]/privacy: the shop is the one collecting the data, Smart App PH runs the app for them (Data Privacy Act of 2012, RA 10173). English in full, with a short Filipino summary box at the top. Text is a plain-words draft; I will have it checked before the first paying shop (say this in the PR).
@@ -35,7 +35,7 @@ Every link in the storefront leads somewhere finished: a clear privacy notice a 
  - Lighthouse mobile by hand (Chrome DevTools) on /kanto-smash, /kanto-smash/menu, /tala-apparel/menu, /kanto-smash/checkout, a receipt and /kanto-smash/rewards: write the Performance, Accessibility, Best Practices and SEO scores and CLS in a table in docs/PROGRESS.md under T14. Targets: Performance ≥ 90 (Home, Menu), Accessibility 100, CLS < 0.1. Anything below target → fix it in this task if small, otherwise list it and stop.
  - Build route table: first-load JS per storefront route pasted in the PR; Home ≤ 300 KB gzipped.
  - CI build scan still blocks demo owner emails, /kit, localhost, setMockScenario, mock-scenario and Demo owner in the storefront production build.
- - QA: fill the storefront rows of docs/SMART_APP_PH_BLUEPRINT.md 16.1 that the mock can prove (360 to 1280, Android Chrome and iPhone Safari by hand where you can; leave the rest blank and say so).
+ - QA: fill the storefront rows of docs/archive/SMART_APP_PH_BLUEPRINT.md 16.1 that the mock can prove (360 to 1280, Android Chrome and iPhone Safari by hand where you can; leave the rest blank and say so).
  - Words check: no visible text outside words.ts (search the storefront for string literals in JSX and list any left).
 
 4. TESTS
