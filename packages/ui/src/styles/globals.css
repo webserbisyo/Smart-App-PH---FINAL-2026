@@ -1318,21 +1318,19 @@
   }
 }
 
-/* The Preview pill (decision T100): bottom left on phones, above the dock (chat buttons own the right
-   corner); bottom centre on a laptop (the sidebar owns the left). */
+/* The Preview pill (decision T100): always bottom left, out of the way of the main actions (Place order,
+   save bars and chat buttons sit centre or right). Above the dock on phones; past the dashboard's side nav
+   (shadcn sidebar: 3rem as an icon rail, 16rem open). */
 @utility preview-pill-place {
   left: 0.75rem;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
-  @media (min-width: 1024px) {
-    left: 50%;
-    translate: -50% 0;
-    bottom: 1rem;
-  }
 }
-/* Tablet dashboard: clear the icon rail on the left (shadcn sidebar's 3rem icon width). */
-@media (min-width: 768px) and (max-width: 1023px) {
+@media (min-width: 768px) {
   body:has([data-slot='sidebar-wrapper']) [data-slot='preview-pill'] {
     left: calc(3rem + 0.75rem);
+  }
+  body:has([data-slot='sidebar'][data-state='expanded']) [data-slot='preview-pill'] {
+    left: calc(16rem + 0.75rem);
   }
 }
 @media (max-width: 1023px) {

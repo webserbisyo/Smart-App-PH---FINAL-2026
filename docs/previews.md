@@ -1,6 +1,6 @@
 # Public demo links (preview builds)
 
-Two links anyone can open, on sample data, with no database and no real sign-in (decision T100): the storefront for the five demo shops, and the owner dashboard with "Look around with sample data" on its sign-in page. Both show the **Preview** pill (bottom left; centred at the bottom on a computer) to switch the scenario, the clock and who you view as. Add `?clean=1` to any address to hide the pill for screenshots, `?clean=0` to bring it back.
+Two links anyone can open, on sample data, with no database and no real sign-in (decision T100): the storefront for the five demo shops, and the owner dashboard with "Look around with sample data" on its sign-in page. Both show the **Preview** pill (bottom left, next to the side nav on a computer) to switch the scenario, the clock and who you view as. Add `?clean=1` to any address to hide the pill for screenshots, `?clean=0` to bring it back.
 
 A preview build is not a live shop. Live builds (`APP_ENV` empty or `production`) have none of this: no Preview pill, no sample sign-in, no `/kit`, and CI checks that.
 

@@ -4,6 +4,8 @@ import { PORTS } from './routes.js';
 // Local runs on macOS 12 (no bundled Chromium there) can use the installed Chrome:
 // PLAYWRIGHT_CHANNEL=chrome pnpm e2e. CI leaves it unset and uses Playwright's Chromium.
 const channel = process.env.PLAYWRIGHT_CHANNEL;
+// A machine with another Chromium build points at it with PLAYWRIGHT_CHROMIUM_PATH.
+const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
 
 export default defineConfig({
   testDir: '.',
@@ -11,7 +13,11 @@ export default defineConfig({
   retries: 0,
   forbidOnly: Boolean(process.env.CI),
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
-  use: { ...(channel ? { channel } : {}), trace: 'retain-on-failure' },
+  use: {
+    ...(channel ? { channel } : {}),
+    ...(executablePath ? { launchOptions: { executablePath } } : {}),
+    trace: 'retain-on-failure',
+  },
   projects: [
     {
       name: 'phone',
