@@ -1,6 +1,8 @@
 <!-- prettier-ignore-start -->
 # Storefront prompts (MVP A, mock data first)
 
+All of these are built. The prompt files now live in `done/` (decision T101); `ref/` stays here. New prompts go in this folder until their task is merged, then move to `done/`.
+
 One prompt = one task = one branch `ag/t<nn>-<name>` = one PR into main. Paste them into Antigravity in the order below. Each prompt makes the agent post a plan and wait for your OK before it codes.
 
 ## Before the first prompt

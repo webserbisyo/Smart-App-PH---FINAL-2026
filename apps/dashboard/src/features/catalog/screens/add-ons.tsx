@@ -53,7 +53,6 @@ import { PageEmpty, PageError } from '@/app/page-state';
 import { cn } from 'cn';
 import { useCatalogTabs } from '../tabs.js';
 import { AddOnSheet } from '../add-on-sheet.js';
-import { DevScenarioPanel } from '../dev-scenario-panel.js';
 
 export function CatalogAddOnsScreen() {
   const { kind } = useShop();
@@ -353,8 +352,6 @@ export function CatalogAddOnsScreen() {
       {optionGroups.length > 0 ? (
         <FloatingAddButton label={catalogWords.addAddOnGroup} onClick={handleOpenAdd} />
       ) : null}
-
-      <DevScenarioPanel />
     </div>
   );
 }

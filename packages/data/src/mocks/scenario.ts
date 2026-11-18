@@ -14,15 +14,19 @@ import {
 
 export * from './scenario-state';
 
-// Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
-declare const process: { env: { NODE_ENV?: string | undefined } };
+// Bundlers replace process.env.NODE_ENV and SMARTAPP_PREVIEW at build time (Next and Vite), so the sample-data
+// tools ship only in development and preview builds and drop out of live builds (decision T100).
+declare const process: {
+  env: { NODE_ENV?: string | undefined; SMARTAPP_PREVIEW?: string | undefined };
+};
 
 function sessionKey(): string {
   return 'smartapp:mock-scenario';
 }
 
 export function setMockScenario(patch: Partial<MockScenario>): MockScenario {
-  if (process.env.NODE_ENV === 'production') return getMockScenario();
+  if (process.env.NODE_ENV === 'production' && process.env.SMARTAPP_PREVIEW !== '1')
+    return getMockScenario();
   const current = MockScenarioSchema.parse({ ...getMockScenario(), ...patch });
   try {
     if (typeof window !== 'undefined')
@@ -36,7 +40,8 @@ export function setMockScenario(patch: Partial<MockScenario>): MockScenario {
 
 /** Restores the scenario saved in this tab (dev only). */
 export function loadMockScenario(): MockScenario {
-  if (process.env.NODE_ENV === 'production') return getMockScenario();
+  if (process.env.NODE_ENV === 'production' && process.env.SMARTAPP_PREVIEW !== '1')
+    return getMockScenario();
   try {
     const raw = typeof window !== 'undefined' ? window.sessionStorage.getItem(sessionKey()) : null;
     const parsed = raw ? MockScenarioSchema.safeParse(JSON.parse(raw)) : null;
@@ -182,7 +187,7 @@ export function readMockScenarioFromUrl(
   params: URLSearchParams,
   dataSource: string,
 ): UrlScenario | null {
-  if (process.env.NODE_ENV === 'production') return null;
+  if (process.env.NODE_ENV === 'production' && process.env.SMARTAPP_PREVIEW !== '1') return null;
   if (dataSource !== 'mock') return null;
   const parsed = parseMockScenario(params);
   if (Object.keys(parsed.scenario).length > 0) {

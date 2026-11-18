@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T13: Install as an app (Serwist service worker, per-shop manifest and icons, offline page, install card, push for order status)
 
-Read first: AGENTS.md, docs/ux.md, docs/decisions.md (T6), docs/stack-versions.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 4, 5 and 7, docs/SMART_APP_PH_BLUEPRINT.md sections 4.1, 7.12, 8.2 and 8.8, and the official Serwist docs for Next.js with Turbopack (serwist.pages.dev). Say which parts you verified in the docs and which you assumed.
+Read first: AGENTS.md, docs/ux.md, docs/decisions.md (T6), docs/stack-versions.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 4, 5 and 7, docs/archive/SMART_APP_PH_BLUEPRINT.md sections 4.1, 7.12, 8.2 and 8.8, and the official Serwist docs for Next.js with Turbopack (serwist.pages.dev). Say which parts you verified in the docs and which you assumed.
 
 FOUNDER DECISIONS USED (change before running)
  - D8 / T6: @serwist/turbopack 9.5.13 (exact) and the serwist package it needs, same version. Before installing, run a dry run and list every package it adds; if it needs anything else (or a Node newer than 24.14), stop and ask me.

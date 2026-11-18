@@ -153,7 +153,7 @@ Docs (same push):
 - `docs/decisions.md` N1: add "(amended by T48: days ahead are a shop setting, default today and tomorrow)". Do not delete N1.
 - `docs/blueprints/A-mvp.md`: update the Order types row (pickup and delivery now or up to the shop's days ahead, item notice and daily limits) and the Dashboard row (Orders: Now board, Scheduled calendar, History, Kitchen view, Change time, Recall). Remove "kitchen screen" and "advance orders beyond tomorrow" from "Not in the MVP" and add "deposits, recurring orders, occasion reminders, walk-in table booking, staff kitchen logins".
 - `docs/blueprints/B-full.md` M10 and M11: one line each saying which part moved to A (T48) and what stays in B.
-- `docs/SYSTEM.md` and `docs/SMART_APP_PH_BLUEPRINT.md`: every place that says "today or tomorrow" only, "advance-order calendar" out of scope, or "kitchen screen" out of scope (search for `tomorrow`, `kitchen`, `advance`), plus the Orders board description (Scheduled group, 30-minute rule, age from placed time): update each to T48 to T53. List the lines you changed in your final report.
+- `docs/archive/SYSTEM.md` and `docs/archive/SMART_APP_PH_BLUEPRINT.md`: every place that says "today or tomorrow" only, "advance-order calendar" out of scope, or "kitchen screen" out of scope (search for `tomorrow`, `kitchen`, `advance`), plus the Orders board description (Scheduled group, 30-minute rule, age from placed time): update each to T48 to T53. List the lines you changed in your final report.
 - `docs/ux.md` section 5: amend the Undo sentence per T51 (Recall shown for 5 seconds; the server allows 10).
 - `docs/PROGRESS.md`: `- [x] O1 Orders data, rules and mock data (T48 to T53)`. `docs/CHANGELOG.md`: one line.
 

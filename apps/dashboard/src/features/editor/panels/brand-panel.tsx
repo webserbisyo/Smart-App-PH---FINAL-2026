@@ -51,6 +51,10 @@ import { pictureRef, pictureSrc } from '../picture.js';
 import type { PanelProps } from './types.js';
 import { CountedLabel, orNull } from './field-count.js';
 
+// A shop with no saved look starts here; owner colour data, not a theme colour.
+const PAGE_DEFAULT = '#FAFAFA'; // brand-guard-ignore: owner colour default
+const CARD_DEFAULT = '#FFFFFF'; // brand-guard-ignore: owner colour default
+
 const W = editorWords.brand;
 const TAGLINE_MAX = 80;
 const SHAPE_ICONS = { circle: CircleIcon, rounded: SquareIcon } as const;
@@ -162,7 +166,7 @@ export function BrandPanel({ content, update }: PanelProps) {
   const set = React.useMemo(() => shopStyles(reading, fallbackSeed), [reading, fallbackSeed]);
   const picked = set.styles.find((s) => isStyle(look, s)) ?? null;
   const main = set.seeds[0]?.hex ?? look.brandColor;
-  const swatches = tuneSwatches(main, look.pageColor ?? '#FAFAFA');
+  const swatches = tuneSwatches(main, look.pageColor ?? PAGE_DEFAULT);
 
   const setLook = (next: Partial<Look>, key: string) => update((c) => withLook(c, next), key);
   const setPage = (hex: string, key: string) =>
@@ -346,8 +350,8 @@ export function BrandPanel({ content, update }: PanelProps) {
                     id: 'white',
                     group: 'light',
                     seed: main,
-                    pageColor: look.pageColor ?? '#FAFAFA',
-                    cardColor: look.cardColor ?? '#FFFFFF',
+                    pageColor: look.pageColor ?? PAGE_DEFAULT,
+                    cardColor: look.cardColor ?? CARD_DEFAULT,
                     brandColor: look.brandColor,
                     surface: look.surface,
                     score: 0,
@@ -420,7 +424,7 @@ export function BrandPanel({ content, update }: PanelProps) {
             <AnyColourPicker
               id="editor-page-any"
               label={W.pageColour}
-              value={look.pageColor ?? '#FAFAFA'}
+              value={look.pageColor ?? PAGE_DEFAULT}
               onChange={(hex) => setPage(hex, 'page-any')}
             />
           </TuneRow>
@@ -445,7 +449,7 @@ export function BrandPanel({ content, update }: PanelProps) {
             <AnyColourPicker
               id="editor-card-any"
               label={W.cardColour}
-              value={look.cardColor ?? '#FFFFFF'}
+              value={look.cardColor ?? CARD_DEFAULT}
               onChange={(hex) => setLook({ cardColor: hex }, 'card-any')}
             />
           </TuneRow>

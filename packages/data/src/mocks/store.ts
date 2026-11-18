@@ -157,7 +157,9 @@ import {
 } from './state';
 
 // Bundlers replace process.env.NODE_ENV at build time (Next and Vite), so dev-only code drops out of production.
-declare const process: { env: { NODE_ENV?: string | undefined } };
+declare const process: {
+  env: { NODE_ENV?: string | undefined; SMARTAPP_PREVIEW?: string | undefined };
+};
 
 export const MOCK_CODE = '123456';
 const RESEND_SECONDS = 60;
@@ -313,7 +315,10 @@ async function resolveOwnerShopSlug(): Promise<string> {
 
 export function createMockStore(options: MockStoreOptions = {}): MockStore {
   const seed = options.seed ?? 20261025;
-  const production = options.production ?? process.env.NODE_ENV === 'production';
+  // A live build: no demo codes on screen, no ?as= customer states. Preview builds keep them (T100).
+  const production =
+    options.production ??
+    (process.env.NODE_ENV === 'production' && process.env.SMARTAPP_PREVIEW !== '1');
   const scenario = options.scenario ?? getMockScenario;
   const persistence = options.persistence ?? null;
   let rng: Rng = mulberry32(seed);

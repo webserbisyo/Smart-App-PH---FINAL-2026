@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T11: My orders (active and past) and Order again
 
-Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/api.md (listMyOrders), docs/prompts/ref/storefront-rules.md sections 5 and 7, docs/prompts/ref/storefront-components.md section 3 (My orders), docs/SMART_APP_PH_BLUEPRINT.md sections 6.5, 7.9 and 8.3.
+Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/api.md (listMyOrders), docs/prompts/ref/storefront-rules.md sections 5 and 7, docs/prompts/ref/storefront-components.md section 3 (My orders), docs/archive/SMART_APP_PH_BLUEPRINT.md sections 6.5, 7.9 and 8.3.
 
 FOUNDER DECISIONS USED (change before running)
  - Guests see the orders saved on this phone (guestOrderTokens, 90 days); members also see their account orders; the two lists merge by order id. No sign-in needed to see your own phone's orders.

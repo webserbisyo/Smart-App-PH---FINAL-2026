@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { DEMO_SHOPS, words, type DemoShopSummary } from '@smartapp/core';
+import { words } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Card,
@@ -19,185 +18,29 @@ import {
 import { Input } from '@smartapp/ui/components/input';
 import { Label } from '@smartapp/ui/components/label';
 import { Separator } from '@smartapp/ui/components/separator';
-import { cssVars } from '@smartapp/ui/lib/css-vars';
+import { KitFrame, KitJumpBar } from '../kit-frame.js';
 import { ShellKitSections } from '../shell-sections.js';
 import { StorefrontPrimitiveSections } from '../storefront-primitives.js';
 import { ReuiPrimitiveSections } from '../reui-primitives.js';
-import { StorefrontPatterns } from '../storefront-patterns.js';
-import { StorefrontSections } from '../storefront-sections.js';
-import { CatalogPrimitiveSections } from '../catalog-primitives.js';
-import { OrdersPrimitiveSections } from '../orders-primitives.js';
-import { OrdersV2Sections } from '../orders-v2-primitives.js';
-import { MembersPrimitiveSections } from '../members-primitives.js';
-import { HomePrimitiveSections } from '../home-primitives.js';
-import { SettingsPrimitiveSections } from '../settings-primitives.js';
-import { EditorPrimitiveSections } from '../editor-primitives.js';
-import { AdminPrimitiveSections } from '../admin-primitives.js';
 
-interface TokenSwatch {
-  name: string;
-  bgClass: string;
-  fgClass: string;
-}
-
-// The kit's jump bar (kit pass K12): one stop per group.
-const KIT_GROUPS = [
-  { id: 'kit-tokens', label: 'Tokens' },
-  { id: 'kit-primitives', label: 'Primitives' },
-  { id: 'kit-storefront', label: 'Storefront' },
+// Kit page 1 of 5, Base (decision T98): the installed components and the app frame that both apps use.
+// App screens are on /kit/dashboard and /kit/storefront; colours on /kit/tokens.
+const GROUPS = [
+  { id: 'kit-basics', label: 'Basics' },
+  { id: 'kit-frame', label: 'App frame' },
+  { id: 'kit-components', label: 'Components' },
   { id: 'kit-reui', label: 'ReUI' },
-  { id: 'kit-catalog', label: 'Catalog' },
-  { id: 'kit-orders', label: 'Orders' },
-  { id: 'kit-members', label: 'Members' },
-  { id: 'kit-home', label: 'Home' },
-  { id: 'kit-settings', label: 'Settings' },
-  { id: 'kit-editor', label: 'Editor' },
-  { id: 'kit-patterns', label: 'Library references' },
 ] as const;
 
-const COLOR_TOKENS: readonly TokenSwatch[] = [
-  { name: 'primary', bgClass: 'bg-primary', fgClass: 'text-primary-foreground' },
-  { name: 'secondary', bgClass: 'bg-secondary', fgClass: 'text-secondary-foreground' },
-  { name: 'destructive', bgClass: 'bg-destructive', fgClass: 'text-destructive-foreground' },
-  { name: 'success', bgClass: 'bg-success', fgClass: 'text-success-foreground' },
-  { name: 'warning', bgClass: 'bg-warning', fgClass: 'text-warning-foreground' },
-  { name: 'info', bgClass: 'bg-info', fgClass: 'text-info-foreground' },
-  { name: 'member', bgClass: 'bg-member', fgClass: 'text-member-foreground' },
-  { name: 'highlight', bgClass: 'bg-highlight', fgClass: 'text-highlight-foreground' },
-  { name: 'background', bgClass: 'bg-background', fgClass: 'text-foreground' },
-  { name: 'card', bgClass: 'bg-card', fgClass: 'text-card-foreground' },
-  { name: 'muted', bgClass: 'bg-muted', fgClass: 'text-muted-foreground' },
-  { name: 'accent', bgClass: 'bg-accent', fgClass: 'text-accent-foreground' },
-];
-
-export default function KitPage() {
-  const [isDark, setIsDark] = useState<boolean>(() =>
-    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : false,
-  );
-  const defaultSlug = DEMO_SHOPS[0]?.slug ?? '';
-  const [selectedShopSlug, setSelectedShopSlug] = useState<string>(defaultSlug);
-
-  function toggleDark(): void {
-    const next = !isDark;
-    setIsDark(next);
-    if (next) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }
-
-  const selectedShop =
-    DEMO_SHOPS.find((s: DemoShopSummary) => s.slug === selectedShopSlug) ?? DEMO_SHOPS[0];
-
+export default function KitBasePage() {
   return (
-    <div className="min-h-dvh overflow-x-clip bg-background p-4 text-foreground md:p-10">
-      <div className="mx-auto max-w-5xl space-y-12">
-        {/* Header */}
-        <header className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Design System & Component Kit</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Live components, design tokens, and demo brand preview for {words.appName}.
-            </p>
-          </div>
-          <Button variant="outline" onClick={toggleDark}>
-            {isDark ? 'Light mode' : 'Dark mode'}
-          </Button>
-        </header>
+    <KitFrame current="/kit">
+      <KitJumpBar groups={GROUPS} />
+      <p className="text-sm text-muted-foreground">
+        The parts every {words.appName} screen is built from. Use these before adding anything new.
+      </p>
 
-        <nav
-          aria-label="Kit sections"
-          className="sticky top-0 z-sticky -mx-4 border-b bg-background/90 px-4 py-2 backdrop-blur-md md:-mx-10 md:px-10"
-        >
-          {/* Plain links: the ReUI Scrollspy reads the first scroll area on the page,
-              and the kit shows several, so it cannot track this page. */}
-          <div className="scrollbar-none flex gap-2 overflow-x-auto">
-            {KIT_GROUPS.map((group) => (
-              <Button
-                key={group.id}
-                variant="outline"
-                size="sm"
-                render={<a href={`#${group.id}`} />}
-                nativeButton={false}
-                className="h-9 shrink-0 rounded-full px-4 pointer-coarse:h-11"
-              >
-                {group.label}
-              </Button>
-            ))}
-          </div>
-        </nav>
-
-        {/* Color Tokens Section */}
-        <section id="kit-tokens" className="scroll-mt-20 space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold">Color Tokens</h2>
-            <p className="text-sm text-muted-foreground">
-              Tailwind v4 OKLCH token swatches in current theme mode.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {COLOR_TOKENS.map((token) => (
-              <div key={token.name} className="overflow-hidden rounded-lg border bg-card shadow-xs">
-                <div
-                  className={`flex h-16 items-center justify-center text-xs font-medium ${token.bgClass} ${token.fgClass}`}
-                >
-                  Aa 4.5:1
-                </div>
-                <div className="p-2 text-center font-mono text-xs">{token.name}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <Separator />
-
-        {/* Demo Shops Brand Switcher */}
-        <section className="space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-xl font-semibold">Demo Shops Brand Palette</h2>
-            <p className="text-sm text-muted-foreground">
-              Dynamic shop brand colors set with the typed cssVars() helper.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {DEMO_SHOPS.map((shop: DemoShopSummary) => (
-              <Button
-                key={shop.slug}
-                variant={selectedShop?.slug === shop.slug ? 'default' : 'outline'}
-                onClick={() => setSelectedShopSlug(shop.slug)}
-              >
-                {shop.name}
-              </Button>
-            ))}
-          </div>
-          {selectedShop ? (
-            <Card className="bg-card">
-              <CardHeader>
-                <CardTitle>{selectedShop.name}</CardTitle>
-                <CardDescription>
-                  {selectedShop.kind} · {selectedShop.city} · {selectedShop.ownerName}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-sm">
-                  Hex color: <span className="font-mono">{selectedShop.brandColor}</span>
-                </div>
-                <div
-                  className="inline-flex items-center rounded-md bg-shop px-3 py-1.5 text-sm font-semibold text-primary-foreground"
-                  style={cssVars({
-                    '--shop-color': selectedShop.brandColor,
-                  })}
-                >
-                  Brand Accent Button
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-        </section>
-
-        <Separator />
-
+      <div id="kit-basics" className="scroll-mt-20 space-y-12">
         {/* Component: Button */}
         <section className="space-y-4">
           <div className="space-y-1">
@@ -338,57 +181,18 @@ export default function KitPage() {
             </div>
           </div>
         </section>
-
-        <div id="kit-primitives" className="scroll-mt-20" />
-        <ShellKitSections />
-
-        <StorefrontPrimitiveSections />
-
-        <Separator />
-
-        <div id="kit-storefront" className="scroll-mt-20" />
-        <StorefrontSections />
-
-        <div id="kit-reui" className="scroll-mt-20" />
-        <ReuiPrimitiveSections />
-
-        <Separator />
-
-        <div id="kit-catalog" className="scroll-mt-20" />
-        <CatalogPrimitiveSections />
-
-        <Separator />
-
-        <div id="kit-orders" className="scroll-mt-20" />
-        <OrdersV2Sections />
-        <OrdersPrimitiveSections />
-
-        <Separator />
-
-        <div id="kit-members" className="scroll-mt-20" />
-        <MembersPrimitiveSections />
-
-        <Separator />
-
-        <div id="kit-home" className="scroll-mt-20" />
-        <HomePrimitiveSections />
-
-        <Separator />
-
-        <div id="kit-settings" className="scroll-mt-20" />
-        <SettingsPrimitiveSections />
-        <AdminPrimitiveSections />
-
-        <Separator />
-
-        <div id="kit-editor" className="scroll-mt-20" />
-        <EditorPrimitiveSections />
-
-        <Separator />
-
-        <div id="kit-patterns" className="scroll-mt-20" />
-        <StorefrontPatterns />
       </div>
-    </div>
+
+      <div id="kit-frame" className="scroll-mt-20" />
+      <ShellKitSections />
+
+      <div id="kit-components" className="scroll-mt-20" />
+      <StorefrontPrimitiveSections />
+
+      <Separator />
+
+      <div id="kit-reui" className="scroll-mt-20" />
+      <ReuiPrimitiveSections />
+    </KitFrame>
   );
 }

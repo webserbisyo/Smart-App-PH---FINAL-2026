@@ -8,6 +8,7 @@
     "test": "vitest run",
     "demo:images": "node scripts/demo-images.ts",
     "e2e": "playwright test -c e2e/playwright.config.ts",
+    "ui-scan": "playwright test -c e2e/ui-scan.config.ts",
     "avatars": "node scripts/default-avatars.ts",
     "art": "node scripts/fluent-art.ts",
     "budget": "node scripts/js-budget.ts"

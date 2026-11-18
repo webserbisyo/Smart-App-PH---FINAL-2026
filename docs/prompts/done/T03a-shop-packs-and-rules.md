@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T03a: Shop data shapes, storefront rules and the 5 demo shop packs (packages/core)
 
-Read first: AGENTS.md, docs/blueprints/foundation.md section 4, docs/api.md, docs/demo-shops.md, docs/prompts/ref/demo-menus.md, docs/prompts/ref/storefront-rules.md, docs/SMART_APP_PH_BLUEPRINT.md sections 8.1 to 8.4 and 14.
+Read first: AGENTS.md, docs/blueprints/foundation.md section 4, docs/api.md, docs/demo-shops.md, docs/prompts/ref/demo-menus.md, docs/prompts/ref/storefront-rules.md, docs/archive/SMART_APP_PH_BLUEPRINT.md sections 8.1 to 8.4 and 14.
 
 FOUNDER DECISIONS USED (change before running)
  - Sample data plan: one TypeScript source. Shop packs (look, catalog, add-ons, stamp card, banners, hours, delivery) are copyable data; activity (orders, members, stamps) is generated from a pack plus a date and never copied into real shops (T03b).

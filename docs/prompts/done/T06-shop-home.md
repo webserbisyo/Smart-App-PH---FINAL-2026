@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T06: Shop home with the banner carousel
 
-Read first: AGENTS.md, docs/ux.md, docs/design-tokens.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 1 and 6, docs/prompts/ref/storefront-components.md section 3 (Home, Shop info), docs/SMART_APP_PH_BLUEPRINT.md section 7.2.
+Read first: AGENTS.md, docs/ux.md, docs/design-tokens.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 1 and 6, docs/prompts/ref/storefront-components.md section 3 (Home, Shop info), docs/archive/SMART_APP_PH_BLUEPRINT.md section 7.2.
 
 FOUNDER DECISIONS USED (change before running)
  - D3: banner carousel (ReUI c-carousel-11 dots + autoplay as in c-carousel-5) through the banner-carousel composition from T02: first banner is a plain priority image, carousel code loads after it, the owner's seconds (default 5), pauses on touch, hover, focus and off-screen, no autoplay under reduced motion, no carousel code for one banner, brand panel for none.

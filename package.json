@@ -18,7 +18,8 @@
     "db:push": "supabase db push",
     "db:new": "supabase migration new",
     "db:types": "supabase gen types typescript --local > packages/data/src/database.types.ts",
-    "e2e": "pnpm --filter @smartapp/tooling e2e"
+    "e2e": "pnpm --filter @smartapp/tooling e2e",
+    "ui-scan": "pnpm --filter @smartapp/tooling ui-scan"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

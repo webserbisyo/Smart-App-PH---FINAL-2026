@@ -7,8 +7,14 @@ const dashboardOrigin = new URL(
   process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://app.webserbisyo.com',
 ).origin;
 
+// A hosted preview on sample data (decision T100): keeps the Preview panel and test scenarios in the build
+// and asks search engines not to index it. Live builds leave NEXT_PUBLIC_APP_ENV unset or `production`.
+const preview = process.env.NEXT_PUBLIC_APP_ENV === 'preview';
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  // Shared packages test this to keep the sample-data tools in preview builds only.
+  env: { SMARTAPP_PREVIEW: preview ? '1' : '0' },
   partialPrefetching: true,
   // `pnpm dev` opened from a phone on the same Wi-Fi (http://192.168.x.x:3000). Next blocks its dev
   // scripts from unknown addresses, which leaves the page on skeletons. Dev only.
@@ -19,6 +25,9 @@ const nextConfig: NextConfig = {
   // The service worker is checked for updates on every visit (never served from the HTTP cache).
   async headers() {
     return [
+      ...(preview
+        ? [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]
+        : []),
       // Demo photos are public; the owner dashboard (another address) reads them to crop a photo.
       {
         source: '/demo/:path*',

@@ -134,7 +134,7 @@ describe('Design Tokens Contrast', () => {
   });
 });
 
-describe('Smart App PH brand tokens contrast (dashboard, decision T35)', () => {
+describe('Smart App PH brand tokens contrast (dashboard, decisions T35 and T97)', () => {
   const currentDir = import.meta.dirname ?? __dirname;
   const css = readFileSync(resolve(currentDir, '../src/styles/tokens.css'), 'utf-8');
 
@@ -172,6 +172,11 @@ describe('Smart App PH brand tokens contrast (dashboard, decision T35)', () => {
     ['background', 'foreground'],
     ['card', 'card-foreground'],
     ['card', 'muted-foreground'],
+    ['background', 'muted-foreground'],
+    ['popover', 'popover-foreground'],
+    ['popover', 'muted-foreground'],
+    ['sidebar', 'foreground'],
+    ['sidebar', 'muted-foreground'],
     ['card', 'success-text'],
     ['card', 'warning-text'],
     ['card', 'info-text'],
@@ -187,6 +192,8 @@ describe('Smart App PH brand tokens contrast (dashboard, decision T35)', () => {
   ];
   const edges: readonly [string, string][] = [
     ['card', 'input'],
+    ['background', 'input'],
+    ['muted', 'input'],
     ['card', 'ring'],
     ['background', 'ring'],
   ];
@@ -205,6 +212,28 @@ describe('Smart App PH brand tokens contrast (dashboard, decision T35)', () => {
       });
     }
   }
+
+  // Surfaces come in layers (decision T97): each layer is lighter than the one under it, so a card never
+  // disappears into the page. Light: sidebar < page < card (popovers are white like cards, with a
+  // border and shadow). Dark: sidebar < page < card < popover, never pure black.
+  function lightness(scope: string, token: string): number {
+    const match = scope.match(new RegExp(`--${token}:\\s*([^;]+);`));
+    if (!match || !match[1]) throw new Error(`Token --${token} not found`);
+    return parseOklch(match[1])[0];
+  }
+  it('light: sidebar, page and card step up in lightness', () => {
+    const order = ['sidebar', 'background', 'card'].map((t) => lightness(light, t));
+    for (let i = 1; i < order.length; i += 1) {
+      expect(order[i] ?? 0).toBeGreaterThan(order[i - 1] ?? 1);
+    }
+  });
+  it('dark: sidebar, page, card and popover step up in lightness, none pure black', () => {
+    const order = ['sidebar', 'background', 'card', 'popover'].map((t) => lightness(dark, t));
+    expect(order[0] ?? 0).toBeGreaterThan(0.15);
+    for (let i = 1; i < order.length; i += 1) {
+      expect((order[i] ?? 0) - (order[i - 1] ?? 1)).toBeGreaterThanOrEqual(0.025);
+    }
+  });
 });
 
 describe('Shop palette contrast (5 demo brands and the presets)', () => {

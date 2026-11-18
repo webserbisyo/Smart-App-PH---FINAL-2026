@@ -15,7 +15,7 @@ const { router } = await import('../src/app/router.js');
 const { NAV } = await import('../src/app/nav.js');
 const { isActivePath } = await import('../src/app/use-nav-items.js');
 
-// Section 7 of docs/prompts/T05-dashboard-shell.md.
+// Section 7 of docs/prompts/done/T05-dashboard-shell.md.
 const SPEC_ROUTES = [
   '/',
   '/orders',

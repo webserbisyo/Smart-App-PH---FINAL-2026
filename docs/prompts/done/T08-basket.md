@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T08: Basket with flagged lines, closed shop, offline and stamp progress
 
-Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 4 and 6, docs/prompts/ref/storefront-components.md section 3 (Basket), docs/SMART_APP_PH_BLUEPRINT.md sections 5.3, 6.2, 6.3, 7.6 and 8.2.
+Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/prompts/ref/storefront-rules.md sections 4 and 6, docs/prompts/ref/storefront-components.md section 3 (Basket), docs/archive/SMART_APP_PH_BLUEPRINT.md sections 5.3, 6.2, 6.3, 7.6 and 8.2.
 
 FOUNDER DECISIONS USED (change before running)
  - Totals use the c-separator-6 pattern (rows wrap; no table), so ₱12,345.50 never widens anything at 360 px.

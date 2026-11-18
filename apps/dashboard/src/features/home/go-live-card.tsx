@@ -11,7 +11,7 @@ import {
 } from '@smartapp/core';
 import { errorCodeOf, useAskToGoLive } from '@smartapp/data';
 import { Item, ItemActions, ItemContent, ItemMedia, ItemTitle } from '@smartapp/ui/components/item';
-import { Status, StatusIndicator, StatusLabel } from '@smartapp/ui/components/status';
+import { Status, StatusLabel } from '@smartapp/ui/components/status';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
@@ -63,8 +63,7 @@ export function GoLiveCard({ onboarding }: { onboarding: OwnerOnboarding }) {
               {W.title}
             </h2>
             {asked ? (
-              <Status variant="warning">
-                <StatusIndicator />
+              <Status className="border-warning/40 bg-warning-soft text-warning-text">
                 <StatusLabel className="flex items-center gap-1">
                   <HourglassIcon className="size-3.5" aria-hidden="true" />
                   {W.waiting}

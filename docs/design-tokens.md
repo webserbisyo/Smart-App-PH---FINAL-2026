@@ -38,7 +38,19 @@ For banner words over a photo (decision R42): `scrim` (a near-black fade, the sa
 
 ## Smart App PH brand (dashboard and login only, decision T35)
 
-`tokens.css` sets the same token names again under `:root[data-app='dashboard']` (and `.dark`), so every installed part takes the brand with no class changes; the storefront never matches it. Values: page `#F9FAFD`, cards white, text navy `#011540`, muted `#4C5666`, borders `#E3E6ED`, control edges `#868C99` (3:1), primary logo blue `#0047FF` (dark `#6497FF`), `member` = mint `#2DE8B3` with navy text (stamps and rewards only), radius 12 px. The dashboard also gets motion 120 / 180 / 260 ms and navy-tinted `--elevation-*` (nearly flat in dark). Utilities: `brand-gradient` (logo gradient, static, never behind text or on controls) and `frost` (top bar and dock: page colour at 82 %, 12 px blur, solid fallback). Logo files: `docs/brand/` (masters: gradient mark, flat blue mark, stacked lockup), `apps/dashboard/public/brand/` (web). Tab and app icons in `apps/dashboard/public/`: `favicon.ico` (16 and 32 flat blue, 48 gradient), `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (ready for the PWA manifest). UX rules: `docs/ux.md` section 7.
+`tokens.css` sets the same token names again under `:root[data-app='dashboard']` (and `.dark`), so every installed part takes the brand with no class changes; the storefront never matches it. Values (light): page `#F9FAFD`, cards white, side nav `#F1F3F9`, text ink `#0B1633`, muted text `#5C6372`, quiet fills `#EDF0F6`, borders `#E0E3EA`, control edges `#83899A` (3:1), primary logo blue `#0047FF` (dark `#6497FF`), `member` = mint `#2DE8B3` with ink text (stamps and rewards only), radius 12 px.
+
+**Surface layers (decision T97).** Neutral black, grey, off-white and white layers instead of navy fills; the brand blue, mint and logo gradient stay as accents. Each surface sits on the layer below it; every step is at least 0.025 L apart (checked by the contrast test).
+
+| Layer         | Token        | Light     | Dark      |
+| ------------- | ------------ | --------- | --------- |
+| Side nav      | `sidebar`    | `#F1F3F9` | `#14171D` |
+| Page          | `background` | `#F9FAFD` | `#1B1E24` |
+| Card, panel   | `card`       | `#FFFFFF` | `#23262D` |
+| Menu, popover | `popover`    | `#FFFFFF` | `#2C3039` |
+| Quiet fill    | `muted`      | `#EDF0F6` | `#2A2E36` |
+
+Dark text is off-white (`oklch(0.955 0.006 264.5)`), never pure white; nothing is pure black. Soft status and stage tints in dark sit at L 0.33, one step above the card. Live on `/kit/tokens`. The dashboard also gets motion 120 / 180 / 260 ms and navy-tinted `--elevation-*` (nearly flat in dark). Utilities: `brand-gradient` (logo gradient, static, never behind text or on controls) and `frost` (top bar and dock: page colour at 82 %, 12 px blur, solid fallback). Logo files: `docs/brand/` (masters: gradient mark, flat blue mark, stacked lockup), `apps/dashboard/public/brand/` (web). Tab and app icons in `apps/dashboard/public/`: `favicon.ico` (16 and 32 flat blue, 48 gradient), `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` (ready for the PWA manifest). UX rules: `docs/ux.md` section 7.
 
 ## Shop brand (storefront only)
 
@@ -93,11 +105,11 @@ One colour per board stage, each with a solid (`stage-*`: dots, column bars, rin
 
 | Stage             | Token             | Light (solid / soft / text)                                  | Dark (solid / soft / text)                          | Icon                               |
 | ----------------- | ----------------- | ------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------- |
-| New               | `stage-new`       | `oklch(0.53 0.22 263)` / `0.955 0.03 264` / `0.44 0.2 263`   | `0.69 0.16 263` / `0.27 0.08 263` / `0.85 0.09 263` | `bell-ring`                        |
-| Preparing/Packing | `stage-preparing` | `oklch(0.68 0.15 65)` / `0.96 0.045 78` / `0.47 0.11 60`     | `0.8 0.15 75` / `0.29 0.06 70` / `0.88 0.11 75`     | `chef-hat` (retail `package-open`) |
-| Ready             | `stage-ready`     | `oklch(0.62 0.15 150)` / `0.955 0.045 150` / `0.44 0.11 150` | `0.74 0.16 150` / `0.27 0.06 150` / `0.87 0.11 150` | `package-check`                    |
-| Out               | `stage-out`       | `oklch(0.56 0.2 295)` / `0.955 0.035 300` / `0.45 0.19 295`  | `0.7 0.16 295` / `0.28 0.08 295` / `0.86 0.09 295`  | `bike`                             |
-| Done              | `stage-done`      | `oklch(0.62 0.02 265)` / `0.95 0.008 265` / `0.45 0.03 260`  | `0.6 0.02 265` / `0.28 0.03 262` / `0.86 0.015 265` | `circle-check`                     |
+| New               | `stage-new`       | `oklch(0.53 0.22 263)` / `0.955 0.03 264` / `0.44 0.2 263`   | `0.69 0.16 263` / `0.33 0.08 263` / `0.85 0.09 263` | `bell-ring`                        |
+| Preparing/Packing | `stage-preparing` | `oklch(0.68 0.15 65)` / `0.96 0.045 78` / `0.47 0.11 60`     | `0.8 0.15 75` / `0.33 0.06 70` / `0.88 0.11 75`     | `chef-hat` (retail `package-open`) |
+| Ready             | `stage-ready`     | `oklch(0.62 0.15 150)` / `0.955 0.045 150` / `0.44 0.11 150` | `0.74 0.16 150` / `0.33 0.06 150` / `0.87 0.11 150` | `package-check`                    |
+| Out               | `stage-out`       | `oklch(0.56 0.2 295)` / `0.955 0.035 300` / `0.45 0.19 295`  | `0.7 0.16 295` / `0.33 0.08 295` / `0.86 0.09 295`  | `bike`                             |
+| Done              | `stage-done`      | `oklch(0.62 0.02 265)` / `0.95 0.008 265` / `0.45 0.03 260`  | `0.6 0.02 265` / `0.33 0.03 262` / `0.86 0.015 265` | `circle-check`                     |
 
 Every `*-text` on its `*-soft` and on `card` is at least 6:1 in both themes (`packages/ui/test/tokens-contrast.test.ts`). The classes live once in `apps/dashboard/src/app/orders/stage.ts`.
 

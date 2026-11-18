@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 Task T10: Receipt (status, pay countdown, proof upload, thread, Messenger, save and share)
 
-Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/api.md, docs/prompts/ref/storefront-rules.md sections 5 and 7, docs/prompts/ref/storefront-components.md sections 3 (Receipt) and 4 (pay-countdown, messenger-handoff, proof-uploader), docs/SMART_APP_PH_BLUEPRINT.md sections 6.1, 6.6, 6.16, 6.17, 7.8, 8.2 and 8.8.
+Read first: AGENTS.md, docs/ux.md, docs/components.md, docs/api.md, docs/prompts/ref/storefront-rules.md sections 5 and 7, docs/prompts/ref/storefront-components.md sections 3 (Receipt) and 4 (pay-countdown, messenger-handoff, proof-uploader), docs/archive/SMART_APP_PH_BLUEPRINT.md sections 6.1, 6.6, 6.16, 6.17, 7.8, 8.2 and 8.8.
 
 FOUNDER DECISIONS USED (change before running)
  - D10: the status track is c-stepper-26 (timestamped steps); c-stepper-3 and c-timeline-3 stay on /kit.
