@@ -33,7 +33,7 @@ AGENTS.md wins over this skill (rules 9, 12 and 13 especially). `smartapp-data` 
 
 ## 4. Limits (API4 Unrestricted Resource Consumption, API6 Sensitive Business Flows)
 
-- Public routes get rate limits before they go live (`@nestjs/throttler`, named in foundation section 2; installing it needs the founder's yes). Answer `429` with `Retry-After` and `rate_limited`.
+- Public routes get rate limits before they go live (`@nestjs/throttler`, approved in T104; version chosen at install). Answer `429` with `Retry-After` and `rate_limited`.
 - Our business limits (A-mvp section 4): at most 3 unpaid orders per phone per 30 minutes, 30 orders per shop per minute, at most 3 proofs per order, manual stamps at most 3 per member per Manila day. Include the shop in the limit key, and keep a global limit too.
 - Body limit 100 kB; uploads only through a signed upload URL for the exact size; lists always paged.
 - Count limits with atomic updates in the database when two API copies run.

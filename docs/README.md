@@ -4,13 +4,17 @@ Which doc answers which question (decision T101). Rules first, then plans, then 
 
 ## Start here
 
-| Question                                      | Read                                                                                |
-| --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| What are the rules for any change?            | `AGENTS.md` (repo root)                                                             |
-| What is the product, its stack and its shape? | `blueprints/foundation.md`                                                          |
-| What ships at launch, what comes after?       | `blueprints/A-mvp.md`, `blueprints/B-full.md`                                       |
-| Where are we now?                             | `PROGRESS.md` (tasks; UI approved and Done per area), `CHANGELOG.md` (what changed) |
-| Why was something decided?                    | `decisions.md` (every approved decision, T01 onward)                                |
+| Question                                         | Read                                                                                |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| What are the rules for any change?               | `AGENTS.md` (repo root)                                                             |
+| What is the product, its stack and its shape?    | `blueprints/foundation.md`                                                          |
+| What ships at launch, what comes after?          | `blueprints/A-mvp.md`, `blueprints/B-full.md`                                       |
+| Why does it exist, who uses it, how is it built? | `blueprints/system.md` (the proposal)                                               |
+| Which pages and features, and their status?      | `blueprints/features.md`                                                            |
+| How do we measure ads (Meta Pixel and CAPI)?     | `blueprints/meta.md`                                                                |
+| The school paper                                 | `capstone.md` (draft)                                                               |
+| Where are we now?                                | `PROGRESS.md` (tasks; UI approved and Done per area), `CHANGELOG.md` (what changed) |
+| Why was something decided?                       | `decisions.md` (every approved decision, T01 onward)                                |
 
 ## Building a screen
 

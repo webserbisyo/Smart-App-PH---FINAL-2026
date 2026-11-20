@@ -35,7 +35,7 @@ Versions are checked with `npm view <pkg> version` at install time and pinned ex
 
 The storefront is one Next.js app and is also the installable PWA (no separate Vite storefront). Serwist precaches the app shell and caches shop pages stale-while-revalidate, so the installed app opens the saved copy instantly and refreshes menu, stock and open/closed in the background. Stock, prices and open/closed are always fetched fresh before checkout. See T6 in `decisions.md`.
 
-Approved, not installed yet: `drizzle-orm`, `pg` and `drizzle-kit` (D1), `@nestjs/schedule` (D5), `zustand` 5.1.0 and `zundo` 2.3.0 for the dashboard Editor store (T103). Named for later, each needs the founder's yes: `@nestjs/throttler` before public API routes, pino logs, Playwright with axe checks, knip.
+Approved, not installed yet: `drizzle-orm`, `pg` and `drizzle-kit` (D1), `@nestjs/schedule` (D5), `zustand` 5.1.0 and `zundo` 2.3.0 for the dashboard Editor store (T103; zundo's last release was November 2024, so Undo stays behind one small hook that can be swapped), `@nestjs/throttler` before the first public API route (T104; version chosen at install, at least 7 days old). Named for later, each needs the founder's yes: pino logs, Playwright with axe checks, knip.
 
 ## 3. Folders
 
@@ -92,14 +92,14 @@ Auth (all phases): app -> @smartapp/data -> NestJS /auth -> Supabase Auth
 | Apps run on the founder's Mac; Vercel previews optional                            | Vercel prod from `main` (Pro plan; Hobby bans commercial use), `shop.webserbisyo.com`, `app.webserbisyo.com` |
 | API runs locally                                                                   | Railway Singapore, `api.webserbisyo.com`                                                                     |
 
-Migrations reach the dev project only when the founder runs `pnpm db:push` after merging; agents never run it. (`database.md` D9 proposes that CI applies them to dev after the tests pass; waiting for the founder.) Local Docker Supabase is optional and not required for any task. Regions: Supabase Singapore, Vercel functions `sin1`, Railway Singapore. Before the first paying shop: branch protection on `main` (PR and green CI required) and Supabase backups.
+Migrations reach the dev project when CI applies them after a push to `main` passes the checks and the database tests (D9, approved in T96); nobody runs `pnpm db:push` against dev by hand, and the live project gets migrations only by the founder. Local Docker Supabase is optional and not required for any task. Regions: Supabase Singapore, Vercel functions `sin1`, Railway Singapore. Before the first paying shop: branch protection on `main` (PR and green CI required) and Supabase backups.
 
 ## 7. Way of working
 
 1. Claude proposes the next task plan; the founder says yes; Claude writes one prompt (`docs/prompts/T<nn>-<name>.md`).
 2. The founder pastes it into Antigravity. Antigravity posts its plan; the founder pastes it back to Claude for review.
-3. Antigravity codes on `ag/t<nn>-<name>`, runs `pnpm check` and `pnpm build`, takes screenshots at 390 and 1280 px, ticks one line in `docs/PROGRESS.md`, adds one line to `docs/CHANGELOG.md`, opens the PR with `gh pr create` and prints the link.
-4. Claude checks the PR (including that planned components were installed, not written). The founder merges.
+3. Antigravity codes, ticks one line in `docs/PROGRESS.md`, adds one line to `docs/CHANGELOG.md` and pushes straight to `main` without running `pnpm check` or `pnpm build` on the slow laptop (T40).
+4. A cloud Claude session pulls `main`, runs check, build, format, the JS budget, the build scan and the UI scan, takes screenshots at 390 and 1280 px, checks that planned components were installed and not written, and fixes what breaks or reverts the push. Cloud sessions may also build tasks themselves.
 
 Every prompt carries this line: "Use the planned library components. Install anything missing with the shadcn CLI. If you hand-write a component instead, stop and tell me why before continuing."
 

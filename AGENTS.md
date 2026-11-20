@@ -33,7 +33,7 @@ Where we are (2026-11-18): every MVP A screen is built on sample data; the dashb
 8. **Database:** only new files in `supabase/migrations/`, with RLS, grants and policies in the same file. Never edit an applied migration. Trusted functions are `security definer` with `set search_path = ''`. Never change the database through a dashboard, SQL editor or MCP. Never run `pnpm db:push`: after a push to `main` passes the checks and database tests, CI applies new migrations to the dev database only (T96, D9); the live database only by the founder. Types are regenerated on a machine with Docker, or copied from the CI diff when a migration changes.
 9. **Secrets:** never read, print or commit `.env*` files or keys. Only `.env.example` is committed. Each app checks its env with Zod at start.
 10. **Packages:** exact versions (no `^`), and no release younger than 7 days unless it is a security fix. pnpm settings live in `pnpm-workspace.yaml` (`minimumReleaseAge`, `allowBuilds`, `catalog`); `.npmrc` settings are ignored. No new package without the founder's yes, except what the shadcn CLI adds with a planned component.
-11. **Git:** branch `ag/t<nn>-<name>` from the latest `main`. Never push to `main`, never merge, never force-push. Always open the PR yourself (`gh pr create --base main`) and print its link.
+11. **Git (decision T40):** work goes straight to `main`. Antigravity pushes without running `pnpm check` or `pnpm build` on the founder's slow laptop; a cloud Claude session then pulls `main`, runs the heavy checks and fixes what breaks or reverts the push. A cloud session uses its own branch and PR only when its setup or the founder asks. Never force-push `main` or rewrite its history: undo with a revert commit.
 12. **Security:** one login error for every failed login (never say which part was wrong). Another shop's pages show Not found, never "forbidden". Every API route has `@Public()` or `@Can()`; the shop comes from `tenant_members`, never from the URL or body. No customer data in logs.
 13. **Backend:** browser → NestJS → Postgres for everything, login included (decision T34). No Supabase calls from apps, no edge functions, pg_net, pg_cron, Realtime or rule-carrying triggers.
 
@@ -41,9 +41,9 @@ Where we are (2026-11-18): every MVP A screen is built on sample data; the dashb
 
 1. Post a short plan (files and steps) and wait for OK.
 2. Do only that task. Stop and ask when something has no clear place, or when two docs disagree (never pick one silently).
-3. Before the PR: `pnpm check` and `pnpm build` green; open each changed page, 0 console errors and 0 React warnings; screenshots at 390 and 1280 px in the PR.
+3. Checks (T40): Antigravity skips `pnpm check` and `pnpm build` locally; the cloud session runs them green, opens each changed page (0 console errors, 0 React warnings) and takes screenshots at 390 and 1280 px.
 4. Tick one line in `docs/PROGRESS.md`, add one line to `docs/CHANGELOG.md`, record approved decisions in `docs/decisions.md`.
-5. Finish with: PR link, what changed, how to test, what the founder must do by hand.
+5. Finish with: the commit or PR link, what changed, how to test, what the founder must do by hand.
 
 ## UX bar (every screen)
 

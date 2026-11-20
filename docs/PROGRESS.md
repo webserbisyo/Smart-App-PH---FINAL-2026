@@ -98,7 +98,7 @@ Order of areas: login first, then shops and settings, catalog, orders and paymen
 - [ ] Drizzle over `pg`, one transaction per request with `set local role app_api` and the shop setting (D1)
 - [ ] Guards in order: login, shop from `tenant_members`, `@Can()`; a test fails on any route without `@Public()` or `@Can()`
 - [ ] Graceful shutdown, health check that also asks the database, 100 kB body limit
-- [ ] Rate limits on public routes (`@nestjs/throttler`, needs the founder's yes)
+- [ ] Rate limits on public routes (`@nestjs/throttler`, approved in T104)
 - [ ] Timed jobs with `@nestjs/schedule` and advisory locks (D5)
 
 ### 4.2 Areas

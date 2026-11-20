@@ -30,14 +30,14 @@ Each module = one database task, one API task, then one task per screen.
 | M7  | Shifts              | open, cash in and out, blind close                                                          |
 | M8  | POS                 | sell screen, senior and PWD discount, slip                                                  |
 | M9  | Voids and approvals | void with PIN                                                                               |
-| M10 | Kitchen and packing | prep board (an owner Kitchen view moved to A, T48; staff kitchen logins stay here)          |
+| M10 | Kitchen and packing | prep board and staff kitchen logins (T54 removed the owner Kitchen view from A)             |
 | M11 | Advance orders      | deposits, recurring orders, occasion reminders (days ahead, notice, limits moved to A, T48) |
 | M12 | Marketing           | vouchers, promotions, announcements                                                         |
 | M13 | Customers extended  | notes, block, export, anonymize, synced favourites and carts, customer Google sign-in       |
 | M14 | Full reports        | breakdowns, CSV                                                                             |
 | M15 | Shipping            | by region                                                                                   |
 | M16 | Platform            | `/admin`, approvals, support mode, billing states (moved into MVP A by T88 to T92)          |
-| M17 | Integrations        | PayMongo, Meta Conversions API, Google Sheets                                               |
+| M17 | Integrations        | PayMongo, Google Sheets (the Meta Conversions API moved into A, T90)                        |
 | M18 | Native app          | Capacitor build of the dashboard, Bluetooth printers                                        |
 | M19 | Loyalty extras      | reward tiers, stamps per peso spent, stamp expiry, double-stamp days                        |
 | M20 | AI                  | brand assistant from the logo, plain-language insight summaries                             |
@@ -45,13 +45,21 @@ Each module = one database task, one API task, then one task per screen.
 
 ## 3. Architecture additions
 
-- Nest guard chain: Throttler, Auth (JWKS), Tenant (shop from `tenant_members`, never from the URL), Permission (`@Can`). A test fails the build if a route has neither `@Public()` nor `@Can()`.
-- Database access through Drizzle with one transaction per request that sets role `authenticated` and the caller's claims, so RLS still applies. The API's database login has no rights of its own.
+- Nest guard chain: Throttler (approved in T104 and installed in MVP A before the first public route), Auth (JWKS), Tenant (shop from `tenant_members`, never from the URL), Permission (`@Can`). A test fails the build if a route has neither `@Public()` nor `@Can()`.
+- Database access through Drizzle with one transaction per request that runs `set local role app_api` and sets `app.tenant_id` (T96, D1), so RLS is a real second wall. The API's database login has no rights of its own.
 - Drizzle never owns the schema; `supabase/migrations` does.
 - Each module adds its methods to `docs/api.md` before any code, and its screens follow `docs/ux.md`.
 - Supabase secret key used only for staff logins and storage clean-up.
 - Jobs: a Nest worker for scheduled jobs, the outbox and emails (no pg_cron).
 
-## 4. Source for porting
+## 4. How a module joins the live app (T104)
+
+1. **Off per shop.** Each module ships switched off and is turned on per shop when ready, so live shops see nothing new until then.
+2. **Database first, additive only.** New tables and columns go in new migration files; an applied migration is never edited; a column a release stops using is dropped in a later release, never the same one.
+3. **Contract first.** The module's methods go into `docs/api.md` before code; the mock adapter and the API adapter follow it (rule 3).
+4. **Dev, then live.** CI applies migrations to dev only (D9); the founder applies them to live by hand after checking.
+5. **One module at a time**, each with its own Done line in `PROGRESS.md` and a way back (a revert commit, or promote the previous deploy).
+
+## 5. Source for porting
 
 The first build (`webserbisyo/Smart-App-PH`, branch `redesign/v3-home`) has SQL and screens for most modules (staff, POS, shifts, vouchers, schedule, audit chain, reports). Port the rules, not the files.

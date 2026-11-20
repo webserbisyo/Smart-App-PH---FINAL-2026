@@ -3,7 +3,7 @@
 
 All of these are built. The prompt files now live in `done/` (decision T101); `ref/` stays here. New prompts go in this folder until their task is merged, then move to `done/`.
 
-One prompt = one task = one branch `ag/t<nn>-<name>` = one PR into main. Paste them into Antigravity in the order below. Each prompt makes the agent post a plan and wait for your OK before it codes.
+One prompt = one task. (These early prompts used one branch and PR each; since T40 new prompts push straight to `main` and a cloud session runs the checks, AGENTS.md rule 11.) Paste them into Antigravity in the order below. Each prompt makes the agent post a plan and wait for your OK before it codes.
 
 ## Before the first prompt
 1. Put this folder in the repo as `docs/prompts/` (the prompts) and `docs/prompts/ref/` (4 reference files the prompts point to). I can open that PR for you.
@@ -71,5 +71,5 @@ One prompt = one task = one branch `ag/t<nn>-<name>` = one PR into main. Paste t
 T02a: N20, N21, T21 · T02: N22 to N24, T22, T23 · T03a: N25 to N28 · T03b: N29, T24 · T04: N30, N31, T25 · T10: N32, N33 · T12: N34, N35 · T13: N36, T26 · T14: N37. If main already uses a number, the agent takes the next free one and says so.
 
 ## Rules every prompt repeats
-Plan first and wait for OK · branch from the latest main · Node 24.14.0 · never touch the dashboard sidebar or shell styling · no new package without your yes · never read or print .env files or keys · never touch the database (only you run `pnpm db:push`) · pnpm format:check, check, lint, build and e2e green · no workarounds, stop and show the error · screenshots at 390 and 1280 · `gh pr create --base main` and print the link.
+Plan first and wait for OK · branch from the latest main · Node 24.14.0 · never touch the dashboard sidebar or shell styling · no new package without your yes · never read or print .env files or keys · never touch the database (only you run `pnpm db:push`) · pnpm format:check, check, lint, build and e2e green · no workarounds, stop and show the error · screenshots at 390 and 1280 · since T40: push to `main` and skip the heavy checks on the laptop (a cloud session runs them).
 <!-- prettier-ignore-end -->
