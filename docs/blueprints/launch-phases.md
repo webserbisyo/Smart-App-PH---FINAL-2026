@@ -1,6 +1,6 @@
 # Launch phases (MVP A to the first paying shop)
 
-Nine phases take Smart App PH from "every screen works on sample data" to "shops pay ₱399 a month". Phases 1 to 7 wire the backend area by area, phase 8 sets up the live product and phase 9 is selling. Written 2026-11-20 from the repo as it stands (main @ bdc7a80); a general map, not a build spec.
+Nine phases take Smart App PH from "every screen works on sample data" to "shops pay ₱399 a month". Phases 1 to 7 wire the backend area by area, phase 8 sets up the live product and phase 9 is selling. Target: the first paying shop in December 2026, so every phase stays as small as launch allows. Written 2026-11-20 from the repo as it stands (main @ bdc7a80); a general map, not a build spec.
 
 **How to use it.** Take one phase at a time into the project chat. For that phase we brainstorm, research the topics listed, settle the open logic, then write the task prompts. A phase is finished only when its "Done when" passes on the dev database. `PROGRESS.md` stays the tick list (each phase names its lines there); `A-mvp.md` wins on scope.
 
@@ -54,7 +54,7 @@ Order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9. Phase 7 depends only o
 
 **Goal.** A real owner signs up with a 6-digit email code, makes a shop and logs in, all through NestJS (T34). Supabase leaves the browser.
 
-**Covers.** Sign in, sign out, session, password reset by code. The 3-step sign-up (You, Your shop, email code) with the lead saved at step 1 (T89). Create shop, slug check, reserved slugs, the Go live card's steps read from the shop. Customer email codes (send and verify) as plumbing for phase 6. Remove `@supabase/*` from `packages/data` and close its ESLint exception. First API deploy to Railway as **staging**, so phones and the Vercel preview can reach it.
+**Covers.** Sign in, sign out, session, password reset by code. The 3-step sign-up (You, Your shop, email code) with the lead saved at step 1 (T89). Create shop, slug check, reserved slugs (a new migration adds `stays`, `rsvp`, `docs`, `dev`, `staging`, `demo` and similar, T105), the Go live card's steps read from the shop. Customer email codes (send and verify) as plumbing for phase 6. Remove `@supabase/*` from `packages/data` and close its ESLint exception. First API deploy to Railway as **staging**, so phones and the Vercel preview can reach it.
 
 **Tables (5).** `profiles`, `tenants`, `tenant_members`, `reserved_slugs`, `signup_leads`.
 
@@ -131,7 +131,7 @@ Fixes found in the current screenshot: the menu opens at `w-fit`, so it squeezes
 
 **Covers.**
 
-- Storefront reads by slug: home, menu, item sheet, shop info, closed and busy states; cached pages plus a fresh price, stock and open check before Place order.
+- Storefront reads by slug, reached at `<slug>.webserbisyo.com` with `shop.webserbisyo.com/<slug>` as a backup (T105): home, menu, item sheet, shop info, closed and busy states; cached pages plus a fresh price, stock and open check before Place order.
 - Place order in one transaction: gap-free order number, client key (no double orders), daily limit, slot lock, delivery fee, abuse limits (3 unpaid per phone per 30 min, 30 per shop per minute).
 - Receipt with live status, my orders, Change time, Recall, ratings.
 - Payments: cash, COD, GCash, Maya, bank, QR Ph; up to 3 proof photos in the order chat; owner Approve or Not approved; duplicate reference block; 5-minute signed links.
@@ -211,7 +211,7 @@ Opened from a card on the Board, the panel stays as it is today. UI only (`chats
 
 **Goal.** A separate live product that is safe, backed up and passes launch acceptance on real phones.
 
-**Covers.** Live Supabase project on Pro with daily backups; dev becomes staging (D4). Live settings: custom SMTP, email confirmation on, 10-minute codes, leaked-password protection, Data API off, auto-expose off (D7). Railway production API at `api.webserbisyo.com`. Vercel Pro with `shop.webserbisyo.com` and `app.webserbisyo.com`. Resend live. All jobs running. One restore from a backup tried and written down. Security pass (OWASP API Top 10, cross-shop tests, rate limits, no customer data in logs). Lighthouse 90+, 300 KB JS per page. Terms, privacy notice per shop and breach plan. Launch acceptance 1 to 8 on an Android and an iPhone.
+**Covers.** Live Supabase project on Pro with daily backups; dev becomes staging (D4). Live settings: custom SMTP, email confirmation on, 10-minute codes, leaked-password protection, Data API off, auto-expose off (D7). Railway production API at `api.webserbisyo.com`. Vercel Pro with the domain plan below (T105). Resend live. All jobs running. One restore from a backup tried and written down. Security pass (OWASP API Top 10, cross-shop tests, rate limits, no customer data in logs). Lighthouse 90+, 300 KB JS per page. Terms, privacy notice per shop and breach plan. Launch acceptance 1 to 8 on an Android and an iPhone.
 
 **Tables.** None new: the 53 tables are applied to the live project.
 
@@ -224,9 +224,25 @@ Opened from a card on the Board, the panel stays as it is today. UI only (`chats
 
 **Research later.** Supabase Pro backups and restore; Railway production settings (replicas, restarts, logs); Vercel domains and DNS; CSP and security headers; Lighthouse on mid-range Android; Data Privacy Act duties (privacy notice, NPC registration if needed, 72-hour breach notice).
 
-**From you.** Supabase Pro (about $25 a month), Vercel Pro (about $20 a month), Railway production plan, DNS yes for the 3 subdomains, Terms and Privacy pages checked by someone who knows RA 10173, and running the live migrations yourself.
+**From you.** Supabase Pro (about $25 a month), Vercel Pro (about $20 a month), Railway production plan, DNS yes for the domain plan below, removing the old rsvp domains (`rsvp.webserbisyo.com`, `*.rsvp.webserbisyo.com`) from Vercel yourself, Terms and Privacy pages checked by someone who knows RA 10173, and running the live migrations yourself.
 
 **Done when.** Every line of `PROGRESS.md` 5.1 and 5.2 is ticked.
+
+### Domain plan (decision T105)
+
+`webserbisyo.com` is the umbrella for two businesses: Smart App and the staycation and rentals product. It already uses Vercel's nameservers, so wildcard certificates are automatic.
+
+| Address                                                 | What it is                                                            |
+| ------------------------------------------------------- | --------------------------------------------------------------------- |
+| `<slug>.webserbisyo.com` (wildcard `*.webserbisyo.com`) | Each shop's main link, on the storefront project                      |
+| `shop.webserbisyo.com/<slug>`                           | Backup link, opens the same shop                                      |
+| `app.webserbisyo.com`                                   | Owner dashboard and Super Admin                                       |
+| `api.webserbisyo.com`                                   | NestJS on Railway                                                     |
+| `mail.webserbisyo.com`                                  | Resend, emails from `codes@`                                          |
+| `stays.webserbisyo.com`, `*.stays.webserbisyo.com`      | Staycation and rentals (its own repo), never collides with shop slugs |
+| `webserbisyo.com`, `www`                                | A simple page linking both products, later                            |
+
+The subdomain is the one link we print and send (QR, share, emails, install, push). The API's CORS list allows `https://*.webserbisyo.com`. Risk: a login, a saved basket and an installed app belong to one address, so a customer who uses both the subdomain and the backup has two copies; printing only the subdomain avoids it.
 
 ## Phase 9. Sell: pilot and first paying shops
 

@@ -61,4 +61,4 @@ Every push to `main` redeploys both. Vercel's own preview links for branches wor
 
 ## Before a real shop goes live
 
-Real shops get their own projects (or the live domains `shop.webserbisyo.com` and `app.webserbisyo.com`) **without** `APP_ENV=preview` and `VITE_SHOW_KIT`, with `DATA_SOURCE=api` per area as the API is wired. See `docs/launch.md`.
+Real shops get their own projects (or the live domains `<slug>.webserbisyo.com`, `shop.webserbisyo.com` and `app.webserbisyo.com`, T105) **without** `APP_ENV=preview` and `VITE_SHOW_KIT`, with `DATA_SOURCE=api` per area as the API is wired. See `docs/launch.md`.

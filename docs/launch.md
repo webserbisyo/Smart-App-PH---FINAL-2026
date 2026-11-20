@@ -112,3 +112,15 @@ After every push to `main`, once the checks and the 99 database tests pass, GitH
 4. GitHub › **Actions** › the latest **Check** run on `main` › **Re-run all jobs**. The job "Apply migrations to the dev database" lists the migrations it applies. Tell me when it is green and I check the tables with the Supabase connector (look only).
 
 Never paste the token or the password in chat, a doc or the repo. If one leaks, make a new one and replace the secret.
+
+## 10. Domains (decision T105, do this in Launch phase 8)
+
+Each shop opens at `<slug>.webserbisyo.com`; `shop.webserbisyo.com/<slug>` is the backup. `webserbisyo.com` already uses Vercel's nameservers, so Vercel makes the certificates by itself.
+
+1. Vercel › the live **storefront** project › **Settings** › **Domains** › **Add**: `*.webserbisyo.com`, then **Add** again: `shop.webserbisyo.com`.
+2. Vercel › the live **dashboard** project › **Settings** › **Domains** › **Add**: `app.webserbisyo.com`.
+3. Railway › api service › **Settings** › **Networking** › **Custom domain**: `api.webserbisyo.com`. Railway shows the DNS records to add; add them in Vercel › **Domains** › `webserbisyo.com` › **DNS records**.
+4. Close rsvp: Vercel › the rsvp project › **Settings** › **Domains** › remove `rsvp.webserbisyo.com` and `*.rsvp.webserbisyo.com`. Then remove any DNS records left for `rsvp` under `webserbisyo.com` › **DNS records**.
+5. Open `kanto-smash.webserbisyo.com` and `shop.webserbisyo.com/kanto-smash` on your phone: both must show the same shop.
+
+Every DNS change needs your yes; I can do steps 1, 2 and 4 with the Vercel connector once you say yes.

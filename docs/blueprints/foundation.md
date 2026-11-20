@@ -86,11 +86,11 @@ Auth (all phases): app -> @smartapp/data -> NestJS /auth -> Supabase Auth
 
 ## 6. Environments
 
-| Now                                                                                | Before the first paying shop                                                                                 |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Supabase "Smart App PH MVP FINAL" (the dev project: demo data only, safe to reset) | add a separate prod project; migrations reach prod only by a manual GitHub Action after review               |
-| Apps run on the founder's Mac; Vercel previews optional                            | Vercel prod from `main` (Pro plan; Hobby bans commercial use), `shop.webserbisyo.com`, `app.webserbisyo.com` |
-| API runs locally                                                                   | Railway Singapore, `api.webserbisyo.com`                                                                     |
+| Now                                                                                | Before the first paying shop                                                                                                                                 |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Supabase "Smart App PH MVP FINAL" (the dev project: demo data only, safe to reset) | add a separate prod project; migrations reach prod only by a manual GitHub Action after review                                                               |
+| Apps run on the founder's Mac; Vercel previews optional                            | Vercel prod from `main` (Pro plan; Hobby bans commercial use), `<slug>.webserbisyo.com` (backup `shop.webserbisyo.com/<slug>`), `app.webserbisyo.com` (T105) |
+| API runs locally                                                                   | Railway Singapore, `api.webserbisyo.com`                                                                                                                     |
 
 Migrations reach the dev project when CI applies them after a push to `main` passes the checks and the database tests (D9, approved in T96); nobody runs `pnpm db:push` against dev by hand, and the live project gets migrations only by the founder. Local Docker Supabase is optional and not required for any task. Regions: Supabase Singapore, Vercel functions `sin1`, Railway Singapore. Before the first paying shop: branch protection on `main` (PR and green CI required) and Supabase backups.
 

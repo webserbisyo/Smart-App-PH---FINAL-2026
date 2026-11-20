@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-20 Domain plan (T105): each shop at `<slug>.webserbisyo.com` with `shop.webserbisyo.com/<slug>` as backup; app, api and mail fixed; `stays.` for the rentals product; rsvp domains go; more reserved slugs
 - 2026-11-20 Launch phases proposed: `docs/blueprints/launch-phases.md` maps 9 phases from the dev database to the first paying shop, places all 53 tables and every MVP A area, folds in the profile menu redesign and the order chat Back fix, and lists 8 conflicts to decide
 - 2026-11-20 Docs aligned (T104): AGENTS rule 11 and foundation match push-to-main (T40) and D9; B-full fixed to T54, T90, T96 with a module merge plan; Meta safety rules; throttler approved; new `system.md`, `features.md`, `meta.md`, `capstone.md`
 - 2026-11-20 Zustand and zundo approved for the stack (T103): first use is the dashboard Editor store with Undo and Redo; API data stays in TanStack Query; install is a later task
