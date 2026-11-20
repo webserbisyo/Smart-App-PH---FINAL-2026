@@ -4,7 +4,7 @@ Smart App PH gives each small Philippine shop (food or retail) an installable or
 
 Read `docs/blueprints/foundation.md` once. For a screen task also read `docs/ux.md`; for data or API work also read `docs/api.md`. Read other docs only when the prompt names them.
 
-The docs map is `docs/README.md` (which doc answers what; `docs/archive/` is history, never build from it). For any UI work use the skills in `.agents/skills/` (also `.claude/skills/`): `smartapp-ui` before building, `smartapp-ui-writing` for any visible text, `smartapp-ui-check` before saying done.
+The docs map is `docs/README.md` (which doc answers what; `docs/archive/` is history, never build from it). For any UI work use the skills in `.agents/skills/` (also `.claude/skills/`): `smartapp-ui` before building, `smartapp-ui-writing` for any visible text, `smartapp-ui-check` before saying done. For planning, data, API, security or platform work use the course skills in the same folder (list in `docs/README.md`, decision T102): they hold our rules from each course, with sources.
 
 ## Now
 
