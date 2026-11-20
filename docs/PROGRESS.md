@@ -2,6 +2,13 @@
 
 One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the PR.
 
+From Phase 4 each area has two ticks (decision T102, copied from the Stays project):
+
+- **UI approved**: every screen of the area works on sample data (mock adapter), checked on a phone and a computer with a food and a retail shop.
+- **Done**: the same screens work on the dev database through NestJS (adapter switched to `api`, contract tests pass for both adapters, the area's e2e passes). Only Done counts as finished.
+
+A short view of this page, with links, is the "Smart App PH: Start here" Claude Doc; this file wins if they differ.
+
 ## Phase 0: Foundation
 
 - [x] T01 Monorepo, docs, auth migration, demo accounts, login and sign up (PR #5)
@@ -71,6 +78,10 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 
 ## Phase 4: Backend, area by area
 
+Order of areas: login first, then shops and settings, catalog, orders and payments, members and stamps, reports (`A-mvp.md` section 3). How to switch an area: the `smartapp-integration` skill, section 3.
+
+### 4.0 Database and ground rules
+
 - [x] Database blueprint approved: 54 tables in 8 areas, access model, build order (`docs/blueprints/database.md`, decision T96, 2026-11-17)
 - [x] Database step 1: platform core
 - [x] Database step 2: shop setup
@@ -80,6 +91,75 @@ One line per task: `- [x] T<nn> name (PR #n)`. No logs here; details live in the
 - [x] Database step 6: stamp card
 - [x] Database step 7: exports, billing, tracking and audit
 - [x] CI applies migrations to the dev project (D9)
-- [ ] Members area: customer account, picture and saved places in the database (today mock data and this phone only, decision R22)
+- [x] Course skills (data, analysis, HCI, web, OOP, algorithms, platform, security, integration, prompts), UI approved / Done tracking, Start here doc (decision T102)
+
+### 4.1 API base (before the first area)
+
+- [ ] Drizzle over `pg`, one transaction per request with `set local role app_api` and the shop setting (D1)
+- [ ] Guards in order: login, shop from `tenant_members`, `@Can()`; a test fails on any route without `@Public()` or `@Can()`
+- [ ] Graceful shutdown, health check that also asks the database, 100 kB body limit
+- [ ] Rate limits on public routes (`@nestjs/throttler`, approved in T104)
+- [ ] Timed jobs with `@nestjs/schedule` and advisory locks (D5)
+
+### 4.2 Areas
+
+Each area lists its screens; tick UI approved and Done separately.
+
+- Login and sign-up (owner login, sign-up 3 steps, password codes, member join codes; Supabase leaves `packages/data`, T34)
+  - [x] UI approved
+  - [ ] Done
+- Shops and settings (Settings: Your shop, You, hours, ordering, delivery, payments, Plan and storage; Editor draft and Publish; uploads and Storage)
+  - [x] UI approved
+  - [ ] Done
+- Catalog (Menu or Products: items, variants and templates, add-ons, categories, photos, archive)
+  - [x] UI approved
+  - [ ] Done
+- Storefront reads (shop home, menu, item sheet, shop info, closed and busy states)
+  - [x] UI approved
+  - [ ] Done
+- Orders and payments (checkout and Place order, receipt and status, proofs, order chat, owner Orders Board, List and Calendar, Change time, Recall, expiry job)
+  - [x] UI approved
+  - [ ] Done
+- Members and stamps (Join, Rewards, account and picture and saved places (R22), Members page, counter stamps with Undo, claims, limited prizes)
+  - [x] UI approved
+  - [ ] Done
+- Reports (Home: today, Needs you, Sales card, best sellers, busy hours; exports)
+  - [x] UI approved
+  - [ ] Done
+- Platform (Super Admin, go-live approval, plan payments, Billing chat, help mode with audit, Meta Conversions API job, emails through Resend)
+  - [x] UI approved
+  - [ ] Done
 
 ## Phase 5: Launch
+
+From `A-mvp.md` sections 5 and 6 and `docs/launch.md`. The founder does the by-hand steps; `launch.md` has the clicks.
+
+### 5.1 Set up live
+
+- [ ] Live Supabase project on Pro with daily backups; dev becomes staging (D4)
+- [ ] Live Supabase settings: custom SMTP through Resend, email confirmation on, code expiry 10 minutes, leaked-password protection on, Data API off, "automatically expose new tables" off
+- [ ] Railway API on its domain, Singapore, health check set
+- [ ] Vercel Pro, storefront and dashboard on their domains (`shop.webserbisyo.com`, `app.webserbisyo.com`)
+- [ ] Resend domain verified; emails from `codes@mail.webserbisyo.com` (sign-up code, shop is live, reminders, payment answers, new-order email N10)
+- [ ] Branch protection on `main`
+- [ ] Jobs running: expire unpaid transfers, delete proof photos after 30 days, clear unconfirmed uploads, send outbox, drop old leads (D6)
+- [ ] Restore from a backup tried once and written down
+- [ ] Meta: Pixel and Conversions API tested in Test events (`launch.md` sections 2 to 7)
+- [ ] Super Admin set up: platform admin flag, Setup values (`launch.md` sections 5 and 6)
+- [ ] Terms and privacy notices checked by someone who knows RA 10173; breach plan written
+
+### 5.2 Launch acceptance (on a real phone)
+
+- [ ] 1. A customer orders in under a minute (pickup GCash, walk-in cash)
+- [ ] 2. The owner sees the new order without refreshing and finishes it
+- [ ] 3. A rejected proof can be sent again; an approved one marks the order paid
+- [ ] 4. A member joins, earns stamps and redeems a reward
+- [ ] 5. Shop A can never see shop B's data (tested)
+- [ ] 6. The storefront installs on Android and iPhone, opens the saved copy, shows an offline page
+- [ ] 7. Lighthouse mobile 90+ on home and menu; at most 300 KB JS per page; CLS under 0.1 (T14 Lighthouse table filled)
+- [ ] 8. A privacy page per shop is linked from checkout, account and the footer; marketing opt-ins unticked
+
+### 5.3 First paying shop
+
+- [ ] A pilot shop set up, approved and taking real orders on the live database
+- [ ] First plan payment approved (₱399, T92)

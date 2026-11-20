@@ -19,20 +19,23 @@ The base every task builds on. Product scope lives in `A-mvp.md` (launch) and `B
 
 ## 2. Stack
 
-Versions are checked with `npm view <pkg> version` at install time and pinned exactly (no `^`). Snapshot 2026-10-17:
+Versions are checked with `npm view <pkg> version` at install time and pinned exactly (no `^`); a release must be 7 days old (`minimumReleaseAge`). Exact pins read from the `package.json` files and the `catalog` on 2026-11-20 (decision T102); update this table when a version changes.
 
-| Part             | Choice                                                                                                                                                                                                                                                                           |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo         | pnpm 12.x (settings in `pnpm-workspace.yaml`) + Turborepo 2.11.x, Node 24 LTS (`>=24.14 <25`), TypeScript 6.0.x strict (move to 7 when typescript-eslint and Nest support it), ESLint flat config + Prettier                                                                     |
-| Storefront       | Next.js 16.4.x App Router, React 19.3, Tailwind 4.3 (Vercel)                                                                                                                                                                                                                     |
-| Dashboard        | Vite 8.3 + React 19.3, TanStack Router (code routes) + TanStack Query, React Hook Form + Zod (Vercel)                                                                                                                                                                            |
-| API              | NestJS 12.x by hand (no Nest CLI), ESM, Express adapter with adapter-neutral code; built-in Standard Schema validation with the shared Zod schemas, `@nestjs/config`, Terminus `/health`, helmet, `jose` for Supabase JWT checks, Vitest; later Drizzle ORM (Railway, Singapore) |
-| Shared           | `@smartapp/core` (Zod schemas, types, money, words, demo fixtures), `@smartapp/ui` (tokens + installed components), `@smartapp/data` (API client to NestJS, mock adapters, Query hooks)                                                                                          |
-| Backend services | Supabase Singapore: Postgres, Auth and later Storage, reached only through NestJS (decision T34). Resend for email later                                                                                                                                                         |
+| Part             | Choice and exact version                                                                                                                                                                                                                                                                              |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo         | Node 24.14.0 (`.nvmrc`, engines `>=24.14 <25`), pnpm 12.8.1, Turborepo 2.11.7, TypeScript 6.0.3 strict (move to 7 when typescript-eslint and Nest support it), ESLint 10.12.0 flat config + typescript-eslint 8.71.1, Prettier 3.9.10, Vitest 5.0.3                                                   |
+| Shared runtime   | React 19.3.0, Zod 4.6.6, lucide-react 1.55.0 (all from the pnpm `catalog`)                                                                                                                                                                                                                            |
+| Storefront       | Next.js 16.4.6 App Router, Tailwind 4.3.3 (`@tailwindcss/postcss`), Serwist 9.5.13 (`serwist`, `@serwist/turbopack`) (Vercel)                                                                                                                                                                         |
+| Dashboard        | Vite 8.3.4 + `@vitejs/plugin-react` 6.1.2, TanStack Router 1.170.42 (code routes) + TanStack Query 5.104.1, React Hook Form 7.89.0 + `@hookform/resolvers` 5.9.1, Recharts 3.8.0, Tailwind 4.3.3 (`@tailwindcss/vite`) (Vercel)                                                                       |
+| UI package       | shadcn CLI 4.21.4 (root dev dependency), `@base-ui/react` 1.9.0, Tailwind 4.3.3, `tw-animate-css` 1.4.0, motion 14.3.0, date-fns 4.4.0, TanStack Table 9.3.1 and Virtual 3.14.22, dnd-kit; full list in `packages/ui/package.json` and `docs/components.md`                                           |
+| API              | NestJS 12.1.2 by hand (no Nest CLI), ESM, Express adapter (`@nestjs/platform-express` 12.1.2), `@nestjs/config` 12.0.1, Terminus 12.1.0 `/health`, helmet 8.3.0, `jose` 6.2.12 for Supabase JWT checks, `@supabase/supabase-js` 2.117.3 (Auth and Storage only), Vitest with SWC (Railway, Singapore) |
+| Data package     | TanStack Query 5.104.1; `@supabase/ssr` 0.12.7 and `@supabase/supabase-js` 2.117.3 only in the 3 login files until login moves behind NestJS (T34)                                                                                                                                                    |
+| Tooling          | Playwright 1.64.1 (CI only; Chromium won't run on macOS 12), sharp 0.35.5, Supabase CLI 2.120.0                                                                                                                                                                                                       |
+| Backend services | Supabase Singapore: Postgres 17, Auth and Storage, reached only through NestJS (decision T34). Resend for email                                                                                                                                                                                       |
 
 The storefront is one Next.js app and is also the installable PWA (no separate Vite storefront). Serwist precaches the app shell and caches shop pages stale-while-revalidate, so the installed app opens the saved copy instantly and refreshes menu, stock and open/closed in the background. Stock, prices and open/closed are always fetched fresh before checkout. See T6 in `decisions.md`.
 
-Later, named but not installed yet (each needs its task): `@serwist/turbopack` for the PWA, `@nestjs/throttler` before public API routes, pino logs, Playwright with axe checks, knip.
+Approved, not installed yet: `drizzle-orm`, `pg` and `drizzle-kit` (D1), `@nestjs/schedule` (D5), `zustand` 5.1.0 and `zundo` 2.3.0 for the dashboard Editor store (T103; zundo's last release was November 2024, so Undo stays behind one small hook that can be swapped), `@nestjs/throttler` before the first public API route (T104; version chosen at install, at least 7 days old). Named for later, each needs the founder's yes: pino logs, Playwright with axe checks, knip.
 
 ## 3. Folders
 
@@ -89,14 +92,14 @@ Auth (all phases): app -> @smartapp/data -> NestJS /auth -> Supabase Auth
 | Apps run on the founder's Mac; Vercel previews optional                            | Vercel prod from `main` (Pro plan; Hobby bans commercial use), `shop.webserbisyo.com`, `app.webserbisyo.com` |
 | API runs locally                                                                   | Railway Singapore, `api.webserbisyo.com`                                                                     |
 
-Migrations reach the dev project only when the founder runs `pnpm db:push` after merging; agents never run it. (`database.md` D9 proposes that CI applies them to dev after the tests pass; waiting for the founder.) Local Docker Supabase is optional and not required for any task. Regions: Supabase Singapore, Vercel functions `sin1`, Railway Singapore. Before the first paying shop: branch protection on `main` (PR and green CI required) and Supabase backups.
+Migrations reach the dev project when CI applies them after a push to `main` passes the checks and the database tests (D9, approved in T96); nobody runs `pnpm db:push` against dev by hand, and the live project gets migrations only by the founder. Local Docker Supabase is optional and not required for any task. Regions: Supabase Singapore, Vercel functions `sin1`, Railway Singapore. Before the first paying shop: branch protection on `main` (PR and green CI required) and Supabase backups.
 
 ## 7. Way of working
 
 1. Claude proposes the next task plan; the founder says yes; Claude writes one prompt (`docs/prompts/T<nn>-<name>.md`).
 2. The founder pastes it into Antigravity. Antigravity posts its plan; the founder pastes it back to Claude for review.
-3. Antigravity codes on `ag/t<nn>-<name>`, runs `pnpm check` and `pnpm build`, takes screenshots at 390 and 1280 px, ticks one line in `docs/PROGRESS.md`, adds one line to `docs/CHANGELOG.md`, opens the PR with `gh pr create` and prints the link.
-4. Claude checks the PR (including that planned components were installed, not written). The founder merges.
+3. Antigravity codes, ticks one line in `docs/PROGRESS.md`, adds one line to `docs/CHANGELOG.md` and pushes straight to `main` without running `pnpm check` or `pnpm build` on the slow laptop (T40).
+4. A cloud Claude session pulls `main`, runs check, build, format, the JS budget, the build scan and the UI scan, takes screenshots at 390 and 1280 px, checks that planned components were installed and not written, and fixes what breaks or reverts the push. Cloud sessions may also build tasks themselves.
 
 Every prompt carries this line: "Use the planned library components. Install anything missing with the shadcn CLI. If you hand-write a component instead, stop and tell me why before continuing."
 
