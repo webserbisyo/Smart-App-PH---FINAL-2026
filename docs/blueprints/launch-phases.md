@@ -15,17 +15,17 @@ Nine phases take Smart App PH from "every screen works on sample data" to "shops
 
 ## At a glance
 
-| #   | Phase                                   | What it delivers                                                    | Tables | `PROGRESS.md` lines                                                |
-| --- | --------------------------------------- | ------------------------------------------------------------------- | ------ | ------------------------------------------------------------------ |
-| 1   | Ground: dev database and API base       | Tables live on dev, safe NestJS base, CI green                      | 0 new  | 4.0 CI applies, 4.1 all                                            |
-| 2   | Accounts: login, sign-up, shop creation | Real owner sign-up and login through NestJS; API on Railway staging | 5      | 4.2 Login and sign-up                                              |
-| 3   | Shop setup: Settings, files, Editor     | Owner sets up the shop on real data; new profile menu               | 9      | 4.2 Shops and settings                                             |
-| 4   | Menu and Products                       | Owner builds the catalog on real data                               | 13     | 4.2 Catalog                                                        |
-| 5   | Storefront, orders and payments         | Customers order, owner runs orders, proofs, chat, push              | 12     | 4.2 Storefront reads, Orders and payments                          |
-| 6   | Members, stamp card and Home numbers    | Join, stamps, rewards, Home and exports on real data                | 7      | 4.2 Members and stamps, Reports                                    |
-| 7   | Plan, billing, Super Admin and Meta     | Go-live approval, ₱399 billing, help mode, tracking, emails         | 7      | 4.2 Platform                                                       |
-| 8   | Go live: live setup and hardening       | Live database, domains, jobs, backups, security, acceptance 1 to 8  | 0 new  | 5.1, 5.2                                                           |
-| 9   | Sell: pilot and first paying shops      | A pilot shop live, first ₱399 approved, a repeatable sales routine  | 0 new  | 5.3                                                                |
+| #   | Phase                                   | What it delivers                                                    | Tables | `PROGRESS.md` lines                       |
+| --- | --------------------------------------- | ------------------------------------------------------------------- | ------ | ----------------------------------------- |
+| 1   | Ground: dev database and API base       | Tables live on dev, safe NestJS base, CI green                      | 0 new  | 4.0 CI applies, 4.1 all                   |
+| 2   | Accounts: login, sign-up, shop creation | Real owner sign-up and login through NestJS; API on Railway staging | 5      | 4.2 Login and sign-up                     |
+| 3   | Shop setup: Settings, files, Editor     | Owner sets up the shop on real data; new profile menu               | 9      | 4.2 Shops and settings                    |
+| 4   | Menu and Products                       | Owner builds the catalog on real data                               | 13     | 4.2 Catalog                               |
+| 5   | Storefront, orders and payments         | Customers order, owner runs orders, proofs, chat, push              | 12     | 4.2 Storefront reads, Orders and payments |
+| 6   | Members, stamp card and Home numbers    | Join, stamps, rewards, Home and exports on real data                | 7      | 4.2 Members and stamps, Reports           |
+| 7   | Plan, billing, Super Admin and Meta     | Go-live approval, ₱399 billing, help mode, tracking, emails         | 7      | 4.2 Platform                              |
+| 8   | Go live: live setup and hardening       | Live database, domains, jobs, backups, security, acceptance 1 to 8  | 0 new  | 5.1, 5.2                                  |
+| 9   | Sell: pilot and first paying shops      | A pilot shop live, first ₱399 approved, a repeatable sales routine  | 0 new  | 5.3                                       |
 
 Order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9. Phase 7 depends only on phase 2, so it can move earlier if selling pressure grows. Your by-hand prep for phase 8 (accounts, Meta, GCash and Maya, terms) can start today.
 
@@ -252,32 +252,32 @@ Opened from a card on the Board, the panel stays as it is today. UI only (`chats
 
 ### Every table has one home phase (53)
 
-| Phase | Tables                                                                                                                                                                                                                                                         |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2     | `profiles`, `tenants`, `tenant_members`, `reserved_slugs`, `signup_leads` (5)                                                                                                                                                                                  |
-| 3     | `shop_settings`, `storefront_content`, `storefront_media`, `opening_hours`, `closures`, `payment_accounts`, `delivery_zones`, `delivery_distance_rows`, `media_files` (9)                                                                                      |
-| 4     | `categories`, `items`, `item_photos`, `variant_templates`, `variant_template_values`, `item_axes`, `item_axis_values`, `item_variants`, `item_variant_values`, `option_groups`, `options`, `item_option_groups`, `item_pairings` (13)                         |
-| 5     | `order_counters`, `orders`, `order_lines`, `order_line_options`, `order_events`, `order_messages`, `payment_proofs`, `order_ratings`, `push_subscriptions`, `order_push`, `item_daily_counts`, `notification_outbox` (12)                                     |
-| 6     | `members`, `member_addresses`, `consents`, `stamp_cards`, `stamp_entries`, `reward_claims`, `data_exports` (7)                                                                                                                                               |
-| 7     | `platform_settings`, `plan_payments`, `billing_messages`, `shop_activity`, `support_sessions`, `track_events`, `audit_log` (7)                                                                                                                                |
+| Phase | Tables                                                                                                                                                                                                                                |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2     | `profiles`, `tenants`, `tenant_members`, `reserved_slugs`, `signup_leads` (5)                                                                                                                                                         |
+| 3     | `shop_settings`, `storefront_content`, `storefront_media`, `opening_hours`, `closures`, `payment_accounts`, `delivery_zones`, `delivery_distance_rows`, `media_files` (9)                                                             |
+| 4     | `categories`, `items`, `item_photos`, `variant_templates`, `variant_template_values`, `item_axes`, `item_axis_values`, `item_variants`, `item_variant_values`, `option_groups`, `options`, `item_option_groups`, `item_pairings` (13) |
+| 5     | `order_counters`, `orders`, `order_lines`, `order_line_options`, `order_events`, `order_messages`, `payment_proofs`, `order_ratings`, `push_subscriptions`, `order_push`, `item_daily_counts`, `notification_outbox` (12)             |
+| 6     | `members`, `member_addresses`, `consents`, `stamp_cards`, `stamp_entries`, `reward_claims`, `data_exports` (7)                                                                                                                        |
+| 7     | `platform_settings`, `plan_payments`, `billing_messages`, `shop_activity`, `support_sessions`, `track_events`, `audit_log` (7)                                                                                                        |
 
 5 + 9 + 13 + 12 + 7 + 7 = 53, the same list as `database.md` section 4.
 
 ### Every MVP A area has a phase
 
-| MVP A area (`A-mvp.md` section 1, `features.md`)                          | Phase |
-| ------------------------------------------------------------------------- | ----- |
-| Login, sign-up, password codes                                            | 2     |
-| Settings, Editor, uploads and Storage, profile menu                       | 3     |
-| Menu or Products                                                          | 4     |
-| Storefront pages, install and offline, checkout, receipt, order push      | 5     |
-| Order types, payments and proofs, Orders Board, List and Calendar, chat   | 5     |
-| Members, Join, Rewards, stamp card, claims, prizes                        | 6     |
-| Home, Sales card, exports                                                 | 6     |
-| Go live, plan and Billing chat, Super Admin, help mode, Meta, emails      | 7     |
-| Jobs (expire, proofs 30 days, uploads 1 hour, outbox, leads 180 days)     | 5, 3, 6, 7 |
-| Live setup, privacy, acceptance                                           | 8     |
-| First paying shop                                                         | 9     |
+| MVP A area (`A-mvp.md` section 1, `features.md`)                        | Phase      |
+| ----------------------------------------------------------------------- | ---------- |
+| Login, sign-up, password codes                                          | 2          |
+| Settings, Editor, uploads and Storage, profile menu                     | 3          |
+| Menu or Products                                                        | 4          |
+| Storefront pages, install and offline, checkout, receipt, order push    | 5          |
+| Order types, payments and proofs, Orders Board, List and Calendar, chat | 5          |
+| Members, Join, Rewards, stamp card, claims, prizes                      | 6          |
+| Home, Sales card, exports                                               | 6          |
+| Go live, plan and Billing chat, Super Admin, help mode, Meta, emails    | 7          |
+| Jobs (expire, proofs 30 days, uploads 1 hour, outbox, leads 180 days)   | 5, 3, 6, 7 |
+| Live setup, privacy, acceptance                                         | 8          |
+| First paying shop                                                       | 9          |
 
 ## Conflicts and gaps for you to decide
 
