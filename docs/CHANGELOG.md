@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-20 Public demo links live on Vercel (T100 setup): `smartapp-demo-storefront.vercel.app` and `smartapp-demo-dashboard.vercel.app` from `main`, sample data, Preview pill, redeploy on every push
 - 2026-11-20 Docs aligned (T104): AGENTS rule 11 and foundation match push-to-main (T40) and D9; B-full fixed to T54, T90, T96 with a module merge plan; Meta safety rules; throttler approved; new `system.md`, `features.md`, `meta.md`, `capstone.md`
 - 2026-11-20 Zustand and zundo approved for the stack (T103): first use is the dashboard Editor store with Undo and Redo; API data stays in TanStack Query; install is a later task
 - 2026-11-20 Course skills and progress (T102): ten skills in `.agents/skills/` turning the courses into rules for our stack with sources (data, analysis, HCI, web, OOP, algorithms, platform, security, integration, prompts); `PROGRESS.md` tracks UI approved and Done per area and lists the launch steps; exact versions in `foundation.md`; docs map lists every skill
