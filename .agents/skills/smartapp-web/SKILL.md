@@ -54,6 +54,7 @@ AGENTS.md, `docs/api.md` and `docs/ux.md` win over this skill.
 - After a write, invalidate the exact keys from `qk` (or set the cache from the response); never reload the page.
 - Use optimistic updates only where Undo exists (stamp, order step), and roll back on error.
 - Live updates are polling or SSE from NestJS; no Supabase Realtime (rule 13).
+- Browser-only state that many components share (the Editor draft, selection, Undo and Redo) lives in one Zustand store with zundo (T103). A store never holds a copy of API data (Query owns it) or form fields (React Hook Form owns them).
 
 ## 5. Caching and offline (PWA)
 
