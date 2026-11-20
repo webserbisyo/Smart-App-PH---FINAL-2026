@@ -78,7 +78,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 
 ## Phase 4: Backend, area by area
 
-Order of areas: login first, then shops and settings, catalog, orders and payments, members and stamps, reports (`A-mvp.md` section 3). How to switch an area: the `smartapp-integration` skill, section 3.
+Order of areas: login first, then shops and settings, catalog, orders and payments, members and stamps, reports (`A-mvp.md` section 3). How to switch an area: the `smartapp-integration` skill, section 3. The phase-by-phase map from here to the first paying shop (proposed 2026-11-20): `blueprints/launch-phases.md`.
 
 ### 4.0 Database and ground rules
 
