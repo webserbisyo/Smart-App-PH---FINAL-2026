@@ -556,28 +556,7 @@ export const words = {
     rewardHint: 'Apply this reward to your order',
     rewardFree: (item: string) => `free ${item}`,
     rewardOff: (amount: string) => `${amount} off`,
-    qrAlt: (method: string) => `${method} QR code`,
     qrHint: 'Scan or save this QR',
-    // The QR card on checkout and the receipt (T107).
-    qr: {
-      title: (method: string) =>
-        /\bQR\b/.test(method) ? `Pay with ${method}` : `Pay with ${method} QR`,
-      save: 'Save QR',
-      saved: 'QR saved. Open your payment app next.',
-      saveFailed: "Couldn't save the QR. Take a screenshot instead.",
-      bigger: 'Show QR bigger',
-      biggerTitle: 'Scan this QR',
-      failed: "The QR didn't load.",
-      tryAgain: 'Try again',
-      phoneSteps: (amount: string) => [
-        'Save the QR to your photos.',
-        'Open GCash, Maya or your bank app. Tap Scan, then Upload QR.',
-        `Type ${amount} exactly and pay.`,
-      ],
-      desktopLine: 'Scan with GCash, Maya or your bank app on your phone.',
-      sample: 'Sample QR. It only says "do not pay".',
-      fileName: (shop: string) => `${shop} QR`,
-    },
     amountToPay: 'Amount to pay',
     noteAndTotal: 'Note and total',
     noteCount: (used: number, max: number) => `${used}/${max}`,
@@ -1997,6 +1976,28 @@ export const catalogWords = {
 
 // The demo's sample receipt picture (T87): never a real app's look, and it says so. Its own export, so
 // the storefront bundle (which carries the mock store) never pulls in all of ordersWords.
+// The QR card on checkout and the receipt (T107). Its own export so it loads only with the QR card.
+export const payQrWords = {
+  alt: (method: string) => `${method} QR code`,
+  title: (method: string) =>
+    /\bQR\b/.test(method) ? `Pay with ${method}` : `Pay with ${method} QR`,
+  save: 'Save QR',
+  saved: 'QR saved. Open your payment app next.',
+  saveFailed: "Couldn't save the QR. Take a screenshot instead.",
+  bigger: 'Show QR bigger',
+  biggerTitle: 'Scan this QR',
+  failed: "The QR didn't load.",
+  tryAgain: 'Try again',
+  phoneSteps: (amount: string) => [
+    'Save the QR to your photos.',
+    'Open GCash, Maya or your bank app. Tap Scan, then Upload QR.',
+    `Type ${amount} exactly and pay.`,
+  ],
+  desktopLine: 'Scan with GCash, Maya or your bank app on your phone.',
+  sample: 'Sample QR. It only says "do not pay".',
+  fileName: (shop: string) => `${shop} QR`,
+};
+
 export const sampleReceiptWords = {
   title: 'Sample receipt',
   note: 'Demo picture · not a real transfer',

@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-21 Prize photo, plan chat and payment QR (T107): crop step (DiceUI Cropper with zoom buttons) on the shared photo row and an optional Custom prize photo; Plan › Messages like Messenger (own scroll, day separators, groups with avatar and time, Sending / Sent / Seen, Not sent with Try again, Newest button, full-height sheet on phones) where owners send only photos with an optional reference or a note; sample QR for the 5 demo shops and one QR card on checkout and the receipt (Save QR, bigger view, phone steps); QR Ph hidden without a QR; database step 9
 - 2026-11-21 Push News (T106): Members › News tab with Write news (starters, photo, link, audience counts, Now / best times / pick a day, quiet hours and 2-a-week limits, Android and iPhone preview), news details with results and Copy, two automatic pushes; entry points from Members groups, a new item, Home and Settings; storefront unticked news box on Join and Notify me, Account Notifications and News sheets, Stop news toast; database step 8 (`push_campaigns`, `push_deliveries`, 55 tables); sample data only
 
 - 2026-11-20 Docs aligned (T104): AGENTS rule 11 and foundation match push-to-main (T40) and D9; B-full fixed to T54, T90, T96 with a module merge plan; Meta safety rules; throttler approved; new `system.md`, `features.md`, `meta.md`, `capstone.md`

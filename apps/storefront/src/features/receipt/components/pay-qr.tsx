@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { imageUrl, words } from '@smartapp/core';
+import { imageUrl, payQrWords } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { notify } from '@smartapp/ui/compositions/notify';
@@ -12,7 +12,7 @@ import { DownloadIcon, ImageOffIcon, Maximize2Icon, RotateCwIcon } from 'lucide-
 // The bigger QR loads only when someone taps it.
 const QrViewer = dynamic(() => import('./qr-viewer').then((m) => m.QrViewer), { ssr: false });
 
-const Q = words.checkout.qr;
+const Q = payQrWords;
 
 /** The address to show: a demo or saved QR at 640 px, or a picture the owner just added. */
 export function qrSrc(ref: string): string | null {
@@ -90,7 +90,7 @@ export function PayQr({ qr, method, accountName, amount, shopName, sample }: Pay
   const [attempt, setAttempt] = useState(0);
   const [zoom, setZoom] = useState(false);
   const [saving, setSaving] = useState(false);
-  const alt = words.checkout.qrAlt(method);
+  const alt = Q.alt(method);
   const failed = state === 'failed' || src === null;
 
   const onSave = async () => {
@@ -123,7 +123,7 @@ export function PayQr({ qr, method, accountName, amount, shopName, sample }: Pay
             <Button
               type="button"
               variant="outline"
-              className="h-11 rounded-full"
+              className="h-11 rounded-full border-paper-foreground/20 bg-paper text-paper-foreground hover:bg-paper-foreground/5 dark:border-paper-foreground/20 dark:bg-paper dark:hover:bg-paper-foreground/5"
               onClick={() => {
                 setState('loading');
                 setAttempt((n) => n + 1);
@@ -167,7 +167,6 @@ export function PayQr({ qr, method, accountName, amount, shopName, sample }: Pay
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="text-base font-semibold">{Q.title(method)}</h4>
-
           </div>
           {accountName ? <p className="text-sm break-words">{accountName}</p> : null}
           {sample ? <p className="text-xs opacity-70">{Q.sample}</p> : null}
@@ -185,7 +184,7 @@ export function PayQr({ qr, method, accountName, amount, shopName, sample }: Pay
           variant="outline"
           disabled={failed || saving}
           onClick={() => void onSave()}
-          className="h-11 w-full gap-2 rounded-full sm:w-auto sm:self-start"
+          className="h-11 w-full gap-2 rounded-full border-paper-foreground/20 bg-paper text-paper-foreground hover:bg-paper-foreground/5 sm:w-auto sm:self-start dark:border-paper-foreground/20 dark:bg-paper dark:hover:bg-paper-foreground/5"
         >
           <DownloadIcon aria-hidden="true" />
           {Q.save}
