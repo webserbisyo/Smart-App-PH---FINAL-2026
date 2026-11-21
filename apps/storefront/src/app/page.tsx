@@ -1,5 +1,5 @@
 import { StoreIcon } from 'lucide-react';
-import { words } from '@smartapp/core';
+import { SAMPLES_PATH, samplesWords, words } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@smartapp/ui/components/card';
 
@@ -23,9 +23,19 @@ export default function PlatformPage() {
           <CardTitle>{w.ownerTitle}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button size="lg" nativeButton={false} render={<a href={DASHBOARD_URL} />}>
-            {w.ownerLink}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button size="lg" nativeButton={false} render={<a href={DASHBOARD_URL} />}>
+              {w.ownerLink}
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              nativeButton={false}
+              render={<a href={SAMPLES_PATH} />}
+            >
+              {samplesWords.platformLink}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </main>

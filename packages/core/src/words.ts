@@ -4366,7 +4366,7 @@ export const signupWords = {
     trial: (days: number) => `${days} days free`,
     pay: 'GCash or Maya',
   },
-  sample: 'See a sample shop',
+  sample: 'See the sample shops',
   messenger: 'Ask us on Messenger',
   progress: (step: number) => `Step ${step} of 3`,
   steps: { you: 'You', shop: 'Your shop', code: 'Email code' },
@@ -4507,6 +4507,7 @@ export const showcaseWords = {
   // The sample shops under the phone: drag or tap one to play its story.
   shopsLabel: 'Sample shops',
   playShop: (shop: string) => `Play ${shop}`,
+  allSamples: 'See all sample shops',
   addLabel: (name: string) => `Add ${name}`,
   openLabel: (name: string, price: string) => `${name}, ${price}`,
   stampProgress: (stamped: number, needed: number) => `${stamped} of ${needed} stamps`,
@@ -5433,4 +5434,25 @@ export const shopNewsWords = {
   stop: 'Stop news',
   stopped: 'News stopped. Order updates stay on.',
   undo: 'Undo',
+};
+
+// The Sample shops page on the storefront (T109): every demo shop, to try as a customer or as the owner.
+export const samplesWords = {
+  title: 'Try a sample shop',
+  intro: 'Open one like yours. Order like a customer, then see the owner side.',
+  metaDescription: 'Five sample shops made with Smart App PH. Open one and order like a customer.',
+  filterLabel: 'Jump to',
+  kind: { food: 'Food', retail: 'Retail' },
+  choices: (names: string) => `${names} choices`,
+  stamps: (needed: number, reward: string) => `${needed} stamps for ${reward}`,
+  orderTypes: { walk_in: 'Walk-in', pickup: 'Pickup', delivery: 'Delivery' },
+  open: 'Open the shop',
+  openLabel: (shop: string) => `Open ${shop}, a sample shop`,
+  owner: 'See the owner side',
+  ownerLabel: (shop: string) => `See ${shop} as its owner`,
+  sampleNote: 'Sample data. Orders here are never sent to a real shop.',
+  readyTitle: 'Ready for your own?',
+  readyLine: (days: number) => `Your own link, stamp card and dashboard. ${days} days free.`,
+  start: (days: number) => `Start ${days} days free`,
+  platformLink: 'Try a sample shop',
 };

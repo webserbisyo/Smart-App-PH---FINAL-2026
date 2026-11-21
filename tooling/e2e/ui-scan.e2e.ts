@@ -21,6 +21,7 @@ import {
   DASHBOARD_ROUTES,
   GUEST_ROUTES,
   SCAN_SHOPS,
+  PLATFORM_ROUTES,
   STOREFRONT_ROUTES,
   type CatalogRoute,
 } from '../../apps/dashboard/src/features/kit/route-catalog.js';
@@ -62,20 +63,28 @@ const DASHBOARD_TARGETS: readonly Target[] = [
   ...KIT_PATHS.map((path) => ({ path, viewer: null })),
 ].map((target) => ({ ...target, app: 'dashboard', notFound: false }));
 
-const STOREFRONT_TARGETS: readonly Target[] = SCAN_SHOPS.flatMap((slug) =>
-  STOREFRONT_ROUTES.flatMap((route) =>
-    route.scan && route.open !== undefined
-      ? [
-          {
-            app: 'storefront' as const,
-            path: `/${slug}${route.open}`,
-            viewer: null,
-            notFound: route.path === '/[...rest]',
-          },
-        ]
-      : [],
+const STOREFRONT_TARGETS: readonly Target[] = [
+  ...opened(PLATFORM_ROUTES).map((path) => ({
+    app: 'storefront' as const,
+    path,
+    viewer: null,
+    notFound: false,
+  })),
+  ...SCAN_SHOPS.flatMap((slug) =>
+    STOREFRONT_ROUTES.flatMap((route) =>
+      route.scan && route.open !== undefined
+        ? [
+            {
+              app: 'storefront' as const,
+              path: `/${slug}${route.open}`,
+              viewer: null,
+              notFound: route.path === '/[...rest]',
+            },
+          ]
+        : [],
+    ),
   ),
-);
+];
 
 // The kit shows a broken photo on purpose (image fallbacks); its address says so.
 const EXPECTED_MISSING = /\/missing-file/;

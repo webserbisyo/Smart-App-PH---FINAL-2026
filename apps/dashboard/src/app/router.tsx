@@ -52,7 +52,7 @@ import { NotFoundPage } from './not-found.js';
 import { AdminShell } from './shell/admin-shell.js';
 import { currentSupport } from './support.js';
 import { rememberPreviousPath } from './back.js';
-import { requireAuth, requireGuest, signOut } from './guards.js';
+import { LoginSearchSchema, requireAuth, requireGuest, signOut } from './guards.js';
 import type { PageMeta } from './page-meta.js';
 import { AppShell } from './shell/app-shell.js';
 import { ShopContext, resolveShop } from './shop.js';
@@ -75,21 +75,22 @@ const rootRoute = createRootRoute({ component: Outlet, notFoundComponent: NotFou
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
-  beforeLoad: requireGuest,
+  validateSearch: LoginSearchSchema,
+  beforeLoad: ({ search }) => requireGuest(search.sample),
   component: LoginScreen,
 });
 
 const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/signup',
-  beforeLoad: requireGuest,
+  beforeLoad: () => requireGuest(),
   component: SignupScreen,
 });
 
 const forgotRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/forgot',
-  beforeLoad: requireGuest,
+  beforeLoad: () => requireGuest(),
   component: ForgotScreen,
 });
 

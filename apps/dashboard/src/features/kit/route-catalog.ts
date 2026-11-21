@@ -76,6 +76,12 @@ export const GUEST_ROUTES: readonly CatalogRoute[] = [
   { path: '/logout', label: 'Sign out', scan: false, note: 'Signs out, then opens Sign in' },
 ];
 
+/** Our own storefront pages outside any shop. */
+export const PLATFORM_ROUTES: readonly CatalogRoute[] = [
+  { path: '/', open: '/', label: 'Platform page', scan: true },
+  { path: '/samples', open: '/samples', label: 'Sample shops (T109)', scan: true },
+];
+
 /** Storefront pages inside one shop; each path follows /<shop slug>. */
 export const STOREFRONT_ROUTES: readonly CatalogRoute[] = [
   { path: '', open: '', label: 'Shop home', scan: true },

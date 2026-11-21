@@ -1,6 +1,13 @@
 import * as React from 'react';
 import { ExternalLinkIcon, GiftIcon, SmartphoneIcon, WalletIcon } from 'lucide-react';
-import { formatPeso, PLAN_TRIAL_DAYS, PRO_PRICE_MONTHLY, signupWords, words } from '@smartapp/core';
+import {
+  formatPeso,
+  PLAN_TRIAL_DAYS,
+  PRO_PRICE_MONTHLY,
+  SAMPLES_PATH,
+  signupWords,
+  words,
+} from '@smartapp/core';
 import { useTrackEvent } from '@smartapp/data';
 import { Badge } from '@smartapp/ui/components/badge';
 import { BorderBeam } from '@smartapp/ui/components/border-beam';
@@ -22,7 +29,6 @@ import { SignupForm, type ShopDraft } from '../signup-form.js';
 const ShowcaseTour = React.lazy(() => import('../showcase/showcase.js'));
 
 const W = signupWords;
-const SAMPLE_SHOP = 'kanto-smash';
 
 function TourSkeleton() {
   return (
@@ -185,7 +191,7 @@ export function SignupScreen() {
               nativeButton={false}
               render={
                 <a
-                  href={`${env.VITE_STOREFRONT_URL}/${SAMPLE_SHOP}`}
+                  href={`${env.VITE_STOREFRONT_URL}${SAMPLES_PATH}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 />

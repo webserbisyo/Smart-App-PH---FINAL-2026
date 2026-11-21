@@ -77,6 +77,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Stays adoption: layered neutral dashboard theme, five kit pages, Preview panel and public demo builds, UI skills, brand guard and UI scan, docs map and archive (decisions T97 to T101)
 - [x] Push News on sample data: Members › News (write, schedule, results, automatic pushes) with entry points, storefront news box on Join and Notify me, Account Notifications and News, Stop news toast (decision T106; built 2026-11-21, UI waiting for review)
 - [x] Log in and sign-up redesign: sign-up tour on a phone with our sample shops that turns into the owner's own app, slimmer step 1 with the password and a colour on step 2, Log in split screen with Show password, Forgot password with a 6-digit code (decision T108; built 2026-11-21, round 2, final pass and finalize the same day, UI waiting for review)
+- [x] Sample shops page: `/samples` on the storefront lists every demo shop with its cover, logo and highlights, to open as a customer or as the owner (decision T109; built 2026-11-22, UI waiting for review)
 
 ## Phase 4: Backend, area by area
 
