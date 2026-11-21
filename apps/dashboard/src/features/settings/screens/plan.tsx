@@ -392,7 +392,7 @@ function PlanMessages({ plan, helping }: { plan: Plan; helping: boolean }) {
     />
   );
 
-  if (!phone) return chat('h-120 max-h-vh-70');
+  if (!phone) return chat('h-160 max-h-vh-80');
 
   return (
     <>

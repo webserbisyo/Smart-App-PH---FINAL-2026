@@ -251,7 +251,7 @@ export function BillingThread({
               </MessageAvatar>
             )}
             <MessageContent className="max-w-4/5 gap-1">
-              {m ? <Line message={m} payment={payment} onZoom={openPhoto} /> : null}
+              {m ? <Line message={m} payment={payment} mine={row.mine} onZoom={openPhoto} /> : null}
               {o ? <OutboxBubble line={o} /> : null}
               {row.last || status === 'failed' ? (
                 <MessageFooter className="gap-1.5 tabular-nums">
@@ -362,10 +362,13 @@ function PhotoTile({ src, onOpen }: { src: string; onOpen?: (() => void) | undef
 function Line({
   message: m,
   payment,
+  mine,
   onZoom,
 }: {
   message: BillingMessage;
   payment: PlanPayment | undefined;
+  // Own words in the brand colour on the right, like Messenger.
+  mine: boolean;
   onZoom: (src: string) => void;
 }) {
   switch (m.kind) {
@@ -429,7 +432,7 @@ function Line({
     case 'support':
     case 'live':
       return (
-        <Bubble variant="muted">
+        <Bubble variant={mine && m.kind === 'note' ? 'default' : 'muted'}>
           <BubbleContent className="whitespace-pre-line">{m.text ?? ''}</BubbleContent>
         </Bubble>
       );
@@ -671,57 +674,63 @@ export function BillingComposer({
         <div className="flex flex-col gap-2 rounded-xl border bg-muted/40 p-2">
           <AttachmentGroup>
             {tray.map((p) => (
-              <Attachment
-                key={p.id}
-                orientation="vertical"
-                size="sm"
-                state={
-                  p.state === 'uploading' ? 'uploading' : p.state === 'failed' ? 'error' : 'done'
-                }
-                className="w-20"
-              >
-                <AttachmentMedia variant="image" className="aspect-square">
-                  {p.state === 'uploading' ? <Spinner /> : null}
-                  {p.state === 'failed' ? (
-                    <CircleAlertIcon aria-hidden="true" />
-                  ) : (
-                    <img
-                      src={p.preview}
-                      alt=""
-                      className={cn(p.state === 'uploading' && 'hidden')}
-                    />
-                  )}
-                </AttachmentMedia>
-                <AttachmentActions className="top-1 right-1">
-                  {p.state === 'failed' ? (
+              <div key={p.id} className="flex w-24 flex-none flex-col gap-1">
+                <Attachment
+                  orientation="vertical"
+                  state={
+                    p.state === 'uploading' ? 'uploading' : p.state === 'failed' ? 'error' : 'done'
+                  }
+                  className="w-24 p-1"
+                >
+                  <AttachmentMedia variant="image" className="aspect-square">
+                    {p.state === 'uploading' ? <Spinner /> : null}
+                    {p.state === 'failed' ? (
+                      <CircleAlertIcon aria-hidden="true" />
+                    ) : (
+                      <img
+                        src={p.preview}
+                        alt=""
+                        className={cn(p.state === 'uploading' && 'hidden')}
+                      />
+                    )}
+                  </AttachmentMedia>
+                  <AttachmentActions className="top-1.5 right-1.5">
                     <AttachmentAction
-                      aria-label={W.tryAgain}
+                      aria-label={W.removePhoto}
                       variant="secondary"
-                      className="size-7 rounded-full"
-                      onClick={() => void put(p.id, p.file)}
+                      className="size-7 rounded-full shadow-xs"
+                      onClick={() => setTray((t) => t.filter((x) => x.id !== p.id))}
                     >
-                      <RotateCwIcon />
+                      <XIcon />
                     </AttachmentAction>
-                  ) : p.state === 'ready' ? (
-                    <AttachmentAction
-                      aria-label={settingsWords.upload.cropAgain}
-                      variant="secondary"
-                      className="size-7 rounded-full"
-                      onClick={() => void openCrop(p)}
-                    >
-                      <CropIcon />
-                    </AttachmentAction>
-                  ) : null}
-                  <AttachmentAction
-                    aria-label={W.removePhoto}
-                    variant="secondary"
-                    className="size-7 rounded-full"
-                    onClick={() => setTray((t) => t.filter((x) => x.id !== p.id))}
+                  </AttachmentActions>
+                </Attachment>
+                {p.state === 'failed' ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-11 gap-1 px-1 text-xs text-destructive-text md:h-8"
+                    onClick={() => void put(p.id, p.file)}
                   >
-                    <XIcon />
-                  </AttachmentAction>
-                </AttachmentActions>
-              </Attachment>
+                    <RotateCwIcon />
+                    {W.tryAgain}
+                  </Button>
+                ) : p.state === 'ready' ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-11 gap-1 px-1 text-xs md:h-8"
+                    onClick={() => void openCrop(p)}
+                  >
+                    <CropIcon />
+                    {W.crop}
+                  </Button>
+                ) : (
+                  <span className="flex h-11 items-center justify-center text-xs text-muted-foreground md:h-8">
+                    {settingsWords.upload.uploading}
+                  </span>
+                )}
+              </div>
             ))}
           </AttachmentGroup>
           <Field>
@@ -913,7 +922,7 @@ export function BillingChat({
           setAtEnd(end);
           if (end) setUnread(0);
         }}
-        className="scrollbar-fine min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 py-2 focus-visible:outline-none"
+        className="scrollbar-fine min-h-40 flex-1 overflow-y-auto overscroll-contain px-1 py-2 focus-visible:outline-none"
       >
         <BillingThread
           thread={thread}

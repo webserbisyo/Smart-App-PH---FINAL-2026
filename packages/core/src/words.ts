@@ -560,7 +560,8 @@ export const words = {
     qrHint: 'Scan or save this QR',
     // The QR card on checkout and the receipt (T107).
     qr: {
-      title: (method: string) => `Pay with ${method} QR`,
+      title: (method: string) =>
+        /\bQR\b/.test(method) ? `Pay with ${method}` : `Pay with ${method} QR`,
       save: 'Save QR',
       saved: 'QR saved. Open your payment app next.',
       saveFailed: "Couldn't save the QR. Take a screenshot instead.",
@@ -4582,6 +4583,7 @@ export const billingWords = {
   tooManyPhotos: 'Up to 3 photos at a time. Send these first.',
   photosSent: (n: number) => (n === 1 ? 'Photo sent.' : `${n} photos sent.`),
   enterHint: 'Enter to send, Shift + Enter for a new line',
+  crop: 'Crop',
   previousPhoto: 'Previous photo',
   nextPhoto: 'Next photo',
   letters: (used: number, max: number) => `${used}/${max}`,

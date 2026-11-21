@@ -4,7 +4,6 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { imageUrl, words } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
-import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from '@smartapp/ui/lib/utils';
@@ -168,11 +167,7 @@ export function PayQr({ qr, method, accountName, amount, shopName, sample }: Pay
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="text-base font-semibold">{Q.title(method)}</h4>
-            {sample ? (
-              <Badge variant="outline" size="lg" radius="full">
-                {words.checkout.sampleLabel}
-              </Badge>
-            ) : null}
+
           </div>
           {accountName ? <p className="text-sm break-words">{accountName}</p> : null}
           {sample ? <p className="text-xs opacity-70">{Q.sample}</p> : null}

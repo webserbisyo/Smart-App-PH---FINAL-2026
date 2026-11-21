@@ -720,7 +720,11 @@ function Preview({
       progressLabel={membersWords.stampsLabel(stamped, goal)}
       prize={{
         title,
-        photo: imageSources(reward.image, env.VITE_STOREFRONT_URL),
+        // A photo just picked shows from the phone's own copy until it is saved (T107).
+        photo:
+          reward.image?.startsWith('blob:') === true
+            ? { avif: '', webp: `${reward.image} 640w`, widths: [640] }
+            : imageSources(reward.image, env.VITE_STOREFRONT_URL),
         label: membersWords.panel.prizeLabel,
       }}
       assetOrigin={env.VITE_STOREFRONT_URL}
