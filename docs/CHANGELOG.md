@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-21 Sign-up and log in finalize (T108): every sample shop plays its own story (order with its item sheet and choices, chat, stamps, push, owner), a draggable row of the five shops that follows the tour, the chat notification slides in, Log in has the stacked logo and the full tour
 - 2026-11-21 Sign-up and log in final pass (T108): real storefront dock in the phone, every sample shop opens from the strip, notifications inside the phone (no cards over it), owner pushes (new order, payment photo, due soon), per-step pacing and fades, sign-up step 1 fits one laptop screen
 - 2026-11-21 Sign-up and log in round 2 (T108): strips move again (one row), sign up form left with the stage pinned right like Log in, one shared stage with floating live cards and member faces, one player bar, photo lock screen, last-7-days sales
 - 2026-11-21 Log in and sign-up redesign (T108): sign-up tour (six chapters on the sample shops with the real menu cards, order chat, stamp card and confetti, notification cards, lock screen, order card and sales card; it becomes the owner's own app as they type), rotating headline, BrandLockup logo, password and colour on step 2, Log in split screen, Show password and Caps Lock hint, Forgot password page; Magic UI android, word-rotate, blur-fade, border-beam
