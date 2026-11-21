@@ -4,7 +4,7 @@ import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { BrandLockup } from '@smartapp/ui/compositions/brand-lockup';
 import { useMediaQuery } from '@/app/use-media-query';
 
-const LoginHero = React.lazy(() => import('./showcase/login-hero.js'));
+const ShowcaseTour = React.lazy(() => import('./showcase/showcase.js'));
 
 /** Laptops and up get the stage beside the form. */
 export function useWide(): boolean {
@@ -29,9 +29,10 @@ export function StageSkeleton() {
 }
 
 /**
- * Log in and Forgot password frame (T108). Phones: the logo gradient as a thin top band, the logo, then the
- * card. Laptops: the same on the left, and the stage with the owner's week on a phone on the right (words
- * never sit on the gradient, L7). The phone only loads on laptops.
+ * Log in and Forgot password frame (T108). Phones: the logo gradient as a thin top band, the logo (mark above
+ * the name, centred), then the card. Laptops: the same on the left, and on the right the same tour as Sign
+ * up: every sample shop's own story, customer and owner side (words never sit on the gradient, L7). The
+ * phone only loads on laptops.
  */
 export function AuthFrame({ children }: { children: React.ReactNode }) {
   const wide = useWide();
@@ -39,13 +40,13 @@ export function AuthFrame({ children }: { children: React.ReactNode }) {
     <main className="relative grid min-h-dvh bg-background pt-safe lg:grid-cols-2">
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 brand-gradient lg:hidden" />
       <div className="flex flex-col items-center justify-center gap-8 p-4 md:p-8">
-        <BrandLockup name={words.appName} size="lg" />
+        <BrandLockup name={words.appName} size="lg" stacked />
         <div className="w-full max-w-sm md:max-w-md">{children}</div>
       </div>
       {wide ? (
         <AuthAside>
           <React.Suspense fallback={<StageSkeleton />}>
-            <LoginHero />
+            <ShowcaseTour yours={null} wide />
           </React.Suspense>
         </AuthAside>
       ) : null}

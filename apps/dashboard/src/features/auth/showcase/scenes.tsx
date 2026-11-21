@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import {
   DEFAULT_BRAND_COLOR,
+  findVariant,
   formatPeso,
   homeWords,
   imageSources,
@@ -20,6 +21,8 @@ import {
   type PublicShop,
   type ShopKind,
   type Showcase,
+  type ShowcaseShop,
+  type ShowcaseStory,
 } from '@smartapp/core';
 import { Badge } from '@smartapp/ui/components/badge';
 import { BlurFade } from '@smartapp/ui/components/blur-fade';
@@ -30,6 +33,8 @@ import {
   ItemDescription,
   ItemMedia,
 } from '@smartapp/ui/components/item';
+import { Field, FieldContent, FieldLabel, FieldTitle } from '@smartapp/ui/components/field';
+import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
 import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
@@ -59,18 +64,19 @@ const pic = (ref: string | null | undefined) => imageSources(ref, ORIGIN);
 const noop = () => undefined;
 const noopAsync = () => Promise.resolve();
 
-// How long each step of a chapter stays on screen (ms): short taps, longer looks at the result.
+// How long each step of a chapter stays on screen (ms): short taps, longer looks at the result. Every
+// sample shop plays the same five chapters on its own data.
 export const PACE = {
-  order: [1500, 900, 1100, 900, 1800],
+  order: [1400, 700, 1300, 1000, 1000, 800, 1900],
   chat: [1800, 1600, 1500, 1700],
   stamps: [1300, 900, 900, 1100, 2400],
   push: [1700, 1500, 1300, 1100, 1300, 1300, 2000],
-  retail: [1500, 1000, 1000, 1300, 2000],
   owner: [1000, 1300, 1300, 1600, 1100, 2200],
 } as const;
 
 export interface SceneProps {
-  data: Showcase;
+  // The sample shop playing, with its own story.
+  entry: ShowcaseShop;
   beat: number;
   now: Date;
   // The tour is playing on screen: the confetti may fire.
@@ -100,6 +106,11 @@ export function shopOf(data: Showcase, slug: string): PublicShop {
   const found = data.shops.find((s) => s.slug === slug) ?? data.shops[0];
   if (!found) throw new Error('The sign-up tour needs a sample shop');
   return found.shop;
+}
+
+/** The scene parts every chapter reads: the shop, its story and the signed-in Suki. */
+function partsOf(entry: ShowcaseShop) {
+  return { shop: entry.shop, story: entry.story, member: entry.story.member };
 }
 
 const CATALOG_ICON = { utensils: <UtensilsIcon />, package: <PackageIcon /> } as const;
@@ -163,6 +174,7 @@ function ShopScreen({
   brandColor,
   member = null,
   dock,
+  overlay,
   children,
 }: {
   shop: PublicShop;
@@ -170,8 +182,10 @@ function ShopScreen({
   name?: string | undefined;
   logo?: boolean | undefined;
   brandColor?: string | undefined;
-  member?: Showcase['member'] | undefined;
+  member?: ShowcaseStory['member'] | undefined;
   dock?: React.ReactNode;
+  // Drawn over the whole screen, the dock too (the item sheet).
+  overlay?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const look = shop.storefront.look;
@@ -208,9 +222,15 @@ function ShopScreen({
           {children}
         </div>
         {dock}
+        {overlay}
       </div>
     </ShopTheme>
   );
+}
+
+/** The stamp rule under the card; a shop with no minimum gives a stamp on every order. */
+function ruleLine(minOrderTotal: number): string {
+  return minOrderTotal > 0 ? W.stampRule(formatPeso(minOrderTotal)) : W.stampAny;
 }
 
 function firstPrice(item: Item): number {
@@ -310,16 +330,17 @@ function PushRow({ push, className }: { push: Push; className?: string | undefin
 }
 
 /**
- * A notification dropping in over the open app, like Android's heads-up banner. It stays in the tree and
- * slides in and out with a transform, so leaving is as smooth as arriving.
+ * A notification dropping in over the open app, like Android's heads-up banner. It slides down from above
+ * the screen a moment after the app opens (its starting style), then back up the same way, so arriving and
+ * leaving are equally smooth.
  */
 function HeadsUp({ push, shown }: { push: Push; shown: boolean }) {
   return (
     <div
       aria-hidden={shown ? undefined : true}
       className={cn(
-        'absolute inset-x-2 top-2 z-30 transition duration-slow ease-out motion-reduce:transition-none',
-        shown ? 'translate-y-0 opacity-100' : '-translate-y-8 opacity-0',
+        'absolute inset-x-2 top-2 z-30 transition duration-slow ease-out motion-reduce:transition-none starting:-translate-y-8 starting:opacity-0',
+        shown ? 'translate-y-0 opacity-100 delay-300' : '-translate-y-8 opacity-0',
       )}
     >
       <PushRow push={push} className="bg-popover/95 ring-1 ring-border" />
@@ -383,10 +404,10 @@ function shopPushIcon(shop: PublicShop) {
 }
 
 /** The owner's own pushes, newest last: a new order, a payment photo to check, an order due soon. */
-export function ownerPushes(data: Showcase, pick = 0): Push[] {
-  const photo = data.chat?.order;
+export function ownerPushes(story: ShowcaseStory, pick = 0): Push[] {
+  const photo = story.chat?.order;
   // The payment photo has its own push, so the other two come from the rest of the board.
-  const board = data.board.filter((o) => o.id !== photo?.id);
+  const board = story.board.filter((o) => o.id !== photo?.id);
   const at = (n: number) => (board.length > 0 ? board[(pick + n) % board.length] : undefined);
   const fresh = at(0);
   const due = at(1);
@@ -428,31 +449,188 @@ export function ownerPushes(data: Showcase, pick = 0): Push[] {
   ];
 }
 
-// ------------------------------------------------------------------ 1 Order (Kanto Smash)
+// ------------------------------------------------------------------ 1 Order (every shop)
 
-export function OrderScene({ data, beat, now }: SceneProps) {
-  const shop = shopOf(data, 'kanto-smash');
+/**
+ * The choices the tour taps on step `taps`: it starts on the item's first variant, then picks another value
+ * on each axis in turn (one with its own photo first, like Tala's Sand tee). Data only, so every shop works.
+ */
+function choicesAt(item: Item, taps: number): string[] {
+  const start = item.variants[0]?.values ?? [];
+  const next = [...start];
+  item.axes.slice(0, taps).forEach((axis, a) => {
+    const value = axis.values.find((v, i) => i > 0 && v.photo) ?? axis.values[1] ?? axis.values[0];
+    if (value) next[a] = value.name;
+  });
+  return findVariant(item, next) ? next : start;
+}
+
+/** The photo for the picked choices: the last picked value with its own photo, else the item's first. */
+function photoFor(item: Item, picked: readonly string[]) {
+  const own = item.axes
+    .map((axis, a) => axis.values.find((v) => v.name === picked[a])?.photo ?? null)
+    .filter((ref) => ref !== null)
+    .at(-1);
+  return pic(own ?? item.photos[0]);
+}
+
+/**
+ * The storefront's item sheet, as the customer sees it: the photo, name and price, the choices (radio rows
+ * for one choice, chips per choice for two or more, like the real sheet), then Add. It slides up from the
+ * bottom over the dock, as tall as what it holds, and back down once added.
+ */
+function ItemSheet({
+  item,
+  picked,
+  open,
+  added,
+}: {
+  item: Item;
+  picked: readonly string[];
+  open: boolean;
+  added: boolean;
+}) {
+  const variant = findVariant(item, picked);
+  const price = formatPeso(variant?.price ?? firstPrice(item));
+  const axis = item.axes[0];
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className={cn(
+          'absolute inset-0 z-sheet bg-foreground/30 transition duration-slow motion-reduce:transition-none',
+          open ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
+      />
+      <div
+        aria-hidden={open ? undefined : true}
+        className={cn(
+          'absolute inset-x-0 bottom-0 z-sheet flex flex-col gap-3 rounded-t-3xl bg-background px-4 pt-2 pb-6 shadow-xl transition duration-slow ease-out motion-reduce:transition-none',
+          open ? 'translate-y-0' : 'translate-y-full',
+        )}
+      >
+        <span aria-hidden="true" className="mx-auto h-1 w-10 rounded-full bg-border-strong" />
+        <ShopImage
+          src={photoFor(item, picked)}
+          alt=""
+          ratio="16:9"
+          sizes="330px"
+          className="overflow-hidden rounded-2xl"
+        />
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="min-w-0 font-heading text-lg leading-snug font-bold">{item.name}</p>
+          <p className="text-lg font-bold tabular">{price}</p>
+        </div>
+        {item.description ? (
+          <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
+        ) : null}
+        {item.axes.length === 1 && axis ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm font-semibold">{axis.name}</p>
+            <RadioGroup value={variant?.id ?? ''} className="gap-2">
+              {item.variants.map((v) => (
+                <FieldLabel key={v.id} className="rounded-lg border border-border p-3">
+                  <Field orientation="horizontal" className="items-center justify-between">
+                    <span className="flex items-center gap-3">
+                      <RadioGroupItem value={v.id} tabIndex={-1} />
+                      <FieldContent>
+                        <FieldTitle className="text-sm font-medium">
+                          {v.values.join(' · ')}
+                        </FieldTitle>
+                      </FieldContent>
+                    </span>
+                    <span className="text-xs font-semibold text-muted-foreground tabular">
+                      {formatPeso(v.price)}
+                    </span>
+                  </Field>
+                </FieldLabel>
+              ))}
+            </RadioGroup>
+          </div>
+        ) : (
+          item.axes.map((a, i) => (
+            <div key={a.name} className="flex flex-col gap-2">
+              <p className="flex justify-between text-sm font-semibold">
+                {a.name}
+                <span className="text-xs font-normal text-muted-foreground">{picked[i]}</span>
+              </p>
+              <ToggleGroup
+                variant="outline"
+                spacing={2}
+                value={picked[i] ? [picked[i]] : []}
+                className="flex flex-wrap justify-start gap-2"
+              >
+                {a.values.map((v) => (
+                  <ToggleGroupItem
+                    key={v.name}
+                    value={v.name}
+                    tabIndex={-1}
+                    className="h-9 rounded-md px-3 text-xs font-medium"
+                  >
+                    {v.name}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </div>
+          ))
+        )}
+        <Button className="mt-1 h-12 rounded-full bg-shop-10 font-semibold text-shop-10-foreground">
+          {added ? (
+            <>
+              <CheckIcon aria-hidden="true" />
+              {W.added([...picked, price].join(' · '))}
+            </>
+          ) : (
+            W.addFor(price)
+          )}
+        </Button>
+      </div>
+    </>
+  );
+}
+
+/**
+ * A customer orders from the shop's own app: the home with its banner and items, a tap on the first item,
+ * its sheet with the choices picked one by one, Add, and the basket appearing on the dock.
+ */
+export function OrderScene({ entry, beat, now }: SceneProps) {
+  const { shop, member } = partsOf(entry);
   const items = shop.catalog.items.slice(0, 4);
-  const added = beat >= 3 ? 2 : beat >= 1 ? 1 : 0;
-  const total = items.slice(0, added).reduce((sum, item) => sum + firstPrice(item), 0);
+  const item = items[0];
+  const picked = item ? choicesAt(item, Math.max(0, beat - 2)) : [];
+  const variant = item ? findVariant(item, picked) : null;
+  const inBasket = beat >= 6;
   return (
     <ShopScreen
       shop={shop}
       now={now}
-      member={data.member}
-      dock={<ShopDock shop={shop} active="home" count={added} total={total} />}
+      member={member}
+      dock={
+        <ShopDock
+          shop={shop}
+          active="home"
+          count={inBasket ? 1 : 0}
+          total={inBasket && item ? (variant?.price ?? firstPrice(item)) : 0}
+        />
+      }
+      overlay={
+        item ? (
+          <ItemSheet item={item} picked={picked} open={beat >= 2 && beat < 6} added={beat === 5} />
+        ) : null
+      }
     >
       <Banner shop={shop} />
-      <MenuGrid items={items} pressed={beat === 1 ? 0 : beat === 3 ? 1 : null} />
+      <MenuGrid items={items} pressed={beat === 1 ? 0 : null} />
     </ShopScreen>
   );
 }
 
 // ------------------------------------------------------------------ 2 Chat and payment (owner side)
 
-export function ChatScene({ data, beat, now }: SceneProps) {
-  const chat = data.chat;
-  const push = ownerPushes(data).find((p) => p.id.startsWith('photo-'));
+export function ChatScene({ entry, beat, now }: SceneProps) {
+  const { shop, story } = partsOf(entry);
+  const chat = story.chat;
+  const push = ownerPushes(story).find((p) => p.id.startsWith('photo-'));
   return (
     <div className="relative flex h-full flex-col bg-card text-foreground">
       <StatusBar now={now} />
@@ -464,8 +642,8 @@ export function ChatScene({ data, beat, now }: SceneProps) {
             <ChatThread
               order={chat.order}
               detail={chat.detail}
-              slug={data.shops[0]?.slug ?? 'kanto-smash'}
-              kind="food"
+              slug={entry.slug}
+              kind={shop.storefront.info.kind}
               active={false}
             />
           </div>
@@ -475,7 +653,7 @@ export function ChatScene({ data, beat, now }: SceneProps) {
   );
 }
 
-// ------------------------------------------------------------------ 3 Stamp and reward (Kanto Smash)
+// ------------------------------------------------------------------ 3 Stamp and reward
 
 function useCelebrate(
   beat: number,
@@ -499,8 +677,8 @@ function useCelebrate(
   }, [beat, live, target, last]);
 }
 
-export function StampsScene({ data, beat, now, live }: SceneProps) {
-  const shop = shopOf(data, 'kanto-smash');
+export function StampsScene({ entry, beat, now, live }: SceneProps) {
+  const { shop, member } = partsOf(entry);
   const card = shop.storefront.stampCard;
   const needed = card.rule.stampsNeeded;
   const start = needed - 3;
@@ -508,12 +686,12 @@ export function StampsScene({ data, beat, now, live }: SceneProps) {
   const ready = stamped >= needed;
   const box = React.useRef<HTMLDivElement>(null);
   useCelebrate(beat, live, box, 3);
-  const first = data.member?.name.split(' ')[0];
+  const first = member?.name.split(' ')[0];
   return (
     <ShopScreen
       shop={shop}
       now={now}
-      member={data.member}
+      member={member}
       dock={<ShopDock shop={shop} active="rewards" />}
     >
       {first ? <p className="text-xl font-bold">{W.hello(first)}</p> : null}
@@ -522,7 +700,7 @@ export function StampsScene({ data, beat, now, live }: SceneProps) {
           needed={needed}
           stamped={stamped}
           title={W.stampTitle}
-          body={W.stampRule(formatPeso(card.rule.minOrderTotal))}
+          body={ruleLine(card.rule.minOrderTotal)}
           progressLabel={W.stampProgress(stamped, needed)}
           prize={{ title: card.reward.title, photo: pic(card.reward.image), label: W.prizeLabel }}
           ready={ready}
@@ -545,17 +723,17 @@ export function StampsScene({ data, beat, now, live }: SceneProps) {
 
 // ------------------------------------------------------------------ 4 Push updates (allow, then the lock screen)
 
-export function PushScene({ data, beat, now, reduce }: SceneProps) {
-  const shop = shopOf(data, 'kanto-smash');
+export function PushScene({ entry, beat, now, reduce }: SceneProps) {
+  const { shop, story, member } = partsOf(entry);
   const card = shop.storefront.stampCard;
   const needed = card.rule.stampsNeeded;
-  const no = orderNoLabel(data.chat?.order.orderNo ?? data.board[0]?.orderNo ?? 45);
+  const no = orderNoLabel(story.chat?.order.orderNo ?? story.board[0]?.orderNo ?? 45);
   const name = shop.storefront.info.name;
   if (beat >= 3) {
     const icon = shopPushIcon(shop);
     const all: Push[] = [
       { id: 'done', icon, app: name, title: W.pushDone(no, needed - 1, needed), body: '' },
-      ...data.news
+      ...story.news
         .slice(0, 1)
         .map((n) => ({ id: n.id, icon, app: name, title: n.title, body: n.body })),
       { id: 'reward', icon, app: name, title: W.pushReward(card.reward.title), body: '' },
@@ -567,7 +745,7 @@ export function PushScene({ data, beat, now, reduce }: SceneProps) {
     <ShopScreen
       shop={shop}
       now={now}
-      member={data.member}
+      member={member}
       dock={<ShopDock shop={shop} active="orders" />}
     >
       <p className="text-xl font-bold">{W.notificationsTitle}</p>
@@ -595,108 +773,18 @@ export function PushScene({ data, beat, now, reduce }: SceneProps) {
   );
 }
 
-// ------------------------------------------------------------------ 5 Retail (Tala Apparel)
-
-export function RetailScene({ data, beat, now, reduce }: SceneProps) {
-  const shop = shopOf(data, 'tala-apparel');
-  const item = shop.catalog.items[0];
-  const card = shop.storefront.stampCard;
-  if (!item) return null;
-  const sizes = item.axes[0]?.values.map((v) => v.name) ?? [];
-  const picked = beat >= 2 ? sizes[1] : beat >= 1 ? sizes[0] : undefined;
-  const price = formatPeso(firstPrice(item));
-  const left = card.reward.quantityLeft;
-  const inBasket = beat >= 3 && picked !== undefined;
-  return (
-    <ShopScreen
-      shop={shop}
-      now={now}
-      dock={
-        <ShopDock
-          shop={shop}
-          active="catalog"
-          count={inBasket ? 1 : 0}
-          total={inBasket ? firstPrice(item) : 0}
-        />
-      }
-    >
-      <ShopImage
-        src={pic(item.photos[0])}
-        alt=""
-        ratio="16:9"
-        sizes="330px"
-        className="shrink-0 overflow-hidden rounded-xl"
-      />
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="truncate text-base font-semibold">{item.name}</p>
-        <p className="text-base font-bold tabular">{price}</p>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <p className="text-sm font-medium text-muted-foreground">{W.sizeLabel}</p>
-        <ToggleGroup value={picked ? [picked] : []} className="grid w-full grid-cols-4">
-          {sizes.map((s) => (
-            <ToggleGroupItem key={s} value={s} className="h-10">
-              {s}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
-      <Button className="h-11 shrink-0 rounded-full bg-shop-10 font-semibold text-shop-10-foreground">
-        {inBasket ? (
-          <>
-            <CheckIcon aria-hidden="true" />
-            {W.added(picked ?? '', price)}
-          </>
-        ) : (
-          W.addToBasket
-        )}
-      </Button>
-      {beat >= 4 ? (
-        <Appear reduce={reduce}>
-          <StampCard
-            needed={card.rule.stampsNeeded}
-            stamped={card.rule.stampsNeeded - 2}
-            title={card.reward.title}
-            body={left === null ? null : W.prizeLeft(left)}
-            progressLabel={W.stampProgress(card.rule.stampsNeeded - 2, card.rule.stampsNeeded)}
-            prize={{
-              title: card.reward.title,
-              photo: pic(card.reward.image),
-              label: W.prizeLabel,
-            }}
-            assetOrigin={ORIGIN}
-          />
-        </Appear>
-      ) : null}
-    </ShopScreen>
-  );
-}
-
-// ------------------------------------------------------------------ 6 The owner's phone
+// ------------------------------------------------------------------ 5 The owner's phone
 
 /** The owner's dashboard on their phone: the newest order with its ring, and the last 7 days of sales. */
-function OwnerHome({
-  data,
-  now,
-  pick,
-  fresh,
-  push,
-}: {
-  data: Showcase;
-  now: Date;
-  pick: number;
-  fresh: boolean;
-  push?: Push | undefined;
-}) {
+function OwnerHome({ entry, now, fresh }: { entry: ShowcaseShop; now: Date; fresh: boolean }) {
+  const { shop, story } = partsOf(entry);
   // The same order as the "New order" push that came in on the lock screen.
-  const board = data.board.filter((o) => o.id !== data.chat?.order.id);
-  const order = board.length > 0 ? board[pick % board.length] : data.board[0];
-  const shop = shopOf(data, 'kanto-smash');
+  const board = story.board.filter((o) => o.id !== story.chat?.order.id);
+  const order = board[0] ?? story.board[0];
   const name = shop.storefront.info.name;
   return (
     <div className="relative flex h-full flex-col bg-background text-foreground">
       <StatusBar now={now} />
-      {push ? <HeadsUp push={push} shown={fresh} /> : null}
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-4">
         <div className="flex items-center gap-3 px-1">
           <ShopLogo name={name} src={pic(shop.storefront.info.logo)} size="sm" shape="round" />
@@ -715,7 +803,7 @@ function OwnerHome({
           />
         ) : null}
         <SalesCard
-          data={data.week}
+          data={story.week}
           periodText={homeWords.period.picks['7d']}
           live={false}
           asOf={now}
@@ -727,44 +815,17 @@ function OwnerHome({
 
 /**
  * The owner's phone: their pushes stack up on the lock screen (new order, payment photo, due soon), then the
- * phone opens on the dashboard with the new order ringing. `pick` moves to the next order on Log in.
+ * phone opens on the dashboard with the new order ringing.
  */
-export function OwnerScene({ data, beat, now, reduce, pick = 0 }: SceneProps & { pick?: number }) {
-  const pushes = ownerPushes(data, pick);
+export function OwnerScene({ entry, beat, now, reduce }: SceneProps) {
+  const pushes = ownerPushes(entry.story);
   const locked = 4;
   if (beat < locked) {
     return (
       <LockScreen now={now} pushes={pushes.slice(0, Math.max(0, beat)).reverse()} reduce={reduce} />
     );
   }
-  return <OwnerHome data={data} now={now} pick={pick} fresh={beat === locked} />;
-}
-
-// ------------------------------------------------------------------ A sample shop from the strip
-
-/** Any sample shop's home, opened from its chip: banner, Suki card, the first items and the dock. */
-export function ShopScene({ data, now, slug }: SceneProps & { slug: string }) {
-  const shop = shopOf(data, slug);
-  const card = shop.storefront.stampCard;
-  const needed = card.rule.stampsNeeded;
-  const items = shop.catalog.items.slice(0, 4);
-  return (
-    <ShopScreen shop={shop} now={now} dock={<ShopDock shop={shop} active="home" />}>
-      <Banner shop={shop} />
-      {card.status === 'off' ? null : (
-        <StampCard
-          needed={needed}
-          stamped={Math.min(needed - 1, 3)}
-          title={W.stampTitle}
-          body={W.stampRule(formatPeso(card.rule.minOrderTotal))}
-          progressLabel={W.stampProgress(Math.min(needed - 1, 3), needed)}
-          prize={{ title: card.reward.title, photo: pic(card.reward.image), label: W.prizeLabel }}
-          assetOrigin={ORIGIN}
-        />
-      )}
-      <MenuGrid items={items} pressed={null} />
-    </ShopScreen>
-  );
+  return <OwnerHome entry={entry} now={now} fresh={beat === locked} />;
 }
 
 // ------------------------------------------------------------------ Your app (from the form)
@@ -778,7 +839,7 @@ export interface Yours {
 // The sample shop whose menu fills the preview of the person's own app.
 const PACK: Record<ShopKind, string> = { food: 'kanto-smash', retail: 'tala-apparel' };
 
-export function YoursScene({ data, now, yours }: SceneProps & { yours: Yours }) {
+export function YoursScene({ data, now, yours }: { data: Showcase; now: Date; yours: Yours }) {
   const pack = shopOf(data, PACK[yours.kind]);
   const items = pack.catalog.items.slice(0, 2);
   const card = pack.storefront.stampCard;
@@ -798,7 +859,7 @@ export function YoursScene({ data, now, yours }: SceneProps & { yours: Yours }) 
         needed={needed}
         stamped={1}
         title={W.stampTitle}
-        body={W.stampRule(formatPeso(card.rule.minOrderTotal))}
+        body={ruleLine(card.rule.minOrderTotal)}
         progressLabel={W.stampProgress(1, needed)}
         prize={{ title: card.reward.title, photo: pic(card.reward.image), label: W.prizeLabel }}
         assetOrigin={ORIGIN}

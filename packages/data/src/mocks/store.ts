@@ -108,6 +108,7 @@ import {
   DEMO_SHOP_SLUGS,
   ShowcaseSchema,
   type Showcase,
+  type ShowcaseStory,
   type SupportSession,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
@@ -2839,53 +2840,57 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     },
   };
 
-  // The sign-up tour (T108): sample shops only, no owner signed in, no scenario, no wait. The first shop
-  // (Kanto Smash) gives the order chat, the board and the day; every shop gives its storefront.
+  // The sign-up tour (T108): sample shops only, no owner signed in, no scenario, no wait. Every shop gives
+  // its storefront and its own story: a payment-photo chat, open orders, the week, a member and news.
+  const story = (slug: string): ShowcaseStory => {
+    const s = requireShop(slug);
+    const byNewest = [...s.orders].sort((a, b) =>
+      b.receipt.placedAt.localeCompare(a.receipt.placedAt),
+    );
+    // The chat shows a member with a face when one sent a payment photo.
+    const photoOrders = byNewest.filter((o) => o.proofs.length > 0);
+    const withFace = (o: (typeof photoOrders)[number]) =>
+      toBoardOrder(s, o).customerAvatar !== null;
+    const withPhoto =
+      photoOrders.find((o) => withFace(o) && !isFinal(o.receipt.status)) ??
+      photoOrders.find(withFace) ??
+      photoOrders.find((o) => !isFinal(o.receipt.status)) ??
+      photoOrders[0] ??
+      null;
+    const open = byNewest.filter((o) => !isFinal(o.receipt.status)).map((o) => toBoardOrder(s, o));
+    const board = [
+      ...open.filter((o) => o.customerAvatar),
+      ...open.filter((o) => !o.customerAvatar),
+    ];
+    const faced =
+      board.find((o) => o.customerAvatar) ??
+      byNewest.map((o) => toBoardOrder(s, o)).find((o) => o.customerAvatar) ??
+      null;
+    const today = manilaDate(now());
+    const weekAgo = manilaDate(new Date(now().getTime() - 6 * 86_400_000));
+    return {
+      chat: withPhoto
+        ? { order: toBoardOrder(s, withPhoto), detail: ownerOrder(s, withPhoto) }
+        : null,
+      board: board.slice(0, 3),
+      week: homeMock.periodFor(slug, { from: weekAgo, to: today }),
+      member: faced?.customerAvatar
+        ? { name: faced.customerName, avatar: faced.customerAvatar }
+        : null,
+      news: newsMock.inbox(slug).slice(0, 3),
+    };
+  };
   const showcase: DataAdapters['showcase'] = {
     getShowcase: () =>
-      Promise.resolve().then((): Showcase => {
-        const shops = DEMO_SHOP_SLUGS.map((slug) => {
-          const s = requireShop(slug);
-          return { slug, shop: clone(s.shop) };
-        });
-        const first = requireShop(DEMO_SHOP_SLUGS[0]);
-        const byNewest = [...first.orders].sort((a, b) =>
-          b.receipt.placedAt.localeCompare(a.receipt.placedAt),
-        );
-        // The chat shows a member with a face when one sent a payment photo.
-        const photoOrders = byNewest.filter((o) => o.proofs.length > 0);
-        const withFace = (o: (typeof photoOrders)[number]) =>
-          toBoardOrder(first, o).customerAvatar !== null;
-        const withPhoto =
-          photoOrders.find((o) => withFace(o) && !isFinal(o.receipt.status)) ??
-          photoOrders.find(withFace) ??
-          photoOrders.find((o) => !isFinal(o.receipt.status)) ??
-          photoOrders[0] ??
-          null;
-        const open = byNewest
-          .filter((o) => !isFinal(o.receipt.status))
-          .map((o) => toBoardOrder(first, o));
-        const board = [
-          ...open.filter((o) => o.customerAvatar),
-          ...open.filter((o) => !o.customerAvatar),
-        ];
-        const faced = board.find((o) => o.customerAvatar) ?? null;
-        const today = manilaDate(now());
-        const weekAgo = manilaDate(new Date(now().getTime() - 6 * 86_400_000));
-        return ShowcaseSchema.parse({
-          shops,
-          chat: withPhoto
-            ? { order: toBoardOrder(first, withPhoto), detail: ownerOrder(first, withPhoto) }
-            : null,
-          board: board.slice(0, 3),
-          today: homeMock.periodFor(DEMO_SHOP_SLUGS[0], { from: today, to: today }),
-          week: homeMock.periodFor(DEMO_SHOP_SLUGS[0], { from: weekAgo, to: today }),
-          member: faced?.customerAvatar
-            ? { name: faced.customerName, avatar: faced.customerAvatar }
-            : null,
-          news: newsMock.inbox(DEMO_SHOP_SLUGS[0]).slice(0, 3),
-        });
-      }),
+      Promise.resolve().then((): Showcase =>
+        ShowcaseSchema.parse({
+          shops: DEMO_SHOP_SLUGS.map((slug) => ({
+            slug,
+            shop: clone(requireShop(slug).shop),
+            story: story(slug),
+          })),
+        }),
+      ),
   };
 
   return {

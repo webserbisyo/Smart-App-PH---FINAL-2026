@@ -260,7 +260,7 @@ The 3 sign-up steps use the Auth rows (`signUp` with the mobile, then the email 
 
 ### Sign-up tour (T108, no route)
 
-The phone beside the sign-up form and on the log in page plays our sample shops. `useShowcase()` reads `showcase.getShowcase()` → `Showcase` (`packages/core/src/schemas/showcase.ts`: the 5 sample storefronts, one Kanto Smash order with its chat (one whose customer has a face when there is one), up to 3 open orders (faces first), today's and the last 7 days' sales, the signed-in sample `member` (name and face, or null), the latest 3 news). It always comes from the mock adapter inside `SampleDataProvider` (its own query cache), whatever `VITE_DATA_SOURCE` says, so it never reads a real shop and needs no NestJS route. It skips the sample-data scenario and delay.
+The phone beside the sign-up form and on the log in page plays our sample shops. `useShowcase()` reads `showcase.getShowcase()` → `Showcase` (`packages/core/src/schemas/showcase.ts`): the 5 sample shops, each with its storefront and its own `story`: one order with a payment photo and its chat (one whose customer has a face when there is one), up to 3 open orders (faces first), the last 7 days' sales, the signed-in sample `member` (name and face, or null) and the latest 3 news. `packages/data/test/showcase.test.ts` checks every shop has each part. It always comes from the mock adapter inside `SampleDataProvider` (its own query cache), whatever `VITE_DATA_SOURCE` says, so it never reads a real shop and needs no NestJS route. It skips the sample-data scenario and delay.
 
 ## Super Admin (`/admin/...`, platform admin only)
 

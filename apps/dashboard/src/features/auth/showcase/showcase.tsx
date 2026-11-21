@@ -4,7 +4,6 @@ import {
   MessageCircleIcon,
   PauseIcon,
   PlayIcon,
-  ShirtIcon,
   ShoppingBagIcon,
   SmartphoneIcon,
   StampIcon,
@@ -13,7 +12,14 @@ import {
 import { imageSources, showcaseWords, type Showcase } from '@smartapp/core';
 import { SampleDataProvider, useShowcase } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
-import { Marquee, MarqueeContent, MarqueeEdge, MarqueeItem } from '@smartapp/ui/components/marquee';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from '@smartapp/ui/components/carousel';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
@@ -28,9 +34,6 @@ import {
   OwnerScene,
   PACE,
   PushScene,
-  RetailScene,
-  shopOf,
-  ShopScene,
   StampsScene,
   YoursScene,
   type SceneProps,
@@ -39,7 +42,8 @@ import {
 
 const W = showcaseWords;
 
-const CHAPTERS = ['order', 'chat', 'stamps', 'push', 'retail', 'owner'] as const;
+// Every sample shop plays these five chapters on its own data, then the next shop starts.
+const CHAPTERS = ['order', 'chat', 'stamps', 'push', 'owner'] as const;
 type Chapter = (typeof CHAPTERS)[number];
 
 const ICON: Record<Chapter, LucideIcon> = {
@@ -47,7 +51,6 @@ const ICON: Record<Chapter, LucideIcon> = {
   chat: MessageCircleIcon,
   stamps: StampIcon,
   push: BellRingIcon,
-  retail: ShirtIcon,
   owner: SmartphoneIcon,
 };
 const SCENE: Record<Chapter, (props: SceneProps) => React.ReactNode> = {
@@ -55,26 +58,8 @@ const SCENE: Record<Chapter, (props: SceneProps) => React.ReactNode> = {
   chat: ChatScene,
   stamps: StampsScene,
   push: PushScene,
-  retail: RetailScene,
   owner: OwnerScene,
 };
-const FEATURE_CHAPTER: Record<keyof typeof W.features, Chapter> = {
-  stamps: 'stamps',
-  reward: 'stamps',
-  chat: 'chat',
-  photo: 'chat',
-  push: 'push',
-  news: 'push',
-  sizes: 'retail',
-  prize: 'retail',
-  board: 'owner',
-  link: 'order',
-  ahead: 'order',
-};
-const FEATURES = Object.entries(W.features).flatMap(([key, label]) => {
-  const chapter = Object.entries(FEATURE_CHAPTER).find(([k]) => k === key)?.[1];
-  return chapter ? [{ key, label, chapter }] : [];
-});
 
 const steps = (c: Chapter) => PACE[c].length;
 
@@ -117,6 +102,12 @@ function SceneFade({ children }: { children: React.ReactNode }) {
   );
 }
 
+interface Spot {
+  shop: number;
+  chapter: Chapter;
+  beat: number;
+}
+
 function Tour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
   const query = useShowcase();
   const reduce = useReducedMotion();
@@ -124,67 +115,54 @@ function Tour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
   const size = usePhoneSize(wide);
   const root = React.useRef<HTMLElement>(null);
   const visible = useVisible(root);
-  const [chapter, setChapter] = React.useState<Chapter>('order');
-  const [beat, setBeat] = React.useState(0);
+  const [spot, setSpot] = React.useState<Spot>({ shop: 0, chapter: 'order', beat: 0 });
   const [stopped, setStopped] = React.useState(false);
-  // A sample shop picked from the strip: the phone shows its home until a chapter is picked.
-  const [shop, setShop] = React.useState<string | null>(null);
   // The form values the person chose to leave: the tour plays again until they type something new.
   const [leftYours, setLeftYours] = React.useState('');
   const data = query.data;
+  const shopCount = data?.shops.length ?? 1;
 
   const autoplay = !reduce && !savesData();
   // What the person types turns the phone into their own app (L1).
   const yoursKey = yours ? `${yours.name.trim()}|${yours.kind}|${yours.colour ?? ''}` : '';
   const touched = yours !== null && (yours.name.trim() !== '' || yours.colour !== null);
   const showingYours = touched && leftYours !== yoursKey;
-  const showingShop = !showingYours && shop !== null;
-  const touring = !showingYours && !showingShop;
-  const playing = autoplay && !stopped && touring && visible;
+  const playing = autoplay && !stopped && !showingYours && visible;
 
-  const turnTo = (next: Chapter, nextBeat: number) => {
-    setChapter(next);
-    setBeat(nextBeat);
-  };
-
+  // One step on: the next beat, the next chapter, then the next shop's story.
   const advance = React.useEffectEvent(() => {
-    if (beat + 1 < steps(chapter)) setBeat(beat + 1);
-    else turnTo(CHAPTERS[(CHAPTERS.indexOf(chapter) + 1) % CHAPTERS.length] ?? 'order', 0);
+    setSpot(({ shop, chapter, beat }) => {
+      if (beat + 1 < steps(chapter)) return { shop, chapter, beat: beat + 1 };
+      const next = CHAPTERS[CHAPTERS.indexOf(chapter) + 1];
+      return next
+        ? { shop, chapter: next, beat: 0 }
+        : { shop: (shop + 1) % shopCount, chapter: 'order', beat: 0 };
+    });
   });
 
   React.useEffect(() => {
     if (!playing || !data) return;
-    const id = window.setTimeout(advance, PACE[chapter][beat] ?? 1200);
+    const id = window.setTimeout(advance, PACE[spot.chapter][spot.beat] ?? 1200);
     return () => window.clearTimeout(id);
-  }, [playing, data, beat, chapter]);
+  }, [playing, data, spot]);
 
-  const go = (next: Chapter) => {
+  // Without autoplay a chapter shows its last moment at once.
+  const go = (shop: number, chapter: Chapter) => {
     setLeftYours(yoursKey);
-    setShop(null);
-    // Without autoplay the scene shows its last moment at once.
-    turnTo(next, autoplay ? 0 : steps(next) - 1);
+    setSpot({ shop, chapter, beat: autoplay ? 0 : steps(chapter) - 1 });
     if (autoplay) setStopped(false);
   };
-
-  const openShop = (slug: string) => {
-    setLeftYours(yoursKey);
-    setShop(slug);
+  const playShop = (shop: number) => {
+    if (shop !== spot.shop || showingYours) go(shop, 'order');
   };
 
-  const shownBeat = autoplay ? beat : steps(chapter) - 1;
-  const Scene = SCENE[chapter];
-  const sceneProps: SceneProps | null = data
-    ? { data, beat: shownBeat, now, live: playing, reduce }
-    : null;
-  const shopName = data && shop ? shopOf(data, shop).storefront.info.name : '';
-  const caption = showingYours
-    ? W.chapters.yours
-    : showingShop
-      ? { title: W.sample(shopName), line: W.shopLine }
-      : W.chapters[chapter];
-  const sceneKey = showingYours ? 'yours' : showingShop ? `shop-${shop}` : chapter;
+  const entry = data?.shops[spot.shop] ?? data?.shops[0];
+  const shownBeat = autoplay ? spot.beat : steps(spot.chapter) - 1;
+  const Scene = SCENE[spot.chapter];
+  const caption = showingYours ? W.chapters.yours : W.chapters[spot.chapter];
+  const sceneKey = showingYours ? 'yours' : `${entry?.slug ?? ''}-${spot.chapter}`;
   // Elapsed share of the chapter at the end of this step, for the progress line.
-  const pace = PACE[chapter];
+  const pace = PACE[spot.chapter];
   const total = pace.reduce((a, b) => a + b, 0);
   const done = pace.slice(0, shownBeat + 1).reduce((a, b) => a + b, 0) / total;
 
@@ -198,14 +176,12 @@ function Tour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
         wide={wide}
         phone={
           <ShowcasePhone label={`${W.phoneLabel}: ${caption.title}`} size={size}>
-            {sceneProps ? (
+            {data && entry ? (
               <SceneFade key={sceneKey}>
                 {showingYours && yours ? (
-                  <YoursScene {...sceneProps} yours={yours} />
-                ) : showingShop && shop ? (
-                  <ShopScene {...sceneProps} slug={shop} />
+                  <YoursScene data={data} now={now} yours={yours} />
                 ) : (
-                  <Scene {...sceneProps} />
+                  <Scene entry={entry} beat={shownBeat} now={now} live={playing} reduce={reduce} />
                 )}
               </SceneFade>
             ) : (
@@ -229,46 +205,48 @@ function Tour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
         aria-label={W.playerLabel}
         className="flex items-center gap-1 rounded-full bg-card p-1 shadow-sm ring-1 ring-border"
       >
-        {touring ? (
-          autoplay ? (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-11 rounded-full"
-                aria-label={stopped ? W.play : W.pause}
-                onClick={() => setStopped(!stopped)}
-              >
-                {stopped ? <PlayIcon aria-hidden="true" /> : <PauseIcon aria-hidden="true" />}
-              </Button>
-              <span aria-hidden="true" className="mx-0.5 h-6 w-px bg-border" />
-            </>
-          ) : null
-        ) : (
+        {showingYours ? (
           <>
-            <Button variant="ghost" className="h-11 rounded-full px-3" onClick={() => go(chapter)}>
+            <Button
+              variant="ghost"
+              className="h-11 rounded-full px-3"
+              onClick={() => go(spot.shop, spot.chapter)}
+            >
               <PlayIcon aria-hidden="true" />
               {W.backToTour}
             </Button>
             <span aria-hidden="true" className="mx-0.5 h-6 w-px bg-border" />
           </>
-        )}
+        ) : autoplay ? (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-11 rounded-full"
+              aria-label={stopped ? W.play : W.pause}
+              onClick={() => setStopped(!stopped)}
+            >
+              {stopped ? <PlayIcon aria-hidden="true" /> : <PauseIcon aria-hidden="true" />}
+            </Button>
+            <span aria-hidden="true" className="mx-0.5 h-6 w-px bg-border" />
+          </>
+        ) : null}
         {CHAPTERS.map((c) => {
           const Icon = ICON[c];
-          const current = touring && c === chapter;
+          const current = !showingYours && c === spot.chapter;
           return (
             <button
               key={c}
               type="button"
               aria-label={W.chapters[c].title}
               aria-current={current ? 'step' : undefined}
-              onClick={() => go(c)}
+              onClick={() => go(spot.shop, c)}
               className={cn(
                 'relative flex size-11 shrink-0 items-center justify-center rounded-full transition-colors duration-base outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 current
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover-hover:hover:bg-muted hover-hover:hover:text-foreground',
-                !touring && 'max-sm:hidden',
+                showingYours && 'max-sm:hidden',
               )}
             >
               <Icon aria-hidden="true" className="size-5" />
@@ -292,13 +270,11 @@ function Tour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
       </div>
 
       {data ? (
-        <Strip
+        <ShopStrip
           data={data}
+          current={showingYours ? null : spot.shop}
           reduce={reduce}
-          picked={showingShop ? shop : null}
-          edge={wide ? 'from-sidebar' : 'from-background'}
-          onShop={openShop}
-          onFeature={go}
+          onPick={playShop}
         />
       ) : null}
     </section>
@@ -306,96 +282,99 @@ function Tour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
 }
 
 /**
- * The sample shops and the features, sliding by in one row (L12). A shop opens its own app in the phone; a
- * feature plays its chapter. The player above is the keyboard and screen reader way in, so the moving
- * copies stay out of the tab order.
+ * The sample shops under the phone (L12, finalize): a row you drag with the mouse or a finger, or step with
+ * the arrows. The shop in the middle is the one playing; letting go on another shop, or tapping it, plays
+ * that shop's own story from its first chapter. When the tour moves to the next shop, the row follows.
  */
-function Strip({
+function ShopStrip({
   data,
+  current,
   reduce,
-  picked,
-  edge,
-  onShop,
-  onFeature,
+  onPick,
 }: {
   data: Showcase;
+  current: number | null;
   reduce: boolean;
-  picked: string | null;
-  edge: string;
-  onShop: (slug: string) => void;
-  onFeature: (chapter: Chapter) => void;
+  onPick: (index: number) => void;
 }) {
-  const chip =
-    'flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full bg-card px-3 text-sm font-medium whitespace-nowrap shadow-xs ring-1 ring-border transition-colors duration-base hover-hover:hover:bg-muted';
-  const shops = data.shops.map(({ slug, shop }) => (
-    <button
-      key={slug}
-      type="button"
-      tabIndex={-1}
-      className={cn(chip, picked === slug && 'ring-2 ring-primary')}
-      onClick={() => onShop(slug)}
-    >
-      <ShopLogo
-        name={shop.storefront.info.name}
-        src={imageSources(shop.storefront.info.logo, env.VITE_STOREFRONT_URL)}
-        size="sm"
-        shape="round"
-        className="size-6"
-      />
-      {shop.storefront.info.name}
-    </button>
-  ));
-  const features = FEATURES.map((f) => {
-    const Icon = ICON[f.chapter];
-    return (
-      <button
-        key={f.key}
-        type="button"
-        tabIndex={-1}
-        className={chip}
-        onClick={() => onFeature(f.chapter)}
-      >
-        <Icon aria-hidden="true" className="size-4 text-primary" />
-        {f.label}
-      </button>
-    );
+  const [api, setApi] = React.useState<CarouselApi>();
+  const selected = React.useEffectEvent((carousel: NonNullable<CarouselApi>) => {
+    const index = carousel.selectedScrollSnap();
+    if (index !== current) onPick(index);
   });
-  // Shops and features take turns along the strip.
-  const mixed = Array.from({ length: Math.max(shops.length, features.length) }, (_, i) => [
-    shops[i],
-    features[i],
-  ])
-    .flat()
-    .filter((chip) => chip !== undefined);
 
-  if (reduce) {
-    return (
-      <div aria-hidden="true" className="flex w-full flex-wrap justify-center gap-2">
-        {mixed}
-      </div>
-    );
-  }
+  React.useEffect(() => {
+    if (!api) return;
+    const onSelect = () => selected(api);
+    api.on('select', onSelect);
+    return () => {
+      api.off('select', onSelect);
+    };
+  }, [api]);
+
+  React.useEffect(() => {
+    if (!api || current === null || api.selectedScrollSnap() === current) return;
+    api.scrollTo(current, reduce);
+  }, [api, current, reduce]);
+
   return (
-    <div aria-hidden="true" className="w-full min-w-0">
-      <Marquee speed={26} pauseOnHover autoFill gap="0.5rem" className="py-1">
-        <MarqueeContent>
-          {mixed.map((c) => (
-            <MarqueeItem key={c.key}>{c}</MarqueeItem>
-          ))}
-        </MarqueeContent>
-        <MarqueeEdge side="left" className={edge} />
-        <MarqueeEdge side="right" className={edge} />
-      </Marquee>
-    </div>
+    <Carousel
+      setApi={setApi}
+      opts={{ align: 'center', loop: true, duration: reduce ? 0 : 24 }}
+      aria-label={W.shopsLabel}
+      className="w-full min-w-0 px-12"
+    >
+      <CarouselContent className="-ml-2 py-1">
+        {data.shops.map(({ slug, shop }, index) => {
+          const info = shop.storefront.info;
+          const on = index === current;
+          return (
+            <CarouselItem key={slug} className="basis-auto pl-2">
+              <button
+                type="button"
+                aria-label={W.playShop(info.name)}
+                aria-pressed={on}
+                onClick={() => {
+                  onPick(index);
+                  api?.scrollTo(index, reduce);
+                }}
+                className={cn(
+                  'flex h-14 max-w-56 cursor-grab items-center gap-2.5 rounded-2xl bg-card py-2 pr-4 pl-2 text-left shadow-xs ring-1 ring-border transition duration-base outline-none select-none focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing hover-hover:hover:bg-muted',
+                  on && 'ring-2 ring-primary',
+                )}
+              >
+                <ShopLogo
+                  name={info.name}
+                  src={imageSources(info.logo, env.VITE_STOREFRONT_URL)}
+                  size="sm"
+                  shape="round"
+                  className="size-10"
+                />
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-semibold text-foreground">
+                    {info.name}
+                  </span>
+                  {info.tagline ? (
+                    <span className="truncate text-xs text-muted-foreground">{info.tagline}</span>
+                  ) : null}
+                </span>
+              </button>
+            </CarouselItem>
+          );
+        })}
+      </CarouselContent>
+      <CarouselPrevious className="left-0 size-11" />
+      <CarouselNext className="right-0 size-11" />
+    </Carousel>
   );
 }
 
 /**
- * The sign-up tour (T108 L1, L11 to L14, final pass): a phone playing six short chapters on our sample shops
- * with the real screens (the storefront and its floating dock, the order chat, the stamp card and its
- * confetti, the notification cards, the owner's pushes and dashboard). Typing a shop name turns it into the
- * person's own app; a shop in the strip opens its own app. It always reads the sample shops, whatever the
- * app's data source.
+ * The sign-up and log in tour (T108 L1, L11 to L14, final pass, finalize): a phone playing each sample shop's
+ * own story in five short chapters with the real screens (the storefront, its item sheet and floating dock,
+ * the order chat, the stamp card and its confetti, the notification cards, the owner's pushes and
+ * dashboard), then the next shop. Typing a shop name turns it into the person's own app; a shop picked in the
+ * row plays its own story. It always reads the sample shops, whatever the app's data source.
  */
 export default function ShowcaseTour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
   return (
