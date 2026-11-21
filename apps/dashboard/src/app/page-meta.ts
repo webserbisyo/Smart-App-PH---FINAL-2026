@@ -3,7 +3,7 @@ import { words, type ShopKind } from '@smartapp/core';
 import { useShop } from './shop.js';
 
 // Paths a sub-page can go back to.
-export type ParentPath = '/orders' | '/catalog' | '/members' | '/settings';
+export type ParentPath = '/orders' | '/catalog' | '/members' | '/members/news' | '/settings';
 
 export interface PageMeta {
   title: (kind: ShopKind) => string;

@@ -7,7 +7,7 @@ Nine phases take Smart App PH from "every screen works on sample data" to "shops
 ## Where we start (checked 2026-11-20)
 
 - Every MVP A screen is built and "UI approved" on sample data; nothing is "Done" (wired to the database).
-- All 53 tables have migration files and 99 database tests, but the dev database still has only `profiles`: the CI step "Apply migrations to the dev database" skips because the 3 GitHub secrets are missing (`launch.md` section 9).
+- All 55 tables have migration files (8 database steps; step 8 is Push News, T106, 2026-11-21) and their database tests, but the dev database still has only `profiles`: the CI step "Apply migrations to the dev database" skips because the 3 GitHub secrets are missing (`launch.md` section 9).
 - The API has only `/health`, `/me` and a test route. Drizzle, `pg`, `@nestjs/schedule` and `@nestjs/throttler` are approved but not installed.
 - `packages/data` already has an API adapter file for every area (untested) next to the mock ones.
 - The latest `main` run fails one job: the UI scan.
@@ -22,7 +22,7 @@ Nine phases take Smart App PH from "every screen works on sample data" to "shops
 | 3   | Shop setup: Settings, files, Editor     | Owner sets up the shop on real data; new profile menu               | 9      | 4.2 Shops and settings                    |
 | 4   | Menu and Products                       | Owner builds the catalog on real data                               | 13     | 4.2 Catalog                               |
 | 5   | Storefront, orders and payments         | Customers order, owner runs orders, proofs, chat, push              | 12     | 4.2 Storefront reads, Orders and payments |
-| 6   | Members, stamp card and Home numbers    | Join, stamps, rewards, Home and exports on real data                | 7      | 4.2 Members and stamps, Reports           |
+| 6   | Members, stamp card and Home numbers    | Join, stamps, rewards, Push News, Home, exports                     | 9      | 4.2 Members and stamps, Reports           |
 | 7   | Plan, billing, Super Admin and Meta     | Go-live approval, ₱399 billing, help mode, tracking, emails         | 7      | 4.2 Platform                              |
 | 8   | Go live: live setup and hardening       | Live database, domains, jobs, backups, security, acceptance 1 to 8  | 0 new  | 5.1, 5.2                                  |
 | 9   | Sell: pilot and first paying shops      | A pilot shop live, first ₱399 approved, a repeatable sales routine  | 0 new  | 5.3                                       |
@@ -31,7 +31,7 @@ Order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9. Phase 7 depends only o
 
 ## Phase 1. Ground: dev database and API base
 
-**Goal.** The dev database holds all 53 tables and NestJS can read and write them safely, one shop at a time.
+**Goal.** The dev database holds all 55 tables and NestJS can read and write them safely, one shop at a time.
 
 **Covers.** Apply the 7 migrations to dev through CI (D9). Regenerate types. Fix the failing UI scan so `main` is green. Install the approved packages (`drizzle-orm`, `pg`, `drizzle-kit`, `@nestjs/schedule`, `@nestjs/throttler`). One database transaction per request that starts with `set local role app_api` and the shop setting (D1). Guards in order: login, shop from `tenant_members`, `@Can()`, with a test that fails on any route lacking `@Public()` or `@Can()`. Graceful shutdown, a health check that also asks the database, 100 kB body limit, CORS allow-list. Timed-job base with advisory locks (D5). A contract test that runs the same cases against the mock and the API adapter.
 
@@ -48,7 +48,7 @@ Order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9. Phase 7 depends only o
 
 **From you.** The 3 GitHub secrets (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`, `SUPABASE_DEV_PROJECT_REF`), then re-run the Check on `main`.
 
-**Done when.** Dev shows 53 tables; every job on `main` is green; `/health` reports the database; the guard test exists; a test proves shop A cannot read shop B through the API.
+**Done when.** Dev shows 55 tables; every job on `main` is green; `/health` reports the database; the guard test exists; a test proves shop A cannot read shop B through the API.
 
 ## Phase 2. Accounts: login, sign-up and shop creation
 
@@ -75,7 +75,7 @@ Order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9. Phase 7 depends only o
 
 **Goal.** An owner sets up a whole shop on real data: facts, hours, ordering rules, delivery, payment places, look and photos.
 
-**Covers.** Settings: Your shop (Shop and contact facts, Hours and closures, Ordering, Delivery zones and per-km rows, Payments with up to 3 banks), You (Account, avatar, Appearance, Notifications) and Plan and storage (read-only plan state, Storage files manager, cleanups). Uploads: signed upload URL for the exact size, confirm, count against 500 MB (T66). Editor: draft, autosave, Undo with Zustand and zundo (T103, replacing the hand-written reducer), Publish. "Start with samples". **Profile menu redesign** (below).
+**Covers.** Settings: Your shop (Shop and contact facts, Hours and closures, Ordering, Delivery zones and per-km rows, Payments with up to 3 banks; the payment QR upload uses the shared photo row with an optional crop step, T107 in PR #35), You (Account, avatar, Appearance, Notifications) and Plan and storage (read-only plan state, Storage files manager, cleanups). Uploads: signed upload URL for the exact size, confirm, count against 500 MB (T66). Editor: draft, autosave, Undo with Zustand and zundo (T103, replacing the hand-written reducer), Publish. "Start with samples". **Profile menu redesign** (below).
 
 **Tables (9).** `shop_settings`, `storefront_content`, `storefront_media`, `opening_hours`, `closures`, `payment_accounts`, `delivery_zones`, `delivery_distance_rows`, `media_files`.
 
@@ -136,7 +136,8 @@ Fixes found in the current screenshot: the menu opens at `w-fit`, so it squeezes
 - Receipt with live status, my orders, Change time, Recall, ratings.
 - Payments: cash, COD, GCash, Maya, bank, QR Ph; up to 3 proof photos in the order chat; owner Approve or Not approved; duplicate reference block; 5-minute signed links.
 - Owner Orders: Board, List, Calendar, order panel with chat.
-- Order status push to the customer's phone (Serwist worker already listens) and the new-order email to the owner.
+- Order status push to the customer's phone (Serwist worker already listens; `web-push` approved in T106) and the new-order email to the owner.
+- One PayQr card on checkout and the receipt with Save QR and phone steps; QR Ph hidden when the shop has no QR (T107, PR #35).
 - Jobs: expire unpaid transfers every minute, delete proofs after 30 days, send the outbox with retry.
 - **Order chat panel fix** (below).
 
@@ -166,13 +167,13 @@ When a chat is opened from the Chats list (chat bubble):
 
 Opened from a card on the Board, the panel stays as it is today. UI only (`chats-sheet.tsx`, `order-panel.tsx`), so it can also run as a small task before phase 5.
 
-## Phase 6. Members, stamp card and Home numbers
+## Phase 6. Members, stamp card, Push News and Home numbers
 
 **Goal.** Members and the stamp card, the main selling point, work on real data, and Home shows real numbers.
 
-**Covers.** Join with a 6-digit code and 1 welcome stamp; account, face, saved places; Rewards with stamp history; stamps on completed paid orders and given back on reversal; counter stamp with reason and Undo, at most 3 per member per day (N5); reward use at the counter; limited prizes with pause and claims; guest orders linked by order token or email only; Members page numbers computed from orders; remove a member (anonymise). Home: today vs a usual day, Needs you, Sales card with Paid, To check, Not paid yet and the money rings, best sellers, busy hours, any period. Export ZIP (24 hours) and its expiry job.
+**Covers.** Join with a 6-digit code and 1 welcome stamp; account, face, saved places; Rewards with stamp history; stamps on completed paid orders and given back on reversal; counter stamp with reason and Undo, at most 3 per member per day (N5); reward use at the counter; limited prizes with pause and claims; custom prize photo through `stamp_cards.reward_media_id` (T107, PR #35); guest orders linked by order token or email only; Members page numbers computed from orders; remove a member (anonymise). Push News (T106): Members › News with audiences, schedule within limits (2 a week, 1 a day, never 9 PM to 8 AM), results, the two automatic pushes (Stamp added, Reward ready), and the customer's unticked news yes on Join, Notify me and Account; sending through `web-push` from a NestJS job. Home: today vs a usual day, Needs you, Sales card with Paid, To check, Not paid yet and the money rings, best sellers, busy hours, any period. Export ZIP (24 hours) and its expiry job.
 
-**Tables (7).** `members`, `member_addresses`, `consents`, `stamp_cards`, `stamp_entries`, `reward_claims`, `data_exports`.
+**Tables (9).** `members`, `member_addresses`, `consents`, `stamp_cards`, `stamp_entries`, `reward_claims`, `data_exports`, `push_campaigns`, `push_deliveries`.
 
 **Logic to decide.**
 
@@ -192,7 +193,7 @@ Opened from a card on the Board, the panel stays as it is today. UI only (`chats
 
 **Goal.** You can approve shops, take ₱399 payments, help owners and see which ad brought each paying shop, without touching SQL.
 
-**Covers.** Ask to go live and your approval (stages `setting_up`, `asked`, `live`, `closed`); the trial starts on approval. Plan payments by GCash or Maya with a receipt in the Billing chat; Approve ₱X or Not approved with reasons; Record a payment; extra days; reminders. Super Admin: Today, Shops with side panel and Leads, Create a shop, Payments with CSV, Tracking, Setup. Help mode (Open as owner, 60 minutes, logged, locked actions). Meta Conversions API from NestJS with the outbox and retry; Pixel on `/signup`. Emails through Resend: shop is live, reminders, payment answers. Job that drops leads after 180 days (D6).
+**Covers.** Ask to go live and your approval (stages `setting_up`, `asked`, `live`, `closed`); the trial starts on approval. Plan payments by GCash or Maya with a receipt in the Billing chat, which takes up to 3 photos with an optional reference (T107, PR #35: database step 9 `20261121120000_billing_chat_photos.sql`, no new table, `POST /owner/plan/photos` and `/owner/plan/seen`, `plan_payments.reference` optional); Approve ₱X or Not approved with reasons; Record a payment; extra days; reminders. Super Admin: Today, Shops with side panel and Leads, Create a shop, Payments with CSV, Tracking, Setup. Help mode (Open as owner, 60 minutes, logged, locked actions). Meta Conversions API from NestJS with the outbox and retry; Pixel on `/signup`. Emails through Resend: shop is live, reminders, payment answers. Job that drops leads after 180 days (D6).
 
 **Tables (7).** `platform_settings`, `plan_payments`, `billing_messages`, `shop_activity`, `support_sessions`, `track_events`, `audit_log`.
 
@@ -213,7 +214,7 @@ Opened from a card on the Board, the panel stays as it is today. UI only (`chats
 
 **Covers.** Live Supabase project on Pro with daily backups; dev becomes staging (D4). Live settings: custom SMTP, email confirmation on, 10-minute codes, leaked-password protection, Data API off, auto-expose off (D7). Railway production API at `api.webserbisyo.com`. Vercel Pro with the domain plan below (T105). Resend live. All jobs running. One restore from a backup tried and written down. Security pass (OWASP API Top 10, cross-shop tests, rate limits, no customer data in logs). Lighthouse 90+, 300 KB JS per page. Terms, privacy notice per shop and breach plan. Launch acceptance 1 to 8 on an Android and an iPhone.
 
-**Tables.** None new: the 53 tables are applied to the live project.
+**Tables.** None new: the 55 tables are applied to the live project.
 
 **Logic to decide.**
 
@@ -266,7 +267,7 @@ The subdomain is the one link we print and send (QR, share, emails, install, pus
 
 ## Coverage check
 
-### Every table has one home phase (53)
+### Every table has one home phase (55)
 
 | Phase | Tables                                                                                                                                                                                                                                |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -274,10 +275,10 @@ The subdomain is the one link we print and send (QR, share, emails, install, pus
 | 3     | `shop_settings`, `storefront_content`, `storefront_media`, `opening_hours`, `closures`, `payment_accounts`, `delivery_zones`, `delivery_distance_rows`, `media_files` (9)                                                             |
 | 4     | `categories`, `items`, `item_photos`, `variant_templates`, `variant_template_values`, `item_axes`, `item_axis_values`, `item_variants`, `item_variant_values`, `option_groups`, `options`, `item_option_groups`, `item_pairings` (13) |
 | 5     | `order_counters`, `orders`, `order_lines`, `order_line_options`, `order_events`, `order_messages`, `payment_proofs`, `order_ratings`, `push_subscriptions`, `order_push`, `item_daily_counts`, `notification_outbox` (12)             |
-| 6     | `members`, `member_addresses`, `consents`, `stamp_cards`, `stamp_entries`, `reward_claims`, `data_exports` (7)                                                                                                                        |
+| 6     | `members`, `member_addresses`, `consents`, `stamp_cards`, `stamp_entries`, `reward_claims`, `data_exports`, `push_campaigns`, `push_deliveries` (9)                                                                                   |
 | 7     | `platform_settings`, `plan_payments`, `billing_messages`, `shop_activity`, `support_sessions`, `track_events`, `audit_log` (7)                                                                                                        |
 
-5 + 9 + 13 + 12 + 7 + 7 = 53, the same list as `database.md` section 4.
+5 + 9 + 13 + 12 + 9 + 7 = 55, the same list as `database.md` section 4.
 
 ### Every MVP A area has a phase
 
@@ -288,7 +289,7 @@ The subdomain is the one link we print and send (QR, share, emails, install, pus
 | Menu or Products                                                        | 4          |
 | Storefront pages, install and offline, checkout, receipt, order push    | 5          |
 | Order types, payments and proofs, Orders Board, List and Calendar, chat | 5          |
-| Members, Join, Rewards, stamp card, claims, prizes                      | 6          |
+| Members, Join, Rewards, stamp card, claims, prizes, Push News (T106)    | 6          |
 | Home, Sales card, exports                                               | 6          |
 | Go live, plan and Billing chat, Super Admin, help mode, Meta, emails    | 7          |
 | Jobs (expire, proofs 30 days, uploads 1 hour, outbox, leads 180 days)   | 5, 3, 6, 7 |
@@ -298,7 +299,7 @@ The subdomain is the one link we print and send (QR, share, emails, install, pus
 ## Conflicts and gaps for you to decide
 
 1. **Storage buckets.** `database.md` section 8 lists 6 buckets, but no migration creates them, and rule 8 forbids making them in the Supabase dashboard. Recommendation: a new migration that creates them (phase 3).
-2. **Order status push.** The storefront already has the push card and worker (T13), `api.md` has `subscribePush` and the tables exist, but `A-mvp.md` section 1 does not list push and the `web-push` package is not approved. Recommendation: keep it in launch and approve the package in phase 5.
+2. **Order status push.** Settled by T106: push is in MVP A and `web-push` is approved, installed with the push plumbing in phase 5.
 3. **How migrations reach live.** `foundation.md` section 6 says "a manual GitHub Action after review"; AGENTS rule 8 and T9 say you run `pnpm db:push`. Recommendation: a manual GitHub Action you press (no laptop step), decided in phase 8.
 4. **Branch protection vs push-to-main.** `A-mvp.md` section 6, `foundation.md` section 6 and `PROGRESS.md` 5.1 want branch protection on `main`; T40 and T104 push straight to `main`. Still open from T104; decide before phase 8.
 5. **Live updates.** T53 says server-sent events "in phase 4"; acceptance 2 passes with polling. Recommendation: polling at launch, events later.

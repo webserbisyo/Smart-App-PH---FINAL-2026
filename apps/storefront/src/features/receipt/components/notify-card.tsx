@@ -7,6 +7,7 @@ import { Label } from '@smartapp/ui/components/label';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Bell, BellOff } from 'lucide-react';
 import { enablePush, pushState, type PushState } from '../../install/push';
+import { NewsBox } from '../../news/news-box';
 
 const CARD = 'rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6';
 
@@ -14,7 +15,10 @@ function noSubscribe() {
   return () => {};
 }
 
-/** Notify me (T13): order updates as phone notifications, asked for only on this switch. */
+/**
+ * Notify me (T13): order updates as phone notifications, asked for only on this switch. Once on, the
+ * unticked Also send me shop news box shows under it (decision T106).
+ */
 export function NotifyCard({ slug, token }: { slug: string; token: string }) {
   const state = useSyncExternalStore<PushState>(noSubscribe, pushState, () => 'unsupported');
   const isOnline = useOnline();
@@ -52,31 +56,39 @@ export function NotifyCard({ slug, token }: { slug: string; token: string }) {
   }
 
   return (
-    <div className={`${CARD} flex items-center justify-between gap-4`}>
-      <div className="flex min-w-0 items-start gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
-          {blocked ? (
-            <BellOff aria-hidden="true" className="size-5" />
-          ) : (
-            <Bell aria-hidden="true" className="size-5" />
-          )}
-        </span>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <Label htmlFor={switchId} className="text-base font-semibold">
-            {W.title}
-          </Label>
-          <p id={`${switchId}-line`} className="text-sm text-muted-foreground">
-            {line}
-          </p>
+    <div className={`${CARD} flex flex-col gap-4`}>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
+            {blocked ? (
+              <BellOff aria-hidden="true" className="size-5" />
+            ) : (
+              <Bell aria-hidden="true" className="size-5" />
+            )}
+          </span>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <Label htmlFor={switchId} className="text-base font-semibold">
+              {W.title}
+            </Label>
+            <p id={`${switchId}-line`} className="text-sm text-muted-foreground">
+              {line}
+            </p>
+          </div>
         </div>
+        <Switch
+          id={switchId}
+          checked={on}
+          onCheckedChange={(next) => void handleChange(next)}
+          disabled={blocked || !isOnline || asking || subscribe.isPending}
+          aria-describedby={`${switchId}-line`}
+        />
       </div>
-      <Switch
-        id={switchId}
-        checked={on}
-        onCheckedChange={(next) => void handleChange(next)}
-        disabled={blocked || !isOnline || asking || subscribe.isPending}
-        aria-describedby={`${switchId}-line`}
-      />
+      {/* Shop news (T106): offered only once order updates are on, always unticked at first. */}
+      {on ? (
+        <div className="border-t border-border/60 pt-4">
+          <NewsBox slug={slug} place="order" />
+        </div>
+      ) : null}
     </div>
   );
 }

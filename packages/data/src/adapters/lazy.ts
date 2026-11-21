@@ -7,6 +7,7 @@ import type {
   OwnerEditorAdapter,
   OwnerHomeAdapter,
   OwnerMembersAdapter,
+  OwnerNewsAdapter,
   OwnerOrdersAdapter,
   OwnerSamplesAdapter,
   OnboardingAdapter,
@@ -38,6 +39,9 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     removeAddress: async (input) => (await real()).storefront.removeAddress(input),
     claimReward: async (input) => (await real()).storefront.claimReward(input),
     getSchedule: async (input) => (await real()).storefront.getSchedule(input),
+    getNewsChoice: async (input) => (await real()).storefront.getNewsChoice(input),
+    setNewsChoice: async (input) => (await real()).storefront.setNewsChoice(input),
+    listShopNews: async (input) => (await real()).storefront.listShopNews(input),
   };
 
   const customerAuth: CustomerAuthAdapter = {
@@ -112,6 +116,16 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     listRewardClaims: async () => (await real()).ownerMembers.listRewardClaims(),
     giveClaim: async (input) => (await real()).ownerMembers.giveClaim(input),
     cancelClaim: async (input) => (await real()).ownerMembers.cancelClaim(input),
+  };
+
+  const ownerNews: OwnerNewsAdapter = {
+    getNewsOverview: async () => (await real()).ownerNews.getNewsOverview(),
+    getNews: async (input) => (await real()).ownerNews.getNews(input),
+    saveNews: async (input) => (await real()).ownerNews.saveNews(input),
+    cancelNews: async (input) => (await real()).ownerNews.cancelNews(input),
+    deleteNews: async (input) => (await real()).ownerNews.deleteNews(input),
+    sendNewsTest: async (input) => (await real()).ownerNews.sendNewsTest(input),
+    savePushSettings: async (input) => (await real()).ownerNews.savePushSettings(input),
   };
 
   const ownerSettings: OwnerSettingsAdapter = {
@@ -200,6 +214,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     ownerSamples,
     ownerCatalog,
     ownerMembers,
+    ownerNews,
     ownerSettings,
     ownerHome,
     ownerEditor,

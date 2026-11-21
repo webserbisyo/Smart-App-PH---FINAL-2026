@@ -1,5 +1,6 @@
-import { BellRingIcon, GemIcon, HardDriveIcon, ReceiptIcon } from 'lucide-react';
-import { errorWords, settingsWords, type NotificationPrefs } from '@smartapp/core';
+import { Link } from '@tanstack/react-router';
+import { BellRingIcon, GemIcon, HardDriveIcon, MegaphoneIcon, ReceiptIcon } from 'lucide-react';
+import { errorWords, newsWords, settingsWords, type NotificationPrefs } from '@smartapp/core';
 import { errorCodeOf, useNotificationPrefs, useSaveNotificationPrefs } from '@smartapp/data';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
@@ -85,6 +86,17 @@ function NotificationsForm({ prefs }: { prefs: NotificationPrefs }) {
           )}
         </Field>
       </SettingsCard>
+      {/* Push News (T106): one line to where customers' notifications live. */}
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-1 text-sm text-muted-foreground">
+        <MegaphoneIcon aria-hidden="true" className="size-4" />
+        {newsWords.entry.settingsLine}
+        <Link
+          to="/members/news"
+          className="font-semibold text-primary underline-offset-4 hover:underline"
+        >
+          {newsWords.entry.settingsAction}
+        </Link>
+      </p>
       <SaveBar
         dirty={dirty}
         valid={!emailProblem}

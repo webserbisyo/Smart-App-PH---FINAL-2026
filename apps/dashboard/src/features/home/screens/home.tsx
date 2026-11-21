@@ -28,6 +28,7 @@ import { HOME_GRID, HOME_MAIN, HOME_PAIR, HOME_SIDE, HOME_SLOTS as slots } from 
 import { MembersCard } from '../members-card.js';
 import { MixCard } from '../mix-card.js';
 import { MoneyCard, MoneyCardSkeleton } from '../money-card.js';
+import { NewsHomeCard } from '../news-card.js';
 import { NeedsCard } from '../needs-card.js';
 import { PeriodPicker, periodLabel } from '../period-picker.js';
 import { SalesCard } from '../sales-card.js';
@@ -158,6 +159,7 @@ export function HomeScreen() {
               {hasNeeds ? members : null}
             </div>
             <div className={HOME_SIDE}>
+              <NewsHomeCard now={now} />
               {hasNeeds ? (
                 <NeedsCard
                   needs={needs}
