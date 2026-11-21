@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   BellRingIcon,
+  ExternalLinkIcon,
   MessageCircleIcon,
   PauseIcon,
   PlayIcon,
@@ -9,7 +10,7 @@ import {
   StampIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { imageSources, showcaseWords, type Showcase } from '@smartapp/core';
+import { imageSources, SAMPLES_PATH, showcaseWords, type Showcase } from '@smartapp/core';
 import { SampleDataProvider, useShowcase } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import {
@@ -277,6 +278,21 @@ function Tour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
           onPick={playShop}
         />
       ) : null}
+      <Button
+        variant="link"
+        className="h-11 text-muted-foreground"
+        nativeButton={false}
+        render={
+          <a
+            href={`${env.VITE_STOREFRONT_URL}${SAMPLES_PATH}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          />
+        }
+      >
+        {W.allSamples}
+        <ExternalLinkIcon aria-hidden="true" />
+      </Button>
     </section>
   );
 }

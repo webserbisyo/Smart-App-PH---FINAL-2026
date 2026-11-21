@@ -55,6 +55,7 @@ Make **two new projects**. Don't reuse the old `storefront` and `dashboard` proj
 
 - Storefront: open `<storefront address>/kanto-smash`. The Preview pill shows bottom left. Try Scenario → Closed, then Shop → Tala Apparel.
 - Dashboard: open the dashboard address → **Look around with sample data**. Home opens as the Kanto Smash owner. Preview → View as → Platform admin opens `/admin`.
+- Sample shops: `<storefront address>/samples` shows all five; See the owner side opens that shop in the dashboard (needs step 3).
 - Kit: `<dashboard address>/kit`, then the Dashboard, Storefront, Tokens and Routes tabs.
 
 Every push to `main` redeploys both. Vercel's own preview links for branches work the same way.
