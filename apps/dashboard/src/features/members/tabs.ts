@@ -7,10 +7,12 @@ const MEMBERS_TABS: readonly PathTab[] = [
   { id: 'members', label: membersWords.tabs.members, to: '/members' },
   { id: 'stamp-card', label: membersWords.tabs.stampCard, to: '/members/stamp-card' },
   { id: 'claims', label: membersWords.tabs.prizes, to: '/members/claims' },
+  // Push News (T106): the fourth tab.
+  { id: 'news', label: membersWords.tabs.news, to: '/members/news' },
 ];
 
 /**
- * Members, Stamp card and Prizes. Prizes shows how many wait at the counter, and only shows for a custom
+ * Members, Stamp card, Prizes and News. Prizes shows how many wait at the counter, and only shows for a custom
  * prize card (or while claims still wait after the prize changed).
  */
 export function useMembersTabs(): NavItem[] {

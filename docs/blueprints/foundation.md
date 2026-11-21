@@ -35,7 +35,7 @@ Versions are checked with `npm view <pkg> version` at install time and pinned ex
 
 The storefront is one Next.js app and is also the installable PWA (no separate Vite storefront). Serwist precaches the app shell and caches shop pages stale-while-revalidate, so the installed app opens the saved copy instantly and refreshes menu, stock and open/closed in the background. Stock, prices and open/closed are always fetched fresh before checkout. See T6 in `decisions.md`.
 
-Approved, not installed yet: `drizzle-orm`, `pg` and `drizzle-kit` (D1), `@nestjs/schedule` (D5), `zustand` 5.1.0 and `zundo` 2.3.0 for the dashboard Editor store (T103; zundo's last release was November 2024, so Undo stays behind one small hook that can be swapped), `@nestjs/throttler` before the first public API route (T104; version chosen at install, at least 7 days old). Named for later, each needs the founder's yes: pino logs, Playwright with axe checks, knip.
+Approved, not installed yet: `drizzle-orm`, `pg` and `drizzle-kit` (D1), `@nestjs/schedule` (D5), `zustand` 5.1.0 and `zundo` 2.3.0 for the dashboard Editor store (T103; zundo's last release was November 2024, so Undo stays behind one small hook that can be swapped), `@nestjs/throttler` before the first public API route (T104; version chosen at install, at least 7 days old), `web-push` for news and order pushes from NestJS with the shop's VAPID keys (T106, P8; installed with the push plumbing, version chosen then, at least 7 days old). Named for later, each needs the founder's yes: pino logs, Playwright with axe checks, knip.
 
 ## 3. Folders
 

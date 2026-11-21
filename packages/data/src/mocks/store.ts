@@ -135,6 +135,7 @@ import { mulberry32, token as makeToken, type Rng } from './rng';
 import { getDeviceStorage } from '../device-storage';
 import { createEditorMock } from './editor';
 import { createHomeMock } from './home';
+import { createNewsMock } from './news';
 import { createSettingsMock } from './settings';
 import type { PlatformMock } from './platform';
 import { defaultPlatformSetup } from './platform-setup';
@@ -648,6 +649,18 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     now: () => now(),
     scenario: () => scenario(),
     seed,
+  });
+
+  // Push News (T106): sample news per shop, a send that goes out over a few seconds, the phone's news choice.
+  const newsMock = createNewsMock({
+    run: (area, fn) => run(area, fn),
+    requireShop: (slug) => requireShop(slug),
+    ownerShop: () => resolveOwnerShopSlug(),
+    membersOverview: (s) => overview(s, peopleOf(s), now()),
+    now: () => now(),
+    empty: () => scenario().empty,
+    helping,
+    fail,
   });
 
   // Owner Editor (T72 to T75): the draft and the published look are kept on the device per shop.
@@ -1274,6 +1287,18 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         persist();
         return rating;
       }),
+
+    getNewsChoice: ({ slug }) =>
+      run('storefront', () => {
+        requireShop(slug);
+        return { news: newsMock.choice(slug) };
+      }),
+    setNewsChoice: ({ slug, news }) =>
+      run('storefront', () => {
+        requireShop(slug);
+        return { news: newsMock.setChoice(slug, news) };
+      }),
+    listShopNews: ({ slug }) => run('storefront', () => newsMock.inbox(slug)),
 
     subscribePush: ({ slug, token }) =>
       run('storefront', () => {
@@ -2818,6 +2843,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     ownerSamples,
     ownerCatalog,
     ownerMembers,
+    ownerNews: newsMock.adapter,
     ownerSettings: settingsMock.adapter,
     ownerHome: homeMock.adapter,
     ownerEditor: editorMock.adapter,
@@ -2830,6 +2856,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       platformMock = null;
       platformSetup = defaultPlatformSetup(PRO_PRICE_MONTHLY);
       homeMock.reset();
+      newsMock.reset();
       if (persistence) editorMock.reset();
       appliedAs = new Map();
       saved = null;

@@ -75,6 +75,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Opening screen v2: preview holds on the splash, loader for slow pages, App name, logo size and tagline (decision T94; pushed to main 2026-11-15)
 - [x] Orders final pass and member faces: List dates and table, Calendar past days and busy colours, type cards, member faces on the account and on orders, join Pick your face (decision T95; pushed to main 2026-11-15)
 - [x] Stays adoption: layered neutral dashboard theme, five kit pages, Preview panel and public demo builds, UI skills, brand guard and UI scan, docs map and archive (decisions T97 to T101)
+- [x] Push News on sample data: Members › News (write, schedule, results, automatic pushes) with entry points, storefront news box on Join and Notify me, Account Notifications and News, Stop news toast (decision T106; built 2026-11-21, UI waiting for review)
 
 ## Phase 4: Backend, area by area
 
@@ -82,7 +83,7 @@ Order of areas: login first, then shops and settings, catalog, orders and paymen
 
 ### 4.0 Database and ground rules
 
-- [x] Database blueprint approved: 54 tables in 8 areas, access model, build order (`docs/blueprints/database.md`, decision T96, 2026-11-17)
+- [x] Database blueprint approved (55 tables after step 8, T106): 54 tables in 8 areas, access model, build order (`docs/blueprints/database.md`, decision T96, 2026-11-17)
 - [x] Database step 1: platform core
 - [x] Database step 2: shop setup
 - [x] Database step 3: catalog
@@ -90,6 +91,7 @@ Order of areas: login first, then shops and settings, catalog, orders and paymen
 - [x] Database step 5: orders, payments and push
 - [x] Database step 6: stamp card
 - [x] Database step 7: exports, billing, tracking and audit
+- [x] Database step 8: push News (`push_campaigns`, `push_deliveries`; decision T106)
 - [x] CI applies migrations to the dev project (D9)
 - [x] Course skills (data, analysis, HCI, web, OOP, algorithms, platform, security, integration, prompts), UI approved / Done tracking, Start here doc (decision T102)
 
