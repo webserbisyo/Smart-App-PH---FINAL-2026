@@ -7,6 +7,7 @@ import {
   redirect,
 } from '@tanstack/react-router';
 import { adminWords, membersWords, newsWords, settingsWords, words } from '@smartapp/core';
+import { ForgotScreen } from '../features/auth/screens/forgot.js';
 import { LoginScreen } from '../features/auth/screens/login.js';
 import { SignupScreen } from '../features/auth/screens/signup.js';
 import { CatalogAddOnsScreen } from '../features/catalog/screens/add-ons.js';
@@ -83,6 +84,13 @@ const signupRoute = createRoute({
   path: '/signup',
   beforeLoad: requireGuest,
   component: SignupScreen,
+});
+
+const forgotRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/forgot',
+  beforeLoad: requireGuest,
+  component: ForgotScreen,
 });
 
 const logoutRoute = createRoute({
@@ -384,6 +392,7 @@ const adminChildren = [
 const baseRoutes = [
   loginRoute,
   signupRoute,
+  forgotRoute,
   logoutRoute,
   editorRoute,
   adminRoute.addChildren(adminChildren),

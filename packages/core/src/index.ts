@@ -29,6 +29,7 @@ export * from './schemas/owner-home.js';
 export * from './schemas/editor.js';
 export * from './schemas/platform.js';
 export * from './schemas/news.js';
+export * from './schemas/showcase.js';
 export * from './rules/money.js';
 export * from './rules/time.js';
 export * from './rules/hours.js';

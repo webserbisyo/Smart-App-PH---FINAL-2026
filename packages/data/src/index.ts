@@ -4,7 +4,14 @@ export * from './hooks/auth';
 export type * from './database.types';
 export * from './device-storage';
 export * from './adapters/types';
-export { createAdapters, DataProvider, resetDemoData, useAdapters } from './adapters/index';
+export {
+  createAdapters,
+  DataProvider,
+  resetDemoData,
+  SampleDataProvider,
+  useAdapters,
+} from './adapters/index';
+export * from './hooks/showcase';
 export * from './env';
 export * from './hooks/storefront/qk';
 export * from './hooks/storefront/device';

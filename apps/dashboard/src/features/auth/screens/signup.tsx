@@ -1,21 +1,59 @@
 import * as React from 'react';
-import { CheckIcon, ExternalLinkIcon, GiftIcon, SmartphoneIcon, WalletIcon } from 'lucide-react';
-import { formatPeso, PLAN_TRIAL_DAYS, PRO_PRICE_MONTHLY, signupWords } from '@smartapp/core';
+import { ExternalLinkIcon, GiftIcon, SmartphoneIcon, WalletIcon } from 'lucide-react';
+import { formatPeso, PLAN_TRIAL_DAYS, PRO_PRICE_MONTHLY, signupWords, words } from '@smartapp/core';
 import { useTrackEvent } from '@smartapp/data';
 import { Badge } from '@smartapp/ui/components/badge';
+import { BorderBeam } from '@smartapp/ui/components/border-beam';
 import { Button } from '@smartapp/ui/components/button';
+import { Skeleton } from '@smartapp/ui/components/skeleton';
+import { WordRotate } from '@smartapp/ui/components/word-rotate';
+import { BrandLockup } from '@smartapp/ui/compositions/brand-lockup';
 import { MessengerIcon } from '@smartapp/ui/compositions/messenger-icon';
+import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
+import { cn } from '@smartapp/ui/lib/utils';
 import { env } from '@/app/env';
 import { captureAttribution, newEventId, pixelTrack, readFbp, startPixel } from '@/app/meta-pixel';
 import { usePageTitle } from '@/app/use-page-title';
-import { SignupForm } from '../signup-form.js';
+import { SignupForm, type ShopDraft } from '../signup-form.js';
+
+// The tour is the heaviest part of the page, so it loads after the form (T108).
+const ShowcaseTour = React.lazy(() => import('../showcase/showcase.js'));
 
 const W = signupWords;
 const SAMPLE_SHOP = 'kanto-smash';
 
+function TourSkeleton() {
+  return (
+    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+      <Skeleton className="h-134.5 w-67 shrink-0 rounded-3xl lg:h-155.25 lg:w-76.5" />
+      <div className="flex w-full flex-col gap-2">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} className="h-14 w-full rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** The form card is in view: the phone's sticky button steps aside. */
+function useInView(ref: React.RefObject<HTMLElement | null>): boolean {
+  const [inView, setInView] = React.useState(false);
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([entry]) => setInView(entry?.isIntersecting ?? false), {
+      threshold: 0.15,
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref]);
+  return inView;
+}
+
 /**
- * The sign-up page (decision T89): no landing page. It sells in a few lines (price, free days, a sample
- * shop, Messenger), then the 3-step form. The Meta Pixel loads here only (T90).
+ * The sign-up page (decision T89, redesigned in T108): the logo and a rotating headline, the price chips, a
+ * phone playing the tour on our sample shops (it turns into the person's own app as they type), then the
+ * 3-step form. The Meta Pixel loads here only (T90).
  */
 export function SignupScreen() {
   usePageTitle(W.pageTitle);
@@ -48,23 +86,40 @@ export function SignupScreen() {
   });
   React.useEffect(() => onOpen(), []);
 
+  const reduce = useReducedMotion();
+  const [draft, setDraft] = React.useState<ShopDraft | null>(null);
+  const formBox = React.useRef<HTMLDivElement>(null);
+  const formInView = useInView(formBox);
+  const toForm = () => {
+    formBox.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    window.setTimeout(
+      () => document.getElementById('su-name')?.focus({ preventScroll: true }),
+      350,
+    );
+  };
+
   return (
     <main className="relative min-h-dvh bg-background pt-safe">
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 brand-gradient" />
-      <div className="mx-auto grid w-full max-w-5xl gap-8 px-4 py-8 md:px-8 md:py-12 lg:grid-cols-2 lg:items-start lg:gap-12">
-        <section className="flex flex-col gap-5 lg:sticky lg:top-12">
-          <img
-            src="/brand/smartappph-lockup-stacked.webp"
-            alt="Smart App PH"
-            width={160}
-            height={164}
-            className="h-auto w-24 md:w-28"
-          />
+      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-6 md:px-8 md:py-10 lg:grid-cols-5 lg:items-start lg:gap-10">
+        <section className="flex min-w-0 flex-col gap-5 lg:col-span-3">
+          <BrandLockup name={words.appName} size="md" />
           <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight text-balance text-foreground md:text-4xl">
-              {W.headline}
-            </h1>
-            <p className="text-base text-pretty text-muted-foreground">{W.sub}</p>
+            <h1 className="sr-only">{W.headlineSpoken}</h1>
+            <div
+              aria-hidden="true"
+              className="text-3xl leading-tight font-extrabold tracking-tight text-balance text-foreground md:text-5xl"
+            >
+              <p>
+                {W.headlineStart} {W.headlineFor}
+              </p>
+              {reduce ? (
+                <p className="py-2 text-primary">{W.shopTypes[0]}</p>
+              ) : (
+                <WordRotate words={[...W.shopTypes]} duration={2600} className="text-primary" />
+              )}
+            </div>
+            <p className="text-base text-pretty text-muted-foreground md:text-lg">{W.sub}</p>
           </div>
           <ul className="flex flex-wrap gap-2" aria-label={W.why}>
             <li>
@@ -86,16 +141,9 @@ export function SignupScreen() {
               </Badge>
             </li>
           </ul>
-          <ul className="hidden flex-col gap-2.5 md:flex">
-            {W.included.map((line) => (
-              <li key={line} className="flex items-start gap-2 text-sm text-foreground">
-                <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success-soft text-success-text">
-                  <CheckIcon className="size-3.5" aria-hidden="true" />
-                </span>
-                {line}
-              </li>
-            ))}
-          </ul>
+          <React.Suspense fallback={<TourSkeleton />}>
+            <ShowcaseTour yours={draft} />
+          </React.Suspense>
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
@@ -130,7 +178,41 @@ export function SignupScreen() {
             </Button>
           </div>
         </section>
-        <SignupForm attribution={attribution} />
+        <div ref={formBox} className="scroll-mt-4 lg:sticky lg:top-8 lg:col-span-2">
+          <div className="relative rounded-xl">
+            <SignupForm attribution={attribution} onDraft={setDraft} />
+            {reduce ? null : (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+              >
+                <BorderBeam
+                  size={140}
+                  duration={9}
+                  borderWidth={2}
+                  colorFrom="var(--logo-blue)"
+                  colorTo="var(--logo-mint)"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* Phones and tablets: one tap from the tour to the form (L1). */}
+      <div
+        className={cn(
+          'sticky bottom-0 z-10 border-t bg-card/90 px-4 pt-2.5 pb-safe backdrop-blur-md transition-opacity duration-base lg:hidden',
+          formInView && 'pointer-events-none opacity-0',
+        )}
+        aria-hidden={formInView ? true : undefined}
+      >
+        <Button
+          className="mb-2.5 h-12 w-full text-base font-semibold"
+          tabIndex={formInView ? -1 : undefined}
+          onClick={toForm}
+        >
+          {W.startFree(PLAN_TRIAL_DAYS)}
+        </Button>
       </div>
     </main>
   );

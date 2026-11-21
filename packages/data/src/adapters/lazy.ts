@@ -13,6 +13,7 @@ import type {
   OnboardingAdapter,
   OwnerSettingsAdapter,
   PlatformAdapter,
+  ShowcaseAdapter,
   StorefrontAdapter,
 } from './types';
 
@@ -207,6 +208,10 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     savePlatformSetup: async (input) => (await real()).platform.savePlatformSetup(input),
   };
 
+  const showcase: ShowcaseAdapter = {
+    getShowcase: async () => (await real()).showcase.getShowcase(),
+  };
+
   return {
     storefront,
     customerAuth,
@@ -220,5 +225,6 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     ownerEditor,
     onboarding,
     platform,
+    showcase,
   };
 }

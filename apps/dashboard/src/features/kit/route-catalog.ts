@@ -72,6 +72,7 @@ export const ADMIN_ROUTES: readonly CatalogRoute[] = [
 export const GUEST_ROUTES: readonly CatalogRoute[] = [
   { path: '/login', open: '/login', label: 'Sign in', scan: true },
   { path: '/signup', open: '/signup', label: 'Sign up', scan: true },
+  { path: '/forgot', open: '/forgot', label: 'Forgot password', scan: true },
   { path: '/logout', label: 'Sign out', scan: false, note: 'Signs out, then opens Sign in' },
 ];
 

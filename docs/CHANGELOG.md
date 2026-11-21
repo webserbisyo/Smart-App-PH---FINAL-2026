@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-21 Log in and sign-up redesign (T108): sign-up tour (six chapters on the sample shops with the real menu cards, order chat, stamp card and confetti, notification cards, lock screen, order card and sales card; it becomes the owner's own app as they type), rotating headline, BrandLockup logo, password and colour on step 2, Log in split screen, Show password and Caps Lock hint, Forgot password page; Magic UI android, word-rotate, blur-fade, border-beam
 - 2026-11-21 Push News (T106): Members › News tab with Write news (starters, photo, link, audience counts, Now / best times / pick a day, quiet hours and 2-a-week limits, Android and iPhone preview), news details with results and Copy, two automatic pushes; entry points from Members groups, a new item, Home and Settings; storefront unticked news box on Join and Notify me, Account Notifications and News sheets, Stop news toast; database step 8 (`push_campaigns`, `push_deliveries`, 55 tables); sample data only
 
 - 2026-11-20 Docs aligned (T104): AGENTS rule 11 and foundation match push-to-main (T40) and D9; B-full fixed to T54, T90, T96 with a module merge plan; Meta safety rules; throttler approved; new `system.md`, `features.md`, `meta.md`, `capstone.md`

@@ -9,7 +9,7 @@ import {
 } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
-import { HomeCard } from './home-card.js';
+import { HomeCard } from '@/app/home/home-card';
 
 const W = homeWords.coming;
 

@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { LoginSchema, previewWords, words, type LoginInput } from '@smartapp/core';
+import {
+  authWords,
+  LoginSchema,
+  PLAN_TRIAL_DAYS,
+  previewWords,
+  words,
+  type LoginInput,
+} from '@smartapp/core';
 import { useSignIn } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import {
@@ -25,6 +32,7 @@ import { writePreviewViewer } from '@/app/preview';
 import { env } from '@/app/env';
 import { supabase } from '@/app/supabase';
 import { useOnlineStatus } from '@/app/use-online-status';
+import { PasswordInput } from './password-input.js';
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
   const navigate = useNavigate();
@@ -65,8 +73,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="elevation-sm">
         <CardHeader>
-          <CardTitle>{words.auth.loginTitle}</CardTitle>
-          <CardDescription>{words.auth.loginSubtitle}</CardDescription>
+          <CardTitle>
+            <h1 className="text-xl font-bold">{authWords.welcome}</h1>
+          </CardTitle>
+          <CardDescription>{authWords.welcomeLine}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
@@ -77,6 +87,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                 <Input
                   id="email"
                   type="email"
+                  className="h-11 text-base md:text-sm"
                   autoComplete="email"
                   inputMode="email"
                   placeholder={words.auth.emailPlaceholder}
@@ -90,10 +101,18 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                 ) : null}
               </Field>
               <Field data-invalid={Boolean(errors.password)}>
-                <FieldLabel htmlFor="password">{words.auth.passwordLabel}</FieldLabel>
-                <Input
+                <div className="flex items-center justify-between gap-2">
+                  <FieldLabel htmlFor="password">{words.auth.passwordLabel}</FieldLabel>
+                  <Link
+                    to="/forgot"
+                    className="-my-3 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    {authWords.forgot}
+                  </Link>
+                </div>
+                <PasswordInput
                   id="password"
-                  type="password"
+                  capsId="password-caps"
                   autoComplete="current-password"
                   placeholder={words.auth.passwordPlaceholder}
                   disabled={isSubmitting}
@@ -106,13 +125,20 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                 ) : null}
               </Field>
               <Field>
-                <Button type="submit" disabled={isSubmitting || isOffline} className="w-full">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || isOffline}
+                  className="h-12 w-full text-base font-semibold"
+                >
                   {buttonText}
                 </Button>
                 <FieldDescription className="text-center">
-                  {words.auth.noAccount}{' '}
-                  <Link to="/signup" className="underline underline-offset-4">
-                    {words.auth.signUpLink}
+                  {authWords.newHere}{' '}
+                  <Link
+                    to="/signup"
+                    className="font-medium text-foreground underline underline-offset-4"
+                  >
+                    {authWords.startFree(PLAN_TRIAL_DAYS)}
                   </Link>
                 </FieldDescription>
               </Field>

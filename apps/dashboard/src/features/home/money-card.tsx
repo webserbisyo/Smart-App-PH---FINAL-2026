@@ -30,7 +30,7 @@ import { cssVars } from '@smartapp/ui/lib/css-vars';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { cn } from 'cn';
 import { PLACE_ICON, placeName, placeTone, type PlaceTone } from '@/app/pay-place';
-import { HomeCard } from './home-card.js';
+import { HomeCard } from '@/app/home/home-card';
 
 const W = homeWords.money;
 // Recharts loads only when Home shows (T57).

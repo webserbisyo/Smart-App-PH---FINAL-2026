@@ -114,6 +114,7 @@ import type {
   SupportSession,
   TrackInput,
   TrackingSummary,
+  Showcase,
 } from '@smartapp/core';
 
 export interface PlacedOrder {
@@ -403,6 +404,11 @@ export interface PlatformAdapter {
   savePlatformSetup(input: PlatformSetup): Promise<PlatformSetup>;
 }
 
+// The sign-up tour (T108): sample shops only, in every build (no API route; docs/api.md "Sign-up tour").
+export interface ShowcaseAdapter {
+  getShowcase(): Promise<Showcase>;
+}
+
 export interface DataAdapters {
   storefront: StorefrontAdapter;
   customerAuth: CustomerAuthAdapter;
@@ -416,4 +422,5 @@ export interface DataAdapters {
   ownerEditor: OwnerEditorAdapter;
   onboarding: OnboardingAdapter;
   platform: PlatformAdapter;
+  showcase: ShowcaseAdapter;
 }

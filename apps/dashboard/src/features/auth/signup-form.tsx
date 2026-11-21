@@ -3,6 +3,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, PackageIcon, UtensilsIcon } from 'lucide-react';
 import {
   ApiErrorSchema,
+  BRAND_COLOR_PRESETS,
   errorWords,
   normalisePhPhone,
   signupWords,
@@ -26,6 +27,7 @@ import {
   CardTitle,
 } from '@smartapp/ui/components/card';
 import { Checkbox } from '@smartapp/ui/components/checkbox';
+import { ColorPicker, ColorPickerSwatches } from '@smartapp/ui/components/reui/color-picker';
 import {
   Field,
   FieldDescription,
@@ -46,12 +48,14 @@ import {
 } from '@smartapp/ui/components/reui/stepper';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
+import { rewardReady } from '@smartapp/ui/compositions/celebrate';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
 import { cn } from 'cn';
 import { newEventId, pixelTrack, readFbp, type Attribution } from '@/app/meta-pixel';
 import { supabase } from '@/app/supabase';
 import { useOnlineStatus } from '@/app/use-online-status';
+import { PasswordInput } from './password-input.js';
 
 const W = signupWords;
 const TERMS_VERSION = '2026-11';
@@ -67,7 +71,6 @@ interface You {
   fullName: string;
   email: string;
   phone: string;
-  password: string;
   terms: boolean;
 }
 
@@ -76,6 +79,15 @@ interface Shop {
   kind: ShopKind;
   city: string;
   facebookPage: string;
+  colour: string | null;
+  password: string;
+}
+
+/** What the phone beside the form shows while the person types (T108 L1). */
+export interface ShopDraft {
+  name: string;
+  kind: ShopKind;
+  colour: string | null;
 }
 
 /** An error's code: from the API, or from the login library's own error shape. */
@@ -91,7 +103,6 @@ function youProblems(you: You): Partial<Record<keyof You, string>> {
   if (you.fullName.trim().length < 2) out.fullName = W.you.fullNameBad;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(you.email.trim())) out.email = W.you.emailBad;
   if (!normalisePhPhone(you.phone).ok) out.phone = W.you.phoneBad;
-  if (you.password.length < 8) out.password = W.you.passwordBad;
   if (!you.terms) out.terms = W.you.termsBad;
   return out;
 }
@@ -100,18 +111,22 @@ function shopProblems(shop: Shop): Partial<Record<keyof Shop, string>> {
   const out: Partial<Record<keyof Shop, string>> = {};
   if (shop.shopName.trim().length < 2) out.shopName = W.shop.shopNameBad;
   if (shop.city.trim().length < 2) out.city = W.shop.cityBad;
+  if (shop.password.length < 8) out.password = W.you.passwordBad;
   return out;
 }
 
 /**
- * The sign-up form (decision T89): 1 You, saved as a lead on Continue; 2 Your shop; 3 the email code. Every
- * step tells Meta through NestJS with the same id the pixel used (T90).
+ * The sign-up form (decision T89, slimmer step 1 in T108 L3): 1 You (name, email, mobile), saved as a lead on
+ * Continue; 2 Your shop, its colour and the password; 3 the email code. Every step tells Meta through NestJS
+ * with the same id the pixel used (T90). The shop name, kind and colour go up to the page for the phone.
  */
 export function SignupForm({
   attribution,
+  onDraft,
   className,
 }: {
   attribution: Attribution;
+  onDraft?: ((draft: ShopDraft) => void) | undefined;
   className?: string | undefined;
 }) {
   const navigate = useNavigate();
@@ -130,15 +145,20 @@ export function SignupForm({
     fullName: '',
     email: '',
     phone: '',
-    password: '',
     terms: false,
   });
-  const [shop, setShop] = React.useState<Shop>({
+  const [shop, setShopState] = React.useState<Shop>({
     shopName: '',
     kind: 'food',
     city: '',
     facebookPage: '',
+    colour: null,
+    password: '',
   });
+  const setShop = (next: Shop) => {
+    setShopState(next);
+    onDraft?.({ name: next.shopName, kind: next.kind, colour: next.colour });
+  };
   const [code, setCode] = React.useState('');
   const [codeError, setCodeError] = React.useState<string | null>(null);
   const [resendAt, setResendAt] = React.useState<string | null>(null);
@@ -207,10 +227,13 @@ export function SignupForm({
         kind: shop.kind,
         city: shop.city.trim(),
         facebookPage: shop.facebookPage.trim() === '' ? null : shop.facebookPage.trim(),
+        brandColor: shop.colour,
       },
       eventId,
       ...ids(),
     });
+    // The ready moment (T108): the reward confetti, then the dashboard.
+    void rewardReady();
     notify({
       title: W.done.title(you.fullName.trim().split(/\s+/)[0] ?? ''),
       description: W.done.line,
@@ -229,7 +252,7 @@ export function SignupForm({
         const res = await signUp.mutateAsync({
           fullName: you.fullName.trim(),
           email: you.email.trim().toLowerCase(),
-          password: you.password,
+          password: shop.password,
           phone: phone.ok ? phone.e164 : undefined,
         });
         if (res.session) await finish();
@@ -397,24 +420,6 @@ export function SignupForm({
                   <FieldDescription>{W.you.phoneHelp}</FieldDescription>
                 )}
               </Field>
-              <Field data-invalid={show(yp, 'password') ? true : undefined}>
-                <FieldLabel htmlFor="su-password">{W.you.password}</FieldLabel>
-                <Input
-                  id="su-password"
-                  type="password"
-                  autoComplete="new-password"
-                  className="h-11 text-base md:text-sm"
-                  value={you.password}
-                  maxLength={72}
-                  aria-invalid={show(yp, 'password') ? true : undefined}
-                  onChange={(e) => setYou({ ...you, password: e.target.value })}
-                />
-                {show(yp, 'password') ? (
-                  <FieldError>{yp.password}</FieldError>
-                ) : (
-                  <FieldDescription>{W.you.passwordHelp}</FieldDescription>
-                )}
-              </Field>
               <Field
                 orientation="horizontal"
                 data-invalid={show(yp, 'terms') ? true : undefined}
@@ -494,6 +499,22 @@ export function SignupForm({
                 </ToggleGroup>
                 <FieldDescription>{W.shop.kindHelp}</FieldDescription>
               </Field>
+              <Field>
+                <FieldLabel id="su-colour-label">{W.shop.colour}</FieldLabel>
+                <ColorPicker
+                  value={shop.colour}
+                  format="hex"
+                  aria-label={W.shop.colour}
+                  i18n={{ labels: { swatches: W.shop.colour } }}
+                  onValueChange={(next) => {
+                    if (next && /^#[0-9a-f]{6}$/i.test(next))
+                      setShop({ ...shop, colour: next.toUpperCase() });
+                  }}
+                >
+                  <ColorPickerSwatches shape="circle" colors={[...BRAND_COLOR_PRESETS]} />
+                </ColorPicker>
+                <FieldDescription>{W.shop.colourHelp}</FieldDescription>
+              </Field>
               <Field data-invalid={show(sp, 'city') ? true : undefined}>
                 <FieldLabel htmlFor="su-city">{W.shop.city}</FieldLabel>
                 <Input
@@ -520,6 +541,23 @@ export function SignupForm({
                   onChange={(e) => setShop({ ...shop, facebookPage: e.target.value })}
                 />
                 <FieldDescription>{W.shop.facebookHelp}</FieldDescription>
+              </Field>
+              <Field data-invalid={show(sp, 'password') ? true : undefined}>
+                <FieldLabel htmlFor="su-password">{W.shop.password}</FieldLabel>
+                <PasswordInput
+                  id="su-password"
+                  capsId="su-password-caps"
+                  autoComplete="new-password"
+                  value={shop.password}
+                  maxLength={72}
+                  aria-invalid={show(sp, 'password') ? true : undefined}
+                  onChange={(e) => setShop({ ...shop, password: e.target.value })}
+                />
+                {show(sp, 'password') ? (
+                  <FieldError>{sp.password}</FieldError>
+                ) : (
+                  <FieldDescription>{W.shop.passwordHelp}</FieldDescription>
+                )}
               </Field>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" className="h-12" onClick={() => goTo(1)}>

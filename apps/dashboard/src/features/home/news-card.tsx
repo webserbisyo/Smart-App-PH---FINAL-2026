@@ -11,7 +11,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@smartapp/ui/components/item';
-import { HomeCard } from './home-card.js';
+import { HomeCard } from '@/app/home/home-card';
 
 const W = newsWords.entry;
 const LAST_HOURS = 48;

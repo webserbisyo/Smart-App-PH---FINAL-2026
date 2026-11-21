@@ -105,6 +105,9 @@ import {
   waitingSince,
   PRO_PRICE_MONTHLY,
   SETUP_MIN_ITEMS,
+  DEMO_SHOP_SLUGS,
+  ShowcaseSchema,
+  type Showcase,
   type SupportSession,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
@@ -2836,7 +2839,41 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     },
   };
 
+  // The sign-up tour (T108): sample shops only, no owner signed in, no scenario, no wait. The first shop
+  // (Kanto Smash) gives the order chat, the board and the day; every shop gives its storefront.
+  const showcase: DataAdapters['showcase'] = {
+    getShowcase: () =>
+      Promise.resolve().then((): Showcase => {
+        const shops = DEMO_SHOP_SLUGS.map((slug) => {
+          const s = requireShop(slug);
+          return { slug, shop: clone(s.shop) };
+        });
+        const first = requireShop(DEMO_SHOP_SLUGS[0]);
+        const byNewest = [...first.orders].sort((a, b) =>
+          b.receipt.placedAt.localeCompare(a.receipt.placedAt),
+        );
+        const withPhoto =
+          byNewest.find((o) => o.proofs.length > 0 && !isFinal(o.receipt.status)) ??
+          byNewest.find((o) => o.proofs.length > 0) ??
+          null;
+        const today = manilaDate(now());
+        return ShowcaseSchema.parse({
+          shops,
+          chat: withPhoto
+            ? { order: toBoardOrder(first, withPhoto), detail: ownerOrder(first, withPhoto) }
+            : null,
+          board: byNewest
+            .filter((o) => !isFinal(o.receipt.status))
+            .slice(0, 3)
+            .map((o) => toBoardOrder(first, o)),
+          today: homeMock.periodFor(DEMO_SHOP_SLUGS[0], { from: today, to: today }),
+          news: newsMock.inbox(DEMO_SHOP_SLUGS[0]).slice(0, 3),
+        });
+      }),
+  };
+
   return {
+    showcase,
     storefront,
     customerAuth,
     ownerOrders,

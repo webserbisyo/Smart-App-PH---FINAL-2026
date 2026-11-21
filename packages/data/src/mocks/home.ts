@@ -17,6 +17,7 @@ import {
   sharePercent,
   variantAvailability,
   type HomeBooking,
+  type HomePeriodData,
   type HomeItem,
   type HomeMembers,
   type HomeSale,
@@ -89,6 +90,7 @@ function membersToday(
 
 export function createHomeMock(deps: HomeMockDeps): {
   adapter: OwnerHomeAdapter;
+  periodFor: (slug: string, dates: { from: string; to: string }) => HomePeriodData;
   reset: () => void;
 } {
   // Past days don't change during a day, so each shop's history is made once per business day.
@@ -202,5 +204,20 @@ export function createHomeMock(deps: HomeMockDeps): {
     },
   };
 
-  return { adapter, reset: () => cache.clear() };
+  // The sign-up tour (T108): one sample shop's day, read without an owner signed in.
+  function periodFor(slug: string, dates: { from: string; to: string }) {
+    const r = read(slug);
+    return HomePeriodDataSchema.parse(
+      buildHomePeriod({
+        now: r.now,
+        dates,
+        storefront: r.shop.storefront,
+        sales: r.sales,
+        items: homeItems(r.shop, r.now),
+        accounts: r.shop.storefront.payments,
+      }),
+    );
+  }
+
+  return { adapter, periodFor, reset: () => cache.clear() };
 }

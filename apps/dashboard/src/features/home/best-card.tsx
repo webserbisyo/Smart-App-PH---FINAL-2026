@@ -5,7 +5,7 @@ import { Badge } from '@smartapp/ui/components/reui/badge';
 import { initials } from '@smartapp/ui/compositions/shop-image';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
 import { orderPhotoSrc } from '@/app/orders/order-photo';
-import { HomeCard } from './home-card.js';
+import { HomeCard } from '@/app/home/home-card';
 
 const W = homeWords.best;
 
