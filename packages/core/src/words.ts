@@ -2951,6 +2951,12 @@ export const membersWords = {
     prizeNamePlaceholder: 'e.g. Suki Tumbler',
     prizeBody: 'What to tell members',
     prizeBodyPlaceholder: 'e.g. Pick your colour at the counter.',
+    // T107: an optional square photo of the custom prize.
+    prizePhoto: 'Prize photo (optional)',
+    prizePhotoHelp: 'A clear photo on a plain background. Members see it on the card.',
+    prizePhotoPick: 'Add a photo',
+    itemPhoto: (catalog: string) =>
+      `Members see this item's photo from your ${catalog.toLowerCase()}.`,
     limited: 'Limited pieces',
     limitedHint: 'Members see how many are left. A claim holds a piece until you give it.',
     pieces: 'Pieces',
@@ -3649,6 +3655,16 @@ export const settingsWords = {
     original: 'Original',
     savedLabel: 'Saved',
     added: (size: string) => `Added a photo · ${size}`,
+    // The crop step on the shared photo row (T107).
+    cropTitle: 'Crop photo',
+    cropHelp: 'Drag to move. Zoom to fit what you want people to see.',
+    cropArea: 'Photo to crop',
+    cropAgain: 'Crop again',
+    usePhoto: 'Use photo',
+    back: 'Back',
+    zoom: 'Zoom',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
   },
 } as const;
 

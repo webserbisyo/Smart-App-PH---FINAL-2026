@@ -2,6 +2,7 @@ import * as React from 'react';
 import {
   CircleCheckIcon,
   CircleOffIcon,
+  ImageIcon,
   CirclePauseIcon,
   InfoIcon,
   WifiOffIcon,
@@ -10,6 +11,7 @@ import {
   errorWords,
   formatPeso,
   imageSources,
+  imageUrl,
   membersWords,
   REWARD_KINDS,
   STAMP_CARD_STATUSES,
@@ -72,6 +74,7 @@ import { notify } from '@smartapp/ui/compositions/notify';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { StampCard } from '@smartapp/ui/compositions/stamp-card';
 import { env } from '@/app/env';
+import { ImageUploadRow } from '@/app/image-upload-row';
 import { Notice } from '@/app/notice';
 import { PageError } from '@/app/page-state';
 import { PesoInput } from '@/app/peso-input';
@@ -145,6 +148,16 @@ export function StampCardScreen() {
       </main>
     </div>
   );
+}
+
+// A custom prize photo is kept square, like a menu photo (T107).
+const PRIZE_SIDE = 1080;
+
+/** What the photo row shows: the photo just picked, or the saved one. */
+function prizePhotoSrc(ref: string | null): string | null {
+  if (!ref) return null;
+  if (/^(blob:|data:|https?:\/\/)/.test(ref)) return ref;
+  return imageUrl(ref, 256, env.VITE_STOREFRONT_URL);
 }
 
 function heldOf(reward: Reward): number {
@@ -478,6 +491,22 @@ function StampCardEditor({
                 </Field>
               ) : null}
               <p className="text-sm text-muted-foreground sm:col-span-2">{W.itemGuard(catalog)}</p>
+              {pickedItem ? (
+                <div className="flex items-center gap-3 sm:col-span-2">
+                  <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted text-muted-foreground">
+                    {prizePhotoSrc(reward.image) ? (
+                      <img
+                        src={prizePhotoSrc(reward.image) ?? undefined}
+                        alt=""
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon className="size-5" aria-hidden />
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{W.itemPhoto(catalog)}</p>
+                </div>
+              ) : null}
             </div>
           )
         ) : null}
@@ -508,6 +537,20 @@ function StampCardEditor({
                 className="text-base md:text-sm"
               />
             </Field>
+            <ImageUploadRow
+              id="reward-photo"
+              kind="item"
+              maxSide={PRIZE_SIDE}
+              label={W.prizePhoto}
+              help={W.prizePhotoHelp}
+              pickLabel={W.prizePhotoPick}
+              src={prizePhotoSrc(reward.image)}
+              shape="rounded"
+              crop={{ aspect: 1, side: PRIZE_SIDE }}
+              disabled={!online}
+              onUploaded={(upload) => setReward({ image: upload.preview })}
+              onRemove={() => setReward({ image: null })}
+            />
             <SwitchRow
               id="reward-limited"
               label={W.limited}
