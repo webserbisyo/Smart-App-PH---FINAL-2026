@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { CircleAlertIcon, ImageIcon, ImageUpIcon, SplitIcon, Trash2Icon } from 'lucide-react';
+import {
+  CircleAlertIcon,
+  CropIcon,
+  ImageIcon,
+  ImageUpIcon,
+  SplitIcon,
+  Trash2Icon,
+} from 'lucide-react';
 import {
   UPLOAD_ACCEPT,
   errorWords,
@@ -29,6 +36,7 @@ import { Spinner } from '@smartapp/ui/components/spinner';
 import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
+import { CropStep, type CropShape } from './crop-step.js';
 
 const U = settingsWords.upload;
 
@@ -181,6 +189,8 @@ export interface ImageUploadRowProps {
   replaceLabel?: string | undefined;
   // A step on this device before the shared upload step (the Editor trims and squares a logo).
   prepare?: ((file: File) => Promise<File>) | undefined;
+  // A crop step after picking, with Crop again (T107): the custom prize photo.
+  crop?: CropShape | undefined;
 }
 
 /** A photo with Upload or Replace, Remove, the size line, Compare and the problem in words. */
@@ -198,21 +208,36 @@ export function ImageUploadRow({
   pickLabel,
   replaceLabel,
   prepare,
+  crop,
 }: ImageUploadRowProps) {
   const { upload, busy, problem } = useImageUpload(kind, maxSide);
   const [last, setLast] = React.useState<UploadedImage | null>(null);
   const [compareOpen, setCompareOpen] = React.useState(false);
+  // The photo as picked (kept for Crop again) and whether the crop step is open.
+  const [picked, setPicked] = React.useState<string | null>(null);
+  const [cropOpen, setCropOpen] = React.useState(false);
 
-  const onFiles = async (files: File[]) => {
-    const picked = files[0];
-    if (!picked) return;
-    // A file the step can't read goes up as it is; the shared step then says what is wrong.
-    const file = prepare ? await prepare(picked).catch(() => picked) : picked;
+  const send = async (file: File) => {
     const done = await upload(file);
-    if (!done) return;
+    if (!done) return false;
     setLast(done);
     onUploaded(done);
     notify({ title: U.added(formatStorage(done.image.after)), tone: 'success' });
+    return true;
+  };
+
+  const onFiles = async (files: File[]) => {
+    const first = files[0];
+    if (!first) return;
+    if (crop) {
+      if (picked) URL.revokeObjectURL(picked);
+      setPicked(URL.createObjectURL(first));
+      setCropOpen(true);
+      return;
+    }
+    // A file the step can't read goes up as it is; the shared step then says what is wrong.
+    const file = prepare ? await prepare(first).catch(() => first) : first;
+    await send(file);
   };
 
   return (
@@ -261,6 +286,21 @@ export function ImageUploadRow({
           <ImageUpIcon />
           {src ? (replaceLabel ?? U.replace) : (pickLabel ?? U.pick)}
         </FileUploadTrigger>
+        {crop && src ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-11 md:h-9"
+            disabled={disabled === true || busy !== null}
+            onClick={() => {
+              if (!picked) setPicked(src);
+              setCropOpen(true);
+            }}
+          >
+            <CropIcon />
+            {U.cropAgain}
+          </Button>
+        ) : null}
         {last ? (
           <Button
             type="button"
@@ -279,6 +319,7 @@ export function ImageUploadRow({
             className="h-11 text-muted-foreground md:h-9"
             onClick={() => {
               setLast(null);
+              setPicked(null);
               onRemove();
             }}
           >
@@ -297,6 +338,19 @@ export function ImageUploadRow({
         </p>
       ) : null}
       <CompareDialog open={compareOpen} onOpenChange={setCompareOpen} upload={last} />
+      {crop ? (
+        <CropStep
+          src={cropOpen ? picked : null}
+          shape={crop}
+          busy={busy !== null}
+          onCancel={() => setCropOpen(false)}
+          onCropped={(file) => {
+            void send(file).then((ok) => {
+              if (ok) setCropOpen(false);
+            });
+          }}
+        />
+      ) : null}
     </FileUpload>
   );
 }

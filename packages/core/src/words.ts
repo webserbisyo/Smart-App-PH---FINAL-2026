@@ -556,7 +556,6 @@ export const words = {
     rewardHint: 'Apply this reward to your order',
     rewardFree: (item: string) => `free ${item}`,
     rewardOff: (amount: string) => `${amount} off`,
-    qrAlt: (method: string) => `${method} QR code`,
     qrHint: 'Scan or save this QR',
     amountToPay: 'Amount to pay',
     noteAndTotal: 'Note and total',
@@ -1977,6 +1976,28 @@ export const catalogWords = {
 
 // The demo's sample receipt picture (T87): never a real app's look, and it says so. Its own export, so
 // the storefront bundle (which carries the mock store) never pulls in all of ordersWords.
+// The QR card on checkout and the receipt (T107). Its own export so it loads only with the QR card.
+export const payQrWords = {
+  alt: (method: string) => `${method} QR code`,
+  title: (method: string) =>
+    /\bQR\b/.test(method) ? `Pay with ${method}` : `Pay with ${method} QR`,
+  save: 'Save QR',
+  saved: 'QR saved. Open your payment app next.',
+  saveFailed: "Couldn't save the QR. Take a screenshot instead.",
+  bigger: 'Show QR bigger',
+  biggerTitle: 'Scan this QR',
+  failed: "The QR didn't load.",
+  tryAgain: 'Try again',
+  phoneSteps: (amount: string) => [
+    'Save the QR to your photos.',
+    'Open GCash, Maya or your bank app. Tap Scan, then Upload QR.',
+    `Type ${amount} exactly and pay.`,
+  ],
+  desktopLine: 'Scan with GCash, Maya or your bank app on your phone.',
+  sample: 'Sample QR. It only says "do not pay".',
+  fileName: (shop: string) => `${shop} QR`,
+};
+
 export const sampleReceiptWords = {
   title: 'Sample receipt',
   note: 'Demo picture · not a real transfer',
@@ -2951,6 +2972,12 @@ export const membersWords = {
     prizeNamePlaceholder: 'e.g. Suki Tumbler',
     prizeBody: 'What to tell members',
     prizeBodyPlaceholder: 'e.g. Pick your colour at the counter.',
+    // T107: an optional square photo of the custom prize.
+    prizePhoto: 'Prize photo (optional)',
+    prizePhotoHelp: 'A clear photo on a plain background. Members see it on the card.',
+    prizePhotoPick: 'Add a photo',
+    itemPhoto: (catalog: string) =>
+      `Members see this item's photo from your ${catalog.toLowerCase()}.`,
     limited: 'Limited pieces',
     limitedHint: 'Members see how many are left. A claim holds a piece until you give it.',
     pieces: 'Pieces',
@@ -3409,8 +3436,8 @@ export const settingsWords = {
     storageValue: (used: string, limit: string) => `${used} of ${limit}`,
     pay: 'Pay now',
     payAhead: 'Pay ahead',
-    pendingLine: (amount: string, ref: string) =>
-      `We got your ${amount} payment (ref ${ref}). We check it within 1 working day.`,
+    pendingLine: (amount: string, ref: string | null) =>
+      `We got your ${amount} payment${ref ? ` (ref ${ref})` : ''}. We check it within 1 working day.`,
     dueNotice: (date: string) => `Your plan is due on ${date}. Pay by GCash or Maya to keep going.`,
     overdueNotice: (date: string) =>
       `Your plan is unpaid. Your shop keeps taking orders until ${date}, then pauses until you pay.`,
@@ -3437,9 +3464,9 @@ export const settingsWords = {
     sendTo: (amount: string, method: string) => `Send exactly ${amount} by ${method} to`,
     copyNumber: 'Copy',
     numberCopied: 'Number copied',
-    reference: 'Reference number',
-    referenceHelp: 'The 13-digit number on your GCash or Maya receipt',
-    referenceBad: 'Type the reference number from your receipt.',
+    reference: 'Reference number (optional)',
+    referenceHelp: 'The 13-digit number on your receipt. Your screenshot shows it too.',
+    referenceBad: 'A reference number has at least 6 characters. Check it, or leave it empty.',
     proof: 'Screenshot of your receipt',
     proofRequired: 'Add the screenshot of your receipt.',
     submit: 'Send payment',
@@ -3649,6 +3676,16 @@ export const settingsWords = {
     original: 'Original',
     savedLabel: 'Saved',
     added: (size: string) => `Added a photo · ${size}`,
+    // The crop step on the shared photo row (T107).
+    cropTitle: 'Crop photo',
+    cropHelp: 'Drag to move. Zoom to fit what you want people to see.',
+    cropArea: 'Photo to crop',
+    cropAgain: 'Crop again',
+    usePhoto: 'Use photo',
+    back: 'Back',
+    zoom: 'Zoom',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
   },
 } as const;
 
@@ -4517,6 +4554,40 @@ export const billingWords = {
   freeMonth: '1 month free',
   noteSent: 'Message sent.',
   rejectedToast: 'Sent. The owner will send a new screenshot.',
+  // The Messenger-style chat (T107).
+  today: 'Today',
+  yesterday: 'Yesterday',
+  seen: 'Seen',
+  delivered: 'Sent',
+  notSent: 'Not sent. Tap to try again.',
+  newest: 'Newest',
+  newCount: (n: number) => `${n} new`,
+  openChat: 'Open messages',
+  closeChat: 'Close messages',
+  preview: {
+    photo: 'Photo',
+    payment: (amount: string) => `Payment sent · ${amount}`,
+  },
+  emptyLine: 'No messages yet. Ask us anything about your plan, or send a photo of your payment.',
+  loadFailed: "Couldn't load your messages.",
+  tryAgain: 'Try again',
+  offline: "You're offline. Messages send when you're back online.",
+  addPhoto: 'Add photos',
+  photoOnly: 'Photos only, up to 3 at a time.',
+  removePhoto: 'Remove photo',
+  photoRemoved: 'Photo removed',
+  photoLine: 'Photo',
+  refLabel: 'Reference number (optional)',
+  refPlaceholder: 'e.g. 1234 567 890 123',
+  refAdd: 'Add reference number',
+  refLine: (ref: string) => `Ref ${ref}`,
+  tooManyPhotos: 'Up to 3 photos at a time. Send these first.',
+  photosSent: (n: number) => (n === 1 ? 'Photo sent.' : `${n} photos sent.`),
+  enterHint: 'Enter to send, Shift + Enter for a new line',
+  crop: 'Crop',
+  previousPhoto: 'Previous photo',
+  nextPhoto: 'Next photo',
+  letters: (used: number, max: number) => `${used}/${max}`,
 };
 
 // Help mode (T91): the founder opens a shop as its owner.

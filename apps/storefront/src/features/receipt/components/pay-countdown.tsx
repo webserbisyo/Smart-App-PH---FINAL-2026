@@ -3,9 +3,9 @@
 import { useSyncExternalStore } from 'react';
 import {
   formatPeso,
-  imageSources,
   pesoAmountText,
   paymentLabel,
+  parseDemoRef,
   words,
   type OrderReceipt,
   type PaymentInstructions,
@@ -17,10 +17,10 @@ import {
   CircularProgressTrack,
   CircularProgressValueText,
 } from '@smartapp/ui/components/circular-progress';
-import { ShopImage } from '@smartapp/ui/compositions/shop-image';
 import { cn } from '@smartapp/ui/lib/utils';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { formatCountdown } from '../receipt-rules';
+import { PayQr } from './pay-qr';
 
 export interface PayCountdownProps {
   readonly order: OrderReceipt;
@@ -139,19 +139,14 @@ function PaymentDetails({
         />
       </ul>
       {payment.qr ? (
-        <figure className="flex flex-col items-center gap-2 pt-1">
-          <ShopImage
-            src={imageSources(payment.qr)}
-            alt={words.receipt.pay.qrAlt(shopName)}
-            ratio="1:1"
-            sizes="192px"
-            fallbackText={shopName}
-            className="size-48 rounded-2xl ring-1 ring-foreground/8"
-          />
-          <figcaption className="text-xs text-muted-foreground">
-            {words.receipt.pay.qrHint}
-          </figcaption>
-        </figure>
+        <PayQr
+          qr={payment.qr}
+          method={paymentLabel(payment)}
+          accountName={payment.accountName}
+          amount={formatPeso(total)}
+          shopName={shopName}
+          sample={parseDemoRef(payment.qr) !== null}
+        />
       ) : null}
     </div>
   );

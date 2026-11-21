@@ -63,6 +63,8 @@ export function createApiOwnerSettingsAdapter({
     getPlan: () => call('/owner/plan', PlanSchema, 'GET'),
     submitPlanPayment: (input) => call('/owner/plan/payments', PlanSchema, 'POST', input),
     sendPlanNote: (input) => call('/owner/plan/notes', PlanSchema, 'POST', input),
+    sendPlanPhoto: (input) => call('/owner/plan/photos', PlanSchema, 'POST', input),
+    markPlanChatSeen: () => call('/owner/plan/seen', PlanSchema, 'POST', {}),
     getStorage: () => call('/owner/storage', StorageSummarySchema, 'GET'),
     previewCleanup: ({ kind }) =>
       call(`/owner/storage/cleanup?kind=${encodeURIComponent(kind)}`, CleanupPreviewSchema, 'GET'),

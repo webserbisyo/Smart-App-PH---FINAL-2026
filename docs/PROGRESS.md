@@ -76,6 +76,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Orders final pass and member faces: List dates and table, Calendar past days and busy colours, type cards, member faces on the account and on orders, join Pick your face (decision T95; pushed to main 2026-11-15)
 - [x] Stays adoption: layered neutral dashboard theme, five kit pages, Preview panel and public demo builds, UI skills, brand guard and UI scan, docs map and archive (decisions T97 to T101)
 - [x] Push News on sample data: Members › News (write, schedule, results, automatic pushes) with entry points, storefront news box on Join and Notify me, Account Notifications and News, Stop news toast (decision T106; built 2026-11-21, UI waiting for review)
+- [x] Prize photo, plan chat and payment QR on sample data: crop step on the shared photo row and a Custom prize photo, Messenger-style Plan › Messages (own scroll, groups, times, avatars, Seen, photos with an optional reference), sample QR for every demo shop and one QR card on checkout and the receipt (decision T107; built 2026-11-21, UI waiting for review)
 
 ## Phase 4: Backend, area by area
 
@@ -92,6 +93,7 @@ Order of areas: login first, then shops and settings, catalog, orders and paymen
 - [x] Database step 6: stamp card
 - [x] Database step 7: exports, billing, tracking and audit
 - [x] Database step 8: push News (`push_campaigns`, `push_deliveries`; decision T106)
+- [x] Database step 9: Billing chat photos (`billing_messages.photo_media_id` and `reference`, kind `photo`, optional plan payment reference; decision T107)
 - [x] CI applies migrations to the dev project (D9)
 - [x] Course skills (data, analysis, HCI, web, OOP, algorithms, platform, security, integration, prompts), UI approved / Done tracking, Start here doc (decision T102)
 
