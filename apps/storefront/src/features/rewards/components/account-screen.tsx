@@ -27,6 +27,10 @@ const W = words.account;
 const SignOutConfirm = lazy(() =>
   import('./sign-out-confirm').then((m) => ({ default: m.SignOutConfirm })),
 );
+// Notifications and News from the shop (T106) load after the page, like the confirm.
+const AccountNews = lazy(() =>
+  import('../../news/account-news').then((m) => ({ default: m.AccountNews })),
+);
 const SIGN_OUT_ID = 'account-sign-out';
 const SIGN_OUT_CLASS = 'h-12 gap-2 rounded-full text-base text-destructive-text';
 const ROW = 'flex min-h-14 items-center gap-3 px-4 py-3 sm:px-5';
@@ -178,6 +182,20 @@ export function AccountScreen() {
           <span className="flex-1 font-medium">{words.storefrontShell.myOrders}</span>
           <ChevronRightIcon aria-hidden="true" className="size-4 text-muted-foreground" />
         </Link>
+        <Suspense
+          fallback={
+            <>
+              <div className={ROW} aria-hidden="true">
+                <Skeleton className="h-8 w-full" />
+              </div>
+              <div className={ROW} aria-hidden="true">
+                <Skeleton className="h-8 w-full" />
+              </div>
+            </>
+          }
+        >
+          <AccountNews slug={slug} shopName={shop.storefront.info.name} />
+        </Suspense>
         <Link href={`/${slug}/privacy`} className={`${ROW} hover:bg-muted/50`}>
           <ShieldCheckIcon aria-hidden="true" className="size-5 text-success-text" />
           <span className="flex flex-1 flex-col">

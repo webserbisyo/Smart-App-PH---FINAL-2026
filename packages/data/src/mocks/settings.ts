@@ -215,6 +215,7 @@ function uploadStorageKind(kind: UploadKind): StorageKind | null {
     case 'logo':
     case 'banner':
     case 'category':
+    case 'news_photo':
       return 'look';
     case 'qr':
       return 'qr';

@@ -6,7 +6,7 @@ import {
   Outlet,
   redirect,
 } from '@tanstack/react-router';
-import { adminWords, membersWords, settingsWords, words } from '@smartapp/core';
+import { adminWords, membersWords, newsWords, settingsWords, words } from '@smartapp/core';
 import { LoginScreen } from '../features/auth/screens/login.js';
 import { SignupScreen } from '../features/auth/screens/signup.js';
 import { CatalogAddOnsScreen } from '../features/catalog/screens/add-ons.js';
@@ -25,6 +25,10 @@ import { InsightsSearchSchema } from '../features/insights/tabs.js';
 import { PrizeClaimsScreen } from '../features/members/screens/claims.js';
 import { FindMemberScreen } from '../features/members/screens/find-member.js';
 import { MembersScreen } from '../features/members/screens/members.js';
+import { NewsComposeScreen } from '../features/members/screens/news-compose.js';
+import { NewsDetailScreen } from '../features/members/screens/news-detail.js';
+import { NewsScreen } from '../features/members/screens/news.js';
+import { NewsComposeSearchSchema } from '../features/members/news-search.js';
 import { MembersSearchSchema } from '../features/members/search.js';
 import { StampCardScreen } from '../features/members/screens/stamp-card.js';
 import { OrdersScreen } from '../features/orders/screens/orders.js';
@@ -59,6 +63,7 @@ const page = (title: PageMeta['title'], parent?: PageMeta['parent'], hideDock?: 
 const orders = { to: '/orders', title: () => s.orders.title } as const;
 const catalog = { to: '/catalog', title: s.catalog.title } as const;
 const members = { to: '/members', title: () => s.members.title } as const;
+const news = { to: '/members/news', title: () => newsWords.tab } as const;
 const settings = { to: '/settings', title: () => s.settings.title } as const;
 const st = settingsWords.sectionTitles;
 
@@ -215,6 +220,24 @@ const claimsRoute = shellPage(
   '/members/claims',
   PrizeClaimsScreen,
   page(() => s.members.title),
+);
+// Push News (T106): the News tab, writing news (full page, no dock) and one news with its results.
+const newsRoute = shellPage(
+  '/members/news',
+  NewsScreen,
+  page(() => s.members.title),
+);
+const newsNewRoute = createRoute({
+  getParentRoute: () => shellRoute,
+  path: '/members/news/new',
+  validateSearch: NewsComposeSearchSchema,
+  component: NewsComposeScreen,
+  staticData: page(() => newsWords.compose.title, news, true),
+});
+const newsOneRoute = shellPage(
+  '/members/news/$newsId',
+  NewsDetailScreen,
+  page(() => newsWords.detail.title, news),
 );
 // Old member links open the member panel on the Members page (decision T57).
 const memberRoute = createRoute({
@@ -377,6 +400,9 @@ const baseRoutes = [
     membersRoute,
     stampCardRoute,
     claimsRoute,
+    newsRoute,
+    newsNewRoute,
+    newsOneRoute,
     memberRoute,
     findMemberRoute,
     insightsRoute,

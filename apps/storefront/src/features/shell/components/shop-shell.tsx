@@ -9,7 +9,7 @@ import { MAIN_CONTENT_ID, SkipNav } from '@smartapp/ui/components/skip-nav';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
 import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
 import { useBasketView } from '../../basket/components/use-basket-view';
-import { useItemOpen, useOnCheckout, usePullRefreshOn, useShopNav } from './nav';
+import { useFromNews, useItemOpen, useOnCheckout, usePullRefreshOn, useShopNav } from './nav';
 import { PullRing, usePullToRefresh } from './pull-to-refresh';
 import { useShop } from './shop-context';
 import { TopBar } from './top-bar';
@@ -24,6 +24,16 @@ const ShopInfoSheet = dynamic(
   () => import('../../shop-info/components/shop-info-sheet').then((m) => m.ShopInfoSheet),
   { ssr: false },
 );
+
+// Opened from a news push (T106): its toast loads only when ?from=news is in the link.
+const FromNews = dynamic(() => import('../../news/from-news').then((m) => m.FromNews), {
+  ssr: false,
+});
+
+function FromNewsWhenLinked() {
+  const { slug, shop } = useShop();
+  return useFromNews() ? <FromNews slug={slug} shopName={shop.storefront.info.name} /> : null;
+}
 
 function LazyShopInfoSheet() {
   const { infoOpen } = useShop();
@@ -115,6 +125,9 @@ export function ShopShell({ children }: { children: ReactNode }) {
       )}
       <LazyBasketDrawer />
       <LazyShopInfoSheet />
+      <Suspense fallback={null}>
+        <FromNewsWhenLinked />
+      </Suspense>
     </div>
   );
 }

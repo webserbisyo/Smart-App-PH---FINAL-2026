@@ -55,6 +55,11 @@ export function useItemOpen(): boolean {
   return Boolean(useSearchParams()?.get('item'));
 }
 
+/** The page was opened from a news push (?from=news, decision T106). */
+export function useFromNews(): boolean {
+  return useSearchParams()?.get('from') === 'news';
+}
+
 /** Pages that pull to refresh (decision R46): Home, the menu, Rewards, Orders and an order's page. */
 export function usePullRefreshOn(): boolean {
   const { slug } = useShop();

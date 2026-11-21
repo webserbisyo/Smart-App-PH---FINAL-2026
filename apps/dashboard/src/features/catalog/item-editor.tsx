@@ -20,6 +20,7 @@ import {
   catalogWords,
   errorWords,
   groupRuleLabel,
+  newsWords,
   type Category,
   type ItemDraft,
   type ItemStatus,
@@ -307,6 +308,17 @@ function ItemEditorForm({
           onClick: () => void navigate({ to: '/catalog/new' }),
         },
       });
+      // Push News (T106): a second, separate toast offers to tell customers about the new item.
+      if (saved.status === 'active') {
+        notify({
+          title: newsWords.entry.menuTellTitle(saved.name),
+          tone: 'info',
+          action: {
+            label: newsWords.entry.menuTell,
+            onClick: () => void navigate({ to: '/members/news/new', search: { item: saved.id } }),
+          },
+        });
+      }
       leaving.current = true;
       void navigate({ to: '/catalog/$itemId', params: { itemId: saved.id }, replace: true });
     } catch (err: unknown) {

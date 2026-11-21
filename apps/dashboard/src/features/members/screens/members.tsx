@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from '@tanstack/react-router';
 import {
   CirclePauseIcon,
   CircleCheckIcon,
@@ -6,6 +7,7 @@ import {
   ChevronDownIcon,
   FilterXIcon,
   PauseCircleIcon,
+  SendIcon,
   StampIcon,
   WifiOffIcon,
   XIcon,
@@ -15,6 +17,7 @@ import {
   errorWords,
   membersWords,
   MEMBER_SORTS,
+  newsWords,
   words,
   type CustomerFilter,
   type CustomerRow,
@@ -504,6 +507,19 @@ export function MembersScreen() {
             )}
           >
             {filter === 'almost' ? W.rules.almost(smallCard) : W.rules[filter]}
+            {/* Push News (T106): a way in from the group the owner is looking at. */}
+            {filter !== 'all' && filter !== 'guests' && (view?.counts[filter] ?? 0) > 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 rounded-full"
+                nativeButton={false}
+                render={<Link to="/members/news/new" search={{ audience: filter }} />}
+              >
+                <SendIcon aria-hidden="true" />
+                {newsWords.entry.membersSend(view?.counts[filter] ?? 0)}
+              </Button>
+            ) : null}
             {stamps !== null ? (
               <Button
                 variant="outline"
