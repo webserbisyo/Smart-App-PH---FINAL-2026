@@ -13,6 +13,7 @@ Which doc answers which question (decision T101). Rules first, then plans, then 
 | Which pages and features, and their status?      | `blueprints/features.md`                                                            |
 | How do we measure ads (Meta Pixel and CAPI)?     | `blueprints/meta.md`                                                                |
 | The school paper                                 | `capstone.md` (draft)                                                               |
+| In what order do we wire, launch and sell?       | `blueprints/launch-phases.md` (9 phases, every table and area placed)               |
 | Where are we now?                                | `PROGRESS.md` (tasks; UI approved and Done per area), `CHANGELOG.md` (what changed) |
 | Why was something decided?                       | `decisions.md` (every approved decision, T01 onward)                                |
 

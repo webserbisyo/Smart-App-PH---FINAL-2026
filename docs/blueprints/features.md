@@ -4,7 +4,7 @@ Every MVP A page and feature, where it lives, the decisions behind it and its st
 
 **Status words (T102).** UI approved = built and approved on sample data. Done = works on the dev database through NestJS. On 2026-11-20 every screen is UI approved and nothing is Done: the backend is wired one area at a time (`PROGRESS.md`, phase 4.2). Update this page when an area turns Done.
 
-## 1. Storefront (customers, `shop.webserbisyo.com/<slug>`)
+## 1. Storefront (customers, `<slug>.webserbisyo.com`, backup `shop.webserbisyo.com/<slug>`, T105)
 
 | Page or feature         | Route                          | What it does                                                                                                                         | Decisions           | UI approved                               | Done |
 | ----------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------- | ----------------------------------------- | ---- |

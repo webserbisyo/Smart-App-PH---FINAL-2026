@@ -79,7 +79,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 
 ## Phase 4: Backend, area by area
 
-Order of areas: login first, then shops and settings, catalog, orders and payments, members and stamps, reports (`A-mvp.md` section 3). How to switch an area: the `smartapp-integration` skill, section 3.
+Order of areas: login first, then shops and settings, catalog, orders and payments, members and stamps, reports (`A-mvp.md` section 3). How to switch an area: the `smartapp-integration` skill, section 3. The phase-by-phase map from here to the first paying shop (proposed 2026-11-20): `blueprints/launch-phases.md`.
 
 ### 4.0 Database and ground rules
 
@@ -141,7 +141,7 @@ From `A-mvp.md` sections 5 and 6 and `docs/launch.md`. The founder does the by-h
 - [ ] Live Supabase project on Pro with daily backups; dev becomes staging (D4)
 - [ ] Live Supabase settings: custom SMTP through Resend, email confirmation on, code expiry 10 minutes, leaked-password protection on, Data API off, "automatically expose new tables" off
 - [ ] Railway API on its domain, Singapore, health check set
-- [ ] Vercel Pro, storefront and dashboard on their domains (`shop.webserbisyo.com`, `app.webserbisyo.com`)
+- [ ] Vercel Pro, storefront and dashboard on their domains (`*.webserbisyo.com` per shop with `shop.webserbisyo.com/<slug>` as backup, `app.webserbisyo.com`; T105); old rsvp domains removed
 - [ ] Resend domain verified; emails from `codes@mail.webserbisyo.com` (sign-up code, shop is live, reminders, payment answers, new-order email N10)
 - [ ] Branch protection on `main`
 - [ ] Jobs running: expire unpaid transfers, delete proof photos after 30 days, clear unconfirmed uploads, send outbox, drop old leads (D6)
