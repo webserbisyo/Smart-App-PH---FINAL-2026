@@ -286,7 +286,7 @@ export const TALA_APPAREL_PACK: ShopPack = {
         bank: null,
         accountName: 'Bea V.',
         accountNumber: '0995 000 0001',
-        qr: null,
+        qr: 'demo:tala-apparel/brand/qr',
         sample: true,
       },
       {
@@ -304,7 +304,7 @@ export const TALA_APPAREL_PACK: ShopPack = {
         bank: null,
         accountName: 'Tala Apparel (Sample)',
         accountNumber: null,
-        qr: null,
+        qr: 'demo:tala-apparel/brand/qr',
         sample: true,
       },
     ],
