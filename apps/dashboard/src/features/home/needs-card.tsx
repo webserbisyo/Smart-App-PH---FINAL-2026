@@ -37,7 +37,7 @@ import {
 import { AnimatedList } from '@smartapp/ui/components/animated-list';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { cn } from 'cn';
-import { HomeCard } from './home-card.js';
+import { HomeCard } from '@/app/home/home-card';
 
 const W = homeWords.needs;
 

@@ -48,14 +48,14 @@ T54 removed the separate Kitchen view; the Orders Board covers it.
 
 ## 3. Sign-up and Super Admin (the founder)
 
-| Page or feature | Route             | What it does                                                                      | Decisions | UI approved | Done |
-| --------------- | ----------------- | --------------------------------------------------------------------------------- | --------- | ----------- | ---- |
-| Sign-up         | `/signup`         | Sells on the left, 3 steps on the right, Meta Pixel                               | T89, T90  | Yes         | No   |
-| Admin home      | `/admin`          | Today: shops waiting, payments to check                                           | T88       | Yes         | No   |
-| Shops           | `/admin/shops`    | Chips, search, side panel, leads, create a shop, help mode (Open as owner 60 min) | T88, T91  | Yes         | No   |
-| Payments        | `/admin/payments` | Plan payments to check, CSV                                                       | T88, T92  | Yes         | No   |
-| Tracking        | `/admin/tracking` | Sending switch, test mode, retry, by-ad table, event list                         | T90       | Yes         | No   |
-| Setup           | `/admin/setup`    | Price, trial days, payment accounts, Messenger link                               | T88, T92  | Yes         | No   |
+| Page or feature | Route             | What it does                                                                      | Decisions      | UI approved | Done |
+| --------------- | ----------------- | --------------------------------------------------------------------------------- | -------------- | ----------- | ---- |
+| Sign-up         | `/signup`         | Sells on the left with the tour phone, 3 steps on the right, Meta Pixel           | T89, T90, T108 | Yes         | No   |
+| Admin home      | `/admin`          | Today: shops waiting, payments to check                                           | T88            | Yes         | No   |
+| Shops           | `/admin/shops`    | Chips, search, side panel, leads, create a shop, help mode (Open as owner 60 min) | T88, T91       | Yes         | No   |
+| Payments        | `/admin/payments` | Plan payments to check, CSV                                                       | T88, T92       | Yes         | No   |
+| Tracking        | `/admin/tracking` | Sending switch, test mode, retry, by-ad table, event list                         | T90            | Yes         | No   |
+| Setup           | `/admin/setup`    | Price, trial days, payment accounts, Messenger link                               | T88, T92       | Yes         | No   |
 
 ## 4. Behind the scenes (NestJS jobs, D5, `database.md` section 6)
 

@@ -78,6 +78,12 @@ export const SignupShopInputSchema = z.object({
     .max(200)
     .transform((v) => (v === '' ? null : v))
     .nullable(),
+  // The colour picked on step 2 (T108); it becomes the shop's brand colour. null keeps the default.
+  brandColor: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullable()
+    .default(null),
 });
 export type SignupShopInput = z.infer<typeof SignupShopInputSchema>;
 

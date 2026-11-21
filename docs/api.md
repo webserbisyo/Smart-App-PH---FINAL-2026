@@ -18,13 +18,13 @@ Trimmed from the old `api-surface.md` (2026-10-11) to fit the restart: NestJS fr
 
 ## Auth (NestJS `/auth`, Supabase Auth behind it)
 
-| Method                                      | Input                                       | Output / notes                                                                                                               |
-| ------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `signUp`                                    | `SignUpSchema`                              | session (email confirmation off on dev)                                                                                      |
-| `signIn` / `signOut`                        | `LoginSchema` / none                        | one error message for every failed login                                                                                     |
-| `getSession`                                | none                                        | `{ userId, email } \| null`                                                                                                  |
-| `sendPasswordCode`, `resetPasswordWithCode` | `{ email }`, `{ email, code, newPassword }` | 6-digit code, no links                                                                                                       |
-| `sendCustomerCode`, `verifyCustomerCode`    | `{ email }`, `{ email, code }`              | storefront members; resend after 60 s, at most 5 codes per hour (`rate_limited`); a code older than 10 min is `code_expired` |
+| Method                                      | Input                                       | Output / notes                                                                                                                              |
+| ------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `signUp`                                    | `SignUpSchema`                              | session (email confirmation off on dev)                                                                                                     |
+| `signIn` / `signOut`                        | `LoginSchema` / none                        | one error message for every failed login                                                                                                    |
+| `getSession`                                | none                                        | `{ userId, email } \| null`                                                                                                                 |
+| `sendPasswordCode`, `resetPasswordWithCode` | `{ email }`, `{ email, code, newPassword }` | owners' Forgot password page `/forgot` (T108): 6-digit code, no links; sending answers the same for every email (only `rate_limited` shows) |
+| `sendCustomerCode`, `verifyCustomerCode`    | `{ email }`, `{ email, code }`              | storefront members; resend after 60 s, at most 5 codes per hour (`rate_limited`); a code older than 10 min is `code_expired`                |
 
 Codes: `invalid_login`, `email_taken`, `weak_password`, `invalid_code`, `code_expired`, `rate_limited`, `not_signed_in`.
 
@@ -248,15 +248,19 @@ The preview is `noindex`, `no-store`, never kept by the service worker, framed o
 
 ## Sign-up and going live (`/signup`, `/track` public; `/owner/onboarding`)
 
-| Method           | Route                        | Input → output                                                                                                                                             |
-| ---------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `saveSignupLead` | POST `/signup/leads`         | `SignupLeadInput` (name, email, mobile, terms version, ad source, event id, `fbp`, `fbc`, page URL) → `{ leadId }`; sends Lead to Meta (T89, T90)          |
-| `registerShop`   | POST `/signup/shop`          | `RegisterShopInput` (lead, shop name, kind, city, Facebook page) → `OwnerOnboarding`; after the email code; stage `setting_up`; sends CompleteRegistration |
-| `trackEvent`     | POST `/track`                | `TrackInput` → `{ ok }`; only PageView, Lead, CompleteRegistration and Contact come from a browser                                                         |
-| `getOnboarding`  | GET `/owner/onboarding`      | → `OwnerOnboarding` (stage, the 4 steps, asked and live times)                                                                                             |
-| `askToGoLive`    | POST `/owner/onboarding/ask` | → `OwnerOnboarding`; stage `asked`; sends SubmitApplication; steps not done is `setup_incomplete`                                                          |
+| Method           | Route                        | Input → output                                                                                                                                                                                                  |
+| ---------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `saveSignupLead` | POST `/signup/leads`         | `SignupLeadInput` (name, email, mobile, terms version, ad source, event id, `fbp`, `fbc`, page URL) → `{ leadId }`; sends Lead to Meta (T89, T90)                                                               |
+| `registerShop`   | POST `/signup/shop`          | `RegisterShopInput` (lead, shop name, kind, city, Facebook page, `brandColor` from the step 2 swatches or null, T108) → `OwnerOnboarding`; after the email code; stage `setting_up`; sends CompleteRegistration |
+| `trackEvent`     | POST `/track`                | `TrackInput` → `{ ok }`; only PageView, Lead, CompleteRegistration and Contact come from a browser                                                                                                              |
+| `getOnboarding`  | GET `/owner/onboarding`      | → `OwnerOnboarding` (stage, the 4 steps, asked and live times)                                                                                                                                                  |
+| `askToGoLive`    | POST `/owner/onboarding/ask` | → `OwnerOnboarding`; stage `asked`; sends SubmitApplication; steps not done is `setup_incomplete`                                                                                                               |
 
 The 3 sign-up steps use the Auth rows (`signUp` with the mobile, then the email code). Stages are `setting_up`, `asked`, `live`, `closed` (a CHECK, no Postgres enum). The trial starts when the founder approves.
+
+### Sign-up tour (T108, no route)
+
+The phone beside the sign-up form and on the log in page plays our sample shops. `useShowcase()` reads `showcase.getShowcase()` → `Showcase` (`packages/core/src/schemas/showcase.ts`: the 5 sample storefronts, one Kanto Smash order with its chat, up to 3 open orders, today's sales, the latest 3 news). It always comes from the mock adapter inside `SampleDataProvider` (its own query cache), whatever `VITE_DATA_SOURCE` says, so it never reads a real shop and needs no NestJS route. It skips the sample-data scenario and delay.
 
 ## Super Admin (`/admin/...`, platform admin only)
 

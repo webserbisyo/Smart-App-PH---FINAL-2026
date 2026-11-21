@@ -76,6 +76,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Orders final pass and member faces: List dates and table, Calendar past days and busy colours, type cards, member faces on the account and on orders, join Pick your face (decision T95; pushed to main 2026-11-15)
 - [x] Stays adoption: layered neutral dashboard theme, five kit pages, Preview panel and public demo builds, UI skills, brand guard and UI scan, docs map and archive (decisions T97 to T101)
 - [x] Push News on sample data: Members › News (write, schedule, results, automatic pushes) with entry points, storefront news box on Join and Notify me, Account Notifications and News, Stop news toast (decision T106; built 2026-11-21, UI waiting for review)
+- [x] Log in and sign-up redesign: sign-up tour on a phone with our sample shops that turns into the owner's own app, slimmer step 1 with the password and a colour on step 2, Log in split screen with Show password, Forgot password with a 6-digit code (decision T108; built 2026-11-21, UI waiting for review)
 
 ## Phase 4: Backend, area by area
 

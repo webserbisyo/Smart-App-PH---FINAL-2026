@@ -8,6 +8,7 @@ import { HomePrimitiveSections } from '../home-primitives.js';
 import { SettingsPrimitiveSections } from '../settings-primitives.js';
 import { AdminPrimitiveSections } from '../admin-primitives.js';
 import { EditorPrimitiveSections } from '../editor-primitives.js';
+import { AuthPrimitiveSections } from '../auth-primitives.js';
 
 // Kit page 2 of 5, Dashboard (decision T98): the owner screens' parts, in the order of the app's nav.
 const GROUPS = [
@@ -18,6 +19,7 @@ const GROUPS = [
   { id: 'kit-settings', label: 'Settings' },
   { id: 'kit-admin', label: 'Admin' },
   { id: 'kit-editor', label: 'Editor' },
+  { id: 'kit-auth', label: 'Sign up' },
 ] as const;
 
 export default function KitDashboardPage() {
@@ -56,6 +58,11 @@ export default function KitDashboardPage() {
 
       <div id="kit-editor" className="scroll-mt-20" />
       <EditorPrimitiveSections />
+
+      <Separator />
+
+      <div id="kit-auth" className="scroll-mt-20" />
+      <AuthPrimitiveSections />
     </KitFrame>
   );
 }
