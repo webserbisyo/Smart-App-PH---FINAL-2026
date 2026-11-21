@@ -2852,21 +2852,37 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const byNewest = [...first.orders].sort((a, b) =>
           b.receipt.placedAt.localeCompare(a.receipt.placedAt),
         );
+        // The chat shows a member with a face when one sent a payment photo.
+        const photoOrders = byNewest.filter((o) => o.proofs.length > 0);
+        const withFace = (o: (typeof photoOrders)[number]) =>
+          toBoardOrder(first, o).customerAvatar !== null;
         const withPhoto =
-          byNewest.find((o) => o.proofs.length > 0 && !isFinal(o.receipt.status)) ??
-          byNewest.find((o) => o.proofs.length > 0) ??
+          photoOrders.find((o) => withFace(o) && !isFinal(o.receipt.status)) ??
+          photoOrders.find(withFace) ??
+          photoOrders.find((o) => !isFinal(o.receipt.status)) ??
+          photoOrders[0] ??
           null;
+        const open = byNewest
+          .filter((o) => !isFinal(o.receipt.status))
+          .map((o) => toBoardOrder(first, o));
+        const board = [
+          ...open.filter((o) => o.customerAvatar),
+          ...open.filter((o) => !o.customerAvatar),
+        ];
+        const faced = board.find((o) => o.customerAvatar) ?? null;
         const today = manilaDate(now());
+        const weekAgo = manilaDate(new Date(now().getTime() - 6 * 86_400_000));
         return ShowcaseSchema.parse({
           shops,
           chat: withPhoto
             ? { order: toBoardOrder(first, withPhoto), detail: ownerOrder(first, withPhoto) }
             : null,
-          board: byNewest
-            .filter((o) => !isFinal(o.receipt.status))
-            .slice(0, 3)
-            .map((o) => toBoardOrder(first, o)),
+          board: board.slice(0, 3),
           today: homeMock.periodFor(DEMO_SHOP_SLUGS[0], { from: today, to: today }),
+          week: homeMock.periodFor(DEMO_SHOP_SLUGS[0], { from: weekAgo, to: today }),
+          member: faced?.customerAvatar
+            ? { name: faced.customerName, avatar: faced.customerAvatar }
+            : null,
           news: newsMock.inbox(DEMO_SHOP_SLUGS[0]).slice(0, 3),
         });
       }),

@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { BoardOrderSchema, OwnerOrderSchema } from './owner-orders.js';
 import { HomePeriodDataSchema } from './owner-home.js';
+import { OwnerAvatarSchema } from './owner-avatar.js';
 import { ShopNewsItemSchema } from './news.js';
 import { PublicShopSchema } from './storefront.js';
 
@@ -21,6 +22,10 @@ export const ShowcaseSchema = z.object({
   board: z.array(BoardOrderSchema),
   // The first shop's day so far (scene 6).
   today: HomePeriodDataSchema,
+  // The first shop's last 7 days (the log in phone): a full chart at any hour.
+  week: HomePeriodDataSchema,
+  // A member of the first shop with a face, signed in on the customer's phone.
+  member: z.object({ name: z.string().min(1), avatar: OwnerAvatarSchema }).nullable(),
   // The first shop's sent news (scene 4).
   news: z.array(ShopNewsItemSchema),
 });

@@ -14,6 +14,7 @@ import { cn } from '@smartapp/ui/lib/utils';
 import { env } from '@/app/env';
 import { captureAttribution, newEventId, pixelTrack, readFbp, startPixel } from '@/app/meta-pixel';
 import { usePageTitle } from '@/app/use-page-title';
+import { AuthAside, StageSkeleton, useWide } from '../auth-frame.js';
 import { SignupForm, type ShopDraft } from '../signup-form.js';
 
 // The tour is the heaviest part of the page, so it loads after the form (T108).
@@ -24,13 +25,9 @@ const SAMPLE_SHOP = 'kanto-smash';
 
 function TourSkeleton() {
   return (
-    <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-      <Skeleton className="h-134.5 w-67 shrink-0 rounded-3xl lg:h-155.25 lg:w-76.5" />
-      <div className="flex w-full flex-col gap-2">
-        {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-14 w-full rounded-xl" />
-        ))}
-      </div>
+    <div className="flex w-full flex-col items-center gap-4">
+      <Skeleton className="h-148 w-full rounded-3xl" />
+      <Skeleton className="h-13 w-80 max-w-full rounded-full" />
     </div>
   );
 }
@@ -51,9 +48,10 @@ function useInView(ref: React.RefObject<HTMLElement | null>): boolean {
 }
 
 /**
- * The sign-up page (decision T89, redesigned in T108): the logo and a rotating headline, the price chips, a
- * phone playing the tour on our sample shops (it turns into the person's own app as they type), then the
- * 3-step form. The Meta Pixel loads here only (T90).
+ * The sign-up page (decision T89, redesigned in T108): the logo, a rotating headline, the price chips and the
+ * 3-step form on the left; the stage with the tour on our sample shops pinned on the right (it turns into the
+ * person's own app as they type). Phones get the stage between the chips and the form, and a sticky Start
+ * button. The Meta Pixel loads here only (T90).
  */
 export function SignupScreen() {
   usePageTitle(W.pageTitle);
@@ -98,28 +96,39 @@ export function SignupScreen() {
     );
   };
 
+  const wide = useWide();
+  const tour = (
+    <React.Suspense fallback={wide ? <StageSkeleton /> : <TourSkeleton />}>
+      <ShowcaseTour yours={draft} wide={wide} />
+    </React.Suspense>
+  );
+
   return (
-    <main className="relative min-h-dvh bg-background pt-safe">
-      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 brand-gradient" />
-      <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-6 md:px-8 md:py-10 lg:grid-cols-5 lg:items-start lg:gap-10">
-        <section className="flex min-w-0 flex-col gap-5 lg:col-span-3">
+    <main className="relative grid min-h-dvh bg-background pt-safe lg:grid-cols-2">
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 brand-gradient lg:hidden" />
+      <div className="flex min-w-0 justify-center px-4 py-6 md:px-8 md:py-10 lg:px-12">
+        <div className="flex w-full max-w-md flex-col gap-6">
           <BrandLockup name={words.appName} size="md" />
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <h1 className="sr-only">{W.headlineSpoken}</h1>
             <div
               aria-hidden="true"
-              className="text-3xl leading-tight font-extrabold tracking-tight text-balance text-foreground md:text-5xl"
+              className="text-3xl leading-tight font-extrabold tracking-tight text-balance text-foreground md:text-4xl"
             >
               <p>
                 {W.headlineStart} {W.headlineFor}
               </p>
               {reduce ? (
-                <p className="py-2 text-primary">{W.shopTypes[0]}</p>
+                <p className="py-1 text-primary">{W.shopTypes[0]}</p>
               ) : (
-                <WordRotate words={[...W.shopTypes]} duration={2600} className="text-primary" />
+                <WordRotate
+                  words={[...W.shopTypes]}
+                  duration={2600}
+                  className="py-1 text-primary"
+                />
               )}
             </div>
-            <p className="text-base text-pretty text-muted-foreground md:text-lg">{W.sub}</p>
+            <p className="text-base text-pretty text-muted-foreground">{W.sub}</p>
           </div>
           <ul className="flex flex-wrap gap-2" aria-label={W.why}>
             <li>
@@ -141,10 +150,27 @@ export function SignupScreen() {
               </Badge>
             </li>
           </ul>
-          <React.Suspense fallback={<TourSkeleton />}>
-            <ShowcaseTour yours={draft} />
-          </React.Suspense>
-          <div className="flex flex-wrap gap-2">
+          {wide ? null : tour}
+          <div ref={formBox} className="scroll-mt-4">
+            <div className="relative rounded-xl">
+              <SignupForm attribution={attribution} onDraft={setDraft} />
+              {reduce ? null : (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+                >
+                  <BorderBeam
+                    size={140}
+                    duration={9}
+                    borderWidth={2}
+                    colorFrom="var(--logo-blue)"
+                    colorTo="var(--logo-mint)"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
             <Button
               variant="outline"
               className="h-11"
@@ -177,27 +203,9 @@ export function SignupScreen() {
               {W.messenger}
             </Button>
           </div>
-        </section>
-        <div ref={formBox} className="scroll-mt-4 lg:sticky lg:top-8 lg:col-span-2">
-          <div className="relative rounded-xl">
-            <SignupForm attribution={attribution} onDraft={setDraft} />
-            {reduce ? null : (
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
-              >
-                <BorderBeam
-                  size={140}
-                  duration={9}
-                  borderWidth={2}
-                  colorFrom="var(--logo-blue)"
-                  colorTo="var(--logo-mint)"
-                />
-              </div>
-            )}
-          </div>
         </div>
       </div>
+      {wide ? <AuthAside>{tour}</AuthAside> : null}
       {/* Phones and tablets: one tap from the tour to the form (L1). */}
       <div
         className={cn(

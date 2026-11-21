@@ -4502,13 +4502,10 @@ export const showcaseWords = {
     owner: { title: 'Your dashboard', line: 'Every order lands here' },
     yours: { title: 'Your app', line: 'Built from what you type' },
   },
-  liveTitle: 'Live in sample shops',
   pause: 'Pause',
   play: 'Play',
   backToTour: 'Back to the tour',
   sample: (shop: string) => `Sample · ${shop}`,
-  shopsLabel: 'Sample shops',
-  featuresLabel: 'Features',
   features: {
     stamps: 'Suki stamp card',
     reward: 'Reward confetti',
@@ -4544,8 +4541,8 @@ export const showcaseWords = {
   sizeLabel: 'Size',
   addToBasket: 'Add to basket',
   added: (size: string, price: string) => `Added · ${size} · ${price}`,
-  todayTitle: (shop: string) => `Today · ${shop}`,
-  boardTitle: 'Orders board',
+  hello: (name: string) => `Hi ${name}!`,
+  orderNow: (no: string) => `New order ${no}`,
   yoursName: 'Your shop',
   sampleBadge: 'Sample',
   feed: {
@@ -4554,8 +4551,10 @@ export const showcaseWords = {
     stamps: 'A Suki got the last stamp · reward ready',
     push: (no: string) => `Push sent: "Order ${no} is done"`,
     retail: (item: string, total: string) => `New order · ${item} · ${total}`,
-    owner: (sales: string) => `Sales today ${sales}`,
+    owner: (sales: string) => `${sales} in sales, last 7 days`,
   },
+  playerLabel: 'Tour chapters',
+  stripLabel: 'Sample shops and features',
 };
 
 // The owner's "go live" card on Home (T89).
