@@ -4361,7 +4361,6 @@ export const signupWords = {
   headlineSpoken: 'Your own ordering app for your shop',
   shopTypes: ['burger shop', 'milk tea shop', 'ukay', 'bakery', 'water station', 'coffee cart'],
   startFree: (days: number) => `Start ${days} days free`,
-  sub: 'Customers order from your link. Regulars collect stamps and come back.',
   chips: {
     price: (price: string) => `${price} a month`,
     trial: (days: number) => `${days} days free`,
@@ -4499,7 +4498,7 @@ export const showcaseWords = {
     stamps: { title: 'Stamp and reward', line: 'Suki collect stamps and come back' },
     push: { title: 'Push updates', line: 'Their phone tells them it is ready' },
     retail: { title: 'Retail', line: 'Sizes, colours and limited prizes' },
-    owner: { title: 'Your dashboard', line: 'Every order lands here' },
+    owner: { title: 'Your phone', line: 'New orders and payment photos ping you' },
     yours: { title: 'Your app', line: 'Built from what you type' },
   },
   pause: 'Pause',
@@ -4542,19 +4541,20 @@ export const showcaseWords = {
   addToBasket: 'Add to basket',
   added: (size: string, price: string) => `Added · ${size} · ${price}`,
   hello: (name: string) => `Hi ${name}!`,
-  orderNow: (no: string) => `New order ${no}`,
   yoursName: 'Your shop',
   sampleBadge: 'Sample',
-  feed: {
-    order: (item: string, total: string) => `New order · ${item} · ${total}`,
-    chat: (no: string) => `Payment photo checked for order ${no}`,
-    stamps: 'A Suki got the last stamp · reward ready',
-    push: (no: string) => `Push sent: "Order ${no} is done"`,
-    retail: (item: string, total: string) => `New order · ${item} · ${total}`,
-    owner: (sales: string) => `${sales} in sales, last 7 days`,
+  // The owner's own pushes from Smart App PH (sign-up tour and Log in).
+  ownerPush: {
+    newOrder: (no: string, total: string) => `New order ${no} · ${total}`,
+    newOrderBody: (name: string, items: string) => `${name} · ${items}`,
+    photo: (no: string) => `Payment photo to check · ${no}`,
+    photoBody: (name: string, total: string) =>
+      `${name} sent ${total}. Check it in your GCash app.`,
+    due: (no: string) => `Order ${no} is due in 10 min`,
+    dueBody: (name: string) => `${name} is on the way. Start it now.`,
   },
+  shopLine: 'A sample shop. Pick a chapter to play the tour.',
   playerLabel: 'Tour chapters',
-  stripLabel: 'Sample shops and features',
 };
 
 // The owner's "go live" card on Home (T89).
