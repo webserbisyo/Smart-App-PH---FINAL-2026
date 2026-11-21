@@ -289,7 +289,7 @@ export function SignupForm({
 
   return (
     <Card className={cn('elevation-sm', className)}>
-      <CardHeader className="gap-4">
+      <CardHeader className="gap-4 lg:gap-3">
         <Stepper value={step} indicators={{}} className="w-full">
           <StepperNav>
             {([1, 2, 3] as const).map((n, i) => (
@@ -331,9 +331,7 @@ export function SignupForm({
           </StepperNav>
         </Stepper>
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium text-muted-foreground tabular-nums">
-            {W.progress(step)}
-          </p>
+          <p className="sr-only">{W.progress(step)}</p>
           <CardTitle>
             <h2 ref={heading} tabIndex={-1} className="outline-none">
               {step === 1 ? W.you.title : step === 2 ? W.shop.title : W.code.title}
@@ -351,7 +349,7 @@ export function SignupForm({
               void onYou();
             }}
           >
-            <FieldGroup>
+            <FieldGroup className="lg:gap-5">
               {formError ? <FieldError>{formError}</FieldError> : null}
               <Field data-invalid={show(yp, 'fullName') ? true : undefined}>
                 <FieldLabel htmlFor="su-name">{W.you.fullName}</FieldLabel>
@@ -367,59 +365,62 @@ export function SignupForm({
                 />
                 {show(yp, 'fullName') ? <FieldError>{yp.fullName}</FieldError> : null}
               </Field>
-              <Field data-invalid={show(yp, 'email') || emailTaken ? true : undefined}>
-                <FieldLabel htmlFor="su-email">{W.you.email}</FieldLabel>
-                <Input
-                  id="su-email"
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  className="h-11 text-base md:text-sm"
-                  placeholder={W.you.emailPlaceholder}
-                  value={you.email}
-                  maxLength={254}
-                  aria-invalid={show(yp, 'email') || emailTaken ? true : undefined}
-                  onChange={(e) => {
-                    setEmailTaken(false);
-                    setYou({ ...you, email: e.target.value });
-                  }}
-                />
-                {emailTaken ? (
-                  <FieldError>
-                    {W.emailTaken}{' '}
-                    <Link to="/login" className="underline underline-offset-4">
-                      {W.logIn}
-                    </Link>
-                  </FieldError>
-                ) : show(yp, 'email') ? (
-                  <FieldError>{yp.email}</FieldError>
-                ) : (
-                  <FieldDescription>{W.you.emailHelp}</FieldDescription>
-                )}
-              </Field>
-              <Field data-invalid={show(yp, 'phone') ? true : undefined}>
-                <FieldLabel htmlFor="su-phone">{W.you.phone}</FieldLabel>
-                <MaskInput
-                  id="su-phone"
-                  mask={{
-                    pattern: '####-###-####',
-                    transform: (val) => val.replace(/\D/g, ''),
-                    validate: (val) => normalisePhPhone(val).ok,
-                  }}
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  className="h-11 text-base md:text-sm"
-                  placeholder={W.you.phonePlaceholder}
-                  value={you.phone}
-                  aria-invalid={show(yp, 'phone') ? true : undefined}
-                  onValueChange={(_, unmasked) => setYou({ ...you, phone: unmasked })}
-                />
-                {show(yp, 'phone') ? (
-                  <FieldError>{yp.phone}</FieldError>
-                ) : (
-                  <FieldDescription>{W.you.phoneHelp}</FieldDescription>
-                )}
-              </Field>
+              {/* Laptops: email and mobile side by side, so the whole step fits one screen. */}
+              <div className="grid gap-7 lg:grid-cols-2 lg:gap-4">
+                <Field data-invalid={show(yp, 'email') || emailTaken ? true : undefined}>
+                  <FieldLabel htmlFor="su-email">{W.you.email}</FieldLabel>
+                  <Input
+                    id="su-email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    className="h-11 text-base md:text-sm"
+                    placeholder={W.you.emailPlaceholder}
+                    value={you.email}
+                    maxLength={254}
+                    aria-invalid={show(yp, 'email') || emailTaken ? true : undefined}
+                    onChange={(e) => {
+                      setEmailTaken(false);
+                      setYou({ ...you, email: e.target.value });
+                    }}
+                  />
+                  {emailTaken ? (
+                    <FieldError>
+                      {W.emailTaken}{' '}
+                      <Link to="/login" className="underline underline-offset-4">
+                        {W.logIn}
+                      </Link>
+                    </FieldError>
+                  ) : show(yp, 'email') ? (
+                    <FieldError>{yp.email}</FieldError>
+                  ) : (
+                    <FieldDescription>{W.you.emailHelp}</FieldDescription>
+                  )}
+                </Field>
+                <Field data-invalid={show(yp, 'phone') ? true : undefined}>
+                  <FieldLabel htmlFor="su-phone">{W.you.phone}</FieldLabel>
+                  <MaskInput
+                    id="su-phone"
+                    mask={{
+                      pattern: '####-###-####',
+                      transform: (val) => val.replace(/\D/g, ''),
+                      validate: (val) => normalisePhPhone(val).ok,
+                    }}
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    className="h-11 text-base md:text-sm"
+                    placeholder={W.you.phonePlaceholder}
+                    value={you.phone}
+                    aria-invalid={show(yp, 'phone') ? true : undefined}
+                    onValueChange={(_, unmasked) => setYou({ ...you, phone: unmasked })}
+                  />
+                  {show(yp, 'phone') ? (
+                    <FieldError>{yp.phone}</FieldError>
+                  ) : (
+                    <FieldDescription>{W.you.phoneHelp}</FieldDescription>
+                  )}
+                </Field>
+              </div>
               <Field
                 orientation="horizontal"
                 data-invalid={show(yp, 'terms') ? true : undefined}
@@ -622,13 +623,6 @@ export function SignupForm({
             </Button>
           </div>
         ) : null}
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          {W.haveAccount}{' '}
-          <Link to="/login" className="font-medium text-foreground underline underline-offset-4">
-            {W.logIn}
-          </Link>
-        </p>
       </CardContent>
     </Card>
   );

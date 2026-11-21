@@ -11,6 +11,7 @@ import { BrandLockup } from '@smartapp/ui/compositions/brand-lockup';
 import { MessengerIcon } from '@smartapp/ui/compositions/messenger-icon';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { cn } from '@smartapp/ui/lib/utils';
+import { Link } from '@tanstack/react-router';
 import { env } from '@/app/env';
 import { captureAttribution, newEventId, pixelTrack, readFbp, startPixel } from '@/app/meta-pixel';
 import { usePageTitle } from '@/app/use-page-title';
@@ -106,29 +107,36 @@ export function SignupScreen() {
   return (
     <main className="relative grid min-h-dvh bg-background pt-safe lg:grid-cols-2">
       <div aria-hidden="true" className="absolute inset-x-0 top-0 h-1 brand-gradient lg:hidden" />
-      <div className="flex min-w-0 justify-center px-4 py-6 md:px-8 md:py-10 lg:px-12">
-        <div className="flex w-full max-w-md flex-col gap-6">
-          <BrandLockup name={words.appName} size="md" />
-          <div className="flex flex-col gap-3">
+      <div className="flex min-w-0 justify-center px-4 py-6 md:px-8 md:py-10 lg:px-12 lg:py-6">
+        <div className="flex w-full max-w-md flex-col gap-5 lg:max-w-lg lg:gap-4">
+          <div className="flex items-center justify-between gap-3">
+            <BrandLockup name={words.appName} size="sm" />
+            <p className="text-sm text-muted-foreground">
+              {W.haveAccount}{' '}
+              <Link
+                to="/login"
+                className="font-medium text-foreground underline underline-offset-4"
+              >
+                {W.logIn}
+              </Link>
+            </p>
+          </div>
+          <div>
             <h1 className="sr-only">{W.headlineSpoken}</h1>
             <div
               aria-hidden="true"
-              className="text-3xl leading-tight font-extrabold tracking-tight text-balance text-foreground md:text-4xl"
+              className="text-3xl leading-tight font-extrabold tracking-tight text-foreground lg:text-4xl"
             >
-              <p>
-                {W.headlineStart} {W.headlineFor}
-              </p>
-              {reduce ? (
-                <p className="py-1 text-primary">{W.shopTypes[0]}</p>
-              ) : (
-                <WordRotate
-                  words={[...W.shopTypes]}
-                  duration={2600}
-                  className="py-1 text-primary"
-                />
-              )}
+              <p>{W.headlineStart}</p>
+              <div className="flex flex-wrap items-center gap-x-2.5">
+                <span className="py-2">{W.headlineFor}</span>
+                {reduce ? (
+                  <span className="py-2 text-primary">{W.shopTypes[0]}</span>
+                ) : (
+                  <WordRotate words={[...W.shopTypes]} duration={2600} className="text-primary" />
+                )}
+              </div>
             </div>
-            <p className="text-base text-pretty text-muted-foreground">{W.sub}</p>
           </div>
           <ul className="flex flex-wrap gap-2" aria-label={W.why}>
             <li>

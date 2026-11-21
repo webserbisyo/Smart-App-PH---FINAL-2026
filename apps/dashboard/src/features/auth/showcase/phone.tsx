@@ -91,9 +91,11 @@ export function ShowcasePhone({
     >
       <div className={cn('absolute top-0 left-0 h-207.5 w-95 origin-top-left', SIZE[size].scale)}>
         <Android width={380} height={830} className="absolute inset-0 drop-shadow-xl" />
+        {/* transform-gpu makes the screen the frame for fixed parts, so the storefront's floating dock
+            sits inside the phone like on a real one. */}
         <div
           inert
-          className="absolute top-3.5 left-2.25 flex h-200 w-90 flex-col overflow-hidden rounded-4xl bg-background"
+          className="absolute top-3.5 left-2.25 flex h-200 w-90 transform-gpu flex-col overflow-hidden rounded-4xl bg-background"
         >
           {children}
         </div>
