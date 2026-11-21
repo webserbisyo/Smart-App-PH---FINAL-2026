@@ -34,7 +34,10 @@ async function qrPng(src: string): Promise<Blob> {
   if (!ctx) throw new Error('unreadable_image');
   ctx.drawImage(img, 0, 0);
   return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('unreadable_image'))), 'image/png'),
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('unreadable_image'))),
+      'image/png',
+    ),
   );
 }
 

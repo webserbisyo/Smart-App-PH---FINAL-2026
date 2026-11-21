@@ -1391,7 +1391,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
         if (!parsed.success) fail('invalid_input', 400);
         const d = parsed.data;
         const s = shopById(d.shopId);
-        const clean = (r: string) => r.replace(/[\s-]/g, '').toUpperCase();
+        const clean = (r: string | null) => (r ?? '').replace(/[\s-]/g, '').toUpperCase();
         if (
           s.book.history.some(
             (p) => clean(p.reference) === clean(d.reference) && p.status !== 'rejected',

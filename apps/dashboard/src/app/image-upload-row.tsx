@@ -240,7 +240,6 @@ export function ImageUploadRow({
     await send(file);
   };
 
-
   return (
     <FileUpload
       accept={UPLOAD_ACCEPT}

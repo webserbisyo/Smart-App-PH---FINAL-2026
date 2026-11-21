@@ -4,7 +4,13 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 // The five demo shops (packages/core/src/demo/slugs.ts; Node can't load that .ts file by its .js name).
-const DEMO_SHOP_SLUGS = ['kanto-smash', 'aqualinis', 'tala-apparel', 'kape-juan', 'lola-remy'] as const;
+const DEMO_SHOP_SLUGS = [
+  'kanto-smash',
+  'aqualinis',
+  'tala-apparel',
+  'kape-juan',
+  'lola-remy',
+] as const;
 
 // Sample payment QRs for the demo shops (decision T107). Each one only holds the words below, so a
 // customer who scans it in GCash or a bank app is told it is not a payment code. Dark modules on white

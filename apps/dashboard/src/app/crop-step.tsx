@@ -53,21 +53,51 @@ export function CropStep({
   onCancel: () => void;
   onCropped: (file: File) => void;
 }) {
+  return (
+    <ResponsiveDialog
+      open={src !== null}
+      onOpenChange={(open) => {
+        if (!open) onCancel();
+      }}
+      title={U.cropTitle}
+      description={U.cropHelp}
+    >
+      {src ? (
+        // A new photo starts again at the middle with no zoom.
+        <CropBody
+          key={src}
+          src={src}
+          shape={shape}
+          busy={busy}
+          onCancel={onCancel}
+          onCropped={onCropped}
+        />
+      ) : null}
+    </ResponsiveDialog>
+  );
+}
+
+function CropBody({
+  src,
+  shape,
+  busy,
+  onCancel,
+  onCropped,
+}: {
+  src: string;
+  shape: CropShape;
+  busy: boolean;
+  onCancel: () => void;
+  onCropped: (file: File) => void;
+}) {
   const [crop, setCrop] = React.useState({ x: 0, y: 0 });
   const [zoom, setZoom] = React.useState(1);
   const [area, setArea] = React.useState<PixelArea | null>(null);
   const [cropping, setCropping] = React.useState(false);
   const [failed, setFailed] = React.useState(false);
 
-  React.useEffect(() => {
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setArea(null);
-    setFailed(false);
-  }, [src]);
-
   const apply = async () => {
-    if (!src || !area) return;
+    if (!area) return;
     setCropping(true);
     try {
       const width = Math.min(shape.side, Math.round(area.width));
@@ -81,86 +111,75 @@ export function CropStep({
   };
 
   return (
-    <ResponsiveDialog
-      open={src !== null}
-      onOpenChange={(open) => {
-        if (!open) onCancel();
-      }}
-      title={U.cropTitle}
-      description={U.cropHelp}
-    >
-      {src ? (
-        <div className="flex flex-col gap-4">
-          <div className="relative h-72 overflow-hidden rounded-xl border border-border bg-muted">
-            <Cropper
-              aspectRatio={shape.aspect}
-              crop={crop}
-              zoom={zoom}
-              minZoom={MIN_ZOOM}
-              maxZoom={MAX_ZOOM}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropAreaChange={(_, pixels) => setArea(pixels)}
-              role="group"
-              aria-label={U.cropArea}
-              className="size-full"
-            >
-              <CropperImage src={src} alt="" crossOrigin="anonymous" />
-              <CropperArea />
-            </Cropper>
-          </div>
-          <ButtonGroup aria-label={U.zoom} className="self-center">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-11"
-              aria-label={U.zoomOut}
-              disabled={zoom <= MIN_ZOOM}
-              onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25))}
-            >
-              <MinusIcon />
-            </Button>
-            <ButtonGroupText className="h-11 w-16 justify-center bg-background tabular-nums">
-              {zoom.toFixed(1)}×
-            </ButtonGroupText>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="size-11"
-              aria-label={U.zoomIn}
-              disabled={zoom >= MAX_ZOOM}
-              onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25))}
-            >
-              <PlusIcon />
-            </Button>
-          </ButtonGroup>
-          {failed ? (
-            <p role="alert" className="text-xs font-medium text-destructive-text">
-              {U.unreadable}
-            </p>
-          ) : null}
-          <ResponsiveDialogFooter>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" className="h-11 md:h-9" onClick={onCancel}>
-                {U.back}
-              </Button>
-              <AsyncButton
-                type="button"
-                status={cropping || busy ? 'loading' : 'idle'}
-                busyLabel={U.shrinking}
-                doneLabel={U.usePhoto}
-                className="h-11 font-semibold md:h-9"
-                disabled={!area}
-                onClick={() => void apply()}
-              >
-                {U.usePhoto}
-              </AsyncButton>
-            </div>
-          </ResponsiveDialogFooter>
-        </div>
+    <div className="flex flex-col gap-4">
+      <div className="relative h-72 overflow-hidden rounded-xl border border-border bg-muted">
+        <Cropper
+          aspectRatio={shape.aspect}
+          crop={crop}
+          zoom={zoom}
+          minZoom={MIN_ZOOM}
+          maxZoom={MAX_ZOOM}
+          onCropChange={setCrop}
+          onZoomChange={setZoom}
+          onCropAreaChange={(_, pixels) => setArea(pixels)}
+          role="group"
+          aria-label={U.cropArea}
+          className="size-full"
+        >
+          <CropperImage src={src} alt="" crossOrigin="anonymous" />
+          <CropperArea />
+        </Cropper>
+      </div>
+      <ButtonGroup aria-label={U.zoom} className="self-center">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="size-11"
+          aria-label={U.zoomOut}
+          disabled={zoom <= MIN_ZOOM}
+          onClick={() => setZoom((z) => Math.max(MIN_ZOOM, z - 0.25))}
+        >
+          <MinusIcon />
+        </Button>
+        <ButtonGroupText className="h-11 w-16 justify-center bg-background tabular-nums">
+          {zoom.toFixed(1)}×
+        </ButtonGroupText>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="size-11"
+          aria-label={U.zoomIn}
+          disabled={zoom >= MAX_ZOOM}
+          onClick={() => setZoom((z) => Math.min(MAX_ZOOM, z + 0.25))}
+        >
+          <PlusIcon />
+        </Button>
+      </ButtonGroup>
+      {failed ? (
+        <p role="alert" className="text-xs font-medium text-destructive-text">
+          {U.unreadable}
+        </p>
       ) : null}
-    </ResponsiveDialog>
+      <ResponsiveDialogFooter>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" className="h-11 md:h-9" onClick={onCancel}>
+            {U.back}
+          </Button>
+          <AsyncButton
+            type="button"
+            status={cropping || busy ? 'loading' : 'idle'}
+            busyLabel={U.shrinking}
+            doneLabel={U.usePhoto}
+            className="h-11 font-semibold md:h-9"
+            disabled={!area}
+            onClick={() => void apply()}
+          >
+            {U.usePhoto}
+          </AsyncButton>
+        </div>
+      </ResponsiveDialogFooter>
+    </div>
   );
 }

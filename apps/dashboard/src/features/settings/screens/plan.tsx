@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Link } from '@tanstack/react-router';
 import {
   CheckIcon,
+  ChevronDownIcon,
   CircleAlertIcon,
   CircleCheckIcon,
   CirclePauseIcon,
@@ -9,6 +10,7 @@ import {
   GiftIcon,
   HardDriveIcon,
   HourglassIcon,
+  MessageCircleIcon,
   WalletIcon,
   XCircleIcon,
 } from 'lucide-react';
@@ -33,13 +35,16 @@ import {
 } from '@smartapp/core';
 import {
   errorCodeOf,
+  useMarkPlanChatSeen,
   usePlan,
   useSendPlanNote,
+  useSendPlanPhoto,
   useStorage,
   useSubmitPlanPayment,
 } from '@smartapp/data';
 import { Badge } from '@smartapp/ui/components/badge';
 import { Button } from '@smartapp/ui/components/button';
+import { Drawer, DrawerContent, DrawerTitle } from '@smartapp/ui/components/drawer';
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { Separator } from '@smartapp/ui/components/separator';
@@ -51,8 +56,17 @@ import {
   ResponsiveDialog,
   ResponsiveDialogFooter,
 } from '@smartapp/ui/compositions/responsive-dialog';
+import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
+import { cssVars } from '@smartapp/ui/lib/css-vars';
 import { cn } from 'cn';
-import { BillingComposer, BillingThread } from '@/app/billing-thread';
+import {
+  BillingChat,
+  BillingComposer,
+  billingPreview,
+  rememberBillingPhoto,
+  type OutboxLine,
+  type SendPhotoInput,
+} from '@/app/billing-thread';
 import { ImageUploadRow, type UploadedImage } from '@/app/image-upload-row';
 import { Notice, type NoticeTone } from '@/app/notice';
 import { PageError } from '@/app/page-state';
@@ -154,7 +168,6 @@ function PlanView({ plan }: { plan: Plan }) {
   const online = useOnlineStatus();
   const [payOpen, setPayOpen] = React.useState(false);
   const helping = useSupport() !== null;
-  const sendNote = useSendPlanNote();
   const look = STATE_LOOK[plan.status];
   const notice = planNotice(plan);
   const urgent = plan.status !== 'active';
@@ -223,18 +236,7 @@ function PlanView({ plan }: { plan: Plan }) {
 
       <SettingsCard title={billingWords.title}>
         <p className="text-sm text-muted-foreground">{billingWords.ownerHint}</p>
-        <BillingThread
-          thread={plan.thread}
-          payments={plan.history}
-          viewer="owner"
-          ownerName={billingWords.you}
-        />
-        <BillingComposer
-          onSend={async (text) => {
-            await sendNote.mutateAsync({ text });
-            notify({ title: billingWords.noteSent, tone: 'success' });
-          }}
-        />
+        <PlanMessages plan={plan} helping={helping} />
       </SettingsCard>
 
       <SettingsCard title={W.includedCard}>
@@ -266,8 +268,8 @@ function PlanView({ plan }: { plan: Plan }) {
                         {W.historyRow(p.months)}
                       </span>
                       <span className="text-xs text-muted-foreground tabular-nums">
-                        {formatManila(p.submittedAt, 'date')} · {words.shop.paymentMethod[p.method]}{' '}
-                        · {p.reference}
+                        {formatManila(p.submittedAt, 'date')} · {words.shop.paymentMethod[p.method]}
+                        {p.reference ? ` · ${p.reference}` : ''}
                       </span>
                       {p.status === 'approved' ? (
                         <span className="text-xs text-muted-foreground tabular-nums">
@@ -304,6 +306,164 @@ function PlanView({ plan }: { plan: Plan }) {
   );
 }
 
+/**
+ * The Billing chat on the Plan page (T107): in the card with its own scroll on a tablet or computer; on a
+ * phone the card shows the newest line and opens the chat full screen, because a scroll box inside a
+ * scrolling page traps the thumb and the keyboard covers the box.
+ */
+function PlanMessages({ plan, helping }: { plan: Plan; helping: boolean }) {
+  const phone = useFormFactor() === 'phone';
+  const [open, setOpen] = React.useState(false);
+  const [outbox, setOutbox] = React.useState<OutboxLine[]>([]);
+  const sendNote = useSendPlanNote();
+  const sendPhoto = useSendPlanPhoto();
+  const markSeen = useMarkPlanChatSeen();
+  const refetch = usePlan().refetch;
+  const seenAsked = React.useRef(false);
+  const unread = plan.thread.filter(
+    (m) => m.from !== 'owner' && m.from !== 'system' && m.seenAt === null,
+  ).length;
+  const newest = plan.thread[plan.thread.length - 1];
+
+  // Ask again shortly after a send, so "Sent" turns into "Seen".
+  const waiting = plan.thread.some((m) => m.from === 'owner' && m.seenAt === null);
+  React.useEffect(() => {
+    if (!waiting) return;
+    const timer = setTimeout(() => void refetch(), 9_000);
+    return () => clearTimeout(timer);
+  }, [waiting, plan.thread, refetch]);
+
+  // One line on its way: shown at once, gone when the server has it, kept with Try again if it fails.
+  const track = (
+    line: Omit<OutboxLine, 'state' | 'retry' | 'id' | 'at'>,
+    run: () => Promise<unknown>,
+  ) => {
+    const lineId = `out-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const attempt = async (): Promise<void> => {
+      setOutbox((list) => list.map((o) => (o.id === lineId ? { ...o, state: 'sending' } : o)));
+      try {
+        await run();
+        setOutbox((list) => list.filter((o) => o.id !== lineId));
+      } catch (err) {
+        setOutbox((list) => list.map((o) => (o.id === lineId ? { ...o, state: 'failed' } : o)));
+        throw err;
+      }
+    };
+    setOutbox((list) => [
+      ...list,
+      {
+        ...line,
+        id: lineId,
+        at: new Date().toISOString(),
+        state: 'sending',
+        retry: () => void attempt().catch(() => undefined),
+      },
+    ]);
+    return attempt();
+  };
+
+  const composer = (
+    <BillingComposer
+      lockedLine={helping ? supportWords.locked : undefined}
+      onSend={(text) => track({ kind: 'note', text }, () => sendNote.mutateAsync({ text }))}
+      onSendPhoto={({ photoPath, reference, preview }: SendPhotoInput) => {
+        rememberBillingPhoto(photoPath, preview);
+        return track({ kind: 'photo', preview, reference }, () =>
+          sendPhoto.mutateAsync({ photoPath, reference }),
+        );
+      }}
+    />
+  );
+  const onSeen = () => {
+    if (seenAsked.current || helping) return;
+    seenAsked.current = true;
+    markSeen.mutate(undefined, { onSettled: () => (seenAsked.current = false) });
+  };
+  const chat = (className: string) => (
+    <BillingChat
+      thread={plan.thread}
+      payments={plan.history}
+      viewer="owner"
+      ownerName={billingWords.you}
+      outbox={outbox}
+      composer={composer}
+      onSeen={onSeen}
+      className={className}
+    />
+  );
+
+  if (!phone) return chat('h-120 max-h-vh-70');
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex min-h-16 w-full items-center gap-3 rounded-xl border bg-muted/40 p-3 text-left hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      >
+        <img
+          src="/brand/smartappph-mark-gradient.webp"
+          alt=""
+          className="size-10 shrink-0 rounded-full bg-card object-contain p-1.5"
+        />
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold text-foreground">{billingWords.smartApp}</span>
+            {newest ? (
+              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                {formatManila(newest.at, 'date')}
+              </span>
+            ) : null}
+          </span>
+          <span
+            className={cn(
+              'line-clamp-2 text-sm',
+              unread > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            {billingPreview(newest, plan.history)}
+          </span>
+        </span>
+        {unread > 0 ? (
+          <Badge className="shrink-0 bg-primary text-primary-foreground tabular-nums">
+            {billingWords.newCount(unread)}
+          </Badge>
+        ) : null}
+      </button>
+      <Button type="button" className="h-11 w-full font-semibold" onClick={() => setOpen(true)}>
+        <MessageCircleIcon />
+        {billingWords.openChat}
+      </Button>
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerContent
+          className="pt-safe pb-safe"
+          style={cssVars({ '--drawer-height': '100dvh', '--drawer-content-max-height': '100dvh' })}
+        >
+          <div className="flex shrink-0 items-center gap-3 border-b px-2 py-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-11"
+              aria-label={billingWords.closeChat}
+              onClick={() => setOpen(false)}
+            >
+              <ChevronDownIcon />
+            </Button>
+            <img
+              src="/brand/smartappph-mark-gradient.webp"
+              alt=""
+              className="size-8 rounded-full bg-card object-contain p-1"
+            />
+            <DrawerTitle className="text-base font-semibold">{billingWords.smartApp}</DrawerTitle>
+          </div>
+          {open ? chat('min-h-0 flex-1 px-3 pb-3') : null}
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+}
+
 /** Pay for Pro: how many months, GCash or Maya, the number to send to, the reference and the screenshot. */
 function PayForm({ plan, onClose }: { plan: Plan; onClose: () => void }) {
   const submit = useSubmitPlanPayment();
@@ -320,7 +480,9 @@ function PayForm({ plan, onClose }: { plan: Plan; onClose: () => void }) {
   const amount = formatPeso(priceOf(months));
   const methodName = words.shop.paymentMethod[method];
   const number = method === 'gcash' ? plan.payTo.gcash : plan.payTo.maya;
-  const refProblem = reference.trim().length >= 6 ? undefined : W.referenceBad;
+  // Optional since T107 (the screenshot shows it); when typed, at least 6 characters.
+  const typed = reference.trim();
+  const refProblem = typed === '' || typed.length >= 6 ? undefined : W.referenceBad;
   const proofProblem = proof ? undefined : W.proofRequired;
   const covers = planCoversUntil(plan.paidUntil, months, new Date());
 

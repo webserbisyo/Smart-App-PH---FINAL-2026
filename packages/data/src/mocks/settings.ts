@@ -23,6 +23,7 @@ import {
   PROOF_KEEP_DAYS,
   SaveProfileInputSchema,
   SendBillingNoteInputSchema,
+  SendBillingPhotoInputSchema,
   SendCodeResultSchema,
   ShopFactsSchema,
   StorageSummarySchema,
@@ -266,8 +267,24 @@ export function createSettingsMock(deps: SettingsMockDeps) {
       text: null,
       reason: null,
       days: null,
+      photoPath: null,
+      photoUrl: null,
+      reference: null,
+      seenAt: null,
       ...extra,
     };
+  }
+
+  // The demo's Smart App PH sees an owner's line 8 seconds after it is sent (T107), like the demo
+  // shop in the order chat.
+  const SEEN_AFTER_MS = 8_000;
+  function markSeenByUs(o: OwnerState, t: Date): void {
+    for (const line of o.thread) {
+      if (line.from === 'owner' && line.seenAt === null) {
+        const seen = new Date(line.at).getTime() + SEEN_AFTER_MS;
+        if (seen <= t.getTime()) line.seenAt = new Date(seen).toISOString();
+      }
+    }
   }
 
   function locked(): void {
@@ -330,15 +347,23 @@ export function createSettingsMock(deps: SettingsMockDeps) {
     }
     // The Billing chat so far: each past payment and its approval, oldest first.
     const thread: BillingMessage[] = [];
-    for (const p of [...history].reverse()) {
+    const oldestFirst = [...history].reverse();
+    oldestFirst.forEach((p, index) => {
       const at = new Date(p.submittedAt).getTime();
+      const approvedAt = at + 3 * 3_600_000;
+      // The newest answer is still unread, so the phone's chat card shows "1 new" (T107).
+      const latest = index === oldestFirst.length - 1;
       thread.push(
-        billingLine('owner', 'payment', new Date(at).toISOString(), { paymentId: p.id }),
-        billingLine('admin', 'approved', new Date(at + 3 * 3_600_000).toISOString(), {
+        billingLine('owner', 'payment', new Date(at).toISOString(), {
           paymentId: p.id,
+          seenAt: new Date(at + 20 * 60_000).toISOString(),
+        }),
+        billingLine('admin', 'approved', new Date(approvedAt).toISOString(), {
+          paymentId: p.id,
+          seenAt: latest ? null : new Date(approvedAt + 3_600_000).toISOString(),
         }),
       );
-    }
+    });
     const state: OwnerState = {
       slug,
       profile: OwnerProfileSchema.parse({ name, email, avatar: startingAvatar(name) }),
@@ -735,6 +760,7 @@ export function createSettingsMock(deps: SettingsMockDeps) {
       case 'default':
         break;
     }
+    markSeenByUs(o, t);
     const pending = o.history.find((p) => p.status === 'pending') ?? null;
     const end = paidUntil ?? (trialEndsAt ? manilaDate(trialEndsAt) : null);
     return PlanSchema.parse({
@@ -936,6 +962,20 @@ export function createSettingsMock(deps: SettingsMockDeps) {
 
     getPlan: async () => {
       const { o } = await current();
+      // Past payments show the demo's sample receipt photo (kept out of first-load JS).
+      if (o.history.some((p) => p.proofUrl === null)) {
+        const { sampleReceiptUrl } = await import('./proof-photo');
+        const setup = deps.setup();
+        for (const p of o.history) {
+          p.proofUrl ??= sampleReceiptUrl({
+            method: words.shop.paymentMethod[p.method],
+            amount: p.amount,
+            reference: p.reference ?? '',
+            shopName: setup.payTo.accountName,
+            at: p.submittedAt,
+          });
+        }
+      }
       return run('settings', () => planOf(o));
     },
 
@@ -947,11 +987,11 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         locked();
         const parsed = SubmitPlanPaymentInputSchema.safeParse(input);
         if (!parsed.success) fail('invalid_input', 400, { reference: ['invalid'] });
-        const ref = parsed.data.reference.replace(/[\s-]/g, '');
+        const clean = (r: string | null) => (r ?? '').replace(/[\s-]/g, '');
+        const ref = clean(parsed.data.reference);
         if (
-          o.history.some(
-            (p) => p.reference.replace(/[\s-]/g, '') === ref && p.status !== 'rejected',
-          )
+          ref !== '' &&
+          o.history.some((p) => clean(p.reference) === ref && p.status !== 'rejected')
         )
           fail('duplicate_reference', 409);
         if (o.history.some((p) => p.status === 'pending')) fail('payment_not_pending', 409);
@@ -971,7 +1011,7 @@ export function createSettingsMock(deps: SettingsMockDeps) {
           proofUrl: sampleReceiptUrl({
             method: words.shop.paymentMethod[parsed.data.method],
             amount,
-            reference: parsed.data.reference,
+            reference: parsed.data.reference ?? '',
             shopName: setup.payTo.accountName,
             at,
           }),
@@ -990,6 +1030,32 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         o.thread.push(
           billingLine('owner', 'note', now().toISOString(), { text: parsed.data.text }),
         );
+        return planOf(o);
+      });
+    },
+
+    sendPlanPhoto: async (input) => {
+      const { o } = await current();
+      return run('settings', () => {
+        const parsed = SendBillingPhotoInputSchema.safeParse(input);
+        if (!parsed.success) fail('invalid_input', 400, { reference: ['invalid'] });
+        // The mock keeps no file: the chat shows the photo from the phone's own copy until reload.
+        o.thread.push(
+          billingLine('owner', 'photo', now().toISOString(), {
+            photoPath: parsed.data.photoPath,
+            reference: parsed.data.reference,
+          }),
+        );
+        return planOf(o);
+      });
+    },
+
+    markPlanChatSeen: async () => {
+      const { o } = await current();
+      return run('settings', () => {
+        const at = now().toISOString();
+        for (const line of o.thread)
+          if (line.from !== 'owner' && line.seenAt === null) line.seenAt = at;
         return planOf(o);
       });
     },
