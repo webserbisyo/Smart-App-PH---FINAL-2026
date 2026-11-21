@@ -21,7 +21,9 @@ import { cn } from '@smartapp/ui/lib/utils';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { env } from '@/app/env';
+import { CustomerFace } from '@/app/owner-avatar';
 import { ShowcasePhone, useManilaNow } from './phone.js';
+import { StageCard, StagePanel, usePhoneSize, type CardSide } from './stage.js';
 import {
   ChatScene,
   OrderScene,
@@ -95,27 +97,66 @@ function savesData(): boolean {
   );
 }
 
-function feedLine(data: Showcase, chapter: Chapter): string {
+interface Moment {
+  title: string;
+  meta: string;
+  media: React.ReactNode;
+}
+
+/** What each chapter "just did", for the live card beside the phone: a real face where a Suki did it. */
+function moment(data: Showcase, chapter: Chapter): Moment {
   const kanto = shopOf(data, 'kanto-smash');
   const tala = shopOf(data, 'tala-apparel');
-  const no = orderNoLabel(data.chat?.order.orderNo ?? data.board[0]?.orderNo ?? 1);
+  const chat = data.chat?.order ?? data.board[0];
+  const no = orderNoLabel(chat?.orderNo ?? 1);
+  const logo = (shop: typeof kanto) => (
+    <ShopLogo
+      name={shop.storefront.info.name}
+      src={imageSources(shop.storefront.info.logo, env.VITE_STOREFRONT_URL)}
+      size="md"
+      shape="round"
+    />
+  );
+  const face = (
+    person:
+      { name: string; avatar: Showcase['board'][number]['customerAvatar'] } | null | undefined,
+  ) => (person ? <CustomerFace avatar={person.avatar} name={person.name} /> : logo(kanto));
+  const member = data.member;
+  const meta = (shop: typeof kanto, who?: string | undefined) =>
+    [who, shop.storefront.info.name, W.now].filter(Boolean).join(' · ');
   switch (chapter) {
     case 'order': {
       const item = kanto.catalog.items[0];
-      return W.feed.order(item?.name ?? '', formatPeso(item?.variants[0]?.price ?? 0));
+      return {
+        title: W.feed.order(item?.name ?? '', formatPeso(item?.variants[0]?.price ?? 0)),
+        meta: meta(kanto, member?.name),
+        media: face(member),
+      };
     }
     case 'chat':
-      return W.feed.chat(no);
+      return {
+        title: W.feed.chat(no),
+        meta: meta(kanto, chat?.customerName),
+        media: face(chat ? { name: chat.customerName, avatar: chat.customerAvatar } : null),
+      };
     case 'stamps':
-      return W.feed.stamps;
+      return { title: W.feed.stamps, meta: meta(kanto, member?.name), media: face(member) };
     case 'push':
-      return W.feed.push(no);
+      return { title: W.feed.push(no), meta: meta(kanto), media: logo(kanto) };
     case 'retail': {
       const item = tala.catalog.items[0];
-      return W.feed.retail(item?.name ?? '', formatPeso(item?.variants[0]?.price ?? 0));
+      return {
+        title: W.feed.retail(item?.name ?? '', formatPeso(item?.variants[0]?.price ?? 0)),
+        meta: meta(tala),
+        media: logo(tala),
+      };
     }
     case 'owner':
-      return W.feed.owner(formatPeso(data.today.money.sales));
+      return {
+        title: W.feed.owner(formatPeso(data.week.money.sales)),
+        meta: meta(kanto),
+        media: logo(kanto),
+      };
   }
 }
 
@@ -139,17 +180,21 @@ function useVisible(ref: React.RefObject<HTMLElement | null>): boolean {
   return onScreen && tabShown;
 }
 
-function Tour({ yours }: { yours: Yours | null }) {
+// Chapters next to each other float on opposite sides, so the newest and the one before never overlap.
+const sideOf = (c: Chapter): CardSide => (CHAPTERS.indexOf(c) % 2 === 0 ? 'start' : 'end');
+
+function Tour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
   const query = useShowcase();
   const reduce = useReducedMotion();
   const now = useManilaNow();
+  const size = usePhoneSize(wide);
   const root = React.useRef<HTMLElement>(null);
   const visible = useVisible(root);
   const [chapter, setChapter] = React.useState<Chapter>('order');
   const [beat, setBeat] = React.useState(0);
   const [stopped, setStopped] = React.useState(false);
-  // The chapters played, newest first: the live list beside the phone.
-  const [history, setHistory] = React.useState<Chapter[]>(['order']);
+  // The chapter played before this one: its card stays on the other side of the phone.
+  const [previous, setPrevious] = React.useState<Chapter | null>(null);
   // The form values the person chose to leave: the tour plays again until they type something new.
   const [leftYours, setLeftYours] = React.useState('');
   const data = query.data;
@@ -162,9 +207,9 @@ function Tour({ yours }: { yours: Yours | null }) {
   const playing = autoplay && !stopped && !showingYours && visible;
 
   const turnTo = (next: Chapter, nextBeat: number) => {
+    if (next !== chapter) setPrevious(chapter);
     setChapter(next);
     setBeat(nextBeat);
-    setHistory((h) => [next, ...h.filter((c) => c !== next)].slice(0, 3));
   };
 
   const advance = React.useEffectEvent(() => {
@@ -193,12 +238,26 @@ function Tour({ yours }: { yours: Yours | null }) {
   const phoneLabel = showingYours
     ? `${W.phoneLabel}: ${W.chapters.yours.title}`
     : `${W.phoneLabel}: ${W.chapters[chapter].title}`;
+  const caption = showingYours ? W.chapters.yours : W.chapters[chapter];
+  // The newest moment shows once the scene has started; laptops keep the one before on the other side.
+  const cards: Chapter[] =
+    !data || showingYours
+      ? []
+      : [
+          ...(shownBeat >= 1 ? [chapter] : []),
+          ...(wide && previous && previous !== chapter ? [previous] : []),
+        ];
 
   return (
-    <section ref={root} aria-label={W.chaptersLabel} className="flex w-full min-w-0 flex-col gap-4">
-      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-        <div className="flex shrink-0 justify-center rounded-3xl brand-gradient p-5 shadow-lg">
-          <ShowcasePhone label={phoneLabel}>
+    <section
+      ref={root}
+      aria-label={W.chaptersLabel}
+      className="flex w-full min-w-0 flex-col items-center gap-4"
+    >
+      <StagePanel
+        wide={wide}
+        phone={
+          <ShowcasePhone label={phoneLabel} size={size}>
             {sceneProps ? (
               showingYours && yours ? (
                 <YoursScene {...sceneProps} yours={yours} />
@@ -213,112 +272,103 @@ function Tour({ yours }: { yours: Yours | null }) {
               </div>
             )}
           </ShowcasePhone>
-        </div>
-
-        <div className="flex w-full min-w-0 flex-col gap-4">
-          <ol className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-col sm:overflow-visible sm:px-0 sm:pb-0">
-            {CHAPTERS.map((c) => {
-              const Icon = ICON[c];
-              const current = !showingYours && c === chapter;
-              const done = current ? (shownBeat + 1) / BEATS[c] : 0;
+        }
+      >
+        {data
+          ? cards.map((c) => {
+              const m = moment(data, c);
               return (
-                <li key={c} className="shrink-0 sm:shrink">
-                  <button
-                    type="button"
-                    aria-current={current ? 'step' : undefined}
-                    onClick={() => go(c)}
-                    className={cn(
-                      'flex min-h-11 w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors duration-base outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                      current
-                        ? 'bg-card shadow-sm ring-1 ring-border'
-                        : 'text-muted-foreground hover-hover:hover:bg-muted',
-                    )}
-                  >
-                    <Icon
-                      aria-hidden="true"
-                      className={cn('mt-0.5 size-4 shrink-0', current && 'text-primary')}
-                    />
-                    <span className="flex min-w-0 flex-1 flex-col gap-1">
-                      <span
-                        className={cn(
-                          'text-sm font-semibold whitespace-nowrap',
-                          current && 'text-foreground',
-                        )}
-                      >
-                        {W.chapters[c].title}
-                      </span>
-                      <span className="hidden text-sm text-muted-foreground sm:block">
-                        {W.chapters[c].line}
-                      </span>
-                      <span
-                        aria-hidden="true"
-                        className="block h-0.5 overflow-hidden rounded-full bg-muted"
-                      >
-                        <span
-                          style={cssVars({ '--p': done })}
-                          className={cn(
-                            'block h-full origin-left scale-x-(--p) rounded-full bg-primary',
-                            playing && current && 'transition-transform duration-1000 ease-linear',
-                          )}
-                        />
-                      </span>
-                    </span>
-                  </button>
-                </li>
+                <StageCard
+                  key={c}
+                  wide={wide}
+                  side={sideOf(c)}
+                  media={m.media}
+                  title={m.title}
+                  meta={m.meta}
+                  reduce={reduce}
+                  onOpen={c === chapter ? undefined : () => go(c)}
+                />
               );
-            })}
-          </ol>
+            })
+          : null}
+      </StagePanel>
 
-          {showingYours ? (
-            <Button variant="outline" className="h-11 self-start" onClick={() => go('order')}>
-              <PlayIcon aria-hidden="true" />
-              {W.backToTour}
-            </Button>
-          ) : null}
+      <div className="flex flex-col items-center gap-1 text-center">
+        <p className="text-base font-semibold text-foreground">{caption.title}</p>
+        <p className="text-sm text-muted-foreground">{caption.line}</p>
+      </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-xs font-semibold tracking-wide text-muted-foreground">
-                {W.liveTitle}
-              </h2>
-              {autoplay && !showingYours ? (
+      <div
+        role="group"
+        aria-label={W.playerLabel}
+        className="flex items-center gap-1 rounded-full bg-card p-1 shadow-sm ring-1 ring-border"
+      >
+        {showingYours ? (
+          <Button variant="ghost" className="h-11 rounded-full px-4" onClick={() => go('order')}>
+            <PlayIcon aria-hidden="true" />
+            {W.backToTour}
+          </Button>
+        ) : (
+          <>
+            {autoplay ? (
+              <>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-11 gap-1.5"
+                  size="icon"
+                  className="size-11 rounded-full"
+                  aria-label={stopped ? W.play : W.pause}
                   onClick={() => setStopped(!stopped)}
                 >
                   {stopped ? <PlayIcon aria-hidden="true" /> : <PauseIcon aria-hidden="true" />}
-                  {stopped ? W.play : W.pause}
                 </Button>
-              ) : null}
-            </div>
-            <ul className="flex flex-col gap-2">
-              {(data ? history : []).map((c, i) => {
-                const Icon = ICON[c];
-                return (
-                  <li key={c} className={cn(i === 2 && 'hidden sm:block')}>
-                    <button
-                      type="button"
-                      onClick={() => go(c)}
-                      className="flex min-h-11 w-full items-center gap-3 rounded-xl bg-card px-3 py-2 text-left text-sm shadow-xs ring-1 ring-border transition-colors duration-base outline-none focus-visible:ring-2 focus-visible:ring-ring hover-hover:hover:bg-muted"
+                <span aria-hidden="true" className="mx-0.5 h-6 w-px bg-border" />
+              </>
+            ) : null}
+            {CHAPTERS.map((c) => {
+              const Icon = ICON[c];
+              const current = c === chapter;
+              const done = current ? (shownBeat + 1) / BEATS[c] : 0;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  aria-label={W.chapters[c].title}
+                  aria-current={current ? 'step' : undefined}
+                  onClick={() => go(c)}
+                  className={cn(
+                    'relative flex size-11 items-center justify-center rounded-full transition-colors duration-base outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    current
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover-hover:hover:bg-muted hover-hover:hover:text-foreground',
+                  )}
+                >
+                  <Icon aria-hidden="true" className="size-5" />
+                  {current ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-x-3 bottom-1.5 h-0.5 overflow-hidden rounded-full bg-primary/20"
                     >
-                      <Icon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 flex-1">{data ? feedLine(data, c) : null}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">{W.now}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
+                      <span
+                        style={cssVars({ '--p': done })}
+                        className={cn(
+                          'block h-full origin-left scale-x-(--p) rounded-full bg-primary',
+                          playing && 'transition-transform duration-1000 ease-linear',
+                        )}
+                      />
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </>
+        )}
       </div>
 
       {data ? (
-        <Strips
+        <Strip
           data={data}
           reduce={reduce}
+          edge={wide ? 'from-sidebar' : 'from-background'}
           onShop={(slug) => go(SHOP_CHAPTER[slug] ?? 'order')}
           onFeature={go}
         />
@@ -328,22 +378,24 @@ function Tour({ yours }: { yours: Yours | null }) {
 }
 
 /**
- * The sample shops and the features, sliding by (L12). Each one jumps to its chapter. The chapters above are
- * the keyboard and screen reader way in, so the moving copies stay out of the tab order.
+ * The sample shops and the features, sliding by in one row (L12). Each one jumps to its chapter. The player
+ * above is the keyboard and screen reader way in, so the moving copies stay out of the tab order.
  */
-function Strips({
+function Strip({
   data,
   reduce,
+  edge,
   onShop,
   onFeature,
 }: {
   data: Showcase;
   reduce: boolean;
+  edge: string;
   onShop: (slug: string) => void;
   onFeature: (chapter: Chapter) => void;
 }) {
   const chip =
-    'flex h-10 items-center gap-2 rounded-full bg-card px-3 text-sm font-medium shadow-xs ring-1 ring-border transition-colors duration-base hover-hover:hover:bg-muted';
+    'flex h-10 shrink-0 items-center gap-2 rounded-full bg-card px-3 text-sm font-medium whitespace-nowrap shadow-xs ring-1 ring-border transition-colors duration-base hover-hover:hover:bg-muted';
   const shops = data.shops.map(({ slug, shop }) => (
     <button key={slug} type="button" tabIndex={-1} className={chip} onClick={() => onShop(slug)}>
       <ShopLogo
@@ -353,7 +405,7 @@ function Strips({
         shape="round"
         className="size-6"
       />
-      {W.sample(shop.storefront.info.name)}
+      {shop.storefront.info.name}
     </button>
   ));
   const features = FEATURES.map((f) => {
@@ -366,39 +418,36 @@ function Strips({
         className={chip}
         onClick={() => onFeature(f.chapter)}
       >
-        <Icon aria-hidden="true" className="size-4 text-muted-foreground" />
+        <Icon aria-hidden="true" className="size-4 text-primary" />
         {f.label}
       </button>
     );
   });
+  // Shops and features take turns along the strip.
+  const mixed = Array.from({ length: Math.max(shops.length, features.length) }, (_, i) => [
+    shops[i],
+    features[i],
+  ])
+    .flat()
+    .filter((chip) => chip !== undefined);
 
   if (reduce) {
     return (
-      <div aria-hidden="true" className="flex flex-col gap-2">
-        <div className="flex flex-wrap gap-2">{shops}</div>
-        <div className="flex flex-wrap gap-2">{features}</div>
+      <div aria-hidden="true" className="flex w-full flex-wrap justify-center gap-2">
+        {mixed}
       </div>
     );
   }
   return (
-    <div aria-hidden="true" className="flex flex-col gap-2">
-      <Marquee speed={30} pauseOnHover autoFill gap={8}>
+    <div aria-hidden="true" className="w-full min-w-0">
+      <Marquee speed={28} pauseOnHover autoFill gap="0.5rem" className="py-1">
         <MarqueeContent>
-          {shops.map((s) => (
-            <MarqueeItem key={s.key}>{s}</MarqueeItem>
+          {mixed.map((c) => (
+            <MarqueeItem key={c.key}>{c}</MarqueeItem>
           ))}
         </MarqueeContent>
-        <MarqueeEdge side="left" />
-        <MarqueeEdge side="right" />
-      </Marquee>
-      <Marquee speed={24} pauseOnHover autoFill gap={8} reverse>
-        <MarqueeContent>
-          {features.map((f) => (
-            <MarqueeItem key={f.key}>{f}</MarqueeItem>
-          ))}
-        </MarqueeContent>
-        <MarqueeEdge side="left" />
-        <MarqueeEdge side="right" />
+        <MarqueeEdge side="left" className={edge} />
+        <MarqueeEdge side="right" className={edge} />
       </Marquee>
     </div>
   );
@@ -410,10 +459,10 @@ function Strips({
  * order card and the sales card). Typing a shop name turns it into the person's own app. It always reads
  * the sample shops, whatever the app's data source.
  */
-export default function ShowcaseTour({ yours }: { yours: Yours | null }) {
+export default function ShowcaseTour({ yours, wide }: { yours: Yours | null; wide: boolean }) {
   return (
     <SampleDataProvider>
-      <Tour yours={yours} />
+      <Tour yours={yours} wide={wide} />
     </SampleDataProvider>
   );
 }

@@ -59,17 +59,27 @@ export function StatusBar({ now, className }: { now: Date; className?: string | 
   );
 }
 
+export type PhoneSize = 'sm' | 'lg';
+
+// The box the scaled phone takes, and the scale (380 × 830 drawn, then 60 or 70 percent).
+const SIZE: Record<PhoneSize, { box: string; scale: string }> = {
+  sm: { box: 'h-124.5 w-57', scale: 'scale-60' },
+  lg: { box: 'h-145.25 w-66.5', scale: 'scale-70' },
+};
+
 /**
  * A neutral modern phone (T108 L13): Magic UI's Android frame drawn at its real 380 × 830 size with a real
  * 360 × 800 screen on top, so the shop screens inside lay out exactly as on a phone; the whole phone is then
- * scaled down. The screen is a picture of the tour (role img, inert): the chapters beside it are the controls.
+ * scaled down. The screen is a picture of the tour (role img, inert): the controls sit beside it.
  */
 export function ShowcasePhone({
   label,
+  size = 'lg',
   children,
   className,
 }: {
   label: string;
+  size?: PhoneSize | undefined;
   children: React.ReactNode;
   className?: string | undefined;
 }) {
@@ -77,9 +87,9 @@ export function ShowcasePhone({
     <div
       role="img"
       aria-label={label}
-      className={cn('relative h-124.5 w-57 shrink-0 lg:h-145.25 lg:w-66.5', className)}
+      className={cn('relative shrink-0', SIZE[size].box, className)}
     >
-      <div className="absolute top-0 left-0 h-207.5 w-95 origin-top-left scale-60 lg:scale-70">
+      <div className={cn('absolute top-0 left-0 h-207.5 w-95 origin-top-left', SIZE[size].scale)}>
         <Android width={380} height={830} className="absolute inset-0 drop-shadow-xl" />
         <div
           inert

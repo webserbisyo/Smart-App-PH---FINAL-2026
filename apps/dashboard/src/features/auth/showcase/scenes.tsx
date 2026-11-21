@@ -30,6 +30,7 @@ import { ShopLogo } from '@smartapp/ui/compositions/shop-logo';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import { StampCard } from '@smartapp/ui/compositions/stamp-card';
 import { cn } from '@smartapp/ui/lib/utils';
+import { CustomerFace } from '@/app/owner-avatar';
 import { SalesCard } from '@/app/home/sales-card';
 import { OrderCard } from '@/app/orders/order-card';
 import { ChatHeader, ChatThread } from '@/app/orders/order-chat';
@@ -85,6 +86,7 @@ function ShopScreen({
   name,
   logo = true,
   brandColor,
+  member = null,
   children,
 }: {
   shop: PublicShop;
@@ -92,6 +94,8 @@ function ShopScreen({
   name?: string | undefined;
   logo?: boolean | undefined;
   brandColor?: string | undefined;
+  // The signed-in Suki, top right like the real storefront's account button.
+  member?: Showcase['member'] | undefined;
   children: React.ReactNode;
 }) {
   const look = shop.storefront.look;
@@ -114,7 +118,14 @@ function ShopScreen({
             size="md"
             shape="round"
           />
-          <p className="min-w-0 truncate font-heading text-lg font-bold">{title}</p>
+          <p className="min-w-0 flex-1 truncate font-heading text-lg font-bold">{title}</p>
+          {member ? (
+            <CustomerFace
+              avatar={member.avatar}
+              name={member.name}
+              className="ring-2 ring-member ring-offset-2 ring-offset-background"
+            />
+          ) : null}
         </div>
         <div className="relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">{children}</div>
       </div>
@@ -185,7 +196,7 @@ export function OrderScene({ data, beat, now }: SceneProps) {
   const total = items.slice(0, added).reduce((sum, item) => sum + firstPrice(item), 0);
   const banner = shop.storefront.look.banners[0];
   return (
-    <ShopScreen shop={shop} now={now}>
+    <ShopScreen shop={shop} now={now} member={data.member}>
       {banner ? (
         <ShopImage
           src={pic(banner.ref)}
@@ -259,8 +270,10 @@ export function StampsScene({ data, beat, now, live }: SceneProps) {
   const ready = stamped >= needed;
   const box = React.useRef<HTMLDivElement>(null);
   useCelebrate(beat, live, box, 3);
+  const first = data.member?.name.split(' ')[0];
   return (
-    <ShopScreen shop={shop} now={now}>
+    <ShopScreen shop={shop} now={now} member={data.member}>
+      {first ? <p className="text-xl font-bold">{W.hello(first)}</p> : null}
       <div ref={box}>
         <StampCard
           needed={needed}
@@ -295,6 +308,11 @@ interface Push {
   body: string;
 }
 
+// A neutral photo, the same for every shop, so the shop's colour shows only in its own notifications.
+const WALLPAPER = '/showcase/lock-wallpaper-360.webp';
+const WALLPAPER_SET =
+  '/showcase/lock-wallpaper-360.webp 360w, /showcase/lock-wallpaper-720.webp 720w';
+
 function LockScreen({
   shop,
   now,
@@ -308,37 +326,50 @@ function LockScreen({
 }) {
   const name = shop.storefront.info.name;
   return (
-    <div className="flex h-full flex-col bg-shop-10 text-shop-10-foreground">
-      <StatusBar now={now} />
-      <div className="flex flex-col items-center gap-1 pt-10">
-        <p className="text-base font-semibold">{phoneDay(now)}</p>
-        <p className="text-8xl leading-none font-bold tracking-tight tabular">{phoneClock(now)}</p>
-      </div>
-      <div className="mt-auto flex flex-col gap-2 px-3 pb-10">
-        {pushes.map((push) => (
-          <Appear key={push.id} reduce={reduce}>
-            <ItemRow className="items-start rounded-2xl bg-popover/90 text-popover-foreground shadow-lg backdrop-blur-md">
-              <ItemMedia>
-                <ShopLogo name={name} src={pic(shop.storefront.info.logo)} size="sm" />
-              </ItemMedia>
-              <ItemContent className="min-w-0 gap-0.5">
-                <span className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <span className="truncate">{name}</span>
-                  <span>{W.now}</span>
-                </span>
-                <span className="text-sm leading-snug font-semibold">{push.title}</span>
-                {push.body ? (
-                  <ItemDescription className="line-clamp-2 text-sm">{push.body}</ItemDescription>
-                ) : null}
-              </ItemContent>
-            </ItemRow>
-          </Appear>
-        ))}
-      </div>
+    <div className="dark relative flex h-full flex-col overflow-hidden text-foreground">
+      <img
+        src={WALLPAPER}
+        srcSet={WALLPAPER_SET}
+        sizes="360px"
+        alt=""
+        decoding="async"
+        className="absolute inset-0 size-full object-cover"
+      />
       <span
         aria-hidden="true"
-        className="mx-auto mb-3 h-1 w-28 rounded-full bg-shop-10-foreground/60"
+        className="absolute inset-0 bg-linear-to-b from-background/40 via-transparent to-background/70"
       />
+      <div className="relative flex h-full flex-col">
+        <StatusBar now={now} />
+        <div className="flex flex-col items-center gap-1 pt-10">
+          <p className="text-base font-semibold">{phoneDay(now)}</p>
+          <p className="text-8xl leading-none font-bold tracking-tight tabular">
+            {phoneClock(now)}
+          </p>
+        </div>
+        <div className="mt-auto flex flex-col gap-2 px-3 pb-10">
+          {pushes.map((push) => (
+            <Appear key={push.id} reduce={reduce}>
+              <ItemRow className="items-start rounded-3xl bg-popover/75 text-popover-foreground shadow-lg backdrop-blur-md">
+                <ItemMedia>
+                  <ShopLogo name={name} src={pic(shop.storefront.info.logo)} size="sm" />
+                </ItemMedia>
+                <ItemContent className="min-w-0 gap-0.5">
+                  <span className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                    <span className="truncate">{name}</span>
+                    <span>{W.now}</span>
+                  </span>
+                  <span className="text-sm leading-snug font-semibold">{push.title}</span>
+                  {push.body ? (
+                    <ItemDescription className="line-clamp-2 text-sm">{push.body}</ItemDescription>
+                  ) : null}
+                </ItemContent>
+              </ItemRow>
+            </Appear>
+          ))}
+        </div>
+        <span aria-hidden="true" className="mx-auto mb-3 h-1 w-28 rounded-full bg-foreground/70" />
+      </div>
     </div>
   );
 }
@@ -355,14 +386,10 @@ export function PushScene({ data, beat, now, reduce }: SceneProps) {
       { id: 'reward', title: W.pushReward(card.reward.title), body: '' },
     ];
     const shown = all.slice(0, Math.max(0, beat - 3)).reverse();
-    return (
-      <ShopTheme brandColor={shop.storefront.look.brandColor} surface="light">
-        <LockScreen shop={shop} now={now} pushes={shown} reduce={reduce} />
-      </ShopTheme>
-    );
+    return <LockScreen shop={shop} now={now} pushes={shown} reduce={reduce} />;
   }
   return (
-    <ShopScreen shop={shop} now={now}>
+    <ShopScreen shop={shop} now={now} member={data.member}>
       <p className="text-xl font-bold">{W.notificationsTitle}</p>
       <PushUpdatesCard state={beat >= 2 ? 'granted' : 'ask'} onTurnOn={noop} />
       <ShopNewsCard checked onCheckedChange={noop} />
@@ -455,17 +482,22 @@ export function RetailScene({ data, beat, now, reduce }: SceneProps) {
 
 // ------------------------------------------------------------------ 6 Your dashboard (owner side)
 
-export function OwnerScene({ data, beat, now }: SceneProps) {
-  const first = data.board[0];
+export function OwnerScene({ data, beat, now, pick = 0 }: SceneProps & { pick?: number }) {
+  const order = data.board.length > 0 ? data.board[pick % data.board.length] : undefined;
   const shop = shopOf(data, 'kanto-smash');
+  const name = shop.storefront.info.name;
   return (
     <div className="flex h-full flex-col bg-background text-foreground">
       <StatusBar now={now} />
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-4">
-        <p className="px-1 text-lg font-bold">{W.todayTitle(shop.storefront.info.name)}</p>
-        {first ? (
+        <div className="flex items-center gap-3 px-1">
+          <ShopLogo name={name} src={pic(shop.storefront.info.logo)} size="sm" shape="round" />
+          <p className="min-w-0 truncate text-lg font-bold">{name}</p>
+        </div>
+        {order ? (
           <OrderCard
-            order={first}
+            key={order.id}
+            order={order}
             now={now}
             kind={shop.storefront.info.kind}
             onOpen={noop}
@@ -474,7 +506,12 @@ export function OwnerScene({ data, beat, now }: SceneProps) {
             fresh={beat >= 1 && beat <= 3}
           />
         ) : null}
-        <SalesCard data={data.today} periodText={homeWords.period.picks.today} live asOf={now} />
+        <SalesCard
+          data={data.week}
+          periodText={homeWords.period.picks['7d']}
+          live={false}
+          asOf={now}
+        />
       </div>
     </div>
   );
@@ -488,8 +525,11 @@ export interface Yours {
   colour: string | null;
 }
 
+// The sample shop whose menu fills the preview of the person's own app.
+const PACK: Record<ShopKind, string> = { food: 'kanto-smash', retail: 'tala-apparel' };
+
 export function YoursScene({ data, now, yours }: SceneProps & { yours: Yours }) {
-  const pack = shopOf(data, yours.kind === 'retail' ? 'tala-apparel' : 'kanto-smash');
+  const pack = shopOf(data, PACK[yours.kind]);
   const items = pack.catalog.items.slice(0, 2);
   const card = pack.storefront.stampCard;
   const needed = card.rule.stampsNeeded;
