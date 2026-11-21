@@ -400,6 +400,10 @@ export function MembersScreen() {
 
         {isPhone ? searchRow : null}
 
+        {overview.isPending && filter === 'all' && !q && stamps === null ? (
+          <InsightsSkeleton isPhone={isPhone} />
+        ) : null}
+
         {showNear && view && isPhone ? (
           <NearList
             layout="strip"
@@ -557,6 +561,31 @@ export function MembersScreen() {
         onConfirm={(ask) => void counter.stamp({ id: ask.customerId, name: ask.name }, true)}
         onClose={counter.closeRecent}
       />
+    </div>
+  );
+}
+
+// Holds the place of the near list, card progress and the insights while the numbers load (T110), so the
+// search and the list below don't jump down when they arrive.
+function InsightsSkeleton({ isPhone }: { isPhone: boolean }) {
+  if (isPhone)
+    return (
+      <div className="flex flex-col gap-3" aria-hidden="true">
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-11 w-full rounded-lg" />
+      </div>
+    );
+  return (
+    <div className="flex flex-col gap-3" aria-hidden="true">
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Skeleton className="h-80 rounded-xl" />
+        <Skeleton className="hidden h-64 rounded-xl lg:block" />
+      </div>
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="hidden h-64 rounded-xl lg:block" />
+      </div>
     </div>
   );
 }

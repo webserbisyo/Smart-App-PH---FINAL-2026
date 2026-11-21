@@ -303,6 +303,22 @@ function clockSnapshot(): string {
   return clock;
 }
 
+const neverChanges = () => () => {};
+
+/**
+ * False on the server and while React wakes the page up, true after (decision T110). Screens built ahead on
+ * the server that show what this phone knows (the member, the basket) keep their loading look until it is
+ * true, so the first browser render always matches the server's copy (React error #418). Without it, a reply
+ * that arrived early (the top bar asks for the member too) made the page skip its loading look.
+ */
+export function useHydrated(): boolean {
+  return useSyncExternalStore(
+    neverChanges,
+    () => true,
+    () => false,
+  );
+}
+
 /** The current minute (ISO), or null on the server and while hydrating, so open states never mismatch. */
 export function useNow(): string | null {
   return useSyncExternalStore(subscribeClock, clockSnapshot, () => null);

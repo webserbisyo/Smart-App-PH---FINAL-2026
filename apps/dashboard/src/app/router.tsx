@@ -5,46 +5,17 @@ import {
   lazyRouteComponent,
   Outlet,
   redirect,
+  type RouteComponent,
 } from '@tanstack/react-router';
 import { adminWords, membersWords, newsWords, settingsWords, words } from '@smartapp/core';
-import { ForgotScreen } from '../features/auth/screens/forgot.js';
-import { LoginScreen } from '../features/auth/screens/login.js';
-import { SignupScreen } from '../features/auth/screens/signup.js';
-import { CatalogAddOnsScreen } from '../features/catalog/screens/add-ons.js';
-import { CatalogCategoriesScreen } from '../features/catalog/screens/categories.js';
-import { CatalogItemScreen } from '../features/catalog/screens/item-detail.js';
-import { CatalogItemsScreen } from '../features/catalog/screens/items.js';
-import { CatalogVariantsScreen } from '../features/catalog/screens/variants.js';
-import { NewCatalogItemScreen } from '../features/catalog/screens/new-item.js';
 import { CatalogSearchSchema, NewItemSearchSchema } from '../features/catalog/tabs.js';
-import { EditorScreen } from '../features/editor/screens/editor.js';
-import { HomeScreen } from '../features/home/screens/home.js';
 import { HomeSearchSchema } from '../features/home/search.js';
 // Insights is hidden for launch (decision T69); its screen stays for later.
 // import { InsightsScreen } from '../features/insights/screens/insights.js';
 import { InsightsSearchSchema } from '../features/insights/tabs.js';
-import { PrizeClaimsScreen } from '../features/members/screens/claims.js';
-import { FindMemberScreen } from '../features/members/screens/find-member.js';
-import { MembersScreen } from '../features/members/screens/members.js';
-import { NewsComposeScreen } from '../features/members/screens/news-compose.js';
-import { NewsDetailScreen } from '../features/members/screens/news-detail.js';
-import { NewsScreen } from '../features/members/screens/news.js';
 import { NewsComposeSearchSchema } from '../features/members/news-search.js';
 import { MembersSearchSchema } from '../features/members/search.js';
-import { StampCardScreen } from '../features/members/screens/stamp-card.js';
-import { OrdersScreen } from '../features/orders/screens/orders.js';
 import { OrdersSearchSchema } from '../features/orders/search.js';
-import { AccountSettingsScreen } from '../features/settings/screens/account.js';
-import { DeliverySettingsScreen } from '../features/settings/screens/delivery.js';
-import { HoursSettingsScreen } from '../features/settings/screens/hours.js';
-import { NotificationsSettingsScreen } from '../features/settings/screens/notifications.js';
-import { OrderingSettingsScreen } from '../features/settings/screens/ordering.js';
-import { PaymentsSettingsScreen } from '../features/settings/screens/payments.js';
-import { PlanSettingsScreen } from '../features/settings/screens/plan.js';
-import { SettingsIndexScreen } from '../features/settings/screens/settings-index.js';
-import { SettingsLayout } from '../features/settings/screens/settings-layout.js';
-import { ShopSettingsScreen } from '../features/settings/screens/shop.js';
-import { StorageSettingsScreen } from '../features/settings/screens/storage.js';
 import { AdminPaymentsSearchSchema, AdminShopsSearchSchema } from '../features/admin/search.js';
 import { setMockOwnerSlug } from '@smartapp/data';
 import { requireAdmin } from './admin.js';
@@ -56,6 +27,129 @@ import { LoginSearchSchema, requireAuth, requireGuest, signOut } from './guards.
 import type { PageMeta } from './page-meta.js';
 import { AppShell } from './shell/app-shell.js';
 import { ShopContext, resolveShop } from './shop.js';
+
+// Every page loads its own file when first opened (decision T110), so the first visit downloads only the
+// shell and that page. Links preload the next page when hovered or touched (defaultPreload 'intent').
+const ForgotScreen = lazyRouteComponent(
+  () => import('../features/auth/screens/forgot.js'),
+  'ForgotScreen',
+);
+const LoginScreen = lazyRouteComponent(
+  () => import('../features/auth/screens/login.js'),
+  'LoginScreen',
+);
+const SignupScreen = lazyRouteComponent(
+  () => import('../features/auth/screens/signup.js'),
+  'SignupScreen',
+);
+const CatalogAddOnsScreen = lazyRouteComponent(
+  () => import('../features/catalog/screens/add-ons.js'),
+  'CatalogAddOnsScreen',
+);
+const CatalogCategoriesScreen = lazyRouteComponent(
+  () => import('../features/catalog/screens/categories.js'),
+  'CatalogCategoriesScreen',
+);
+const CatalogItemScreen = lazyRouteComponent(
+  () => import('../features/catalog/screens/item-detail.js'),
+  'CatalogItemScreen',
+);
+const CatalogItemsScreen = lazyRouteComponent(
+  () => import('../features/catalog/screens/items.js'),
+  'CatalogItemsScreen',
+);
+const CatalogVariantsScreen = lazyRouteComponent(
+  () => import('../features/catalog/screens/variants.js'),
+  'CatalogVariantsScreen',
+);
+const NewCatalogItemScreen = lazyRouteComponent(
+  () => import('../features/catalog/screens/new-item.js'),
+  'NewCatalogItemScreen',
+);
+const EditorScreen = lazyRouteComponent(
+  () => import('../features/editor/screens/editor.js'),
+  'EditorScreen',
+);
+const HomeScreen = lazyRouteComponent(
+  () => import('../features/home/screens/home.js'),
+  'HomeScreen',
+);
+const PrizeClaimsScreen = lazyRouteComponent(
+  () => import('../features/members/screens/claims.js'),
+  'PrizeClaimsScreen',
+);
+const FindMemberScreen = lazyRouteComponent(
+  () => import('../features/members/screens/find-member.js'),
+  'FindMemberScreen',
+);
+const MembersScreen = lazyRouteComponent(
+  () => import('../features/members/screens/members.js'),
+  'MembersScreen',
+);
+const NewsComposeScreen = lazyRouteComponent(
+  () => import('../features/members/screens/news-compose.js'),
+  'NewsComposeScreen',
+);
+const NewsDetailScreen = lazyRouteComponent(
+  () => import('../features/members/screens/news-detail.js'),
+  'NewsDetailScreen',
+);
+const NewsScreen = lazyRouteComponent(
+  () => import('../features/members/screens/news.js'),
+  'NewsScreen',
+);
+const StampCardScreen = lazyRouteComponent(
+  () => import('../features/members/screens/stamp-card.js'),
+  'StampCardScreen',
+);
+const OrdersScreen = lazyRouteComponent(
+  () => import('../features/orders/screens/orders.js'),
+  'OrdersScreen',
+);
+const AccountSettingsScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/account.js'),
+  'AccountSettingsScreen',
+);
+const DeliverySettingsScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/delivery.js'),
+  'DeliverySettingsScreen',
+);
+const HoursSettingsScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/hours.js'),
+  'HoursSettingsScreen',
+);
+const NotificationsSettingsScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/notifications.js'),
+  'NotificationsSettingsScreen',
+);
+const OrderingSettingsScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/ordering.js'),
+  'OrderingSettingsScreen',
+);
+const PaymentsSettingsScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/payments.js'),
+  'PaymentsSettingsScreen',
+);
+const PlanSettingsScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/plan.js'),
+  'PlanSettingsScreen',
+);
+const SettingsIndexScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/settings-index.js'),
+  'SettingsIndexScreen',
+);
+const SettingsLayout = lazyRouteComponent(
+  () => import('../features/settings/screens/settings-layout.js'),
+  'SettingsLayout',
+);
+const ShopSettingsScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/shop.js'),
+  'ShopSettingsScreen',
+);
+const StorageSettingsScreen = lazyRouteComponent(
+  () => import('../features/settings/screens/storage.js'),
+  'StorageSettingsScreen',
+);
 
 const s = words.screens;
 const page = (title: PageMeta['title'], parent?: PageMeta['parent'], hideDock?: boolean) => ({
@@ -147,7 +241,7 @@ function ShellLayout() {
 
 function shellPage<TPath extends string>(
   path: TPath,
-  component: () => React.JSX.Element,
+  component: RouteComponent,
   meta: { page: PageMeta },
 ) {
   return createRoute({ getParentRoute: () => shellRoute, path, component, staticData: meta });
@@ -289,11 +383,7 @@ const settingsRoute = createRoute({
   staticData: page(() => s.settings.title),
 });
 
-function settingsPage<TPath extends string>(
-  path: TPath,
-  component: () => React.JSX.Element,
-  title: string,
-) {
+function settingsPage<TPath extends string>(path: TPath, component: RouteComponent, title: string) {
   return createRoute({
     getParentRoute: () => settingsRoute,
     path,

@@ -6,6 +6,12 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@smartapp/ui/components/chart';
+import { evenRows, noColumns } from '@smartapp/ui/lib/chart-grid';
+import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
+
+// Five values on the side, a grid line on each, placed without measuring (T110).
+const VALUE_TICKS = 5;
+const GRID_ROWS = evenRows(VALUE_TICKS);
 
 const W = membersWords.chart;
 
@@ -27,6 +33,7 @@ export interface ProgressChartProps {
  * lazily so Recharts stays out of the first load.
  */
 export default function ProgressChart({ progress, goal, selected, onPick }: ProgressChartProps) {
+  const reduced = useReducedMotion();
   const data = progress.map((members, stamps) => ({
     stamps,
     label: stamps >= goal ? W.ready : String(stamps),
@@ -47,9 +54,27 @@ export default function ProgressChart({ progress, goal, selected, onPick }: Prog
           data={data}
           margin={{ top: 8, right: 4, left: -24, bottom: 0 }}
         >
-          <CartesianGrid vertical={false} />
+          <CartesianGrid
+            vertical={false}
+            horizontalCoordinatesGenerator={GRID_ROWS}
+            verticalCoordinatesGenerator={noColumns}
+          />
           <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} interval={0} />
-          <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={48} />
+          {/* interval 0: no on-screen label measuring (T110). */}
+          <YAxis
+            allowDecimals={false}
+            tickLine={false}
+            axisLine={false}
+            width={48}
+            interval={0}
+            tickCount={VALUE_TICKS}
+            // A top that splits into whole steps, so every grid line sits on a whole number.
+            domain={[
+              0,
+              (most: number) =>
+                Math.max(VALUE_TICKS - 1, Math.ceil(most / (VALUE_TICKS - 1)) * (VALUE_TICKS - 1)),
+            ]}
+          />
           <ChartTooltip
             cursor={false}
             content={
@@ -64,6 +89,9 @@ export default function ProgressChart({ progress, goal, selected, onPick }: Prog
             }
           />
           <Bar
+            // Grows in under 400 ms, off under reduced motion (T110).
+            isAnimationActive={!reduced}
+            animationDuration={350}
             dataKey="members"
             radius={6}
             className="cursor-pointer"

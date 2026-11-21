@@ -150,6 +150,11 @@ export function CatalogAddOnsScreen() {
           </div>
         ) : null}
 
+        {groupsLoading ? (
+          // The hint row, held while loading so the groups don't jump (T110).
+          <Skeleton className="h-10 w-full rounded-lg md:h-9" aria-hidden="true" />
+        ) : null}
+
         {/* Offline Banner */}
         {!isOnline && (
           <Notice tone="warning" icon={<WifiOffIcon />}>

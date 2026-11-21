@@ -9,7 +9,11 @@
  *   - JavaScript errors or console errors
  *   - failed requests (status 400 and up), apart from the deliberate not-found page and broken-image demos
  *   - the page scrolling sideways
- * SOFT findings (text covered by another layer, tap targets under 24 px) go in
+ *   - the page keeping the processor busy for good (decision T110, desktop light only): still over
+ *     BUSY_LIMIT in every second for SETTLE_SECONDS after it opened, usually an animation or a count that
+ *     never stops
+ * SOFT findings (text covered by another layer, tap targets under 24 px, a freeze over 300 ms while the
+ * page loads, a page that takes over 5 s to settle or stays over BUSY_NOTE busy) go in
  * `test-results/ui-scan/report.md` for a person to review, next to a screenshot of every page.
  * No pixel baselines: the screenshots are for looking at, not for comparing.
  */
@@ -39,6 +43,17 @@ const SIZES = [
 ] as const;
 type Size = (typeof SIZES)[number];
 type Theme = 'light' | 'dark';
+
+// Speed check (decision T110). A settled page should leave the processor idle. CI machines are shared and
+// run several pages at once, so the hard limit leaves room for noise; anything over BUSY_NOTE is reported.
+// The kit pages show every chart and animation at once and take about 5 s to settle, hence the long wait.
+const BUSY_LIMIT = 0.25;
+const BUSY_NOTE = 0.1;
+const SETTLE_SECONDS = 8;
+// Opening, network quiet and the checks above already take about 3 s, so the note starts at 5.
+const SETTLE_NOTE_SECONDS = 5;
+const FREEZE_NOTE_MS = 300;
+const LONGEST_TASK = '__smartappScanLongestTask';
 
 // Who the sample sign-in opens the dashboard as (apps/dashboard/src/app/preview.ts).
 type Viewer = 'kanto-smash' | 'admin' | null;
@@ -206,6 +221,41 @@ async function inspect(page: Page): Promise<{ overflow: string | null; soft: str
   });
 }
 
+interface Speed {
+  // Share of the last measured second the processor was busy (0 to 1).
+  readonly busy: number;
+  // Seconds after the page opened until a second came in under BUSY_LIMIT, or null if none did.
+  readonly settled: number | null;
+  // The longest load freeze in ms.
+  readonly longest: number;
+}
+
+// Measures one second at a time until the page goes quiet or SETTLE_SECONDS have passed since `opened`.
+async function measureSpeed(page: Page, opened: number): Promise<Speed> {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Performance.enable');
+  const taskSeconds = async () => {
+    const { metrics } = await cdp.send('Performance.getMetrics');
+    return metrics.find((metric) => metric.name === 'TaskDuration')?.value ?? 0;
+  };
+  let busy = 1;
+  let settled: number | null = null;
+  while (settled === null && Date.now() - opened < SETTLE_SECONDS * 1000) {
+    const startTask = await taskSeconds();
+    const startWall = Date.now();
+    await page.waitForTimeout(1000);
+    const wall = (Date.now() - startWall) / 1000;
+    busy = wall > 0 ? ((await taskSeconds()) - startTask) / wall : 0;
+    if (busy <= BUSY_LIMIT) settled = (Date.now() - opened) / 1000;
+  }
+  await cdp.detach();
+  const longest = await page.evaluate((key) => {
+    const value = Reflect.get(window, key);
+    return typeof value === 'number' ? value : 0;
+  }, LONGEST_TASK);
+  return { busy, settled, longest };
+}
+
 async function scan(page: Page, target: Target, size: Size, theme: Theme): Promise<void> {
   const hard: string[] = [];
   page.on('pageerror', (error) => hard.push(`JavaScript error: ${error.message.slice(0, 200)}`));
@@ -237,12 +287,43 @@ async function scan(page: Page, target: Target, size: Size, theme: Theme): Promi
     { theme, viewer: target.viewer },
   );
 
+  const timed = size.name === 'desktop' && theme === 'light';
+  if (timed) {
+    // Keeps the longest task (a freeze) seen while the page loads.
+    await page.addInitScript((key) => {
+      Reflect.set(window, key, 0);
+      try {
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            const longest = Reflect.get(window, key);
+            if (typeof longest === 'number' && entry.duration > longest)
+              Reflect.set(window, key, entry.duration);
+          }
+        }).observe({ type: 'longtask', buffered: true });
+      } catch {
+        // No long task timing in this browser: the freeze note is skipped.
+      }
+    }, LONGEST_TASK);
+  }
+
   const origin = target.app === 'dashboard' ? DASHBOARD_ORIGIN : STOREFRONT_ORIGIN;
+  const opened = Date.now();
   await page.goto(`${origin}${target.path}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(400);
 
   const { overflow, soft } = await inspect(page);
   if (overflow) hard.push(overflow);
+  if (timed) {
+    const { busy, settled, longest } = await measureSpeed(page, opened);
+    const percent = `${Math.round(busy * 100)}%`;
+    if (settled === null) {
+      hard.push(`processor still ${percent} busy ${SETTLE_SECONDS} s after the page opened`);
+    } else {
+      if (settled > SETTLE_NOTE_SECONDS) soft.push(`took ${settled.toFixed(1)} s to settle`);
+      if (busy > BUSY_NOTE) soft.push(`processor ${percent} busy after the page settled`);
+    }
+    if (longest > FREEZE_NOTE_MS) soft.push(`froze for ${Math.round(longest)} ms while loading`);
+  }
 
   const screenshot = fileName(target.app, target.path, size.name, theme);
   await page.screenshot({ path: resolve(OUT_DIR, screenshot) });
