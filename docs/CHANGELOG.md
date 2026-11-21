@@ -2,13 +2,9 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
-<<<<<<< HEAD
+- 2026-11-21 Push News (T106): Members › News tab with Write news (starters, photo, link, audience counts, Now / best times / pick a day, quiet hours and 2-a-week limits, Android and iPhone preview), news details with results and Copy, two automatic pushes; entry points from Members groups, a new item, Home and Settings; storefront unticked news box on Join and Notify me, Account Notifications and News sheets, Stop news toast; database step 8 (`push_campaigns`, `push_deliveries`, 55 tables); sample data only
 - 2026-11-20 Domain plan (T105): each shop at `<slug>.webserbisyo.com` with `shop.webserbisyo.com/<slug>` as backup; app, api and mail fixed; `stays.` for the rentals product; rsvp domains go; more reserved slugs
 - 2026-11-20 Launch phases proposed: `docs/blueprints/launch-phases.md` maps 9 phases from the dev database to the first paying shop, places all 53 tables and every MVP A area, folds in the profile menu redesign and the order chat Back fix, and lists 8 conflicts to decide
-=======
-- 2026-11-21 Push News (T106): Members › News tab with Write news (starters, photo, link, audience counts, Now / best times / pick a day, quiet hours and 2-a-week limits, Android and iPhone preview), news details with results and Copy, two automatic pushes; entry points from Members groups, a new item, Home and Settings; storefront unticked news box on Join and Notify me, Account Notifications and News sheets, Stop news toast; database step 8 (`push_campaigns`, `push_deliveries`, 55 tables); sample data only
-
->>>>>>> origin/main
 - 2026-11-20 Docs aligned (T104): AGENTS rule 11 and foundation match push-to-main (T40) and D9; B-full fixed to T54, T90, T96 with a module merge plan; Meta safety rules; throttler approved; new `system.md`, `features.md`, `meta.md`, `capstone.md`
 - 2026-11-20 Zustand and zundo approved for the stack (T103): first use is the dashboard Editor store with Undo and Redo; API data stays in TanStack Query; install is a later task
 - 2026-11-20 Course skills and progress (T102): ten skills in `.agents/skills/` turning the courses into rules for our stack with sources (data, analysis, HCI, web, OOP, algorithms, platform, security, integration, prompts); `PROGRESS.md` tracks UI approved and Done per area and lists the launch steps; exact versions in `foundation.md`; docs map lists every skill
