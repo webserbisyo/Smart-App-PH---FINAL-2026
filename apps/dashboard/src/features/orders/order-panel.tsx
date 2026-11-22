@@ -122,7 +122,16 @@ import {
 } from './change-time.js';
 import { WhenCard } from './when-card.js';
 import { MessengerOrderButton } from '@/app/orders/messenger-inbox';
-import { ChatFooter, ChatHeader, ChatThread, chatWaits, scrollBox } from '@/app/orders/order-chat';
+import {
+  BackToChatsButton,
+  ChatFooter,
+  ChatHeader,
+  ChatThread,
+  NextWaitingChat,
+  chatWaits,
+  scrollBox,
+  type ChatNav,
+} from '@/app/orders/order-chat';
 import { CustomerFace } from '@/app/owner-avatar';
 
 const CANCEL_REASON_KEYS = [
@@ -189,6 +198,8 @@ export interface OrderPanelProps {
   tab: PanelTab;
   onTabChange: (tab: PanelTab) => void;
   onClose: () => void;
+  // Set when the chat was opened from the Chats list: Back to chats and the next waiting chat (T112).
+  chatNav?: ChatNav | null | undefined;
 }
 
 export type PanelTab = 'order' | 'chat';
@@ -207,6 +218,7 @@ export function OrderPanel({
   tab,
   onTabChange,
   onClose,
+  chatNav,
 }: OrderPanelProps) {
   // Keep the last order while the panel slides away.
   const [lastId, setLastId] = React.useState(orderId);
@@ -284,7 +296,15 @@ export function OrderPanel({
             <ChangeTimeHeader ct={ct} onBack={() => setMode('order')} />
           ) : order && chat ? (
             <>
-              <ChatHeader order={order} detail={detail} close={<CloseButton onClose={onClose} />} />
+              <ChatHeader
+                order={order}
+                detail={detail}
+                close={<CloseButton onClose={onClose} />}
+                back={chatNav ? <BackToChatsButton onBack={chatNav.onBack} /> : undefined}
+              />
+              {chatNav?.next ? (
+                <NextWaitingChat next={chatNav.next} onNext={chatNav.onNext} />
+              ) : null}
               <PanelTabs order={order} />
             </>
           ) : order ? (

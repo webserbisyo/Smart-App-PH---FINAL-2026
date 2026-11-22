@@ -79,6 +79,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Log in and sign-up redesign: sign-up tour on a phone with our sample shops that turns into the owner's own app, slimmer step 1 with the password and a colour on step 2, Log in split screen with Show password, Forgot password with a 6-digit code (decision T108; built 2026-11-21, round 2, final pass and finalize the same day, UI waiting for review)
 - [x] Sample shops page: `/samples` on the storefront lists every demo shop with its cover, logo and highlights, to open as a customer or as the owner (decision T109; built 2026-11-22, UI waiting for review)
 - [x] Smoothness pass: one short count-up, lists fade in, charts stop measuring labels, matching skeletons, dashboard screens load on demand, storefront hydration fix, UI scan speed check (decision T110; built 2026-11-22, waiting for review)
+- [x] Chat Back to chats and Next waiting on Orders, Stays-style account menu with Appearance, My account, Settings and Log out, Preview pill no longer covers it (decision T112; built 2026-11-22, waiting for review)
 
 ## Phase 4: Backend, area by area
 
