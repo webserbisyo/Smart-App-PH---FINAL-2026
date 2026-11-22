@@ -18,6 +18,13 @@ export const DASHBOARD_ROUTES: readonly CatalogRoute[] = [
   { path: '/', open: '/', label: 'Home', scan: true },
   { path: '/orders', open: '/orders', label: 'Orders', scan: true },
   { path: '/orders/$orderId', label: 'Order (opens on Orders)', scan: false, note: 'Redirect' },
+  { path: '/orders/new', open: '/orders/new', label: 'New order', scan: true },
+  {
+    path: '/orders/$orderId/edit',
+    label: 'Edit order',
+    scan: false,
+    note: 'Needs an open order id; opened from the order panel',
+  },
   { path: '/catalog', open: '/catalog', label: 'Menu', scan: true },
   { path: '/catalog/categories', open: '/catalog/categories', label: 'Categories', scan: true },
   { path: '/catalog/add-ons', open: '/catalog/add-ons', label: 'Add-ons', scan: true },
@@ -72,7 +79,14 @@ export const ADMIN_ROUTES: readonly CatalogRoute[] = [
 export const GUEST_ROUTES: readonly CatalogRoute[] = [
   { path: '/login', open: '/login', label: 'Sign in', scan: true },
   { path: '/signup', open: '/signup', label: 'Sign up', scan: true },
+  { path: '/forgot', open: '/forgot', label: 'Forgot password', scan: true },
   { path: '/logout', label: 'Sign out', scan: false, note: 'Signs out, then opens Sign in' },
+];
+
+/** Our own storefront pages outside any shop. */
+export const PLATFORM_ROUTES: readonly CatalogRoute[] = [
+  { path: '/', open: '/', label: 'Platform page', scan: true },
+  { path: '/samples', open: '/samples', label: 'Sample shops (T109)', scan: true },
 ];
 
 /** Storefront pages inside one shop; each path follows /<shop slug>. */

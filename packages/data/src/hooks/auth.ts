@@ -90,6 +90,43 @@ export function useResendSignupCode(client: SupabaseClient<Database>) {
   });
 }
 
+/**
+ * Forgot password, step 1 (T108): emails a 6-digit code. It answers the same whether or not the email has an
+ * account, so nobody can test which emails are owners (rule 12).
+ */
+export function useSendResetCode(client: SupabaseClient<Database>) {
+  return useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const { error } = await client.auth.resetPasswordForEmail(email);
+      if (error && /rate|too many|seconds/i.test(error.message)) throw mapCodeError(error, true);
+    },
+  });
+}
+
+/** Forgot password, step 2 (T108): the code signs the owner in, then the new password is saved. */
+export function useResetPassword(client: SupabaseClient<Database>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      email,
+      code,
+      newPassword,
+    }: {
+      email: string;
+      code: string;
+      newPassword: string;
+    }) => {
+      const verified = await client.auth.verifyOtp({ email, token: code, type: 'recovery' });
+      if (verified.error) throw mapCodeError(verified.error);
+      const saved = await client.auth.updateUser({ password: newPassword });
+      if (saved.error) throw mapAuthError(saved.error, false);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: authKeys.session });
+    },
+  });
+}
+
 export function useSignOut(client: SupabaseClient<Database>) {
   const queryClient = useQueryClient();
   return useMutation({

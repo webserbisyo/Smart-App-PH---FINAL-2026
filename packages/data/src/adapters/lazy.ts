@@ -13,6 +13,7 @@ import type {
   OnboardingAdapter,
   OwnerSettingsAdapter,
   PlatformAdapter,
+  ShowcaseAdapter,
   StorefrontAdapter,
 } from './types';
 
@@ -61,6 +62,11 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     markChatSeen: async (input) => (await real()).ownerOrders.markChatSeen(input),
     reviewPayment: async (input) => (await real()).ownerOrders.reviewPayment(input),
     recordPayment: async (input) => (await real()).ownerOrders.recordPayment(input),
+    quoteOwnerOrder: async (input) => (await real()).ownerOrders.quoteOwnerOrder(input),
+    createOwnerOrder: async (input) => (await real()).ownerOrders.createOwnerOrder(input),
+    editOrder: async (input) => (await real()).ownerOrders.editOrder(input),
+    getOwnerSchedule: async (input) => (await real()).ownerOrders.getOwnerSchedule(input),
+    recordGiveBack: async (input) => (await real()).ownerOrders.recordGiveBack(input),
     advanceOrder: async (input) => (await real()).ownerOrders.advanceOrder(input),
     recallOrder: async (input) => (await real()).ownerOrders.recallOrder(input),
     rescheduleOrder: async (input) => (await real()).ownerOrders.rescheduleOrder(input),
@@ -148,6 +154,8 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     getPlan: async () => (await real()).ownerSettings.getPlan(),
     submitPlanPayment: async (input) => (await real()).ownerSettings.submitPlanPayment(input),
     sendPlanNote: async (input) => (await real()).ownerSettings.sendPlanNote(input),
+    sendPlanPhoto: async (input) => (await real()).ownerSettings.sendPlanPhoto(input),
+    markPlanChatSeen: async () => (await real()).ownerSettings.markPlanChatSeen(),
     getStorage: async () => (await real()).ownerSettings.getStorage(),
     previewCleanup: async (input) => (await real()).ownerSettings.previewCleanup(input),
     runCleanup: async (input) => (await real()).ownerSettings.runCleanup(input),
@@ -207,6 +215,10 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     savePlatformSetup: async (input) => (await real()).platform.savePlatformSetup(input),
   };
 
+  const showcase: ShowcaseAdapter = {
+    getShowcase: async () => (await real()).showcase.getShowcase(),
+  };
+
   return {
     storefront,
     customerAuth,
@@ -220,5 +232,6 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     ownerEditor,
     onboarding,
     platform,
+    showcase,
   };
 }

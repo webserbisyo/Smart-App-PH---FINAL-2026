@@ -144,8 +144,9 @@ jobs:
   ui-scan:
     # Decision T99: every page in the route catalog and the five kit pages on the preview builds (the
     # same builds as the public demo links), at 360, 768 and 1280 px, the dashboard in light and dark.
-    # Fails on JavaScript or console errors, failed requests and sideways scroll; the report and a
-    # screenshot of every page are uploaded either way (no pixel baselines).
+    # Fails on JavaScript or console errors, failed requests, sideways scroll and a settled desktop page
+    # still keeping the processor busy (T110); the report and a screenshot of every page are uploaded
+    # either way (no pixel baselines).
     name: UI scan (every page, 3 sizes, light and dark)
     runs-on: ubuntu-latest
     needs: check

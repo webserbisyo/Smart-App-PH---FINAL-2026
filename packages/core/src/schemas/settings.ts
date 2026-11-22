@@ -116,7 +116,8 @@ export const PlanPaymentSchema = z.object({
   months: PlanMonthsSchema,
   amount: CentavosSchema,
   method: PlanPaidViaEnum,
-  reference: z.string().min(1).max(40),
+  // Optional since T107: the photo shows it.
+  reference: z.string().min(1).max(40).nullable(),
   status: PlanPaymentStatusEnum,
   submittedAt: IsoDateTimeSchema,
   // The last day this payment pays for, once approved.
@@ -148,6 +149,13 @@ export const BillingMessageSchema = z.object({
   reason: PlanRejectReasonEnum.nullable(),
   // extra_days: how many days were given; live: none.
   days: z.number().int().positive().nullable(),
+  // photo (T107): where the photo is kept, a short-lived address to show it (null once it is deleted),
+  // and the reference number the owner typed with it, if any.
+  photoPath: z.string().min(1).max(300).nullable().default(null),
+  photoUrl: z.string().max(200_000).nullable().default(null),
+  reference: z.string().min(1).max(40).nullable().default(null),
+  // When the other side saw it: Smart App PH for the owner's lines, the owner for ours.
+  seenAt: IsoDateTimeSchema.nullable().default(null),
 });
 export type BillingMessage = z.infer<typeof BillingMessageSchema>;
 
@@ -174,13 +182,35 @@ export type Plan = z.infer<typeof PlanSchema>;
 export const SendBillingNoteInputSchema = z.object({ text: z.string().trim().min(1).max(300) });
 export type SendBillingNoteInput = z.infer<typeof SendBillingNoteInputSchema>;
 
+// A photo in the Billing chat (T107): photos only, the reference number is optional.
+export const BILLING_PHOTOS_PER_SEND = 3;
+export const SendBillingPhotoInputSchema = z.object({
+  photoPath: z.string().min(1).max(300),
+  reference: z
+    .string()
+    .trim()
+    .max(40)
+    .transform((v) => (v === '' ? null : v))
+    .nullable()
+    .default(null),
+});
+export type SendBillingPhotoInput = z.input<typeof SendBillingPhotoInputSchema>;
+
 export const SubmitPlanPaymentInputSchema = z.object({
   months: PlanMonthsSchema,
   method: PlanPayMethodEnum,
-  reference: z.string().trim().min(6).max(40),
+  // Optional since T107: the photo shows it. When typed, at least 6 characters.
+  reference: z
+    .string()
+    .trim()
+    .max(40)
+    .refine((v) => v === '' || v.length >= 6)
+    .transform((v) => (v === '' ? null : v))
+    .nullable()
+    .default(null),
   proofPath: z.string().min(1),
 });
-export type SubmitPlanPaymentInput = z.infer<typeof SubmitPlanPaymentInputSchema>;
+export type SubmitPlanPaymentInput = z.input<typeof SubmitPlanPaymentInputSchema>;
 
 // ---------- storage and data (T66) ----------
 

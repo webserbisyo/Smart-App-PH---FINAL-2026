@@ -98,6 +98,7 @@ These are from earlier decisions and are not done yet:
 - The NestJS routes in `docs/api.md` for sign-up, Super Admin and tracking, and the job that sends Meta events and retries failed ones.
 - Emails from `codes@mail.webserbisyo.com` through Resend: the sign-up code, "your shop is live", reminders and payment answers (Super Admin › Setup lists them).
 - The job that deletes payment photos after 30 days.
+- Forgot password (decision T108): Supabase › Authentication › Emails › **Reset password**. Replace the link with the code: put `{{ .Token }}` in the message (for example "Your code is {{ .Token }}"), then Save. Without it the owner gets a link and the `/forgot` page has no code to type.
 
 ## 9. Let GitHub update the dev database (decision T96, D9)
 

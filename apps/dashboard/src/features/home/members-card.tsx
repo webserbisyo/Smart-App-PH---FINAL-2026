@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { homeWords, type HomeMembers } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { cn } from 'cn';
-import { HomeCard } from './home-card.js';
+import { HomeCard } from '@/app/home/home-card';
 
 const W = homeWords.members;
 

@@ -2,6 +2,8 @@
 
 Two links anyone can open, on sample data, with no database and no real sign-in (decision T100): the storefront for the five demo shops, and the owner dashboard with "Look around with sample data" on its sign-in page. Both show the **Preview** pill (bottom left, next to the side nav on a computer) to switch the scenario, the clock and who you view as. Add `?clean=1` to any address to hide the pill for screenshots, `?clean=0` to bring it back.
 
+**Live now (set up 2026-11-20):** storefront https://smartapp-demo-storefront.vercel.app (try `/kanto-smash`), dashboard https://smartapp-demo-dashboard.vercel.app. Vercel team "Web Serbisyo's projects", projects `smartapp-demo-storefront` and `smartapp-demo-dashboard`, Vercel Authentication off so anyone can open them. The steps below are how they were made; you don't need to repeat them.
+
 A preview build is not a live shop. Live builds (`APP_ENV` empty or `production`) have none of this: no Preview pill, no sample sign-in, no `/kit`, and CI checks that.
 
 ## What a preview build turns on
@@ -55,6 +57,7 @@ Make **two new projects**. Don't reuse the old `storefront` and `dashboard` proj
 
 - Storefront: open `<storefront address>/kanto-smash`. The Preview pill shows bottom left. Try Scenario → Closed, then Shop → Tala Apparel.
 - Dashboard: open the dashboard address → **Look around with sample data**. Home opens as the Kanto Smash owner. Preview → View as → Platform admin opens `/admin`.
+- Sample shops: `<storefront address>/samples` shows all five; See the owner side opens that shop in the dashboard (needs step 3).
 - Kit: `<dashboard address>/kit`, then the Dashboard, Storefront, Tokens and Routes tabs.
 
 Every push to `main` redeploys both. Vercel's own preview links for branches work the same way.

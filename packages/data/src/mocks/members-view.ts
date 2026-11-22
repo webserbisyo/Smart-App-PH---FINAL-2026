@@ -89,6 +89,8 @@ export function peopleOf(s: ShopState): Person[] {
       member.orders.push(order);
       return;
     }
+    // A walk-in made without a mobile number is not a guest anyone can find again (T111).
+    if (!phone) return;
     let guest = guests.get(phone);
     if (!guest) {
       guest = { id: guestId(phone), member: null, name, phone, email, orders: [] };

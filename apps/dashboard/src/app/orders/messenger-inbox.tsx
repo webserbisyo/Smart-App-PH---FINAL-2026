@@ -4,7 +4,7 @@ import { MessengerIcon } from '@smartapp/ui/compositions/messenger-icon';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { copyText } from '@smartapp/ui/lib/copy-text';
 import { cn } from 'cn';
-import { orderNoLabel } from '@/app/orders/order-ticket-label';
+import { orderNoLabel } from './order-ticket-label.js';
 
 // The shop's Page inbox in Meta Business Suite: where a Facebook Page's Messenger chats are answered.
 export const PAGE_INBOX_URL = 'https://business.facebook.com/latest/inbox/all';

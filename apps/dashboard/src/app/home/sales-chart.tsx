@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { ReferenceLine } from 'recharts';
 import {
   formatManila,
@@ -7,10 +8,12 @@ import {
   manilaToDate,
   type HomeSlot,
 } from '@smartapp/core';
+import { evenRows, noColumns } from '@smartapp/ui/lib/chart-grid';
 import { EvilBarChart } from '@smartapp/ui/components/evilcharts/charts/recharts-bar-chart';
 import { ChartTip } from './chart-tip.js';
 
 const W = homeWords;
+const CONFIG = { sales: { label: W.sales.byHour, colors: { light: ['var(--chart-1)'] } } };
 
 export interface SalesChartProps {
   slots: readonly HomeSlot[];
@@ -27,32 +30,52 @@ function slotLabel(slot: HomeSlot, days: number): string {
     : slot.date.slice(8).replace(/^0/, '');
 }
 
+// At most this many labels under the bars. A fixed step (T110): Recharts' "preserve" spacing measures every
+// label on screen, which froze Home for up to a second while the page was still changing.
+const MAX_LABELS = 6;
+const labelStep = (count: number) => Math.max(0, Math.ceil(count / MAX_LABELS) - 1);
+// Four values on the side, and a grid line on each one, placed without measuring (T110).
+const VALUE_TICKS = 4;
+const GRID_ROWS = evenRows(VALUE_TICKS);
+
 /**
  * Sales by hour (one day) or by day (T83) on the installed evilcharts Bar chart: one gradient bar per slot,
  * a now line on today, and no "usual" bars. Loaded lazily with Recharts.
  */
-export default function SalesChart({ slots, nowHour }: SalesChartProps) {
-  const data = slots.map((s) => ({
-    label: slotLabel(s, slots.length),
-    hour: s.hour,
-    date: s.date,
-    orders: s.orders,
-    sales: s.sales,
-  }));
-  const config = { sales: { label: W.sales.byHour, colors: { light: ['var(--chart-1)'] } } };
+function SalesChart({ slots, nowHour }: SalesChartProps) {
+  // Rebuilt only when the slots change, so a Home refresh with the same numbers doesn't redraw the chart.
+  const data = React.useMemo(
+    () =>
+      slots.map((s) => ({
+        label: slotLabel(s, slots.length),
+        hour: s.hour,
+        date: s.date,
+        orders: s.orders,
+        sales: s.sales,
+      })),
+    [slots],
+  );
   const nowLabel = nowHour === null ? null : (data.find((d) => d.hour === nowHour)?.label ?? null);
   return (
     <div className="h-52 w-full md:h-60">
       <EvilBarChart
         data={data}
-        config={config}
+        config={CONFIG}
         className="aspect-auto h-full w-full"
         barRadius={6}
         barGap={2}
       >
-        <EvilBarChart.Grid />
-        <EvilBarChart.XAxis dataKey="label" interval="preserveStartEnd" minTickGap={8} />
-        <EvilBarChart.YAxis width={44} tickFormatter={(v: number) => formatPesoShort(v)} />
+        <EvilBarChart.Grid
+          horizontalCoordinatesGenerator={GRID_ROWS}
+          verticalCoordinatesGenerator={noColumns}
+        />
+        <EvilBarChart.XAxis dataKey="label" interval={labelStep(data.length)} />
+        <EvilBarChart.YAxis
+          width={44}
+          interval={0}
+          tickCount={VALUE_TICKS}
+          tickFormatter={(v: number) => formatPesoShort(v)}
+        />
         <ChartTip
           rows={[{ key: 'sales', label: W.money.title }]}
           title={(row) => {
@@ -83,3 +106,5 @@ export default function SalesChart({ slots, nowHour }: SalesChartProps) {
     </div>
   );
 }
+
+export default React.memo(SalesChart);

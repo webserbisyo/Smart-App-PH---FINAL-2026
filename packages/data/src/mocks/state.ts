@@ -16,6 +16,7 @@ import {
   type OrderEvent,
   type OrderMessage,
   type OrderReceipt,
+  type OrderSource,
   type OrderStatus,
   type OrderType,
   type OwnerAvatar,
@@ -50,6 +51,19 @@ export interface OrderRecord {
   byCustomer: boolean;
   seenAt: string | null;
   ownerNote: string | null;
+  // T111: who made it, what is paid so far, the edit version and when the shop last changed it. Left
+  // out on older records: storefront, the whole total when paid, version 1, never changed.
+  source?: OrderSource | undefined;
+  paidAmount?: number | undefined;
+  version?: number | undefined;
+  editedAt?: string | null | undefined;
+}
+
+/** What the customer paid so far (T111): the stored amount, else all of it once the order is paid. */
+export function paidOf(o: Pick<OrderRecord, 'paidAmount' | 'receipt'>): number {
+  if (o.paidAmount !== undefined) return o.paidAmount;
+  const status = o.receipt.paymentStatus;
+  return status === 'paid' || status === 'refunded' ? o.receipt.totals.total : 0;
 }
 
 // A stamp history line as stored. The extra fields are the owner's (D4) and optional, so a plain line still fits.

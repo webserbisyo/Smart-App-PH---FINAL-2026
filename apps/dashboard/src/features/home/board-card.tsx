@@ -29,7 +29,7 @@ import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
 import { STAGE_LOOK, stageLabel } from '@/app/orders/stage';
 import { StageChip } from '@/app/orders/stage-chip';
 import { StageIcon } from '@/app/orders/stage-icon';
-import { HomeCard } from './home-card.js';
+import { HomeCard } from '@/app/home/home-card';
 
 const W = homeWords.board;
 const LIVE_STAGES = ['new', 'preparing', 'ready', 'out'] as const satisfies readonly OrderStage[];

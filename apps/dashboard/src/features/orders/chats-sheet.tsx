@@ -18,7 +18,7 @@ import { CUSTOMER_LOOK, customerKind } from '@/app/orders/customer-kind';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { useNow } from '@/app/orders/use-now';
 import { useCardDragging } from './drag-state.js';
-import { PAGE_INBOX_URL } from './messenger-inbox.js';
+import { PAGE_INBOX_URL } from '@/app/orders/messenger-inbox';
 import { CustomerFace } from '@/app/owner-avatar';
 
 const W = ordersWords.chat.list;

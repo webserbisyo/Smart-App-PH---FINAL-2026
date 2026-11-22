@@ -309,7 +309,7 @@ export const KAPE_JUAN_PACK: ShopPack = {
         bank: null,
         accountName: 'Juan S.',
         accountNumber: '0918 000 0001',
-        qr: null,
+        qr: 'demo:kape-juan/brand/qr',
         sample: true,
       },
       {

@@ -36,30 +36,9 @@ import { ItemPhotos, PaymentChip } from '@/app/orders/order-card';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
 import { StageChip } from '@/app/orders/stage-chip';
-import { CustomerFace } from '@/app/owner-avatar';
+import { CustomerAvatar } from '@/app/orders/customer-avatar';
 
 const W = ordersWords.bookings;
-
-/** A member's face, or the customer's initials tinted by who they are (first order, guest). */
-export function CustomerAvatar({
-  order,
-  size = 'sm',
-  className,
-}: {
-  order: BoardOrder;
-  size?: 'sm' | 'default';
-  className?: string | undefined;
-}) {
-  return (
-    <CustomerFace
-      avatar={order.customerAvatar}
-      name={order.customerName}
-      size={size}
-      className={className}
-      initialsClassName={CUSTOMER_LOOK[customerKind(order)].avatar}
-    />
-  );
-}
 
 /**
  * One order on the week board (T86): always the column's full width, so a busy time stacks cards instead

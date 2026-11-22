@@ -15,6 +15,7 @@ export const PORTS: Record<SmokeServer, number> = { prod: 3000, dev: 3100 };
 
 export const ROUTES: readonly SmokeRoute[] = [
   { name: 'platform page', path: '/', server: 'prod' },
+  { name: 'sample shops', path: '/samples', server: 'prod' },
   { name: 'kanto-smash home', path: '/kanto-smash', server: 'prod' },
   { name: 'tala-apparel home', path: '/tala-apparel', server: 'prod' },
   { name: 'kape-juan home', path: '/kape-juan', server: 'prod' },

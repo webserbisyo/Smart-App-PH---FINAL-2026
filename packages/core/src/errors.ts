@@ -54,6 +54,10 @@ export const ErrorCode = [
   'slot_full',
   'notice_too_short',
   'daily_limit_reached',
+  // New order and Edit order (T111)
+  'order_locked',
+  'proof_waiting',
+  'order_changed',
   // Catalog (owner)
   'category_not_empty',
   'item_has_orders',

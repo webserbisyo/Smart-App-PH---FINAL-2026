@@ -18,7 +18,6 @@ import {
   StatLabel,
   StatValue,
 } from '@smartapp/ui/components/stat';
-import { CountUp } from '@smartapp/ui/compositions/count-up';
 import { cn } from 'cn';
 
 const W = membersWords;
@@ -190,7 +189,7 @@ export function MembersStats({
         aria={W.stats.open(W.stats.members)}
         icon={<UsersIcon />}
         tone="bg-accent text-primary"
-        value={<CountUp value={view.members} />}
+        value={view.members}
         note={
           <>
             <Change value={changeOf(pulse.joined, pulse.joinedBefore, true)} />
@@ -205,7 +204,7 @@ export function MembersStats({
         aria={W.stats.open(W.stats.ready)}
         icon={<GiftIcon />}
         tone="bg-member-soft text-member-text"
-        value={<CountUp value={ready} />}
+        value={ready}
         note={<span className="truncate">{W.stats.readyNote(ready)}</span>}
         pressed={filter === 'ready'}
         onClick={() => onPick(filter === 'ready' ? 'all' : 'ready')}
@@ -216,7 +215,7 @@ export function MembersStats({
         aria={W.stats.open(W.stats.almost)}
         icon={<StarIcon />}
         tone="bg-warning-soft text-warning-text"
-        value={<CountUp value={almost} />}
+        value={almost}
         note={<span className="truncate">{W.stats.almostNote(smallCard)}</span>}
         pressed={filter === 'almost'}
         onClick={() => onPick(filter === 'almost' ? 'all' : 'almost')}
@@ -227,12 +226,8 @@ export function MembersStats({
         aria={W.stats.openSales}
         icon={<WalletIcon />}
         tone="bg-info-soft text-info-text"
-        value={
-          <span>
-            {W.stats.pesoSign}
-            <CountUp value={pesos} />
-          </span>
-        }
+        // Whole pesos, shown at once (T110): the page headline already carries the moment.
+        value={formatPeso(pesos * 100)}
         note={
           <>
             <Change value={changeOf(pulse.sales.members, pulse.salesBefore.members, false)} />
