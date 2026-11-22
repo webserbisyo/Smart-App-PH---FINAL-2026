@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-22 T107 follow-up: Billing chat photos send as they are (no crop step, like Messenger); QR Ph accounts keep their account or mobile number (Settings asks for it as the database already required, demo QR Ph accounts have one, checkout shows it)
 - 2026-11-22 Smoothness pass (T110): one 380 ms count-up (Home Sales total, storefront stamps), lists fade in instead of Animated List, charts stop measuring labels, skeletons match pages, dashboard screens load on demand (first file 500 to 116 KB), storefront #418 race fixed, sign-up lighter on phones, smoke test warm-up, UI scan speed check
 - 2026-11-22 Sample shops page (T109): `/samples` on the storefront with every demo shop's cover, logo, highlights, Open the shop and See the owner side (`/login?sample=<slug>`); linked from Sign up, the tour and the platform page; `samples` reserved
 - 2026-11-21 Sign-up and log in finalize (T108): every sample shop plays its own story (order with its item sheet and choices, chat, stamps, push, owner), a draggable row of the five shops that follows the tour, the chat notification slides in, Log in has the stacked logo and the full tour

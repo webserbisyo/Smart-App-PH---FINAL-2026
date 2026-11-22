@@ -3308,7 +3308,13 @@ export const settingsWords = {
     methodsCard: 'Ways to pay',
     lastMethod: 'Keep at least one way to pay on.',
     accountName: 'Account name',
-    accountNumber: (method: string) => (method === 'bank' ? 'Account number' : 'Mobile number'),
+    // QR Ph: the account or mobile number behind the QR, so customers can also type it in.
+    accountNumber: (method: string) =>
+      method === 'bank'
+        ? 'Account number'
+        : method === 'qr_ph'
+          ? 'Account or mobile number'
+          : 'Mobile number',
     // A shop can take up to three bank accounts, each with its bank from a list (T84).
     bank: 'Bank',
     bankPick: 'Pick a bank',
@@ -3318,6 +3324,8 @@ export const settingsWords = {
     bankLimit: (n: number) => `Up to ${n} bank accounts.`,
     required: 'Fill this in, so customers know where to send.',
     qr: 'QR code (optional)',
+    // QR Ph is the QR itself, so there it is required.
+    qrRequired: 'QR code',
     qrHelp: 'Kept sharp so it scans: 1000 px, high quality.',
     sample: 'Sample details. Replace them before you go live.',
     codMax: 'Cash on delivery up to',
@@ -4688,7 +4696,6 @@ export const billingWords = {
   tooManyPhotos: 'Up to 3 photos at a time. Send these first.',
   photosSent: (n: number) => (n === 1 ? 'Photo sent.' : `${n} photos sent.`),
   enterHint: 'Enter to send, Shift + Enter for a new line',
-  crop: 'Crop',
   previousPhoto: 'Previous photo',
   nextPhoto: 'Next photo',
   letters: (used: number, max: number) => `${used}/${max}`,
