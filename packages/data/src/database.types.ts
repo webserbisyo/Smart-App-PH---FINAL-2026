@@ -51,14 +51,14 @@ isOneToOne: false
                   ]
                 },"billing_messages": {
                   Row: {
-                    "created_at": string,"days": number | null,"from": string,"id": string,"kind": string,"payment_id": string | null,"reason": string | null,"seen_at": string | null,"tenant_id": string,"text": string | null
+                    "created_at": string,"days": number | null,"from": string,"id": string,"kind": string,"payment_id": string | null,"photo_media_id": string | null,"reason": string | null,"reference": string | null,"seen_at": string | null,"tenant_id": string,"text": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"days"?: number | null,"from": string,"id"?: string,"kind": string,"payment_id"?: string | null,"reason"?: string | null,"seen_at"?: string | null,"tenant_id": string,"text"?: string | null
+                    "created_at"?: string,"days"?: number | null,"from": string,"id"?: string,"kind": string,"payment_id"?: string | null,"photo_media_id"?: string | null,"reason"?: string | null,"reference"?: string | null,"seen_at"?: string | null,"tenant_id": string,"text"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"days"?: number | null,"from"?: string,"id"?: string,"kind"?: string,"payment_id"?: string | null,"reason"?: string | null,"seen_at"?: string | null,"tenant_id"?: string,"text"?: string | null
+                    "created_at"?: string,"days"?: number | null,"from"?: string,"id"?: string,"kind"?: string,"payment_id"?: string | null,"photo_media_id"?: string | null,"reason"?: string | null,"reference"?: string | null,"seen_at"?: string | null,"tenant_id"?: string,"text"?: string | null
                   }
                   Relationships: [
                     {
@@ -72,6 +72,12 @@ isOneToOne: false
       columns: ["tenant_id","payment_id"]
 isOneToOne: false
       referencedRelation: "plan_payments"
+      referencedColumns: ["tenant_id","id"]
+    },{
+      foreignKeyName: "billing_messages_tenant_id_photo_media_id_fkey"
+      columns: ["tenant_id","photo_media_id"]
+isOneToOne: false
+      referencedRelation: "media_files"
       referencedColumns: ["tenant_id","id"]
     }
                   ]
@@ -939,14 +945,14 @@ isOneToOne: false
                   ]
                 },"plan_payments": {
                   Row: {
-                    "amount": number,"covers_until": string,"created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"method": string,"months": number,"proof_media_id": string | null,"recorded_by": string | null,"reference": string,"reference_norm": string | null,"reject_reason": string | null,"status": string,"tenant_id": string
+                    "amount": number,"covers_until": string,"created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"method": string,"months": number,"proof_media_id": string | null,"recorded_by": string | null,"reference": string | null,"reference_norm": string | null,"reject_reason": string | null,"status": string,"tenant_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount": number,"covers_until": string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method": string,"months": number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference": string,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id": string
+                    "amount": number,"covers_until": string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method": string,"months": number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference"?: string | null,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id": string
                   }
                   Update: {
-                    "amount"?: number,"covers_until"?: string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method"?: string,"months"?: number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference"?: string,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id"?: string
+                    "amount"?: number,"covers_until"?: string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method"?: string,"months"?: number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference"?: string | null,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id"?: string
                   }
                   Relationships: [
                     {
@@ -991,16 +997,92 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
-                },"push_subscriptions": {
+                },"push_campaigns": {
                   Row: {
-                    "auth": string,"created_at": string,"endpoint": string,"id": string,"member_id": string | null,"p256dh": string,"tenant_id": string
+                    "audience": string,"body": string,"copied_from_id": string | null,"created_at": string,"created_by": string | null,"id": string,"image_media_id": string | null,"link_item_id": string | null,"link_kind": string,"phones": number,"send_at": string | null,"sent_at": string | null,"status": string,"tenant_id": string,"title": string,"updated_at": string,"wait_reason": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "auth": string,"created_at"?: string,"endpoint": string,"id"?: string,"member_id"?: string | null,"p256dh": string,"tenant_id": string
+                    "audience"?: string,"body": string,"copied_from_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"image_media_id"?: string | null,"link_item_id"?: string | null,"link_kind"?: string,"phones"?: number,"send_at"?: string | null,"sent_at"?: string | null,"status"?: string,"tenant_id": string,"title": string,"updated_at"?: string,"wait_reason"?: string | null
                   }
                   Update: {
-                    "auth"?: string,"created_at"?: string,"endpoint"?: string,"id"?: string,"member_id"?: string | null,"p256dh"?: string,"tenant_id"?: string
+                    "audience"?: string,"body"?: string,"copied_from_id"?: string | null,"created_at"?: string,"created_by"?: string | null,"id"?: string,"image_media_id"?: string | null,"link_item_id"?: string | null,"link_kind"?: string,"phones"?: number,"send_at"?: string | null,"sent_at"?: string | null,"status"?: string,"tenant_id"?: string,"title"?: string,"updated_at"?: string,"wait_reason"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "push_campaigns_tenant_id_copied_from_id_fkey"
+      columns: ["tenant_id","copied_from_id"]
+isOneToOne: false
+      referencedRelation: "push_campaigns"
+      referencedColumns: ["tenant_id","id"]
+    },{
+      foreignKeyName: "push_campaigns_tenant_id_fkey"
+      columns: ["tenant_id"]
+isOneToOne: false
+      referencedRelation: "tenants"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "push_campaigns_tenant_id_image_media_id_fkey"
+      columns: ["tenant_id","image_media_id"]
+isOneToOne: false
+      referencedRelation: "media_files"
+      referencedColumns: ["tenant_id","id"]
+    },{
+      foreignKeyName: "push_campaigns_tenant_id_link_item_id_fkey"
+      columns: ["tenant_id","link_item_id"]
+isOneToOne: false
+      referencedRelation: "items"
+      referencedColumns: ["tenant_id","id"]
+    }
+                  ]
+                },"push_deliveries": {
+                  Row: {
+                    "attempts": number,"campaign_id": string,"created_at": string,"id": string,"member_id": string | null,"opened_at": string | null,"platform": string,"sent_at": string | null,"status": string,"stopped_at": string | null,"subscription_id": string | null,"tenant_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "attempts"?: number,"campaign_id": string,"created_at"?: string,"id"?: string,"member_id"?: string | null,"opened_at"?: string | null,"platform"?: string,"sent_at"?: string | null,"status"?: string,"stopped_at"?: string | null,"subscription_id"?: string | null,"tenant_id": string
+                  }
+                  Update: {
+                    "attempts"?: number,"campaign_id"?: string,"created_at"?: string,"id"?: string,"member_id"?: string | null,"opened_at"?: string | null,"platform"?: string,"sent_at"?: string | null,"status"?: string,"stopped_at"?: string | null,"subscription_id"?: string | null,"tenant_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "push_deliveries_tenant_id_campaign_id_fkey"
+      columns: ["tenant_id","campaign_id"]
+isOneToOne: false
+      referencedRelation: "push_campaigns"
+      referencedColumns: ["tenant_id","id"]
+    },{
+      foreignKeyName: "push_deliveries_tenant_id_fkey"
+      columns: ["tenant_id"]
+isOneToOne: false
+      referencedRelation: "tenants"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "push_deliveries_tenant_id_member_id_fkey"
+      columns: ["tenant_id","member_id"]
+isOneToOne: false
+      referencedRelation: "members"
+      referencedColumns: ["tenant_id","id"]
+    },{
+      foreignKeyName: "push_deliveries_tenant_id_subscription_id_fkey"
+      columns: ["tenant_id","subscription_id"]
+isOneToOne: false
+      referencedRelation: "push_subscriptions"
+      referencedColumns: ["tenant_id","id"]
+    }
+                  ]
+                },"push_subscriptions": {
+                  Row: {
+                    "auth": string,"created_at": string,"endpoint": string,"fail_count": number,"id": string,"last_ok_at": string | null,"member_id": string | null,"news": boolean,"news_changed_at": string | null,"p256dh": string,"platform": string,"tenant_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "auth": string,"created_at"?: string,"endpoint": string,"fail_count"?: number,"id"?: string,"last_ok_at"?: string | null,"member_id"?: string | null,"news"?: boolean,"news_changed_at"?: string | null,"p256dh": string,"platform"?: string,"tenant_id": string
+                  }
+                  Update: {
+                    "auth"?: string,"created_at"?: string,"endpoint"?: string,"fail_count"?: number,"id"?: string,"last_ok_at"?: string | null,"member_id"?: string | null,"news"?: boolean,"news_changed_at"?: string | null,"p256dh"?: string,"platform"?: string,"tenant_id"?: string
                   }
                   Relationships: [
                     {
@@ -1079,14 +1161,14 @@ isOneToOne: false
                   ]
                 },"shop_settings": {
                   Row: {
-                    "address": string | null,"busy_until": string | null,"cod_max_total": number | null,"days_ahead": number,"delivery_on": boolean,"facebook_url": string | null,"free_delivery_from": number | null,"google_review_url": string | null,"messenger_username": string | null,"orders_per_slot": number | null,"paused": boolean,"phone": string | null,"pickup_note": string | null,"pickup_on": boolean,"pin_lat": number | null,"pin_lng": number | null,"prep_minutes": number,"show_address": boolean,"slot_minutes": number,"take_orders_while_closed": boolean,"tenant_id": string,"updated_at": string,"walk_in_on": boolean
+                    "address": string | null,"busy_until": string | null,"cod_max_total": number | null,"days_ahead": number,"delivery_on": boolean,"facebook_url": string | null,"free_delivery_from": number | null,"google_review_url": string | null,"messenger_username": string | null,"orders_per_slot": number | null,"paused": boolean,"phone": string | null,"pickup_note": string | null,"pickup_on": boolean,"pin_lat": number | null,"pin_lng": number | null,"prep_minutes": number,"push_reward_ready": boolean,"push_stamp_added": boolean,"show_address": boolean,"slot_minutes": number,"take_orders_while_closed": boolean,"tenant_id": string,"updated_at": string,"walk_in_on": boolean
                   }
                   ComputedFields: never
                   Insert: {
-                    "address"?: string | null,"busy_until"?: string | null,"cod_max_total"?: number | null,"days_ahead"?: number,"delivery_on"?: boolean,"facebook_url"?: string | null,"free_delivery_from"?: number | null,"google_review_url"?: string | null,"messenger_username"?: string | null,"orders_per_slot"?: number | null,"paused"?: boolean,"phone"?: string | null,"pickup_note"?: string | null,"pickup_on"?: boolean,"pin_lat"?: number | null,"pin_lng"?: number | null,"prep_minutes"?: number,"show_address"?: boolean,"slot_minutes"?: number,"take_orders_while_closed"?: boolean,"tenant_id": string,"updated_at"?: string,"walk_in_on"?: boolean
+                    "address"?: string | null,"busy_until"?: string | null,"cod_max_total"?: number | null,"days_ahead"?: number,"delivery_on"?: boolean,"facebook_url"?: string | null,"free_delivery_from"?: number | null,"google_review_url"?: string | null,"messenger_username"?: string | null,"orders_per_slot"?: number | null,"paused"?: boolean,"phone"?: string | null,"pickup_note"?: string | null,"pickup_on"?: boolean,"pin_lat"?: number | null,"pin_lng"?: number | null,"prep_minutes"?: number,"push_reward_ready"?: boolean,"push_stamp_added"?: boolean,"show_address"?: boolean,"slot_minutes"?: number,"take_orders_while_closed"?: boolean,"tenant_id": string,"updated_at"?: string,"walk_in_on"?: boolean
                   }
                   Update: {
-                    "address"?: string | null,"busy_until"?: string | null,"cod_max_total"?: number | null,"days_ahead"?: number,"delivery_on"?: boolean,"facebook_url"?: string | null,"free_delivery_from"?: number | null,"google_review_url"?: string | null,"messenger_username"?: string | null,"orders_per_slot"?: number | null,"paused"?: boolean,"phone"?: string | null,"pickup_note"?: string | null,"pickup_on"?: boolean,"pin_lat"?: number | null,"pin_lng"?: number | null,"prep_minutes"?: number,"show_address"?: boolean,"slot_minutes"?: number,"take_orders_while_closed"?: boolean,"tenant_id"?: string,"updated_at"?: string,"walk_in_on"?: boolean
+                    "address"?: string | null,"busy_until"?: string | null,"cod_max_total"?: number | null,"days_ahead"?: number,"delivery_on"?: boolean,"facebook_url"?: string | null,"free_delivery_from"?: number | null,"google_review_url"?: string | null,"messenger_username"?: string | null,"orders_per_slot"?: number | null,"paused"?: boolean,"phone"?: string | null,"pickup_note"?: string | null,"pickup_on"?: boolean,"pin_lat"?: number | null,"pin_lng"?: number | null,"prep_minutes"?: number,"push_reward_ready"?: boolean,"push_stamp_added"?: boolean,"show_address"?: boolean,"slot_minutes"?: number,"take_orders_while_closed"?: boolean,"tenant_id"?: string,"updated_at"?: string,"walk_in_on"?: boolean
                   }
                   Relationships: [
                     {

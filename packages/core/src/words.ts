@@ -556,7 +556,6 @@ export const words = {
     rewardHint: 'Apply this reward to your order',
     rewardFree: (item: string) => `free ${item}`,
     rewardOff: (amount: string) => `${amount} off`,
-    qrAlt: (method: string) => `${method} QR code`,
     qrHint: 'Scan or save this QR',
     amountToPay: 'Amount to pay',
     noteAndTotal: 'Note and total',
@@ -1394,6 +1393,12 @@ export const words = {
       support_locked:
         'This is locked while you help as the owner. The owner can do it from their own login.',
       name_mismatch: "The name doesn't match. Type the shop's name exactly as shown.",
+      news_week_limit: '2 news a week is the most. Pick a later day.',
+      news_day_limit: 'One news a day. Pick another day.',
+      news_quiet_hours: 'News waits for 8 AM. Pick a time from 8 AM to 9 PM.',
+      news_no_audience: 'No phones in that group get news. Pick another.',
+      news_link_gone: 'That item is gone. Pick another link.',
+      news_already_sent: 'It already went out. Copy it to send again.',
     },
   },
 } as const;
@@ -1971,6 +1976,28 @@ export const catalogWords = {
 
 // The demo's sample receipt picture (T87): never a real app's look, and it says so. Its own export, so
 // the storefront bundle (which carries the mock store) never pulls in all of ordersWords.
+// The QR card on checkout and the receipt (T107). Its own export so it loads only with the QR card.
+export const payQrWords = {
+  alt: (method: string) => `${method} QR code`,
+  title: (method: string) =>
+    /\bQR\b/.test(method) ? `Pay with ${method}` : `Pay with ${method} QR`,
+  save: 'Save QR',
+  saved: 'QR saved. Open your payment app next.',
+  saveFailed: "Couldn't save the QR. Take a screenshot instead.",
+  bigger: 'Show QR bigger',
+  biggerTitle: 'Scan this QR',
+  failed: "The QR didn't load.",
+  tryAgain: 'Try again',
+  phoneSteps: (amount: string) => [
+    'Save the QR to your photos.',
+    'Open GCash, Maya or your bank app. Tap Scan, then Upload QR.',
+    `Type ${amount} exactly and pay.`,
+  ],
+  desktopLine: 'Scan with GCash, Maya or your bank app on your phone.',
+  sample: 'Sample QR. It only says "do not pay".',
+  fileName: (shop: string) => `${shop} QR`,
+};
+
 export const sampleReceiptWords = {
   title: 'Sample receipt',
   note: 'Demo picture · not a real transfer',
@@ -2587,7 +2614,7 @@ export const ordersWords = {
 
 // Owner Members page (decisions T57 to T60).
 export const membersWords = {
-  tabs: { members: 'Members', stampCard: 'Stamp card', prizes: 'Prizes' },
+  tabs: { members: 'Members', stampCard: 'Stamp card', prizes: 'Prizes', news: 'News' },
   cardState: { on: 'Card on', paused: 'Card paused', off: 'Card off' },
   summary: {
     members: (n: number) => `${n} ${n === 1 ? 'member' : 'members'}`,
@@ -2945,6 +2972,12 @@ export const membersWords = {
     prizeNamePlaceholder: 'e.g. Suki Tumbler',
     prizeBody: 'What to tell members',
     prizeBodyPlaceholder: 'e.g. Pick your colour at the counter.',
+    // T107: an optional square photo of the custom prize.
+    prizePhoto: 'Prize photo (optional)',
+    prizePhotoHelp: 'A clear photo on a plain background. Members see it on the card.',
+    prizePhotoPick: 'Add a photo',
+    itemPhoto: (catalog: string) =>
+      `Members see this item's photo from your ${catalog.toLowerCase()}.`,
     limited: 'Limited pieces',
     limitedHint: 'Members see how many are left. A claim holds a piece until you give it.',
     pieces: 'Pieces',
@@ -3403,8 +3436,8 @@ export const settingsWords = {
     storageValue: (used: string, limit: string) => `${used} of ${limit}`,
     pay: 'Pay now',
     payAhead: 'Pay ahead',
-    pendingLine: (amount: string, ref: string) =>
-      `We got your ${amount} payment (ref ${ref}). We check it within 1 working day.`,
+    pendingLine: (amount: string, ref: string | null) =>
+      `We got your ${amount} payment${ref ? ` (ref ${ref})` : ''}. We check it within 1 working day.`,
     dueNotice: (date: string) => `Your plan is due on ${date}. Pay by GCash or Maya to keep going.`,
     overdueNotice: (date: string) =>
       `Your plan is unpaid. Your shop keeps taking orders until ${date}, then pauses until you pay.`,
@@ -3431,9 +3464,9 @@ export const settingsWords = {
     sendTo: (amount: string, method: string) => `Send exactly ${amount} by ${method} to`,
     copyNumber: 'Copy',
     numberCopied: 'Number copied',
-    reference: 'Reference number',
-    referenceHelp: 'The 13-digit number on your GCash or Maya receipt',
-    referenceBad: 'Type the reference number from your receipt.',
+    reference: 'Reference number (optional)',
+    referenceHelp: 'The 13-digit number on your receipt. Your screenshot shows it too.',
+    referenceBad: 'A reference number has at least 6 characters. Check it, or leave it empty.',
     proof: 'Screenshot of your receipt',
     proofRequired: 'Add the screenshot of your receipt.',
     submit: 'Send payment',
@@ -3643,6 +3676,16 @@ export const settingsWords = {
     original: 'Original',
     savedLabel: 'Saved',
     added: (size: string) => `Added a photo · ${size}`,
+    // The crop step on the shared photo row (T107).
+    cropTitle: 'Crop photo',
+    cropHelp: 'Drag to move. Zoom to fit what you want people to see.',
+    cropArea: 'Photo to crop',
+    cropAgain: 'Crop again',
+    usePhoto: 'Use photo',
+    back: 'Back',
+    zoom: 'Zoom',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
   },
 } as const;
 
@@ -4349,13 +4392,18 @@ const countOf = (n: number, one: string, many: string) => `${n} ${n === 1 ? one 
 export const signupWords = {
   pageTitle: 'Start your shop',
   headline: 'Your own ordering app, ready today',
-  sub: 'Customers order from your link. Regulars collect stamps and come back.',
+  // The rotating headline (T108): "Your own ordering app for your burger shop".
+  headlineStart: 'Your own ordering app',
+  headlineFor: 'for your',
+  headlineSpoken: 'Your own ordering app for your shop',
+  shopTypes: ['burger shop', 'milk tea shop', 'ukay', 'bakery', 'water station', 'coffee cart'],
+  startFree: (days: number) => `Start ${days} days free`,
   chips: {
     price: (price: string) => `${price} a month`,
     trial: (days: number) => `${days} days free`,
     pay: 'GCash or Maya',
   },
-  sample: 'See a sample shop',
+  sample: 'See the sample shops',
   messenger: 'Ask us on Messenger',
   progress: (step: number) => `Step ${step} of 3`,
   steps: { you: 'You', shop: 'Your shop', code: 'Email code' },
@@ -4396,6 +4444,11 @@ export const signupWords = {
     facebook: 'Facebook page (optional)',
     facebookPlaceholder: 'facebook.com/yourshop',
     facebookHelp: 'Helps us check your shop faster.',
+    colour: 'Pick a colour',
+    colourHelp: 'Your app takes this colour. You can change it later in Editor.',
+    colourName: (n: number) => `Colour ${n}`,
+    password: 'Make a password',
+    passwordHelp: 'At least 8 characters. You log in with your email and this.',
     back: 'Back',
     create: 'Create my shop',
     creating: 'Creating your shop',
@@ -4414,6 +4467,7 @@ export const signupWords = {
     resent: 'New code sent.',
   },
   done: {
+    ready: 'Your app is ready',
     title: (name: string) => `Welcome, ${name}`,
     line: 'Your shop is ready to set up. Your link turns on after a quick check, usually within a day.',
   },
@@ -4431,6 +4485,99 @@ export const signupWords = {
     'We use cookies and share hashed contact details with Meta to measure our ads. See the Privacy notice.',
   offline: "You're offline. Connect to sign up.",
   error: "We couldn't save that. Check your connection and try again.",
+};
+
+// Login and Forgot password (T108). Dashboard only, so it has its own export and never rides along into the
+// storefront.
+export const authWords = {
+  welcome: 'Welcome back',
+  welcomeLine: 'Your orders and Suki are waiting.',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
+  capsLock: 'Caps Lock is on.',
+  forgot: 'Forgot password?',
+  newHere: 'New here?',
+  startFree: (days: number) => `Start ${days} days free`,
+  forgotPage: {
+    pageTitle: 'Reset your password',
+    title: 'Reset your password',
+    line: "Type your login email. We'll send a 6-digit code.",
+    email: 'Email',
+    send: 'Send the code',
+    sending: 'Sending',
+    codeTitle: 'Check your email',
+    sent: (email: string) => `If ${email} has a shop, we sent a 6-digit code to it.`,
+    code: 'Code',
+    hint: 'Not there? Check Spam or Promotions.',
+    resend: 'Send a new code',
+    resendIn: (seconds: number) => `New code in ${seconds} s`,
+    resent: 'New code sent.',
+    newPassword: 'New password',
+    newPasswordHelp: 'At least 8 characters.',
+    passwordBad: 'Use at least 8 characters.',
+    codeBad: 'Type the 6 numbers from the email.',
+    save: 'Save and log in',
+    saving: 'Saving',
+    done: 'Password saved. Welcome back.',
+    wrongEmail: 'Wrong email? Go back',
+    back: 'Back to log in',
+  },
+  offline: "You're offline. Connect to log in.",
+};
+
+// The sign-up tour (T108): what the phone beside the sign-up form plays, on our sample shops. Dashboard only.
+export const showcaseWords = {
+  phoneLabel: 'A sample shop app playing on a phone',
+  chaptersLabel: 'What the app does',
+  chapters: {
+    order: { title: 'Order', line: 'Customers order from your link' },
+    chat: { title: 'Chat and payment', line: 'GCash photo, checked in the chat' },
+    stamps: { title: 'Stamp and reward', line: 'Suki collect stamps and come back' },
+    push: { title: 'Push updates', line: 'Their phone tells them it is ready' },
+    owner: { title: 'Your phone', line: 'New orders and payment photos ping you' },
+    yours: { title: 'Your app', line: 'Built from what you type' },
+  },
+  pause: 'Pause',
+  play: 'Play',
+  backToTour: 'Back to the tour',
+  sample: (shop: string) => `Sample · ${shop}`,
+  // The sample shops under the phone: drag or tap one to play its story.
+  shopsLabel: 'Sample shops',
+  playShop: (shop: string) => `Play ${shop}`,
+  allSamples: 'See all sample shops',
+  addLabel: (name: string) => `Add ${name}`,
+  openLabel: (name: string, price: string) => `${name}, ${price}`,
+  stampProgress: (stamped: number, needed: number) => `${stamped} of ${needed} stamps`,
+  stampTitle: 'Suki card',
+  stampRule: (min: string) => `1 stamp per order of ${min} or more`,
+  stampAny: '1 stamp per order',
+  rewardReady: 'Your reward is ready',
+  useReward: 'Use on your next order',
+  prizeLabel: 'Prize',
+  notificationsTitle: 'Notifications',
+  allowAsk: (host: string) => `${host} wants to send notifications`,
+  allow: 'Allow',
+  block: 'Block',
+  now: 'now',
+  pushDone: (no: string, stamped: number, needed: number) =>
+    `Order ${no} is done · +1 stamp, ${stamped} of ${needed}`,
+  pushReward: (reward: string) => `Your ${reward} is ready`,
+  addFor: (price: string) => `Add to basket · ${price}`,
+  added: (what: string) => `Added · ${what}`,
+  hello: (name: string) => `Hi ${name}!`,
+  yoursName: 'Your shop',
+  sampleBadge: 'Sample',
+  // The owner's own pushes from Smart App PH (sign-up tour and Log in).
+  ownerPush: {
+    newOrder: (no: string, total: string) => `New order ${no} · ${total}`,
+    newOrderBody: (name: string, items: string) => `${name} · ${items}`,
+    photo: (no: string) => `Payment photo to check · ${no}`,
+    photoBody: (name: string, total: string) =>
+      `${name} sent ${total}. Check it in your GCash app.`,
+    due: (no: string) => `Order ${no} is due in 10 min`,
+    dueBody: (name: string) => `${name} is on the way. Start it now.`,
+  },
+  playerLabel: 'Tour chapters',
 };
 
 // The owner's "go live" card on Home (T89).
@@ -4511,6 +4658,40 @@ export const billingWords = {
   freeMonth: '1 month free',
   noteSent: 'Message sent.',
   rejectedToast: 'Sent. The owner will send a new screenshot.',
+  // The Messenger-style chat (T107).
+  today: 'Today',
+  yesterday: 'Yesterday',
+  seen: 'Seen',
+  delivered: 'Sent',
+  notSent: 'Not sent. Tap to try again.',
+  newest: 'Newest',
+  newCount: (n: number) => `${n} new`,
+  openChat: 'Open messages',
+  closeChat: 'Close messages',
+  preview: {
+    photo: 'Photo',
+    payment: (amount: string) => `Payment sent · ${amount}`,
+  },
+  emptyLine: 'No messages yet. Ask us anything about your plan, or send a photo of your payment.',
+  loadFailed: "Couldn't load your messages.",
+  tryAgain: 'Try again',
+  offline: "You're offline. Messages send when you're back online.",
+  addPhoto: 'Add photos',
+  photoOnly: 'Photos only, up to 3 at a time.',
+  removePhoto: 'Remove photo',
+  photoRemoved: 'Photo removed',
+  photoLine: 'Photo',
+  refLabel: 'Reference number (optional)',
+  refPlaceholder: 'e.g. 1234 567 890 123',
+  refAdd: 'Add reference number',
+  refLine: (ref: string) => `Ref ${ref}`,
+  tooManyPhotos: 'Up to 3 photos at a time. Send these first.',
+  photosSent: (n: number) => (n === 1 ? 'Photo sent.' : `${n} photos sent.`),
+  enterHint: 'Enter to send, Shift + Enter for a new line',
+  crop: 'Crop',
+  previousPhoto: 'Previous photo',
+  nextPhoto: 'Next photo',
+  letters: (used: number, max: number) => `${used}/${max}`,
 };
 
 // Help mode (T91): the founder opens a shop as its owner.
@@ -5026,3 +5207,323 @@ export const previewWords = {
     'member-capped': 'Member at the daily cap',
   },
 } as const;
+
+// Push News (decision T106): Members › News, writing news and its results, and the ways in from Home, Menu,
+// Members and Settings. Dashboard only, so it has its own export and never rides along into the storefront.
+export const newsWords = {
+  tab: 'News',
+  title: "Send news to your customers' phones",
+  line: (phones: number, members: number) =>
+    phones === 0
+      ? 'No phones get your news yet.'
+      : `${phones.toLocaleString('en-PH')} ${phones === 1 ? 'phone gets' : 'phones get'} your news · ${members.toLocaleString('en-PH')} Suki`,
+  write: 'Write news',
+  stats: {
+    phones: 'Phones that get news',
+    phonesLine: (members: number, guests: number, fresh: number) =>
+      `${members} Suki · ${guests} guests${fresh > 0 ? ` · +${fresh} this week` : ''}`,
+    week: 'This week',
+    weekLeft: (left: number, limit: number) => `${left} of ${limit} left`,
+    weekFree: (when: string) => `Next one from ${when}`,
+    weekOk: 'Counted over 7 days',
+    last30: 'Last 30 days',
+    last30Value: (orders: number, sales: string) =>
+      `${orders} ${orders === 1 ? 'order' : 'orders'} · ${sales}`,
+    last30Line: (news: number) => `from ${news} ${news === 1 ? 'news' : 'news'}`,
+  },
+  auto: {
+    heading: 'Automatic',
+    line: 'These go by themselves, right after the order or stamp. Customers who turned on order updates get them.',
+    stampAdded: 'Order done and stamp added',
+    stampAddedSample: (stamps: number, goal: number) =>
+      `One push: "Order #045 is done · +1 stamp, ${stamps} of ${goal}"`,
+    rewardReady: 'Reward ready',
+    rewardReadySample: (reward: string) => `Once, when the card fills: "Your ${reward} is ready"`,
+    on: 'Turned on',
+    off: 'Turned off. Customers no longer get this push.',
+  },
+  list: {
+    heading: 'Your news',
+    filtersLabel: 'Show news',
+    filters: { all: 'All', scheduled: 'Scheduled', sent: 'Sent', draft: 'Drafts' },
+    empty: 'Nothing here yet.',
+    opened: 'opened',
+    orders: 'orders',
+    sales: 'sales',
+    sending: (done: number, of: number) =>
+      `${done.toLocaleString('en-PH')} of ${of.toLocaleString('en-PH')}`,
+  },
+  status: {
+    draft: 'Draft',
+    scheduled: 'Scheduled',
+    sending: 'Sending',
+    sent: 'Sent',
+    waiting: 'Waiting for you',
+    canceled: 'Cancelled',
+  },
+  when: {
+    sent: (at: string) => `Sent ${at}`,
+    scheduled: (at: string) => `Sends ${at}`,
+    draft: (at: string) => `Edited ${at}`,
+    sending: 'Going out now',
+  },
+  waitReason: {
+    link_gone: 'The item it opens was deleted or hidden. Pick another link, or cancel it.',
+    plan_lapsed: 'Your plan is unpaid, so nothing sends. It goes once the plan is paid.',
+    shop_paused: 'Your shop is paused, so nothing sends. It goes once the shop is back.',
+  },
+  audience: {
+    everyone: 'Everyone',
+    members: 'Suki only',
+    ready: 'Ready',
+    almost: 'Almost',
+    regulars: 'Regulars',
+    quiet: 'Quiet',
+    new: 'New',
+  },
+  audienceHelp: {
+    everyone: 'Every phone with news on, guests too',
+    members: 'Members with news on',
+    ready: 'A reward is waiting for them',
+    almost: '1 or 2 stamps to go',
+    regulars: '3 or more orders',
+    quiet: 'No order in 30 days',
+    new: 'Joined in the last 30 days',
+  },
+  phones: (n: number) => `${n.toLocaleString('en-PH')} ${n === 1 ? 'phone' : 'phones'}`,
+  limits:
+    'Customers choose to get news. At most 2 a week and 1 a day, never from 9 PM to 8 AM. Order updates are separate and always on.',
+  empty: {
+    noPhonesTitle: 'No customers get news yet',
+    noPhonesBody:
+      'Customers who tap Notify me on their receipt and tick Shop news show up here. You can still write a draft.',
+    noPhonesAction: 'Open your shop',
+    noNewsTitle: 'No news yet',
+    noNewsBody: 'Tell your Suki about a new item, your hours or a deal. It takes a minute.',
+    errorTitle: "We couldn't load your news",
+  },
+  // Writing news (/members/news/new).
+  compose: {
+    title: 'Write news',
+    editTitle: 'Edit news',
+    back: 'Back to News',
+    about: "What's it about?",
+    starters: {
+      item: 'New on the menu',
+      open: "We're open",
+      deal: 'A deal today',
+      ready: 'Reward waiting',
+      almost: '1 stamp to go',
+      own: 'Write my own',
+    },
+    starterHelp: {
+      item: 'Show off one item',
+      open: 'Hours, late nights',
+      deal: 'Say it in words',
+      ready: 'For Ready',
+      almost: 'For Almost',
+      own: 'Start blank',
+    },
+    // What each starter fills in. Every one carries something real (no empty "we miss you").
+    fill: {
+      itemTitle: (item: string) => `New: ${item}`.slice(0, 40),
+      itemBody: (item: string, about: string) => {
+        const lead = about.trim().replace(/[.!]+$/, '');
+        const full = `${lead}. Try it today.`;
+        return lead && full.length <= 120 ? full : `Try the ${item} today.`.slice(0, 120);
+      },
+      openTitle: 'Open till 9 PM tonight',
+      openBody: 'Order ahead and skip the line. Pickup and delivery are open.',
+      dealTitle: 'Today only: free drink',
+      dealBody: 'Free drink with any order of ₱300 or more, until 8 PM. Just ask at the counter.',
+      readyTitle: (reward: string) => `Your ${reward} is waiting`.slice(0, 40),
+      readyBody: (goal: number) =>
+        `You have ${goal} of ${goal} stamps. Use your reward on your next order.`,
+      almostTitle: (reward: string) => `1 stamp to a ${reward}`.slice(0, 40),
+      almostBody: 'Order today and your next stamp gets you the reward.',
+    },
+    titleLabel: 'Title',
+    titlePlaceholder: 'New: Classic Smash',
+    titleHelp: "Short and clear. Your shop's name shows on its own.",
+    bodyLabel: 'Message',
+    bodyPlaceholder: "What's new, and why today?",
+    bodyHelp: 'Say what they get.',
+    bodyLong: 'Android shows the first line until they pull it down.',
+    count: (n: number, max: number) => `${n}/${max}`,
+    photoLabel: 'Photo (optional)',
+    photoHelp: "Android shows it big when they pull it down. iPhone doesn't show photos.",
+    linkLabel: 'When they tap, open',
+    link: { home: 'Shop home', item: 'One item', rewards: 'Their rewards' },
+    itemLabel: 'Which item',
+    itemNone: 'Pick an item',
+    audienceLabel: 'Who gets it',
+    audienceNote: 'Counts are phones with Shop news on. Someone in two groups gets it once.',
+    whenLabel: 'When',
+    now: 'Now',
+    pick: 'Pick a day',
+    best: { lunch: 'Before lunch', merienda: 'Merienda', dinner: 'Before dinner' },
+    bestNote:
+      'Best times come from your own busiest hours on Home. Nothing sends from 9 PM to 8 AM.',
+    day: 'Day',
+    time: 'Time',
+    quietNow: 'It is quiet hours now. Now sends at 8:00 AM.',
+    quietPicked: 'That time is in quiet hours. Pick a time from 8 AM to 9 PM.',
+    pastPicked: 'That time has passed. Pick a later one.',
+    weekFull: (when: string) =>
+      `You used 2 of 2 news this week. Pick ${when} or later, or save a draft.`,
+    dayFull: 'A news already goes out that day. Pick another day.',
+    closedNote: 'Your shop is closed now. People who tap see Closed.',
+    test: 'Send a test to my phone',
+    testSent: 'Test sent to your phone',
+    testNote: 'It goes to your own Suki account in your shop, on the phone where you joined.',
+    save: 'Save draft',
+    saved: 'Draft saved',
+    sendNow: (phones: string) => `Send to ${phones}`,
+    schedule: 'Schedule',
+    sending: 'Sending',
+    preview: 'Preview',
+    writeTab: 'Write',
+    previewTab: 'Preview',
+    previewNote: {
+      android: 'Android: shop logo on the right; the photo shows when they pull it down.',
+      ios: 'iPhone: shop icon on the left, no photo.',
+    },
+    android: 'Android',
+    ios: 'iPhone',
+    pulled: 'Pulled down',
+    previewTitle: 'Your title',
+    previewBody: 'Your message',
+    nowWord: 'now',
+    confirmNowTitle: (phones: string) => `Send to ${phones} now?`,
+    confirmLaterTitle: (when: string) => `Schedule for ${when}?`,
+    confirmNowBody: "It goes out within a minute. You can't take it back after that.",
+    confirmLaterBody: 'You can edit or cancel it until it sends.',
+    confirmUses: (left: number) =>
+      left <= 1 ? 'This uses your last news this week.' : 'This uses 1 of your 2 news this week.',
+    confirmBack: 'Back',
+    sentToast: (phones: string) => `Sending to ${phones}`,
+    scheduledToast: (when: string) => `Scheduled for ${when}`,
+    leaveTitle: 'Leave without saving?',
+    leaveBody: 'Your words here will be lost.',
+    leave: 'Leave',
+    stay: 'Keep writing',
+    helpMode: 'You are helping this shop. You can write and save a draft; only the owner can send.',
+    offline: "You're offline. Send waits until you're back; Save draft works when you're back too.",
+    notFound: 'That news was not found. It may have been deleted.',
+  },
+  // One news (/members/news/:id).
+  detail: {
+    title: 'Details',
+    who: 'Who',
+    when: 'When',
+    opens: 'Opens',
+    itemGone: 'An item that was deleted',
+    phones: 'Phones',
+    edit: 'Edit',
+    fix: 'Fix',
+    copy: 'Copy to send again',
+    copied: 'Copied. Edit it, then send.',
+    cancel: 'Cancel it',
+    cancelTitle: 'Cancel this news?',
+    cancelBody: "It won't send. It goes back to your drafts, so you can send it later.",
+    cancelYes: 'Cancel news',
+    cancelNo: 'Keep it',
+    canceled: 'Cancelled. It moved to your drafts.',
+    delete: 'Delete',
+    deleteTitle: 'Delete this draft?',
+    deleteBody: "It's gone for good. Sent news stays, for its results.",
+    deleteYes: 'Delete draft',
+    deleted: 'Draft deleted',
+    results: 'Results',
+    opened: 'Opened',
+    openedLine: (pct: number) => `${pct}% tapped it`,
+    ordered: 'Ordered within 24 h',
+    orderedLine: 'after opening it',
+    stopped: 'Stopped news',
+    stoppedLine: (n: number) =>
+      n === 0 ? 'No one turned news off' : 'Order updates stay on for them',
+    funnel: 'From sent to sold',
+    funnelSteps: { sent: 'Sent', opened: 'Opened', ordered: 'Ordered' },
+    sentNote: (android: number, ios: number) =>
+      `Sent = phones that took it (Android ${android}, iPhone ${ios}). We can't see who read it without tapping.`,
+    of: (n: number, of: number) => `${n.toLocaleString('en-PH')} of ${of.toLocaleString('en-PH')}`,
+    sendingLine: 'Going out now. This takes a minute.',
+  },
+  // Ways in from the pages the owner already uses.
+  entry: {
+    membersSend: (n: number) => `Send news to ${n === 1 ? 'them' : `these ${n}`}`,
+    menuTell: 'Tell customers',
+    menuTellTitle: (item: string) => `Tell your customers about ${item}?`,
+    homeWaiting: (title: string) => `News waiting: ${title}`,
+    homeWaitingAction: 'Fix',
+    homeLast: 'Last news',
+    homeLastLine: (opened: number, orders: number, sales: string) =>
+      `${opened} opened · ${orders} ${orders === 1 ? 'order' : 'orders'} · ${sales}`,
+    homeLastAction: 'See results',
+    settingsLine: 'What customers get on their phones is in Members › News.',
+    settingsAction: 'Open News',
+  },
+};
+
+// Push News on the storefront (decision T106): the news box, Account › Notifications and News from the shop,
+// the Join box and the "From news" bar. Its own small export, loaded only with those late parts (T31 budget).
+export const shopNewsWords = {
+  box: 'Also send me shop news',
+  boxHelp: 'New items and deals, at most 2 a week. Order updates come either way.',
+  joinBox: 'Send me shop news',
+  joinHelp: 'At most 2 a week. You can stop it any time.',
+  boxOn: "Done. You'll get shop news.",
+  boxOff: 'Shop news is off. Order updates stay on.',
+  notifications: 'Notifications',
+  notificationsHelp: (shop: string) => `What you get from ${shop} on this device`,
+  notificationsLine: {
+    ask: 'Not on yet',
+    on: (news: boolean) => `Order updates on · news ${news ? 'on' : 'off'}`,
+    denied: 'Blocked in phone settings',
+    needs_install: 'Add to Home Screen first',
+    unsupported: "This browser can't show them",
+  },
+  updates: 'Order and stamp updates',
+  updatesHelp: 'When your order moves, a stamp lands or a reward is ready',
+  updatesOn: 'On',
+  news: 'Shop news',
+  newsHelp: 'New items and deals, at most 2 a week, never 9 PM to 8 AM',
+  turnOn: 'Turn on notifications',
+  deniedHelp:
+    'Blocked on this phone. iPhone: Settings › Notifications › this shop › Allow. Android: hold the shop icon › App info › Notifications.',
+  installHelp:
+    'On iPhone this works after you add the shop to your Home Screen, then open it from there.',
+  unsupportedHelp:
+    "This browser can't show notifications. Try Chrome on Android, or the Home Screen app on iPhone.",
+  offline: "You're offline. Try again when you're back.",
+  inbox: (shop: string) => `News from ${shop}`,
+  inboxLine: (n: number) => (n === 0 ? 'Nothing in the last 30 days' : `${n} in the last 30 days`),
+  inboxNote: 'The last 30 days. It shows here even if you missed the push or turned news off.',
+  inboxEmpty: 'No news in the last 30 days.',
+  close: 'Close',
+  fromNews: (shop: string) => `From ${shop} news`,
+  stop: 'Stop news',
+  stopped: 'News stopped. Order updates stay on.',
+  undo: 'Undo',
+};
+
+// The Sample shops page on the storefront (T109): every demo shop, to try as a customer or as the owner.
+export const samplesWords = {
+  title: 'Try a sample shop',
+  intro: 'Open one like yours. Order like a customer, then see the owner side.',
+  metaDescription: 'Five sample shops made with Smart App PH. Open one and order like a customer.',
+  filterLabel: 'Jump to',
+  kind: { food: 'Food', retail: 'Retail' },
+  choices: (names: string) => `${names} choices`,
+  stamps: (needed: number, reward: string) => `${needed} stamps for ${reward}`,
+  orderTypes: { walk_in: 'Walk-in', pickup: 'Pickup', delivery: 'Delivery' },
+  open: 'Open the shop',
+  openLabel: (shop: string) => `Open ${shop}, a sample shop`,
+  owner: 'See the owner side',
+  ownerLabel: (shop: string) => `See ${shop} as its owner`,
+  sampleNote: 'Sample data. Orders here are never sent to a real shop.',
+  readyTitle: 'Ready for your own?',
+  readyLine: (days: number) => `Your own link, stamp card and dashboard. ${days} days free.`,
+  start: (days: number) => `Start ${days} days free`,
+  platformLink: 'Try a sample shop',
+};

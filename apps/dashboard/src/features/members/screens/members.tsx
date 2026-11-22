@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from '@tanstack/react-router';
 import {
   CirclePauseIcon,
   CircleCheckIcon,
@@ -6,6 +7,7 @@ import {
   ChevronDownIcon,
   FilterXIcon,
   PauseCircleIcon,
+  SendIcon,
   StampIcon,
   WifiOffIcon,
   XIcon,
@@ -15,6 +17,7 @@ import {
   errorWords,
   membersWords,
   MEMBER_SORTS,
+  newsWords,
   words,
   type CustomerFilter,
   type CustomerRow,
@@ -397,6 +400,10 @@ export function MembersScreen() {
 
         {isPhone ? searchRow : null}
 
+        {overview.isPending && filter === 'all' && !q && stamps === null ? (
+          <InsightsSkeleton isPhone={isPhone} />
+        ) : null}
+
         {showNear && view && isPhone ? (
           <NearList
             layout="strip"
@@ -504,6 +511,19 @@ export function MembersScreen() {
             )}
           >
             {filter === 'almost' ? W.rules.almost(smallCard) : W.rules[filter]}
+            {/* Push News (T106): a way in from the group the owner is looking at. */}
+            {filter !== 'all' && filter !== 'guests' && (view?.counts[filter] ?? 0) > 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 rounded-full"
+                nativeButton={false}
+                render={<Link to="/members/news/new" search={{ audience: filter }} />}
+              >
+                <SendIcon aria-hidden="true" />
+                {newsWords.entry.membersSend(view?.counts[filter] ?? 0)}
+              </Button>
+            ) : null}
             {stamps !== null ? (
               <Button
                 variant="outline"
@@ -541,6 +561,31 @@ export function MembersScreen() {
         onConfirm={(ask) => void counter.stamp({ id: ask.customerId, name: ask.name }, true)}
         onClose={counter.closeRecent}
       />
+    </div>
+  );
+}
+
+// Holds the place of the near list, card progress and the insights while the numbers load (T110), so the
+// search and the list below don't jump down when they arrive.
+function InsightsSkeleton({ isPhone }: { isPhone: boolean }) {
+  if (isPhone)
+    return (
+      <div className="flex flex-col gap-3" aria-hidden="true">
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-11 w-full rounded-lg" />
+      </div>
+    );
+  return (
+    <div className="flex flex-col gap-3" aria-hidden="true">
+      <div className="grid gap-3 lg:grid-cols-2">
+        <Skeleton className="h-80 rounded-xl" />
+        <Skeleton className="hidden h-64 rounded-xl lg:block" />
+      </div>
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="hidden h-64 rounded-xl lg:block" />
+      </div>
     </div>
   );
 }

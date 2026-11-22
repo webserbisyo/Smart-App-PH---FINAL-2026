@@ -105,6 +105,10 @@ import {
   waitingSince,
   PRO_PRICE_MONTHLY,
   SETUP_MIN_ITEMS,
+  DEMO_SHOP_SLUGS,
+  ShowcaseSchema,
+  type Showcase,
+  type ShowcaseStory,
   type SupportSession,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
@@ -135,6 +139,7 @@ import { mulberry32, token as makeToken, type Rng } from './rng';
 import { getDeviceStorage } from '../device-storage';
 import { createEditorMock } from './editor';
 import { createHomeMock } from './home';
+import { createNewsMock } from './news';
 import { createSettingsMock } from './settings';
 import type { PlatformMock } from './platform';
 import { defaultPlatformSetup } from './platform-setup';
@@ -648,6 +653,18 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     now: () => now(),
     scenario: () => scenario(),
     seed,
+  });
+
+  // Push News (T106): sample news per shop, a send that goes out over a few seconds, the phone's news choice.
+  const newsMock = createNewsMock({
+    run: (area, fn) => run(area, fn),
+    requireShop: (slug) => requireShop(slug),
+    ownerShop: () => resolveOwnerShopSlug(),
+    membersOverview: (s) => overview(s, peopleOf(s), now()),
+    now: () => now(),
+    empty: () => scenario().empty,
+    helping,
+    fail,
   });
 
   // Owner Editor (T72 to T75): the draft and the published look are kept on the device per shop.
@@ -1274,6 +1291,18 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         persist();
         return rating;
       }),
+
+    getNewsChoice: ({ slug }) =>
+      run('storefront', () => {
+        requireShop(slug);
+        return { news: newsMock.choice(slug) };
+      }),
+    setNewsChoice: ({ slug, news }) =>
+      run('storefront', () => {
+        requireShop(slug);
+        return { news: newsMock.setChoice(slug, news) };
+      }),
+    listShopNews: ({ slug }) => run('storefront', () => newsMock.inbox(slug)),
 
     subscribePush: ({ slug, token }) =>
       run('storefront', () => {
@@ -2811,13 +2840,68 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     },
   };
 
+  // The sign-up tour (T108): sample shops only, no owner signed in, no scenario, no wait. Every shop gives
+  // its storefront and its own story: a payment-photo chat, open orders, the week, a member and news.
+  const story = (slug: string): ShowcaseStory => {
+    const s = requireShop(slug);
+    const byNewest = [...s.orders].sort((a, b) =>
+      b.receipt.placedAt.localeCompare(a.receipt.placedAt),
+    );
+    // The chat shows a member with a face when one sent a payment photo.
+    const photoOrders = byNewest.filter((o) => o.proofs.length > 0);
+    const withFace = (o: (typeof photoOrders)[number]) =>
+      toBoardOrder(s, o).customerAvatar !== null;
+    const withPhoto =
+      photoOrders.find((o) => withFace(o) && !isFinal(o.receipt.status)) ??
+      photoOrders.find(withFace) ??
+      photoOrders.find((o) => !isFinal(o.receipt.status)) ??
+      photoOrders[0] ??
+      null;
+    const open = byNewest.filter((o) => !isFinal(o.receipt.status)).map((o) => toBoardOrder(s, o));
+    const board = [
+      ...open.filter((o) => o.customerAvatar),
+      ...open.filter((o) => !o.customerAvatar),
+    ];
+    const faced =
+      board.find((o) => o.customerAvatar) ??
+      byNewest.map((o) => toBoardOrder(s, o)).find((o) => o.customerAvatar) ??
+      null;
+    const today = manilaDate(now());
+    const weekAgo = manilaDate(new Date(now().getTime() - 6 * 86_400_000));
+    return {
+      chat: withPhoto
+        ? { order: toBoardOrder(s, withPhoto), detail: ownerOrder(s, withPhoto) }
+        : null,
+      board: board.slice(0, 3),
+      week: homeMock.periodFor(slug, { from: weekAgo, to: today }),
+      member: faced?.customerAvatar
+        ? { name: faced.customerName, avatar: faced.customerAvatar }
+        : null,
+      news: newsMock.inbox(slug).slice(0, 3),
+    };
+  };
+  const showcase: DataAdapters['showcase'] = {
+    getShowcase: () =>
+      Promise.resolve().then((): Showcase =>
+        ShowcaseSchema.parse({
+          shops: DEMO_SHOP_SLUGS.map((slug) => ({
+            slug,
+            shop: clone(requireShop(slug).shop),
+            story: story(slug),
+          })),
+        }),
+      ),
+  };
+
   return {
+    showcase,
     storefront,
     customerAuth,
     ownerOrders,
     ownerSamples,
     ownerCatalog,
     ownerMembers,
+    ownerNews: newsMock.adapter,
     ownerSettings: settingsMock.adapter,
     ownerHome: homeMock.adapter,
     ownerEditor: editorMock.adapter,
@@ -2830,6 +2914,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       platformMock = null;
       platformSetup = defaultPlatformSetup(PRO_PRICE_MONTHLY);
       homeMock.reset();
+      newsMock.reset();
       if (persistence) editorMock.reset();
       appliedAs = new Map();
       saved = null;

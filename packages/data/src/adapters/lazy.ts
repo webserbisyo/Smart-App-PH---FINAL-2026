@@ -7,11 +7,13 @@ import type {
   OwnerEditorAdapter,
   OwnerHomeAdapter,
   OwnerMembersAdapter,
+  OwnerNewsAdapter,
   OwnerOrdersAdapter,
   OwnerSamplesAdapter,
   OnboardingAdapter,
   OwnerSettingsAdapter,
   PlatformAdapter,
+  ShowcaseAdapter,
   StorefrontAdapter,
 } from './types';
 
@@ -38,6 +40,9 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     removeAddress: async (input) => (await real()).storefront.removeAddress(input),
     claimReward: async (input) => (await real()).storefront.claimReward(input),
     getSchedule: async (input) => (await real()).storefront.getSchedule(input),
+    getNewsChoice: async (input) => (await real()).storefront.getNewsChoice(input),
+    setNewsChoice: async (input) => (await real()).storefront.setNewsChoice(input),
+    listShopNews: async (input) => (await real()).storefront.listShopNews(input),
   };
 
   const customerAuth: CustomerAuthAdapter = {
@@ -114,6 +119,16 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     cancelClaim: async (input) => (await real()).ownerMembers.cancelClaim(input),
   };
 
+  const ownerNews: OwnerNewsAdapter = {
+    getNewsOverview: async () => (await real()).ownerNews.getNewsOverview(),
+    getNews: async (input) => (await real()).ownerNews.getNews(input),
+    saveNews: async (input) => (await real()).ownerNews.saveNews(input),
+    cancelNews: async (input) => (await real()).ownerNews.cancelNews(input),
+    deleteNews: async (input) => (await real()).ownerNews.deleteNews(input),
+    sendNewsTest: async (input) => (await real()).ownerNews.sendNewsTest(input),
+    savePushSettings: async (input) => (await real()).ownerNews.savePushSettings(input),
+  };
+
   const ownerSettings: OwnerSettingsAdapter = {
     getSettings: async () => (await real()).ownerSettings.getSettings(),
     saveShopFacts: async (input) => (await real()).ownerSettings.saveShopFacts(input),
@@ -134,6 +149,8 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     getPlan: async () => (await real()).ownerSettings.getPlan(),
     submitPlanPayment: async (input) => (await real()).ownerSettings.submitPlanPayment(input),
     sendPlanNote: async (input) => (await real()).ownerSettings.sendPlanNote(input),
+    sendPlanPhoto: async (input) => (await real()).ownerSettings.sendPlanPhoto(input),
+    markPlanChatSeen: async () => (await real()).ownerSettings.markPlanChatSeen(),
     getStorage: async () => (await real()).ownerSettings.getStorage(),
     previewCleanup: async (input) => (await real()).ownerSettings.previewCleanup(input),
     runCleanup: async (input) => (await real()).ownerSettings.runCleanup(input),
@@ -193,6 +210,10 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     savePlatformSetup: async (input) => (await real()).platform.savePlatformSetup(input),
   };
 
+  const showcase: ShowcaseAdapter = {
+    getShowcase: async () => (await real()).showcase.getShowcase(),
+  };
+
   return {
     storefront,
     customerAuth,
@@ -200,10 +221,12 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     ownerSamples,
     ownerCatalog,
     ownerMembers,
+    ownerNews,
     ownerSettings,
     ownerHome,
     ownerEditor,
     onboarding,
     platform,
+    showcase,
   };
 }

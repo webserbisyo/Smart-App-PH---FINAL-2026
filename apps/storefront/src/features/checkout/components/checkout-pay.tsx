@@ -2,7 +2,6 @@
 
 import {
   formatPeso,
-  imageSources,
   isTransfer,
   paymentLabel,
   pesoAmountText,
@@ -14,7 +13,6 @@ import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Field, FieldLabel, FieldTitle } from '@smartapp/ui/components/field';
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
-import { ShopImage } from '@smartapp/ui/compositions/shop-image';
 import {
   AlertTriangleIcon,
   BanknoteIcon,
@@ -25,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { PaymentOption } from '../checkout-rules';
+import { PayQr } from '../../receipt/components/pay-qr';
 import { CheckoutStep } from './checkout-step';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 
@@ -192,19 +191,14 @@ export function CheckoutPay({
           />
 
           {selectedConfig.qr ? (
-            <figure className="flex flex-col items-center gap-2 py-2">
-              <ShopImage
-                src={imageSources(selectedConfig.qr)}
-                alt={words.checkout.qrAlt(paymentLabel(selectedConfig))}
-                ratio="1:1"
-                sizes="192px"
-                fallbackText={sf.info.name}
-                className="size-48 rounded-2xl ring-1 ring-foreground/8"
-              />
-              <figcaption className="text-xs text-muted-foreground">
-                {words.checkout.qrHint}
-              </figcaption>
-            </figure>
+            <PayQr
+              qr={selectedConfig.qr}
+              method={paymentLabel(selectedConfig)}
+              accountName={selectedConfig.accountName}
+              amount={formatPeso(totalCentavos)}
+              shopName={sf.info.name}
+              sample={selectedConfig.sample}
+            />
           ) : null}
 
           <p className="px-1 pb-1 text-sm text-muted-foreground">

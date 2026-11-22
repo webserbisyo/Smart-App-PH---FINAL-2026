@@ -50,9 +50,9 @@ function hasMessage(err: unknown): err is { message: unknown } {
 }
 
 /** A wrong or old sign-up code (T89): one of two codes, never Supabase's own text. */
-export function mapCodeError(err: unknown): ApiError {
+export function mapCodeError(err: unknown, sending = false): ApiError {
   const raw = hasMessage(err) ? String(err.message).toLowerCase() : '';
-  const code = raw.includes('expired') ? 'code_expired' : 'invalid_code';
+  const code = sending ? 'rate_limited' : raw.includes('expired') ? 'code_expired' : 'invalid_code';
   return { status: 400, code, message: errorWords(code) };
 }
 

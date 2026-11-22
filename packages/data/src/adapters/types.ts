@@ -1,6 +1,12 @@
 // One interface per area, named exactly like the rows in docs/api.md. The mock implements every row; the API
 // adapter for each area comes in phase 4.
 import type {
+  NewsOverview,
+  OwnerNews,
+  PushSettings,
+  SaveNewsInput,
+  NewsTestInput,
+  ShopNewsItem,
   HomeRange,
   HomeSummary,
   HomePeriodData,
@@ -100,6 +106,7 @@ import type {
   RegisterShopInput,
   ReviewPlanPaymentInput,
   SendBillingNoteInput,
+  SendBillingPhotoInput,
   SetTrackingInput,
   ShopIdInput,
   SignupLeadInput,
@@ -108,6 +115,7 @@ import type {
   SupportSession,
   TrackInput,
   TrackingSummary,
+  Showcase,
 } from '@smartapp/core';
 
 export interface PlacedOrder {
@@ -172,6 +180,11 @@ export interface StorefrontAdapter {
     type: OrderType;
     lines: readonly { itemId: string; qty: number }[];
   }): Promise<Schedule>;
+  // Push News (T106): this phone's news yes or no (kept per subscription; order updates stay on), and the
+  // shop's sent news of the last 30 days for Account › News from the shop.
+  getNewsChoice(input: { slug: string }): Promise<{ news: boolean }>;
+  setNewsChoice(input: { slug: string; news: boolean }): Promise<{ news: boolean }>;
+  listShopNews(input: { slug: string }): Promise<ShopNewsItem[]>;
 }
 
 export interface CustomerAuthAdapter {
@@ -292,6 +305,17 @@ export interface OwnerMembersAdapter {
   cancelClaim(input: { claimId: string; reason: ClaimCancelReason }): Promise<OwnerClaim>;
 }
 
+// Push News (T106): Members › News. The shop comes from the owner's login (T34).
+export interface OwnerNewsAdapter {
+  getNewsOverview(): Promise<NewsOverview>;
+  getNews(input: { newsId: string }): Promise<OwnerNews>;
+  saveNews(input: SaveNewsInput): Promise<OwnerNews>;
+  cancelNews(input: { newsId: string }): Promise<OwnerNews>;
+  deleteNews(input: { newsId: string }): Promise<{ ok: true }>;
+  sendNewsTest(input: NewsTestInput): Promise<{ ok: true }>;
+  savePushSettings(input: PushSettings): Promise<PushSettings>;
+}
+
 // Owner Settings (decisions T64 to T68): one read for the shop's settings, one save per section, the
 // owner's profile and emails, the Pro plan, storage, cleanups and exports. No method takes a slug (T34).
 export interface OwnerSettingsAdapter {
@@ -313,6 +337,10 @@ export interface OwnerSettingsAdapter {
   submitPlanPayment(input: SubmitPlanPaymentInput): Promise<Plan>;
   // The Billing chat (T88): a short note to Smart App PH.
   sendPlanNote(input: SendBillingNoteInput): Promise<Plan>;
+  // A photo (payment proof or reference) with an optional reference number (T107).
+  sendPlanPhoto(input: SendBillingPhotoInput): Promise<Plan>;
+  // The owner opened the chat: our lines count as seen (T107).
+  markPlanChatSeen(): Promise<Plan>;
   getStorage(): Promise<StorageSummary>;
   previewCleanup(input: { kind: CleanupKind }): Promise<CleanupPreview>;
   runCleanup(input: { kind: CleanupKind; token: string }): Promise<StorageSummary>;
@@ -381,6 +409,11 @@ export interface PlatformAdapter {
   savePlatformSetup(input: PlatformSetup): Promise<PlatformSetup>;
 }
 
+// The sign-up tour (T108): sample shops only, in every build (no API route; docs/api.md "Sign-up tour").
+export interface ShowcaseAdapter {
+  getShowcase(): Promise<Showcase>;
+}
+
 export interface DataAdapters {
   storefront: StorefrontAdapter;
   customerAuth: CustomerAuthAdapter;
@@ -388,9 +421,11 @@ export interface DataAdapters {
   ownerSamples: OwnerSamplesAdapter;
   ownerCatalog: OwnerCatalogAdapter;
   ownerMembers: OwnerMembersAdapter;
+  ownerNews: OwnerNewsAdapter;
   ownerSettings: OwnerSettingsAdapter;
   ownerHome: OwnerHomeAdapter;
   ownerEditor: OwnerEditorAdapter;
   onboarding: OnboardingAdapter;
   platform: PlatformAdapter;
+  showcase: ShowcaseAdapter;
 }

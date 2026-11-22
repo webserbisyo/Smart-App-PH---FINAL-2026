@@ -298,6 +298,8 @@ export const UPLOAD_KINDS = [
   'qr',
   'avatar',
   'plan_proof',
+  // A photo on a push News (T106), 2:1.
+  'news_photo',
 ] as const;
 export const UploadKindEnum = z.enum(UPLOAD_KINDS);
 export type UploadKind = z.infer<typeof UploadKindEnum>;
@@ -548,6 +550,8 @@ export const BILLING_KINDS = [
   'approved',
   'rejected',
   'note',
+  // An owner's photo (payment proof or a reference screenshot) with an optional reference (T107).
+  'photo',
   'reminder',
   'extra_days',
   'support',

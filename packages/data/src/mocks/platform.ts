@@ -118,6 +118,8 @@ interface PShop {
   closeReason: CloseReason | null;
   source: SignupSource;
   facebookPage: string | null;
+  // The colour picked at sign-up (T108); the Editor starts from it.
+  brandColor?: string | null;
   storageUsedBytes: number;
   orders7d: number;
   members: number;
@@ -1148,6 +1150,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
           closeReason: null,
           source: lead?.source ?? { channel: 'direct', campaign: null },
           facebookPage: d.shop.facebookPage,
+          brandColor: d.shop.brandColor,
           storageUsedBytes: 0,
           orders7d: 0,
           members: 0,
@@ -1391,7 +1394,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
         if (!parsed.success) fail('invalid_input', 400);
         const d = parsed.data;
         const s = shopById(d.shopId);
-        const clean = (r: string) => r.replace(/[\s-]/g, '').toUpperCase();
+        const clean = (r: string | null) => (r ?? '').replace(/[\s-]/g, '').toUpperCase();
         if (
           s.book.history.some(
             (p) => clean(p.reference) === clean(d.reference) && p.status !== 'rejected',

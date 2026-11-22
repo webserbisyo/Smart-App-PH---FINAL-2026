@@ -4,11 +4,19 @@ export * from './hooks/auth';
 export type * from './database.types';
 export * from './device-storage';
 export * from './adapters/types';
-export { createAdapters, DataProvider, resetDemoData, useAdapters } from './adapters/index';
+export {
+  createAdapters,
+  DataProvider,
+  resetDemoData,
+  SampleDataProvider,
+  useAdapters,
+} from './adapters/index';
+export * from './hooks/showcase';
 export * from './env';
 export * from './hooks/storefront/qk';
 export * from './hooks/storefront/device';
 export * from './hooks/storefront/queries';
+export * from './hooks/storefront/news';
 export * from './hooks/storefront/provider';
 export {
   DEMO_CUSTOMER,
@@ -44,6 +52,7 @@ export {
   createApiOwnerMembersAdapter,
   type ApiOwnerMembersOptions,
 } from './adapters/api/owner-members';
+export { createApiOwnerNewsAdapter, type ApiOwnerNewsOptions } from './adapters/api/owner-news';
 export {
   createApiOwnerOrdersAdapter,
   type ApiOwnerOrdersOptions,
@@ -62,6 +71,7 @@ export { setMockOwnerSlug, setMockSupportSession } from './mocks/store';
 export * from './hooks/owner-catalog/index';
 export * from './hooks/owner-orders/index';
 export * from './hooks/owner-members/index';
+export * from './hooks/owner-news/index';
 export * from './hooks/owner-settings/index';
 export * from './hooks/owner-home/index';
 export * from './hooks/owner-editor/index';

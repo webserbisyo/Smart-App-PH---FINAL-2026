@@ -75,6 +75,13 @@ export const ErrorCode = [
   'setup_incomplete',
   'support_locked',
   'name_mismatch',
+  // Push News (T106)
+  'news_week_limit',
+  'news_day_limit',
+  'news_quiet_hours',
+  'news_no_audience',
+  'news_link_gone',
+  'news_already_sent',
 ] as const;
 
 export const ErrorCodeEnum = z.enum(ErrorCode);
