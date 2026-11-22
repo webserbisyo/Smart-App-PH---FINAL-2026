@@ -306,7 +306,7 @@ export const LOLA_REMY_PACK: ShopPack = {
         method: 'qr_ph',
         bank: null,
         accountName: 'Panaderya ni Lola Remy (Sample)',
-        accountNumber: null,
+        accountNumber: '0918 000 0003',
         qr: 'demo:lola-remy/brand/qr',
         sample: true,
       },

@@ -864,9 +864,7 @@ export function createSettingsMock(deps: SettingsMockDeps) {
         if (!parsed.success) fail('invalid_input', 400);
         const missing = parsed.data.payments.filter(
           (p) =>
-            TRANSFER_METHODS.some((m) => m === p.method) &&
-            p.method !== 'qr_ph' &&
-            (!p.accountName || !p.accountNumber),
+            TRANSFER_METHODS.some((m) => m === p.method) && (!p.accountName || !p.accountNumber),
         );
         if (missing.length > 0)
           fail('invalid_input', 400, Object.fromEntries(missing.map((p) => [p.id, ['missing']])));
