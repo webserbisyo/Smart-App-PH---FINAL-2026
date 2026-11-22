@@ -1333,6 +1333,10 @@
     left: calc(16rem + 0.75rem);
   }
 }
+/* The account menu opens over the pill's corner (T112): the pill steps aside while it is open. */
+body:has([data-account-menu][data-open]) [data-slot='preview-pill'] {
+  visibility: hidden;
+}
 @media (max-width: 1023px) {
   body:has([data-slot='storefront-dock']) [data-slot='preview-pill'],
   body:has([data-slot='bottom-dock']) [data-slot='preview-pill'] {

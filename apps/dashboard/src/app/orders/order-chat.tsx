@@ -3,6 +3,9 @@ import { Link } from '@tanstack/react-router';
 import {
   CalendarClockIcon,
   CheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClockIcon,
   IdCardIcon,
   ImageOffIcon,
   LinkIcon,
@@ -23,7 +26,9 @@ import {
   ordersWords,
   statusStage,
   words,
+  minutesUntil,
   type BoardOrder,
+  type ChatSummary,
   type OrderMessage,
   type OwnerOrder,
   type Proof,
@@ -91,16 +96,20 @@ export function ChatHeader({
   order,
   detail,
   close,
+  back,
 }: {
   order: BoardOrder;
   detail: OwnerOrder | undefined;
   close: React.ReactNode;
+  // "Back to chats" when the chat was opened from the Chats list (T112).
+  back?: React.ReactNode | undefined;
 }) {
   const now = useNow(30_000);
   const kind = customerKind(order);
   const phone = detail?.customerPhone ?? null;
   return (
-    <div className="flex items-center gap-3 border-b px-4 pt-1 pb-3 md:pt-3">
+    <div className={cn('flex items-center gap-3 border-b px-4 pt-1 pb-3 md:pt-3', back && 'pl-2')}>
+      {back}
       <CustomerAvatar
         order={order}
         size="default"
@@ -148,6 +157,75 @@ export function ChatHeader({
         </Button>
       ) : null}
       {close}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- moving between chats
+
+/** A chat opened from the Chats list (T112): the way back, and the next chat that waits for an answer. */
+export interface ChatNav {
+  onBack: () => void;
+  next: ChatSummary | null;
+  onNext: (orderId: string) => void;
+}
+
+/** The waiting chat to answer after this one: the one that has waited longest, never the open one. */
+export function nextWaitingChat(
+  chats: readonly ChatSummary[],
+  openOrderId: string | undefined,
+): ChatSummary | null {
+  let best: ChatSummary | null = null;
+  for (const chat of chats) {
+    if (chat.waitingSince === null || chat.orderId === openOrderId) continue;
+    if (!best || (best.waitingSince !== null && chat.waitingSince < best.waitingSince)) best = chat;
+  }
+  return best;
+}
+
+export function BackToChatsButton({ onBack }: { onBack: () => void }) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={onBack}
+      aria-label={W.list.back}
+      title={W.list.back}
+      className="size-11 shrink-0 md:size-9"
+    >
+      <ChevronLeftIcon aria-hidden="true" />
+    </Button>
+  );
+}
+
+/** One row under the chat header: who waits next and for how long. A tap opens their chat. */
+export function NextWaitingChat({
+  next,
+  onNext,
+}: {
+  next: ChatSummary;
+  onNext: (orderId: string) => void;
+}) {
+  const now = useNow(30_000);
+  const waited = next.waitingSince ? -minutesUntil(next.waitingSince, now) : 0;
+  return (
+    <div className="border-b px-2 py-1">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => onNext(next.orderId)}
+        aria-label={W.list.nextOpen(next.customerName)}
+        className="h-11 w-full justify-start gap-2 px-2 md:h-9"
+      >
+        <span className="shrink-0 text-xs font-semibold text-muted-foreground">{W.list.next}</span>
+        <span className="min-w-0 truncate font-semibold">{next.customerName}</span>
+        <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning-soft-foreground tabular-nums">
+          <ClockIcon aria-hidden="true" className="size-3" />
+          {W.list.waiting(waited)}
+        </span>
+        <ChevronRightIcon aria-hidden="true" className="shrink-0 text-muted-foreground" />
+      </Button>
     </div>
   );
 }
