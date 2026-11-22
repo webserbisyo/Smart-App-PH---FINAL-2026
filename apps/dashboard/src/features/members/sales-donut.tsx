@@ -6,6 +6,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@smartapp/ui/components/chart';
+import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 
 const W = membersWords.sales;
 
@@ -23,6 +24,7 @@ const average = (total: number, orders: number): number =>
  * share in the middle, and the two amounts with their average order beside it. Loaded lazily.
  */
 export default function SalesDonut({ sales }: { sales: MemberSales }) {
+  const reduced = useReducedMotion();
   const total = sales.members + sales.guests;
   const share = sharePercent(sales.members, total);
   const memberAvg = formatPeso(average(sales.members, sales.memberOrders));
@@ -71,6 +73,10 @@ export default function SalesDonut({ sales }: { sales: MemberSales }) {
             }
           />
           <Pie
+            // Draws in under 400 ms, off under reduced motion (T110; Recharts' own default is 1.9 s).
+            isAnimationActive={!reduced}
+            animationBegin={0}
+            animationDuration={350}
             data={data}
             dataKey="amount"
             nameKey="who"

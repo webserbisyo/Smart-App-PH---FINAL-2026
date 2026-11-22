@@ -11,7 +11,13 @@ import {
   ShieldCheckIcon,
 } from 'lucide-react';
 import { artPath, errorWords, formatManila, words } from '@smartapp/core';
-import { errorCodeOf, useMyAccount, useMyPicture, useSignOutCustomer } from '@smartapp/data';
+import {
+  errorCodeOf,
+  useHydrated,
+  useMyAccount,
+  useMyPicture,
+  useSignOutCustomer,
+} from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
@@ -44,13 +50,15 @@ export function AccountScreen() {
   const { slug, shop } = useShop();
   const router = useRouter();
   const account = useMyAccount(slug);
+  // Loading look until the page is awake, so it always matches the server's copy (T110).
+  const hydrated = useHydrated();
   const signOut = useSignOutCustomer();
   const confirm = useLaterPart();
   const member = account.data;
   const avatar = useMyPicture(slug, member);
   const stampsOn = shop.storefront.stampCard.status !== 'off';
 
-  if (account.isPending) {
+  if (!hydrated || account.isPending) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 pt-2 pb-6" aria-hidden="true">
         <Skeleton className="h-8 w-32" />

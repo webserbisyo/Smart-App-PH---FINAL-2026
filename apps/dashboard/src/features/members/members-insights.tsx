@@ -7,7 +7,7 @@ import {
   type MembersPulse,
   type TopSuki,
 } from '@smartapp/core';
-import { AnimatedList } from '@smartapp/ui/components/animated-list';
+import { staggerIn } from '@smartapp/ui/lib/stagger';
 import {
   CircularProgress,
   CircularProgressIndicator,
@@ -16,7 +16,6 @@ import {
   CircularProgressValueText,
 } from '@smartapp/ui/components/circular-progress';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { cn } from 'cn';
 import { MemberAvatar } from './member-rows.js';
 import { daysSince, lastInLabel } from './when.js';
@@ -196,8 +195,8 @@ function ActivityRow({
 }
 
 /**
- * Latest at the counter (T63): joins, stamps and rewards, newest on top. New lines slide in with
- * Magic UI Animated List; under reduced motion the list just shows.
+ * Latest at the counter (T63): joins, stamps and rewards, newest on top. The lines fade in once, top
+ * first (T110); under reduced motion the list just shows.
  */
 export function ActivityFeed({
   activity,
@@ -208,28 +207,19 @@ export function ActivityFeed({
   now: Date;
   onOpen: (id: string) => void;
 }) {
-  const reducedMotion = useReducedMotion();
-  // Animated List shows its children one by one and puts the last one on top: oldest first here.
-  const oldestFirst = [...activity].reverse();
   return (
     <section aria-labelledby="activity-title" className={CARD}>
       <CardTitle id="activity-title" title={W.activity.title} />
       {activity.length === 0 ? (
         <p className="text-sm text-muted-foreground">{W.activity.empty}</p>
-      ) : reducedMotion ? (
+      ) : (
         <ul className="flex flex-col gap-1.5">
-          {activity.map((a) => (
-            <li key={a.id}>
+          {activity.map((a, index) => (
+            <li key={a.id} className={staggerIn(index)}>
               <ActivityRow a={a} now={now} onOpen={onOpen} />
             </li>
           ))}
         </ul>
-      ) : (
-        <AnimatedList delay={90} className="items-stretch gap-1.5">
-          {oldestFirst.map((a) => (
-            <ActivityRow key={a.id} a={a} now={now} onOpen={onOpen} />
-          ))}
-        </AnimatedList>
       )}
     </section>
   );

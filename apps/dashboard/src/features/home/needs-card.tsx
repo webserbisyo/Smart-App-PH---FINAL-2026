@@ -34,8 +34,7 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@smartapp/ui/components/item';
-import { AnimatedList } from '@smartapp/ui/components/animated-list';
-import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
+import { staggerIn } from '@smartapp/ui/lib/stagger';
 import { cn } from 'cn';
 import { HomeCard } from '@/app/home/home-card';
 
@@ -152,12 +151,12 @@ export function NeedsCard({
   const orders = React.useMemo(() => new Map(live.map((o) => [o.id, o])), [live]);
   const rows = all ? needs : needs.slice(0, shown);
   const hidden = needs.length - rows.length;
-  const reducedMotion = useReducedMotion();
-  const items = rows.map((need) => {
+  const items = rows.map((need, index) => {
     const look = LOOK[need.kind];
     const Icon = look.icon;
     return (
-      <div key={need.kind} role="listitem">
+      // Fades in once with the rows after it (T110); "Show more" rows show at once.
+      <div key={need.kind} role="listitem" className={index < shown ? staggerIn(index) : undefined}>
         <Item variant="outline" className="min-h-14" render={<NeedLink need={need} />}>
           <ItemMedia>
             <IconTile variant="soft" size="sm" className={look.tone}>
@@ -179,22 +178,9 @@ export function NeedsCard({
   });
   return (
     <HomeCard id="needs" title={W.title} hint={W.hint} className={className}>
-      {reducedMotion ? (
-        <div role="list" className="flex flex-col gap-2">
-          {items}
-        </div>
-      ) : (
-        // Magic UI Animated List (T83): the rows slide in one after another, worst first on top. A hidden
-        // copy in the same grid cell holds the full height from the start, so nothing below moves.
-        <div className="grid *:col-start-1 *:row-start-1">
-          <div aria-hidden="true" className="invisible flex flex-col gap-2">
-            {items}
-          </div>
-          <AnimatedList key={String(all)} delay={90} role="list" className="items-stretch gap-2">
-            {[...items].reverse()}
-          </AnimatedList>
-        </div>
-      )}
+      <div role="list" className="flex flex-col gap-2">
+        {items}
+      </div>
       {needs.length > shown ? (
         <Button
           variant="ghost"

@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-22 Smoothness pass (T110): one 380 ms count-up (Home Sales total, storefront stamps), lists fade in instead of Animated List, charts stop measuring labels, skeletons match pages, dashboard screens load on demand (first file 500 to 116 KB), storefront #418 race fixed, sign-up lighter on phones, smoke test warm-up, UI scan speed check
 - 2026-11-22 Sample shops page (T109): `/samples` on the storefront with every demo shop's cover, logo, highlights, Open the shop and See the owner side (`/login?sample=<slug>`); linked from Sign up, the tour and the platform page; `samples` reserved
 - 2026-11-21 Sign-up and log in finalize (T108): every sample shop plays its own story (order with its item sheet and choices, chat, stamps, push, owner), a draggable row of the five shops that follows the tour, the chat notification slides in, Log in has the stacked logo and the full tour
 - 2026-11-21 Sign-up and log in final pass (T108): real storefront dock in the phone, every sample shop opens from the strip, notifications inside the phone (no cards over it), owner pushes (new order, payment photo, due soon), per-step pacing and fades, sign-up step 1 fits one laptop screen

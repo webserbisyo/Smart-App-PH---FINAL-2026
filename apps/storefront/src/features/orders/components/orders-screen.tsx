@@ -6,7 +6,14 @@ import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { GiftIcon, RotateCwIcon, WifiOffIcon } from 'lucide-react';
 import { artPath, formatManila, vocab, words } from '@smartapp/core';
-import { useMyAccount, useMyOrders, useNow, useOnline, useSavedReceipts } from '@smartapp/data';
+import {
+  useHydrated,
+  useMyAccount,
+  useMyOrders,
+  useNow,
+  useOnline,
+  useSavedReceipts,
+} from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Alert, AlertDescription, AlertTitle } from '@smartapp/ui/components/reui/alert';
 import { Badge } from '@smartapp/ui/components/reui/badge';
@@ -47,6 +54,8 @@ export function OrdersScreen() {
   const now = useNow();
   const query = useMyOrders(slug);
   const account = useMyAccount(slug).data;
+  // Loading look until the page is awake, so it always matches the server's copy (T110).
+  const hydrated = useHydrated();
   const saved = useSavedReceipts(slug);
   const { orderAgain, loadingToken, scheduleOpen, setScheduleOpen } = useOrderAgain();
   const [shown, setShown] = useState(PAST_PAGE);
@@ -72,7 +81,7 @@ export function OrdersScreen() {
     router.replace(`${pathname}?${search.toString()}`, { scroll: false });
   }
 
-  if (query.isPending && online && savedRows.length === 0) return <OrdersSkeleton />;
+  if (!hydrated || (query.isPending && online && savedRows.length === 0)) return <OrdersSkeleton />;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 pt-2 pb-6">

@@ -54,7 +54,6 @@ import {
   StatValue,
 } from '@smartapp/ui/components/stat';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
-import { CountUp } from '@smartapp/ui/compositions/count-up';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
 import { cn } from 'cn';
@@ -319,7 +318,7 @@ function StatsGrid({ data, now }: { data: AdminToday; now: Date }) {
       label: T.stats.live,
       icon: <StoreIcon />,
       tone: 'bg-primary/10 text-primary',
-      value: <CountUp value={data.liveShops} />,
+      value: data.liveShops,
       note: null,
       to: '/admin/shops' as const,
     },
@@ -327,7 +326,7 @@ function StatsGrid({ data, now }: { data: AdminToday; now: Date }) {
       label: T.stats.paying,
       icon: <WalletIcon />,
       tone: 'bg-success-soft text-success-text',
-      value: <CountUp value={data.payingShops} />,
+      value: data.payingShops,
       note: null,
       to: '/admin/shops' as const,
     },

@@ -168,7 +168,9 @@ export function SignupScreen() {
           <div ref={formBox} className="scroll-mt-4">
             <div className="relative rounded-xl">
               <SignupForm attribution={attribution} onDraft={setDraft} />
-              {reduce ? null : (
+              {/* The moving border runs on every frame, so phones skip it (T110): the tour above is the
+                  motion there. */}
+              {reduce || !wide ? null : (
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"

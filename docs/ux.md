@@ -102,7 +102,7 @@ Loading skeleton · empty with one line and one action · error with Try again �
 - The logo gradient (`brand-gradient`) only on the logo, the login band, the panel behind the sign-up and log in phone (T108 L7), the loyalty strip and the reward moment; never behind text, on buttons or as gradient text.
 - Depth with `elevation-*`, at most two levels on screen; motion with `ease-enter` / `ease-exit` and the duration tokens, transform and opacity only; one 500 ms celebration (`duration-celebrate`) when a stamp card fills.
 - The stamp card is the one tactile part (decision T36): 2 px border, dashed empty slots, solid mint filled slots with a navy icon, a pop when a stamp fills.
-- No glass panels: blur only on the top bar and dock (`frost`). No animated backgrounds, count-up money or looping effects in the dashboard.
+- No glass panels: blur only on the top bar and dock (`frost`). No animated backgrounds or looping effects in the dashboard; the only count-up is the Home Sales total (T110).
 
 ## 8. Dashboard feedback rules (decision T43)
 
@@ -125,7 +125,9 @@ The same few moves everywhere, all off under `prefers-reduced-motion` (the chang
 
 - **Timing:** the duration tokens, never a raw number: `duration-fast` for taps and toggles, `duration-base` for popovers, sheets and panels, `duration-slow` for reveals, `duration-celebrate` (500 ms) only for the one celebration. Nothing over 400 ms except that.
 - **Something new appears:** fade in and rise 8 px (`FadeUp` in `app/orders/order-motion.tsx`, `lib/motion` timings), with `ease-enter`; leaving uses `ease-exit` and runs shorter.
-- **Rows in a list:** Magic UI Animated List lets rows slide in one after another (Home Needs you, Members Latest at the counter). Keep the list's full height from the start so nothing below moves.
-- **Totals:** count up with Number Ticker through `CountUp`, still under reduced motion.
+- **Rows in a list:** rows fade in one after another once with `staggerIn` (`packages/ui/src/lib/stagger.ts`: Home Needs you, Members Latest at the counter), all done within 400 ms. Nothing moves after that, so rows never cross when a card above changes height (T110 replaced Magic UI Animated List here). A list waits for all its data before it shows, so no row pops in late.
+- **Totals:** one count-up per page at most, through `CountUp` (380 ms, then it stops): the Home Sales total and the storefront stamp count. Every other number shows its final value at once. Under reduced motion the final number shows (T110).
+- **Charts:** chart bars and rings grow in 350 ms, off under reduced motion; grid lines use `evenRows` and `noColumns` (`lib/chart-grid.ts`) and label steps are set by hand, so Recharts never measures every label (T110).
+- **Speed:** a settled page leaves the processor idle. The UI scan fails a desktop page still over 25% busy in every second for 8 s after it opens, and notes a page that takes over 5 s to settle, stays over 10% busy, or freezes over 300 ms while loading (T110).
 - **Celebrations:** `celebrate` (canvas-confetti) once per real milestone: a stamp landing, a reward ready, a card filled. Never on page load.
 - **Theme switch:** the new look grows from where you tapped (`revealPage`, View Transitions); browsers without it change at once.

@@ -4,6 +4,7 @@ import { errorWords, formatClock, homeWords, words } from '@smartapp/core';
 import {
   errorCodeOf,
   useHomePeriod as useHomePeriodData,
+  useNewsOverview,
   useOnboarding,
   useStorefront,
 } from '@smartapp/data';
@@ -54,6 +55,9 @@ export function HomeScreen() {
   const storefront = useStorefront(shop.slug);
   // Going live (T89): until the founder approves, the go-live card leads the page.
   const onboarding = useOnboarding();
+  // The News card sits above Needs you; Home waits for it so nothing is pushed down after the page shows
+  // (T110). If News fails, the card is simply left out.
+  const news = useNewsOverview();
   const { summary, home, now, needs, live, today } = view;
   const { period, dates } = useHomePeriodSearch(today);
   const setPeriod = useSetHomePeriod();
@@ -69,7 +73,7 @@ export function HomeScreen() {
   const updated = home.dataUpdatedAt > 0 ? formatClock(new Date(home.dataUpdatedAt)) : null;
 
   let body: React.ReactNode;
-  if (home.isPending) {
+  if (home.isPending || news.isPending) {
     body = <HomeSkeleton />;
   } else if (home.isError && !summary) {
     body = (

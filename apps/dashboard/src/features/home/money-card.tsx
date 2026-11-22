@@ -36,8 +36,20 @@ const W = homeWords.money;
 // Recharts loads only when Home shows (T57).
 const MoneyRing = React.lazy(() => import('./money-rings.js'));
 
-/** A peso amount that counts up (Magic UI Number Ticker through CountUp; still under reduced motion). */
-export function PesoTicker({ centavos, className }: { centavos: number; className?: string }) {
+/**
+ * A peso amount. Only the period's big total counts up (`count`, decision T110); every other amount shows
+ * its final value at once, so the page settles as soon as the data arrives.
+ */
+export function PesoTicker({
+  centavos,
+  count = false,
+  className,
+}: {
+  centavos: number;
+  count?: boolean;
+  className?: string;
+}) {
+  if (!count) return <span className={cn('tabular-nums', className)}>{formatPeso(centavos)}</span>;
   const whole = centavos % 100 === 0;
   return (
     <span className={cn('tabular-nums', className)}>
@@ -210,7 +222,7 @@ export function ShareRings({ rings, label }: { rings: readonly ShareRing[]; labe
               <MoneyRing slice={{ key: r.key, percent: r.percent, color: r.tone.color }} />
             </React.Suspense>
             <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm font-extrabold tabular-nums">
-              <CountUp value={r.percent} />%
+              {r.percent}%
             </span>
           </div>
           <span className="flex max-w-full min-w-0 items-center gap-1 text-xs font-semibold">
@@ -421,6 +433,7 @@ export function MoneyCard({
       <div className="flex flex-wrap items-end gap-x-4 gap-y-1">
         <PesoTicker
           centavos={money.sales}
+          count
           className={cn(
             'text-4xl font-extrabold tracking-tight md:text-5xl',
             money.orders === 0 && 'text-muted-foreground',
