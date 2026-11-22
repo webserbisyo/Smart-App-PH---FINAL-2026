@@ -210,7 +210,7 @@ export const AQUALINIS_PACK: ShopPack = {
         bank: null,
         accountName: 'Ramon D.',
         accountNumber: '0928 000 0001',
-        qr: null,
+        qr: 'demo:aqualinis/brand/qr',
         sample: true,
       },
     ],

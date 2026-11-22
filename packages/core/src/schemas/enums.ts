@@ -569,6 +569,8 @@ export const BILLING_KINDS = [
   'approved',
   'rejected',
   'note',
+  // An owner's photo (payment proof or a reference screenshot) with an optional reference (T107).
+  'photo',
   'reminder',
   'extra_days',
   'support',

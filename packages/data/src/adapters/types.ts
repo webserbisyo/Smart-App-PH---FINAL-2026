@@ -110,6 +110,7 @@ import type {
   RegisterShopInput,
   ReviewPlanPaymentInput,
   SendBillingNoteInput,
+  SendBillingPhotoInput,
   SetTrackingInput,
   ShopIdInput,
   SignupLeadInput,
@@ -366,6 +367,10 @@ export interface OwnerSettingsAdapter {
   submitPlanPayment(input: SubmitPlanPaymentInput): Promise<Plan>;
   // The Billing chat (T88): a short note to Smart App PH.
   sendPlanNote(input: SendBillingNoteInput): Promise<Plan>;
+  // A photo (payment proof or reference) with an optional reference number (T107).
+  sendPlanPhoto(input: SendBillingPhotoInput): Promise<Plan>;
+  // The owner opened the chat: our lines count as seen (T107).
+  markPlanChatSeen(): Promise<Plan>;
   getStorage(): Promise<StorageSummary>;
   previewCleanup(input: { kind: CleanupKind }): Promise<CleanupPreview>;
   runCleanup(input: { kind: CleanupKind; token: string }): Promise<StorageSummary>;

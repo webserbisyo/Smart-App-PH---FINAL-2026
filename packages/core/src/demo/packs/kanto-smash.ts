@@ -351,7 +351,7 @@ export const KANTO_SMASH_PACK: ShopPack = {
         bank: null,
         accountName: 'Paolo R.',
         accountNumber: '0917 000 0001',
-        qr: null,
+        qr: 'demo:kanto-smash/brand/qr',
         sample: true,
       },
       {

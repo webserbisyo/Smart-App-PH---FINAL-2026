@@ -10,6 +10,7 @@ import type {
   PaymentSettings,
   SaveProfileInput,
   SendBillingNoteInput,
+  SendBillingPhotoInput,
   ShopFacts,
   StoredFileIdsInput,
   SubmitPlanPaymentInput,
@@ -133,6 +134,24 @@ export function useSendPlanNote() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: SendBillingNoteInput) => ownerSettings.sendPlanNote(input),
+    onSuccess: (plan) => qc.setQueryData(ownerSettingsQk.plan(), plan),
+  });
+}
+
+export function useSendPlanPhoto() {
+  const { ownerSettings } = useAdapters();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SendBillingPhotoInput) => ownerSettings.sendPlanPhoto(input),
+    onSuccess: (plan) => qc.setQueryData(ownerSettingsQk.plan(), plan),
+  });
+}
+
+export function useMarkPlanChatSeen() {
+  const { ownerSettings } = useAdapters();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => ownerSettings.markPlanChatSeen(),
     onSuccess: (plan) => qc.setQueryData(ownerSettingsQk.plan(), plan),
   });
 }
