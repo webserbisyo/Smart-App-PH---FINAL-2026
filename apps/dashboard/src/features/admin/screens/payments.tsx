@@ -119,7 +119,8 @@ export function AdminPaymentsScreen() {
                   <span className="shrink-0 font-bold tabular-nums">{formatPeso(p.amount)}</span>
                 </span>
                 <span className="truncate text-sm text-muted-foreground">
-                  {P.months(p.months)} · {method(p)} · {p.reference}
+                  {P.months(p.months)} · {method(p)}
+                  {p.reference ? ` · ${p.reference}` : ''}
                 </span>
                 <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                   <PaymentBadge status={p.status} />
@@ -164,7 +165,7 @@ export function AdminPaymentsScreen() {
                 </TableCell>
                 <TableCell>{P.months(p.months)}</TableCell>
                 <TableCell>{method(p)}</TableCell>
-                <TableCell className="font-mono text-xs">{p.reference}</TableCell>
+                <TableCell className="font-mono text-xs">{p.reference ?? '—'}</TableCell>
                 <TableCell>{formatManila(p.submittedAt, 'date')}</TableCell>
                 <TableCell>
                   <span className="flex flex-col items-start gap-0.5">
@@ -279,7 +280,7 @@ function saveCsv(rows: AdminPayment[], now: Date) {
         (p.amount / 100).toFixed(2),
         String(p.months),
         method(p),
-        p.reference,
+        p.reference ?? '',
         formatManila(p.submittedAt, 'long'),
         P.status[p.status],
         p.status === 'approved' ? p.coversUntil : '',

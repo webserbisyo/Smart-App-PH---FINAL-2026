@@ -51,14 +51,14 @@ isOneToOne: false
                   ]
                 },"billing_messages": {
                   Row: {
-                    "created_at": string,"days": number | null,"from": string,"id": string,"kind": string,"payment_id": string | null,"reason": string | null,"seen_at": string | null,"tenant_id": string,"text": string | null
+                    "created_at": string,"days": number | null,"from": string,"id": string,"kind": string,"payment_id": string | null,"photo_media_id": string | null,"reason": string | null,"reference": string | null,"seen_at": string | null,"tenant_id": string,"text": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"days"?: number | null,"from": string,"id"?: string,"kind": string,"payment_id"?: string | null,"reason"?: string | null,"seen_at"?: string | null,"tenant_id": string,"text"?: string | null
+                    "created_at"?: string,"days"?: number | null,"from": string,"id"?: string,"kind": string,"payment_id"?: string | null,"photo_media_id"?: string | null,"reason"?: string | null,"reference"?: string | null,"seen_at"?: string | null,"tenant_id": string,"text"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"days"?: number | null,"from"?: string,"id"?: string,"kind"?: string,"payment_id"?: string | null,"reason"?: string | null,"seen_at"?: string | null,"tenant_id"?: string,"text"?: string | null
+                    "created_at"?: string,"days"?: number | null,"from"?: string,"id"?: string,"kind"?: string,"payment_id"?: string | null,"photo_media_id"?: string | null,"reason"?: string | null,"reference"?: string | null,"seen_at"?: string | null,"tenant_id"?: string,"text"?: string | null
                   }
                   Relationships: [
                     {
@@ -72,6 +72,12 @@ isOneToOne: false
       columns: ["tenant_id","payment_id"]
 isOneToOne: false
       referencedRelation: "plan_payments"
+      referencedColumns: ["tenant_id","id"]
+    },{
+      foreignKeyName: "billing_messages_tenant_id_photo_media_id_fkey"
+      columns: ["tenant_id","photo_media_id"]
+isOneToOne: false
+      referencedRelation: "media_files"
       referencedColumns: ["tenant_id","id"]
     }
                   ]
@@ -939,14 +945,14 @@ isOneToOne: false
                   ]
                 },"plan_payments": {
                   Row: {
-                    "amount": number,"covers_until": string,"created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"method": string,"months": number,"proof_media_id": string | null,"recorded_by": string | null,"reference": string,"reference_norm": string | null,"reject_reason": string | null,"status": string,"tenant_id": string
+                    "amount": number,"covers_until": string,"created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"method": string,"months": number,"proof_media_id": string | null,"recorded_by": string | null,"reference": string | null,"reference_norm": string | null,"reject_reason": string | null,"status": string,"tenant_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount": number,"covers_until": string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method": string,"months": number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference": string,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id": string
+                    "amount": number,"covers_until": string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method": string,"months": number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference"?: string | null,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id": string
                   }
                   Update: {
-                    "amount"?: number,"covers_until"?: string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method"?: string,"months"?: number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference"?: string,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id"?: string
+                    "amount"?: number,"covers_until"?: string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method"?: string,"months"?: number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference"?: string | null,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id"?: string
                   }
                   Relationships: [
                     {

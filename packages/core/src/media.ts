@@ -3,6 +3,14 @@ import { isDemoShopSlug, type DemoShopSlug } from './demo/slugs.js';
 
 export type MediaFolder = 'items' | 'banners' | 'brand';
 
+// The sample payment QR file name in each demo shop's brand folder (tooling/scripts/demo-qr.ts).
+export const DEMO_QR_NAME = 'qr';
+
+/** The sample QR of a demo shop, as a media ref. */
+export function demoQrRef(slug: DemoShopSlug): string {
+  return `demo:${slug}/brand/${DEMO_QR_NAME}`;
+}
+
 /** "4.2 MB", "310 KB" (1 KB = 1024 bytes); for the proof photo's before and after sizes. */
 export function formatFileSize(bytes: number): string {
   const kb = Math.max(0, bytes) / 1024;
@@ -66,6 +74,8 @@ export function parseDemoRef(ref: string | null | undefined): ParsedDemoRef | nu
   }
 
   if (folder === 'brand') {
+    // Every demo shop has a sample payment QR (T107): it only says "sample, do not pay".
+    if (name === DEMO_QR_NAME) return { slug, folder, name, widths: [320, 640] as const };
     if (name !== 'logo' || !shopMedia.logo) return null;
     return { slug, folder, name, widths: [128, 256] as const };
   }
@@ -125,8 +135,13 @@ export function imageSources(ref: string | null | undefined, origin = ''): Image
   const [w1, w2] = parsed.widths;
   const basePath = `${cleanOrigin}/demo/${parsed.slug}/${parsed.folder}/${parsed.name}`;
 
+  // The sample QR is a lossless WebP only (smaller than AVIF for black squares).
+  const avif =
+    parsed.folder === 'brand' && parsed.name === DEMO_QR_NAME
+      ? ''
+      : `${basePath}-${w1}.avif ${w1}w, ${basePath}-${w2}.avif ${w2}w`;
   return {
-    avif: `${basePath}-${w1}.avif ${w1}w, ${basePath}-${w2}.avif ${w2}w`,
+    avif,
     webp: `${basePath}-${w1}.webp ${w1}w, ${basePath}-${w2}.webp ${w2}w`,
     widths: parsed.widths,
   };
