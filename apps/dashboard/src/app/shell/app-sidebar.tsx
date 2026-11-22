@@ -116,6 +116,22 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup className="pb-0">
+          {/* New order (T111): the owner's one main action, on top of the places. */}
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                isActive={nav.newOrder.active}
+                {...(withTooltip ? { tooltip: nav.newOrder.label } : {})}
+                render={nav.newOrder.link}
+                className="justify-center bg-primary font-semibold text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground data-active:bg-primary data-active:text-primary-foreground pointer-coarse:h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
+              >
+                {nav.newOrder.icon}
+                <span>{nav.newOrder.label}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         <SidebarGroup>
           <SidebarMenu aria-label={words.shell.mainNav} className="gap-1">
             {nav.all.map((item) => (

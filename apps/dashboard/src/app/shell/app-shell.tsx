@@ -13,6 +13,7 @@ import { ShopContext, useShop, type CurrentShop } from '../shop.js';
 import { useCoarsePointer } from '../use-coarse-pointer.js';
 import { usePageTitle } from '../use-page-title.js';
 import { storefrontUrl, useNavItems } from '../use-nav-items.js';
+import { useNewOrderKey } from './use-new-order-key.js';
 import { AppSidebar } from './app-sidebar.js';
 import { ShareShopSheet } from './share-shop-sheet.js';
 import { SupportBanner } from './support-banner.js';
@@ -36,6 +37,7 @@ function Shell({ claims }: { claims: UserClaims }) {
   const menuOpen = menuOpenOn === pathname;
   const setMenuOpen = (open: boolean) => setMenuOpenOn(open ? pathname : null);
   const nav = useNavItems({ onShare: () => setShareOpen(true) });
+  useNewOrderKey(true);
   usePageTitle(page.title);
 
   const isTablet = formFactor === 'tablet';
@@ -90,6 +92,7 @@ function Shell({ claims }: { claims: UserClaims }) {
         <BottomDock
           label={words.shell.mainNav}
           items={nav.dock}
+          action={nav.newOrder}
           more={{
             label: words.nav.more,
             items: [...nav.more, nav.viewMyShop, nav.shareMyShop, nav.account],

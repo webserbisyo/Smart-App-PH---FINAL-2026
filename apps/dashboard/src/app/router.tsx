@@ -7,7 +7,14 @@ import {
   redirect,
   type RouteComponent,
 } from '@tanstack/react-router';
-import { adminWords, membersWords, newsWords, settingsWords, words } from '@smartapp/core';
+import {
+  adminWords,
+  membersWords,
+  newOrderWords,
+  newsWords,
+  settingsWords,
+  words,
+} from '@smartapp/core';
 import { CatalogSearchSchema, NewItemSearchSchema } from '../features/catalog/tabs.js';
 import { HomeSearchSchema } from '../features/home/search.js';
 // Insights is hidden for launch (decision T69); its screen stays for later.
@@ -105,6 +112,14 @@ const StampCardScreen = lazyRouteComponent(
 const OrdersScreen = lazyRouteComponent(
   () => import('../features/orders/screens/orders.js'),
   'OrdersScreen',
+);
+const NewOrderScreen = lazyRouteComponent(
+  () => import('../features/orders/new-order/screen.js'),
+  'NewOrderScreen',
+);
+const EditOrderScreen = lazyRouteComponent(
+  () => import('../features/orders/new-order/screen.js'),
+  'EditOrderScreen',
 );
 const AccountSettingsScreen = lazyRouteComponent(
   () => import('../features/settings/screens/account.js'),
@@ -262,6 +277,17 @@ const ordersRoute = createRoute({
   component: OrdersScreen,
   staticData: page(() => s.orders.title),
 });
+// New order and Edit order (T111): full-screen, so the phone dock steps aside for the step bar.
+const newOrderRoute = shellPage(
+  '/orders/new',
+  NewOrderScreen,
+  page(() => newOrderWords.title, orders, true),
+);
+const editOrderRoute = shellPage(
+  '/orders/$orderId/edit',
+  EditOrderScreen,
+  page(() => newOrderWords.edit.button, orders, true),
+);
 // Old order links (notifications, bookmarks) open the order panel on the Orders page (decision T54).
 const orderRoute = createRoute({
   getParentRoute: () => shellRoute,
@@ -490,6 +516,8 @@ const baseRoutes = [
   shellRoute.addChildren([
     homeRoute,
     ordersRoute,
+    newOrderRoute,
+    editOrderRoute,
     orderRoute,
     catalogRoute,
     catalogCategoriesRoute,
