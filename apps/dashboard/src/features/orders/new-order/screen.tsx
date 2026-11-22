@@ -473,9 +473,7 @@ function Composer({ shop, editing }: { shop: PublicShop; editing: OwnerOrder | n
                 {W.basket.title}
               </h2>
               {draft.lines.length > 0 ? (
-                <span className="text-sm text-muted-foreground tabular-nums">
-                  {summary}
-                </span>
+                <span className="text-sm text-muted-foreground tabular-nums">{summary}</span>
               ) : null}
             </div>
             <OrderLines
