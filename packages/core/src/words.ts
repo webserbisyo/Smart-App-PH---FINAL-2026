@@ -179,6 +179,7 @@ export const words = {
     back: 'Back',
     toggleSidebar: 'Show or hide the menu',
     accountMenu: 'Account menu',
+    myAccount: 'My account',
     // The dot on the owner's picture (ReUI c-avatar-6, T83): new orders only arrive live when online.
     online: 'Online, new orders arrive live',
     offline: 'Offline, new orders wait until you’re back',
@@ -2252,6 +2253,10 @@ export const ordersWords = {
       tryAgain: 'Try again',
       messengerInbox: 'Messenger inbox',
       messengerHint: 'Questions about orders come in on Messenger for now.',
+      // Inside a chat opened from this list (T112).
+      back: 'Back to chats',
+      next: 'Next waiting',
+      nextOpen: (name: string) => `Open the next waiting chat, ${name}`,
     },
   },
   typeCards: {

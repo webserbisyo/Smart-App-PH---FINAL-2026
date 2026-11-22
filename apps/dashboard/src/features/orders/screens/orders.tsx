@@ -11,7 +11,13 @@ import {
   payWindowOver,
   words,
 } from '@smartapp/core';
-import { errorCodeOf, useOpenOrders, useOrdersByDate, useStorefront } from '@smartapp/data';
+import {
+  errorCodeOf,
+  useChats,
+  useOpenOrders,
+  useOrdersByDate,
+  useStorefront,
+} from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
@@ -19,6 +25,7 @@ import { notify } from '@smartapp/ui/compositions/notify';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { copyText } from '@smartapp/ui/lib/copy-text';
 import { Notice } from '@/app/notice';
+import { nextWaitingChat, type ChatNav } from '@/app/orders/order-chat';
 import { useFreshIds } from '@/app/orders/order-motion';
 import { useNow } from '@/app/orders/use-now';
 import { useOrderSound } from '@/app/orders/use-order-sound';
@@ -153,9 +160,12 @@ export function OrdersScreen() {
     live.find((o) => o.id === search.order) ??
     (clicked && clicked.id === search.order ? clicked : undefined);
 
+  // A chat opened from the Chats list gets Back to chats and the next waiting chat (T112).
+  const [fromChats, setFromChats] = React.useState(false);
   const openOrder = React.useCallback(
     (order: BoardOrder) => {
       setClicked(order);
+      setFromChats(false);
       // From "photos to check", the order opens on its chat, where the check is (T87).
       setSearch({ order: order.id, tab: filter === 'to_check' ? 'chat' : undefined });
     },
@@ -163,10 +173,23 @@ export function OrdersScreen() {
   );
   // The Chats list opens an order on its Chat tab (T87).
   const [chatsOpen, setChatsOpen] = React.useState(false);
+  const chats = useChats(shop.slug);
   const openChat = (orderId: string) => {
     setChatsOpen(false);
+    setFromChats(true);
     setSearch({ order: orderId, tab: 'chat' });
   };
+  const chatNav: ChatNav | null = fromChats
+    ? {
+        onBack: () => {
+          setFromChats(false);
+          setSearch({ order: undefined, tab: undefined }, { replace: true });
+          setChatsOpen(true);
+        },
+        next: nextWaitingChat(chats.data ?? [], search.order),
+        onNext: openChat,
+      }
+    : null;
   // An order dropped on a day where its time isn't open: its panel opens on Change time, on that day.
   const [timeRequest, setTimeRequest] = React.useState<{ orderId: string; day: string } | null>(
     null,
@@ -174,6 +197,7 @@ export function OrdersScreen() {
   const openChangeTime = React.useCallback(
     (order: BoardOrder, day: string) => {
       setClicked(order);
+      setFromChats(false);
       setTimeRequest({ orderId: order.id, day });
       setSearch({ order: order.id, tab: undefined });
     },
@@ -181,6 +205,7 @@ export function OrdersScreen() {
   );
   const closeOrder = React.useCallback(() => {
     setTimeRequest(null);
+    setFromChats(false);
     setSearch({ order: undefined, tab: undefined }, { replace: true });
   }, [setSearch]);
 
@@ -381,6 +406,7 @@ export function OrdersScreen() {
           setSearch({ tab: next === 'chat' ? 'chat' : undefined }, { replace: true })
         }
         onClose={closeOrder}
+        chatNav={chatNav}
       />
     </div>
   );

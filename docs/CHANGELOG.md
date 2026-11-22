@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-22 Chat back button and profile menu (T112): Back to chats and a Next waiting row in a chat opened from Orders › Chats; account menu like Stays (name, role, online, Appearance Light/Dark/System with a check, My account, Settings, Log out); Preview pill hides while the menu is open
 - 2026-11-22 New order and editable orders (T111): owner New order for walk-ins and Messenger (phone steps, laptop two columns, Guest or Member with prize, Now or a time with Allow anyway, delivery fee, Paid now / Not paid yet / Paid part, Already handed over), dock Home · Orders · + New order · Members · More (Menu in More), sidebar and Orders New order button and N key, Edit order while New, Preparing or Ready with a customer chat line, Collect more and Give back, database step 10 (`source`, `paid_amount`, `version`, `edited_at`, `changed` messages)
 - 2026-11-22 Smoothness pass (T110): one 380 ms count-up (Home Sales total, storefront stamps), lists fade in instead of Animated List, charts stop measuring labels, skeletons match pages, dashboard screens load on demand (first file 500 to 116 KB), storefront #418 race fixed, sign-up lighter on phones, smoke test warm-up, UI scan speed check
 - 2026-11-22 Sample shops page (T109): `/samples` on the storefront with every demo shop's cover, logo, highlights, Open the shop and See the owner side (`/login?sample=<slug>`); linked from Sign up, the tour and the platform page; `samples` reserved
