@@ -95,6 +95,8 @@ Order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9. Phase 7 depends only o
 
 ### Profile menu redesign (bottom-left sidebar, also the rail and the phone top bar)
 
+Built early on sample data (decision T112, PR #44, 2026-11-22). Phase 3 only checks it still works once real accounts are in.
+
 Copy the reference's structure inside our installed `DropdownMenu` (it already has `DropdownMenuRadioGroup` and `DropdownMenuRadioItem`, so no new component):
 
 1. Header: avatar with the status dot, full name, and a role line ("Shop owner · Kanto Smash", "Super Admin", or "Helping Kanto Smash" in help mode) instead of the email.
@@ -157,7 +159,9 @@ Fixes found in the current screenshot: the menu opens at `w-fit`, so it squeezes
 
 **Done when.** Launch acceptance 1, 2 and 3 pass on dev on a real phone, for a food and a retail shop.
 
-### Order chat panel fix (approved in principle)
+### Order chat panel fix
+
+Built early on sample data (decision T112, PR #44, 2026-11-22). Phase 5 only checks it on real orders.
 
 When a chat is opened from the Chats list (chat bubble):
 
