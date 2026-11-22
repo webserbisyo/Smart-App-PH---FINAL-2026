@@ -1,8 +1,12 @@
 import * as React from 'react';
+import { Link, useNavigate } from '@tanstack/react-router';
 import {
   CalendarClockIcon,
   ChevronDownIcon,
   CircleXIcon,
+  HandCoinsIcon,
+  PencilIcon,
+  StoreIcon,
   ExternalLinkIcon,
   ImageIcon,
   MessageCircleIcon,
@@ -16,12 +20,16 @@ import {
 import type { BoardOrder, OrderStatus, OwnerOrder, ShopKind } from '@smartapp/core';
 import {
   PROOFS_PER_ORDER,
+  balanceOf,
   canCancel,
+  editBlock,
+  newOrderWords,
   canReschedule,
   errorWords,
   formatClock,
   formatManila,
   formatPeso,
+  formatPhPhone,
   isFinal,
   isStillOpenPast,
   manilaDate,
@@ -37,6 +45,7 @@ import {
   useCancelOrder,
   useMarkSeen,
   useOrderDetail,
+  useRecordGiveBack,
   useRecordPayment,
   useSaveDeliveryInfo,
   useSaveOwnerNote,
@@ -182,6 +191,8 @@ function boardShape(o: OwnerOrder): BoardOrder {
     memberStamps: null,
     // The face shows once the card loads; the link opens with initials.
     customerAvatar: null,
+    source: o.source,
+    paidAmount: o.paidAmount,
   };
 }
 
@@ -442,6 +453,12 @@ function PanelHeader({ order, onClose }: { order: BoardOrder; onClose: () => voi
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
         <TimeChip order={order} now={now} />
+        {order.source === 'owner' ? (
+          <Badge variant="secondary" size="lg" radius="full" className="gap-1 font-semibold">
+            <StoreIcon aria-hidden="true" />
+            {newOrderWords.madeInShop}
+          </Badge>
+        ) : null}
         <span className="ml-auto inline-flex items-center gap-1.5">
           <span className="text-xs">{ordersWords.panel.pickupCode}</span>
           <span className="font-mono text-base font-bold tracking-widest text-foreground">
@@ -697,7 +714,17 @@ function PaymentSection({
   const online = useOnlineStatus();
   const record = useRecordPayment(slug);
   const recordAction = useAsyncAction();
+  const giveBack = useRecordGiveBack(slug);
+  const giveBackAction = useAsyncAction();
   const proofs = detail?.proofs ?? [];
+  const M = newOrderWords.money;
+  // After an edit (T111): part paid means there is more to collect; paid over the total means change back.
+  const { due, back } = balanceOf({ total: order.total, paidAmount: order.paidAmount });
+  const partPaid = order.paidAmount > 0 && due > 0;
+  const canRecord =
+    !isFinal(order.status) &&
+    order.paymentStatus === 'unpaid' &&
+    (isPayLater(order.paymentMethod) || order.source === 'owner' || partPaid);
   const waits = chatWaits(order);
   const C = ordersWords.chat;
 
@@ -723,9 +750,16 @@ function PaymentSection({
         </div>
       ) : null}
 
-      {isPayLater(order.paymentMethod) &&
-      order.paymentStatus !== 'paid' &&
-      !isFinal(order.status) ? (
+      {partPaid ? (
+        <p className="flex items-center justify-between gap-2 text-sm tabular-nums">
+          <span className="text-muted-foreground">
+            {M.paidOf(formatPeso(order.paidAmount), formatPeso(order.total))}
+          </span>
+          <span className="font-semibold text-warning-text">{M.collect(formatPeso(due))}</span>
+        </p>
+      ) : null}
+
+      {canRecord ? (
         <AsyncButton
           variant="outline"
           status={recordAction.status}
@@ -735,15 +769,48 @@ function PaymentSection({
           onClick={() =>
             recordAction
               .run(async () => {
-                await record.mutateAsync({ orderId: order.id, method: order.paymentMethod });
+                await record.mutateAsync({
+                  orderId: order.id,
+                  method: order.paymentMethod,
+                  amount: due,
+                });
                 notify({ title: ordersWords.detail.cashRecorded, tone: 'success' });
               })
               .catch(fail)
           }
           className="h-11 w-full font-semibold md:h-9"
         >
-          {ordersWords.detail.recordCash}
+          {partPaid || !isPayLater(order.paymentMethod)
+            ? M.markRest(formatPeso(due))
+            : ordersWords.detail.recordCash}
         </AsyncButton>
+      ) : null}
+
+      {back > 0 && order.status !== 'cancelled' ? (
+        <div className="flex flex-col gap-2 rounded-xl bg-warning-soft p-3 text-sm text-warning-soft-foreground">
+          <p className="flex items-center gap-1.5 font-semibold tabular-nums">
+            <HandCoinsIcon className="size-4 shrink-0" aria-hidden="true" />
+            {M.giveBack(formatPeso(back))}
+          </p>
+          <AsyncButton
+            variant="outline"
+            status={giveBackAction.status}
+            busyLabel={ordersWords.detail.recordingCash}
+            doneLabel={M.gaveBackDone}
+            disabled={!online}
+            onClick={() =>
+              giveBackAction
+                .run(async () => {
+                  await giveBack.mutateAsync({ orderId: order.id });
+                  notify({ title: M.gaveBackDone, tone: 'success' });
+                })
+                .catch(fail)
+            }
+            className="h-11 w-full bg-card font-semibold md:h-9"
+          >
+            {M.gaveBack}
+          </AsyncButton>
+        </div>
       ) : null}
     </Section>
   );
@@ -774,8 +841,42 @@ function ItemsSection({
       ]
     : [];
   const notes = detail ? detail.lines.filter((l) => l.note.trim() !== '') : [];
+  const block = editBlock(order);
+  const E = newOrderWords.edit;
   return (
-    <Section title={w.itemsSection} action={<ItemPhotos order={order} />}>
+    <Section
+      title={w.itemsSection}
+      action={
+        <div className="flex items-center gap-2">
+          <ItemPhotos order={order} />
+          {block !== 'order_locked' ? (
+            <Button
+              variant="outline"
+              disabled={block !== null}
+              nativeButton={block !== null}
+              render={
+                block === null ? (
+                  <Link to="/orders/$orderId/edit" params={{ orderId: order.id }} />
+                ) : undefined
+              }
+              className="h-11 gap-1.5 font-semibold md:h-9"
+            >
+              <PencilIcon aria-hidden="true" />
+              {E.short}
+            </Button>
+          ) : null}
+        </div>
+      }
+    >
+      {block === 'proof_waiting' ? (
+        <p className="text-sm text-muted-foreground">{E.proofWaiting}</p>
+      ) : null}
+      {detail?.editedAt ? (
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <PencilIcon className="size-3.5 shrink-0" aria-hidden="true" />
+          {E.editedAt(formatManila(detail.editedAt, 'time'))}
+        </p>
+      ) : null}
       {order.note ? (
         <p className="flex items-start gap-1.5 rounded-lg bg-warning-soft px-2.5 py-2 text-sm text-warning-soft-foreground">
           <MessageSquareTextIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
@@ -842,9 +943,11 @@ function CustomerSection({
         />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{order.customerName}</p>
-          {detail ? (
-            <p className="text-sm text-muted-foreground tabular-nums">{detail.customerPhone}</p>
-          ) : loading ? (
+          {detail?.customerPhone ? (
+            <p className="text-sm text-muted-foreground tabular-nums">
+              {formatPhPhone(detail.customerPhone)}
+            </p>
+          ) : loading && !detail ? (
             <Skeleton className="mt-1 h-4 w-28" />
           ) : null}
         </div>
@@ -869,25 +972,29 @@ function CustomerSection({
         ) : null}
       </div>
       {detail ? (
-        <div className="grid grid-cols-3 gap-2">
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<a href={`tel:${detail.customerPhone}`} />}
-            className="h-11 gap-1.5 font-semibold md:h-9"
-          >
-            <PhoneIcon aria-hidden="true" />
-            {ordersWords.detail.callCustomer}
-          </Button>
-          <Button
-            variant="outline"
-            nativeButton={false}
-            render={<a href={`sms:${detail.customerPhone}`} />}
-            className="h-11 gap-1.5 font-semibold md:h-9"
-          >
-            <MessageSquareTextIcon aria-hidden="true" />
-            {ordersWords.detail.openMessenger}
-          </Button>
+        <div className={cn('grid gap-2', detail.customerPhone ? 'grid-cols-3' : 'grid-cols-1')}>
+          {detail.customerPhone ? (
+            <>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<a href={`tel:${detail.customerPhone}`} />}
+                className="h-11 gap-1.5 font-semibold md:h-9"
+              >
+                <PhoneIcon aria-hidden="true" />
+                {ordersWords.detail.callCustomer}
+              </Button>
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<a href={`sms:${detail.customerPhone}`} />}
+                className="h-11 gap-1.5 font-semibold md:h-9"
+              >
+                <MessageSquareTextIcon aria-hidden="true" />
+                {ordersWords.detail.openMessenger}
+              </Button>
+            </>
+          ) : null}
           <MessengerOrderButton order={order} />
         </div>
       ) : null}
@@ -1144,6 +1251,8 @@ function PanelFooter({
   const action = cardAction(order);
   const targets = moveTargets(order);
   const w = ordersWords.detail;
+  const navigate = useNavigate();
+  const block = editBlock(order);
 
   let main: React.ReactNode = null;
   if (action.kind === 'advance') {
@@ -1240,6 +1349,17 @@ function PanelFooter({
                 })}
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+          ) : null}
+          {block !== 'order_locked' ? (
+            <DropdownMenuItem
+              disabled={block !== null || !online}
+              onClick={() =>
+                void navigate({ to: '/orders/$orderId/edit', params: { orderId: order.id } })
+              }
+            >
+              <PencilIcon />
+              {newOrderWords.edit.button}
+            </DropdownMenuItem>
           ) : null}
           {canReschedule(order) ? (
             <DropdownMenuItem onClick={onChangeTime}>

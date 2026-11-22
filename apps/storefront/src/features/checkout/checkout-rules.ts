@@ -58,6 +58,11 @@ export function resolvePaymentOptions(
       continue;
     }
 
+    // QR Ph is paid by its QR alone: without one, the option is left out (T107).
+    if (method === 'qr_ph' && !p.qr) {
+      continue;
+    }
+
     let disabled = false;
     let disabledReason: string | null = null;
 

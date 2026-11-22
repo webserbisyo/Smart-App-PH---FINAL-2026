@@ -28,7 +28,7 @@ export const CATALOG_ICONS: Record<CatalogIcon, LucideIcon> = {
 export const NAV = [
   { id: 'home', path: '/', icon: HouseIcon, words: 'home', placement: 'dock' },
   { id: 'orders', path: '/orders', icon: ReceiptTextIcon, words: 'orders', placement: 'dock' },
-  { id: 'catalog', path: '/catalog', icon: 'catalog', words: 'catalog', placement: 'dock' },
+  { id: 'catalog', path: '/catalog', icon: 'catalog', words: 'catalog', placement: 'more' },
   { id: 'members', path: '/members', icon: UsersIcon, words: 'members', placement: 'dock' },
   { id: 'editor', path: '/editor', icon: PaintbrushIcon, words: 'editor', placement: 'more' },
   // Insights is hidden for launch (decision T69): its 7 and 30 day trends live on Home, and /insights

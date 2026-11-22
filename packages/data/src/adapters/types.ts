@@ -46,6 +46,10 @@ import type {
   OwnerItem,
   OwnerOptionGroup,
   OwnerOrder,
+  OwnerOrderCreated,
+  OwnerOrderPayload,
+  CreateOwnerOrderInput,
+  EditOrderInput,
   ChatSummary,
   OwnerVariantTemplate,
   PauseMode,
@@ -106,6 +110,7 @@ import type {
   RegisterShopInput,
   ReviewPlanPaymentInput,
   SendBillingNoteInput,
+  SendBillingPhotoInput,
   SetTrackingInput,
   ShopIdInput,
   SignupLeadInput,
@@ -220,7 +225,33 @@ export interface OwnerOrdersAdapter {
     approve: boolean;
     rejectReason?: string | undefined;
   }): Promise<Payment>;
-  recordPayment(input: { slug: string; orderId: string; method: PaymentMethod }): Promise<Payment>;
+  // `amount` (T111): what the customer paid now, for a part payment or the rest; left out = all of it.
+  recordPayment(input: {
+    slug: string;
+    orderId: string;
+    method: PaymentMethod;
+    amount?: number | undefined;
+  }): Promise<Payment>;
+  // New order and Edit order (T111). The quote prices the lines and checks them the server's way;
+  // `orderId` quotes an edit (its own lines, time and items count as free).
+  quoteOwnerOrder(input: {
+    slug: string;
+    payload: OwnerOrderPayload;
+    orderId?: string | undefined;
+  }): Promise<Quote>;
+  createOwnerOrder(input: {
+    slug: string;
+    input: CreateOwnerOrderInput;
+  }): Promise<OwnerOrderCreated>;
+  editOrder(input: { slug: string; orderId: string; input: EditOrderInput }): Promise<OwnerOrder>;
+  // The days and times New order and Edit order can pick (the owner's 60 days, like Change time).
+  getOwnerSchedule(input: {
+    slug: string;
+    lines: OwnerOrderPayload['lines'];
+    orderId?: string | undefined;
+  }): Promise<Schedule>;
+  // The money was given back after an edit made the order smaller (T111).
+  recordGiveBack(input: { slug: string; orderId: string }): Promise<Payment>;
   advanceOrder(input: {
     slug: string;
     orderId: string;
@@ -336,6 +367,10 @@ export interface OwnerSettingsAdapter {
   submitPlanPayment(input: SubmitPlanPaymentInput): Promise<Plan>;
   // The Billing chat (T88): a short note to Smart App PH.
   sendPlanNote(input: SendBillingNoteInput): Promise<Plan>;
+  // A photo (payment proof or reference) with an optional reference number (T107).
+  sendPlanPhoto(input: SendBillingPhotoInput): Promise<Plan>;
+  // The owner opened the chat: our lines count as seen (T107).
+  markPlanChatSeen(): Promise<Plan>;
   getStorage(): Promise<StorageSummary>;
   previewCleanup(input: { kind: CleanupKind }): Promise<CleanupPreview>;
   runCleanup(input: { kind: CleanupKind; token: string }): Promise<StorageSummary>;

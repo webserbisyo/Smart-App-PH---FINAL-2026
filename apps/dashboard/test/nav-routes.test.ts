@@ -61,14 +61,14 @@ describe('dashboard routes', () => {
     }
   });
 
-  it('puts Home, Orders, catalog and Members in the dock and the rest in More', () => {
+  it('puts Home, Orders and Members in the dock (New order sits between them) and the rest in More (T111)', () => {
     expect(NAV.filter((item) => item.placement === 'dock').map((item) => item.id)).toEqual([
       'home',
       'orders',
-      'catalog',
       'members',
     ]);
     expect(NAV.filter((item) => item.placement === 'more').map((item) => item.id)).toEqual([
+      'catalog',
       'editor',
       'settings',
     ]);

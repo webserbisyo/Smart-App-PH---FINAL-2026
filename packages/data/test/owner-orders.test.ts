@@ -501,6 +501,11 @@ describe('ownerOrders mock adapter', () => {
       'getBookingRules',
       'saveBookingRules',
       'setPause',
+      'quoteOwnerOrder',
+      'createOwnerOrder',
+      'editOrder',
+      'getOwnerSchedule',
+      'recordGiveBack',
     ];
 
     for (const name of expectedMethods) {

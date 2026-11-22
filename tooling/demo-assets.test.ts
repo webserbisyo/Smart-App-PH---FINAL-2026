@@ -179,6 +179,19 @@ describe('Demo Assets Integrity and Budgets', () => {
     }
   });
 
+  it('has a small, square sample payment QR for every demo shop (T107)', async () => {
+    for (const slug of Object.keys(DEMO_MEDIA)) {
+      for (const width of [320, 640]) {
+        const file = path.join(DEMO_ROOT, slug, `brand/qr-${width}.webp`);
+        expect(fs.existsSync(file), `Missing sample QR: ${file}`).toBe(true);
+        expect(fs.statSync(file).size).toBeLessThanOrEqual(10 * 1024);
+        const meta = await sharp(file).metadata();
+        expect(meta.width).toBe(width);
+        expect(meta.height).toBe(width);
+      }
+    }
+  });
+
   it('ensures no file on disk in public/demo is missing from DEMO_MEDIA', () => {
     const expectedFiles = new Set<string>();
 
@@ -216,6 +229,9 @@ describe('Demo Assets Integrity and Budgets', () => {
         expectedFiles.add(`${slug}/brand/apple-touch-icon.png`);
         expectedFiles.add(`${slug}/brand/og.jpg`);
       }
+      // The sample payment QR (T107, tooling/scripts/demo-qr.ts): lossless WebP only.
+      expectedFiles.add(`${slug}/brand/qr-640.webp`);
+      expectedFiles.add(`${slug}/brand/qr-320.webp`);
     }
 
     // Walk disk

@@ -43,4 +43,19 @@ describe('BottomDock', () => {
     );
     expect(screen.getByRole('button', { name: /more/i }).hasAttribute('data-active')).toBe(true);
   });
+
+  it('puts the lifted action in the middle, after the first two items', () => {
+    const { container } = render(
+      <BottomDock
+        label="Main"
+        items={[items[0]!, items[1]!, items[3]!]}
+        action={item('new', 'New order', false)}
+        more={{ label: 'More', items: [items[2]!] }}
+      />,
+    );
+    const labels = [...container.querySelectorAll('nav > a, nav > button')].map((el) =>
+      el.textContent?.replace(/\d+/g, ''),
+    );
+    expect(labels).toEqual(['Home', 'Orders', 'New order', 'Members', 'More']);
+  });
 });

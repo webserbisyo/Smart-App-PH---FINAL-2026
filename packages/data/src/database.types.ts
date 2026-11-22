@@ -51,14 +51,14 @@ isOneToOne: false
                   ]
                 },"billing_messages": {
                   Row: {
-                    "created_at": string,"days": number | null,"from": string,"id": string,"kind": string,"payment_id": string | null,"reason": string | null,"seen_at": string | null,"tenant_id": string,"text": string | null
+                    "created_at": string,"days": number | null,"from": string,"id": string,"kind": string,"payment_id": string | null,"photo_media_id": string | null,"reason": string | null,"reference": string | null,"seen_at": string | null,"tenant_id": string,"text": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"days"?: number | null,"from": string,"id"?: string,"kind": string,"payment_id"?: string | null,"reason"?: string | null,"seen_at"?: string | null,"tenant_id": string,"text"?: string | null
+                    "created_at"?: string,"days"?: number | null,"from": string,"id"?: string,"kind": string,"payment_id"?: string | null,"photo_media_id"?: string | null,"reason"?: string | null,"reference"?: string | null,"seen_at"?: string | null,"tenant_id": string,"text"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"days"?: number | null,"from"?: string,"id"?: string,"kind"?: string,"payment_id"?: string | null,"reason"?: string | null,"seen_at"?: string | null,"tenant_id"?: string,"text"?: string | null
+                    "created_at"?: string,"days"?: number | null,"from"?: string,"id"?: string,"kind"?: string,"payment_id"?: string | null,"photo_media_id"?: string | null,"reason"?: string | null,"reference"?: string | null,"seen_at"?: string | null,"tenant_id"?: string,"text"?: string | null
                   }
                   Relationships: [
                     {
@@ -72,6 +72,12 @@ isOneToOne: false
       columns: ["tenant_id","payment_id"]
 isOneToOne: false
       referencedRelation: "plan_payments"
+      referencedColumns: ["tenant_id","id"]
+    },{
+      foreignKeyName: "billing_messages_tenant_id_photo_media_id_fkey"
+      columns: ["tenant_id","photo_media_id"]
+isOneToOne: false
+      referencedRelation: "media_files"
       referencedColumns: ["tenant_id","id"]
     }
                   ]
@@ -843,14 +849,14 @@ isOneToOne: false
                   ]
                 },"orders": {
                   Row: {
-                    "address_line": string | null,"business_date": string,"cancel_reason": string | null,"client_key": string | null,"created_at": string,"customer_email": string | null,"customer_name": string,"customer_phone": string | null,"delivery_fee": number,"discount": number,"distance_m": number | null,"due_at": string,"floor": string | null,"house_no": string | null,"id": string,"landmark": string | null,"last_step_at": string,"lat": number | null,"lng": number | null,"member_id": string | null,"note": string | null,"order_no": number,"owner_note": string | null,"pay_by": string | null,"payment_account_id": string | null,"payment_method": string,"payment_status": string,"pickup_code": string,"placed_at": string,"refund_amount": number | null,"refund_reason": string | null,"refunded_at": string | null,"reward_title": string | null,"rider_name": string | null,"rider_phone": string | null,"rider_provider": string | null,"scheduled_at": string | null,"seen_at": string | null,"start_by": string,"status": string,"subtotal": number,"tenant_id": string,"token": string,"total": number,"tracking_url": string | null,"type": string,"zone_id": string | null
+                    "address_line": string | null,"business_date": string,"cancel_reason": string | null,"client_key": string | null,"created_at": string,"customer_email": string | null,"customer_name": string,"customer_phone": string | null,"delivery_fee": number,"discount": number,"distance_m": number | null,"due_at": string,"edited_at": string | null,"floor": string | null,"house_no": string | null,"id": string,"landmark": string | null,"last_step_at": string,"lat": number | null,"lng": number | null,"member_id": string | null,"note": string | null,"order_no": number,"owner_note": string | null,"paid_amount": number,"pay_by": string | null,"payment_account_id": string | null,"payment_method": string,"payment_status": string,"pickup_code": string,"placed_at": string,"refund_amount": number | null,"refund_reason": string | null,"refunded_at": string | null,"reward_title": string | null,"rider_name": string | null,"rider_phone": string | null,"rider_provider": string | null,"scheduled_at": string | null,"seen_at": string | null,"source": string,"start_by": string,"status": string,"subtotal": number,"tenant_id": string,"token": string,"total": number,"tracking_url": string | null,"type": string,"version": number,"zone_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "address_line"?: string | null,"business_date": string,"cancel_reason"?: string | null,"client_key"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name": string,"customer_phone"?: string | null,"delivery_fee"?: number,"discount"?: number,"distance_m"?: number | null,"due_at": string,"floor"?: string | null,"house_no"?: string | null,"id"?: string,"landmark"?: string | null,"last_step_at"?: string,"lat"?: number | null,"lng"?: number | null,"member_id"?: string | null,"note"?: string | null,"order_no": number,"owner_note"?: string | null,"pay_by"?: string | null,"payment_account_id"?: string | null,"payment_method": string,"payment_status"?: string,"pickup_code": string,"placed_at"?: string,"refund_amount"?: number | null,"refund_reason"?: string | null,"refunded_at"?: string | null,"reward_title"?: string | null,"rider_name"?: string | null,"rider_phone"?: string | null,"rider_provider"?: string | null,"scheduled_at"?: string | null,"seen_at"?: string | null,"start_by": string,"status"?: string,"subtotal": number,"tenant_id": string,"token": string,"total": number,"tracking_url"?: string | null,"type": string,"zone_id"?: string | null
+                    "address_line"?: string | null,"business_date": string,"cancel_reason"?: string | null,"client_key"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name": string,"customer_phone"?: string | null,"delivery_fee"?: number,"discount"?: number,"distance_m"?: number | null,"due_at": string,"edited_at"?: string | null,"floor"?: string | null,"house_no"?: string | null,"id"?: string,"landmark"?: string | null,"last_step_at"?: string,"lat"?: number | null,"lng"?: number | null,"member_id"?: string | null,"note"?: string | null,"order_no": number,"owner_note"?: string | null,"paid_amount"?: number,"pay_by"?: string | null,"payment_account_id"?: string | null,"payment_method": string,"payment_status"?: string,"pickup_code": string,"placed_at"?: string,"refund_amount"?: number | null,"refund_reason"?: string | null,"refunded_at"?: string | null,"reward_title"?: string | null,"rider_name"?: string | null,"rider_phone"?: string | null,"rider_provider"?: string | null,"scheduled_at"?: string | null,"seen_at"?: string | null,"source"?: string,"start_by": string,"status"?: string,"subtotal": number,"tenant_id": string,"token": string,"total": number,"tracking_url"?: string | null,"type": string,"version"?: number,"zone_id"?: string | null
                   }
                   Update: {
-                    "address_line"?: string | null,"business_date"?: string,"cancel_reason"?: string | null,"client_key"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string,"customer_phone"?: string | null,"delivery_fee"?: number,"discount"?: number,"distance_m"?: number | null,"due_at"?: string,"floor"?: string | null,"house_no"?: string | null,"id"?: string,"landmark"?: string | null,"last_step_at"?: string,"lat"?: number | null,"lng"?: number | null,"member_id"?: string | null,"note"?: string | null,"order_no"?: number,"owner_note"?: string | null,"pay_by"?: string | null,"payment_account_id"?: string | null,"payment_method"?: string,"payment_status"?: string,"pickup_code"?: string,"placed_at"?: string,"refund_amount"?: number | null,"refund_reason"?: string | null,"refunded_at"?: string | null,"reward_title"?: string | null,"rider_name"?: string | null,"rider_phone"?: string | null,"rider_provider"?: string | null,"scheduled_at"?: string | null,"seen_at"?: string | null,"start_by"?: string,"status"?: string,"subtotal"?: number,"tenant_id"?: string,"token"?: string,"total"?: number,"tracking_url"?: string | null,"type"?: string,"zone_id"?: string | null
+                    "address_line"?: string | null,"business_date"?: string,"cancel_reason"?: string | null,"client_key"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string,"customer_phone"?: string | null,"delivery_fee"?: number,"discount"?: number,"distance_m"?: number | null,"due_at"?: string,"edited_at"?: string | null,"floor"?: string | null,"house_no"?: string | null,"id"?: string,"landmark"?: string | null,"last_step_at"?: string,"lat"?: number | null,"lng"?: number | null,"member_id"?: string | null,"note"?: string | null,"order_no"?: number,"owner_note"?: string | null,"paid_amount"?: number,"pay_by"?: string | null,"payment_account_id"?: string | null,"payment_method"?: string,"payment_status"?: string,"pickup_code"?: string,"placed_at"?: string,"refund_amount"?: number | null,"refund_reason"?: string | null,"refunded_at"?: string | null,"reward_title"?: string | null,"rider_name"?: string | null,"rider_phone"?: string | null,"rider_provider"?: string | null,"scheduled_at"?: string | null,"seen_at"?: string | null,"source"?: string,"start_by"?: string,"status"?: string,"subtotal"?: number,"tenant_id"?: string,"token"?: string,"total"?: number,"tracking_url"?: string | null,"type"?: string,"version"?: number,"zone_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -939,14 +945,14 @@ isOneToOne: false
                   ]
                 },"plan_payments": {
                   Row: {
-                    "amount": number,"covers_until": string,"created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"method": string,"months": number,"proof_media_id": string | null,"recorded_by": string | null,"reference": string,"reference_norm": string | null,"reject_reason": string | null,"status": string,"tenant_id": string
+                    "amount": number,"covers_until": string,"created_at": string,"decided_at": string | null,"decided_by": string | null,"id": string,"method": string,"months": number,"proof_media_id": string | null,"recorded_by": string | null,"reference": string | null,"reference_norm": string | null,"reject_reason": string | null,"status": string,"tenant_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount": number,"covers_until": string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method": string,"months": number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference": string,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id": string
+                    "amount": number,"covers_until": string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method": string,"months": number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference"?: string | null,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id": string
                   }
                   Update: {
-                    "amount"?: number,"covers_until"?: string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method"?: string,"months"?: number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference"?: string,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id"?: string
+                    "amount"?: number,"covers_until"?: string,"created_at"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"method"?: string,"months"?: number,"proof_media_id"?: string | null,"recorded_by"?: string | null,"reference"?: string | null,"reference_norm"?: never,"reject_reason"?: string | null,"status"?: string,"tenant_id"?: string
                   }
                   Relationships: [
                     {

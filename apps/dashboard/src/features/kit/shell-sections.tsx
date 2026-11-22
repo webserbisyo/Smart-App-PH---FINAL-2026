@@ -3,6 +3,7 @@ import {
   ChevronDownIcon,
   HouseIcon,
   PaintbrushIcon,
+  PlusIcon,
   ReceiptTextIcon,
   SettingsIcon,
   UsersIcon,
@@ -104,6 +105,11 @@ const MORE_ITEMS: NavItem[] = [
   demoItem('editor', 'Editor', <PaintbrushIcon />),
   demoItem('settings', 'Settings', <SettingsIcon />, false, 1),
 ];
+
+// The phone dock as it ships (T111): Home · Orders · + New order · Members · More (Menu inside).
+const DOCK_ACTION = demoItem('new-order', 'New order', <PlusIcon />);
+const DOCK_PHONE_ITEMS: NavItem[] = DOCK_ITEMS.filter((item) => item.id !== 'catalog');
+const DOCK_MORE_ITEMS: NavItem[] = [demoItem('catalog', 'Menu', <UtensilsIcon />), ...MORE_ITEMS];
 
 const TAB_ITEMS: NavItem[] = [
   demoItem('items', 'Items', null, true),
@@ -370,13 +376,18 @@ export function ShellKitSections() {
         title="Bottom dock"
         library="composition"
         path="packages/ui/src/compositions/bottom-dock.tsx"
-        usedIn="dashboard shell (phone), kit"
+        usedIn="dashboard shell (phone) with the + New order action (T111), kit"
       >
         <div
           id="kit-nav"
-          className="relative h-28 transform-gpu overflow-hidden rounded-xl border border-border bg-muted"
+          className="relative h-32 transform-gpu overflow-hidden rounded-xl border border-border bg-muted"
         >
-          <BottomDock label="Demo" items={DOCK_ITEMS} more={{ label: 'More', items: MORE_ITEMS }} />
+          <BottomDock
+            label="Demo"
+            items={DOCK_PHONE_ITEMS}
+            action={DOCK_ACTION}
+            more={{ label: 'More', items: DOCK_MORE_ITEMS }}
+          />
         </div>
       </KitSection>
 
