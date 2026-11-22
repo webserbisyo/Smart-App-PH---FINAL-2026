@@ -3,12 +3,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   BoardOrder,
   BookingRules,
+  CreateOwnerOrderInput,
+  EditOrderInput,
   OrderStatus,
   PauseMode,
   PaymentMethod,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
 import { ownerHomeQk } from '../owner-home/qk';
+import { ownerMembersQk } from '../owner-members/qk';
 import { ownerOrdersQk } from './qk';
 
 export function useSetPause(slug: string) {
@@ -133,8 +136,13 @@ export function useRecordPayment(slug: string) {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: { orderId: string; method: PaymentMethod }) =>
-      ownerOrders.recordPayment({ slug, orderId: input.orderId, method: input.method }),
+    mutationFn: (input: { orderId: string; method: PaymentMethod; amount?: number }) =>
+      ownerOrders.recordPayment({
+        slug,
+        orderId: input.orderId,
+        method: input.method,
+        amount: input.amount,
+      }),
     onSettled: (_data, _err, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
       qc.invalidateQueries({ queryKey: ownerHomeQk.all });
@@ -271,6 +279,57 @@ export function useMarkChatSeen(slug: string) {
     onSuccess: (_chat, vars) => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.chats(slug) });
       qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
+    },
+  });
+}
+
+// New order (T111): orders, Home and Members all change (a handed-over member order adds a stamp).
+export function useCreateOwnerOrder(slug: string) {
+  const { ownerOrders } = useAdapters();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateOwnerOrderInput) => ownerOrders.createOwnerOrder({ slug, input }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
+      qc.invalidateQueries({ queryKey: ownerMembersQk.all });
+    },
+  });
+}
+
+// Edit order (T111).
+export function useEditOrder(slug: string) {
+  const { ownerOrders } = useAdapters();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { orderId: string; input: EditOrderInput }) =>
+      ownerOrders.editOrder({ slug, orderId: input.orderId, input: input.input }),
+    onSuccess: (order) => {
+      qc.setQueryData(ownerOrdersQk.detail(slug, order.id), order);
+    },
+    onSettled: (_data, _err, vars) => {
+      qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      qc.invalidateQueries({ queryKey: ownerHomeQk.all });
+      qc.invalidateQueries({ queryKey: ownerMembersQk.all });
+      if (vars?.orderId) {
+        qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
+      }
+    },
+  });
+}
+
+// The money was given back after an edit made the order smaller (T111).
+export function useRecordGiveBack(slug: string) {
+  const { ownerOrders } = useAdapters();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { orderId: string }) =>
+      ownerOrders.recordGiveBack({ slug, orderId: input.orderId }),
+    onSettled: (_data, _err, vars) => {
+      qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
+      if (vars?.orderId) {
+        qc.invalidateQueries({ queryKey: ownerOrdersQk.detail(slug, vars.orderId) });
+      }
     },
   });
 }

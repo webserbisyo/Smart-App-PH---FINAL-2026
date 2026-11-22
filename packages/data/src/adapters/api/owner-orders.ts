@@ -4,8 +4,10 @@ import {
   ChatSummarySchema,
   DayLoadSchema,
   OpenStateSchema,
+  OwnerOrderCreatedSchema,
   OwnerOrderSchema,
   PaymentSchema,
+  QuoteSchema,
   ScheduleSchema,
 } from '@smartapp/core';
 import { z } from 'zod';
@@ -138,8 +140,53 @@ export function createApiOwnerOrdersAdapter({
         {
           method: 'POST',
           headers,
-          body: JSON.stringify({ method: input.method }),
+          body: JSON.stringify({ method: input.method, amount: input.amount }),
         },
+      );
+    },
+
+    async quoteOwnerOrder(input) {
+      const headers = await authHeaders();
+      return fetchApi(`${baseUrl}/owner/orders/quote`, QuoteSchema, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ payload: input.payload, orderId: input.orderId }),
+      });
+    },
+
+    async createOwnerOrder(input) {
+      const headers = await authHeaders();
+      return fetchApi(`${baseUrl}/owner/orders`, OwnerOrderCreatedSchema, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(input.input),
+      });
+    },
+
+    async editOrder(input) {
+      const headers = await authHeaders();
+      return fetchApi(
+        `${baseUrl}/owner/orders/${encodeURIComponent(input.orderId)}`,
+        OwnerOrderSchema,
+        { method: 'PUT', headers, body: JSON.stringify(input.input) },
+      );
+    },
+
+    async getOwnerSchedule(input) {
+      const headers = await authHeaders();
+      return fetchApi(`${baseUrl}/owner/orders/schedule`, ScheduleSchema, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ lines: input.lines, orderId: input.orderId }),
+      });
+    },
+
+    async recordGiveBack(input) {
+      const headers = await authHeaders();
+      return fetchApi(
+        `${baseUrl}/owner/orders/${encodeURIComponent(input.orderId)}/payments/give-back`,
+        PaymentSchema,
+        { method: 'POST', headers },
       );
     },
 

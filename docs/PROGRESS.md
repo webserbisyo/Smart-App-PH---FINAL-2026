@@ -80,6 +80,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Log in and sign-up redesign: sign-up tour on a phone with our sample shops that turns into the owner's own app, slimmer step 1 with the password and a colour on step 2, Log in split screen with Show password, Forgot password with a 6-digit code (decision T108; built 2026-11-21, round 2, final pass and finalize the same day, UI waiting for review)
 - [x] Sample shops page: `/samples` on the storefront lists every demo shop with its cover, logo and highlights, to open as a customer or as the owner (decision T109; built 2026-11-22, UI waiting for review)
 - [x] Smoothness pass: one short count-up, lists fade in, charts stop measuring labels, matching skeletons, dashboard screens load on demand, storefront hydration fix, UI scan speed check (decision T110; built 2026-11-22, waiting for review)
+- [x] New order and editable orders: a simple POS for walk-ins and Messenger (items, Guest or Member, how and when, payment with Paid part), + New order in the middle of the phone dock with Menu in More, Edit order while New, Preparing or Ready with Collect more and Give back, database step 10 (decision T111; built 2026-11-22, UI waiting for review)
 
 ## Phase 4: Backend, area by area
 
@@ -97,6 +98,7 @@ Order of areas: login first, then shops and settings, catalog, orders and paymen
 - [x] Database step 7: exports, billing, tracking and audit
 - [x] Database step 8: push News (`push_campaigns`, `push_deliveries`; decision T106)
 - [x] Database step 9: Billing chat photos (`billing_messages.photo_media_id` and `reference`, kind `photo`, optional plan payment reference; decision T107)
+- [x] Database step 10: New order and Edit order columns on `orders` (`source`, `paid_amount`, `version`, `edited_at`) and the `changed` order message (decision T111; no new tables)
 - [x] CI applies migrations to the dev project (D9)
 - [x] Course skills (data, analysis, HCI, web, OOP, algorithms, platform, security, integration, prompts), UI approved / Done tracking, Start here doc (decision T102)
 

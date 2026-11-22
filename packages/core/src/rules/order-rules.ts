@@ -265,3 +265,40 @@ export function payCountdown(
     fraction: Math.min(1, secondsLeft / (windowMinutes * 60)),
   };
 }
+
+/** T111: an order can be edited while it is New, Preparing or Ready (not on the way, done or closed). */
+export function canEditOrder(order: { status: OrderStatus }): boolean {
+  return order.status === 'placed' || order.status === 'preparing' || order.status === 'ready';
+}
+
+/**
+ * Why Edit order is not allowed right now, or null: the order moved past Ready (`order_locked`), or a
+ * payment photo still waits for the owner's answer (`proof_waiting`), so a photo is never checked
+ * against a changed amount.
+ */
+export function editBlock(order: {
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+}): 'order_locked' | 'proof_waiting' | null {
+  if (!canEditOrder(order)) return 'order_locked';
+  if (order.paymentStatus === 'pending') return 'proof_waiting';
+  return null;
+}
+
+export interface Balance {
+  // Still to collect from the customer.
+  due: number;
+  // Paid more than the total (an edit made it smaller): give this back.
+  back: number;
+}
+
+/** What is left to pay, or to give back, from the total and what was paid so far (T111, P4). */
+export function balanceOf(order: { total: number; paidAmount: number }): Balance {
+  const diff = order.total - order.paidAmount;
+  return { due: Math.max(0, diff), back: Math.max(0, -diff) };
+}
+
+/** Payment status from what was paid: all of it is paid, anything less is not paid yet. */
+export function paidStatusFor(total: number, paidAmount: number): PaymentStatus {
+  return paidAmount >= total ? 'paid' : 'unpaid';
+}

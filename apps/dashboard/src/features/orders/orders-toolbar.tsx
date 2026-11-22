@@ -7,10 +7,12 @@ import {
   KanbanSquareIcon,
   ListIcon,
   MoreHorizontalIcon,
+  PlusIcon,
   SearchIcon,
   XIcon,
 } from 'lucide-react';
-import { ordersWords } from '@smartapp/core';
+import { Link } from '@tanstack/react-router';
+import { newOrderWords, ordersWords } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import {
   DropdownMenu,
@@ -142,6 +144,17 @@ export function OrdersToolbar({
         </Button>
 
         {chats ? <div className="md:hidden">{chats}</div> : null}
+
+        {/* Laptop and tablet: New order next to the tools; phones use the dock's + (T111). */}
+        <Button
+          className="hidden h-9 gap-1.5 font-semibold md:inline-flex"
+          aria-keyshortcuts={newOrderWords.shortcut}
+          nativeButton={false}
+          render={<Link to="/orders/new" />}
+        >
+          <PlusIcon aria-hidden="true" />
+          {newOrderWords.title}
+        </Button>
 
         <Tooltip>
           <TooltipTrigger

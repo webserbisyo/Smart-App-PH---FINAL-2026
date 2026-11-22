@@ -110,6 +110,17 @@ import {
   type Showcase,
   type ShowcaseStory,
   type SupportSession,
+  balanceOf,
+  CreateOwnerOrderInputSchema,
+  editBlock,
+  EditOrderInputSchema,
+  lineIdentity,
+  orderChangeWords,
+  OrderSourceEnum,
+  OwnerOrderPayloadSchema,
+  paidStatusFor,
+  type OwnerOrderPayload,
+  type Quote,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
 import { getAuthClient, getClaims } from '../auth';
@@ -148,6 +159,7 @@ import { getMockScenario, type DemoCustomerState, type MockScenario } from './sc
 import {
   addMinutes,
   buildOrder,
+  paidOf,
   memberBalance,
   memberFace,
   memberId,
@@ -250,6 +262,11 @@ const PersistedSchema = z.object({
       // Older saved orders have no seen time or owner note.
       seenAt: z.string().nullable().default(null),
       ownerNote: z.string().nullable().default(null),
+      // T111: kept when the owner changed a customer's order on this device.
+      source: OrderSourceEnum.optional(),
+      paidAmount: z.number().optional(),
+      version: z.number().optional(),
+      editedAt: z.string().nullable().optional(),
     }),
   ),
   members: z.array(
@@ -896,6 +913,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             }
           : null,
       customerAvatar: member ? memberFace(member) : null,
+      source: o.source ?? 'storefront',
+      paidAmount: paidOf(o),
     });
   }
 
@@ -919,17 +938,24 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
 
   function ownerOrder(s: ShopState, o: OrderRecord) {
     const lastStepAt = o.receipt.events[o.receipt.events.length - 1]?.at ?? o.receipt.placedAt;
+    const member = memberOf(s, o.memberEmail ?? o.customerEmail);
     return OwnerOrderSchema.parse({
       ...o.receipt,
       id: o.id,
-      customerPhone: o.customerPhone,
+      // A walk-in made without a mobile number has none (T111).
+      customerPhone: o.customerPhone || null,
       customerEmail: o.customerEmail,
       isFirstOrder: o.isFirstOrder,
-      isMember: memberOf(s, o.memberEmail ?? o.customerEmail) !== null,
+      isMember: member !== null,
       proofs: o.proofs,
       seenAt: o.seenAt ?? null,
       ownerNote: o.ownerNote ?? null,
       lastStepAt,
+      source: o.source ?? 'storefront',
+      paidAmount: paidOf(o),
+      version: o.version ?? 1,
+      editedAt: o.editedAt ?? null,
+      memberId: member ? memberId(member) : null,
     });
   }
 
@@ -951,7 +977,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       orderNo: o.receipt.orderNo,
       status: o.receipt.status,
       customerName: o.receipt.customerName,
-      customerPhone: o.customerPhone,
+      customerPhone: o.customerPhone || null,
       isMember: board.isMember,
       isFirstOrder: o.isFirstOrder,
       memberStamps: board.memberStamps,
@@ -970,6 +996,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       method: o.receipt.paymentMethod,
       status: o.receipt.paymentStatus,
       amount: o.receipt.totals.total,
+      paidAmount: paidOf(o),
       proofs: o.proofs,
     });
   }
@@ -1498,6 +1525,227 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       }),
   };
 
+  // One stamp when an order is done (S20): the member on the order, under the card's minimum and cap.
+  function awardStamp(s: ShopState, order: OrderRecord, at: string): void {
+    const r = order.receipt;
+    const member = memberOf(s, order.memberEmail);
+    const card = s.shop.storefront.stampCard;
+    if (!member || order.stamp !== 'pending' || card.status !== 'on') return;
+    const from = card.rule.period ? new Date(periodStart(card.rule.period, now())).getTime() : 0;
+    const earned = member.ledger.filter(
+      (e) => e.kind === 'earned' && new Date(e.at).getTime() >= from,
+    ).length;
+    if (earnsStamp(card.rule, r.totals.subtotal, earned).earns) {
+      member.ledger.push({
+        kind: 'earned',
+        delta: 1,
+        reasonCategory: null,
+        orderNo: r.orderNo,
+        at,
+      });
+      order.stamp = 'earned';
+    } else {
+      order.stamp = 'none';
+    }
+  }
+
+  // ---- New order and Edit order (T111) -----------------------------------------------------------
+
+  function createdOf(o: OrderRecord) {
+    return {
+      orderId: o.id,
+      orderNo: o.receipt.orderNo,
+      token: o.receipt.token,
+      status: o.receipt.status,
+    };
+  }
+
+  function deliveryText(body: OwnerOrderPayload): string | null {
+    if (body.type !== 'delivery' || !body.delivery) return null;
+    const d = body.delivery;
+    return [d.houseNo, d.floor, d.addressLine, d.landmark].filter(Boolean).join(', ');
+  }
+
+  // The customer on an owner-made order: the picked member, or a guest ("Walk-in" without a name).
+  function ownerCustomer(
+    s: ShopState,
+    body: OwnerOrderPayload,
+  ): { member: MemberRecord | null; name: string; phone: string } {
+    const c = body.customer;
+    if (c.kind === 'member') {
+      const member = s.members.find((m) => memberId(m) === c.memberId);
+      if (!member) fail('not_found', 404);
+      return { member, name: member.name, phone: member.phone };
+    }
+    let phone = '';
+    if (c.phone) {
+      const checked = normalisePhPhone(c.phone);
+      if (!checked.ok) fail('invalid_input', 422, { phone: [orderChangeWords.phoneInvalid] });
+      phone = checked.e164;
+    }
+    return { member: null, name: c.name.trim() || orderChangeWords.walkIn, phone };
+  }
+
+  // Ways to pay the owner can record: cash at the counter (walk-in and pickup), COD for delivery, and the
+  // shop's own transfer accounts.
+  function ownerMethods(shop: PublicShop, type: OwnerOrderPayload['type']) {
+    const set = new Set(methodsFor(shop, type));
+    if (type !== 'delivery') set.add('cash');
+    return [...set];
+  }
+
+  /**
+   * The owner's quote: the storefront's prices and line checks, without the customer-only limits (open
+   * now, busy, paused, COD limit, minimum order). Booked times keep closed days and hours; full times,
+   * daily limits and notice need Allow anyway (P6). An edit keeps lines that were already on the order
+   * even if they sold out since, and keeps its prize.
+   */
+  function ownerQuote(s: ShopState, body: OwnerOrderPayload, editing: OrderRecord | null): Quote {
+    const shop = publicShop(s);
+    const sf = shop.storefront;
+    const member =
+      body.customer.kind === 'member'
+        ? (s.members.find(
+            (m) => body.customer.kind === 'member' && memberId(m) === body.customer.memberId,
+          ) ?? null)
+        : null;
+    const base = quote(
+      { shop, now: now(), member: member ? accountFor(s, member) : null },
+      {
+        type: body.type,
+        scheduledAt: null,
+        lines: body.lines,
+        delivery: null,
+        paymentMethod: body.paymentMethod,
+        paymentAccountId: body.paymentAccountId,
+        useReward: editing ? false : body.useReward && member !== null,
+      },
+    );
+    const had = new Map<string, number>();
+    for (const l of editing?.receipt.lines ?? []) {
+      const key = lineIdentity(l);
+      had.set(key, (had.get(key) ?? 0) + l.qty);
+    }
+    const lines = base.lines.map((l) =>
+      l.qty <= (had.get(l.identity) ?? 0)
+        ? {
+            ...l,
+            problems: l.problems.filter(
+              (p) => p.code !== 'sold_out' && p.code !== 'sold_out_today',
+            ),
+          }
+        : l,
+    );
+    const good = lines.filter((l) => l.problems.length === 0);
+    const subtotal = good.reduce((sum, l) => sum + l.lineTotal, 0);
+    const problems: Quote['problems'] = base.problems.filter(
+      (p) => p.code === 'empty_basket' || p.code === 'reward_unavailable',
+    );
+    const problem = (code: Quote['problems'][number]['code']) =>
+      problems.push({ code, amount: null, km: null });
+
+    if (body.type !== 'walk_in' && !sf.orderTypes.includes(body.type))
+      problem('fulfillment_unavailable');
+    const pickedAccount =
+      body.paymentAccountId === null ||
+      sf.payments.some((p) => p.id === body.paymentAccountId && p.method === body.paymentMethod);
+    if (!ownerMethods(shop, body.type).includes(body.paymentMethod) || !pickedAccount)
+      problem('payment_unavailable');
+
+    const at = body.type === 'walk_in' ? null : body.scheduledAt;
+    if (body.type === 'walk_in' && body.scheduledAt) problem('slot_unavailable');
+    if (at && at !== editing?.receipt.scheduledAt) {
+      const date = manilaDate(at);
+      const t = new Date(at).getTime();
+      const closed =
+        sf.closures.some((c) => c.date === date) ||
+        !intervalsForDate(sf, date).some((i) => t >= i.start.getTime() && t < i.end.getTime()) ||
+        t <= now().getTime();
+      if (closed) problem('slot_unavailable');
+      else if (!body.override) {
+        const sched = ownerScheduleDays(
+          sf,
+          body.lines,
+          shop.catalog.items,
+          computeBookings(s, editing?.id),
+          now(),
+        );
+        const day = sched.days.find((d) => d.date === date);
+        const slot = day?.slots.find((sl) => sl.at === at);
+        if (!day || day.state !== 'open' || !slot || slot.state !== 'open')
+          problem('slot_unavailable');
+      }
+    }
+
+    let fee = 0;
+    if (body.type === 'delivery') {
+      if (!body.delivery || body.delivery.addressLine.trim() === '') problem('zone_required');
+      const zone = sf.delivery.zones.find((z) => z.id === body.delivery?.zoneId);
+      fee = body.deliveryFee ?? zone?.fee ?? 0;
+    }
+    const discount = editing
+      ? Math.min(editing.receipt.totals.discount, subtotal)
+      : Math.min(base.discount, subtotal);
+    return {
+      ...base,
+      lines,
+      subtotal,
+      discount,
+      deliveryFee: fee,
+      total: Math.max(0, subtotal - discount) + fee,
+      distanceM: null,
+      slots: [],
+      readyEstimate: at ?? base.readyEstimate,
+      problems,
+    };
+  }
+
+  function failOnQuote(q: Quote): void {
+    const flagged = q.lines.find((l) => l.problems.length > 0);
+    if (flagged) {
+      const code = flagged.problems[0]?.code;
+      fail(
+        code === 'sold_out' || code === 'sold_out_today'
+          ? 'out_of_stock'
+          : code === 'item_missing' || code === 'variant_missing'
+            ? 'item_unavailable'
+            : 'invalid_options',
+        409,
+      );
+    }
+    const first = q.problems[0];
+    if (!first) return;
+    if (first.code === 'slot_unavailable') fail('slot_full', 409);
+    fail(quoteProblemCode(first), 409);
+  }
+
+  // "added 1 Fries, removed 2 Iced Tea" for the customer's chat line; "updated the details" otherwise.
+  function changeSummary(
+    before: readonly { name: string; variantLabel: string | null; qty: number }[],
+    after: readonly { name: string; variantLabel: string | null; qty: number }[],
+  ): string {
+    const count = (lines: typeof before) => {
+      const m = new Map<string, number>();
+      for (const l of lines) {
+        const key = [l.name, l.variantLabel].filter(Boolean).join(' ');
+        m.set(key, (m.get(key) ?? 0) + l.qty);
+      }
+      return m;
+    };
+    const was = count(before);
+    const now = count(after);
+    const parts: string[] = [];
+    for (const [name, qty] of now) {
+      const diff = qty - (was.get(name) ?? 0);
+      if (diff > 0) parts.push(orderChangeWords.added(diff, name));
+    }
+    for (const [name, qty] of was) {
+      const diff = qty - (now.get(name) ?? 0);
+      if (diff > 0) parts.push(orderChangeWords.removed(diff, name));
+    }
+    return parts.length > 0 ? parts.join(', ') : orderChangeWords.details;
+  }
+
   const ownerOrders: DataAdapters['ownerOrders'] = {
     listOrders: (input) =>
       run('orders', () => {
@@ -1649,6 +1897,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const at = now().toISOString();
         if (approve) {
           order.receipt.paymentStatus = 'paid';
+          order.paidAmount = order.receipt.totals.total;
           if (proof) proof.status = 'approved';
           order.receipt.messages.push({
             id: `${order.id}-paid-${order.proofs.length}`,
@@ -1694,18 +1943,227 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return payment(order);
       }),
 
-    recordPayment: ({ slug, orderId, method }) =>
+    recordPayment: ({ slug, orderId, method, amount }) =>
       run('orders', () => {
         const s = requireShop(slug);
         const order = orderById(s, orderId);
-        if (order.receipt.paymentStatus === 'paid') fail('already_paid', 409);
-        if (method !== 'cash' && method !== 'cod') fail('payment_unavailable', 409);
+        const total = order.receipt.totals.total;
+        const paid = paidOf(order);
+        if (order.receipt.paymentStatus === 'paid' || paid >= total) fail('already_paid', 409);
+        // A customer's transfer is approved from its photo; the owner's own orders take any method, and so
+        // does the rest of an order that grew after an edit (T111).
+        const ownerMade = order.source === 'owner';
+        if (!ownerMade && paid === 0 && method !== 'cash' && method !== 'cod')
+          fail('payment_unavailable', 409);
+        const add = amount ?? total - paid;
+        if (!Number.isInteger(add) || add <= 0 || paid + add > total) fail('invalid_input', 422);
+        order.paidAmount = paid + add;
         order.receipt.paymentMethod = method;
-        order.receipt.paymentStatus = 'paid';
-        order.receipt.expiresAt = null;
-        order.receipt.payment = null;
+        order.receipt.paymentStatus = paidStatusFor(total, order.paidAmount);
+        if (order.receipt.paymentStatus === 'paid') {
+          order.receipt.expiresAt = null;
+          if (!ownerMade) order.receipt.payment = null;
+        }
         persist();
         return payment(order);
+      }),
+
+    getOwnerSchedule: ({ slug, lines, orderId }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        return ownerScheduleDays(
+          s.shop.storefront,
+          lines,
+          s.shop.catalog.items,
+          computeBookings(s, orderId),
+          now(),
+        );
+      }),
+
+    recordGiveBack: ({ slug, orderId }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const order = orderById(s, orderId);
+        const { back } = balanceOf({
+          total: order.receipt.totals.total,
+          paidAmount: paidOf(order),
+        });
+        if (back <= 0) fail('invalid_input', 422);
+        order.paidAmount = order.receipt.totals.total;
+        persist();
+        return payment(order);
+      }),
+
+    quoteOwnerOrder: ({ slug, payload, orderId }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const parsed = OwnerOrderPayloadSchema.safeParse(payload);
+        if (!parsed.success) fail('invalid_input', 422);
+        const editing = orderId ? orderById(s, orderId) : null;
+        return QuoteSchema.parse(ownerQuote(s, parsed.data, editing));
+      }),
+
+    createOwnerOrder: ({ slug, input }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const parsed = CreateOwnerOrderInputSchema.safeParse(input);
+        if (!parsed.success) fail('invalid_input', 422);
+        const { payload: body, pay, handedOver, clientKey } = parsed.data;
+        const again = s.orders.find((o) => o.clientKey === clientKey);
+        if (again) return createdOf(again);
+        if (handedOver && body.type !== 'walk_in') fail('invalid_input', 422);
+
+        const q = ownerQuote(s, body, null);
+        failOnQuote(q);
+        const who = ownerCustomer(s, body);
+        const total = q.total;
+        let paidAmount = 0;
+        if (pay.kind === 'paid') paidAmount = total;
+        if (pay.kind === 'part') {
+          const amount = pay.amount ?? 0;
+          if (amount <= 0 || amount >= total)
+            fail('invalid_input', 422, {
+              amount: [orderChangeWords.partInvalid(formatPeso(total))],
+            });
+          paidAmount = amount;
+        }
+
+        const t = now();
+        const iso = t.toISOString();
+        const card = s.shop.storefront.stampCard;
+        const redeemed =
+          who.member && body.useReward && q.discount > 0 ? card.rule.stampsNeeded : 0;
+        const orderNo = nextOrderNo(s, manilaDate(t));
+        const token = makeToken(rng);
+        const record = buildOrder(s.shop, {
+          id: `${slug}-n-${token.slice(0, 10)}`,
+          slug,
+          token,
+          orderNo,
+          placedAt: iso,
+          type: body.type,
+          status: 'placed',
+          paymentStatus: paidStatusFor(total, paidAmount),
+          paymentMethod: body.paymentMethod,
+          paymentAccountId: body.paymentAccountId,
+          lines: body.lines,
+          customer: { name: who.name, phone: who.phone, email: who.member?.email ?? null },
+          scheduledAt: body.type === 'walk_in' ? null : body.scheduledAt,
+          deliveryAddress: deliveryText(body),
+          deliveryFee: q.deliveryFee,
+          discount: q.discount,
+          rewardTitle: redeemed > 0 ? card.reward.title : null,
+          expiresAt: null,
+          note: body.note,
+          clientKey,
+          isFirstOrder: who.phone !== '' && !s.orders.some((o) => o.customerPhone === who.phone),
+          memberEmail: who.member?.email ?? null,
+          redeemed,
+          stamp:
+            who.member && card.status === 'on' && q.subtotal >= card.rule.minOrderTotal
+              ? 'pending'
+              : 'none',
+          byCustomer: false,
+          // The owner made it, so it is seen already (no chime, no New dot).
+          seenAt: iso,
+        });
+        record.source = 'owner';
+        record.paidAmount = paidAmount;
+        record.version = 1;
+        record.editedAt = null;
+        if (who.member && redeemed > 0) {
+          who.member.ledger.push({
+            kind: 'used',
+            delta: -redeemed,
+            reasonCategory: null,
+            orderNo,
+            at: iso,
+          });
+        }
+        s.orders.push(record);
+        if (handedOver) {
+          addStatus(record, 'completed', iso);
+          awardStamp(s, record, iso);
+        }
+        persist();
+        return createdOf(record);
+      }),
+
+    editOrder: ({ slug, orderId, input }) =>
+      run('orders', () => {
+        const s = requireShop(slug);
+        const order = orderById(s, orderId);
+        const parsed = EditOrderInputSchema.safeParse(input);
+        if (!parsed.success) fail('invalid_input', 422);
+        const block = editBlock(order.receipt);
+        if (block) fail(block, 409);
+        if ((order.version ?? 1) !== parsed.data.version) fail('order_changed', 409);
+        const body = parsed.data.payload;
+        const q = ownerQuote(s, body, order);
+        failOnQuote(q);
+        const who = ownerCustomer(s, body);
+        const r = order.receipt;
+        const at = now().toISOString();
+        const paid = paidOf(order);
+        const beforeLines = r.lines.map((l) => ({ ...l }));
+
+        r.lines = receiptLines(s.shop, body.lines);
+        r.totals = {
+          subtotal: q.subtotal,
+          discount: q.discount,
+          deliveryFee: q.deliveryFee,
+          total: q.total,
+        };
+        r.type = body.type;
+        r.customerName = who.name;
+        r.note = body.note;
+        r.deliveryAddress = body.type === 'delivery' ? deliveryText(body) : null;
+        if (body.type === 'walk_in') r.scheduledAt = null;
+        else if (body.scheduledAt !== r.scheduledAt) r.scheduledAt = body.scheduledAt;
+        const times = dueTimes({
+          placedAt: r.placedAt,
+          scheduledAt: r.scheduledAt,
+          prepMinutes: s.shop.storefront.prepMinutes ?? 20,
+        });
+        r.dueAt = times.dueAt;
+        r.startBy = times.startBy;
+        if (r.paymentMethod !== body.paymentMethod && r.paymentStatus !== 'paid') {
+          r.paymentMethod = body.paymentMethod;
+        }
+        if (r.payment) r.payment = { ...r.payment, amount: q.total };
+        if (r.paymentStatus !== 'refunded') r.paymentStatus = paidStatusFor(q.total, paid);
+        order.paidAmount = paid;
+        order.customerPhone = who.phone;
+        order.customerEmail = who.member?.email ?? null;
+        if ((order.memberEmail ?? null) !== (who.member?.email ?? null)) {
+          // Another member (or a guest now): the stamp follows the member on the order.
+          order.memberEmail = who.member?.email ?? null;
+        }
+        const card = s.shop.storefront.stampCard;
+        if (order.stamp === 'pending' || order.stamp === 'none') {
+          order.stamp =
+            who.member && card.status === 'on' && q.subtotal >= card.rule.minOrderTotal
+              ? 'pending'
+              : 'none';
+        }
+        order.version = (order.version ?? 1) + 1;
+        order.editedAt = at;
+        r.messages.push({
+          id: `${order.id}-changed-${order.version}`,
+          kind: 'changed',
+          at,
+          status: null,
+          proof: null,
+          text: orderChangeWords.changedLine(
+            changeSummary(beforeLines, r.lines),
+            formatPeso(q.total),
+          ),
+          from: 'shop',
+          via: 'app',
+          seenAt: null,
+        });
+        persist();
+        return ownerOrder(s, order);
       }),
 
     advanceOrder: ({ slug, orderId, toStatus, trackingUrl }) =>
@@ -1718,30 +2176,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const at = now().toISOString();
         if (trackingUrl) r.trackingUrl = trackingUrl;
         addStatus(order, toStatus, at);
-        if (toStatus === 'completed') {
-          const member = memberOf(s, order.memberEmail);
-          const card = s.shop.storefront.stampCard;
-          if (member && order.stamp === 'pending' && card.status === 'on') {
-            const from = card.rule.period
-              ? new Date(periodStart(card.rule.period, now())).getTime()
-              : 0;
-            const earned = member.ledger.filter(
-              (e) => e.kind === 'earned' && new Date(e.at).getTime() >= from,
-            ).length;
-            if (earnsStamp(card.rule, r.totals.subtotal, earned).earns) {
-              member.ledger.push({
-                kind: 'earned',
-                delta: 1,
-                reasonCategory: null,
-                orderNo: r.orderNo,
-                at,
-              });
-              order.stamp = 'earned';
-            } else {
-              order.stamp = 'none';
-            }
-          }
-        }
+        if (toStatus === 'completed') awardStamp(s, order, at);
         persist();
         return ownerOrder(s, order);
       }),
@@ -1867,16 +2302,18 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const at = now().toISOString();
         addStatus(order, 'cancelled', at);
         r.cancelReason = why;
-        if (r.paymentStatus === 'paid') {
+        // Whatever was paid goes back, a part payment too (T111).
+        const paidSoFar = paidOf(order);
+        if (paidSoFar > 0) {
           r.paymentStatus = 'refunded';
-          r.refund = { amount: r.totals.total, reason: why, at };
+          r.refund = { amount: paidSoFar, reason: why, at };
           r.messages.push({
             id: `${order.id}-refund`,
             kind: 'status',
             at,
             status: null,
             proof: null,
-            text: words.shop.thread.refunded(formatPeso(r.totals.total), why),
+            text: words.shop.thread.refunded(formatPeso(paidSoFar), why),
             from: 'shop',
             via: 'app',
             seenAt: null,
