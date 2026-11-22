@@ -7,6 +7,7 @@ import {
   ADMIN_ROUTES,
   DASHBOARD_ROUTES,
   GUEST_ROUTES,
+  PLATFORM_ROUTES,
   SCAN_SHOPS,
   STOREFRONT_ROUTES,
   type CatalogRoute,
@@ -74,7 +75,11 @@ function RouteList({
 export default function KitRoutesPage() {
   const store = env.VITE_STOREFRONT_URL;
   const total =
-    DASHBOARD_ROUTES.length + ADMIN_ROUTES.length + GUEST_ROUTES.length + STOREFRONT_ROUTES.length;
+    DASHBOARD_ROUTES.length +
+    ADMIN_ROUTES.length +
+    GUEST_ROUTES.length +
+    PLATFORM_ROUTES.length +
+    STOREFRONT_ROUTES.length;
 
   return (
     <KitFrame current="/kit/routes">
@@ -104,6 +109,13 @@ export default function KitRoutesPage() {
 
       <Separator />
 
+      <RouteList
+        title="Storefront: our own pages"
+        hint="Outside any shop. Opens the storefront app in a new tab."
+        routes={PLATFORM_ROUTES}
+        base={store}
+        external
+      />
       {SCAN_SHOPS.map((slug) => (
         <RouteList
           key={slug}

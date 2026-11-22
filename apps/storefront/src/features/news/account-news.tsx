@@ -1,11 +1,10 @@
 'use client';
 
-import { useId, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
-import { BellIcon, BellOffIcon, CheckIcon, ChevronRightIcon, MegaphoneIcon } from 'lucide-react';
+import { BellIcon, ChevronRightIcon, MegaphoneIcon } from 'lucide-react';
 import { formatManila, imageSources, shopNewsWords, type ShopNewsItem } from '@smartapp/core';
 import { useNewsChoice, useOnline, useSetNewsChoice, useShopNews } from '@smartapp/data';
-import { Button } from '@smartapp/ui/components/button';
 import {
   Drawer,
   DrawerContent,
@@ -13,9 +12,8 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@smartapp/ui/components/drawer';
-import { Label } from '@smartapp/ui/components/label';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { Switch } from '@smartapp/ui/components/switch';
+import { PushUpdatesCard, ShopNewsCard } from '@smartapp/ui/compositions/news-settings';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { ShopImage } from '@smartapp/ui/compositions/shop-image';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
@@ -122,12 +120,6 @@ function NewsDrawer({
   );
 }
 
-const BLOCK_HELP: Record<Exclude<PushState, 'ask' | 'granted'>, string> = {
-  denied: W.deniedHelp,
-  needs_install: W.installHelp,
-  unsupported: W.unsupportedHelp,
-};
-
 function SettingsBody({
   slug,
   state: first,
@@ -143,7 +135,6 @@ function SettingsBody({
   const [asking, setAsking] = useState(false);
   const save = useSetNewsChoice(slug);
   const online = useOnline();
-  const newsId = useId();
 
   async function turnOn() {
     setAsking(true);
@@ -159,65 +150,19 @@ function SettingsBody({
     });
   }
 
-  const blocked = state !== 'ask' && state !== 'granted';
   return (
     <>
-      <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/8">
-        <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-shop-10-soft text-shop-10-soft-foreground">
-            {blocked ? (
-              <BellOffIcon aria-hidden="true" className="size-5" />
-            ) : (
-              <BellIcon aria-hidden="true" className="size-5" />
-            )}
-          </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="font-semibold">{W.updates}</span>
-            <span className="text-sm text-muted-foreground">{W.updatesHelp}</span>
-          </div>
-          {state === 'granted' ? (
-            <span className="flex shrink-0 items-center gap-1 text-sm font-semibold text-success-text">
-              <CheckIcon aria-hidden="true" className="size-4" />
-              {W.updatesOn}
-            </span>
-          ) : null}
-        </div>
-        {state === 'ask' ? (
-          <Button
-            className="h-11 rounded-full bg-shop-10 text-shop-10-foreground hover:bg-shop-10-hover"
-            disabled={asking || !online}
-            onClick={() => void turnOn()}
-          >
-            {W.turnOn}
-          </Button>
-        ) : null}
-        {blocked ? (
-          <p role="status" className="rounded-xl bg-muted p-3 text-sm">
-            {BLOCK_HELP[state]}
-          </p>
-        ) : null}
-      </section>
-
-      <section className="flex items-start gap-3 rounded-2xl bg-card p-4 ring-1 ring-foreground/8">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-member-soft text-member-soft-foreground">
-          <MegaphoneIcon aria-hidden="true" className="size-5" />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <Label htmlFor={newsId} className="text-base font-semibold">
-            {W.news}
-          </Label>
-          <span id={`${newsId}-help`} className="text-sm text-muted-foreground">
-            {W.newsHelp}
-          </span>
-        </div>
-        <Switch
-          id={newsId}
-          checked={news}
-          disabled={loading || save.isPending || !online}
-          onCheckedChange={setNews}
-          aria-describedby={`${newsId}-help`}
-        />
-      </section>
+      <PushUpdatesCard
+        state={state}
+        asking={asking}
+        disabled={!online}
+        onTurnOn={() => void turnOn()}
+      />
+      <ShopNewsCard
+        checked={news}
+        disabled={loading || save.isPending || !online}
+        onCheckedChange={setNews}
+      />
       {!online ? <p className="text-sm text-muted-foreground">{W.offline}</p> : null}
     </>
   );

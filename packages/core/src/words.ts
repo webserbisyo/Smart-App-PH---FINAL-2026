@@ -4392,13 +4392,18 @@ const countOf = (n: number, one: string, many: string) => `${n} ${n === 1 ? one 
 export const signupWords = {
   pageTitle: 'Start your shop',
   headline: 'Your own ordering app, ready today',
-  sub: 'Customers order from your link. Regulars collect stamps and come back.',
+  // The rotating headline (T108): "Your own ordering app for your burger shop".
+  headlineStart: 'Your own ordering app',
+  headlineFor: 'for your',
+  headlineSpoken: 'Your own ordering app for your shop',
+  shopTypes: ['burger shop', 'milk tea shop', 'ukay', 'bakery', 'water station', 'coffee cart'],
+  startFree: (days: number) => `Start ${days} days free`,
   chips: {
     price: (price: string) => `${price} a month`,
     trial: (days: number) => `${days} days free`,
     pay: 'GCash or Maya',
   },
-  sample: 'See a sample shop',
+  sample: 'See the sample shops',
   messenger: 'Ask us on Messenger',
   progress: (step: number) => `Step ${step} of 3`,
   steps: { you: 'You', shop: 'Your shop', code: 'Email code' },
@@ -4439,6 +4444,11 @@ export const signupWords = {
     facebook: 'Facebook page (optional)',
     facebookPlaceholder: 'facebook.com/yourshop',
     facebookHelp: 'Helps us check your shop faster.',
+    colour: 'Pick a colour',
+    colourHelp: 'Your app takes this colour. You can change it later in Editor.',
+    colourName: (n: number) => `Colour ${n}`,
+    password: 'Make a password',
+    passwordHelp: 'At least 8 characters. You log in with your email and this.',
     back: 'Back',
     create: 'Create my shop',
     creating: 'Creating your shop',
@@ -4457,6 +4467,7 @@ export const signupWords = {
     resent: 'New code sent.',
   },
   done: {
+    ready: 'Your app is ready',
     title: (name: string) => `Welcome, ${name}`,
     line: 'Your shop is ready to set up. Your link turns on after a quick check, usually within a day.',
   },
@@ -4474,6 +4485,99 @@ export const signupWords = {
     'We use cookies and share hashed contact details with Meta to measure our ads. See the Privacy notice.',
   offline: "You're offline. Connect to sign up.",
   error: "We couldn't save that. Check your connection and try again.",
+};
+
+// Login and Forgot password (T108). Dashboard only, so it has its own export and never rides along into the
+// storefront.
+export const authWords = {
+  welcome: 'Welcome back',
+  welcomeLine: 'Your orders and Suki are waiting.',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
+  capsLock: 'Caps Lock is on.',
+  forgot: 'Forgot password?',
+  newHere: 'New here?',
+  startFree: (days: number) => `Start ${days} days free`,
+  forgotPage: {
+    pageTitle: 'Reset your password',
+    title: 'Reset your password',
+    line: "Type your login email. We'll send a 6-digit code.",
+    email: 'Email',
+    send: 'Send the code',
+    sending: 'Sending',
+    codeTitle: 'Check your email',
+    sent: (email: string) => `If ${email} has a shop, we sent a 6-digit code to it.`,
+    code: 'Code',
+    hint: 'Not there? Check Spam or Promotions.',
+    resend: 'Send a new code',
+    resendIn: (seconds: number) => `New code in ${seconds} s`,
+    resent: 'New code sent.',
+    newPassword: 'New password',
+    newPasswordHelp: 'At least 8 characters.',
+    passwordBad: 'Use at least 8 characters.',
+    codeBad: 'Type the 6 numbers from the email.',
+    save: 'Save and log in',
+    saving: 'Saving',
+    done: 'Password saved. Welcome back.',
+    wrongEmail: 'Wrong email? Go back',
+    back: 'Back to log in',
+  },
+  offline: "You're offline. Connect to log in.",
+};
+
+// The sign-up tour (T108): what the phone beside the sign-up form plays, on our sample shops. Dashboard only.
+export const showcaseWords = {
+  phoneLabel: 'A sample shop app playing on a phone',
+  chaptersLabel: 'What the app does',
+  chapters: {
+    order: { title: 'Order', line: 'Customers order from your link' },
+    chat: { title: 'Chat and payment', line: 'GCash photo, checked in the chat' },
+    stamps: { title: 'Stamp and reward', line: 'Suki collect stamps and come back' },
+    push: { title: 'Push updates', line: 'Their phone tells them it is ready' },
+    owner: { title: 'Your phone', line: 'New orders and payment photos ping you' },
+    yours: { title: 'Your app', line: 'Built from what you type' },
+  },
+  pause: 'Pause',
+  play: 'Play',
+  backToTour: 'Back to the tour',
+  sample: (shop: string) => `Sample · ${shop}`,
+  // The sample shops under the phone: drag or tap one to play its story.
+  shopsLabel: 'Sample shops',
+  playShop: (shop: string) => `Play ${shop}`,
+  allSamples: 'See all sample shops',
+  addLabel: (name: string) => `Add ${name}`,
+  openLabel: (name: string, price: string) => `${name}, ${price}`,
+  stampProgress: (stamped: number, needed: number) => `${stamped} of ${needed} stamps`,
+  stampTitle: 'Suki card',
+  stampRule: (min: string) => `1 stamp per order of ${min} or more`,
+  stampAny: '1 stamp per order',
+  rewardReady: 'Your reward is ready',
+  useReward: 'Use on your next order',
+  prizeLabel: 'Prize',
+  notificationsTitle: 'Notifications',
+  allowAsk: (host: string) => `${host} wants to send notifications`,
+  allow: 'Allow',
+  block: 'Block',
+  now: 'now',
+  pushDone: (no: string, stamped: number, needed: number) =>
+    `Order ${no} is done · +1 stamp, ${stamped} of ${needed}`,
+  pushReward: (reward: string) => `Your ${reward} is ready`,
+  addFor: (price: string) => `Add to basket · ${price}`,
+  added: (what: string) => `Added · ${what}`,
+  hello: (name: string) => `Hi ${name}!`,
+  yoursName: 'Your shop',
+  sampleBadge: 'Sample',
+  // The owner's own pushes from Smart App PH (sign-up tour and Log in).
+  ownerPush: {
+    newOrder: (no: string, total: string) => `New order ${no} · ${total}`,
+    newOrderBody: (name: string, items: string) => `${name} · ${items}`,
+    photo: (no: string) => `Payment photo to check · ${no}`,
+    photoBody: (name: string, total: string) =>
+      `${name} sent ${total}. Check it in your GCash app.`,
+    due: (no: string) => `Order ${no} is due in 10 min`,
+    dueBody: (name: string) => `${name} is on the way. Start it now.`,
+  },
+  playerLabel: 'Tour chapters',
 };
 
 // The owner's "go live" card on Home (T89).
@@ -5401,4 +5505,25 @@ export const shopNewsWords = {
   stop: 'Stop news',
   stopped: 'News stopped. Order updates stay on.',
   undo: 'Undo',
+};
+
+// The Sample shops page on the storefront (T109): every demo shop, to try as a customer or as the owner.
+export const samplesWords = {
+  title: 'Try a sample shop',
+  intro: 'Open one like yours. Order like a customer, then see the owner side.',
+  metaDescription: 'Five sample shops made with Smart App PH. Open one and order like a customer.',
+  filterLabel: 'Jump to',
+  kind: { food: 'Food', retail: 'Retail' },
+  choices: (names: string) => `${names} choices`,
+  stamps: (needed: number, reward: string) => `${needed} stamps for ${reward}`,
+  orderTypes: { walk_in: 'Walk-in', pickup: 'Pickup', delivery: 'Delivery' },
+  open: 'Open the shop',
+  openLabel: (shop: string) => `Open ${shop}, a sample shop`,
+  owner: 'See the owner side',
+  ownerLabel: (shop: string) => `See ${shop} as its owner`,
+  sampleNote: 'Sample data. Orders here are never sent to a real shop.',
+  readyTitle: 'Ready for your own?',
+  readyLine: (days: number) => `Your own link, stamp card and dashboard. ${days} days free.`,
+  start: (days: number) => `Start ${days} days free`,
+  platformLink: 'Try a sample shop',
 };

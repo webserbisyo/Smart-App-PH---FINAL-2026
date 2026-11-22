@@ -1,6 +1,8 @@
 import { redirect } from '@tanstack/react-router';
+import { z } from 'zod';
+import { DEMO_SHOP_SLUGS, type DemoShopSlug } from '@smartapp/core';
 import { getClaims, type UserClaims } from '@smartapp/data';
-import { previewClaims, readPreviewViewer, writePreviewViewer } from './preview.js';
+import { previewActive, previewClaims, readPreviewViewer, writePreviewViewer } from './preview.js';
 import { supabase } from './supabase.js';
 
 // Written out (not imported) so Vite folds it and live builds drop the sample sign-in entirely (T100).
@@ -17,7 +19,17 @@ export async function requireAuth(): Promise<UserClaims> {
   return claims;
 }
 
-export async function requireGuest(): Promise<void> {
+// A sample shop's "See the owner side" link (`/login?sample=<slug>`, T109): in development and preview builds
+// on sample data it opens the dashboard as that shop's owner; live builds ignore it.
+export const LoginSearchSchema = z.object({
+  sample: z.enum(DEMO_SHOP_SLUGS).optional().catch(undefined),
+});
+
+export async function requireGuest(sample?: DemoShopSlug | undefined): Promise<void> {
+  if (PREVIEW && sample && previewActive()) {
+    writePreviewViewer(sample);
+    throw redirect({ to: '/' });
+  }
   if (PREVIEW && readPreviewViewer()) throw redirect({ to: '/' });
   const claims = await getClaims(supabase);
   if (claims) {

@@ -240,6 +240,14 @@ export function CatalogCategoriesScreen() {
           </div>
         ) : null}
 
+        {catsLoading ? (
+          // The hint row and the icon style card, held while loading so the list doesn't jump (T110).
+          <div className="space-y-3" aria-hidden="true">
+            <Skeleton className="h-11 w-full rounded-lg md:h-9" />
+            <Skeleton className="h-18 w-full rounded-xl" />
+          </div>
+        ) : null}
+
         {/* Offline Banner */}
         {!isOnline && (
           <Notice tone="warning" icon={<WifiOffIcon />}>

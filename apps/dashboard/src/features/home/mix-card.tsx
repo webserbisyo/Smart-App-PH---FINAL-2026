@@ -8,7 +8,7 @@ import {
 } from '@smartapp/core';
 import { cn } from 'cn';
 import { placeTone, type PlaceTone } from '@/app/pay-place';
-import { HomeCard, Segmented } from './home-card.js';
+import { HomeCard, Segmented } from '@/app/home/home-card';
 import { PesoTicker, ShareRings } from './money-card.js';
 
 const W = homeWords.donut;

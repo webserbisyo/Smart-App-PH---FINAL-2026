@@ -16,7 +16,7 @@ import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-but
 import { notify } from '@smartapp/ui/compositions/notify';
 import { cn } from 'cn';
 import { useOnlineStatus } from '@/app/use-online-status';
-import { CARD } from './home-card.js';
+import { CARD } from '@/app/home/home-card';
 
 const W = goLiveWords;
 

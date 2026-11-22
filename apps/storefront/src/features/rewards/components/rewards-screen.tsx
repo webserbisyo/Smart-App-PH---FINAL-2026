@@ -13,11 +13,13 @@ import {
 } from '@smartapp/core';
 import {
   useCelebratedReward,
+  useHydrated,
   useMyAccount,
   useNow,
   useOnline,
   useSeenStamps,
 } from '@smartapp/data';
+import { CountUp } from '@smartapp/ui/compositions/count-up';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import {
@@ -35,12 +37,6 @@ import { capReached, rewardRound, ruleLine } from '../rewards-rules';
 import { RewardCard } from './reward-card';
 import { RewardsSkeleton } from './rewards-skeleton';
 import { SukiInvite } from './suki-invite';
-
-// Magic UI Number Ticker pulls in motion, so it loads after the page (decision R38: motion only where
-// loaded lazily). Until then the count shows where it starts.
-const NumberTicker = lazy(() =>
-  import('@smartapp/ui/components/number-ticker').then((m) => ({ default: m.NumberTicker })),
-);
 
 // History and Member QR are tabs behind the card, and the QR maker is big, so both load after the page
 // (decision R49).
@@ -80,6 +76,8 @@ export function RewardsScreen() {
   const online = useOnline();
   const now = useNow();
   const account = useMyAccount(slug);
+  // Loading look until the page is awake, so it always matches the server's copy (T110).
+  const hydrated = useHydrated();
   const member = account.data ?? null;
   const card = shop.storefront.stampCard;
   const kind = shop.storefront.info.kind;
@@ -122,13 +120,13 @@ export function RewardsScreen() {
         <SukiInvite
           slug={slug}
           shopName={shop.storefront.info.name}
-          member={account.isPending && online ? undefined : member}
+          member={!hydrated || (account.isPending && online) ? undefined : member}
         />
       </div>
     );
   }
 
-  if (account.isPending && online) return <RewardsSkeleton />;
+  if (!hydrated || (account.isPending && online)) return <RewardsSkeleton />;
 
   const rawTab = params.get('tab');
   const tab: RewardsTab = isTab(rawTab) ? rawTab : 'card';
@@ -259,13 +257,12 @@ export function RewardsScreen() {
                   {calm ? (
                     progress.filled
                   ) : (
-                    <Suspense fallback={Math.min(seen ?? progress.filled, progress.filled)}>
-                      <NumberTicker
-                        value={progress.filled}
-                        startValue={Math.min(seen ?? progress.filled, progress.filled)}
-                        className="tracking-normal text-member-soft-foreground"
-                      />
-                    </Suspense>
+                    // New stamps since the last visit count up in under 400 ms (T110).
+                    <CountUp
+                      value={progress.filled}
+                      from={Math.min(seen ?? progress.filled, progress.filled)}
+                      className="text-member-soft-foreground"
+                    />
                   )}
                   <span className="text-base font-semibold"> / {needed}</span>
                 </span>

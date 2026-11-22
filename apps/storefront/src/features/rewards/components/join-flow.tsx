@@ -19,6 +19,7 @@ import {
   errorCodeOf,
   useCheckoutDraft,
   useGuestOrderTokens,
+  useHydrated,
   useJoin,
   useMyAccount,
   useSendCode,
@@ -63,6 +64,7 @@ export function JoinFlow() {
   const { slug, shop } = useShop();
   const router = useRouter();
   const account = useMyAccount(slug);
+  const hydrated = useHydrated();
   const { draft } = useCheckoutDraft(slug);
   const tokens = useGuestOrderTokens(slug);
   const sendCode = useSendCode();
@@ -240,7 +242,7 @@ export function JoinFlow() {
     );
   }
 
-  if (account.isPending || isMember) {
+  if (!hydrated || account.isPending || isMember) {
     return (
       <div className="flex justify-center py-16">
         <Spinner />

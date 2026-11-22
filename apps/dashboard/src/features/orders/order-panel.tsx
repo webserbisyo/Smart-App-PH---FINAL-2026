@@ -121,8 +121,8 @@ import {
   useChangeTime,
 } from './change-time.js';
 import { WhenCard } from './when-card.js';
-import { MessengerOrderButton } from './messenger-inbox.js';
-import { ChatFooter, ChatHeader, ChatThread, chatWaits, scrollBox } from './order-chat.js';
+import { MessengerOrderButton } from '@/app/orders/messenger-inbox';
+import { ChatFooter, ChatHeader, ChatThread, chatWaits, scrollBox } from '@/app/orders/order-chat';
 import { CustomerFace } from '@/app/owner-avatar';
 
 const CANCEL_REASON_KEYS = [

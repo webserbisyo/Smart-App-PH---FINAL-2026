@@ -18,7 +18,7 @@ import {
   ItemDescription,
 } from '@smartapp/ui/components/item';
 import { cn } from 'cn';
-import { CARD } from './home-card.js';
+import { CARD } from '@/app/home/home-card';
 
 const W = homeWords.setup;
 

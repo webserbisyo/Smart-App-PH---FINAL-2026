@@ -72,7 +72,14 @@ export const ADMIN_ROUTES: readonly CatalogRoute[] = [
 export const GUEST_ROUTES: readonly CatalogRoute[] = [
   { path: '/login', open: '/login', label: 'Sign in', scan: true },
   { path: '/signup', open: '/signup', label: 'Sign up', scan: true },
+  { path: '/forgot', open: '/forgot', label: 'Forgot password', scan: true },
   { path: '/logout', label: 'Sign out', scan: false, note: 'Signs out, then opens Sign in' },
+];
+
+/** Our own storefront pages outside any shop. */
+export const PLATFORM_ROUTES: readonly CatalogRoute[] = [
+  { path: '/', open: '/', label: 'Platform page', scan: true },
+  { path: '/samples', open: '/samples', label: 'Sample shops (T109)', scan: true },
 ];
 
 /** Storefront pages inside one shop; each path follows /<shop slug>. */

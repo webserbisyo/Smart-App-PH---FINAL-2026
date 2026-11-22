@@ -21,7 +21,7 @@ import { dayLong, periodOf, whenShort } from '@/app/orders/calendar-days';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { clockOf } from './calendar-facts.js';
-import { PAGE_INBOX_URL } from './messenger-inbox.js';
+import { PAGE_INBOX_URL } from '@/app/orders/messenger-inbox';
 
 const W = ordersWords.changeTime;
 const PRESSED = 'aria-pressed:bg-primary aria-pressed:text-primary-foreground';

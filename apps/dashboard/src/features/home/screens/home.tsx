@@ -4,6 +4,7 @@ import { errorWords, formatClock, homeWords, words } from '@smartapp/core';
 import {
   errorCodeOf,
   useHomePeriod as useHomePeriodData,
+  useNewsOverview,
   useOnboarding,
   useStorefront,
 } from '@smartapp/data';
@@ -22,7 +23,7 @@ import { useOwnerFirstName } from '@/app/use-owner-name';
 import { BestCard } from '../best-card.js';
 import { BoardCard } from '../board-card.js';
 import { ComingCard, hasBookings } from '../coming-card.js';
-import { CARD, HomeCard } from '../home-card.js';
+import { CARD, HomeCard } from '@/app/home/home-card';
 import { HomeHello, PauseNotice } from '../home-hello.js';
 import { HOME_GRID, HOME_MAIN, HOME_PAIR, HOME_SIDE, HOME_SLOTS as slots } from '../home-layout.js';
 import { MembersCard } from '../members-card.js';
@@ -31,7 +32,7 @@ import { MoneyCard, MoneyCardSkeleton } from '../money-card.js';
 import { NewsHomeCard } from '../news-card.js';
 import { NeedsCard } from '../needs-card.js';
 import { PeriodPicker, periodLabel } from '../period-picker.js';
-import { SalesCard } from '../sales-card.js';
+import { SalesCard } from '@/app/home/sales-card';
 import { useHomePeriodSearch, useSetHomePeriod } from '../search.js';
 import { GoLiveCard } from '../go-live-card.js';
 import { SetupCard } from '../setup-card.js';
@@ -54,6 +55,9 @@ export function HomeScreen() {
   const storefront = useStorefront(shop.slug);
   // Going live (T89): until the founder approves, the go-live card leads the page.
   const onboarding = useOnboarding();
+  // The News card sits above Needs you; Home waits for it so nothing is pushed down after the page shows
+  // (T110). If News fails, the card is simply left out.
+  const news = useNewsOverview();
   const { summary, home, now, needs, live, today } = view;
   const { period, dates } = useHomePeriodSearch(today);
   const setPeriod = useSetHomePeriod();
@@ -69,7 +73,7 @@ export function HomeScreen() {
   const updated = home.dataUpdatedAt > 0 ? formatClock(new Date(home.dataUpdatedAt)) : null;
 
   let body: React.ReactNode;
-  if (home.isPending) {
+  if (home.isPending || news.isPending) {
     body = <HomeSkeleton />;
   } else if (home.isError && !summary) {
     body = (

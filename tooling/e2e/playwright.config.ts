@@ -9,6 +9,8 @@ const executablePath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
 
 export default defineConfig({
   testDir: '.',
+  // Compiles every dev page once before the tests (T110); runs after the web servers are up.
+  globalSetup: './warm-dev.ts',
   timeout: 60_000,
   retries: 0,
   forbidOnly: Boolean(process.env.CI),
