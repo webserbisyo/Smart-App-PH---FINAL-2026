@@ -7,7 +7,6 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CircleAlertIcon,
-  CropIcon,
   HourglassIcon,
   ImageOffIcon,
   ImagePlusIcon,
@@ -58,7 +57,6 @@ import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { ResponsiveDialog } from '@smartapp/ui/compositions/responsive-dialog';
 import { cn } from 'cn';
-import { CropStep, type CropShape } from './crop-step.js';
 import { useImageUpload } from './image-upload-row.js';
 import { useOnlineStatus } from './use-online-status.js';
 
@@ -546,8 +544,6 @@ function PhotoViewer({
 
 interface TrayPhoto {
   id: string;
-  // The photo as picked, for the tile and for Crop.
-  original: string;
   preview: string;
   state: 'uploading' | 'ready' | 'failed';
   path: string | null;
@@ -562,8 +558,8 @@ export interface SendPhotoInput {
 
 /**
  * Write in the Billing chat (T107): a text box that grows, Enter sends on a computer, and for the owner
- * photos only (payment proof or a reference screenshot), up to 3 at a time, each with Crop, plus an
- * optional reference number. Photos go up while the owner types, so Send is quick.
+ * photos only (payment proof or a reference screenshot), up to 3 at a time, sent as they are like
+ * Messenger, plus an optional reference number. Photos go up while the owner types, so Send is quick.
  */
 export function BillingComposer({
   onSend,
@@ -583,7 +579,6 @@ export function BillingComposer({
   const [reference, setReference] = React.useState('');
   const [tray, setTray] = React.useState<TrayPhoto[]>([]);
   const [problem, setProblem] = React.useState<string | null>(null);
-  const [crop, setCrop] = React.useState<{ id: string; shape: CropShape } | null>(null);
   const [sending, setSending] = React.useState(false);
   const { upload } = useImageUpload('plan_proof', PROOF_SIDE);
   const fileRef = React.useRef<HTMLInputElement>(null);
@@ -613,22 +608,10 @@ export function BillingComposer({
     if (list.length > room) setProblem(W.tooManyPhotos);
     for (const file of list.slice(0, Math.max(0, room))) {
       const photoId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const original = URL.createObjectURL(file);
-      setTray((t) => [
-        ...t,
-        { id: photoId, original, preview: original, state: 'uploading', path: null, file },
-      ]);
+      const preview = URL.createObjectURL(file);
+      setTray((t) => [...t, { id: photoId, preview, state: 'uploading', path: null, file }]);
       void put(photoId, file);
     }
-  };
-
-  const openCrop = async (photo: TrayPhoto) => {
-    // Keep the photo's own shape: zoom and drag to the part with the amount and reference.
-    const img = new Image();
-    img.src = photo.original;
-    await img.decode().catch(() => undefined);
-    const aspect = img.naturalWidth > 0 ? img.naturalWidth / img.naturalHeight : 9 / 16;
-    setCrop({ id: photo.id, shape: { aspect, side: PROOF_SIDE } });
   };
 
   const send = async () => {
@@ -659,8 +642,6 @@ export function BillingComposer({
   };
 
   if (lockedLine) return <p className="text-xs text-muted-foreground">{lockedLine}</p>;
-
-  const cropping = crop ? tray.find((p) => p.id === crop.id) : undefined;
 
   return (
     <form
@@ -715,21 +696,11 @@ export function BillingComposer({
                     <RotateCwIcon />
                     {W.tryAgain}
                   </Button>
-                ) : p.state === 'ready' ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="h-11 gap-1 px-1 text-xs md:h-8"
-                    onClick={() => void openCrop(p)}
-                  >
-                    <CropIcon />
-                    {W.crop}
-                  </Button>
-                ) : (
+                ) : p.state === 'uploading' ? (
                   <span className="flex h-11 items-center justify-center text-xs text-muted-foreground md:h-8">
                     {settingsWords.upload.uploading}
                   </span>
-                )}
+                ) : null}
               </div>
             ))}
           </AttachmentGroup>
@@ -832,20 +803,6 @@ export function BillingComposer({
             {W.letters(used, NOTE_MAX)}
           </p>
         )
-      ) : null}
-      {crop ? (
-        <CropStep
-          src={cropping?.original ?? null}
-          shape={crop.shape}
-          busy={false}
-          onCancel={() => setCrop(null)}
-          onCropped={(file) => {
-            const target = crop.id;
-            setCrop(null);
-            patch(target, { file, preview: URL.createObjectURL(file) });
-            void put(target, file);
-          }}
-        />
       ) : null}
     </form>
   );

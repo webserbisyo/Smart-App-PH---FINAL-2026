@@ -83,7 +83,7 @@ function missing(account: PaymentAccount): Missing {
   return {
     bank: account.method === 'bank' && !account.bank,
     name: !account.accountName?.trim(),
-    number: account.method !== 'qr_ph' && !account.accountNumber?.trim(),
+    number: !account.accountNumber?.trim(),
     qr: account.method === 'qr_ph' && !account.qr,
   };
 }
@@ -302,27 +302,25 @@ function AccountFields({
             onChange={(e) => onChange({ accountName: e.target.value || null })}
           />
         </Field>
-        {method !== 'qr_ph' ? (
-          <Field data-invalid={need.number ? true : undefined}>
-            <FieldLabel htmlFor={`${id}-number`}>{W.accountNumber(method)}</FieldLabel>
-            <Input
-              className="h-11 md:h-9"
-              id={`${id}-number`}
-              value={account.accountNumber ?? ''}
-              inputMode={method === 'bank' ? 'numeric' : 'tel'}
-              maxLength={40}
-              aria-invalid={need.number ? true : undefined}
-              onChange={(e) => onChange({ accountNumber: e.target.value || null })}
-            />
-          </Field>
-        ) : null}
+        <Field data-invalid={need.number ? true : undefined}>
+          <FieldLabel htmlFor={`${id}-number`}>{W.accountNumber(method)}</FieldLabel>
+          <Input
+            className="h-11 md:h-9"
+            id={`${id}-number`}
+            value={account.accountNumber ?? ''}
+            inputMode={method === 'bank' ? 'numeric' : 'tel'}
+            maxLength={40}
+            aria-invalid={need.number ? true : undefined}
+            onChange={(e) => onChange({ accountNumber: e.target.value || null })}
+          />
+        </Field>
       </div>
       {need.name || need.number ? <FieldError>{W.required}</FieldError> : null}
       <ImageUploadRow
         id={`${id}-qr`}
         kind="qr"
         maxSide={QR_SIDE}
-        label={W.qr}
+        label={method === 'qr_ph' ? W.qrRequired : W.qr}
         help={W.qrHelp}
         src={qrSrc}
         onUploaded={(done) => {
