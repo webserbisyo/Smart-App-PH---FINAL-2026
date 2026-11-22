@@ -6,6 +6,17 @@ export const ORDER_TYPES = ['walk_in', 'pickup', 'delivery'] as const;
 export const OrderTypeEnum = z.enum(ORDER_TYPES);
 export type OrderType = z.infer<typeof OrderTypeEnum>;
 
+// Who made the order (T111): the customer on the storefront, or the owner with New order (walk-in,
+// Messenger, phone). Owner-made orders never send a Meta Purchase event.
+export const ORDER_SOURCES = ['storefront', 'owner'] as const;
+export const OrderSourceEnum = z.enum(ORDER_SOURCES);
+export type OrderSource = z.infer<typeof OrderSourceEnum>;
+
+// How much the customer paid when the owner makes the order (T111, P4): all of it, nothing yet, or part.
+export const PAID_KINDS = ['paid', 'unpaid', 'part'] as const;
+export const PaidKindEnum = z.enum(PAID_KINDS);
+export type PaidKind = z.infer<typeof PaidKindEnum>;
+
 export const ORDER_STATUSES = [
   'placed',
   'preparing',
@@ -165,7 +176,15 @@ export const CLAIM_CANCEL_REASONS = ['no_show', 'out_of_stock', 'other'] as cons
 export const ClaimCancelReasonEnum = z.enum(CLAIM_CANCEL_REASONS);
 export type ClaimCancelReason = z.infer<typeof ClaimCancelReasonEnum>;
 
-export const MESSAGE_KINDS = ['proof', 'status', 'rider', 'tracking', 'schedule'] as const;
+// `changed`: the shop edited the order (T111), so the customer sees what changed and the new total.
+export const MESSAGE_KINDS = [
+  'proof',
+  'status',
+  'rider',
+  'tracking',
+  'schedule',
+  'changed',
+] as const;
 export const MessageKindEnum = z.enum(MESSAGE_KINDS);
 export type MessageKind = z.infer<typeof MessageKindEnum>;
 

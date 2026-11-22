@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import type { OwnerOrderPayload } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
 import { ownerOrdersQk } from './qk';
 
@@ -95,5 +96,42 @@ export function useProofUrl(slug: string, path: string | null) {
     queryFn: () => ownerOrders.getProofUrl({ slug, path: path ?? '' }),
     staleTime: 5 * 60_000,
     enabled: Boolean(slug && path),
+  });
+}
+
+/**
+ * The owner's quote for New order and Edit order (T111): prices and checks the lines the server's way
+ * while the owner picks. Null payload (nothing picked yet) asks nothing; the last answer stays on
+ * screen while the next one loads.
+ */
+export function useOwnerQuote(slug: string, payload: OwnerOrderPayload | null, orderId?: string) {
+  const { ownerOrders } = useAdapters();
+  const key = payload ? JSON.stringify(payload) : '';
+  return useQuery({
+    queryKey: ownerOrdersQk.ownerQuote(slug, key, orderId ?? ''),
+    queryFn: () => {
+      if (!payload) throw new Error('no payload');
+      return ownerOrders.quoteOwnerOrder({ slug, payload, orderId });
+    },
+    enabled: Boolean(slug && payload),
+    placeholderData: keepPreviousData,
+    staleTime: 10_000,
+  });
+}
+
+/** Days and times for New order and Edit order (T111): the owner's 60 days for these lines. */
+export function useOwnerSchedule(
+  slug: string,
+  lines: OwnerOrderPayload['lines'],
+  enabled: boolean,
+  orderId?: string,
+) {
+  const { ownerOrders } = useAdapters();
+  const key = JSON.stringify(lines.map((l) => [l.itemId, l.qty]));
+  return useQuery({
+    queryKey: ownerOrdersQk.ownerSchedule(slug, key, orderId ?? ''),
+    queryFn: () => ownerOrders.getOwnerSchedule({ slug, lines, orderId }),
+    enabled: Boolean(slug) && enabled && lines.length > 0,
+    placeholderData: keepPreviousData,
   });
 }

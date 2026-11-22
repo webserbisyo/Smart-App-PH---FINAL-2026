@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { Link, useRouterState } from '@tanstack/react-router';
-import { CalendarDaysIcon, UserIcon } from 'lucide-react';
+import { CalendarDaysIcon, PlusIcon, UserIcon } from 'lucide-react';
 import { manilaDate, vocab, words } from '@smartapp/core';
 import type { NavItem } from '@smartapp/ui/lib/nav';
 import { env } from './env.js';
@@ -18,7 +18,7 @@ export function storefrontUrl(slug: string): string {
   return `${env.VITE_STOREFRONT_URL}/${slug}`;
 }
 
-function navLink(to: NavPath | '/settings/account') {
+function navLink(to: NavPath | '/settings/account' | '/orders/new') {
   return createElement(Link, { to, preload: 'intent' });
 }
 
@@ -30,6 +30,8 @@ export interface NavItems {
   viewMyShop: NavItem;
   shareMyShop: NavItem;
   account: NavItem;
+  // New order (T111): the dock's centre button and the sidebar's top button.
+  newOrder: NavItem;
   // Under Orders in the sidebar, for shops that take orders for later days (T85).
   ordersCalendar: NavItem | null;
 }
@@ -87,6 +89,13 @@ export function useNavItems({ onShare }: { onShare: () => void }): NavItems {
       icon: createElement(FOOTER_ICONS.shareMyShop),
       link: createElement('button', { type: 'button', onClick: onShare }),
       active: false,
+    },
+    newOrder: {
+      id: 'new-order',
+      label: words.nav.newOrder,
+      icon: createElement(PlusIcon),
+      link: navLink('/orders/new'),
+      active: isActivePath(pathname, '/orders/new'),
     },
     account: {
       id: 'account',

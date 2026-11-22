@@ -12,6 +12,10 @@ export const ownerOrdersQk = {
   chats: (slug: string) => ['owner-orders', slug, 'chats'] as const,
   proofUrl: (slug: string, path: string) => ['owner-orders', slug, 'proof-url', path] as const,
   bookingRules: (slug: string) => ['owner-orders', slug, 'booking-rules'] as const,
+  ownerQuote: (slug: string, payload: string, orderId: string) =>
+    ['owner-orders', slug, 'owner-quote', orderId, payload] as const,
+  ownerSchedule: (slug: string, lines: string, orderId: string) =>
+    ['owner-orders', slug, 'owner-schedule', orderId, lines] as const,
   rescheduleSchedule: (slug: string, orderId: string) =>
     ['owner-orders', slug, 'reschedule-schedule', orderId] as const,
 };

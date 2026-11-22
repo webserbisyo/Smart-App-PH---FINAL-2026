@@ -18,6 +18,13 @@ export const DASHBOARD_ROUTES: readonly CatalogRoute[] = [
   { path: '/', open: '/', label: 'Home', scan: true },
   { path: '/orders', open: '/orders', label: 'Orders', scan: true },
   { path: '/orders/$orderId', label: 'Order (opens on Orders)', scan: false, note: 'Redirect' },
+  { path: '/orders/new', open: '/orders/new', label: 'New order', scan: true },
+  {
+    path: '/orders/$orderId/edit',
+    label: 'Edit order',
+    scan: false,
+    note: 'Needs an open order id; opened from the order panel',
+  },
   { path: '/catalog', open: '/catalog', label: 'Menu', scan: true },
   { path: '/catalog/categories', open: '/catalog/categories', label: 'Categories', scan: true },
   { path: '/catalog/add-ons', open: '/catalog/add-ons', label: 'Add-ons', scan: true },
