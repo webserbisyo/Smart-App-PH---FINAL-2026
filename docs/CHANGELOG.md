@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-25 Phases 1 to 3 build plan (proposed): `blueprints/phases-1-3.md` with research findings, database cross-check, sample data plan, tasks and 12 founder questions
 - 2026-11-25 Shop status dot (T115): the storefront logo shows a still green, orange or grey dot (shadcn AvatarBadge) instead of the turning ring, with Busy, Closed or Paused under the logo
 - 2026-11-24 Checkout and Join start fresh (T114): a second order no longer reopens the last order's printer box or reuses its order key; Place order waits for how you'll order; the booked time and note clear after each order; Join is empty after Sign out; empty basket checkout shows Browse menu
 - 2026-11-24 Final verdicts (T113): sidebar My App with rocket and border beam; New order real photos, category icons, compact tiles, photo in the choices dialog, laptop pane with pinned header and total and one-line Customer, How and Payment; board line photos and "₱X left to pay"; List faces; phone calendar tips button; Home Upcoming list with money chips; smaller Preview pill on phones

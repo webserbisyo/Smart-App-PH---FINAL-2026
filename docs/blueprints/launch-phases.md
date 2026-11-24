@@ -2,7 +2,7 @@
 
 Nine phases take Smart App PH from "every screen works on sample data" to "shops pay ₱399 a month". Phases 1 to 7 wire the backend area by area, phase 8 sets up the live product and phase 9 is selling. Target: the first paying shop in December 2026, so every phase stays as small as launch allows. Written 2026-11-20 from the repo as it stands (main @ bdc7a80); a general map, not a build spec.
 
-**How to use it.** Take one phase at a time into the project chat. For that phase we brainstorm, research the topics listed, settle the open logic, then write the task prompts. A phase is finished only when its "Done when" passes on the dev database. `PROGRESS.md` stays the tick list (each phase names its lines there); `A-mvp.md` wins on scope.
+**How to use it.** Take one phase at a time into the project chat. For that phase we brainstorm, research the topics listed, settle the open logic, then write the task prompts. A phase is finished only when its "Done when" passes on the dev database. `PROGRESS.md` stays the tick list (each phase names its lines there); `A-mvp.md` wins on scope. Phases 1 to 3 have a detailed build plan in `phases-1-3.md` (proposed 2026-11-25).
 
 ## Where we start (checked 2026-11-20)
 
