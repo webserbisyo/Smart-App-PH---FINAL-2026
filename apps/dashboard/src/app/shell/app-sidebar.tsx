@@ -15,6 +15,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  useSidebar,
 } from '@smartapp/ui/components/sidebar';
 import { BorderBeam } from '@smartapp/ui/components/border-beam';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
@@ -115,6 +116,9 @@ export function AppSidebar({
 }) {
   const shop = useShop();
   const withTooltip = variant === 'rail';
+  // On the closed (icon) rail the New order label is left out, so the + sits in the middle of its button.
+  const { state } = useSidebar();
+  const iconOnly = variant === 'rail' && state === 'collapsed';
 
   return (
     <Sidebar
@@ -157,7 +161,7 @@ export function AppSidebar({
                 className="justify-center bg-primary font-semibold text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground data-active:bg-primary data-active:text-primary-foreground pointer-coarse:h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
               >
                 {nav.newOrder.icon}
-                <span>{nav.newOrder.label}</span>
+                {iconOnly ? null : <span>{nav.newOrder.label}</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
