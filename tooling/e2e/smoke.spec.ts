@@ -672,6 +672,24 @@ test.describe('basket (T08)', () => {
 
   test('delivery resolves valid Google Maps link', async ({ page }) => {
     const problems = watch(page);
+    // Checkout with an empty basket shows Browse menu instead (T114), so put one item in first.
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
     await page.goto(urlFor('dev', '/kanto-smash/checkout'));
 
     await page.locator('#checkout-change-location').click();

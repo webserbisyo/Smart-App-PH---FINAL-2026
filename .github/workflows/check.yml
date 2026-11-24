@@ -243,9 +243,10 @@ jobs:
       - name: Check the dev database secrets are set
         id: secrets
         run: |
+          # Decision T116 (conflict 8): a missing secret fails the job instead of a green skip.
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_DB_PASSWORD" ] || [ -z "$SUPABASE_DEV_PROJECT_REF" ]; then
-            echo "Dev database secrets are not set yet (see docs/launch.md); skipping."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::error::Dev database secrets are missing (see docs/launch.md section 9)."
+            exit 1
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi

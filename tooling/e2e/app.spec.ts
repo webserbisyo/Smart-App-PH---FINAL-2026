@@ -80,6 +80,24 @@ test.describe('privacy notice', () => {
   }
 
   test('footer, checkout and join link to it', async ({ page }) => {
+    // Checkout with an empty basket shows Browse menu instead (T114), so put one item in first.
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'smartapp:basket:kanto-smash',
+        JSON.stringify({
+          v: 1,
+          data: [
+            {
+              itemId: 'ks-classic-smash',
+              variantId: 'ks-classic-smash--single',
+              optionIds: [],
+              note: '',
+              qty: 1,
+            },
+          ],
+        }),
+      );
+    });
     for (const path of ['/kanto-smash', '/kanto-smash/checkout', '/kanto-smash/join']) {
       await page.goto(urlFor('prod', path));
       await expect(page.locator('a[href="/kanto-smash/privacy"]').first()).toBeAttached();
