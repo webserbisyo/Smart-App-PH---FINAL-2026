@@ -4,13 +4,18 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckIcon,
+  ChevronDownIcon,
   LockIcon,
   PackageOpenIcon,
+  UserIcon,
+  UsersIcon,
+  WalletIcon,
   WifiOffIcon,
 } from 'lucide-react';
 import {
   editBlock,
   errorWords,
+  formatManila,
   formatPeso,
   manilaDate,
   newOrderWords,
@@ -44,6 +49,11 @@ import {
 } from '@smartapp/ui/components/alert-dialog';
 import { Button } from '@smartapp/ui/components/button';
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@smartapp/ui/components/collapsible';
+import {
   Stepper,
   StepperIndicator,
   StepperItem,
@@ -54,9 +64,16 @@ import {
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { notify } from '@smartapp/ui/compositions/notify';
+import {
+  ResponsiveDialog,
+  ResponsiveDialogFooter,
+} from '@smartapp/ui/compositions/responsive-dialog';
+import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { copyText } from '@smartapp/ui/lib/copy-text';
 import { cn } from 'cn';
 import { Notice } from '@/app/notice';
+import { PhotoStack } from '@/app/orders/item-photo';
+import { ORDER_TYPE_ICON as TYPE_ICON } from '@/app/orders/order-type-icons';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { receiptLink } from '@/app/orders/print-ticket';
 import { useNow } from '@/app/orders/use-now';
@@ -81,7 +98,8 @@ import {
 } from './draft.js';
 import { ItemGrid } from './item-grid.js';
 import { OrderLines } from './order-lines.js';
-import { PayFields, Totals } from './pay-fields.js';
+import { choiceKey, PayFields, payChoices, Totals } from './pay-fields.js';
+import { SummaryRow } from './summary-row.js';
 
 const W = newOrderWords;
 
@@ -212,6 +230,9 @@ function Composer({ shop, editing }: { shop: PublicShop; editing: OwnerOrder | n
   const [step, setStep] = React.useState<Step>('items');
   const [picking, setPicking] = React.useState<{ item: Item; index: number | null } | null>(null);
   const [tried, setTried] = React.useState(false);
+  const desktop = useFormFactor() === 'desktop';
+  const [part, setPart] = React.useState<'customer' | 'details' | 'pay' | null>(null);
+  const [showLines, setShowLines] = React.useState(false);
   const [phoneError, setPhoneError] = React.useState<string | null>(null);
   const [clientKey] = React.useState(() => crypto.randomUUID());
   const leaving = React.useRef(false);
@@ -323,6 +344,11 @@ function Composer({ shop, editing }: { shop: PublicShop; editing: OwnerOrder | n
     setTried(true);
     if (!checkPhone()) {
       setStep('details');
+      if (desktop) setPart('customer');
+      return;
+    }
+    if (desktop && detailsProblem !== null && draft.lines.length > 0) {
+      setPart('details');
       return;
     }
     if (blocked || !payload) return;
@@ -389,11 +415,111 @@ function Composer({ shop, editing }: { shop: PublicShop; editing: OwnerOrder | n
     ? quote && quote.total !== editing.totals.total
       ? W.edit.save(formatPeso(editing.totals.total), formatPeso(quote.total))
       : W.edit.saveSame
-    : W.create(formatPeso(total));
+    : draft.lines.length === 0
+      ? W.problems.empty_basket
+      : W.create(formatPeso(total));
   const stepIndex = STEPS.indexOf(step);
-  const shown = (s: Step) => (step === s ? 'flex' : 'hidden lg:flex');
   const section = 'flex-col gap-4';
-  const sectionTitle = 'text-base font-bold lg:text-sm lg:font-semibold';
+  const sectionTitle = 'text-base font-bold';
+
+  const basketPhotos = draft.lines.map((l) => {
+    const item = catalog.items.find((i) => i.id === l.itemId);
+    return { name: item?.name ?? '', photo: item?.photos[0] ?? null };
+  });
+  const guestName = draft.customer.name.trim() || W.customer.walkIn;
+  const customerValue =
+    draft.customer.kind === 'member' ? W.pane.member(draft.customer.name) : W.pane.guest(guestName);
+  const whenValue =
+    draft.type === 'walk_in' || !draft.later
+      ? W.when.now
+      : draft.scheduledAt
+        ? formatManila(draft.scheduledAt, 'datetime')
+        : W.when.later;
+  const howValue = W.pane.when(W.how[draft.type], whenValue);
+  const payLabel =
+    payChoices(storefront, draft.type).find((c) => c.key === choiceKey(draft))?.label ??
+    words.shop.paymentMethod[draft.paymentMethod];
+  const payValue = W.pane.pay(
+    payLabel,
+    draft.paidKind === 'part' && draft.partAmount > 0
+      ? `${W.pay.part} ${formatPeso(draft.partAmount)}`
+      : W.pay[draft.paidKind],
+  );
+
+  const lines = (
+    <OrderLines
+      lines={draft.lines}
+      catalog={catalog}
+      quoted={quote?.lines}
+      onQty={(index, qty) =>
+        change({ lines: draft.lines.map((l, i) => (i === index ? { ...l, qty } : l)) })
+      }
+      onRemove={(index) => change({ lines: draft.lines.filter((_, i) => i !== index) })}
+      onEdit={(index) => {
+        const line = draft.lines[index];
+        const item = catalog.items.find((it) => it.id === line?.itemId);
+        if (item) setPicking({ item, index });
+      }}
+      className={desktop && draft.lines.length > 0 ? '' : desktop ? 'my-3' : ''}
+    />
+  );
+  const customerFields = (
+    <>
+      <CustomerFields
+        value={draft.customer}
+        onChange={(customer) => {
+          setPhoneError(null);
+          change({ customer, useReward: customer.kind === 'member' && draft.useReward });
+        }}
+        useReward={draft.useReward}
+        onUseReward={(on) => change({ useReward: on })}
+        card={storefront.stampCard}
+        lockMember={editing !== null && editing.memberId !== null}
+      />
+      {phoneError ? <p className="text-sm text-destructive">{phoneError}</p> : null}
+    </>
+  );
+  const detailsFields = (
+    <DetailsFields
+      draft={draft}
+      onChange={change}
+      storefront={storefront}
+      schedule={schedule.data}
+      scheduleLoading={schedule.isPending}
+      today={today}
+      problems={tried && detailsProblem && draft.lines.length > 0 ? [detailsProblem] : []}
+    />
+  );
+  const payFields = (
+    <PayFields
+      draft={draft}
+      onChange={change}
+      storefront={storefront}
+      total={total}
+      editing={editing !== null}
+    />
+  );
+  const problemList =
+    quoteProblems.length > 0 ? (
+      <ul className="flex flex-col gap-1 text-sm text-destructive">
+        {quoteProblems.map((p) => (
+          <li key={p}>{p}</li>
+        ))}
+      </ul>
+    ) : null;
+  const submitButton = (className: string) => (
+    <AsyncButton
+      type="button"
+      status={action.status}
+      busyLabel={editing ? W.edit.saving : W.creating}
+      doneLabel={editing ? W.edit.saveSame : W.title}
+      disabled={blocked}
+      onClick={submit}
+      className={className}
+    >
+      {submitLabel}
+    </AsyncButton>
+  );
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-6 md:px-6 md:pt-6">
@@ -449,7 +575,12 @@ function Composer({ shop, editing }: { shop: PublicShop; editing: OwnerOrder | n
       ) : null}
 
       <div className="lg:grid lg:grid-cols-5 lg:items-start lg:gap-6">
-        <div className={cn(shown('items'), 'min-w-0 flex-col lg:col-span-3')}>
+        <div
+          className={cn(
+            desktop || step === 'items' ? 'flex' : 'hidden',
+            'min-w-0 flex-col lg:col-span-3',
+          )}
+        >
           <ItemGrid
             catalog={catalog}
             now={now}
@@ -458,122 +589,200 @@ function Composer({ shop, editing }: { shop: PublicShop; editing: OwnerOrder | n
           />
         </div>
 
-        <aside
-          aria-label={W.basket.title}
-          className="flex flex-col gap-6 lg:sticky lg:top-20 lg:col-span-2 lg:max-h-fill-24 lg:overflow-y-auto lg:rounded-2xl lg:border lg:bg-card lg:p-4 lg:elevation-sm"
-        >
-          <section className={cn(shown('details'), section)} aria-labelledby="new-order-lines">
-            <div className="flex items-center justify-between gap-2">
+        {desktop ? (
+          /* Laptop (T113): the header and the total stay put, only the items scroll, and customer, how
+             and payment are one line each that open their fields. */
+          <aside
+            aria-label={W.basket.title}
+            className="sticky top-20 col-span-2 flex max-h-fill-24 flex-col overflow-hidden rounded-2xl border bg-card elevation-sm"
+          >
+            <div className="flex shrink-0 items-center gap-3 border-b px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <h2 id="new-order-lines" className="text-sm font-semibold">
+                  {W.basket.title}
+                </h2>
+                <p className="text-sm text-muted-foreground tabular-nums">
+                  {draft.lines.length > 0 ? summary : W.basket.count(0)}
+                </p>
+              </div>
+              <PhotoStack lines={basketPhotos} label={W.basket.photosAria(count)} />
+              {draft.lines.length > 0 && !editing ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 shrink-0 text-muted-foreground"
+                  onClick={() => change({ lines: [] })}
+                >
+                  {W.basket.clear}
+                </Button>
+              ) : null}
+            </div>
+
+            <div className="scrollbar-fine min-h-24 flex-1 overflow-y-auto overscroll-contain px-4 py-1">
+              {lines}
+            </div>
+
+            <div className="flex shrink-0 flex-col divide-y border-t">
+              <SummaryRow
+                icon={draft.customer.kind === 'member' ? UsersIcon : UserIcon}
+                label={W.customer.title}
+                value={customerValue}
+                onClick={() => setPart('customer')}
+                problem={phoneError}
+              />
+              <SummaryRow
+                icon={TYPE_ICON[draft.type]}
+                label={W.pane.how}
+                value={howValue}
+                onClick={() => setPart('details')}
+                problem={tried && draft.lines.length > 0 ? detailsProblem : null}
+              />
+              <SummaryRow
+                icon={WalletIcon}
+                label={W.pay.title}
+                value={payValue}
+                onClick={() => setPart('pay')}
+                problem={payProblem}
+              />
+            </div>
+
+            <div className="flex shrink-0 flex-col gap-3 border-t bg-card px-4 py-3">
+              <Totals quote={quote} draft={draft} editing={editing !== null} />
+              {problemList}
+              {submitButton('h-11 w-full text-base font-semibold')}
+              {editing && !dirty ? (
+                <p className="text-center text-sm text-muted-foreground">{W.edit.noChanges}</p>
+              ) : null}
+            </div>
+
+            <ResponsiveDialog
+              open={part !== null}
+              onOpenChange={(open) => {
+                if (!open) setPart(null);
+              }}
+              title={
+                part === 'customer'
+                  ? W.customer.title
+                  : part === 'details'
+                    ? W.pane.how
+                    : W.pay.title
+              }
+              scroll
+            >
+              <div className="flex flex-col gap-4 pb-2">
+                {part === 'customer' ? customerFields : null}
+                {part === 'details' ? detailsFields : null}
+                {part === 'pay' ? payFields : null}
+              </div>
+              <ResponsiveDialogFooter>
+                <Button
+                  type="button"
+                  className="h-11 w-full font-semibold md:h-9"
+                  onClick={() => {
+                    if (part === 'customer' && !checkPhone()) return;
+                    setPart(null);
+                  }}
+                >
+                  {W.pane.done}
+                </Button>
+              </ResponsiveDialogFooter>
+            </ResponsiveDialog>
+          </aside>
+        ) : (
+          <div className="flex flex-col gap-6">
+            <section
+              className={cn(step === 'details' ? 'flex' : 'hidden', section)}
+              aria-labelledby="new-order-lines"
+            >
+              {/* Phone (T113): the items fold into one line with their photos; Show items opens them. */}
+              <Collapsible open={showLines} onOpenChange={setShowLines}>
+                <div className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h2
+                      id="new-order-lines"
+                      ref={step === 'details' ? heading : undefined}
+                      tabIndex={-1}
+                      className={cn(sectionTitle, 'outline-none')}
+                    >
+                      {W.steps.items}
+                    </h2>
+                    <p className="text-sm text-muted-foreground tabular-nums">{summary}</p>
+                  </div>
+                  <PhotoStack lines={basketPhotos} label={W.basket.photosAria(count)} />
+                  <CollapsibleTrigger
+                    render={
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 shrink-0 gap-1 rounded-full px-3"
+                      />
+                    }
+                  >
+                    {showLines ? W.basket.hideItems : W.basket.showItems}
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className={cn(
+                        'transition-transform duration-base',
+                        showLines && 'rotate-180',
+                      )}
+                    />
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="pt-2">{lines}</CollapsibleContent>
+              </Collapsible>
+            </section>
+
+            <section
+              className={cn(step === 'details' ? 'flex' : 'hidden', section)}
+              aria-labelledby="new-order-customer"
+            >
+              <h2 id="new-order-customer" className={sectionTitle}>
+                {W.customer.title}
+              </h2>
+              {customerFields}
+            </section>
+
+            <section
+              className={cn(step === 'details' ? 'flex' : 'hidden', section)}
+              aria-labelledby="new-order-details"
+            >
+              <h2 id="new-order-details" className={sectionTitle}>
+                {W.steps.details}
+              </h2>
+              {detailsFields}
+            </section>
+
+            <section
+              className={cn(step === 'pay' ? 'flex' : 'hidden', section)}
+              aria-labelledby="new-order-pay"
+            >
               <h2
-                id="new-order-lines"
-                ref={step === 'details' ? heading : undefined}
+                id="new-order-pay"
+                ref={step === 'pay' ? heading : undefined}
                 tabIndex={-1}
                 className={cn(sectionTitle, 'outline-none')}
               >
-                {W.basket.title}
+                {W.pay.title}
               </h2>
-              {draft.lines.length > 0 ? (
-                <span className="text-sm text-muted-foreground tabular-nums">{summary}</span>
-              ) : null}
-            </div>
-            <OrderLines
-              lines={draft.lines}
-              catalog={catalog}
-              quoted={quote?.lines}
-              onQty={(index, qty) =>
-                change({ lines: draft.lines.map((l, i) => (i === index ? { ...l, qty } : l)) })
-              }
-              onRemove={(index) => change({ lines: draft.lines.filter((_, i) => i !== index) })}
-              onEdit={(index) => {
-                const line = draft.lines[index];
-                const item = catalog.items.find((it) => it.id === line?.itemId);
-                if (item) setPicking({ item, index });
-              }}
-              className="-my-3"
-            />
-          </section>
-
-          <section className={cn(shown('details'), section)} aria-labelledby="new-order-customer">
-            <h2 id="new-order-customer" className={sectionTitle}>
-              {W.customer.title}
-            </h2>
-            <CustomerFields
-              value={draft.customer}
-              onChange={(customer) => {
-                setPhoneError(null);
-                change({ customer, useReward: customer.kind === 'member' && draft.useReward });
-              }}
-              useReward={draft.useReward}
-              onUseReward={(on) => change({ useReward: on })}
-              card={storefront.stampCard}
-              lockMember={editing !== null && editing.memberId !== null}
-            />
-            {phoneError ? <p className="text-sm text-destructive">{phoneError}</p> : null}
-          </section>
-
-          <section className={cn(shown('details'), section)} aria-labelledby="new-order-details">
-            <h2 id="new-order-details" className={sectionTitle}>
-              {W.steps.details}
-            </h2>
-            <DetailsFields
-              draft={draft}
-              onChange={change}
-              storefront={storefront}
-              schedule={schedule.data}
-              scheduleLoading={schedule.isPending}
-              today={today}
-              problems={tried && detailsProblem && draft.lines.length > 0 ? [detailsProblem] : []}
-            />
-          </section>
-
-          <section className={cn(shown('pay'), section)} aria-labelledby="new-order-pay">
-            <h2
-              id="new-order-pay"
-              ref={step === 'pay' ? heading : undefined}
-              tabIndex={-1}
-              className={cn(sectionTitle, 'outline-none')}
-            >
-              {W.pay.title}
-            </h2>
-            <PayFields
-              draft={draft}
-              onChange={change}
-              storefront={storefront}
-              total={total}
-              editing={editing !== null}
-            />
-            <Totals quote={quote} draft={draft} editing={editing !== null} className="pt-1" />
-            {quoteProblems.length > 0 ? (
-              <ul className="flex flex-col gap-1 text-sm text-destructive">
-                {quoteProblems.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
-            ) : null}
-            <AsyncButton
-              type="button"
-              status={action.status}
-              busyLabel={editing ? W.edit.saving : W.creating}
-              doneLabel={editing ? W.edit.saveSame : W.title}
-              disabled={blocked}
-              onClick={submit}
-              className="hidden h-11 w-full text-base font-semibold lg:flex"
-            >
-              {submitLabel}
-            </AsyncButton>
-            {editing && !dirty ? (
-              <p className="hidden text-center text-sm text-muted-foreground lg:block">
-                {W.edit.noChanges}
-              </p>
-            ) : null}
-          </section>
-        </aside>
+              {payFields}
+              <Totals quote={quote} draft={draft} editing={editing !== null} className="pt-1" />
+              {problemList}
+            </section>
+          </div>
+        )}
       </div>
 
       {/* Phone and tablet: the step's bar on the bottom edge (the dock steps aside on this page). */}
-      <div className="pointer-events-none sticky bottom-4 z-30 mt-6 flex justify-center pb-safe lg:hidden">
+      <div
+        className={cn(
+          'pointer-events-none sticky bottom-4 z-30 mt-6 flex justify-center pb-safe',
+          desktop && 'hidden',
+        )}
+      >
         <div
           role="region"
+          data-slot="new-order-bar"
           aria-label={W.stepsLabel}
           className="pointer-events-auto flex w-full items-center gap-2 rounded-full border border-border bg-card p-1.5 elevation-md"
         >
@@ -589,7 +798,15 @@ function Composer({ shop, editing }: { shop: PublicShop; editing: OwnerOrder | n
               <ArrowLeftIcon aria-hidden="true" />
             </Button>
           ) : null}
-          <span className="min-w-0 flex-1 truncate pl-2 text-sm font-semibold tabular-nums">
+          {/* The photos ride in the bar on the items step; later steps show them at the top. */}
+          {draft.lines.length > 0 && step === 'items' ? (
+            <PhotoStack
+              lines={basketPhotos}
+              label={W.basket.photosAria(count)}
+              className="pl-1.5"
+            />
+          ) : null}
+          <span className="min-w-0 flex-1 truncate pl-1 text-sm font-semibold tabular-nums">
             {draft.lines.length === 0 ? W.basket.empty : summary}
           </span>
           {step === 'pay' ? (

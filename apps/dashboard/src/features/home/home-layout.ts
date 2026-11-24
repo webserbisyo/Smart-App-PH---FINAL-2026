@@ -15,8 +15,9 @@ export const HOME_SLOTS = {
   money: 'order-2 md:col-span-2 lg:order-none',
   sales: 'order-3 md:col-span-2 lg:order-none',
   board: 'order-4 lg:order-none',
-  mix: 'order-5 lg:order-none',
-  best: 'order-6 lg:order-none',
-  members: 'order-7 lg:order-none lg:flex-1',
-  coming: 'order-8 md:col-span-2 lg:order-none lg:col-span-3',
+  // Upcoming (T113) sits right under the board: what is due today, then what is booked next.
+  coming: 'order-5 md:col-span-2 lg:order-none',
+  mix: 'order-6 lg:order-none',
+  best: 'order-7 lg:order-none',
+  members: 'order-8 lg:order-none lg:flex-1',
 } as const;

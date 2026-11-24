@@ -10,6 +10,7 @@ import {
 } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { cn } from 'cn';
+import { LinePhoto } from '@/app/orders/item-photo';
 import { QtyField } from './qty-field.js';
 
 const W = newOrderWords.basket;
@@ -69,6 +70,7 @@ export function OrderLines({
         return (
           <li key={lineIdentity(line)} className="flex flex-col gap-2 py-3">
             <div className="flex items-start justify-between gap-3">
+              <LinePhoto line={{ name, photo: item?.photos[0] ?? null }} className="size-10" />
               <div className="min-w-0 flex-1">
                 <p className="font-medium break-words">{name}</p>
                 {extras.length > 0 ? (
@@ -88,7 +90,7 @@ export function OrderLines({
                 {q ? formatPeso(q.lineTotal) : ''}
               </span>
             </div>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 pl-13">
               <QtyField
                 value={line.qty}
                 onChange={(qty) => onQty(index, qty)}

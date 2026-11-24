@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { LockIcon, MessageSquareTextIcon, ShieldAlertIcon } from 'lucide-react';
+import { LockIcon, MessageSquareTextIcon, ShieldAlertIcon, WalletIcon } from 'lucide-react';
 import type { BoardOrder, OrderStatus, ShopKind } from '@smartapp/core';
 import {
   awaitsTransfer,
+  balanceOf,
   canAdvance,
   formatPeso,
   isPayLater,
@@ -12,15 +13,12 @@ import {
   statusStage,
   words,
 } from '@smartapp/core';
-import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
-import { AvatarGroup } from '@smartapp/ui/components/avatar-group';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Button } from '@smartapp/ui/components/button';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
-import { initials } from '@smartapp/ui/compositions/shop-image';
 import { cn } from 'cn';
 import { orderNoLabel } from './order-ticket-label.js';
-import { orderPhotoSrc } from './order-photo.js';
+import { LinePhoto, PhotoStack } from './item-photo.js';
 import { ORDER_TYPE_ICON } from './order-type-icons.js';
 import { StageIcon } from './stage-icon.js';
 import { STAGE_LOOK } from './stage.js';
@@ -53,13 +51,19 @@ export function cardAction(order: BoardOrder): CardAction {
 export type PaymentChipOrder = Pick<
   BoardOrder,
   'status' | 'paymentStatus' | 'paymentMethod' | 'expiresAt'
->;
+> &
+  Partial<Pick<BoardOrder, 'paidAmount' | 'total'>>;
 
 // Long payment words shrink with an ellipsis instead of pushing out of a narrow card.
 const CHIP_FIT = 'max-w-full min-w-0';
 
 export function PaymentChip({ order, now }: { order: PaymentChipOrder; now: Date }) {
   const method = words.shop.paymentMethod[order.paymentMethod];
+  // A part payment (a deposit, T111): what is still to collect, in yellow so it gets noticed (T113).
+  const due =
+    order.paymentStatus === 'unpaid' && order.total !== undefined && (order.paidAmount ?? 0) > 0
+      ? balanceOf({ total: order.total, paidAmount: order.paidAmount ?? 0 }).due
+      : 0;
   if (order.paymentStatus === 'paid') {
     return (
       <Badge
@@ -93,6 +97,19 @@ export function PaymentChip({ order, now }: { order: PaymentChipOrder; now: Date
     return (
       <Badge variant="outline" size="lg" radius="full" className="text-muted-foreground">
         {words.shop.paymentStatus.refunded}
+      </Badge>
+    );
+  }
+  if (due > 0) {
+    return (
+      <Badge
+        variant="warning-light"
+        size="lg"
+        radius="full"
+        className={cn(CHIP_FIT, 'gap-1 font-semibold tabular-nums')}
+      >
+        <WalletIcon aria-hidden="true" />
+        <span className="truncate">{ordersWords.ticket.balanceLeft(formatPeso(due))}</span>
       </Badge>
     );
   }
@@ -133,32 +150,21 @@ export function PaymentChip({ order, now }: { order: PaymentChipOrder; now: Date
       radius="full"
       className={cn(CHIP_FIT, 'text-muted-foreground')}
     >
-      <span className="truncate">{ordersWords.detail.payLater(method)}</span>
+      <span className="truncate">
+        {ordersWords.detail.payLater(ordersWords.ticket.methodShort[order.paymentMethod])}
+      </span>
     </Badge>
   );
 }
 
-/** Up to 3 item photos, then "+N" (installed Avatar Group). Items with no photo show their initials. */
+/** Up to 3 item photos of an order, then "+N". */
 export function ItemPhotos({ order, size = 'sm' }: { order: BoardOrder; size?: 'sm' | 'default' }) {
-  if (order.lines.length === 0) return null;
-  const px = size === 'sm' ? 24 : 32;
   return (
-    <AvatarGroup
-      size={px}
-      max={4}
-      aria-label={ordersWords.ticket.photosAria(order.lines.length + order.moreLines)}
-      role="img"
-    >
-      {order.lines.map((line, index) => {
-        const src = orderPhotoSrc(line.photo, 96);
-        return (
-          <Avatar key={index} size={size} className="ring-2 ring-card">
-            {src ? <AvatarImage src={src} alt="" /> : null}
-            <AvatarFallback className="font-semibold">{initials(line.name)}</AvatarFallback>
-          </Avatar>
-        );
-      })}
-    </AvatarGroup>
+    <PhotoStack
+      lines={order.lines}
+      label={ordersWords.ticket.photosAria(order.lines.length + order.moreLines)}
+      size={size}
+    />
   );
 }
 
@@ -351,10 +357,11 @@ function OrderCardView({
         </div>
 
         {/* Lines */}
-        <ul className="space-y-1 text-sm">
+        <ul className="space-y-1.5 text-sm">
           {visibleLines.map((line, index) => (
-            <li key={index} className="flex min-w-0 gap-1.5">
-              <span className="w-7 shrink-0 font-semibold tabular-nums">{line.qty}×</span>
+            <li key={index} className="flex min-w-0 items-start gap-1.5">
+              <LinePhoto line={line} className="size-6" />
+              <span className="shrink-0 font-semibold tabular-nums">{line.qty}×</span>
               <span className="min-w-0">
                 <span className="line-clamp-1 font-medium break-words">{line.name}</span>
                 {line.variantLabel || line.optionLabels.length > 0 ? (
@@ -379,9 +386,8 @@ function OrderCardView({
           </p>
         ) : null}
 
-        {/* Photos, payment, total */}
+        {/* Payment, total (each line shows its own photo above, so no stack here, T113) */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <ItemPhotos order={order} />
           <PaymentChip order={order} now={now} />
           <span className="ml-auto shrink-0 text-base font-bold whitespace-nowrap tabular-nums">
             {formatPeso(order.total)}

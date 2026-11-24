@@ -25,7 +25,9 @@ import {
   ResponsiveDialog,
   ResponsiveDialogFooter,
 } from '@smartapp/ui/compositions/responsive-dialog';
+import { ItemSheetPhotos } from '@smartapp/ui/compositions/item-photos';
 import { cn } from 'cn';
+import { env } from '@/app/env';
 import { QtyField } from './qty-field.js';
 
 const W = newOrderWords.choices;
@@ -105,6 +107,9 @@ function ChoicesBody({
     .filter((g): g is OptionGroup => g !== undefined);
   const missing = problems.find((p) => p.groupId !== null);
   const variant = item.variants.find((v) => v.id === variantId) ?? item.variants[0];
+  const categoryIcon = catalog.categories.find((c) => c.id === item.categoryId)?.icon;
+  const optionPrice = (o: { soldOut: boolean; priceDelta: number }) =>
+    o.soldOut ? W.soldOut : o.priceDelta === 0 ? words.shop.free : `+${formatPeso(o.priceDelta)}`;
 
   const submit = () => {
     setTried(true);
@@ -121,6 +126,23 @@ function ChoicesBody({
   return (
     <>
       <div className="flex flex-col gap-5 pb-2">
+        {/* The item's photo on top, like the storefront's item sheet (T113). */}
+        <div className="-mx-4 -mt-4 flex flex-col gap-3 sm:-mx-6">
+          <ItemSheetPhotos
+            photos={item.photos}
+            itemName={item.name}
+            categoryIcon={categoryIcon}
+            ratio="16:9"
+            sizes="(min-width: 640px) 512px, 100vw"
+            assetOrigin={env.VITE_STOREFRONT_URL}
+            className="max-h-56 sm:max-h-64"
+          />
+          {item.description ? (
+            <p className="line-clamp-3 px-4 text-sm text-muted-foreground sm:px-6">
+              {item.description}
+            </p>
+          ) : null}
+        </div>
         {item.axes.length > 0 && item.variants.length > 1 ? (
           item.axes.map((axis, axisIndex) => {
             const current = variant?.values ?? [];
@@ -182,7 +204,7 @@ function ChoicesBody({
                   key={v.id}
                   htmlFor={`nv-${v.id}`}
                   className={cn(
-                    'flex min-h-12 items-center justify-between gap-3 rounded-lg border border-border px-3',
+                    'flex min-h-12 w-full items-center justify-between gap-3 rounded-lg border border-border px-3',
                     off ? 'opacity-50' : 'cursor-pointer',
                   )}
                 >
@@ -223,7 +245,7 @@ function ChoicesBody({
                       key={o.id}
                       htmlFor={`no-${o.id}`}
                       className={cn(
-                        'flex min-h-11 items-center justify-between gap-3 rounded-lg px-2',
+                        'flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-2 font-normal',
                         o.soldOut ? 'opacity-50' : 'cursor-pointer hover:bg-muted/40',
                       )}
                     >
@@ -232,7 +254,7 @@ function ChoicesBody({
                         {o.name}
                       </span>
                       <span className="text-xs font-semibold text-muted-foreground">
-                        {o.priceDelta === 0 ? words.shop.free : `+${formatPeso(o.priceDelta)}`}
+                        {optionPrice(o)}
                       </span>
                     </FieldLabel>
                   ))}
@@ -257,7 +279,7 @@ function ChoicesBody({
                         >
                           <span>{o.name}</span>
                           <span className="ml-auto text-xs font-semibold text-muted-foreground">
-                            {o.priceDelta === 0 ? words.shop.free : `+${formatPeso(o.priceDelta)}`}
+                            {optionPrice(o)}
                           </span>
                         </CheckboxGroupItem>
                       </div>

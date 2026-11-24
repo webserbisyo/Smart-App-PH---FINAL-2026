@@ -183,9 +183,17 @@ export function HomeScreen() {
                 now={now}
                 className={cn(slots.board, hasNeeds && 'lg:flex-1')}
               />
+              {booked ? (
+                <ComingCard
+                  days={summary.comingUp}
+                  upcoming={summary.upcoming}
+                  upcomingCount={summary.upcomingCount}
+                  today={summary.businessDate}
+                  className={slots.coming}
+                />
+              ) : null}
               {hasNeeds ? null : members}
             </div>
-            {booked ? <ComingCard days={summary.comingUp} className={slots.coming} /> : null}
           </div>
         )}
       </div>

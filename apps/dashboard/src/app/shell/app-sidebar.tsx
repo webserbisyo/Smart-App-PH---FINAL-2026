@@ -16,10 +16,36 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from '@smartapp/ui/components/sidebar';
+import { BorderBeam } from '@smartapp/ui/components/border-beam';
+import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import type { NavItem } from '@smartapp/ui/lib/nav';
+import { cn } from 'cn';
 import { useShop } from '../shop.js';
 import type { NavItems } from '../use-nav-items.js';
 import { AccountMenu } from './account-menu.js';
+
+/**
+ * A slow logo-coloured border around My App (T113), like the sign-up card's. Off under reduced motion;
+ * clipped to the button so it never spills onto the next link.
+ */
+function FeaturedBeam() {
+  const reduce = useReducedMotion();
+  if (reduce) return null;
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 overflow-hidden rounded-md"
+    >
+      <BorderBeam
+        size={48}
+        duration={8}
+        borderWidth={1.5}
+        colorFrom="var(--logo-blue)"
+        colorTo="var(--logo-mint)"
+      />
+    </span>
+  );
+}
 
 function SidebarLink({
   item,
@@ -36,8 +62,12 @@ function SidebarLink({
         isActive={item.active}
         {...(withTooltip ? { tooltip: item.label } : {})}
         render={item.link}
-        className="pointer-coarse:h-11 tablet-rail:size-11! tablet-rail:p-3.5!"
+        className={cn(
+          'pointer-coarse:h-11 tablet-rail:size-11! tablet-rail:p-3.5!',
+          item.featured && 'relative',
+        )}
       >
+        {item.featured ? <FeaturedBeam /> : null}
         {item.icon}
         <span>{item.label}</span>
       </SidebarMenuButton>

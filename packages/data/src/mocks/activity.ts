@@ -1553,7 +1553,7 @@ export function generateOrders(shop: PublicShop, now: Date, rng: Rng): OrderReco
     .sort((a, b) => a.placedAt.localeCompare(b.placedAt));
   const counters = new Map<string, number>();
   let openCount = 0;
-  return drafts.map((d, index) => {
+  const records = drafts.map((d, index) => {
     const date = manilaDate(d.placedAt);
     const orderNo = (counters.get(date) ?? 0) + 1;
     counters.set(date, orderNo);
@@ -1579,6 +1579,21 @@ export function generateOrders(shop: PublicShop, now: Date, rng: Rng): OrderReco
       customer,
     });
   });
+  // One booked order paid part up front (a deposit, T111), so Home's Upcoming and the board show a
+  // balance still to collect (T113).
+  const today = manilaDate(now);
+  const deposit = records
+    .filter(
+      (o) =>
+        o.receipt.scheduledAt !== null &&
+        manilaDate(o.receipt.dueAt) > today &&
+        o.receipt.paymentStatus === 'unpaid' &&
+        o.receipt.paymentMethod === 'cash' &&
+        o.receipt.totals.total >= 20_000,
+    )
+    .sort((a, b) => a.receipt.dueAt.localeCompare(b.receipt.dueAt))[0];
+  if (deposit) deposit.paidAmount = Math.floor(deposit.receipt.totals.total / 2 / 10_000) * 10_000;
+  return records;
 }
 
 export type { OrderStatus, PaymentStatus };

@@ -71,13 +71,14 @@ export function PreviewPanel({ pill, summary, title, hint, fields }: PreviewPane
           render={
             <Button
               variant="outline"
-              className="h-11 max-w-xs gap-2 rounded-full bg-popover px-4 text-popover-foreground shadow-lg dark:bg-popover dark:hover:bg-muted"
+              className="h-11 max-w-xs gap-2 rounded-full bg-popover px-4 text-popover-foreground shadow-lg max-md:w-11 max-md:px-0 dark:bg-popover dark:hover:bg-muted"
             />
           }
         >
           <FlaskConicalIcon className="text-warning" aria-hidden="true" />
-          <span className="font-semibold">{pill}</span>
-          <span className="truncate text-muted-foreground">· {summary}</span>
+          {/* A phone shows the flask alone, so the pill covers less of the page (T113). */}
+          <span className="font-semibold max-md:sr-only">{pill}</span>
+          <span className="truncate text-muted-foreground max-md:sr-only">· {summary}</span>
         </PopoverTrigger>
         <PopoverContent side="top" align="start" className="w-80 gap-3 p-4">
           <PopoverHeader>

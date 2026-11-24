@@ -8,7 +8,7 @@ import {
   CarouselItem,
   type CarouselApi,
 } from '@smartapp/ui/components/carousel';
-import { ShopImage, type ShopImageRatio } from '@smartapp/ui/compositions/shop-image';
+import { ShopImage, type ShopImageRatio } from './shop-image';
 import { cn } from '@smartapp/ui/lib/utils';
 
 export interface ItemSheetPhotosProps {
@@ -16,15 +16,17 @@ export interface ItemSheetPhotosProps {
   itemName: string;
   categoryIcon?: IconKey | CategoryIcon | undefined;
   activePhotoIndex?: number | undefined;
-  ratio: Extract<ShopImageRatio, '4:3' | '1:1'>;
+  ratio: Extract<ShopImageRatio, '16:9' | '4:3' | '1:1'>;
   sizes: string;
   // Glass buttons on the photo (heart, close).
   overlay?: ReactNode;
+  // Where the sample photos live when this runs outside the storefront (the dashboard's New order).
+  assetOrigin?: string | undefined;
   className?: string | undefined;
 }
 
 /**
- * Full-bleed item photos (c-carousel-11, no autoplay): swipe for more, dots on a glass pill.
+ * Full-bleed item photos (moved from the storefront's item sheet so New order shows the same photos, T113) (c-carousel-11, no autoplay): swipe for more, dots on a glass pill.
  * No photo: the shop-coloured tile with the category icon.
  */
 export function ItemSheetPhotos({
@@ -35,6 +37,7 @@ export function ItemSheetPhotos({
   ratio,
   sizes,
   overlay,
+  assetOrigin = '',
   className,
 }: ItemSheetPhotosProps) {
   const [api, setApi] = useState<CarouselApi>();
@@ -62,13 +65,14 @@ export function ItemSheetPhotos({
     <div className={cn('relative overflow-hidden bg-muted', className)}>
       {single ? (
         <ShopImage
-          src={first ? imageSources(first) : null}
+          src={first ? imageSources(first, assetOrigin) : null}
           alt={itemName}
           ratio={ratio}
           fallbackIcon={categoryIcon}
           fallbackText={itemName}
           sizes={sizes}
           priority
+          assetOrigin={assetOrigin}
         />
       ) : (
         <Carousel setApi={setApi} className="w-full">
@@ -76,13 +80,14 @@ export function ItemSheetPhotos({
             {photos.map((photo, index) => (
               <CarouselItem key={photo} className="pl-0">
                 <ShopImage
-                  src={imageSources(photo)}
+                  src={imageSources(photo, assetOrigin)}
                   alt={words.storefrontShell.menu.itemSheet.photoAlt(itemName, index + 1)}
                   ratio={ratio}
                   fallbackIcon={categoryIcon}
                   fallbackText={itemName}
                   sizes={sizes}
                   priority={index === 0}
+                  assetOrigin={assetOrigin}
                 />
               </CarouselItem>
             ))}

@@ -49,6 +49,7 @@ import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
 import { cn } from 'cn';
 import { GRID_I18N } from '@/app/grid-pager';
 import { CustomerChip, ItemPhotos, PaymentChip, orderNoLabel } from '@/app/orders/order-card';
+import { CustomerFace } from '@/app/owner-avatar';
 import { dateFromKey } from '@/app/day-key';
 import { AnimatePresence, FadeUp } from '@/app/orders/order-motion';
 import { ORDER_TYPE_ICON } from '@/app/orders/order-type-icons';
@@ -623,6 +624,12 @@ function PhoneRows({
                   </span>
                 </span>
                 <span className="flex min-w-0 items-center gap-2">
+                  <CustomerFace
+                    avatar={order.customerAvatar}
+                    name={order.customerName}
+                    size="sm"
+                    initialsClassName="bg-secondary text-secondary-foreground"
+                  />
                   <span className="min-w-0 truncate text-sm font-semibold">
                     {order.customerName}
                   </span>
@@ -630,7 +637,9 @@ function PhoneRows({
                 </span>
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                   <ItemPhotos order={order} />
-                  <span className="text-xs text-muted-foreground">{L.itemCount(count)}</span>
+                  <span className="text-xs whitespace-nowrap text-muted-foreground">
+                    {L.itemCount(count)}
+                  </span>
                   <PaymentChip order={order} now={now} />
                   <span className="ml-auto font-bold whitespace-nowrap tabular-nums">
                     {formatPeso(order.total)}
@@ -736,6 +745,12 @@ function OrdersGrid({
         header: L.cols.customer,
         cell: ({ row }) => (
           <span className="flex min-w-0 items-center gap-2">
+            <CustomerFace
+              avatar={row.original.customerAvatar}
+              name={row.original.customerName}
+              size="sm"
+              initialsClassName="bg-secondary text-secondary-foreground"
+            />
             <span className="min-w-0 truncate font-medium">{row.original.customerName}</span>
             <CustomerChip order={row.original} />
           </span>
@@ -750,11 +765,13 @@ function OrdersGrid({
           return (
             <span className="flex items-center gap-2">
               <ItemPhotos order={row.original} />
-              <span className="text-sm text-muted-foreground">{L.itemCount(count)}</span>
+              <span className="text-sm whitespace-nowrap text-muted-foreground">
+                {L.itemCount(count)}
+              </span>
             </span>
           );
         },
-        size: 160,
+        size: 180,
       },
       {
         accessorKey: 'total',

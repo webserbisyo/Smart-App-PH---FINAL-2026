@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import {
   ChevronDownIcon,
   HouseIcon,
-  PaintbrushIcon,
+  RocketIcon,
   PlusIcon,
   ReceiptTextIcon,
   SettingsIcon,
@@ -102,7 +102,7 @@ const DOCK_ITEMS: NavItem[] = [
 ];
 
 const MORE_ITEMS: NavItem[] = [
-  demoItem('editor', 'Editor', <PaintbrushIcon />),
+  demoItem('editor', 'My App', <RocketIcon />),
   demoItem('settings', 'Settings', <SettingsIcon />, false, 1),
 ];
 

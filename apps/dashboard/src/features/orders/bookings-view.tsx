@@ -5,6 +5,7 @@ import {
   CalendarSearchIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  InfoIcon,
   MoveIcon,
   SquareIcon,
 } from 'lucide-react';
@@ -141,6 +142,20 @@ export default function BookingsView({
     onNavigate({ date: clampDay(next, firstDay, lastDay) }, { replace: true });
   const openDay = (d: string) => onNavigate({ view: 'day', date: d });
 
+  const bookedSwitch = (
+    <label className="flex min-h-11 items-center gap-2 text-sm font-medium md:min-h-0">
+      <Switch
+        checked={bookedOnly}
+        onCheckedChange={setBookedOnly}
+        aria-describedby="calendar-booked-only-hint"
+      />
+      {W.bookedOnly}
+      <span id="calendar-booked-only-hint" className="sr-only">
+        {W.bookedOnlyHint}
+      </span>
+    </label>
+  );
+
   return (
     <div className="flex flex-col gap-3">
       <CalendarBar
@@ -160,34 +175,51 @@ export default function BookingsView({
         onPickDate={go}
       />
 
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MoveIcon aria-hidden="true" className="size-4 shrink-0" />
-          {view === 'month'
-            ? W.hintMonth
-            : isPhone
-              ? W.hintPhone
-              : view === 'day'
-                ? W.hintDay
-                : formFactor === 'tablet'
-                  ? W.hintTablet
-                  : W.hint}
-        </p>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          {view === 'month' ? null : <CustomerLegend />}
-          <label className="flex min-h-11 items-center gap-2 text-sm font-medium md:min-h-0">
-            <Switch
-              checked={bookedOnly}
-              onCheckedChange={setBookedOnly}
-              aria-describedby="calendar-booked-only-hint"
-            />
-            {W.bookedOnly}
-            <span id="calendar-booked-only-hint" className="sr-only">
-              {W.bookedOnlyHint}
-            </span>
-          </label>
+      {isPhone ? (
+        <div className="flex items-center justify-between gap-2">
+          <Popover>
+            <PopoverTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-11 gap-1.5 px-2 text-sm font-medium text-muted-foreground"
+                />
+              }
+            >
+              <InfoIcon aria-hidden="true" />
+              {W.tips}
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 gap-3 p-3">
+              <p className="flex items-start gap-2 text-sm text-muted-foreground">
+                <MoveIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                {view === 'month' ? W.hintMonth : W.hintPhone}
+              </p>
+              {view === 'month' ? null : <CustomerLegend />}
+            </PopoverContent>
+          </Popover>
+          {bookedSwitch}
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <p className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MoveIcon aria-hidden="true" className="size-4 shrink-0" />
+            {view === 'month'
+              ? W.hintMonth
+              : isPhone
+                ? W.hintPhone
+                : view === 'day'
+                  ? W.hintDay
+                  : formFactor === 'tablet'
+                    ? W.hintTablet
+                    : W.hint}
+          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {view === 'month' ? null : <CustomerLegend />}
+            {bookedSwitch}
+          </div>
+        </div>
+      )}
 
       {view === 'month' ? (
         <MonthView

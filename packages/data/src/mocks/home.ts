@@ -22,6 +22,7 @@ import {
   type HomeMembers,
   type HomeSale,
   type MembersOverview,
+  type BoardOrder,
   type PublicShop,
 } from '@smartapp/core';
 import type { OwnerHomeAdapter } from '../adapters/types';
@@ -39,7 +40,11 @@ export interface HomeMockDeps {
   now: () => Date;
   scenario: () => MockScenario;
   seed: number;
+  // The board card of a stored order (T113), for Home's Upcoming list.
+  boardOrder: (s: ShopState, o: ShopState['orders'][number]) => BoardOrder;
 }
+
+const UPCOMING_MAX = 5;
 
 const STAMP_KINDS = new Set(['earned', 'given']);
 
@@ -113,6 +118,7 @@ export function createHomeMock(deps: HomeMockDeps): {
     sales: HomeSale[];
     todaySales: HomeSale[];
     bookings: HomeBooking[];
+    upcoming: BoardOrder[];
   }
 
   function read(slug: string): Read {
@@ -135,7 +141,12 @@ export function createHomeMock(deps: HomeMockDeps): {
         total: o.receipt.totals.total,
         needsNotice: o.receipt.lines.some((l) => notice.has(l.itemId)),
       }));
-    return { s, shop, now, sales: [...past, ...todaySales], todaySales, bookings };
+    // Upcoming (T113): open orders due after today, soonest first.
+    const upcoming = live
+      .filter((o) => !isFinal(o.receipt.status) && manilaDate(o.receipt.dueAt) > today)
+      .sort((a, b) => a.receipt.dueAt.localeCompare(b.receipt.dueAt))
+      .map((o) => deps.boardOrder(s, o));
+    return { s, shop, now, sales: [...past, ...todaySales], todaySales, bookings, upcoming };
   }
 
   const adapter: OwnerHomeAdapter = {
@@ -146,8 +157,8 @@ export function createHomeMock(deps: HomeMockDeps): {
         const overview = deps.membersOverview(r.s);
         const items = homeItems(r.shop, r.now);
         const sf = r.shop.storefront;
-        return HomeSummarySchema.parse(
-          buildHomeSummary({
+        return HomeSummarySchema.parse({
+          ...buildHomeSummary({
             now: r.now,
             storefront: sf,
             sales: r.sales,
@@ -165,7 +176,9 @@ export function createHomeMock(deps: HomeMockDeps): {
               anyOrder: r.sales.length > 0,
             }),
           }),
-        );
+          upcoming: r.upcoming.slice(0, UPCOMING_MAX),
+          upcomingCount: r.upcoming.length,
+        });
       });
     },
 
