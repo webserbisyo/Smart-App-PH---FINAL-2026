@@ -117,7 +117,7 @@ export interface PlaceOrderEligibilityInput {
 export interface PlaceOrderEligibilityResult {
   canPlace: boolean;
   reason: string | null;
-  missingField: 'name' | 'phone' | 'address' | 'zone' | 'payment' | 'basket' | null;
+  missingField: 'type' | 'name' | 'phone' | 'address' | 'zone' | 'payment' | 'basket' | null;
 }
 
 /**
@@ -168,6 +168,11 @@ export function checkPlaceOrderEligibility(
   const state = openState(sf, now);
   if (state.paused) {
     return { canPlace: false, reason: words.shop.notTakingOrders, missingField: null };
+  }
+
+  // Never a silent default: a shop with more than one way to order waits for the customer's pick.
+  if (!orderType) {
+    return { canPlace: false, reason: words.location.choose, missingField: 'type' };
   }
 
   if (state.state === 'closed' && !scheduledAt && orderType !== 'walk_in') {

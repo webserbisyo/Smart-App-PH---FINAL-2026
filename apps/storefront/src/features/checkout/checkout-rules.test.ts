@@ -160,6 +160,12 @@ describe('checkPlaceOrderEligibility', () => {
     submitting: false,
   };
 
+  it('waits for the order type when none is picked', () => {
+    const res = checkPlaceOrderEligibility({ ...defaultInput, orderType: null });
+    expect(res.canPlace).toBe(false);
+    expect(res.missingField).toBe('type');
+  });
+
   it('allows placing order when all fields are valid', () => {
     const res = checkPlaceOrderEligibility(defaultInput);
     expect(res.canPlace).toBe(true);

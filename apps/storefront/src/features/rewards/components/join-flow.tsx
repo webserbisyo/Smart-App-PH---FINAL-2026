@@ -1,6 +1,15 @@
 'use client';
 
-import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -57,10 +66,21 @@ const W = words.join;
 type Step = 'details' | 'code' | 'done';
 
 /**
+ * Join, one round at a time: Next keeps the page alive, hidden, when the customer moves on (React Activity).
+ * A finished join starts a new round when the page is hidden, so after Sign out the next person gets an empty
+ * form, never the last member's welcome.
+ */
+export function JoinFlow() {
+  const [round, setRound] = useState(0);
+  const nextRound = useCallback(() => setRound((r) => r + 1), []);
+  return <JoinRound key={round} onSpent={nextRound} />;
+}
+
+/**
  * Join (T12): name, mobile and email, then the 6-digit email code (otp-resend), then the welcome stamp
  * landing on the card. Already a member on this phone: straight to Rewards.
  */
-export function JoinFlow() {
+function JoinRound({ onSpent }: { onSpent: () => void }) {
   const { slug, shop } = useShop();
   const router = useRouter();
   const account = useMyAccount(slug);
@@ -90,6 +110,12 @@ export function JoinFlow() {
   const [joined, setJoined] = useState<MemberAccount | null>(null);
   // The face picked on the form (T95); null skips it.
   const [face, setFace] = useState<OwnerAvatar | null>(null);
+  useLayoutEffect(
+    () => () => {
+      if (step === 'done') onSpent();
+    },
+    [step, onSpent],
+  );
   const codeRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 

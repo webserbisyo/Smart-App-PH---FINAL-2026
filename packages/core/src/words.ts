@@ -488,6 +488,7 @@ export const words = {
       `${count} ${count === 1 ? 'item' : 'items'} · ${total}`,
     howSection: 'How you’ll get it',
     change: 'Change',
+    choose: 'Choose',
     whoSection: 'Your details',
     name: 'Your name',
     namePlaceholder: 'Juan dela Cruz',
