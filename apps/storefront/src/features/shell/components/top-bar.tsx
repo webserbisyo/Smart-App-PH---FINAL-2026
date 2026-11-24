@@ -120,15 +120,29 @@ export function TopBar() {
     >
       <div className="mx-auto flex h-16 max-w-280 items-center gap-3 px-4 lg:gap-6">
         {/* One stretched button over logo and name opens Shop info (redesign R7); the pill sits above
-            it. The dot on the logo and the short word under the name (T115), the full state spoken with the name. */}
+            it. The dot on the logo and the short word under it (T115), the full state spoken with the name. */}
         <div className="relative flex min-w-0 flex-1 items-center gap-3 lg:flex-none">
-          <StatusLogo
-            name={name}
-            src={logo}
-            state={open?.kind ?? null}
-            logoShape={shop.storefront.look.logoShape}
-            dotRingClassName="ring-shop-60"
-          />
+          {/* The dot on the logo and, for Busy, Closed or Paused, the short word under it (T115). */}
+          <span className="flex shrink-0 flex-col items-center gap-0.5">
+            <StatusLogo
+              name={name}
+              src={logo}
+              state={open?.kind ?? null}
+              logoShape={shop.storefront.look.logoShape}
+              dotRingClassName="ring-shop-60"
+            />
+            {open && open.kind !== 'open' ? (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'text-xs leading-none font-semibold',
+                  open.kind === 'busy' ? 'text-warning-text' : 'text-muted-foreground',
+                )}
+              >
+                {open.paused ? words.shop.pausedShort : words.shop.openStateShort[open.kind]}
+              </span>
+            ) : null}
+          </span>
           <div className="flex min-w-0 flex-col items-start gap-1">
             <button
               type="button"
@@ -139,21 +153,7 @@ export function TopBar() {
             >
               {name}
             </button>
-            <span className="flex max-w-full min-w-0 items-center gap-2">
-              {/* Busy or Closed in words beside the dot's colour (decision T115); open needs no word. */}
-              {open && open.kind !== 'open' ? (
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    'shrink-0 text-xs font-semibold',
-                    open.kind === 'busy' ? 'text-warning-text' : 'text-muted-foreground',
-                  )}
-                >
-                  {open.paused ? words.shop.pausedShort : words.shop.openStateShort[open.kind]}
-                </span>
-              ) : null}
-              <LocationBar className="z-10 min-w-0" />
-            </span>
+            <LocationBar className="z-10" />
           </div>
         </div>
         <nav
