@@ -670,6 +670,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     now: () => now(),
     scenario: () => scenario(),
     seed,
+    boardOrder: (s, o) => toBoardOrder(s, o),
   });
 
   // Push News (T106): sample news per shop, a send that goes out over a few seconds, the phone's news choice.

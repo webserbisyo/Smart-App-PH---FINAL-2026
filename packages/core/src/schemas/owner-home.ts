@@ -10,6 +10,7 @@ import {
   IsoDateTimeSchema,
   MediaRefSchema,
 } from './common.js';
+import { BoardOrderSchema } from './owner-orders.js';
 import {
   HomeBuyerEnum,
   HomePlaceKindEnum,
@@ -140,6 +141,9 @@ export const HomeSummarySchema = z.object({
   mix: z.object({ types: z.array(HomeTypeMixSchema), methods: z.array(HomeMethodMixSchema) }),
   members: HomeMembersSchema,
   comingUp: z.array(HomeBookingDaySchema).length(7),
+  // Upcoming (T113): the next booked orders after today, soonest first, and how many there are in all.
+  upcoming: z.array(BoardOrderSchema).max(5).default([]),
+  upcomingCount: CountSchema.default(0),
   // Bookings due tomorrow that need notice (cakes), for "Needs you".
   noticeTomorrow: CountSchema,
   soldOut: z.array(HomeSoldOutSchema),

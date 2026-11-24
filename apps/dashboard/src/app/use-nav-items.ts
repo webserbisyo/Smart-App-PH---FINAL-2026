@@ -65,6 +65,7 @@ export function useNavItems({ onShare }: { onShare: () => void }): NavItems {
       active: isActivePath(pathname, def.path),
       placement: def.placement,
       count,
+      featured: 'featured' in def ? def.featured : undefined,
     };
   });
 

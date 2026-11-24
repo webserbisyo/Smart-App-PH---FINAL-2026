@@ -11,6 +11,8 @@ export interface NavItem {
   link: ReactElement;
   active: boolean;
   count?: number | undefined;
+  // The one link we want owners to notice (My App, T113): a slow moving border around it.
+  featured?: boolean | undefined;
 }
 
 export function countLabel(count: number): string {

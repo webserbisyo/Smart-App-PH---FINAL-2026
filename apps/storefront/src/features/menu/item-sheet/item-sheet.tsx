@@ -40,7 +40,7 @@ import { ADD_LOADING_MS, ItemSheetFooter } from './item-sheet-footer';
 import { ItemSheetGoesWellWith } from './item-sheet-goes-well-with';
 import { ItemSheetGroups } from './item-sheet-groups';
 import { ItemSheetNote } from './item-sheet-note';
-import { ItemSheetPhotos } from './item-sheet-photos';
+import { ItemSheetPhotos } from '@smartapp/ui/compositions/item-photos';
 import { ItemSheetVariants } from './item-sheet-variants';
 import { useAddedToast } from '../use-added-toast';
 

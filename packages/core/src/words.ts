@@ -158,7 +158,8 @@ export const words = {
     orders: 'Orders',
     catalog: (kind: ShopKind) => vocab(kind).catalog,
     members: 'Members',
-    editor: 'Editor',
+    // The shop's own app, the main thing we sell (T113: was Editor).
+    editor: 'My App',
     insights: 'Insights',
     settings: 'Settings',
     viewMyShop: 'View my shop',
@@ -1279,7 +1280,7 @@ export const words = {
       detailEmpty: 'The member’s stamps and orders will show here.',
     },
     editor: {
-      title: 'Editor',
+      title: 'My App',
       empty: 'Change how your shop page looks here: colours, banner and sections.',
     },
     insights: {
@@ -2043,6 +2044,8 @@ export const ordersWords = {
     // Booked only (T95): the Calendar counts every order; this shows the booked ones alone.
     bookedOnly: 'Booked only',
     bookedOnlyHint: 'Show only orders customers booked for a later time.',
+    // Phone (T113): the tip and the colour key sit behind one small button, so orders start higher.
+    tips: 'Tips and colours',
     // A past day (T95): read only, and what is still open on it.
     pastDrop: (orderNo: string) =>
       `${orderNo} can't move to a day that has passed. Pick today or later.`,
@@ -2390,6 +2393,17 @@ export const ordersWords = {
     locked: 'Starts once the payment is checked',
     lockedAria: 'Locked until paid',
     photosAria: (count: number) => `${count} item ${count === 1 ? 'photo' : 'photos'}`,
+    // Part paid (a deposit): what is still to collect (T113).
+    balanceLeft: (amount: string) => `${amount} left to pay`,
+    // Short payment names for a narrow chip (T113): "COD", not "Cash on delivery".
+    methodShort: {
+      cash: 'Cash',
+      cod: 'COD',
+      gcash: 'GCash',
+      maya: 'Maya',
+      bank: 'Bank',
+      qr_ph: 'QR Ph',
+    },
   },
   buttons: {
     start: (kind: ShopKind) => (kind === 'retail' ? 'Start packing' : 'Start'),
@@ -2687,6 +2701,7 @@ export const newOrderWords = {
     save: (price: string) => `Save · ${price}`,
     missing: (group: string) => `Pick ${group} first`,
     pickOne: 'Pick one',
+    soldOut: 'Sold out',
   },
   basket: {
     title: 'Items in this order',
@@ -2702,6 +2717,19 @@ export const newOrderWords = {
     more: (name: string) => `One more ${name}`,
     clear: 'Clear all',
     prize: 'Prize',
+    showItems: 'Show items',
+    hideItems: 'Hide items',
+    photosAria: (n: number) => `${n} ${n === 1 ? 'item' : 'items'} in this order`,
+  },
+  // The laptop order pane (T113): one line each for customer, how and payment; a tap opens its fields.
+  pane: {
+    change: (part: string) => `Change ${part.toLowerCase()}`,
+    done: 'Done',
+    how: 'How and when',
+    guest: (name: string) => `${name} · Guest`,
+    member: (name: string) => `${name} · Member`,
+    when: (how: string, when: string) => `${how} · ${when}`,
+    pay: (method: string, state: string) => `${method} · ${state}`,
   },
   customer: {
     title: 'Customer',
@@ -4133,8 +4161,19 @@ export const homeWords = {
     turnOn: 'Set up the stamp card',
   },
   coming: {
-    title: 'Coming up',
-    hint: 'Bookings for the next 7 days',
+    title: 'Upcoming',
+    hint: 'Booked orders for the next 7 days',
+    // The next booked orders under the bars (T113).
+    listLabel: 'Next booked orders',
+    tomorrowShort: 'Tomorrow',
+    inDays: (n: number) => `in ${n} days`,
+    paid: 'Paid',
+    left: (amount: string) => `${amount} left to pay`,
+    notPaid: (method: string) => `${method} · not paid yet`,
+    onHandover: (method: string) => `${method} · pay on pickup`,
+    seeAll: (n: number) => `See all ${n} booked orders`,
+    rowAria: (no: string, name: string, when: string, total: string) =>
+      `Order ${no} for ${name}, ${when}, ${total}`,
     orders: (n: number) => `${n} ${plural(n, 'booking', 'bookings')}`,
     open: 'See bookings',
     tomorrow: 'Tomorrow',
@@ -4198,8 +4237,8 @@ export const editorPreviewWords = {
 } as const;
 
 export const editorWords = {
-  title: 'Editor',
-  titleFor: (shop: string) => `Editor · ${shop}`,
+  title: 'My App',
+  titleFor: (shop: string) => `My App · ${shop}`,
   sections: EDITOR_SECTION_NAMES,
   surfaces: SURFACE_NAMES,
   colours: {

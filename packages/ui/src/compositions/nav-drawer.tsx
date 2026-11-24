@@ -1,5 +1,7 @@
 import { Badge } from '@smartapp/ui/components/badge';
+import { BorderBeam } from '@smartapp/ui/components/border-beam';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@smartapp/ui/components/drawer';
+import { useReducedMotion } from '../hooks/use-reduced-motion';
 import { countLabel, useNavLink, type NavItem } from '../lib/nav';
 
 export interface NavDrawerProps {
@@ -13,6 +15,7 @@ const tileClass =
   'group/tile pressable relative flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card p-3 text-center text-sm font-medium text-foreground outline-none hover-hover:hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring data-active:border-primary data-active:text-primary';
 
 function NavTile({ item, onSelect }: { item: NavItem; onSelect: () => void }) {
+  const reduce = useReducedMotion();
   return useNavLink(item, {
     className: tileClass,
     onClick: onSelect,
@@ -27,6 +30,21 @@ function NavTile({ item, onSelect }: { item: NavItem; onSelect: () => void }) {
         <span className="line-clamp-2">{item.label}</span>
         {item.count !== undefined && item.count > 0 ? (
           <Badge className="absolute top-2 right-2 tabular">{countLabel(item.count)}</Badge>
+        ) : null}
+        {/* The featured tile (My App, T113): a slow logo-coloured border; none under reduced motion. */}
+        {item.featured && !reduce ? (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+          >
+            <BorderBeam
+              size={64}
+              duration={8}
+              borderWidth={1.5}
+              colorFrom="var(--logo-blue)"
+              colorTo="var(--logo-mint)"
+            />
+          </span>
         ) : null}
       </>
     ),

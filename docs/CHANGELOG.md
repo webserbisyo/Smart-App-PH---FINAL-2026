@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-24 Final verdicts (T113): sidebar My App with rocket and border beam; New order real photos, category icons, compact tiles, photo in the choices dialog, laptop pane with pinned header and total and one-line Customer, How and Payment; board line photos and "₱X left to pay"; List faces; phone calendar tips button; Home Upcoming list with money chips; smaller Preview pill on phones
 - 2026-11-22 Chat back button and profile menu (T112): Back to chats and a Next waiting row in a chat opened from Orders › Chats; account menu like Stays (name, role, online, Appearance Light/Dark/System with a check, My account, Settings, Log out); Preview pill hides while the menu is open
 - 2026-11-22 New order and editable orders (T111): owner New order for walk-ins and Messenger (phone steps, laptop two columns, Guest or Member with prize, Now or a time with Allow anyway, delivery fee, Paid now / Not paid yet / Paid part, Already handed over), dock Home · Orders · + New order · Members · More (Menu in More), sidebar and Orders New order button and N key, Edit order while New, Preparing or Ready with a customer chat line, Collect more and Give back, database step 10 (`source`, `paid_amount`, `version`, `edited_at`, `changed` messages)
 - 2026-11-22 T107 follow-up: Billing chat photos send as they are (no crop step, like Messenger); QR Ph accounts keep their account or mobile number (Settings asks for it as the database already required, demo QR Ph accounts have one, checkout shows it)

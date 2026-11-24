@@ -211,11 +211,14 @@ each read from orders, the stamp history and the menu (rules H1 to H14 in `packa
 nothing is stored. The live board and the order rows of "Needs you" come from `listOrders` (open), so Home and
 Orders always show the same orders.
 
-| Method          | HTTP                     | Input → Output                                                             |
-| --------------- | ------------------------ | -------------------------------------------------------------------------- |
-| `getHome`       | GET `/owner/home`        | → `HomeSummary` (today, pace, hours, best sellers, mix, members, bookings) |
-| `getHomeTrends` | GET `/owner/home/trends` | `{ range: '7d' \| '30d' }` → `HomeTrends` (days, days before, busy hours)  |
-| `getHomePeriod` | GET `/owner/home/period` | `{ from, to }` (Manila dates) → `HomePeriodData` (money, slots, mix, best) |
+| Method          | HTTP                     | Input → Output                                                                       |
+| --------------- | ------------------------ | ------------------------------------------------------------------------------------ |
+| `getHome`       | GET `/owner/home`        | → `HomeSummary` (today, pace, hours, best sellers, mix, members, bookings, upcoming) |
+| `getHomeTrends` | GET `/owner/home/trends` | `{ range: '7d' \| '30d' }` → `HomeTrends` (days, days before, busy hours)            |
+| `getHomePeriod` | GET `/owner/home/period` | `{ from, to }` (Manila dates) → `HomePeriodData` (money, slots, mix, best)           |
+
+`HomeSummary.upcoming` (T113) lists the next 5 open orders due after today, soonest first, as `BoardOrder`
+cards (the same shape as the Orders board), and `upcomingCount` says how many there are in all.
 
 `getHomePeriod` (T83) answers the Home period picker: plain facts for the dates, never a comparison. Dates outside
 the last 60 days (H14) or after today are pulled in; one day gives hourly slots, longer periods give daily slots.

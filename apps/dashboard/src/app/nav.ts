@@ -2,9 +2,9 @@ import {
   ExternalLinkIcon,
   HouseIcon,
   PackageIcon,
-  PaintbrushIcon,
   QrCodeIcon,
   ReceiptTextIcon,
+  RocketIcon,
   SettingsIcon,
   UsersIcon,
   UtensilsIcon,
@@ -30,7 +30,15 @@ export const NAV = [
   { id: 'orders', path: '/orders', icon: ReceiptTextIcon, words: 'orders', placement: 'dock' },
   { id: 'catalog', path: '/catalog', icon: 'catalog', words: 'catalog', placement: 'more' },
   { id: 'members', path: '/members', icon: UsersIcon, words: 'members', placement: 'dock' },
-  { id: 'editor', path: '/editor', icon: PaintbrushIcon, words: 'editor', placement: 'more' },
+  // My App (T113): the shop's own app, our main feature, so it gets a rocket and a moving border.
+  {
+    id: 'editor',
+    path: '/editor',
+    icon: RocketIcon,
+    words: 'editor',
+    placement: 'more',
+    featured: true,
+  },
   // Insights is hidden for launch (decision T69): its 7 and 30 day trends live on Home, and /insights
   // opens them. Put this back to bring the page back.
   // {
@@ -47,6 +55,7 @@ export const NAV = [
   icon: LucideIcon | 'catalog';
   words: NavWordKey;
   placement: NavPlacement;
+  featured?: boolean;
 }[];
 
 export type NavPath = (typeof NAV)[number]['path'];

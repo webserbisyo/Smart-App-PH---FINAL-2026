@@ -14,10 +14,10 @@ describe('Home layout slots', () => {
       'money',
       'sales',
       'board',
+      'coming',
       'mix',
       'best',
       'members',
-      'coming',
     ]);
     expect(order.map(([, n]) => n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });

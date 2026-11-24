@@ -552,6 +552,9 @@ export function buildHomeSummary(input: HomeSummaryInput): HomeSummary {
     mix: homeMix(todaySales),
     members: input.members,
     comingUp,
+    // The list itself comes from the orders store (the API or the sample data), T113.
+    upcoming: [],
+    upcomingCount: 0,
     noticeTomorrow: input.bookings.filter((b) => b.needsNotice && manilaDate(b.dueAt) === tomorrow)
       .length,
     soldOut,
