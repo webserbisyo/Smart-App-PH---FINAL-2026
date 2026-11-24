@@ -206,7 +206,6 @@ function ShopScreen({
             name={title}
             src={logo ? pic(shop.storefront.info.logo) : null}
             state="open"
-            stateLabel={words.shop.openStateShort.open}
             logoShape={own ? 'circle' : look.logoShape}
           />
           <p className="min-w-0 flex-1 truncate font-heading text-lg font-bold">{title}</p>

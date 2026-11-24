@@ -1136,6 +1136,7 @@ export const words = {
     closedNoOpening: 'Closed',
     // The word on the logo's status ring (top bar).
     openStateShort: { open: 'Open', busy: 'Busy', closed: 'Closed' },
+    pausedShort: 'Paused',
     busyBack: (time: string) => `Busy · back ${time}`,
     notTakingOrders: 'Not taking orders right now',
     tomorrowAt: (time: string) => `tomorrow ${time}`,

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { cn } from 'cn';
 import { srcsetUrls, type ImageSources } from '@smartapp/core/media';
 import { Avatar, AvatarFallback, AvatarImage } from '@smartapp/ui/components/avatar';
@@ -20,6 +21,8 @@ export interface ShopLogoProps {
   // Square in lists (c-avatar-4); round inside the status ring (c-avatar-33).
   shape?: 'square' | 'round' | undefined;
   className?: string | undefined;
+  // A small mark on the corner (the status dot, AvatarBadge), drawn inside the avatar.
+  badge?: ReactNode;
 }
 
 const SHAPE_CLASS = { square: 'rounded-lg', round: 'rounded-full' } as const;
@@ -32,6 +35,7 @@ export function ShopLogo({
   isLoading = false,
   shape = 'square',
   className,
+  badge,
 }: ShopLogoProps) {
   const radius = SHAPE_CLASS[shape];
   if (isLoading) {
@@ -60,6 +64,7 @@ export function ShopLogo({
       <AvatarFallback className={cn(radius, 'bg-shop-10 font-semibold text-shop-10-foreground')}>
         {initials(name)}
       </AvatarFallback>
+      {badge}
     </Avatar>
   );
 }

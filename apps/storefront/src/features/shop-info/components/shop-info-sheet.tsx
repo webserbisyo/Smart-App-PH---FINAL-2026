@@ -56,7 +56,6 @@ function ShopInfoBody() {
           src={imageSources(sf.info.logo)}
           size="lg"
           state={state ? (state.paused ? 'closed' : state.state) : null}
-          stateLabel={state ? words.shop.openStateShort[state.paused ? 'closed' : state.state] : ''}
           logoShape={sf.look.logoShape}
         />
         <div className="min-w-0">

@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-25 Shop status dot (T115): the storefront logo shows a still green, orange or grey dot (shadcn AvatarBadge) instead of the turning ring, with Busy, Closed or Paused under the shop name
 - 2026-11-24 Checkout and Join start fresh (T114): a second order no longer reopens the last order's printer box or reuses its order key; Place order waits for how you'll order; the booked time and note clear after each order; Join is empty after Sign out; empty basket checkout shows Browse menu
 - 2026-11-24 Final verdicts (T113): sidebar My App with rocket and border beam; New order real photos, category icons, compact tiles, photo in the choices dialog, laptop pane with pinned header and total and one-line Customer, How and Payment; board line photos and "₱X left to pay"; List faces; phone calendar tips button; Home Upcoming list with money chips; smaller Preview pill on phones
 - 2026-11-22 Chat back button and profile menu (T112): Back to chats and a Next waiting row in a chat opened from Orders › Chats; account menu like Stays (name, role, online, Appearance Light/Dark/System with a check, My account, Settings, Log out); Preview pill hides while the menu is open

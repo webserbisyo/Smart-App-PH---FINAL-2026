@@ -368,10 +368,13 @@ function StatusLogos({ name, logo }: { name: string; logo: ImageSources | null }
   return (
     <div className="flex flex-wrap items-center gap-8">
       {states.map((s) => (
-        <StatusLogo key={s.state} name={name} src={logo} state={s.state} stateLabel={s.label} />
+        <span key={s.state} className="flex items-center gap-2">
+          <StatusLogo name={name} src={logo} state={s.state} />
+          <span className="text-sm text-muted-foreground">{s.label}</span>
+        </span>
       ))}
-      <StatusLogo name={name} src={null} state="open" stateLabel="Open" size="lg" />
-      <StatusLogo name={name} src={logo} state={null} stateLabel="" />
+      <StatusLogo name={name} src={null} state="open" size="lg" />
+      <StatusLogo name={name} src={logo} state={null} />
     </div>
   );
 }
