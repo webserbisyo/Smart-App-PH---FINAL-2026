@@ -10,6 +10,7 @@ import { ClientOnly } from '@smartapp/ui/components/client-only';
 import { CartButton } from '@smartapp/ui/compositions/cart-button';
 import { StatusLogo } from '@smartapp/ui/compositions/status-logo';
 import { useNavLink, type NavItem } from '@smartapp/ui/lib/nav';
+import { cn } from '@smartapp/ui/lib/utils';
 import { useWhenIdle } from '../use-when-idle';
 import { useBasketView } from '../../basket/components/use-basket-view';
 import { LocationBar } from '../../location/components/location-bar';
@@ -87,13 +88,17 @@ function BarCart() {
   );
 }
 
-// The logo in its open, busy or closed ring (decision R4); the name link says the state in words.
-function useOpenKind(): { kind: OpenStateKind; text: string } | null {
+// The logo's open, busy or closed dot (decision T115); the name link says the state in words.
+function useOpenKind(): { kind: OpenStateKind; paused: boolean; text: string } | null {
   const { shop } = useShop();
   const now = useNow();
   if (!now) return null;
   const state = openState(shop.storefront, now);
-  return { kind: state.paused ? 'closed' : state.state, text: openStateText(state, now) };
+  return {
+    kind: state.paused ? 'closed' : state.state,
+    paused: state.paused,
+    text: openStateText(state, now),
+  };
 }
 
 // Phone: ring logo, the name with the short location pill under it, then favourites and the account
@@ -115,14 +120,14 @@ export function TopBar() {
     >
       <div className="mx-auto flex h-16 max-w-280 items-center gap-3 px-4 lg:gap-6">
         {/* One stretched button over logo and name opens Shop info (redesign R7); the pill sits above
-            it. Decision R4's ring and word on the logo, the full state spoken with the name. */}
+            it. The dot on the logo and the short word under the name (T115), the full state spoken with the name. */}
         <div className="relative flex min-w-0 flex-1 items-center gap-3 lg:flex-none">
           <StatusLogo
             name={name}
             src={logo}
             state={open?.kind ?? null}
-            stateLabel={open ? words.shop.openStateShort[open.kind] : ''}
             logoShape={shop.storefront.look.logoShape}
+            dotRingClassName="ring-shop-60"
           />
           <div className="flex min-w-0 flex-col items-start gap-1">
             <button
@@ -134,7 +139,21 @@ export function TopBar() {
             >
               {name}
             </button>
-            <LocationBar className="z-10" />
+            <span className="flex max-w-full min-w-0 items-center gap-2">
+              {/* Busy or Closed in words beside the dot's colour (decision T115); open needs no word. */}
+              {open && open.kind !== 'open' ? (
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'shrink-0 text-xs font-semibold',
+                    open.kind === 'busy' ? 'text-warning-text' : 'text-muted-foreground',
+                  )}
+                >
+                  {open.paused ? words.shop.pausedShort : words.shop.openStateShort[open.kind]}
+                </span>
+              ) : null}
+              <LocationBar className="z-10 min-w-0" />
+            </span>
           </div>
         </div>
         <nav

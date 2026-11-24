@@ -28,17 +28,31 @@ interface CheckoutHowProps {
   /** A time the shop turned away (slot_unavailable); each new `rejectKey` opens the picker at its day. */
   rejectedAt?: string | null | undefined;
   rejectKey?: number | undefined;
+  /** Each new value opens the sheet (Place order tapped before the customer picked how). */
+  askKey?: number | undefined;
 }
 
 /**
  * How section: Displays the current order type, place, or pickup time with a Change button.
  */
-export function CheckoutHow({ sf, choice, now, rejectedAt, rejectKey = 0 }: CheckoutHowProps) {
+export function CheckoutHow({
+  sf,
+  choice,
+  now,
+  rejectedAt,
+  rejectKey = 0,
+  askKey = 0,
+}: CheckoutHowProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetLoaded, setSheetLoaded] = useState(false);
   const [seenRejectKey, setSeenRejectKey] = useState(rejectKey);
+  const [seenAskKey, setSeenAskKey] = useState(askKey);
   if (rejectKey !== seenRejectKey) {
     setSeenRejectKey(rejectKey);
+    setSheetOpen(true);
+  }
+  if (askKey !== seenAskKey) {
+    setSeenAskKey(askKey);
     setSheetOpen(true);
   }
   if (sheetOpen && !sheetLoaded) setSheetLoaded(true);
@@ -74,7 +88,7 @@ export function CheckoutHow({ sf, choice, now, rejectedAt, rejectKey = 0 }: Chec
             onClick={() => setSheetOpen(true)}
             className="h-11 rounded-full px-4"
           >
-            {words.checkout.change}
+            {choice.type ? words.checkout.change : words.checkout.choose}
           </Button>
         }
       >

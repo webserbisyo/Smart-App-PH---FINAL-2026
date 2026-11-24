@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
+  artPath,
   errorWords,
   formatPeso,
   normalisePhPhone,
   rewardState,
   variantAvailability,
+  vocab,
   words,
   type OrderPayload,
   type PaymentMethod,
@@ -27,6 +30,7 @@ import { Button } from '@smartapp/ui/components/button';
 import { Pending } from '@smartapp/ui/components/pending';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
 import { Spinner } from '@smartapp/ui/components/spinner';
+import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { AlertTriangleIcon } from 'lucide-react';
 import { formatManilaDateTime } from '../../receipt/receipt-rules';
@@ -78,7 +82,13 @@ function DrawnCheck() {
   );
 }
 
-export function CheckoutForm({ now }: { now: string }) {
+interface CheckoutFormProps {
+  now: string;
+  /** Called when the page is hidden after an order went through, so the next visit starts a fresh checkout. */
+  onSpent: () => void;
+}
+
+export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { slug, shop } = useShop();
@@ -116,8 +126,13 @@ export function CheckoutForm({ now }: { now: string }) {
   // Scheduled time
   const scheduledAt = queryScheduled || choice.scheduledAt;
 
-  // Order type
-  const orderType = choice.type ?? sf.orderTypes[0] ?? 'pickup';
+  // Order type: the customer's pick, or the only way this shop takes orders. Never a silent default.
+  const pickedType =
+    choice.type ?? (sf.orderTypes.length === 1 ? (sf.orderTypes[0] ?? null) : null);
+  // The quote still needs a type before the pick; Place order waits for the pick.
+  const orderType = pickedType ?? sf.orderTypes[0] ?? 'pickup';
+  // Each new value opens the How and where sheet (Place order tapped before a pick).
+  const [askKey, setAskKey] = useState(0);
 
   // Client idempotency key (stable across manual retries)
   const clientKeyRef = useRef<string>(generateClientKey());
@@ -138,6 +153,16 @@ export function CheckoutForm({ now }: { now: string }) {
   const openedRef = useRef(false);
   const reducedMotion = useReducedMotion();
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; phone?: string }>({});
+
+  // Next keeps a page alive, hidden, when the customer moves on (React Activity). Once an order went
+  // through, hiding the page asks for a fresh checkout: no old printer, a new order key, the saved details
+  // read again. A failed try keeps everything as typed.
+  useLayoutEffect(
+    () => () => {
+      if (placedOk) onSpent();
+    },
+    [placedOk, onSpent],
+  );
 
   // Track serialized state to only write when actual values change
   const lastSavedJsonRef = useRef<string>(
@@ -315,7 +340,7 @@ export function CheckoutForm({ now }: { now: string }) {
     now,
     linesCount: basket.lines.length,
     flaggedCount,
-    orderType,
+    orderType: pickedType,
     scheduledAt,
     name,
     phone,
@@ -415,7 +440,20 @@ export function CheckoutForm({ now }: { now: string }) {
     if (openedRef.current) return;
     openedRef.current = true;
     basket.clear();
-    if (!rememberMe) getDeviceStorage().checkoutDraft.remove(slug);
+    const storage = getDeviceStorage();
+    if (!rememberMe) storage.checkoutDraft.remove(slug);
+    else {
+      // Name, phone and payment stay for next time; the time, note and reward were for this order only.
+      const saved = storage.checkoutDraft.read(slug).value;
+      if (saved) {
+        storage.checkoutDraft.write(slug, {
+          ...saved,
+          scheduledAt: null,
+          note: '',
+          useReward: false,
+        });
+      }
+    }
     // Replace, not push: back from the receipt goes to the shop, never to a spent checkout (decision R45).
     router.replace(`/${slug}/o/${token}?new=1`);
   }
@@ -468,6 +506,7 @@ export function CheckoutForm({ now }: { now: string }) {
   };
 
   const busy = placeOrder.isPending || placedOk;
+  const askForType = !busy && eligibility.missingField === 'type';
   const placeLabel = placedOk
     ? words.checkout.placed
     : placeOrder.isPending
@@ -475,6 +514,29 @@ export function CheckoutForm({ now }: { now: string }) {
       : eligibility.canPlace
         ? words.checkout.placeOrder
         : (eligibility.reason ?? words.checkout.placeOrder);
+
+  // Nothing to check out (and no order just placed): one way back to the menu.
+  if (basket.lines.length === 0 && !placedOk) {
+    return (
+      <div className="mx-auto flex w-full max-w-160 flex-col pt-2 pb-24">
+        <EmptyState
+          id="checkout-empty"
+          art={artPath('basket_empty')}
+          title={words.basket.empty}
+          description={words.basket.emptyHint}
+          action={
+            <Button
+              nativeButton={false}
+              render={<Link href={`/${slug}/menu`} />}
+              className="h-11 rounded-full bg-shop-10 px-6 text-shop-10-foreground hover:bg-shop-10-hover"
+            >
+              {words.basket.browse(vocab(sf.info.kind).catalog)}
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-160 flex-col gap-4 pt-2 pb-40">
@@ -486,6 +548,7 @@ export function CheckoutForm({ now }: { now: string }) {
         now={now}
         rejectedAt={rejected.at}
         rejectKey={rejected.key}
+        askKey={askKey}
       />
 
       <CheckoutWho
@@ -560,8 +623,10 @@ export function CheckoutForm({ now }: { now: string }) {
               type="button"
               size="lg"
               className="h-auto min-h-12 w-full rounded-full px-5 py-2 text-base font-bold whitespace-normal shadow-md"
-              disabled={!placedOk && (!eligibility.canPlace || placeOrder.isPending)}
-              onClick={busy ? undefined : handlePlaceOrder}
+              disabled={!placedOk && !askForType && (!eligibility.canPlace || placeOrder.isPending)}
+              onClick={
+                busy ? undefined : askForType ? () => setAskKey((k) => k + 1) : handlePlaceOrder
+              }
               aria-busy={placeOrder.isPending}
             >
               {placedOk ? (
@@ -569,7 +634,11 @@ export function CheckoutForm({ now }: { now: string }) {
               ) : placeOrder.isPending ? (
                 <Spinner aria-hidden="true" />
               ) : null}
-              <span className={eligibility.canPlace || busy ? undefined : 'text-sm font-semibold'}>
+              <span
+                className={
+                  eligibility.canPlace || busy || askForType ? undefined : 'text-sm font-semibold'
+                }
+              >
                 {placeLabel}
               </span>
             </Button>
