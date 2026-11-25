@@ -140,7 +140,7 @@ Each area lists its screens; tick UI approved and Done separately.
   - [ ] Done
 - Members and stamps (Join, Rewards, account and picture and saved places (R22), Members page, counter stamps with Undo, claims, limited prizes)
   - [x] UI approved
-  - [x] Built on NestJS and tested against local Supabase: member login by emailed code, Join with the welcome stamp, stamps on completed orders, Rewards and claims, the owner's Members page, counter stamps with Undo, the stamp card, push News with its limits and send job (launch phase 6; T117, PR #49). The member note waits for the founder's yes on its column
+  - [x] Built on NestJS and tested against local Supabase: member login by emailed code, Join with the welcome stamp, stamps on completed orders, Rewards and claims, the owner's Members page, counter stamps with Undo, the stamp card, push News with its limits and send job, the counter note on a member (launch phase 6; T117, PR #49)
   - [ ] Done
 - Reports (Home: today, Needs you, Sales card, best sellers, busy hours; exports)
   - [x] UI approved

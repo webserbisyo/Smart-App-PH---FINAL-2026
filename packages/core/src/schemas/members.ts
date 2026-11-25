@@ -215,3 +215,9 @@ export const AdjustStampsInputSchema = z.object({
   note: z.string().trim().max(120).nullable(),
 });
 export type AdjustStampsInput = z.infer<typeof AdjustStampsInputSchema>;
+
+// The counter note on a member panel ("less ice"); empty clears it.
+export const MemberNoteInputSchema = z.object({
+  note: z.string().trim().max(300).nullable(),
+});
+export type MemberNoteInput = z.infer<typeof MemberNoteInputSchema>;

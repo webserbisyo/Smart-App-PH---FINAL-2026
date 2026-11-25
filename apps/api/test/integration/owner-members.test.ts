@@ -149,6 +149,26 @@ describe('owner Members (phase 6)', () => {
     );
     expect(detail).toMatchObject({ balance: 4, changesLeftToday: 0, isMember: true });
     expect(detail.history[0]?.note).toBe('Birthday');
+    expect(detail.note).toBeNull();
+
+    // The counter note saves, reads back, and an empty one clears it.
+    const noted = MemberDetailSchema.parse(
+      (await shop.agent.put(`/owner/members/${id}/note`).send({ note: '  Less ice  ' }).expect(200))
+        .body,
+    );
+    expect(noted.note).toBe('Less ice');
+    expect(
+      MemberDetailSchema.parse((await shop.agent.get(`/owner/members/${id}`).expect(200)).body)
+        .note,
+    ).toBe('Less ice');
+    await shop.agent
+      .put(`/owner/members/${id}/note`)
+      .send({ note: 'x'.repeat(301) })
+      .expect(400);
+    const cleared = MemberDetailSchema.parse(
+      (await shop.agent.put(`/owner/members/${id}/note`).send({ note: '' }).expect(200)).body,
+    );
+    expect(cleared.note).toBeNull();
 
     // The reward at the counter.
     const used = CounterChangeSchema.parse(
@@ -190,6 +210,7 @@ describe('owner Members (phase 6)', () => {
     // Another shop's member is Not found here (rule 12).
     const other = await liveShop(app, 'owner-members-other');
     await other.agent.get(`/owner/members/${id}`).expect(404);
+    await other.agent.put(`/owner/members/${id}/note`).send({ note: 'Mine' }).expect(404);
   });
 
   it('hands a custom prize over at the counter, or cancels a claim and gives everything back', async () => {

@@ -317,7 +317,7 @@ export class OwnerMembersService {
       averageOrder: person.visits > 0 ? Math.round(person.spent / person.visits) : 0,
       usuallyBuys: usuallyBuys(lines),
       firstOrderAt: person.firstOrderAt,
-      note: null,
+      note: m?.note ?? null,
       changesLeftToday: m ? changesLeftToday(counter, now) : 0,
       lastCounterStampAt: m ? recentCounterStamp(counter, now) : null,
       history: ownerLedger(entries),
@@ -501,9 +501,14 @@ export class OwnerMembersService {
     return this.counterChange(member.id, added.id);
   }
 
-  /** The counter note ("less ice") needs its column first; until then the note is not kept. */
-  async saveMemberNote(customerId: string): Promise<MemberDetail> {
+  /** The counter note ("less ice"): owner only, never shown to the member; empty clears it. */
+  async saveMemberNote(customerId: string, note: string | null): Promise<MemberDetail> {
     const member = await this.memberOf(customerId);
+    const clean = note?.trim() ? note.trim() : null;
+    await this.db.tx
+      .update(members)
+      .set({ note: clean, updatedAt: sql`now()` })
+      .where(and(eq(members.tenantId, this.db.shopId), eq(members.id, member.id)));
     return this.getMember(member.id);
   }
 

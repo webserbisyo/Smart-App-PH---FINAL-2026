@@ -537,14 +537,14 @@ isOneToOne: false
                   ]
                 },"members": {
                   Row: {
-                    "avatar": Json | null,"avatar_media_id": string | null,"created_at": string,"email": string | null,"erased_at": string | null,"id": string,"joined_at": string,"member_code": string,"member_code_digits": string | null,"member_code_norm": string | null,"name": string,"phone": string | null,"tenant_id": string,"updated_at": string,"user_id": string | null
+                    "avatar": Json | null,"avatar_media_id": string | null,"created_at": string,"email": string | null,"erased_at": string | null,"id": string,"joined_at": string,"member_code": string,"member_code_digits": string | null,"member_code_norm": string | null,"name": string,"note": string | null,"phone": string | null,"tenant_id": string,"updated_at": string,"user_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar"?: Json | null,"avatar_media_id"?: string | null,"created_at"?: string,"email"?: string | null,"erased_at"?: string | null,"id"?: string,"joined_at"?: string,"member_code": string,"member_code_digits"?: never,"member_code_norm"?: never,"name": string,"phone"?: string | null,"tenant_id": string,"updated_at"?: string,"user_id"?: string | null
+                    "avatar"?: Json | null,"avatar_media_id"?: string | null,"created_at"?: string,"email"?: string | null,"erased_at"?: string | null,"id"?: string,"joined_at"?: string,"member_code": string,"member_code_digits"?: never,"member_code_norm"?: never,"name": string,"note"?: string | null,"phone"?: string | null,"tenant_id": string,"updated_at"?: string,"user_id"?: string | null
                   }
                   Update: {
-                    "avatar"?: Json | null,"avatar_media_id"?: string | null,"created_at"?: string,"email"?: string | null,"erased_at"?: string | null,"id"?: string,"joined_at"?: string,"member_code"?: string,"member_code_digits"?: never,"member_code_norm"?: never,"name"?: string,"phone"?: string | null,"tenant_id"?: string,"updated_at"?: string,"user_id"?: string | null
+                    "avatar"?: Json | null,"avatar_media_id"?: string | null,"created_at"?: string,"email"?: string | null,"erased_at"?: string | null,"id"?: string,"joined_at"?: string,"member_code"?: string,"member_code_digits"?: never,"member_code_norm"?: never,"name"?: string,"note"?: string | null,"phone"?: string | null,"tenant_id"?: string,"updated_at"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     {

@@ -933,6 +933,7 @@ export const members = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
       .defaultNow()
       .notNull(),
+    note: text(),
   },
   (table) => [
     check(
@@ -942,7 +943,7 @@ export const members = pgTable(
     check('members_check', sql`(erased_at IS NOT NULL) OR (email IS NOT NULL)`),
     check(
       'members_check1',
-      sql`(erased_at IS NULL) OR ((email IS NULL) AND (phone IS NULL) AND (user_id IS NULL))`,
+      sql`(erased_at IS NULL) OR ((email IS NULL) AND (phone IS NULL) AND (user_id IS NULL) AND (note IS NULL))`,
     ),
     check(
       'members_email_check',
@@ -953,6 +954,10 @@ export const members = pgTable(
       sql`(char_length(member_code) >= 4) AND (char_length(member_code) <= 16)`,
     ),
     check('members_name_check', sql`(char_length(name) >= 1) AND (char_length(name) <= 80)`),
+    check(
+      'members_note_check',
+      sql`(note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 300))`,
+    ),
     check('members_phone_check', sql`phone ~ '^\+639[0-9]{9}$'::text`),
     foreignKey({
       columns: [table.avatarMediaId, table.tenantId],

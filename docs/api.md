@@ -205,7 +205,7 @@ Codes: `stamp_cap_reached`, `stamp_recent`, `stamp_card_off`, `undo_expired`, `s
 
 No CSV export, tags, bulk stamps or messaging other than push News (T106) in A (M14).
 
-**On the API (phase 6, T117):** reads need `shop:view`, changes `members:manage`. Stamps are earned when an order is completed (one per order, unique index), and the completed push carries the stamp. `saveMemberNote` waits for the founder's yes on a `members.note` column; until then it saves nothing.
+**On the API (phase 6, T117):** reads need `shop:view`, changes `members:manage`. Stamps are earned when an order is completed (one per order, unique index), and the completed push carries the stamp. `saveMemberNote` (PUT `/owner/members/:id/note`, `{ note }`, up to 300 characters, empty clears it) writes `members.note`, an owner-only counter note the member never sees.
 
 ## News (owner, push News)
 

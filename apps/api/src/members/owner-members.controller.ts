@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, Inject, Param, Post, Put, Query } from '@nestjs/common';
 import {
   AdjustStampsInputSchema,
+  MemberNoteInputSchema,
   ClaimCancelReasonEnum,
   CustomerFilterEnum,
   MemberSortEnum,
@@ -11,6 +12,7 @@ import {
   type CustomerPage,
   type FoundMember,
   type MemberDetail,
+  type MemberNoteInput,
   type MembersOverview,
   type OwnerClaim,
   type StampCardImpact,
@@ -151,11 +153,13 @@ export class OwnerMembersController {
     return this.members.useReward(id, body.clientKey);
   }
 
-  // The note waits for its column (members.note); until then the panel reads back as it was.
   @Put('members/:id/note')
   @Can('members:manage')
-  saveMemberNote(@Param('id') id: string): Promise<MemberDetail> {
-    return this.members.saveMemberNote(id);
+  saveMemberNote(
+    @Param('id') id: string,
+    @Body({ schema: MemberNoteInputSchema }) body: MemberNoteInput,
+  ): Promise<MemberDetail> {
+    return this.members.saveMemberNote(id, body.note);
   }
 
   @Get('claims')
