@@ -128,6 +128,7 @@ Each area lists its screens; tick UI approved and Done separately.
   - [ ] Done
 - Catalog (Menu or Products: items, variants and templates, add-ons, categories, photos, archive)
   - [x] UI approved
+  - [x] Built on NestJS and tested against local Supabase: categories, items with choices and versions, add-ons, ready-made choices, sort, sold out today, bulk actions in one request, archived photo cleanup, storefront refresh after changes (launch phase 4; T117, PR #49). Sample packs come with the storefront reads (phase 5)
   - [ ] Done
 - Storefront reads (shop home, menu, item sheet, shop info, closed and busy states)
   - [x] UI approved
