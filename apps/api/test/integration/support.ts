@@ -185,9 +185,9 @@ export async function upload(
 export async function liveShop(
   app: NestExpressApplication,
   name: string,
-  options: { dailyLimit?: number | null; gcash?: boolean } = {},
+  options: { dailyLimit?: number | null; gcash?: boolean; kind?: 'food' | 'retail' } = {},
 ) {
-  const owner = await ownerWithShop(app, name);
+  const owner = await ownerWithShop(app, name, options.kind);
   const cat = CategorySchema.parse(
     (
       await owner.agent

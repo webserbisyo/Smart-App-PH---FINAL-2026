@@ -8,6 +8,7 @@ import { createApiOnboardingAdapter } from './api/onboarding';
 import { createApiOwnerAuth } from './api/owner-auth';
 import { createApiOwnerCatalogAdapter } from './api/owner-catalog';
 import { createApiOwnerEditorAdapter } from './api/owner-editor';
+import { createApiOwnerHomeAdapter } from './api/owner-home';
 import { createApiOwnerMembersAdapter } from './api/owner-members';
 import { createApiOwnerNewsAdapter } from './api/owner-news';
 import { createApiOwnerOrdersAdapter } from './api/owner-orders';
@@ -62,6 +63,9 @@ export function createAdapters(source: DataSource, options: AdapterOptions = {})
       : {}),
     ...(usesApi(plan, 'ownerNews')
       ? { ownerNews: createApiOwnerNewsAdapter({ baseUrl, getToken }) }
+      : {}),
+    ...(usesApi(plan, 'ownerHome')
+      ? { ownerHome: createApiOwnerHomeAdapter({ baseUrl, getToken }) }
       : {}),
   };
 }

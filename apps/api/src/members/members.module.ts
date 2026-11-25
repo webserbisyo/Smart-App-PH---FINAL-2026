@@ -14,6 +14,6 @@ import { ShopNewsService } from './shop-news.service.js';
   imports: [OrdersModule, MediaModule],
   controllers: [OwnerMembersController, OwnerNewsController, ShopNewsController],
   providers: [OwnerMembersService, NewsAudiences, NewsSender, OwnerNewsService, ShopNewsService],
-  exports: [NewsSender],
+  exports: [NewsSender, OwnerMembersService],
 })
 export class MembersModule {}
