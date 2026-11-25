@@ -148,6 +148,14 @@ export class SupabaseAuthProvider implements AuthProvider {
     return sessionOf(data.session, data.user);
   }
 
+  async sendEmailCode(email: string, info: ClientInfo): Promise<void> {
+    const { error } = await this.client(info).auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    });
+    if (error) throw this.mapped(error, 'unknown');
+  }
+
   async resendSignupCode(email: string, info: ClientInfo): Promise<void> {
     const { error } = await this.client(info).auth.resend({ type: 'signup', email });
     if (error) throw this.mapped(error, 'unknown');

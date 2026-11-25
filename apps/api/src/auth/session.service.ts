@@ -15,6 +15,7 @@ import {
   cookieNames,
   readCookie,
   setSessionCookies,
+  type SessionAudience,
 } from './session-cookies.js';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -84,7 +85,35 @@ export class SessionService {
     if (header?.startsWith('Bearer ')) {
       return this.verify(header.slice(7).trim());
     }
-    const names = cookieNames(this.env);
+    return this.fromCookies(req, res, 'owner');
+  }
+
+  /**
+   * The storefront's signed-in member (launch phase 6): only the member cookies, never a Bearer token or the
+   * owner's cookies, so an owner trying their own shop is a customer there like anyone else.
+   */
+  async member(req: Request, res: Response): Promise<CallerUser | null> {
+    return this.fromCookies(req, res, 'member');
+  }
+
+  memberAccessToken(req: Request): string | null {
+    return readCookie(req.headers.cookie, cookieNames(this.env, 'member').access);
+  }
+
+  startMember(res: Response, session: AuthSession): void {
+    setSessionCookies(res, this.env, session, 'member');
+  }
+
+  endMember(res: Response): void {
+    clearSessionCookies(res, this.env, 'member');
+  }
+
+  private async fromCookies(
+    req: Request,
+    res: Response,
+    audience: SessionAudience,
+  ): Promise<CallerUser | null> {
+    const names = cookieNames(this.env, audience);
     const access = readCookie(req.headers.cookie, names.access);
     if (access) {
       const user = await this.verify(access);
@@ -94,10 +123,10 @@ export class SessionService {
     if (!refresh) return null;
     try {
       const session = await this.auth.refresh(refresh, clientInfo(req));
-      this.start(res, session);
+      setSessionCookies(res, this.env, session, audience);
       return session.user;
     } catch {
-      clearSessionCookies(res, this.env);
+      clearSessionCookies(res, this.env, audience);
       return null;
     }
   }

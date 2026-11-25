@@ -7,7 +7,7 @@ import type { ApiEnv } from '../env.js';
  * development they carry the __Host- prefix, which browsers only accept with Secure, Path=/ and no Domain.
  * Members (storefront customers, phase 6) get their own pair.
  */
-export const SESSION_AUDIENCES = ['owner'] as const;
+export const SESSION_AUDIENCES = ['owner', 'member'] as const;
 export type SessionAudience = (typeof SESSION_AUDIENCES)[number];
 
 // The refresh cookie is renewed on every refresh, so an owner who opens the dashboard weekly stays in.
@@ -34,15 +34,24 @@ function baseOptions(env: ApiEnv): CookieOptions {
   return { httpOnly: true, secure: env !== 'development', sameSite: 'lax', path: '/' };
 }
 
-export function setSessionCookies(res: Response, env: ApiEnv, tokens: SessionTokens): void {
-  const names = cookieNames(env);
+export function setSessionCookies(
+  res: Response,
+  env: ApiEnv,
+  tokens: SessionTokens,
+  audience: SessionAudience = 'owner',
+): void {
+  const names = cookieNames(env, audience);
   const options = baseOptions(env);
   res.cookie(names.access, tokens.accessToken, { ...options, maxAge: tokens.expiresIn * 1000 });
   res.cookie(names.refresh, tokens.refreshToken, { ...options, maxAge: REFRESH_MAX_AGE_MS });
 }
 
-export function clearSessionCookies(res: Response, env: ApiEnv): void {
-  const names = cookieNames(env);
+export function clearSessionCookies(
+  res: Response,
+  env: ApiEnv,
+  audience: SessionAudience = 'owner',
+): void {
+  const names = cookieNames(env, audience);
   const options = baseOptions(env);
   res.clearCookie(names.access, options);
   res.clearCookie(names.refresh, options);
