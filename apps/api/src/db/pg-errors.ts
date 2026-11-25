@@ -40,6 +40,8 @@ const UNIQUE_CODES: Record<string, ErrorCode> = {
   tenants_slug_key: 'slug_taken',
   tenant_members_user_id_key: 'already_has_shop',
   tenant_members_pkey: 'already_has_shop',
+  // The same reference number cannot pay two orders unless the shop turned it down.
+  payment_proofs_reference: 'duplicate_reference',
 };
 
 export interface MappedDbError {

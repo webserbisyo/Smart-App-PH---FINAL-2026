@@ -62,27 +62,67 @@ export class MediaService {
     kind: UploadKind;
     bytes?: number | undefined;
   }): Promise<UploadResult> {
+    return this.reserve(input.kind, UPLOAD_BUCKET[input.kind], input.bytes);
+  }
+
+  /**
+   * A customer's payment photo (private `proofs` bucket). It always goes through, even when the shop's
+   * storage is full, and still counts toward the meter (T66).
+   */
+  async createProofUpload(bytes?: number): Promise<UploadResult> {
+    return this.reserve('proof', 'proofs', bytes);
+  }
+
+  async confirmUpload(id: string): Promise<ConfirmUploadResult> {
+    return this.confirm(id, null);
+  }
+
+  /** Confirms a payment photo by the path its upload step gave; anything else is Not found. */
+  async confirmProof(path: string): Promise<{ id: string; bytes: number }> {
+    if (!/^[0-9a-f-]{36}\/proof\/[0-9a-f-]{36}$/.test(path)) throw notFound();
+    const [row] = await this.db.tx
+      .select({ id: mediaFiles.id })
+      .from(mediaFiles)
+      .where(
+        and(
+          eq(mediaFiles.path, path),
+          eq(mediaFiles.kind, 'proof'),
+          isNull(mediaFiles.confirmedAt),
+          isNull(mediaFiles.deletedAt),
+        ),
+      );
+    if (!row) throw notFound();
+    const done = await this.confirm(row.id, 'proof');
+    return { id: row.id, bytes: done.bytes };
+  }
+
+  private async reserve(
+    kind: MediaKind,
+    bucket: MediaBucket,
+    requested: number | undefined,
+  ): Promise<UploadResult> {
     const shopId = this.db.shopId;
-    const bucket = UPLOAD_BUCKET[input.kind];
     const id = randomUUID();
     // No file ending: Storage keeps the real type, and the path never says what the phone sent.
-    const path = `${shopId}/${input.kind}/${id}`;
-    const bytes = Math.max(0, Math.min(input.bytes ?? 0, MAX_UPLOAD_BYTES));
+    const path = `${shopId}/${kind}/${id}`;
+    const bytes = Math.max(0, Math.min(requested ?? 0, MAX_UPLOAD_BYTES));
     await this.db.tx.execute(
-      sql`select private.reserve_media(${id}::uuid, ${input.kind}, ${bucket}, ${path}, ${bytes}, 'image/webp')`,
+      sql`select private.reserve_media(${id}::uuid, ${kind}, ${bucket}, ${path}, ${bytes}, 'image/webp')`,
     );
     const uploadUrl = await this.storage.signedUpload(bucket, path);
     return { id, uploadUrl, path };
   }
 
-  async confirmUpload(id: string): Promise<ConfirmUploadResult> {
+  private async confirm(id: string, kind: MediaKind | null): Promise<ConfirmUploadResult> {
     const [row] = await this.db.tx
-      .select({ bucket: mediaFiles.bucket, path: mediaFiles.path })
+      .select({ bucket: mediaFiles.bucket, path: mediaFiles.path, kind: mediaFiles.kind })
       .from(mediaFiles)
       .where(
         and(eq(mediaFiles.id, id), isNull(mediaFiles.confirmedAt), isNull(mediaFiles.deletedAt)),
       );
     if (!row || !isBucket(row.bucket)) throw notFound();
+    // The owner's confirm never takes a customer's payment photo, and the other way round.
+    if ((kind === 'proof') !== (row.kind === 'proof')) throw notFound();
     const stored = await this.storage.stat(row.bucket, row.path);
     if (!stored) throw notFound();
     // A wrong file is removed now; its row goes with the hourly clean-up.
