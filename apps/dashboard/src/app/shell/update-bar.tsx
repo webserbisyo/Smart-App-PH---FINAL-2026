@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { cn } from 'cn';
 import { RefreshCwIcon, SparklesIcon } from 'lucide-react';
-import { words } from '@smartapp/core';
+import { updateBarWords } from '@smartapp/core';
 import { Banner, BannerActions, BannerContent, BannerIcon } from '@smartapp/ui/components/banner';
 import { Button } from '@smartapp/ui/components/button';
 
@@ -68,11 +68,11 @@ export function UpdateBar({ aboveDock }: { aboveDock: boolean }) {
       <BannerIcon>
         <SparklesIcon className="size-4 text-primary" aria-hidden="true" />
       </BannerIcon>
-      <BannerContent className="text-sm font-medium">{words.shell.updateReady}</BannerContent>
+      <BannerContent className="text-sm font-medium">{updateBarWords.ready}</BannerContent>
       <BannerActions>
         <Button size="sm" className="h-9" onClick={() => window.location.reload()}>
           <RefreshCwIcon aria-hidden="true" />
-          {words.shell.refresh}
+          {updateBarWords.refresh}
         </Button>
       </BannerActions>
     </Banner>

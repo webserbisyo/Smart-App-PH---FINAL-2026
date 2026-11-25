@@ -173,9 +173,6 @@ export const words = {
     calendarCount: (n: number) => `${n} ${n === 1 ? 'order' : 'orders'} for later days`,
   },
   shell: {
-    // A newer dashboard is live (T117): one tap loads it.
-    updateReady: 'New version ready',
-    refresh: 'Refresh',
     myShop: 'My shop',
     open: 'Open',
     mainNav: 'Main',
@@ -2646,6 +2643,13 @@ export const ordersWords = {
       paused: 'Paused',
     },
   },
+} as const;
+
+// The dashboard's "New version ready · Refresh" bar (T117). Its own export, so the storefront's pages never
+// carry these words (the JS budget, T31).
+export const updateBarWords = {
+  ready: 'New version ready',
+  refresh: 'Refresh',
 } as const;
 
 // Owner Members page (decisions T57 to T60).
