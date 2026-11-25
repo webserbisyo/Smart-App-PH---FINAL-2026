@@ -225,12 +225,52 @@ jobs:
           pnpm exec supabase gen types typescript --local > packages/data/src/database.types.ts
           git diff --exit-code packages/data/src/database.types.ts
 
+      # The API's Drizzle mirror must match the migrations (decision T116, Q9): pull again, nothing may change.
+      - name: Verify Drizzle schema drift
+        run: |
+          pnpm --filter @smartapp/api run db:pull
+          git diff --exit-code apps/api/src/db/generated
+
+  api-integration:
+    # Decision T116: the real API against a real local Supabase (database, Auth, Mailpit for the codes):
+    # sign-up with an emailed code, login cookies, the shop wall, jobs.
+    name: API integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start Supabase (database, Auth, Storage, Mailpit)
+        run: pnpm exec supabase start -x studio,realtime,edge-runtime,logflare,vector,imgproxy,postgres-meta,supavisor
+
+      - name: Build shared packages
+        run: pnpm --filter @smartapp/core run build
+
+      - name: Run API integration tests
+        run: |
+          # The local stack's own key (never a real project's); masked in the log anyway.
+          SECRET_KEY="$(pnpm exec supabase status -o env | grep '^SECRET_KEY=' | cut -d'"' -f2)"
+          echo "::add-mask::$SECRET_KEY"
+          SUPABASE_SECRET_KEY="$SECRET_KEY" pnpm --filter @smartapp/api run test:integration
+
   db-deploy:
     # Decision T96 (D9): after every check and database test passes on main, apply new migrations to
     # the DEV project only. The live database is only ever changed by the founder by hand.
     name: Apply migrations to the dev database
     runs-on: ubuntu-latest
-    needs: [check, db]
+    needs: [check, db, api-integration]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     concurrency:
       group: db-deploy-dev
