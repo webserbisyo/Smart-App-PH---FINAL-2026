@@ -30,7 +30,7 @@ import { Input } from '@smartapp/ui/components/input';
 import { cn } from '@smartapp/ui/lib/utils';
 import { writePreviewViewer } from '@/app/preview';
 import { env } from '@/app/env';
-import { supabase } from '@/app/supabase';
+import { ownerAuth } from '@/app/data';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { PasswordInput } from './password-input.js';
 
@@ -38,7 +38,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
   const isOffline = !isOnline;
-  const signIn = useSignIn(supabase);
+  const signIn = useSignIn(ownerAuth);
   const [formError, setFormError] = useState<string | null>(null);
 
   const {

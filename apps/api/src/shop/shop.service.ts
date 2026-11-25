@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  canAskToGoLive,
   isShopSlug,
   MyShopSchema,
   newShopContent,
@@ -15,7 +16,6 @@ import {
   type RegisterShopInput,
   type SignupLeadInput,
 } from '@smartapp/core';
-import { canAskToGoLive } from '@smartapp/core/rules/platform.js';
 import { and, count, eq, gt, isNull, sql } from 'drizzle-orm';
 import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';

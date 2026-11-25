@@ -390,6 +390,25 @@ describe('ownerCatalog variants (T46)', () => {
   });
 });
 
+// A GET with the owner's token, the session cookies (credentials) and our CSRF header (T116).
+function expectGet(fetchMock: ReturnType<typeof vi.fn>, url: string) {
+  const call = fetchMock.mock.calls.find((c) => c[0] === url);
+  expect(call).toBeDefined();
+  const init: unknown = call?.[1];
+  expect(init).toMatchObject({ method: 'GET', credentials: 'include' });
+  const headers = new Headers(
+    typeof init === 'object' &&
+      init !== null &&
+      'headers' in init &&
+      init.headers instanceof Headers
+      ? init.headers
+      : undefined,
+  );
+  expect(headers.get('authorization')).toBe('Bearer test-bearer-token');
+  expect(headers.get('content-type')).toBe('application/json');
+  expect(headers.get('x-smartapp')).toBe('1');
+}
+
 describe('ownerCatalog HTTP API adapter', () => {
   it('calls correct endpoints with bearer token and parses schema', async () => {
     const fetchMock = vi.fn();
@@ -407,13 +426,7 @@ describe('ownerCatalog HTTP API adapter', () => {
     });
     const categories = await adapter.listCategories();
     expect(categories.length).toBe(1);
-    expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/owner/categories', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer test-bearer-token',
-      },
-    });
+    expectGet(fetchMock, 'https://api.example.com/owner/categories');
 
     // Test saveCategory (POST)
     fetchMock.mockResolvedValueOnce({
@@ -472,13 +485,7 @@ describe('ownerCatalog HTTP API adapter', () => {
     });
     const variantTemplates = await adapter.listVariantTemplates();
     expect(variantTemplates.length).toBe(1);
-    expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/owner/variant-templates', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: 'Bearer test-bearer-token',
-      },
-    });
+    expectGet(fetchMock, 'https://api.example.com/owner/variant-templates');
 
     // Test saveVariantTemplate (POST)
     fetchMock.mockResolvedValueOnce({

@@ -4724,6 +4724,8 @@ export const signupWords = {
     back: 'Back',
     create: 'Create my shop',
     creating: 'Creating your shop',
+    // An owner who confirmed the email code but left before the shop was made (T116).
+    finishing: 'Your email is confirmed. Add your shop to finish.',
   },
   code: {
     title: 'Check your email',

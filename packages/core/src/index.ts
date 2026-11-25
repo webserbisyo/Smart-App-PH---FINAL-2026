@@ -60,7 +60,7 @@ export * from './rules/face-parts.js';
 export * from './rules/owner-home.js';
 export * from './rules/editor.js';
 export * from './rules/news.js';
-
+export * from './rules/platform.js';
 export * from './demo/rhythm.js';
 export { SHOP_PACKS } from './demo/packs/index.js';
 export {

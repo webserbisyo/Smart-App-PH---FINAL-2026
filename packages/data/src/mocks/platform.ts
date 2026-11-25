@@ -1202,6 +1202,18 @@ export function createPlatformMock(deps: PlatformMockDeps) {
       });
     },
 
+    getMyShop: async () => {
+      const s = await ownersShop();
+      return run('platform', () => ({
+        id: s.id,
+        slug: s.slug,
+        name: s.name,
+        kind: s.kind,
+        stage: s.stage,
+        isDemo: s.demo,
+      }));
+    },
+
     getOnboarding: async () => {
       const s = await ownersShop();
       return run('platform', () => onboardingOf(s));

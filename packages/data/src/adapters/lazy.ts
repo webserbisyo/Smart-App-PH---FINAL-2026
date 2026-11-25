@@ -183,6 +183,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
   const onboarding: OnboardingAdapter = {
     saveSignupLead: async (input) => (await real()).onboarding.saveSignupLead(input),
     registerShop: async (input) => (await real()).onboarding.registerShop(input),
+    getMyShop: async () => (await real()).onboarding.getMyShop(),
     trackEvent: async (input) => (await real()).onboarding.trackEvent(input),
     getOnboarding: async () => (await real()).onboarding.getOnboarding(),
     askToGoLive: async () => (await real()).onboarding.askToGoLive(),

@@ -1,11 +1,13 @@
-export * from './auth';
+export * from './owner-auth';
 export * from './api-client';
 export * from './hooks/auth';
-export type * from './database.types';
 export * from './device-storage';
 export * from './adapters/types';
 export {
   createAdapters,
+  createOwnerAuth,
+  planOf,
+  type AdapterOptions,
   DataProvider,
   resetDemoData,
   SampleDataProvider,

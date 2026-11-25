@@ -105,6 +105,7 @@ import type {
   ListAdminPaymentsInput,
   ListAdminShopsInput,
   OwnerOnboarding,
+  MyShop,
   PlatformSetup,
   RecordPlanPaymentInput,
   RegisterShopInput,
@@ -406,6 +407,8 @@ export interface OwnerEditorAdapter {
 export interface OnboardingAdapter {
   saveSignupLead(input: SignupLeadInput): Promise<SignupLeadResult>;
   registerShop(input: RegisterShopInput): Promise<OwnerOnboarding>;
+  // The signed-in owner's shop, or null when sign-up stopped before the shop step (T116).
+  getMyShop(): Promise<MyShop | null>;
   trackEvent(input: TrackInput): Promise<{ ok: true }>;
   getOnboarding(): Promise<OwnerOnboarding>;
   askToGoLive(): Promise<OwnerOnboarding>;

@@ -4,6 +4,7 @@ import { RouterProvider } from '@tanstack/react-router';
 import { DataProvider, loadMockScenario, readMockScenarioFromUrl } from '@smartapp/data';
 import { AppToaster } from '@smartapp/ui/compositions/app-toaster';
 import { router } from './app/router.js';
+import { adapters } from './app/data.js';
 import { env } from './app/env.js';
 
 const ReactQueryDevtools = import.meta.env.DEV
@@ -45,7 +46,7 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <DataProvider source={env.VITE_DATA_SOURCE}>
+      <DataProvider source={env.VITE_DATA_SOURCE} adapters={adapters}>
         {/* One toaster for every page, so every notify() shows (Saved, errors, Undo). */}
         <AppToaster>
           <RouterProvider router={router} />

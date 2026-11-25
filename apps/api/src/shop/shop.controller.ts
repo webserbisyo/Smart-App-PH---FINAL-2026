@@ -3,14 +3,17 @@ import { Throttle } from '@nestjs/throttler';
 import {
   RegisterShopInputSchema,
   SignupLeadInputSchema,
+  TrackInputSchema,
   type MyShop,
   type OwnerOnboarding,
   type RegisterShopInput,
   type SignupLeadInput,
   type SignupLeadResult,
+  type TrackInput,
+  type Ok,
 } from '@smartapp/core';
 import type { CallerShop, CallerUser } from '../auth/caller.js';
-import { Can, CurrentShop, CurrentUser, Public } from '../auth/decorators.js';
+import { Can, CurrentShop, CurrentUser, NoTransaction, Public } from '../auth/decorators.js';
 import { ShopService } from './shop.service.js';
 
 const SIGNUP_LIMIT = { default: { limit: 10, ttl: 60_000 } };
@@ -39,6 +42,20 @@ export class ShopController {
     @Body({ schema: SignupLeadInputSchema }) body: SignupLeadInput,
   ): Promise<SignupLeadResult> {
     return this.shops.saveSignupLead(body);
+  }
+
+  /**
+   * The sign-up page's Meta events (T90). Checked and answered now, so the page never waits on Meta; sending
+   * them on to the Conversions API is its own launch phase (Meta), which adds the outbox behind this route.
+   */
+  @Post('track')
+  @Public()
+  @NoTransaction()
+  @HttpCode(200)
+  @Throttle(SIGNUP_LIMIT)
+  track(@Body({ schema: TrackInputSchema }) body: TrackInput): Ok {
+    void body; // checked by the schema; nothing is kept yet
+    return { ok: true };
   }
 
   @Post('signup/shop')

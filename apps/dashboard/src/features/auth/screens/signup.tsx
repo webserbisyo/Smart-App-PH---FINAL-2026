@@ -8,7 +8,7 @@ import {
   signupWords,
   words,
 } from '@smartapp/core';
-import { useTrackEvent } from '@smartapp/data';
+import { useTrackEvent, type UserClaims } from '@smartapp/data';
 import { Badge } from '@smartapp/ui/components/badge';
 import { BorderBeam } from '@smartapp/ui/components/border-beam';
 import { Button } from '@smartapp/ui/components/button';
@@ -60,7 +60,7 @@ function useInView(ref: React.RefObject<HTMLElement | null>): boolean {
  * person's own app as they type). Phones get the stage between the chips and the form, and a sticky Start
  * button. The Meta Pixel loads here only (T90).
  */
-export function SignupScreen() {
+export function SignupScreen({ finishing = null }: { finishing?: UserClaims | null }) {
   usePageTitle(W.pageTitle);
   const [attribution] = React.useState(() => captureAttribution(window.location.search));
   const track = useTrackEvent();
@@ -167,7 +167,7 @@ export function SignupScreen() {
           {wide ? null : tour}
           <div ref={formBox} className="scroll-mt-4">
             <div className="relative rounded-xl">
-              <SignupForm attribution={attribution} onDraft={setDraft} />
+              <SignupForm attribution={attribution} onDraft={setDraft} finishing={finishing} />
               {/* The moving border runs on every frame, so phones skip it (T110): the tour above is the
                   motion there. */}
               {reduce || !wide ? null : (

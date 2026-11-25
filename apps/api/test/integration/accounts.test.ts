@@ -125,6 +125,23 @@ describe('owner accounts through NestJS (phase 2)', () => {
     expect((await api.get(`/slugs/brand-new-${Date.now()}`)).body).toEqual({ free: true });
   });
 
+  it('the sign-up page events are checked and answered', async () => {
+    const api = phone(app);
+    const event = {
+      name: 'PageView',
+      eventId: 'PageView.abc12345',
+      fbp: null,
+      fbc: null,
+      pageUrl: 'http://localhost:5173/signup',
+      source: { channel: 'direct', campaign: null },
+    };
+    expect((await api.post('/track').send(event)).body).toEqual({ ok: true });
+    // Only the four browser events; a purchase from a browser is refused.
+    const bad = await api.post('/track').send({ ...event, name: 'Purchase' });
+    expect(bad.status).toBe(400);
+    expect(bad.body.code).toBe('invalid_input');
+  });
+
   it('a wrong password and an unknown email give the same error', async () => {
     const email = await withAccount('rosa');
     const api = phone(app);

@@ -22,8 +22,12 @@ export async function fetchApi<T>(
   options?: RequestInit,
 ): Promise<T> {
   let res: Response;
+  // The owner's session rides in httpOnly cookies set by the API (T116), so every call sends them; our own
+  // header marks the call as ours (the API refuses writes without it: a CSRF guard).
+  const headers = new Headers(options?.headers);
+  headers.set('x-smartapp', '1');
   try {
-    res = await fetch(url, options);
+    res = await fetch(url, { ...options, headers, credentials: options?.credentials ?? 'include' });
   } catch {
     // The request never left the phone or got no answer: word it as offline, not a server error.
     throw new ApiRequestError({ status: 0, code: 'offline', message: errorWords('offline') });
