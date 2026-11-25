@@ -140,32 +140,40 @@ export class OwnerHomeService {
     const shop = await this.shops.read('published');
     const today = manilaDate(now);
     const since = addDays(today, -HOME_HISTORY_DAYS);
-    // One pass: the kept history by business date, and open orders due later (bookings).
-    // The lines join once by order (a hash join), never a lookup per order: 10,000 orders stay fast even
-    // before Postgres has fresh statistics for a shop that just grew.
-    const result = await this.db.tx.execute(sql`
-      with picked as (
-        select o.id, o.placed_at, o.due_at, o.pay_by, o.total, o.type, o.status, o.payment_method,
-          o.payment_status, o.payment_account_id, o.member_id is not null as member
-        from public.orders o
-        where o.tenant_id = ${this.db.shopId}
-          and o.status not in ('cancelled', 'expired')
-          and (o.business_date >= ${since}::date
-            or (o.status not in ('completed') and o.due_at > now()))
-      ),
-      lines as (
-        select l.order_id, json_agg(json_build_object('itemId', coalesce(l.item_id::text, ''),
-          'name', l.name, 'qty', l.qty, 'lineTotal', l.line_total) order by l.sort) as lines
+    // Two reads: the kept history by business date with open orders due later (bookings), then their
+    // lines by order id through the (order_id, sort) index. Joining lines to the picked orders in one
+    // statement let a stale row estimate pick a nested loop over 10,000 x 10,000 rows and time out.
+    const picked = await this.db.tx.execute(sql`
+      select o.id, o.placed_at, o.due_at, o.pay_by, o.total, o.type, o.status, o.payment_method,
+        o.payment_status, o.payment_account_id, o.member_id is not null as member
+      from public.orders o
+      where o.tenant_id = ${this.db.shopId}
+        and o.status not in ('cancelled', 'expired')
+        and (o.business_date >= ${since}::date
+          or (o.status not in ('completed') and o.due_at > now()))`);
+    const orders = z
+      .array(OrderSchema.omit({ lines: true }).extend({ id: z.string() }))
+      .parse(picked.rows);
+    const byOrder = new Map<string, z.infer<typeof LineSchema>[]>();
+    if (orders.length > 0) {
+      const ids = `{${orders.map((o) => o.id).join(',')}}`;
+      const found = await this.db.tx.execute(sql`
+        select l.order_id, coalesce(l.item_id::text, '') as "itemId", l.name, l.qty,
+          l.line_total as "lineTotal"
         from public.order_lines l
-        join picked p on p.id = l.order_id
-        where l.tenant_id = ${this.db.shopId}
-        group by l.order_id
-      )
-      select p.placed_at, p.due_at, p.pay_by, p.total, p.type, p.status, p.payment_method,
-        p.payment_status, p.payment_account_id, p.member, coalesce(x.lines, '[]') as lines
-      from picked p
-      left join lines x on x.order_id = p.id`);
-    const rows = z.array(OrderSchema).parse(result.rows);
+        where l.tenant_id = ${this.db.shopId} and l.order_id = any(${ids}::uuid[])
+        order by l.order_id, l.sort`);
+      for (const row of z.array(LineSchema.extend({ order_id: z.string() })).parse(found.rows)) {
+        const { order_id: orderId, ...line } = row;
+        const list = byOrder.get(orderId);
+        if (list) list.push(line);
+        else byOrder.set(orderId, [line]);
+      }
+    }
+    const rows: OrderRead[] = orders.map(({ id, ...o }) => ({
+      ...o,
+      lines: byOrder.get(id) ?? [],
+    }));
     const live = rows.filter((o) => countsAsSale(saleCheck(o), now));
     const sales = live
       .filter((o) => manilaDate(o.placed_at) >= since && iso(o.placed_at) <= now.toISOString())

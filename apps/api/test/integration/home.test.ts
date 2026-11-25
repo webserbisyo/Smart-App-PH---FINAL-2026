@@ -132,10 +132,8 @@ describe('owner Home (phase 6)', () => {
         from copies c
         join public.order_lines l on l.order_id = ${first.orderId}::uuid`);
     });
-    // As autovacuum would after a busy day: the planner knows the shop grew.
-    await db.run(ADMIN, async () => {
-      await db.tx.execute(sql`analyze public.orders, public.order_lines`);
-    });
+    // No analyze here (app_admin may not run it): the read must stay fast before Postgres
+    // has fresh statistics for a shop that just grew.
     const started = performance.now();
     const home = HomeSummarySchema.parse((await shop.agent.get('/owner/home').expect(200)).body);
     const took = performance.now() - started;
