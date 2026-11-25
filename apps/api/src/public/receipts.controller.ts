@@ -112,12 +112,20 @@ export class ReceiptsController {
 
   @Post('o/:token/push')
   @HttpCode(200)
-  subscribePush(
+  async subscribePush(
     @Param('slug') slug: string,
     @Param('token') token: string,
     @Body({ schema: PushInputSchema }) body: PushInput,
     @Headers('user-agent') userAgent: string | undefined,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{ ok: true }> {
-    return this.receipts.subscribePush(slug, token, body.subscription, userAgent);
+    return this.receipts.subscribePush(
+      slug,
+      token,
+      body.subscription,
+      userAgent,
+      await this.sessions.member(req, res),
+    );
   }
 }

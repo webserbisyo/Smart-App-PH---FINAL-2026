@@ -152,7 +152,11 @@ export class PushOutbox {
    * backup address's worker (it opens the path on its own address).
    */
   private receiptUrl(slug: string, token: string): string {
-    const path = `/${slug}/o/${encodeURIComponent(token)}`;
+    return this.shopUrl(slug, `/${slug}/o/${encodeURIComponent(token)}`);
+  }
+
+  /** A path on the shop's own address (its subdomain when there is one). */
+  shopUrl(slug: string, path: string): string {
     return this.shopDomain
       ? `https://${slug}.${this.shopDomain}${path}`
       : `${this.storefrontUrl}${path}`;

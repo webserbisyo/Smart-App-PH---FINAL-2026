@@ -35,3 +35,12 @@ export function useShopNews(slug: string, enabled = true) {
     enabled,
   });
 }
+
+/** Counts a tapped news push once (the `d` in its link); a failure is not shown, the page still opens. */
+export function useMarkNewsOpened(slug: string) {
+  const { storefront } = useShopAdapters();
+  return useMutation({
+    retry: 2,
+    mutationFn: (deliveryId: string) => storefront.markNewsOpened({ slug, deliveryId }),
+  });
+}

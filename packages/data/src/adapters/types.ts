@@ -195,6 +195,8 @@ export interface StorefrontAdapter {
   getNewsChoice(input: { slug: string }): Promise<{ news: boolean }>;
   setNewsChoice(input: { slug: string; news: boolean }): Promise<{ news: boolean }>;
   listShopNews(input: { slug: string }): Promise<ShopNewsItem[]>;
+  // A news push was tapped: its delivery id rides in the link (`d`), so the owner's results count it.
+  markNewsOpened(input: { slug: string; deliveryId: string }): Promise<{ ok: true }>;
 }
 
 export interface CustomerAuthAdapter {

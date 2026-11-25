@@ -143,10 +143,14 @@ export class ReceiptsService {
     token: string,
     subscription: PushSubscriptionInput,
     userAgent: string | undefined,
+    user: CallerUser | null,
   ): Promise<{ ok: true }> {
     const view = await this.order(slug, token);
     const id = await this.subscriptions.save(subscription, platformOf(userAgent), null);
     await this.subscriptions.linkOrder(id, view.id);
+    // A signed-in member's phone is theirs, so their News groups reach it once they turn news on.
+    const member = user ? await this.accounts.byUser(user.id) : null;
+    if (member) await this.subscriptions.linkMember(id, member.id);
     return { ok: true };
   }
 

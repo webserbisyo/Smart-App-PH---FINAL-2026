@@ -9,6 +9,7 @@ import { createApiOwnerAuth } from './api/owner-auth';
 import { createApiOwnerCatalogAdapter } from './api/owner-catalog';
 import { createApiOwnerEditorAdapter } from './api/owner-editor';
 import { createApiOwnerMembersAdapter } from './api/owner-members';
+import { createApiOwnerNewsAdapter } from './api/owner-news';
 import { createApiOwnerOrdersAdapter } from './api/owner-orders';
 import { createApiOwnerSettingsAdapter } from './api/owner-settings';
 import { createApiUploadsAdapter } from './api/uploads';
@@ -58,6 +59,9 @@ export function createAdapters(source: DataSource, options: AdapterOptions = {})
       : {}),
     ...(usesApi(plan, 'ownerMembers')
       ? { ownerMembers: createApiOwnerMembersAdapter({ baseUrl, getToken }) }
+      : {}),
+    ...(usesApi(plan, 'ownerNews')
+      ? { ownerNews: createApiOwnerNewsAdapter({ baseUrl, getToken }) }
       : {}),
   };
 }

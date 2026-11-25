@@ -1322,6 +1322,11 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return { news: newsMock.setChoice(slug, news) };
       }),
     listShopNews: ({ slug }) => run('storefront', () => newsMock.inbox(slug)),
+    markNewsOpened: ({ slug }) =>
+      run('storefront', () => {
+        requireShop(slug);
+        return { ok: true as const };
+      }),
 
     subscribePush: ({ slug, token }) =>
       run('storefront', () => {

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import { shopNewsWords } from '@smartapp/core';
-import { useNewsChoice, useSetNewsChoice } from '@smartapp/data';
+import { useMarkNewsOpened, useNewsChoice, useSetNewsChoice } from '@smartapp/data';
+import { useSearchParams } from 'next/navigation';
 import { closeToast, notify } from '@smartapp/ui/compositions/notify';
 
 const W = shopNewsWords;
@@ -15,8 +16,18 @@ const SHOW_MS = 8000;
 export function FromNews({ slug, shopName }: { slug: string; shopName: string }) {
   const choice = useNewsChoice(slug);
   const save = useSetNewsChoice(slug);
+  const opened = useMarkNewsOpened(slug);
+  const delivery = useSearchParams()?.get('d') ?? null;
   const shown = useRef(false);
+  const counted = useRef(false);
   const on = choice.data?.news === true;
+
+  // The push's own id (`d`) counts the tap once for the owner's results.
+  useEffect(() => {
+    if (!delivery || counted.current) return;
+    counted.current = true;
+    opened.mutate(delivery);
+  }, [delivery, opened]);
 
   useEffect(() => {
     if (!on || shown.current) return;

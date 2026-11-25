@@ -44,6 +44,7 @@ import {
   type ListCustomersInput,
   type MemberActivity,
   type MemberDetail,
+  type MemberSegment,
   type MembersOverview,
   type MemberSales,
   type OwnerClaim,
@@ -258,6 +259,16 @@ export class OwnerMembersService {
             ).slice(0, NEAR_LIMIT),
       pulse: await this.pulse(people, rows, now),
     });
+  }
+
+  /** Each member's groups right now (T57), for the News audiences. Guests have none. */
+  async memberSegmentsNow(): Promise<Map<string, readonly MemberSegment[]>> {
+    const now = new Date();
+    const card = await this.shops.stampCard();
+    const people = await this.people();
+    return new Map(
+      people.filter((p) => p.member !== null).map((p) => [p.id, this.row(p, card, now).segments]),
+    );
   }
 
   async listCustomers(input: ListCustomersInput): Promise<CustomerPage> {

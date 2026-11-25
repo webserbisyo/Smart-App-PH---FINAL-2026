@@ -71,6 +71,19 @@ export class PushSubscriptions {
       .onConflictDoNothing();
   }
 
+  /** The phone belongs to this member (signed in on it). */
+  async linkMember(subscriptionId: string, memberId: string): Promise<void> {
+    await this.db.tx
+      .update(pushSubscriptions)
+      .set({ memberId })
+      .where(
+        and(
+          eq(pushSubscriptions.tenantId, this.db.shopId),
+          eq(pushSubscriptions.id, subscriptionId),
+        ),
+      );
+  }
+
   /** The owner turned alerts off on this device (or signed out): its row goes. */
   async removeOwnerDevice(endpoint: string, userId: string): Promise<void> {
     await this.db.tx

@@ -47,6 +47,6 @@ import { PushSubscriptions } from './push-subscriptions.service.js';
     PushSubscriptions,
     EmailOutbox,
   ],
-  exports: [PushOutbox, PushSubscriptions, PushDelivery, EmailOutbox],
+  exports: [PushOutbox, PushSubscriptions, PushDelivery, PushSender, EmailOutbox],
 })
 export class PushModule {}

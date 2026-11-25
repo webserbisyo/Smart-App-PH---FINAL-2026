@@ -53,6 +53,7 @@ export function lazyShopAdapters(load: () => Promise<ShopAdapters>): ShopAdapter
     getNewsChoice: async (input) => (await real()).storefront.getNewsChoice(input),
     setNewsChoice: async (input) => (await real()).storefront.setNewsChoice(input),
     listShopNews: async (input) => (await real()).storefront.listShopNews(input),
+    markNewsOpened: async (input) => (await real()).storefront.markNewsOpened(input),
   };
 
   const customerAuth: CustomerAuthAdapter = {

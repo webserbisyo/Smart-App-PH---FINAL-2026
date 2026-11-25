@@ -15,6 +15,7 @@ export const API_AREAS = [
   'ownerCatalog',
   'ownerOrders',
   'ownerMembers',
+  'ownerNews',
   'storefront',
   'customerAuth',
 ] as const;
