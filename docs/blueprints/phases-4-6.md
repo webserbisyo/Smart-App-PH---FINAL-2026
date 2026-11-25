@@ -1,6 +1,6 @@
-# Phases 4 to 6: build plan (PROPOSED)
+# Phases 4 to 6: build plan (APPROVED)
 
-The detailed plan for launch phases 4 (Menu and Products), 5 (Storefront, orders and payments) and 6 (Members, stamp card, Push News and Home) from `launch-phases.md`. Written 2026-11-25 from `main` @ d86dd6a (phases 1 to 3 merged) after a scan of the code and research in the official docs. Status: **proposed**, waiting for the founder's yes on section 9. `launch-phases.md` stays the map; this file is the build spec for these three phases. Where they differ, this file wins once approved.
+The detailed plan for launch phases 4 (Menu and Products), 5 (Storefront, orders and payments) and 6 (Members, stamp card, Push News and Home) from `launch-phases.md`. Written 2026-11-25 from `main` @ d86dd6a (phases 1 to 3 merged) after a scan of the code and research in the official docs. Status: **approved** (decision T117, founder 2026-11-25: yes to Q1 to Q14, plus the dashboard's pull to refresh and "New version ready" bar). `launch-phases.md` stays the map; this file is the build spec for these three phases. Where they differ, this file wins once approved.
 
 The founder does every by-hand step (Railway, Resend, DNS, keys) at the very end, after all the code is in (founder, 2026-11-25). So every phase here is built and tested on the laptop database in CI first, and the checks that need real phones and real email wait for the staging setup in `docs/launch.md` section 11 and 12.
 
