@@ -12,6 +12,7 @@ import { createApiOwnerHomeAdapter } from './api/owner-home';
 import { createApiOwnerMembersAdapter } from './api/owner-members';
 import { createApiOwnerNewsAdapter } from './api/owner-news';
 import { createApiOwnerOrdersAdapter } from './api/owner-orders';
+import { createApiOwnerSamplesAdapter } from './api/owner-samples';
 import { createApiOwnerSettingsAdapter } from './api/owner-settings';
 import { createApiUploadsAdapter } from './api/uploads';
 import { lazyAdapters, loadMockStore } from './lazy';
@@ -50,7 +51,10 @@ export function createAdapters(source: DataSource, options: AdapterOptions = {})
       ? { ownerSettings: createApiOwnerSettingsAdapter({ baseUrl, getToken }) }
       : {}),
     ...(usesApi(plan, 'ownerCatalog')
-      ? { ownerCatalog: createApiOwnerCatalogAdapter({ baseUrl, getToken }) }
+      ? {
+          ownerCatalog: createApiOwnerCatalogAdapter({ baseUrl, getToken }),
+          ownerSamples: createApiOwnerSamplesAdapter({ baseUrl, getToken }),
+        }
       : {}),
     ...(usesApi(plan, 'ownerEditor')
       ? { ownerEditor: createApiOwnerEditorAdapter({ baseUrl, getToken }) }

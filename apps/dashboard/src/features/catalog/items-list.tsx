@@ -12,7 +12,13 @@ import {
   ListChecksIcon,
   GripVerticalIcon,
 } from 'lucide-react';
-import { catalogWords, errorWords, type OwnerItem, type Category } from '@smartapp/core';
+import {
+  catalogWords,
+  errorWords,
+  samplePackFor,
+  type OwnerItem,
+  type Category,
+} from '@smartapp/core';
 import {
   useOwnerItems,
   useOwnerCategories,
@@ -359,7 +365,7 @@ export function ItemsList() {
   const handlePopulateSamples = async () => {
     if (!ownerSamples) return;
     try {
-      await ownerSamples.applySamplePack({ slug, packSlug: slug });
+      await ownerSamples.applySamplePack({ slug, packSlug: samplePackFor(slug, kind) });
       void refetchItems();
       void refetchCats();
     } catch (err: unknown) {

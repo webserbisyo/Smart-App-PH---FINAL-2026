@@ -29,7 +29,7 @@ const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 // A shop that never set up its stamp card shows it Off, with the same starting rule as a blank shop
 // (core demo test-blank). Nothing is stored until the owner saves the card (phase 6).
-const OFF_CARD: PublicStampCard = {
+export const OFF_CARD: PublicStampCard = {
   status: 'off',
   rule: { minOrderTotal: 0, stampsNeeded: 10, welcomeStamps: 1, maxEarned: 1, period: 'day' },
   reward: {

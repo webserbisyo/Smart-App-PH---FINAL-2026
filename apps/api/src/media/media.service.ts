@@ -114,6 +114,18 @@ export class MediaService {
     return { id: made.id, bucket: 'profile', path: made.path, bytes: body.length };
   }
 
+  /**
+   * A sample menu photo the API copies for "Start with samples" (X4, Q14): same two steps as an upload, so it
+   * counts in the shop's storage and lives in the shop's own folder.
+   */
+  async storeSamplePhoto(body: Buffer, mime: string): Promise<ShopFile> {
+    if (!isImageMime(mime)) throw new ApiFailure('file_not_image', 400);
+    const made = await this.reserve('item', 'menu', body.length);
+    await this.storage.put('menu', made.path, body, mime);
+    await this.confirm(made.id, null);
+    return { id: made.id, bucket: 'menu', path: made.path, bytes: body.length };
+  }
+
   private async reserve(
     kind: MediaKind,
     bucket: MediaBucket,

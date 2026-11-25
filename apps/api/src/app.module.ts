@@ -16,6 +16,7 @@ import { validateEnv } from './env.js';
 import { HealthModule } from './health/health.module.js';
 import { JobsModule } from './jobs/jobs.module.js';
 import { HomeModule } from './home/home.module.js';
+import { SamplesModule } from './samples/samples.module.js';
 import { MembersModule } from './members/members.module.js';
 import { MediaModule } from './media/media.module.js';
 import { OrdersModule } from './orders/orders.module.js';
@@ -53,6 +54,7 @@ import { StorefrontCacheModule } from './public/pages-cache.module.js';
     PublicModule,
     MembersModule,
     HomeModule,
+    SamplesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: OriginGuard },
