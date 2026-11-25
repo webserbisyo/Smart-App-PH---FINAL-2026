@@ -2,6 +2,8 @@
 
 How Smart App PH measures which Facebook ads bring paying shops. This is about our own ads for shop owners, not tracking inside a shop's storefront. Decisions T90 (what we send) and T104 (the safety rules in section 5). By-hand steps: `launch.md` sections 1 to 7. Routes: `api.md`, "Sign-up and going live" and "Super Admin". Table: `track_events` in `database.md` section 4.8.
 
+**Proposed changes (2026-11-25, awaiting the founder's yes):** `phases-7-9.md` section 4 rewrites sections 2, 3 and 5 below: Purchase and Subscribe carry the time the owner sent the payment and the owner's own IP and browser from that request, StartTrial is `system_generated`, a 10-minute Undo, a list of who never fires, and the pixel fixes for the sign-up page. Until approved, this file stands.
+
 ## 1. Status (2026-11-20)
 
 | Item                              | Status                                                                                   |

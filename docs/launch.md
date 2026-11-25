@@ -173,3 +173,7 @@ Phases 4 to 6 are built (PR #49). Do these after section 11, in this order. Neve
 The demo links (`smartapp-demo-*.vercel.app`) keep sample data: change nothing there.
 
 **Then we test together on staging:** acceptance 1 to 4 (`A-mvp.md` section 5) with a real iPhone and Android phone: place an order, send a payment photo, accept it on the dashboard, get the pushes, join as a member and earn a stamp, send one News, and download an export.
+
+## 13. Phases 7 to 9: your list (proposed)
+
+The full by-hand list for phases 7 (Meta, payments, Super Admin), 8 (live) and 9 (selling) is in `blueprints/phases-7-9.md` section 11, in order. It moves here once you approve that plan.
