@@ -1,6 +1,6 @@
-# Phases 7 to 9: build plan (PROPOSED)
+# Phases 7 to 9: build plan (APPROVED)
 
-The detailed plan for launch phases 7 (Plan, billing, Super Admin and Meta), 8 (Go live) and 9 (Sell) from `launch-phases.md`. Written 2026-11-25 from `main` @ 752d3ae (phases 4 to 6 merged) after a scan of our code, a scan of the founder's RSVP app (`webserbisyo/webserbisyo-rsvp` @ 11cb846, used as a list of mistakes to avoid, never as the reference) and the official Meta Pixel and Conversions API docs. Status: **proposed**. Nothing here is built until the founder says yes to section 10. `launch-phases.md` stays the map; once approved, this file is the build spec for these three phases and wins where they differ.
+The detailed plan for launch phases 7 (Plan, billing, Super Admin and Meta), 8 (Go live) and 9 (Sell) from `launch-phases.md`. Written 2026-11-25 from `main` @ 752d3ae (phases 4 to 6 merged) after a scan of our code, a scan of the founder's RSVP app (`webserbisyo/webserbisyo-rsvp` @ 11cb846, used as a list of mistakes to avoid, never as the reference) and the official Meta Pixel and Conversions API docs. Status: **approved** (decision T118, founder 2026-11-26: "proceed with all youre recommendations and finalize/execute phase 7-9", yes to Q1 to Q18). `launch-phases.md` stays the map; once approved, this file is the build spec for these three phases and wins where they differ.
 
 As in phases 4 to 6, the founder does every by-hand step at the end, after the code is in. Section 11 is that list, in order.
 

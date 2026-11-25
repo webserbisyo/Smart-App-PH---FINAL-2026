@@ -593,6 +593,8 @@ export const SHOP_ACTIVITY_KINDS = [
   'payment_approved',
   'payment_rejected',
   'payment_recorded',
+  // The founder took an approval back within its 10 minutes (T118 Q4).
+  'payment_undone',
   'reminder',
   'extra_days',
   'support',
@@ -668,9 +670,38 @@ export const BROWSER_TRACK_EVENTS = [
 export const BrowserTrackEventEnum = z.enum(BROWSER_TRACK_EVENTS);
 export type BrowserTrackEvent = z.infer<typeof BrowserTrackEventEnum>;
 
-export const TRACK_STATUSES = ['queued', 'sent', 'failed', 'skipped'] as const;
+// waiting: a Purchase or Subscribe written when the owner sends a payment, until the founder decides (T118).
+export const TRACK_STATUSES = ['waiting', 'queued', 'sent', 'failed', 'skipped'] as const;
 export const TrackStatusEnum = z.enum(TRACK_STATUSES);
 export type TrackStatus = z.infer<typeof TrackStatusEnum>;
+
+// Why an event failed (Meta's answer) or was skipped (our rules, T118 section 4.3). Mirrors the CHECK.
+export const TRACK_PROBLEMS = [
+  'token_expired',
+  'rejected',
+  'timeout',
+  'no_match_data',
+  'off',
+  'too_old',
+  'not_approved',
+  'demo_shop',
+  'test_shop',
+  'help_mode',
+  'admin',
+] as const;
+export const TrackProblemEnum = z.enum(TRACK_PROBLEMS);
+export type TrackProblem = z.infer<typeof TrackProblemEnum>;
+
+// Where the event really happened (Meta's action_source, which must be true): an owner's step on our site,
+// the founder's approval starting a trial, or money recorded by hand.
+export const TRACK_ACTION_SOURCES = ['website', 'system_generated', 'other'] as const;
+export const TrackActionSourceEnum = z.enum(TRACK_ACTION_SOURCES);
+export type TrackActionSource = z.infer<typeof TrackActionSourceEnum>;
+
+// Who caused an event (rule 1 of section 4.1): only visitors and owners carry an IP address and browser.
+export const TRACK_CAUSED_BY = ['visitor', 'owner', 'admin', 'job'] as const;
+export const TrackCausedByEnum = z.enum(TRACK_CAUSED_BY);
+export type TrackCausedBy = z.infer<typeof TrackCausedByEnum>;
 
 export const TRACK_VIA = ['browser_server', 'server', 'browser'] as const;
 export const TrackViaEnum = z.enum(TRACK_VIA);

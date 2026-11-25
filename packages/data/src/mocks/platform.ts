@@ -19,6 +19,7 @@ import {
   RecordPlanPaymentInputSchema,
   RegisterShopInputSchema,
   ReviewPlanPaymentInputSchema,
+  SetTestShopInputSchema,
   SetTrackingInputSchema,
   SignupLeadInputSchema,
   StartSupportInputSchema,
@@ -26,6 +27,8 @@ import {
   SupportSessionSchema,
   TrackingSummarySchema,
   TrackInputSchema,
+  UNDO_APPROVAL_MS,
+  UndoApprovalInputSchema,
   addDays,
   adminFlags,
   canAskToGoLive,
@@ -59,6 +62,7 @@ import {
   type SupportSession,
   type TrackEvent,
   type TrackEventName,
+  type TrackStatus,
   type TrackVia,
 } from '@smartapp/core';
 import type { OnboardingAdapter, PlatformAdapter } from '../adapters/types';
@@ -128,7 +132,21 @@ interface PShop {
   activity: ShopActivity[];
   remindedAt: string | null;
   demo: boolean;
+  // A shop the founder marks as a test: nothing goes to Meta and it stays out of Today (T118 Q7).
+  isTest: boolean;
   book: PlanBook;
+}
+
+// What one approval changed, so Undo approval can put it back within 10 minutes (T118 Q4).
+interface UndoState {
+  paymentId: string;
+  until: string;
+  amount: number;
+  note: string | null;
+  paidUntil: string | null;
+  trialEndsAt: string | null;
+  lineId: string;
+  eventIds: string[];
 }
 
 interface PaymentMeta {
@@ -466,6 +484,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
   const leads: (AdminLead & { convertedAt: string | null })[] = [];
   const meta = new Map<string, PaymentMeta>();
   const events: TrackEvent[] = [];
+  const undos = new Map<string, UndoState>();
   const tracking = { sending: true, testMode: false };
   // Visits to the sign-up page in the last 30 days (from the PageView events the server sent).
   let visits = 412;
@@ -501,18 +520,21 @@ export function createPlatformMock(deps: PlatformMockDeps) {
     at: string,
     via: TrackVia,
     value: number | null = null,
+    shop: PShop | null = null,
+    status: TrackStatus = 'sent',
   ): TrackEventName {
-    const off = !tracking.sending;
+    // Same order as the API: test shop, then tracking off (T118 section 4.3).
+    const problem = shop?.isTest ? 'test_shop' : !tracking.sending ? 'off' : null;
     events.push({
       id: id('ev'),
       name,
       eventId: metaEventId(name, base),
       at,
       via,
-      status: off ? 'skipped' : 'sent',
+      status: problem ? 'skipped' : status,
       subject,
       value,
-      problem: off ? 'off' : null,
+      problem,
       test: tracking.testMode,
     });
     return name;
@@ -565,6 +587,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
         activity: [],
         remindedAt: null,
         demo: true,
+        isTest: false,
         book,
       };
       activity(s, 'signed_up', 'owner', s.createdAt, { events: ['CompleteRegistration'] });
@@ -694,6 +717,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
         activity: [],
         remindedAt: l.paidDays !== undefined && l.paidDays < 0 ? ago(2 * DAY) : null,
         demo: false,
+        isTest: false,
         book,
       };
       activity(s, 'signed_up', 'owner', createdAt, {
@@ -834,6 +858,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
       pending: pendingOf(s),
       setupDone: setupDoneCount(s.steps),
       hasDemoData: s.demo,
+      isTest: s.isTest,
     };
   }
 
@@ -847,7 +872,14 @@ export function createPlatformMock(deps: PlatformMockDeps) {
       thread: s.book.thread,
       activity: [...s.activity].sort((a, b) => b.at.localeCompare(a.at)),
       remindedAt: s.remindedAt,
+      undo: undoOf(s),
     });
+  }
+
+  function undoOf(s: PShop): { paymentId: string; until: string } | null {
+    const u = undos.get(s.id);
+    if (!u || new Date(u.until).getTime() <= now().getTime()) return null;
+    return { paymentId: u.paymentId, until: u.until };
   }
 
   function needsYou(r: AdminShopRow): boolean {
@@ -890,9 +922,10 @@ export function createPlatformMock(deps: PlatformMockDeps) {
     return leads.filter((l) => l.convertedAt === null);
   }
 
-  function adminPayments(): AdminPayment[] {
+  function adminPayments(includeTest = true): AdminPayment[] {
     const out: AdminPayment[] = [];
     for (const s of shops.values()) {
+      if (s.isTest && !includeTest) continue;
       for (const p of s.book.history) {
         const m = meta.get(p.id) ?? { reviewedAt: null, recorded: false, note: null };
         out.push({ ...p, shopId: s.id, shopName: s.name, ...m });
@@ -903,7 +936,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
 
   function monthTotal(): number {
     const month = manilaDate(now()).slice(0, 7);
-    return adminPayments()
+    return adminPayments(false)
       .filter(
         (p) =>
           p.status === 'approved' && p.reviewedAt && manilaDate(p.reviewedAt).slice(0, 7) === month,
@@ -912,7 +945,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
   }
 
   function isPaying(r: AdminShopRow): boolean {
-    return r.stage === 'live' && r.paidUntil !== null && r.planStatus !== 'paused';
+    return !r.isTest && r.stage === 'live' && r.paidUntil !== null && r.planStatus !== 'paused';
   }
 
   // A Manila day as the instant it starts.
@@ -1026,7 +1059,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
     };
     for (const l of leads) get(l.source.campaign).leads += 1;
     for (const s of shops.values()) {
-      if (s.demo) continue;
+      if (s.demo || s.isTest) continue;
       const r = rowOf(s);
       const v = get(s.source.campaign);
       v.leads += 1;
@@ -1159,6 +1192,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
           activity: [],
           remindedAt: null,
           demo: false,
+          isTest: false,
           book: { trialEndsAt: null, paidUntil: null, history: [], thread: [] },
         };
         events.push({
@@ -1244,12 +1278,12 @@ export function createPlatformMock(deps: PlatformMockDeps) {
         const rows = [...shops.values()].map(rowOf);
         const since = now().getTime() - 30 * DAY;
         const recent = rows.filter(
-          (r) => new Date(r.createdAt).getTime() >= since && !shops.get(r.id)?.demo,
+          (r) => new Date(r.createdAt).getTime() >= since && !shops.get(r.id)?.demo && !r.isTest,
         );
         const recentLeads = leads.filter((l) => new Date(l.createdAt).getTime() >= since);
         return AdminTodaySchema.parse({
           needs: needs(rows),
-          liveShops: rows.filter((r) => r.stage === 'live').length,
+          liveShops: rows.filter((r) => r.stage === 'live' && !r.isTest).length,
           payingShops: rows.filter(isPaying).length,
           collectedThisMonth: monthTotal(),
           monthlyRunRate: rows.filter(isPaying).reduce((sum, r) => sum + r.priceMonthly, 0),
@@ -1345,7 +1379,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
         if (!s.book.paidUntil) s.book.trialEndsAt = trialEndsFrom(now(), setup.trialDays);
         s.book.thread.push(deps.billingLine('system', 'live', at));
         activity(s, 'approved', 'admin', at, {
-          events: [track('StartTrial', s.id, s.name, at, 'server')],
+          events: [track('StartTrial', s.id, s.name, at, 'server', null, s)],
         });
         return detailOf(s);
       });
@@ -1374,27 +1408,87 @@ export function createPlatformMock(deps: PlatformMockDeps) {
           activity(s, 'payment_rejected', 'admin', at, { amount: p.amount, reason: d.reason });
           return detailOf(s);
         }
+        const first = !s.book.history.some((x) => x.status === 'approved');
+        const undo: UndoState = {
+          paymentId: p.id,
+          until: new Date(now().getTime() + UNDO_APPROVAL_MS).toISOString(),
+          amount: p.amount,
+          note: m.note,
+          paidUntil: s.book.paidUntil,
+          trialEndsAt: s.book.trialEndsAt,
+          lineId: '',
+          eventIds: [],
+        };
         if (d.amount !== null && d.amount !== p.amount) {
           if (!d.amountReason) fail('invalid_input', 400, { amountReason: ['required'] });
           p.amount = d.amount;
           m.note = d.amountReason;
         }
-        const first = !s.book.history.some((x) => x.status === 'approved');
         p.status = 'approved';
         p.coversUntil = planCoversUntil(s.book.paidUntil, p.months, now());
         s.book.paidUntil = p.coversUntil;
         s.book.trialEndsAt = null;
-        s.book.thread.push(
-          deps.billingLine('admin', 'approved', at, { paymentId: p.id, text: m.note }),
-        );
+        const line = deps.billingLine('admin', 'approved', at, { paymentId: p.id, text: m.note });
+        s.book.thread.push(line);
+        undo.lineId = line.id;
+        // The events carry the owner's send time and wait 10 minutes for Undo (T118 Q1, Q4).
+        const before = events.length;
         const sent: TrackEventName[] = [];
-        if (first) sent.push(track('Subscribe', p.id, s.name, at, 'server', p.amount));
-        sent.push(track('Purchase', p.id, s.name, at, 'server', p.amount));
+        if (first)
+          sent.push(
+            track('Subscribe', p.id, s.name, p.submittedAt, 'server', p.amount, s, 'queued'),
+          );
+        sent.push(track('Purchase', p.id, s.name, p.submittedAt, 'server', p.amount, s, 'queued'));
+        undo.eventIds = events.slice(before).map((e) => e.id);
+        undos.set(s.id, undo);
         activity(s, 'payment_approved', 'admin', at, {
           amount: p.amount,
           note: m.note,
           events: sent,
         });
+        return detailOf(s);
+      });
+    },
+
+    undoPlanApproval: async (input) => {
+      await init();
+      return run('platform', () => {
+        const parsed = UndoApprovalInputSchema.safeParse(input);
+        if (!parsed.success) fail('invalid_input', 400);
+        const d = parsed.data;
+        const s = shopById(d.shopId);
+        const u = undos.get(s.id);
+        const p = s.book.history.find((x) => x.id === d.paymentId);
+        if (!p) fail('not_found', 404);
+        if (!u || u.paymentId !== p.id || new Date(u.until).getTime() <= now().getTime())
+          fail('approval_undo_expired', 409);
+        undos.delete(s.id);
+        p.status = 'pending';
+        p.amount = u.amount;
+        p.coversUntil = planCoversUntil(u.paidUntil, p.months, now());
+        s.book.paidUntil = u.paidUntil;
+        s.book.trialEndsAt = u.trialEndsAt;
+        s.book.thread = s.book.thread.filter((l) => l.id !== u.lineId);
+        const m = meta.get(p.id);
+        if (m) {
+          m.reviewedAt = null;
+          m.note = u.note;
+        }
+        // The waiting events go back to waiting: nothing reached Meta (T118 Q4).
+        for (const e of events)
+          if (u.eventIds.includes(e.id) && e.status === 'queued') e.status = 'waiting';
+        activity(s, 'payment_undone', 'admin', now().toISOString(), { amount: p.amount });
+        return detailOf(s);
+      });
+    },
+
+    setTestShop: async (input) => {
+      await init();
+      return run('platform', () => {
+        const parsed = SetTestShopInputSchema.safeParse(input);
+        if (!parsed.success) fail('invalid_input', 400);
+        const s = shopById(parsed.data.shopId);
+        s.isTest = parsed.data.isTest;
         return detailOf(s);
       });
     },
@@ -1436,8 +1530,8 @@ export function createPlatformMock(deps: PlatformMockDeps) {
         );
         // Money taken outside the app goes to Meta as "other", not as a website event (T90).
         const sent: TrackEventName[] = [];
-        if (first) sent.push(track('Subscribe', p.id, s.name, at, 'server', p.amount));
-        sent.push(track('Purchase', p.id, s.name, at, 'server', p.amount));
+        if (first) sent.push(track('Subscribe', p.id, s.name, at, 'server', p.amount, s));
+        sent.push(track('Purchase', p.id, s.name, at, 'server', p.amount, s));
         activity(s, 'payment_recorded', 'admin', at, {
           amount: p.amount,
           note: d.note,
@@ -1575,6 +1669,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
           activity: [],
           remindedAt: null,
           demo: false,
+          isTest: false,
           book: { trialEndsAt: null, paidUntil: null, history: [], thread: [] },
         };
         activity(s, 'created_by_admin', 'admin', at);

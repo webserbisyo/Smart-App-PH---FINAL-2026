@@ -8,6 +8,7 @@ import {
   doublePrecision,
   foreignKey,
   index,
+  inet,
   integer,
   jsonb,
   pgTable,
@@ -1044,7 +1045,7 @@ export const notificationOutbox = pgTable(
     ),
     check(
       'notification_outbox_kind_check',
-      sql`kind = ANY (ARRAY['new_order'::text, 'payment_to_check'::text, 'storage'::text, 'plan_payment'::text, 'shop_live'::text, 'plan_reminder'::text, 'plan_answer'::text])`,
+      sql`kind = ANY (ARRAY['new_order'::text, 'payment_to_check'::text, 'storage'::text, 'plan_payment'::text, 'shop_live'::text, 'plan_reminder'::text, 'plan_answer'::text, 'help_started'::text])`,
     ),
     check('notification_outbox_payload_check', sql`jsonb_typeof(payload) = 'object'::text`),
     check(
@@ -2377,7 +2378,7 @@ export const shopActivity = pgTable(
     ),
     check(
       'shop_activity_kind_check',
-      sql`kind = ANY (ARRAY['signed_up'::text, 'asked'::text, 'approved'::text, 'payment_sent'::text, 'payment_approved'::text, 'payment_rejected'::text, 'payment_recorded'::text, 'reminder'::text, 'extra_days'::text, 'support'::text, 'closed'::text, 'reopened'::text, 'created_by_admin'::text])`,
+      sql`kind = ANY (ARRAY['signed_up'::text, 'asked'::text, 'approved'::text, 'payment_sent'::text, 'payment_approved'::text, 'payment_rejected'::text, 'payment_recorded'::text, 'payment_undone'::text, 'reminder'::text, 'extra_days'::text, 'support'::text, 'closed'::text, 'reopened'::text, 'created_by_admin'::text])`,
     ),
     check('shop_activity_minutes_check', sql`minutes >= 1`),
     check('shop_activity_note_check', sql`char_length(note) <= 300`),
@@ -2904,6 +2905,7 @@ export const tenants = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
       .defaultNow()
       .notNull(),
+    isTest: boolean('is_test').default(false).notNull(),
   },
   (table) => [
     check('tenants_campaign_check', sql`char_length(campaign) <= 100`),
@@ -2966,30 +2968,61 @@ export const trackEvents = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
       .defaultNow()
       .notNull(),
+    eventTime: timestamp('event_time', { withTimezone: true, mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    actionSource: text('action_source').default('website').notNull(),
+    causedBy: text('caused_by').default('visitor').notNull(),
+    planPaymentId: uuid('plan_payment_id'),
+    clientIp: inet('client_ip'),
+    clientUa: text('client_ua'),
+    fbtraceId: text('fbtrace_id'),
   },
   (table) => [
+    check(
+      'track_events_action_source_check',
+      sql`action_source = ANY (ARRAY['website'::text, 'system_generated'::text, 'other'::text])`,
+    ),
+    check(
+      'track_events_admin_check',
+      sql`(caused_by <> ALL (ARRAY['admin'::text, 'job'::text])) OR ((client_ip IS NULL) AND (client_ua IS NULL))`,
+    ),
     check('track_events_attempts_check', sql`(attempts >= 0) AND (attempts <= 10)`),
+    check(
+      'track_events_caused_by_check',
+      sql`caused_by = ANY (ARRAY['visitor'::text, 'owner'::text, 'admin'::text, 'job'::text])`,
+    ),
     check('track_events_check', sql`(status = 'sent'::text) = (sent_at IS NOT NULL)`),
     check(
-      'track_events_check1',
-      sql`(status = ANY (ARRAY['queued'::text, 'sent'::text])) OR (problem IS NOT NULL)`,
+      'track_events_client_check',
+      sql`(status <> ALL (ARRAY['sent'::text, 'skipped'::text])) OR ((client_ip IS NULL) AND (client_ua IS NULL))`,
     ),
+    check('track_events_client_ua_check', sql`char_length(client_ua) <= 500`),
     check(
       'track_events_event_id_check',
       sql`(char_length(event_id) >= 8) AND (char_length(event_id) <= 80)`,
     ),
+    check('track_events_fbtrace_id_check', sql`char_length(fbtrace_id) <= 100`),
     check(
       'track_events_name_check',
       sql`name = ANY (ARRAY['PageView'::text, 'Lead'::text, 'CompleteRegistration'::text, 'SubmitApplication'::text, 'StartTrial'::text, 'AddPaymentInfo'::text, 'Subscribe'::text, 'Purchase'::text, 'Contact'::text])`,
     ),
     check('track_events_page_url_check', sql`char_length(page_url) <= 500`),
     check(
+      'track_events_payment_check',
+      sql`(name <> ALL (ARRAY['AddPaymentInfo'::text, 'Subscribe'::text, 'Purchase'::text])) OR (status = 'skipped'::text) OR (plan_payment_id IS NOT NULL)`,
+    ),
+    check(
       'track_events_problem_check',
-      sql`problem = ANY (ARRAY['token_expired'::text, 'rejected'::text, 'timeout'::text, 'no_match_data'::text, 'off'::text])`,
+      sql`problem = ANY (ARRAY['token_expired'::text, 'rejected'::text, 'timeout'::text, 'no_match_data'::text, 'off'::text, 'too_old'::text, 'not_approved'::text, 'demo_shop'::text, 'test_shop'::text, 'help_mode'::text, 'admin'::text])`,
+    ),
+    check(
+      'track_events_reason_check',
+      sql`(status = ANY (ARRAY['waiting'::text, 'queued'::text, 'sent'::text])) OR (problem IS NOT NULL)`,
     ),
     check(
       'track_events_status_check',
-      sql`status = ANY (ARRAY['queued'::text, 'sent'::text, 'failed'::text, 'skipped'::text])`,
+      sql`status = ANY (ARRAY['waiting'::text, 'queued'::text, 'sent'::text, 'failed'::text, 'skipped'::text])`,
     ),
     check('track_events_user_data_check', sql`jsonb_typeof(user_data) = 'object'::text`),
     check(
@@ -3007,6 +3040,11 @@ export const trackEvents = pgTable(
       name: 'track_events_lead_id_fkey',
     }).onDelete('set null'),
     foreignKey({
+      columns: [table.planPaymentId],
+      foreignColumns: [planPayments.id],
+      name: 'track_events_plan_payment_id_fkey',
+    }).onDelete('set null'),
+    foreignKey({
       columns: [table.tenantId],
       foreignColumns: [tenants.id],
       name: 'track_events_tenant_id_fkey',
@@ -3016,10 +3054,17 @@ export const trackEvents = pgTable(
       table.createdAt.desc().nullsFirst().op('timestamptz_ops'),
     ),
     index('track_events_lead').using('btree', table.leadId.asc().nullsLast().op('uuid_ops')),
+    index('track_events_plan_payment').using(
+      'btree',
+      table.planPaymentId.asc().nullsLast().op('uuid_ops'),
+    ),
     index('track_events_queue')
       .using('btree', table.sendAfter.asc().nullsLast().op('timestamptz_ops'))
       .where(sql`(status = 'queued'::text)`),
     index('track_events_tenant').using('btree', table.tenantId.asc().nullsLast().op('uuid_ops')),
+    index('track_events_waiting')
+      .using('btree', table.planPaymentId.asc().nullsLast().op('uuid_ops'))
+      .where(sql`(status = 'waiting'::text)`),
     unique('track_events_event_id_key').on(table.eventId),
   ],
 );

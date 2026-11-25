@@ -85,6 +85,10 @@ export const ErrorCode = [
   'setup_incomplete',
   'support_locked',
   'name_mismatch',
+  // Undo approval after its 10 minutes (T118 Q4)
+  'approval_undo_expired',
+  // Super Admin's second sign-in step (T118 Q16)
+  'second_step_needed',
   // Push News (T106)
   'news_week_limit',
   'news_day_limit',

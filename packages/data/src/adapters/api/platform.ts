@@ -64,6 +64,15 @@ export function createApiPlatformAdapter({
         'POST',
         input,
       ),
+    undoPlanApproval: (input) =>
+      call(
+        `${shop(input.shopId)}/payments/${encodeURIComponent(input.paymentId)}/undo`,
+        AdminShopDetailSchema,
+        'POST',
+        {},
+      ),
+    setTestShop: (input) =>
+      call(`${shop(input.shopId)}/test`, AdminShopDetailSchema, 'PUT', { isTest: input.isTest }),
     recordPlanPayment: (input) =>
       call(`${shop(input.shopId)}/payments`, AdminShopDetailSchema, 'POST', input),
     extendPlan: (input) =>

@@ -1409,6 +1409,9 @@ export const words = {
       support_locked:
         'This is locked while you help as the owner. The owner can do it from their own login.',
       name_mismatch: "The name doesn't match. Type the shop's name exactly as shown.",
+      approval_undo_expired:
+        'Too late to undo: the 10 minutes passed. Write to the owner in the chat if something is wrong.',
+      second_step_needed: 'Type the 6-digit code from your authenticator app to open Super Admin.',
       news_week_limit: '2 news a week is the most. Pick a later day.',
       news_day_limit: 'One news a day. Pick another day.',
       news_quiet_hours: 'News waits for 8 AM. Pick a time from 8 AM to 9 PM.',

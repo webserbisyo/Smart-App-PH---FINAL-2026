@@ -1395,28 +1395,28 @@ isOneToOne: false
                   ]
                 },"tenants": {
                   Row: {
-                    "asked_at": string | null,"campaign": string | null,"channel": string,"city": string,"close_reason": string | null,"closed_at": string | null,"closes_on": string | null,"created_at": string,"facebook_page": string | null,"id": string,"is_demo": boolean,"kind": string,"live_at": string | null,"name": string,"paid_until": string | null,"price_monthly": number,"reminded_at": string | null,"slug": string,"stage": string,"storage_limit_bytes": number,"trial_ends_at": string | null,"updated_at": string
+                    "asked_at": string | null,"campaign": string | null,"channel": string,"city": string,"close_reason": string | null,"closed_at": string | null,"closes_on": string | null,"created_at": string,"facebook_page": string | null,"id": string,"is_demo": boolean,"is_test": boolean,"kind": string,"live_at": string | null,"name": string,"paid_until": string | null,"price_monthly": number,"reminded_at": string | null,"slug": string,"stage": string,"storage_limit_bytes": number,"trial_ends_at": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "asked_at"?: string | null,"campaign"?: string | null,"channel"?: string,"city"?: string,"close_reason"?: string | null,"closed_at"?: string | null,"closes_on"?: string | null,"created_at"?: string,"facebook_page"?: string | null,"id"?: string,"is_demo"?: boolean,"kind": string,"live_at"?: string | null,"name": string,"paid_until"?: string | null,"price_monthly": number,"reminded_at"?: string | null,"slug": string,"stage"?: string,"storage_limit_bytes"?: number,"trial_ends_at"?: string | null,"updated_at"?: string
+                    "asked_at"?: string | null,"campaign"?: string | null,"channel"?: string,"city"?: string,"close_reason"?: string | null,"closed_at"?: string | null,"closes_on"?: string | null,"created_at"?: string,"facebook_page"?: string | null,"id"?: string,"is_demo"?: boolean,"is_test"?: boolean,"kind": string,"live_at"?: string | null,"name": string,"paid_until"?: string | null,"price_monthly": number,"reminded_at"?: string | null,"slug": string,"stage"?: string,"storage_limit_bytes"?: number,"trial_ends_at"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "asked_at"?: string | null,"campaign"?: string | null,"channel"?: string,"city"?: string,"close_reason"?: string | null,"closed_at"?: string | null,"closes_on"?: string | null,"created_at"?: string,"facebook_page"?: string | null,"id"?: string,"is_demo"?: boolean,"kind"?: string,"live_at"?: string | null,"name"?: string,"paid_until"?: string | null,"price_monthly"?: number,"reminded_at"?: string | null,"slug"?: string,"stage"?: string,"storage_limit_bytes"?: number,"trial_ends_at"?: string | null,"updated_at"?: string
+                    "asked_at"?: string | null,"campaign"?: string | null,"channel"?: string,"city"?: string,"close_reason"?: string | null,"closed_at"?: string | null,"closes_on"?: string | null,"created_at"?: string,"facebook_page"?: string | null,"id"?: string,"is_demo"?: boolean,"is_test"?: boolean,"kind"?: string,"live_at"?: string | null,"name"?: string,"paid_until"?: string | null,"price_monthly"?: number,"reminded_at"?: string | null,"slug"?: string,"stage"?: string,"storage_limit_bytes"?: number,"trial_ends_at"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     
                   ]
                 },"track_events": {
                   Row: {
-                    "attempts": number,"created_at": string,"event_id": string,"id": string,"lead_id": string | null,"name": string,"page_url": string | null,"problem": string | null,"send_after": string,"sent_at": string | null,"status": string,"tenant_id": string | null,"test": boolean,"user_data": NonNullable<Json>,"value": number | null,"via": string
+                    "action_source": string,"attempts": number,"caused_by": string,"client_ip": unknown,"client_ua": string | null,"created_at": string,"event_id": string,"event_time": string,"fbtrace_id": string | null,"id": string,"lead_id": string | null,"name": string,"page_url": string | null,"plan_payment_id": string | null,"problem": string | null,"send_after": string,"sent_at": string | null,"status": string,"tenant_id": string | null,"test": boolean,"user_data": NonNullable<Json>,"value": number | null,"via": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "attempts"?: number,"created_at"?: string,"event_id": string,"id"?: string,"lead_id"?: string | null,"name": string,"page_url"?: string | null,"problem"?: string | null,"send_after"?: string,"sent_at"?: string | null,"status"?: string,"tenant_id"?: string | null,"test"?: boolean,"user_data"?: NonNullable<Json>,"value"?: number | null,"via": string
+                    "action_source"?: string,"attempts"?: number,"caused_by"?: string,"client_ip"?: unknown,"client_ua"?: string | null,"created_at"?: string,"event_id": string,"event_time"?: string,"fbtrace_id"?: string | null,"id"?: string,"lead_id"?: string | null,"name": string,"page_url"?: string | null,"plan_payment_id"?: string | null,"problem"?: string | null,"send_after"?: string,"sent_at"?: string | null,"status"?: string,"tenant_id"?: string | null,"test"?: boolean,"user_data"?: NonNullable<Json>,"value"?: number | null,"via": string
                   }
                   Update: {
-                    "attempts"?: number,"created_at"?: string,"event_id"?: string,"id"?: string,"lead_id"?: string | null,"name"?: string,"page_url"?: string | null,"problem"?: string | null,"send_after"?: string,"sent_at"?: string | null,"status"?: string,"tenant_id"?: string | null,"test"?: boolean,"user_data"?: NonNullable<Json>,"value"?: number | null,"via"?: string
+                    "action_source"?: string,"attempts"?: number,"caused_by"?: string,"client_ip"?: unknown,"client_ua"?: string | null,"created_at"?: string,"event_id"?: string,"event_time"?: string,"fbtrace_id"?: string | null,"id"?: string,"lead_id"?: string | null,"name"?: string,"page_url"?: string | null,"plan_payment_id"?: string | null,"problem"?: string | null,"send_after"?: string,"sent_at"?: string | null,"status"?: string,"tenant_id"?: string | null,"test"?: boolean,"user_data"?: NonNullable<Json>,"value"?: number | null,"via"?: string
                   }
                   Relationships: [
                     {
@@ -1424,6 +1424,12 @@ isOneToOne: false
       columns: ["lead_id"]
 isOneToOne: false
       referencedRelation: "signup_leads"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "track_events_plan_payment_id_fkey"
+      columns: ["plan_payment_id"]
+isOneToOne: false
+      referencedRelation: "plan_payments"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "track_events_tenant_id_fkey"

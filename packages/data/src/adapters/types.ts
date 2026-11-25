@@ -113,6 +113,8 @@ import type {
   RecordPlanPaymentInput,
   RegisterShopInput,
   ReviewPlanPaymentInput,
+  SetTestShopInput,
+  UndoApprovalInput,
   SendBillingNoteInput,
   SendBillingPhotoInput,
   SetTrackingInput,
@@ -445,6 +447,10 @@ export interface PlatformAdapter {
   markLeadContacted(input: LeadIdInput): Promise<AdminLead>;
   approveGoLive(input: ShopIdInput): Promise<AdminShopDetail>;
   reviewPlanPayment(input: ReviewPlanPaymentInput): Promise<AdminShopDetail>;
+  // Takes the newest approval back within its 10 minutes; its Meta events never go (T118 Q4).
+  undoPlanApproval(input: UndoApprovalInput): Promise<AdminShopDetail>;
+  // Marks a shop as a test: no Meta events, left out of Today's money (T118 Q7).
+  setTestShop(input: SetTestShopInput): Promise<AdminShopDetail>;
   recordPlanPayment(input: RecordPlanPaymentInput): Promise<AdminShopDetail>;
   extendPlan(input: ExtendDaysInput): Promise<AdminShopDetail>;
   sendPlanReminder(input: ShopIdInput): Promise<AdminShopDetail>;
