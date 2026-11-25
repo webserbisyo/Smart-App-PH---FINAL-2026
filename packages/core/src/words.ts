@@ -2645,6 +2645,9 @@ export const ordersWords = {
   },
 } as const;
 
+// The receipt's day words (Q10, T117): a small export, so every page that shows a time can use it.
+export const receiptDateWords = { today: 'Today', tomorrow: 'Tomorrow' } as const;
+
 // The dashboard's "New version ready · Refresh" bar (T117). Its own export, so the storefront's pages never
 // carry these words (the JS budget, T31).
 export const updateBarWords = {

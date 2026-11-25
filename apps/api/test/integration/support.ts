@@ -4,11 +4,18 @@ import { Test } from '@nestjs/testing';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { createClient } from '@supabase/supabase-js';
 import request from 'supertest';
-import { ConfirmUploadResultSchema, UploadResultSchema } from '@smartapp/core';
+import {
+  CategorySchema,
+  ConfirmUploadResultSchema,
+  OwnerItemSchema,
+  UploadResultSchema,
+} from '@smartapp/core';
+import { sql } from 'drizzle-orm';
 import { expect } from 'vitest';
 import { z } from 'zod';
 import { AppModule } from '../../src/app.module.js';
 import { configureApp } from '../../src/configure-app.js';
+import { Db } from '../../src/db/db.service.js';
 
 // The local Supabase's own keys (`supabase status`); CI passes them the same way. Local keys only.
 const SUPABASE_URL = process.env['SUPABASE_URL'] ?? 'http://127.0.0.1:54321';
@@ -169,4 +176,81 @@ export async function upload(
     (await agent.post(`/owner/uploads/${created.id}/confirm`).send({}).expect(200)).body,
   );
   return { id: created.id, ...done };
+}
+
+/**
+ * A live shop open all day every day, with one ₱150 item (and its first variant). `gcash` adds cash and GCash
+ * accounts; `dailyLimit` caps the item per day.
+ */
+export async function liveShop(
+  app: NestExpressApplication,
+  name: string,
+  options: { dailyLimit?: number | null; gcash?: boolean } = {},
+) {
+  const owner = await ownerWithShop(app, name);
+  const cat = CategorySchema.parse(
+    (
+      await owner.agent
+        .post('/owner/categories')
+        .send({ name: 'Mains', icon: 'burger' })
+        .expect(201)
+    ).body,
+  );
+  const item = OwnerItemSchema.parse(
+    (
+      await owner.agent
+        .post('/owner/items')
+        .send({
+          categoryId: cat.id,
+          name: 'Smash burger',
+          description: null,
+          photos: [],
+          basePrice: 15000,
+          axes: [],
+          variants: [
+            {
+              id: 'new',
+              values: [],
+              price: 15000,
+              priceOverride: null,
+              availability: 'available',
+              soldOutUntil: null,
+            },
+          ],
+          optionGroupIds: [],
+          pairingIds: [],
+          featured: false,
+          isNew: false,
+          status: 'active',
+          noticeDays: 0,
+          dailyLimit: options.dailyLimit ?? null,
+        })
+        .expect(201)
+    ).body,
+  );
+  const db = app.get(Db);
+  await db.run({ userId: null, shopId: null, role: 'admin' }, async () => {
+    const id = owner.shopId;
+    await db.tx.execute(
+      sql`update public.tenants set stage = 'live', asked_at = now(), live_at = now() where id = ${id}::uuid`,
+    );
+    await db.tx.execute(sql`delete from public.opening_hours where tenant_id = ${id}::uuid`);
+    await db.tx.execute(sql`
+      insert into public.opening_hours (tenant_id, weekday, opens, closes)
+      select ${id}::uuid, d, '00:00', '23:59' from generate_series(0, 6) d`);
+    if (options.gcash) {
+      await db.tx.execute(sql`
+        insert into public.payment_accounts (tenant_id, method, account_name, account_number, sort)
+        values (${id}::uuid, 'cash', null, null, 0), (${id}::uuid, 'gcash', 'Ana Cruz', '09171234567', 1)`);
+    }
+  });
+  return { ...owner, itemId: item.id, variantId: item.variants[0]?.id ?? '' };
+}
+
+let phoneSeq = Math.floor(Math.random() * 9_000_000);
+
+/** A different mobile number each time, so the per-phone limit stays out of the way. */
+export function nextPhone(): string {
+  phoneSeq = (phoneSeq + 1) % 10_000_000;
+  return `0919${String(phoneSeq).padStart(7, '0')}`;
 }
