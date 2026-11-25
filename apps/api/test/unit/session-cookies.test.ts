@@ -24,7 +24,20 @@ describe('settings', () => {
     SUPABASE_URL: 'https://abc.supabase.co',
     DATABASE_URL: 'postgresql://u:p@pooler.supabase.com:6543/postgres',
     CORS_ORIGINS: 'https://app.webserbisyo.com',
+    STOREFRONT_URL: 'https://shop.webserbisyo.com',
+    STOREFRONT_REVALIDATE_SECRET: 'x'.repeat(40),
   };
+
+  it('production refuses to start without the storefront values (phase 4)', () => {
+    const rest = { ...base, STOREFRONT_URL: '' };
+    expect(
+      EnvSchema.safeParse({
+        ...rest,
+        APP_ENV: 'production',
+        SUPABASE_SECRET_KEY: 'sb_secret_0123456789abcdef',
+      }).success,
+    ).toBe(false);
+  });
 
   it('production refuses to start without the secret key', () => {
     expect(EnvSchema.safeParse({ ...base, APP_ENV: 'production' }).success).toBe(false);
