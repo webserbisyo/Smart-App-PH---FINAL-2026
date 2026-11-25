@@ -30,7 +30,8 @@ export interface PushOrder {
   customerName: string;
 }
 
-type PushKind = 'order_status' | 'owner_new_order' | 'owner_payment';
+type PushKind =
+  'order_status' | 'owner_new_order' | 'owner_payment' | 'stamp_added' | 'reward_ready';
 
 const IdsSchema = z.array(z.object({ id: z.string() }));
 
@@ -60,6 +61,19 @@ export class PushOutbox {
     const body = statusBody(status, order.type, order.orderNo);
     if (!body) return;
     await this.toCustomer(order, body, `status:${eventId}`, eventId);
+  }
+
+  /**
+   * A finished order that earned a stamp (T106): one push with the stamp, or with the reward when the card is
+   * now full. It waits like a step, so an undone Complete never sends it.
+   */
+  async orderDone(
+    order: PushOrder,
+    kind: 'stamp_added' | 'reward_ready',
+    body: string,
+    eventId: string,
+  ): Promise<void> {
+    await this.toCustomer(order, body, `done:${eventId}`, eventId, kind);
   }
 
   /** The owner said No to the payment photo: the customer can send another one. */
@@ -106,6 +120,7 @@ export class PushOutbox {
     body: string,
     key: string,
     eventId: string | undefined,
+    kind: PushKind = 'order_status',
   ): Promise<void> {
     const shop = await this.shop();
     const payload: OutboxPayload = {
@@ -119,7 +134,6 @@ export class PushOutbox {
       },
       ...(eventId ? { eventId } : {}),
     };
-    const kind: PushKind = 'order_status';
     const result = await this.db.tx.execute(sql`
       insert into public.push_outbox
         (tenant_id, subscription_id, kind, payload, dedupe_key, topic, ttl_seconds, urgency, send_after)

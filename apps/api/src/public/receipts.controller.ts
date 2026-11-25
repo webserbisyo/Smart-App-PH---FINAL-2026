@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  Inject,
+  Param,
+  Post,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
   PaymentMethodEnum,
@@ -7,8 +18,10 @@ import {
   type OrderRow,
   type Payment,
 } from '@smartapp/core';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { Public } from '../auth/decorators.js';
+import { SessionService } from '../auth/session.service.js';
 import { PushSubscriptionInputSchema } from '../push/push-endpoints.js';
 import { MAX_TOKENS, ReceiptsService } from './receipts.service.js';
 import { STOREFRONT_LIMIT } from './storefront.controller.js';
@@ -47,15 +60,20 @@ type PushInput = z.infer<typeof PushInputSchema>;
 @Public()
 @Throttle(STOREFRONT_LIMIT)
 export class ReceiptsController {
-  constructor(@Inject(ReceiptsService) private readonly receipts: ReceiptsService) {}
+  constructor(
+    @Inject(ReceiptsService) private readonly receipts: ReceiptsService,
+    @Inject(SessionService) private readonly sessions: SessionService,
+  ) {}
 
   @Post('my-orders')
   @HttpCode(200)
-  listMyOrders(
+  async listMyOrders(
     @Param('slug') slug: string,
     @Body({ schema: MyOrdersInputSchema }) body: MyOrdersInput,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<OrderRow[]> {
-    return this.receipts.listMyOrders(slug, body.tokens);
+    return this.receipts.listMyOrders(slug, body.tokens, await this.sessions.member(req, res));
   }
 
   @Get('o/:token')

@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Inject,
+  Param,
+  Post,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
   OrderPayloadSchema,
@@ -8,8 +19,10 @@ import {
   type Quote,
   type Schedule,
 } from '@smartapp/core';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { Public } from '../auth/decorators.js';
+import { SessionService } from '../auth/session.service.js';
 import { StorefrontService, type PlacedOrder } from './storefront.service.js';
 
 // Phones in the Philippines share addresses (carrier NAT, R12): a generous per-address ceiling here, and the
@@ -36,7 +49,10 @@ const PreviewQuerySchema = z.object({ token: z.string().min(1).max(200) });
 @Public()
 @Throttle(STOREFRONT_LIMIT)
 export class StorefrontController {
-  constructor(@Inject(StorefrontService) private readonly storefront: StorefrontService) {}
+  constructor(
+    @Inject(StorefrontService) private readonly storefront: StorefrontService,
+    @Inject(SessionService) private readonly sessions: SessionService,
+  ) {}
 
   @Get()
   getStorefront(@Param('slug') slug: string): Promise<PublicShop> {
@@ -63,20 +79,25 @@ export class StorefrontController {
 
   @Post('quote')
   @HttpCode(200)
-  quoteOrder(
+  async quoteOrder(
     @Param('slug') slug: string,
     @Body({ schema: OrderPayloadSchema }) body: OrderPayload,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<Quote> {
-    return this.storefront.quoteOrder(slug, body);
+    return this.storefront.quoteOrder(slug, body, await this.sessions.member(req, res));
   }
 
   @Post('orders')
   @HttpCode(200)
-  placeOrder(
+  async placeOrder(
     @Param('slug') slug: string,
     @Body({ schema: PlaceOrderBodySchema }) body: PlaceOrderBody,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<PlacedOrder> {
     const { clientKey, ...payload } = body;
-    return this.storefront.placeOrder(slug, payload, clientKey);
+    const member = await this.sessions.member(req, res);
+    return this.storefront.placeOrder(slug, payload, clientKey, member);
   }
 }

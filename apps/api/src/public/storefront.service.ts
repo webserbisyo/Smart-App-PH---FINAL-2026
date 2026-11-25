@@ -21,6 +21,9 @@ import { Db } from '../db/db.service.js';
 import { orderEvents, orders, tenants } from '../db/generated/schema.js';
 import { EditorService } from '../editor/editor.service.js';
 import { EmailOutbox } from '../email/email-outbox.service.js';
+import type { CallerUser } from '../auth/caller.js';
+import { MemberAccounts, type MemberRow } from '../members/member-accounts.js';
+import { StampLedger } from '../members/stamp-ledger.js';
 import { PushOutbox } from '../push/push-outbox.service.js';
 import { failOnQuote, OrderBook, uuidOrNull } from '../orders/order-book.js';
 import { ShopReader } from './shop-reader.js';
@@ -51,6 +54,8 @@ export class StorefrontService {
     @Inject(EditorService) private readonly editor: EditorService,
     @Inject(PushOutbox) private readonly push: PushOutbox,
     @Inject(EmailOutbox) private readonly emails: EmailOutbox,
+    @Inject(MemberAccounts) private readonly accounts: MemberAccounts,
+    @Inject(StampLedger) private readonly ledger: StampLedger,
   ) {}
 
   /** A live or demo shop as customers see it; anything else is Not found (rule 12). */
@@ -88,14 +93,17 @@ export class StorefrontService {
   }
 
   /** The server's price check, always called before Place order. */
-  async quoteOrder(slug: string, payload: OrderPayload): Promise<Quote> {
+  async quoteOrder(slug: string, payload: OrderPayload, user: CallerUser | null): Promise<Quote> {
     await this.shops.enterShop(slug);
     const shop = await this.shops.read();
     const now = new Date();
     if (payload.scheduledAt) {
       await this.checkSlot(shop, payload, payload.scheduledAt, now);
     }
-    return QuoteSchema.parse(quote({ shop, now, member: null }, payload));
+    const member = await this.memberOf(user);
+    return QuoteSchema.parse(
+      quote({ shop, now, member: member ? await this.stampsOf(member, shop) : null }, payload),
+    );
   }
 
   /**
@@ -103,7 +111,12 @@ export class StorefrontService {
    * the slot is locked before it is counted; the server quotes again and refuses a flagged line or a
    * problem; the limits, the order number and each item's daily count are taken under their SQL guards.
    */
-  async placeOrder(slug: string, payload: OrderPayload, clientKey: string): Promise<PlacedOrder> {
+  async placeOrder(
+    slug: string,
+    payload: OrderPayload,
+    clientKey: string,
+    user: CallerUser | null,
+  ): Promise<PlacedOrder> {
     const shopId = await this.shops.enterShop(slug);
     // Two taps with the same key wait for each other here, so the second one finds the first order.
     await this.db.tx.execute(
@@ -128,8 +141,23 @@ export class StorefrontService {
       await this.book.lockSlot(payload.scheduledAt);
       await this.checkSlot(shop, payload, payload.scheduledAt, now);
     }
-    const q = quote({ shop, now, member: null }, payload);
+    // A signed-in member's order joins their card; their stamps are held while the reward is used.
+    const member = await this.memberOf(user);
+    const stamps = member ? await this.ledger.lock(member.id) : 0;
+    const q = quote(
+      { shop, now, member: member ? await this.stampsOf(member, shop) : null },
+      payload,
+    );
     failOnQuote(q);
+    const card = shop.storefront.stampCard;
+    const redeemed = member && payload.useReward && q.discount > 0 ? card.rule.stampsNeeded : 0;
+    if (redeemed > 0) {
+      // A limited prize loses one piece (S26); the last one can't go twice.
+      const took = await this.db.tx.execute<{ ok: boolean }>(
+        sql`select private.take_prize() as ok`,
+      );
+      if (took.rows[0]?.ok !== true) throw new ApiFailure('reward_all_claimed', 409);
+    }
     await this.checkLimits(phone.e164, now);
 
     const { orderNo, businessDate } = await this.book.nextOrderNo(now);
@@ -168,6 +196,7 @@ export class StorefrontService {
         paymentMethod: payload.paymentMethod,
         paymentStatus: q.total === 0 ? 'paid' : 'unpaid',
         paymentAccountId: uuidOrNull(account?.id),
+        memberId: member?.id ?? null,
         customerName: payload.customer.name.trim(),
         customerPhone: phone.e164,
         customerEmail: payload.customer.email,
@@ -188,6 +217,7 @@ export class StorefrontService {
         discount: q.discount,
         deliveryFee: q.deliveryFee,
         total: q.total,
+        rewardTitle: redeemed > 0 ? card.reward.title.slice(0, 60) : null,
         note: note === '' ? null : note,
         source: 'storefront',
         lastStepAt: placedAt,
@@ -195,6 +225,12 @@ export class StorefrontService {
       .returning({ id: orders.id });
     if (!order) throw new ApiFailure('unknown', 500);
     await this.book.writeLines(order.id, shop, q);
+    if (member && redeemed > 0) {
+      await this.ledger.add(
+        { memberId: member.id, kind: 'used', delta: -redeemed, orderId: order.id },
+        stamps,
+      );
+    }
     await this.db.tx.insert(orderEvents).values({
       tenantId: shopId,
       orderId: order.id,
@@ -221,6 +257,19 @@ export class StorefrontService {
       `new_order:${order.id}`,
     );
     return { orderId: order.id, orderNo, token: ticket.token };
+  }
+
+  private async memberOf(user: CallerUser | null): Promise<MemberRow | null> {
+    return user ? this.accounts.byUser(user.id) : null;
+  }
+
+  /** What the price check needs of a member: their balance and the stamps on the way. */
+  private async stampsOf(
+    member: MemberRow,
+    shop: PublicShop,
+  ): Promise<{ balance: number; pendingStamps: number }> {
+    const account = await this.accounts.account(member, shop.storefront.stampCard);
+    return { balance: account.balance, pendingStamps: account.pendingStamps };
   }
 
   private async schedule(

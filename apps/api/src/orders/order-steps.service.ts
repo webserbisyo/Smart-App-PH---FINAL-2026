@@ -10,6 +10,7 @@ import {
   OrderStatusEnum,
   PAY_WINDOW_MINUTES,
   paidStatusFor,
+  pushWords,
   type OrderStatus,
   type Payment,
   type PaymentMethod,
@@ -18,7 +19,10 @@ import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
 import { orderEvents, orders, paymentProofs } from '../db/generated/schema.js';
+import { StampLedger } from '../members/stamp-ledger.js';
+import { orderNoText } from '../push/push-messages.js';
 import { PushOutbox, type PushOrder } from '../push/push-outbox.service.js';
+import { ShopReader } from '../public/shop-reader.js';
 import { OrderBook, uuidOrNull } from './order-book.js';
 import { OrderReader, type OrderView } from './order-reader.js';
 
@@ -37,6 +41,8 @@ export class OrderSteps {
     @Inject(OrderReader) private readonly reader: OrderReader,
     @Inject(OrderBook) private readonly book: OrderBook,
     @Inject(PushOutbox) private readonly push: PushOutbox,
+    @Inject(StampLedger) private readonly ledger: StampLedger,
+    @Inject(ShopReader) private readonly shops: ShopReader,
   ) {}
 
   /** The order, locked until the commit; another shop's id or a bad id is Not found. */
@@ -75,6 +81,7 @@ export class OrderSteps {
     const at = new Date().toISOString();
     const eventId = await this.step(view.id, to, 'shop', at);
     await this.push.orderStep(pushOrderOf(view), to, eventId);
+    if (to === 'completed') await this.earnStamp(view, eventId);
     if (trackingUrl) {
       await this.db.tx
         .update(orders)
@@ -305,12 +312,46 @@ export class OrderSteps {
     return event.id;
   }
 
-  /** What a cancelled or expired order held goes back once: each item's count for its day. */
+  /**
+   * What a cancelled or expired order held goes back once: each item's count for its day, the stamps its
+   * reward used, and a limited prize's piece.
+   */
   private async giveBack(view: OrderView): Promise<void> {
     await this.book.giveBackDailyCounts(
       view.receipt.lines.map((l) => ({ itemId: l.itemId, qty: l.qty })),
       manilaDate(view.receipt.dueAt),
     );
+    if (await this.ledger.giveBackUsed(view.id)) {
+      await this.db.tx.execute(sql`select private.give_back_prize()`);
+    }
+  }
+
+  /**
+   * A finished member order earns its stamp (S20), and the Completed push goes out with it (T106) when the
+   * shop keeps those pushes on. Undo keeps the stamp; completing again never adds a second one.
+   */
+  private async earnStamp(view: OrderView, eventId: string): Promise<void> {
+    const card = await this.shops.stampCard();
+    const earned = await this.ledger.earnForOrder(
+      { id: view.id, memberId: view.row.memberId, subtotal: view.row.subtotal },
+      card,
+      new Date(),
+    );
+    if (!earned.earned) return;
+    const settings = await this.db.tx.execute<{ stamp: boolean; reward: boolean }>(sql`
+      select push_stamp_added as stamp, push_reward_ready as reward
+      from public.shop_settings where tenant_id = ${this.db.shopId}`);
+    const wants = settings.rows[0];
+    const goal = card.rule.stampsNeeded;
+    const no = orderNoText(view.row.orderNo);
+    const ready = earned.balance >= goal && earned.balance - 1 < goal;
+    if (ready && wants?.reward !== false) {
+      const body = pushWords.status.doneReward(no, card.reward.title);
+      await this.push.orderDone(pushOrderOf(view), 'reward_ready', body, eventId);
+    } else if (wants?.stamp !== false) {
+      const body = pushWords.status.doneStamp(no, Math.min(earned.balance, goal), goal);
+      await this.push.orderDone(pushOrderOf(view), 'stamp_added', body, eventId);
+    }
   }
 }
 

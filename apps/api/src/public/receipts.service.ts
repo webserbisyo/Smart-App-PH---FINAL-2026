@@ -10,12 +10,14 @@ import {
   type Payment,
   type PaymentMethod,
 } from '@smartapp/core';
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, or, sql } from 'drizzle-orm';
+import type { CallerUser } from '../auth/caller.js';
 import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
 import { orderRatings, orders, paymentProofs, tenants } from '../db/generated/schema.js';
 import { EmailOutbox } from '../email/email-outbox.service.js';
 import { MediaService } from '../media/media.service.js';
+import { MemberAccounts } from '../members/member-accounts.js';
 import { OrderReader, type OrderView } from '../orders/order-reader.js';
 import { pushOrderOf } from '../orders/order-steps.service.js';
 import { platformOf, type PushSubscriptionInput } from '../push/push-endpoints.js';
@@ -43,21 +45,31 @@ export class ReceiptsService {
     @Inject(PushOutbox) private readonly push: PushOutbox,
     @Inject(PushSubscriptions) private readonly subscriptions: PushSubscriptions,
     @Inject(EmailOutbox) private readonly emails: EmailOutbox,
+    @Inject(MemberAccounts) private readonly accounts: MemberAccounts,
   ) {}
 
   async getOrder(slug: string, token: string): Promise<OrderReceipt> {
     return (await this.order(slug, token)).receipt;
   }
 
-  /** The guest orders this phone kept (newest first). A member's own orders join them in phase 6. */
-  async listMyOrders(slug: string, tokens: readonly string[]): Promise<OrderRow[]> {
+  /** The guest orders this phone kept and, for a signed-in member, their own orders (newest first). */
+  async listMyOrders(
+    slug: string,
+    tokens: readonly string[],
+    user: CallerUser | null,
+  ): Promise<OrderRow[]> {
     await this.shops.enterShop(slug);
     const wanted = [...new Set(tokens)].filter((t) => t.length >= 16 && t.length <= 64);
-    if (wanted.length === 0) return [];
+    const member = user ? await this.accounts.byUser(user.id) : null;
+    const mine = [
+      ...(wanted.length > 0 ? [inArray(orders.token, wanted)] : []),
+      ...(member ? [eq(orders.memberId, member.id)] : []),
+    ];
+    if (mine.length === 0) return [];
     const rows = await this.db.tx
       .select()
       .from(orders)
-      .where(and(eq(orders.tenantId, this.db.shopId), inArray(orders.token, wanted)))
+      .where(and(eq(orders.tenantId, this.db.shopId), or(...mine)))
       .orderBy(desc(orders.placedAt))
       .limit(MAX_TOKENS);
     return (await this.reader.views(rows)).map((view) => this.reader.row(view));

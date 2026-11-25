@@ -20,6 +20,8 @@ import { MediaStorage } from './media-storage.js';
 
 // The bucket limit (migration 20261126100000): a phone sends far less after shrinking (T65).
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+// A member's photo is a 256 px crop: far under this.
+const MEMBER_PHOTO_BYTES = 300 * 1024;
 // An upload not confirmed in an hour is removed (api.md "Settings").
 const UNCONFIRMED_HOURS = 1;
 const CLEANUP_BATCH = 200;
@@ -94,6 +96,22 @@ export class MediaService {
     if (!row) throw notFound();
     const done = await this.confirm(row.id, 'proof');
     return { id: row.id, bytes: done.bytes };
+  }
+
+  /**
+   * A member's photo (T95): the storefront crops it to a small square and sends it as a data address; the API
+   * stores it in the public `profile` bucket in the same two steps as an upload (room, then the real size).
+   */
+  async storeMemberPhoto(dataUrl: string): Promise<ShopFile> {
+    const match = /^data:(image\/(?:webp|jpeg|png));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+    if (!match?.[1] || !match[2]) throw new ApiFailure('file_not_image', 400);
+    const body = Buffer.from(match[2], 'base64');
+    if (body.length === 0) throw new ApiFailure('file_not_image', 400);
+    if (body.length > MEMBER_PHOTO_BYTES) throw new ApiFailure('file_too_large', 400);
+    const made = await this.reserve('member_photo', 'profile', body.length);
+    await this.storage.put('profile', made.path, body, match[1]);
+    await this.confirm(made.id, 'member_photo');
+    return { id: made.id, bucket: 'profile', path: made.path, bytes: body.length };
   }
 
   private async reserve(

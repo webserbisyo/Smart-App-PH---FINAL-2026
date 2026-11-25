@@ -979,8 +979,8 @@ test.describe('scheduling (O6)', () => {
     await expect(page.locator('#receipt-pickup-code')).toHaveText(/^Code [A-Z0-9]{4}$/);
     const code = page.locator('figcaption', { has: page.locator('#receipt-pickup-code') });
     await expect(code).toContainText('Show this at pickup');
-    // The receipt words the date its own way ("Oct 29, 3:00 PM").
-    await expect(code).toContainText(/Pickup Oct 29, \d/);
+    // The receipt words the date its own way ("Thu, Oct 29, 3 PM", Q10).
+    await expect(code).toContainText(/Pickup (\w{3}, )?Oct 29, \d/);
     expect(problems).toEqual([]);
   });
 

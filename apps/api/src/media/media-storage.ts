@@ -45,6 +45,14 @@ export class MediaStorage {
     return data.signedUrl;
   }
 
+  /** A small file the API itself sends (a member's cropped photo): never replaces one already there. */
+  async put(bucket: MediaBucket, path: string, body: Buffer, mime: string): Promise<void> {
+    const { error } = await this.storage()
+      .from(bucket)
+      .upload(path, body, { contentType: mime, cacheControl: String(PUBLIC_CACHE_SECONDS) });
+    if (error) throw this.failure('put', error);
+  }
+
   /** The sent file's real size and type, or null when nothing arrived. */
   async stat(bucket: MediaBucket, path: string): Promise<StoredObject | null> {
     const { data, error } = await this.storage().from(bucket).info(path);

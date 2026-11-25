@@ -2660,6 +2660,11 @@ export const pushWords = {
     expired: (no: string) => `Order ${no} was cancelled: the payment did not come in time.`,
     proofRejected: (no: string) =>
       `Your payment photo for order ${no} was not approved. Open it to send another.`,
+    // Completed is one push with the stamp (T106): sent only when the order earned one.
+    doneStamp: (no: string, have: number, goal: number) =>
+      `Order ${no} is done. You got a stamp: ${have} of ${goal}.`,
+    doneReward: (no: string, reward: string) =>
+      `Order ${no} is done. Your reward is ready: ${reward}.`,
   },
   owner: {
     newOrder: (no: string, total: string) => `New order ${no} · ${total}`,

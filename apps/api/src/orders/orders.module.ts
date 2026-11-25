@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { MemberAccounts } from '../members/member-accounts.js';
+import { StampLedger } from '../members/stamp-ledger.js';
 import { CatalogModule } from '../catalog/catalog.module.js';
 import { MediaModule } from '../media/media.module.js';
 import { ShopReader } from '../public/shop-reader.js';
@@ -16,7 +18,16 @@ import { OwnerOrdersService } from './owner-orders.service.js';
 @Module({
   imports: [CatalogModule, MediaModule],
   controllers: [OwnerOrdersController],
-  providers: [ShopReader, OrderBook, OrderReader, OrderSteps, OwnerOrdersService, OrderJobs],
-  exports: [ShopReader, OrderBook, OrderReader, OrderSteps],
+  providers: [
+    ShopReader,
+    OrderBook,
+    OrderReader,
+    OrderSteps,
+    OwnerOrdersService,
+    OrderJobs,
+    MemberAccounts,
+    StampLedger,
+  ],
+  exports: [ShopReader, OrderBook, OrderReader, OrderSteps, MemberAccounts, StampLedger],
 })
 export class OrdersModule {}
