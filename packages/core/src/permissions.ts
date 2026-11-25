@@ -17,6 +17,8 @@ export const PERMISSIONS = [
   'menu:manage',
   // Run orders: steps, payments, chats, New order and Edit order, booking rules, pause (phase 5, T117).
   'orders:manage',
+  // Members and the stamp card: the card's settings, counter stamps, prizes, News (phase 6, T117).
+  'members:manage',
   // The founder's Super Admin (an app_metadata flag on the account, never a shop role).
   'platform:admin',
 ] as const;
@@ -38,6 +40,7 @@ const SHOP_PERMISSIONS: Record<ShopRole, readonly Permission[]> = {
     'files:manage',
     'menu:manage',
     'orders:manage',
+    'members:manage',
   ],
 };
 

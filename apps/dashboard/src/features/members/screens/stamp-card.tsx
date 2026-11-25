@@ -548,7 +548,9 @@ function StampCardEditor({
               shape="rounded"
               crop={{ aspect: 1, side: PRIZE_SIDE }}
               disabled={!online}
-              onUploaded={(upload) => setReward({ image: upload.preview })}
+              onUploaded={(upload) =>
+                setReward({ image: upload.sample ? upload.preview : upload.ref })
+              }
               onRemove={() => setReward({ image: null })}
             />
             <SwitchRow
