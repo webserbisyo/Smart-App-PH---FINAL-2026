@@ -6,6 +6,7 @@ import type { AppEnv, DataSource } from '../env';
 import type { OwnerAuth } from '../owner-auth';
 import { createApiOnboardingAdapter } from './api/onboarding';
 import { createApiOwnerAuth } from './api/owner-auth';
+import { createApiOwnerCatalogAdapter } from './api/owner-catalog';
 import { createApiOwnerEditorAdapter } from './api/owner-editor';
 import { createApiOwnerSettingsAdapter } from './api/owner-settings';
 import { createApiUploadsAdapter } from './api/uploads';
@@ -43,6 +44,9 @@ export function createAdapters(source: DataSource, options: AdapterOptions = {})
     ...(usesApi(plan, 'uploads') ? { uploads: createApiUploadsAdapter(baseUrl) } : {}),
     ...(usesApi(plan, 'ownerSettings')
       ? { ownerSettings: createApiOwnerSettingsAdapter({ baseUrl, getToken }) }
+      : {}),
+    ...(usesApi(plan, 'ownerCatalog')
+      ? { ownerCatalog: createApiOwnerCatalogAdapter({ baseUrl, getToken }) }
       : {}),
     ...(usesApi(plan, 'ownerEditor')
       ? { ownerEditor: createApiOwnerEditorAdapter({ baseUrl, getToken }) }

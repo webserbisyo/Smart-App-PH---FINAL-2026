@@ -4,6 +4,8 @@ import { Test } from '@nestjs/testing';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { createClient } from '@supabase/supabase-js';
 import request from 'supertest';
+import { ConfirmUploadResultSchema, UploadResultSchema } from '@smartapp/core';
+import { expect } from 'vitest';
 import { z } from 'zod';
 import { AppModule } from '../../src/app.module.js';
 import { configureApp } from '../../src/configure-app.js';
@@ -137,4 +139,34 @@ export async function latestCode(email: string, subject: RegExp): Promise<string
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
   throw new Error(`No code email for ${email}`);
+}
+
+// A tiny real WebP (1 x 1), so Storage keeps a real picture.
+export const WEBP = Buffer.from(
+  'UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA',
+  'base64',
+);
+
+type Agent = Awaited<ReturnType<typeof ownerWithShop>>['agent'];
+
+/** The three upload steps a phone takes: room, the file to the signed link, confirm. */
+export async function upload(
+  agent: Agent,
+  kind: string,
+  body: Buffer = WEBP,
+  type = 'image/webp',
+): Promise<{ id: string; ref: string; bytes: number }> {
+  const created = UploadResultSchema.parse(
+    (await agent.post('/owner/uploads').send({ kind, bytes: body.length }).expect(201)).body,
+  );
+  const sent = await fetch(created.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': type },
+    body,
+  });
+  expect(sent.ok).toBe(true);
+  const done = ConfirmUploadResultSchema.parse(
+    (await agent.post(`/owner/uploads/${created.id}/confirm`).send({}).expect(200)).body,
+  );
+  return { id: created.id, ...done };
 }

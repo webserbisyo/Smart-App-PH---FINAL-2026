@@ -1214,9 +1214,10 @@ export const orderLineOptions = pgTable(
   {
     tenantId: uuid('tenant_id').notNull(),
     lineId: uuid('line_id').notNull(),
-    optionId: uuid('option_id').notNull(),
+    optionId: uuid('option_id'),
     name: text().notNull(),
     price: integer().notNull(),
+    id: uuid().defaultRandom().primaryKey().notNull(),
   },
   (table) => [
     check(
@@ -1233,7 +1234,7 @@ export const orderLineOptions = pgTable(
       columns: [table.optionId, table.tenantId],
       foreignColumns: [options.id, options.tenantId],
       name: 'order_line_options_tenant_id_option_id_fkey',
-    }).onDelete('restrict'),
+    }).onDelete('set null'),
     foreignKey({
       columns: [table.tenantId],
       foreignColumns: [tenants.id],
@@ -1247,7 +1248,7 @@ export const orderLineOptions = pgTable(
       'btree',
       table.tenantId.asc().nullsLast().op('uuid_ops'),
     ),
-    primaryKey({ columns: [table.lineId, table.optionId], name: 'order_line_options_pkey' }),
+    unique('order_line_options_line_option_key').on(table.lineId, table.optionId),
   ],
 );
 
@@ -1258,7 +1259,7 @@ export const orderLines = pgTable(
     tenantId: uuid('tenant_id').notNull(),
     orderId: uuid('order_id').notNull(),
     itemId: uuid('item_id').notNull(),
-    variantId: uuid('variant_id').notNull(),
+    variantId: uuid('variant_id'),
     name: text().notNull(),
     variantLabel: text('variant_label'),
     note: text().default('').notNull(),
@@ -1290,7 +1291,7 @@ export const orderLines = pgTable(
       columns: [table.tenantId, table.variantId],
       foreignColumns: [itemVariants.id, itemVariants.tenantId],
       name: 'order_lines_tenant_id_variant_id_fkey',
-    }).onDelete('restrict'),
+    }).onDelete('set null'),
     foreignKey({
       columns: [table.tenantId],
       foreignColumns: [tenants.id],
@@ -2939,6 +2940,7 @@ export const variantTemplates = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
       .defaultNow()
       .notNull(),
+    isSample: boolean('is_sample').default(false).notNull(),
   },
   (table) => [
     check(
@@ -2950,8 +2952,11 @@ export const variantTemplates = pgTable(
       foreignColumns: [tenants.id],
       name: 'variant_templates_tenant_id_fkey',
     }).onDelete('cascade'),
+    index('variant_templates_tenant').using(
+      'btree',
+      table.tenantId.asc().nullsLast().op('uuid_ops'),
+    ),
     unique('variant_templates_tenant_id_id_key').on(table.id, table.tenantId),
-    uniqueIndex('variant_templates_name').using('btree', sql`tenant_id`, sql`lower(name)`),
   ],
 );
 

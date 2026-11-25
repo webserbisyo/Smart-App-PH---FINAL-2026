@@ -31,6 +31,12 @@ export const EnvSchema = z
     META_PIXEL_ID: optionalText(z.string().regex(/^\d{5,20}$/)),
     META_CAPI_TOKEN: optionalText(z.string().min(20)),
     META_TEST_EVENT_CODE: z.string().max(40).optional(),
+    // The storefront (launch phase 4, R8): NestJS tells it which shop's cached pages to read again.
+    STOREFRONT_URL: z
+      .url()
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
+    STOREFRONT_REVALIDATE_SECRET: optionalText(z.string().min(32)),
     META_GRAPH_VERSION: z
       .string()
       .regex(/^v\d+\.\d+$/)
@@ -44,6 +50,10 @@ export const EnvSchema = z
         path: ['SUPABASE_SECRET_KEY'],
         message: 'Needed outside development',
       });
+    }
+    for (const key of ['STOREFRONT_URL', 'STOREFRONT_REVALIDATE_SECRET'] as const) {
+      if (!env[key])
+        ctx.addIssue({ code: 'custom', path: [key], message: 'Needed outside development' });
     }
     if (!env.SUPABASE_URL.startsWith('https://')) {
       ctx.addIssue({ code: 'custom', path: ['SUPABASE_URL'], message: 'Use https' });

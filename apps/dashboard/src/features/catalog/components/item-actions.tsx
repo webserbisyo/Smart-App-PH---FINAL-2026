@@ -28,10 +28,8 @@ export interface ItemActions {
 }
 
 export function isItemSoldOut(item: OwnerItem): boolean {
-  return item.variants.every((v) => v.availability === 'sold_out');
+  return item.variants.every((v) => v.availability !== 'available');
 }
-
-const DAY_MS = 24 * 3600 * 1000;
 
 function showError(err: unknown) {
   notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
@@ -50,13 +48,14 @@ export function useItemActions(): { actions: ItemActions; dialogs: React.ReactNo
   const [deleteTarget, setDeleteTarget] = React.useState<OwnerItem | null>(null);
   const deleteAction = useAsyncAction();
 
-  const markSoldOut = (item: OwnerItem, soldOutUntil: string | null) => {
+  // "Today" comes back at the shop's next opening (the server reads its hours); the other stays off.
+  const markSoldOut = (item: OwnerItem, today: boolean) => {
     setSoldOutMany.mutate(
       {
         items: item.variants.map((v) => ({
           variantId: v.id,
-          availability: 'sold_out' as const,
-          soldOutUntil,
+          availability: today ? ('sold_out_today' as const) : ('sold_out' as const),
+          soldOutUntil: null,
         })),
       },
       { onError: showError },
@@ -194,10 +193,7 @@ export function useItemActions(): { actions: ItemActions; dialogs: React.ReactNo
                   type="button"
                   onClick={() => {
                     if (soldOutTarget) {
-                      markSoldOut(
-                        soldOutTarget,
-                        choice === 'today' ? new Date(Date.now() + DAY_MS).toISOString() : null,
-                      );
+                      markSoldOut(soldOutTarget, choice === 'today');
                     }
                     setSoldOutTarget(null);
                   }}

@@ -1,12 +1,16 @@
+import { createHash } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
+  CleanupPreviewSchema,
   MEDIA_BUCKETS,
   PROOF_KEEP_DAYS,
   STORAGE_KINDS,
   StorageSummarySchema,
   StoredFileListSchema,
   words,
+  type CleanupKind,
+  type CleanupPreview,
   type FileUse,
   type MediaBucket,
   type StorageFolder,
@@ -36,6 +40,12 @@ interface FileRow extends Record<string, unknown> {
   use_kind: string | null;
   use_id: string | null;
   use_label: string | null;
+}
+
+/** The same list of files gives the same token; anything added or gone since the preview changes it. */
+function cleanupToken(files: readonly { id: string }[]): string {
+  const ids = files.map((f) => f.id).sort();
+  return createHash('sha256').update(ids.join(',')).digest('hex').slice(0, 32);
 }
 
 /** Which storage kind (meter row and folder) a bucket's files count under; plan receipts never count. */
@@ -76,6 +86,12 @@ function usesSql(shopId: string) {
       union all
       select ip.media_id, 'item', ip.item_id::text, i.name, 3
         from public.item_photos ip join public.items i on i.id = ip.item_id where ip.tenant_id = ${shopId}
+      union all
+      select v.media_id, 'item', i.id::text, i.name, 3
+        from public.item_axis_values v
+        join public.item_axes a on a.id = v.axis_id
+        join public.items i on i.id = a.item_id
+        where v.tenant_id = ${shopId} and v.media_id is not null
       union all
       select icon_media_id, 'category', id::text, name, 4
         from public.categories where tenant_id = ${shopId} and icon_media_id is not null
@@ -138,13 +154,58 @@ export class StorageService {
       usedBytes: used,
       limitBytes: Number(limit?.limit ?? 0),
       kinds,
-      // Old proofs and archived photos arrive with orders and the menu (phases 4 and 5).
-      cleanups: [],
+      cleanups: await this.cleanupOffers(rows),
       unusedUploads: unused,
       proofDays: PROOF_KEEP_DAYS,
       // Exports come with their own phase (6).
       lastExport: null,
     });
+  }
+
+  /** What a cleanup would delete now, with a token so Run deletes exactly this list (cleanup_changed). */
+  async previewCleanup(kind: CleanupKind): Promise<CleanupPreview> {
+    const files = await this.cleanupFiles(kind, await this.files(this.db.shopId));
+    return CleanupPreviewSchema.parse({
+      kind,
+      files: files.length,
+      bytes: files.reduce((sum, f) => sum + Number(f.bytes), 0),
+      // Archived photos were never customer data; proofs need an export first (phase 6).
+      savedCopy: kind === 'archived_photos',
+      token: cleanupToken(files),
+    });
+  }
+
+  async runCleanup(kind: CleanupKind, token: string): Promise<StorageSummary> {
+    const shopId = this.db.shopId;
+    const files = await this.cleanupFiles(kind, await this.files(shopId));
+    if (files.length === 0 || cleanupToken(files) !== token) {
+      throw new ApiFailure('cleanup_changed', 409);
+    }
+    const ids = files.map((f) => f.id);
+    if (kind === 'archived_photos') {
+      // The archived items lose these photos; restoring one brings it back without a picture.
+      await this.db.tx.execute(sql`
+        delete from public.item_photos where tenant_id = ${shopId} and media_id in (${sql.join(
+          ids.map((id) => sql`${id}::uuid`),
+          sql`, `,
+        )})`);
+      await this.db.tx.execute(sql`
+        update public.item_axis_values set media_id = null
+          where tenant_id = ${shopId} and media_id in (${sql.join(
+            ids.map((id) => sql`${id}::uuid`),
+            sql`, `,
+          )})`);
+    } else {
+      // The payment row stays; only its picture goes (P7).
+      await this.db.tx.execute(sql`
+        update public.payment_proofs set media_id = null
+          where tenant_id = ${shopId} and media_id in (${sql.join(
+            ids.map((id) => sql`${id}::uuid`),
+            sql`, `,
+          )})`);
+    }
+    await this.media.deleteFiles(files);
+    return this.getStorage();
   }
 
   async listFiles(folder: StorageFolder): Promise<StoredFileList> {
@@ -223,6 +284,63 @@ export class StorageService {
     });
   }
 
+  private async cleanupOffers(
+    rows: readonly (FileRow & { uses: number })[],
+  ): Promise<{ kind: CleanupKind; files: number; bytes: number }[]> {
+    const offers: { kind: CleanupKind; files: number; bytes: number }[] = [];
+    for (const kind of ['old_proofs', 'archived_photos'] as const) {
+      const files = await this.cleanupFiles(kind, rows);
+      offers.push({
+        kind,
+        files: files.length,
+        bytes: files.reduce((s, f) => s + Number(f.bytes), 0),
+      });
+    }
+    return offers;
+  }
+
+  /**
+   * The files a cleanup takes:
+   * - archived_photos: menu photos whose every use is an archived item (photo or option photo);
+   * - old_proofs: payment photos of finished orders (completed, cancelled, expired) older than 7 days;
+   * - exported_proofs: proofs inside the owner's last export (phase 6).
+   */
+  private async cleanupFiles(
+    kind: CleanupKind,
+    rows: readonly (FileRow & { uses: number })[],
+  ): Promise<(FileRow & { uses: number })[]> {
+    const shopId = this.db.shopId;
+    if (kind === 'archived_photos') {
+      const archived = await this.db.tx.execute<{ media_id: string; n: number | string }>(sql`
+        select media_id, count(*) as n from (
+          select ip.media_id from public.item_photos ip
+            join public.items i on i.id = ip.item_id
+            where ip.tenant_id = ${shopId} and i.status = 'archived'
+          union all
+          select v.media_id from public.item_axis_values v
+            join public.item_axes a on a.id = v.axis_id
+            join public.items i on i.id = a.item_id
+            where v.tenant_id = ${shopId} and i.status = 'archived' and v.media_id is not null
+        ) archived_uses group by media_id`);
+      const uses = new Map(archived.rows.map((r) => [r.media_id, Number(r.n)]));
+      return rows.filter(
+        (row) => row.bucket === 'menu' && row.uses > 0 && uses.get(row.id) === row.uses,
+      );
+    }
+    if (kind === 'old_proofs') {
+      const old = await this.db.tx.execute<{ media_id: string }>(sql`
+        select p.media_id from public.payment_proofs p
+          join public.orders o on o.id = p.order_id
+          join public.media_files m on m.id = p.media_id
+          where p.tenant_id = ${shopId} and p.media_id is not null
+            and o.status in ('completed', 'cancelled', 'expired')
+            and m.created_at < now() - interval '7 days'`);
+      const ids = new Set(old.rows.map((r) => r.media_id));
+      return rows.filter((row) => ids.has(row.id));
+    }
+    return [];
+  }
+
   /** The screen words the use from its kind (settingsWords.storage.files.usedBy) with this label. */
   private useLabel(use: FileUse, label: string | null): string {
     if (use === 'qr') {
@@ -240,6 +358,7 @@ export class StorageService {
           select qr_media_id as media_id from public.payment_accounts where tenant_id = ${shopId} and removed_at is null
           union all select media_id from public.storefront_media where tenant_id = ${shopId}
           union all select media_id from public.item_photos where tenant_id = ${shopId}
+          union all select media_id from public.item_axis_values where tenant_id = ${shopId}
           union all select icon_media_id from public.categories where tenant_id = ${shopId}
           union all select media_id from public.payment_proofs where tenant_id = ${shopId}
           union all select avatar_media_id from public.members where tenant_id = ${shopId}

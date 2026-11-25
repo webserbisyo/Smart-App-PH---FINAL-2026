@@ -13,6 +13,8 @@ import type {
   HomeTrends,
   AdjustStampsInput,
   Availability,
+  BulkItemsInput,
+  BulkItemsResult,
   ClaimCancelReason,
   CounterChange,
   CustomerPage,
@@ -309,6 +311,8 @@ export interface OwnerCatalogAdapter {
   saveVariantTemplate(input: SaveVariantTemplateInput): Promise<SaveVariantTemplateResult>;
   removeVariantTemplate(input: { id: string }): Promise<RemoveVariantTemplateResult>;
   saveSortOrder(input: SortOrderInput): Promise<void>;
+  // Bulk menu actions (Q7, T117): one call, all or nothing.
+  bulkItems(input: BulkItemsInput): Promise<BulkItemsResult>;
 }
 
 // The owner's uploads (T65, T66, T116): every owner picture goes through these two steps, whatever area it

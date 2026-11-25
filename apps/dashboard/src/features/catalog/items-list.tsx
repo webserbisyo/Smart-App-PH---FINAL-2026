@@ -280,16 +280,16 @@ export function ItemsList() {
   };
 
   const handleBulkSoldOutToday = (ids: string[]) => {
-    const until = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
     void runBulk(
       ids,
       (previous) =>
         bulkSetSoldOut.mutateAsync({
+          // Back on at the next opening: the server reads the shop's hours.
           items: previous.flatMap((i) =>
             i.variants.map((v) => ({
               variantId: v.id,
-              availability: 'sold_out' as const,
-              soldOutUntil: until,
+              availability: 'sold_out_today' as const,
+              soldOutUntil: null,
             })),
           ),
         }),

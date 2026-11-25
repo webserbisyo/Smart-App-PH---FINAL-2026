@@ -40,6 +40,7 @@ import {
   tenants,
 } from '../db/generated/schema.js';
 import { MediaService } from '../media/media.service.js';
+import { StorefrontCache } from '../public/pages-cache.service.js';
 
 // Orders still to come (Settings warns what stays booked when an order type goes off).
 const OPEN_STATUSES = ['placed', 'preparing', 'ready', 'out_for_delivery'];
@@ -74,6 +75,7 @@ export class SettingsService {
   constructor(
     @Inject(Db) private readonly db: Db,
     @Inject(MediaService) private readonly media: MediaService,
+    @Inject(StorefrontCache) private readonly pages: StorefrontCache,
   ) {}
 
   async getSettings(): Promise<OwnerSettings> {
@@ -229,6 +231,8 @@ export class SettingsService {
         updatedAt: sql`now()`,
       })
       .where(eq(shopSettings.tenantId, shopId));
+    // What customers see changed (hours, delivery, ways to pay...): the storefront reads it again (R8).
+    await this.pages.shopChanged();
     return this.getSettings();
   }
 
@@ -275,6 +279,8 @@ export class SettingsService {
           set: { reason: sql`excluded.reason` },
         });
     }
+    // What customers see changed (hours, delivery, ways to pay...): the storefront reads it again (R8).
+    await this.pages.shopChanged();
     return this.getSettings();
   }
 
@@ -295,6 +301,8 @@ export class SettingsService {
         updatedAt: sql`now()`,
       })
       .where(eq(shopSettings.tenantId, this.db.shopId));
+    // What customers see changed (hours, delivery, ways to pay...): the storefront reads it again (R8).
+    await this.pages.shopChanged();
     return this.getSettings();
   }
 
@@ -360,6 +368,8 @@ export class SettingsService {
       .update(shopSettings)
       .set({ freeDeliveryFrom: input.freeDeliveryFrom, updatedAt: sql`now()` })
       .where(eq(shopSettings.tenantId, shopId));
+    // What customers see changed (hours, delivery, ways to pay...): the storefront reads it again (R8).
+    await this.pages.shopChanged();
     return this.getSettings();
   }
 
@@ -432,6 +442,8 @@ export class SettingsService {
       .update(shopSettings)
       .set({ codMaxTotal: input.codMaxTotal, updatedAt: sql`now()` })
       .where(eq(shopSettings.tenantId, shopId));
+    // What customers see changed (hours, delivery, ways to pay...): the storefront reads it again (R8).
+    await this.pages.shopChanged();
     return this.getSettings();
   }
 

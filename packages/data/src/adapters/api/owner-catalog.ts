@@ -1,7 +1,7 @@
-// TODO: When moving to NestJS in phase 4, wire this adapter into createAdapters('api')
-// by switching VITE_DATA_SOURCE to 'api' for ownerCatalog with no screen changes.
-
+// The owner Menu adapter for NestJS (launch phase 4, T117). Same rows as docs/api.md "Catalog (owner)"; the
+// shop comes from the owner's login cookie, never from the address (T34).
 import {
+  BulkItemsResultSchema,
   CategorySchema,
   OwnerItemSchema,
   OwnerOptionGroupSchema,
@@ -9,178 +9,92 @@ import {
   RemoveVariantTemplateResultSchema,
   SaveVariantTemplateResultSchema,
 } from '@smartapp/core';
-import type { OwnerCatalogAdapter } from '../types';
-import { fetchApi } from '../../api-client';
 import { z } from 'zod';
+import { fetchApi } from '../../api-client';
+import type { OwnerCatalogAdapter } from '../types';
 
 export interface ApiOwnerCatalogOptions {
   baseUrl: string;
   getToken: () => Promise<string | null>;
 }
 
+const OkSchema = z.object({ ok: z.literal(true) });
+
+const part = (id: string) => encodeURIComponent(id);
+
 export function createApiOwnerCatalogAdapter({
   baseUrl,
   getToken,
 }: ApiOwnerCatalogOptions): OwnerCatalogAdapter {
-  const authHeaders = async (): Promise<HeadersInit> => {
+  const call = async <T>(
+    path: string,
+    schema: z.ZodType<T>,
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+    body?: unknown,
+  ): Promise<T> => {
     const token = await getToken();
-    return {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
+    return fetchApi(`${baseUrl}${path}`, schema, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
   };
 
   return {
-    async listCategories() {
-      const headers = await authHeaders();
-      return fetchApi(`${baseUrl}/owner/categories`, z.array(CategorySchema), {
-        method: 'GET',
-        headers,
-      });
+    listCategories: () => call('/owner/categories', z.array(CategorySchema), 'GET'),
+    saveCategory: (input) =>
+      input.id
+        ? call(`/owner/categories/${part(input.id)}`, CategorySchema, 'PUT', input)
+        : call('/owner/categories', CategorySchema, 'POST', input),
+    removeCategory: async ({ id }) => {
+      await call(`/owner/categories/${part(id)}`, OkSchema, 'DELETE');
     },
 
-    async saveCategory(input) {
-      const headers = await authHeaders();
-      const url = input.id
-        ? `${baseUrl}/owner/categories/${encodeURIComponent(input.id)}`
-        : `${baseUrl}/owner/categories`;
-      const method = input.id ? 'PUT' : 'POST';
-      return fetchApi(url, CategorySchema, {
-        method,
-        headers,
-        body: JSON.stringify(input),
-      });
+    listItems: () => call('/owner/items', z.array(OwnerItemSchema), 'GET'),
+    saveItem: ({ id, draft }) =>
+      id
+        ? call(`/owner/items/${part(id)}`, OwnerItemSchema, 'PUT', draft)
+        : call('/owner/items', OwnerItemSchema, 'POST', draft),
+    removeItem: async ({ id }) => {
+      await call(`/owner/items/${part(id)}`, OkSchema, 'DELETE');
+    },
+    setItemStatus: ({ id, status }) =>
+      call(`/owner/items/${part(id)}/status`, OwnerItemSchema, 'PATCH', { status }),
+    setSoldOut: ({ variantId, availability, soldOutUntil }) =>
+      call(`/owner/variants/${part(variantId)}`, OwnerItemSchema, 'PATCH', {
+        availability,
+        soldOutUntil: soldOutUntil ?? null,
+      }),
+    bulkItems: (input) => call('/owner/items/bulk', BulkItemsResultSchema, 'POST', input),
+
+    listOptionGroups: () => call('/owner/option-groups', z.array(OwnerOptionGroupSchema), 'GET'),
+    saveOptionGroup: (input) =>
+      input.id
+        ? call(`/owner/option-groups/${part(input.id)}`, OwnerOptionGroupSchema, 'PUT', input)
+        : call('/owner/option-groups', OwnerOptionGroupSchema, 'POST', input),
+    removeOptionGroup: async ({ id }) => {
+      await call(`/owner/option-groups/${part(id)}`, OkSchema, 'DELETE');
     },
 
-    async removeCategory({ id }) {
-      const headers = await authHeaders();
-      await fetchApi(`${baseUrl}/owner/categories/${encodeURIComponent(id)}`, z.unknown(), {
-        method: 'DELETE',
-        headers,
-      });
-    },
+    listVariantTemplates: () =>
+      call('/owner/variant-templates', z.array(OwnerVariantTemplateSchema), 'GET'),
+    saveVariantTemplate: (input) =>
+      input.draft.id
+        ? call(
+            `/owner/variant-templates/${part(input.draft.id)}`,
+            SaveVariantTemplateResultSchema,
+            'PUT',
+            input,
+          )
+        : call('/owner/variant-templates', SaveVariantTemplateResultSchema, 'POST', input),
+    removeVariantTemplate: ({ id }) =>
+      call(`/owner/variant-templates/${part(id)}`, RemoveVariantTemplateResultSchema, 'DELETE'),
 
-    async listItems() {
-      const headers = await authHeaders();
-      return fetchApi(`${baseUrl}/owner/items`, z.array(OwnerItemSchema), {
-        method: 'GET',
-        headers,
-      });
-    },
-
-    async saveItem({ id, draft }) {
-      const headers = await authHeaders();
-      const url = id
-        ? `${baseUrl}/owner/items/${encodeURIComponent(id)}`
-        : `${baseUrl}/owner/items`;
-      const method = id ? 'PUT' : 'POST';
-      return fetchApi(url, OwnerItemSchema, {
-        method,
-        headers,
-        body: JSON.stringify(draft),
-      });
-    },
-
-    async removeItem({ id }) {
-      const headers = await authHeaders();
-      await fetchApi(`${baseUrl}/owner/items/${encodeURIComponent(id)}`, z.unknown(), {
-        method: 'DELETE',
-        headers,
-      });
-    },
-
-    async setItemStatus({ id, status }) {
-      const headers = await authHeaders();
-      return fetchApi(`${baseUrl}/owner/items/${encodeURIComponent(id)}/status`, OwnerItemSchema, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ status }),
-      });
-    },
-
-    async setSoldOut({ variantId, availability, soldOutUntil }) {
-      const headers = await authHeaders();
-      return fetchApi(
-        `${baseUrl}/owner/variants/${encodeURIComponent(variantId)}`,
-        OwnerItemSchema,
-        {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({
-            isSoldOut: availability !== 'available',
-            availability,
-            soldOutUntil,
-          }),
-        },
-      );
-    },
-
-    async listOptionGroups() {
-      const headers = await authHeaders();
-      return fetchApi(`${baseUrl}/owner/option-groups`, z.array(OwnerOptionGroupSchema), {
-        method: 'GET',
-        headers,
-      });
-    },
-
-    async saveOptionGroup(input) {
-      const headers = await authHeaders();
-      const url = input.id
-        ? `${baseUrl}/owner/option-groups/${encodeURIComponent(input.id)}`
-        : `${baseUrl}/owner/option-groups`;
-      const method = input.id ? 'PUT' : 'POST';
-      return fetchApi(url, OwnerOptionGroupSchema, {
-        method,
-        headers,
-        body: JSON.stringify(input),
-      });
-    },
-
-    async removeOptionGroup({ id }) {
-      const headers = await authHeaders();
-      await fetchApi(`${baseUrl}/owner/option-groups/${encodeURIComponent(id)}`, z.unknown(), {
-        method: 'DELETE',
-        headers,
-      });
-    },
-
-    async listVariantTemplates() {
-      const headers = await authHeaders();
-      return fetchApi(`${baseUrl}/owner/variant-templates`, z.array(OwnerVariantTemplateSchema), {
-        method: 'GET',
-        headers,
-      });
-    },
-
-    async saveVariantTemplate(input) {
-      const headers = await authHeaders();
-      const url = input.draft.id
-        ? `${baseUrl}/owner/variant-templates/${encodeURIComponent(input.draft.id)}`
-        : `${baseUrl}/owner/variant-templates`;
-      const method = input.draft.id ? 'PUT' : 'POST';
-      return fetchApi(url, SaveVariantTemplateResultSchema, {
-        method,
-        headers,
-        body: JSON.stringify(input),
-      });
-    },
-
-    async removeVariantTemplate({ id }) {
-      const headers = await authHeaders();
-      return fetchApi(
-        `${baseUrl}/owner/variant-templates/${encodeURIComponent(id)}`,
-        RemoveVariantTemplateResultSchema,
-        { method: 'DELETE', headers },
-      );
-    },
-
-    async saveSortOrder(input) {
-      const headers = await authHeaders();
-      await fetchApi(`${baseUrl}/owner/sort`, z.unknown(), {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(input),
-      });
+    saveSortOrder: async (input) => {
+      await call('/owner/sort', OkSchema, 'PUT', input);
     },
   };
 }

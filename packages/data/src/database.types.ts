@@ -695,14 +695,14 @@ isOneToOne: false
                   ]
                 },"order_line_options": {
                   Row: {
-                    "line_id": string,"name": string,"option_id": string,"price": number,"tenant_id": string
+                    "id": string,"line_id": string,"name": string,"option_id": string | null,"price": number,"tenant_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "line_id": string,"name": string,"option_id": string,"price": number,"tenant_id": string
+                    "id"?: string,"line_id": string,"name": string,"option_id"?: string | null,"price": number,"tenant_id": string
                   }
                   Update: {
-                    "line_id"?: string,"name"?: string,"option_id"?: string,"price"?: number,"tenant_id"?: string
+                    "id"?: string,"line_id"?: string,"name"?: string,"option_id"?: string | null,"price"?: number,"tenant_id"?: string
                   }
                   Relationships: [
                     {
@@ -727,14 +727,14 @@ isOneToOne: false
                   ]
                 },"order_lines": {
                   Row: {
-                    "id": string,"is_reward": boolean,"item_id": string,"line_total": number,"name": string,"note": string,"order_id": string,"qty": number,"sort": number,"tenant_id": string,"unit_price": number,"variant_id": string,"variant_label": string | null
+                    "id": string,"is_reward": boolean,"item_id": string,"line_total": number,"name": string,"note": string,"order_id": string,"qty": number,"sort": number,"tenant_id": string,"unit_price": number,"variant_id": string | null,"variant_label": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "id"?: string,"is_reward"?: boolean,"item_id": string,"line_total": number,"name": string,"note"?: string,"order_id": string,"qty": number,"sort"?: number,"tenant_id": string,"unit_price": number,"variant_id": string,"variant_label"?: string | null
+                    "id"?: string,"is_reward"?: boolean,"item_id": string,"line_total": number,"name": string,"note"?: string,"order_id": string,"qty": number,"sort"?: number,"tenant_id": string,"unit_price": number,"variant_id"?: string | null,"variant_label"?: string | null
                   }
                   Update: {
-                    "id"?: string,"is_reward"?: boolean,"item_id"?: string,"line_total"?: number,"name"?: string,"note"?: string,"order_id"?: string,"qty"?: number,"sort"?: number,"tenant_id"?: string,"unit_price"?: number,"variant_id"?: string,"variant_label"?: string | null
+                    "id"?: string,"is_reward"?: boolean,"item_id"?: string,"line_total"?: number,"name"?: string,"note"?: string,"order_id"?: string,"qty"?: number,"sort"?: number,"tenant_id"?: string,"unit_price"?: number,"variant_id"?: string | null,"variant_label"?: string | null
                   }
                   Relationships: [
                     {
@@ -1435,14 +1435,14 @@ isOneToOne: false
                   ]
                 },"variant_templates": {
                   Row: {
-                    "created_at": string,"id": string,"name": string,"tenant_id": string
+                    "created_at": string,"id": string,"is_sample": boolean,"name": string,"tenant_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"name": string,"tenant_id": string
+                    "created_at"?: string,"id"?: string,"is_sample"?: boolean,"name": string,"tenant_id": string
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"name"?: string,"tenant_id"?: string
+                    "created_at"?: string,"id"?: string,"is_sample"?: boolean,"name"?: string,"tenant_id"?: string
                   }
                   Relationships: [
                     {

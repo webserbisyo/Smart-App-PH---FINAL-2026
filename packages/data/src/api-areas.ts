@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { AppEnv, DataSource } from './env';
 
 // Areas wired to NestJS so far (decision T116, per-area switch). A sample-data build can take some areas from
-// the API (staging: `VITE_API_AREAS=ownerAuth,onboarding,uploads,ownerSettings,ownerEditor`) while the rest stay on
+// the API (staging: `VITE_API_AREAS=ownerAuth,onboarding,uploads,ownerSettings,ownerEditor,ownerCatalog`) while the rest stay on
 // sample data. The list grows phase by phase; a live build never mixes (see dataPlan).
 export const API_AREAS = [
   'ownerAuth',
@@ -12,6 +12,7 @@ export const API_AREAS = [
   'uploads',
   'ownerSettings',
   'ownerEditor',
+  'ownerCatalog',
 ] as const;
 export const ApiAreaEnum = z.enum(API_AREAS);
 export type ApiArea = z.infer<typeof ApiAreaEnum>;

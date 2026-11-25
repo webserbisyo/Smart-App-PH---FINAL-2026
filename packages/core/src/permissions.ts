@@ -13,6 +13,8 @@ export const PERMISSIONS = [
   'editor:manage',
   // Upload, list and delete the shop's files.
   'files:manage',
+  // Change the menu: categories, items, add-ons, variants, samples (launch phase 4, T117).
+  'menu:manage',
   // The founder's Super Admin (an app_metadata flag on the account, never a shop role).
   'platform:admin',
 ] as const;
@@ -26,7 +28,14 @@ export const ShopRoleEnum = z.enum(SHOP_ROLES);
 export type ShopRole = z.infer<typeof ShopRoleEnum>;
 
 const SHOP_PERMISSIONS: Record<ShopRole, readonly Permission[]> = {
-  owner: ['account', 'shop:view', 'settings:manage', 'editor:manage', 'files:manage'],
+  owner: [
+    'account',
+    'shop:view',
+    'settings:manage',
+    'editor:manage',
+    'files:manage',
+    'menu:manage',
+  ],
 };
 
 /** True when a shop role may do this. `platform:admin` never comes from a shop role. */

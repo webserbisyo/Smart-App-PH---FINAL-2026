@@ -100,6 +100,11 @@ export class MediaService {
     return { ref: this.refOf(row.bucket, row.path), bytes: stored.bytes };
   }
 
+  /** The ref of a stored row's file, or null for a bucket we do not know. */
+  refFor(bucket: string, path: string): string | null {
+    return isBucket(bucket) ? this.refOf(bucket, path) : null;
+  }
+
   /** What a screen saves and shows for a file. */
   refOf(bucket: MediaBucket, path: string): string {
     return PUBLIC_BUCKETS.has(bucket) ? this.storage.publicUrl(bucket, path) : path;

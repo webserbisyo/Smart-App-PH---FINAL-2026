@@ -105,6 +105,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     removeVariantTemplate: async (input) =>
       (await real()).ownerCatalog.removeVariantTemplate(input),
     saveSortOrder: async (input) => (await real()).ownerCatalog.saveSortOrder(input),
+    bulkItems: async (input) => (await real()).ownerCatalog.bulkItems(input),
   };
 
   const uploads: UploadsAdapter = {
