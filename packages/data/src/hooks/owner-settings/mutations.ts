@@ -119,6 +119,23 @@ export function useSaveNotificationPrefs() {
   });
 }
 
+/** Alerts on or off for this device; the answer is kept under the device's push address. */
+export function useSetDeviceAlerts() {
+  const { ownerSettings } = useAdapters();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (
+      input:
+        { on: true; endpoint: string; subscription: unknown } | { on: false; endpoint: string },
+    ) =>
+      input.on
+        ? ownerSettings.turnOnDeviceAlerts({ subscription: input.subscription })
+        : ownerSettings.turnOffDeviceAlerts({ endpoint: input.endpoint }),
+    onSuccess: (answer, input) =>
+      qc.setQueryData(ownerSettingsQk.deviceAlerts(input.endpoint), answer),
+  });
+}
+
 export function useSubmitPlanPayment() {
   const { ownerSettings } = useAdapters();
   const qc = useQueryClient();

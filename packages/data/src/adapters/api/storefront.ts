@@ -30,6 +30,7 @@ const PlacedOrderSchema = z.object({
 const ProofUploadSchema = z.object({ uploadUrl: z.string(), path: z.string() });
 const OkSchema = z.object({ ok: z.literal(true) });
 const NewsChoiceSchema = z.object({ news: z.boolean() });
+const PushKeySchema = z.object({ key: z.string().nullable() });
 
 const part = (value: string) => encodeURIComponent(value);
 
@@ -83,6 +84,7 @@ export function createApiStorefrontAdapter({ baseUrl }: ApiStorefrontOptions): S
       call(`${order(slug, token)}/rating`, OrderRatingSchema, 'POST', { stars, comment }),
     subscribePush: ({ slug, token, subscription }) =>
       call(`${order(slug, token)}/push`, OkSchema, 'POST', { subscription }),
+    getPushKey: () => call('/push/key', PushKeySchema, 'GET'),
     resolveMapsLink: ({ url }) => call('/maps/resolve', LatLngSchema, 'POST', { url }),
     joinAsMember: ({ slug, name, phone, orderToken, avatar }) =>
       call(`${shop(slug)}/members`, MemberAccountSchema, 'POST', {

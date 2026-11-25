@@ -23,16 +23,33 @@ export function pushState(): PushState {
 export type EnablePushResult =
   { ok: true; subscription: PushSubscriptionJSON | null } | { ok: false; reason: 'denied' };
 
+/** The base64url key from the API as the bytes `pushManager.subscribe` takes. */
+function keyBytes(key: string): Uint8Array<ArrayBuffer> {
+  const base64 = (key + '='.repeat((4 - (key.length % 4)) % 4))
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  const raw = atob(base64);
+  const bytes = new Uint8Array(new ArrayBuffer(raw.length));
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes;
+}
+
 /**
- * Asks once, on the customer's tap. Mock mode keeps the choice on the phone with no subscription; the
- * API task adds the server key and subscribes through the worker (registration.pushManager.subscribe).
+ * Asks once, on the customer's tap, then subscribes through the worker with the platform key (launch phase
+ * 5). Sample data has no key: the choice stays on the phone with no subscription.
  */
-export async function enablePush(): Promise<EnablePushResult> {
+export async function enablePush(key: string | null): Promise<EnablePushResult> {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return { ok: false, reason: 'denied' };
   const registration = await navigator.serviceWorker.getRegistration();
-  const subscription = registration ? await registration.pushManager.getSubscription() : null;
-  return { ok: true, subscription: subscription ? subscription.toJSON() : null };
+  if (!registration) return { ok: true, subscription: null };
+  const existing = await registration.pushManager.getSubscription();
+  if (existing || !key) return { ok: true, subscription: existing ? existing.toJSON() : null };
+  const made = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: keyBytes(key),
+  });
+  return { ok: true, subscription: made.toJSON() };
 }
 
 /** Dev only: shows what an order update looks like, through the worker when it runs. */

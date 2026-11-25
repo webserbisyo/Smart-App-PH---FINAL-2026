@@ -1329,6 +1329,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return { ok: true as const };
       }),
 
+    // Sample data sends no pushes: Notify me is kept on the phone only.
+    getPushKey: () => run('storefront', () => ({ key: null })),
+
     resolveMapsLink: ({ url }) =>
       run('storefront', () => {
         const spot = parseMapsLink(url);

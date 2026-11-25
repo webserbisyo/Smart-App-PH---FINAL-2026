@@ -2665,7 +2665,8 @@ export const pushWords = {
     newOrder: (no: string, total: string) => `New order ${no} · ${total}`,
     newOrderBody: (name: string, type: string) => `${name} · ${type}. Open Orders to accept it.`,
     payment: (no: string) => `Payment photo to check · ${no}`,
-    paymentBody: (name: string, total: string) => `${name} sent ${total}. Check it, then tap Yes or No.`,
+    paymentBody: (name: string, total: string) =>
+      `${name} sent ${total}. Check it, then tap Yes or No.`,
   },
   orderType: { walk_in: 'Walk-in', pickup: 'Pickup', delivery: 'Delivery' },
   email: {
@@ -3468,7 +3469,8 @@ export const settingsWords = {
     delivery: 'Fees by distance from your shop, or by named areas. You book the rider yourself.',
     payments: 'How customers pay you. Transfers need a screenshot you check by hand.',
     account: 'You, the owner. Customers never see this page.',
-    notifications: 'Emails we send you. The order sound is the bell on the Orders page.',
+    notifications:
+      'Alerts on this device and the emails we send you. The order sound is the bell on the Orders page.',
     plan: 'One plan with everything. You pay Smart App PH by GCash or Maya.',
     storage: 'Your 500 MB, what uses it, and how to save a copy.',
   },
@@ -3722,6 +3724,18 @@ export const settingsWords = {
     sendTo: 'Send to',
     sendToBad: 'Type an email address, like you@example.com.',
     sendToHelp: 'Usually your login email. A shared shop inbox works too.',
+    // New-order alerts on this phone or laptop (launch phase 5, Q2).
+    deviceCard: 'Alerts on this device',
+    deviceAlerts: 'New orders and payment photos',
+    deviceAlertsHelp: 'A notice on this phone or laptop, even with the screen off',
+    deviceOn: 'Alerts are on for this device.',
+    deviceIphone:
+      'On iPhone, add the dashboard to your Home Screen first, then open it from there.',
+    deviceDenied: 'Notifications are blocked for this site. Allow them in your browser settings.',
+    deviceUnsupported: 'This browser can’t show alerts. Try Chrome, Edge or Safari.',
+    deviceFailed: 'Alerts didn’t turn on. Check your connection, then try again.',
+    deviceTurnedOn: 'Alerts turned on',
+    deviceTurnedOff: 'Alerts turned off',
   },
   plan: {
     yourPlan: 'Your plan',

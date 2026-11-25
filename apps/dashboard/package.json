@@ -28,6 +28,7 @@
     "zustand": "5.1.0"
   },
   "devDependencies": {
+    "@serwist/vite": "9.5.15",
     "@tailwindcss/vite": "4.3.3",
     "@tanstack/react-query-devtools": "5.104.1",
     "@types/react": "catalog:",

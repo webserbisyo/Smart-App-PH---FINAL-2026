@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { DEMO_SHOP_SLUGS, type DemoShopSlug } from '@smartapp/core';
 import type { UserClaims } from '@smartapp/data';
 import { adapters, ownerAuth, realShops } from './data.js';
+import { unsubscribeDevice } from './device-alerts.js';
 import { previewActive, previewClaims, readPreviewViewer, writePreviewViewer } from './preview.js';
 
 // Written out (not imported) so Vite folds it and live builds drop the sample sign-in entirely (T100).
@@ -55,6 +56,11 @@ export async function signOut(): Promise<never> {
   if (PREVIEW && readPreviewViewer()) {
     writePreviewViewer(null);
     throw redirect({ to: '/login' });
+  }
+  // This device stops getting the shop's alerts (X6): in the browser, then on the API while still signed in.
+  const endpoint = await unsubscribeDevice().catch(() => null);
+  if (endpoint) {
+    await adapters.ownerSettings.turnOffDeviceAlerts({ endpoint }).catch(() => undefined);
   }
   await ownerAuth.signOut().catch(() => undefined);
   throw redirect({ to: '/login' });

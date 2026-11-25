@@ -172,6 +172,18 @@ export function useRateOrder(slug: string, token: string) {
   });
 }
 
+// The push key, read before the tap so Notify me asks right away (iPhone wants the ask on the tap itself).
+export function usePushKey(enabled: boolean) {
+  const { storefront } = useShopAdapters();
+  return useQuery({
+    queryKey: qk.pushKey(),
+    queryFn: () => storefront.getPushKey(),
+    enabled,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+}
+
 // Notify me on the receipt (T10). The mock stores nothing; T13 passes the service worker's subscription.
 export function useSubscribePush(slug: string, token: string) {
   const { storefront } = useShopAdapters();

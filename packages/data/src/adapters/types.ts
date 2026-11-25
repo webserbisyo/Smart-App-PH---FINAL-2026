@@ -167,6 +167,8 @@ export interface StorefrontAdapter {
     token: string;
     subscription: unknown;
   }): Promise<{ ok: true }>;
+  // The platform's push key (launch phase 5, Q5); null where pushes are only recorded (sample data, a laptop).
+  getPushKey(): Promise<{ key: string | null }>;
   resolveMapsLink(input: { url: string }): Promise<LatLng>;
   joinAsMember(input: {
     slug: string;
@@ -376,6 +378,12 @@ export interface OwnerSettingsAdapter {
   requestAccountDelete(): Promise<{ ok: true }>;
   getNotificationPrefs(): Promise<NotificationPrefs>;
   saveNotificationPrefs(input: NotificationPrefs): Promise<NotificationPrefs>;
+  // New-order alerts on this phone or laptop (launch phase 5, Q2). The key is null where pushes are only
+  // recorded (sample data, a laptop); a device is named by its push address.
+  getOwnerPushKey(): Promise<{ key: string | null }>;
+  getDeviceAlerts(input: { endpoint: string }): Promise<{ on: boolean }>;
+  turnOnDeviceAlerts(input: { subscription: unknown }): Promise<{ on: boolean }>;
+  turnOffDeviceAlerts(input: { endpoint: string }): Promise<{ on: boolean }>;
   getPlan(): Promise<Plan>;
   submitPlanPayment(input: SubmitPlanPaymentInput): Promise<Plan>;
   // The Billing chat (T88): a short note to Smart App PH.

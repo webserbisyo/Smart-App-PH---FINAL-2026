@@ -22,6 +22,8 @@ export interface ApiOwnerSettingsOptions {
 }
 
 const OkSchema = z.object({ ok: z.literal(true) });
+const OnSchema = z.object({ on: z.boolean() });
+const PushKeySchema = z.object({ key: z.string().nullable() });
 
 export function createApiOwnerSettingsAdapter({
   baseUrl,
@@ -60,6 +62,10 @@ export function createApiOwnerSettingsAdapter({
     getNotificationPrefs: () => call('/owner/notifications', NotificationPrefsSchema, 'GET'),
     saveNotificationPrefs: (input) =>
       call('/owner/notifications', NotificationPrefsSchema, 'PUT', input),
+    getOwnerPushKey: () => call('/push/key', PushKeySchema, 'GET'),
+    getDeviceAlerts: (input) => call('/owner/push/check', OnSchema, 'POST', input),
+    turnOnDeviceAlerts: (input) => call('/owner/push', OnSchema, 'POST', input),
+    turnOffDeviceAlerts: (input) => call('/owner/push/off', OnSchema, 'POST', input),
     getPlan: () => call('/owner/plan', PlanSchema, 'GET'),
     submitPlanPayment: (input) => call('/owner/plan/payments', PlanSchema, 'POST', input),
     sendPlanNote: (input) => call('/owner/plan/notes', PlanSchema, 'POST', input),
