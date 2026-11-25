@@ -151,3 +151,25 @@ Phases 1 to 3 are built and merged. The founder does these steps later, in this 
 7. **Last:** Supabase dev › Data API › off. The apps never call Supabase from the browser (decision T34), so nothing breaks.
 
 **Then we test together on staging:** log in from an iPhone in Safari, and set up one food shop and one retail shop from sign-up to an edited storefront, on a phone and a laptop.
+
+## 12. Staging setup after launch phases 4 to 6 (decision T117)
+
+Phases 4 to 6 are built (PR #49). Do these after section 11, in this order. Never paste a key, token or password in chat, a doc or the repo.
+
+1. **Push keys (one pair for every shop):** on your laptop, in `apps/api`, run `node -e "import('web-push').then(w => console.log(w.generateVAPIDKeys()))"`. Put the two values only into Railway (step 4). Keep a copy in your password manager: a new pair means every phone must turn alerts on again.
+2. **Resend API key for the owner's emails:** Resend › API Keys › Create (sending access, domain `mail.webserbisyo.com`). Paste it only into Railway (step 4).
+3. **Supabase dev › Authentication › Emails › Templates:** members log in with a 6-digit code too. In **Magic Link** and **Confirm signup**, show only the code (`{{ .Token }}`), with no link, like the templates in section 11.
+4. **Railway › api › Variables:** add
+   - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (step 1) and `VAPID_SUBJECT` = `mailto:codes@mail.webserbisyo.com`
+   - `RESEND_API_KEY` (step 2) and `EMAIL_FROM` = `Smart App PH <alerts@mail.webserbisyo.com>`
+   - `DASHBOARD_URL` = `https://staging-app.webserbisyo.com` (links in the owner's pushes and emails)
+   - `STOREFRONT_URL` = the storefront's staging address (cached pages refresh, and "Start with samples" reads the sample photos from it)
+   - `STOREFRONT_REVALIDATE_SECRET` and `SERVER_READ_SECRET`: run `openssl rand -hex 32` twice, one value each
+   - `SHOP_DOMAIN` = `webserbisyo.com`
+   - `ADMIN_EMAIL` stays your login email: an owner's "Delete account" request is emailed there.
+5. **Vercel › storefront project › Environment (staging):** `NEXT_PUBLIC_DATA_SOURCE` = `api`, `NEXT_PUBLIC_API_URL` = `https://api-staging.webserbisyo.com`, `NEXT_PUBLIC_SHOP_DOMAIN` = `webserbisyo.com`, and the same `SERVER_READ_SECRET` and `STOREFRONT_REVALIDATE_SECRET` as Railway.
+6. **Vercel › dashboard project › Environment (staging):** `VITE_DATA_SOURCE` = `api`, `VITE_API_URL` = `https://api-staging.webserbisyo.com`.
+
+The demo links (`smartapp-demo-*.vercel.app`) keep sample data: change nothing there.
+
+**Then we test together on staging:** acceptance 1 to 4 (`A-mvp.md` section 5) with a real iPhone and Android phone: place an order, send a payment photo, accept it on the dashboard, get the pushes, join as a member and earn a stamp, send one News, and download an export.
