@@ -256,6 +256,8 @@ Each task: one commit (or a short PR when the founder asks). After each one: `pn
 
 ## 8. What the founder does by hand
 
+The full click guide, with the Railway env list, is in `docs/launch.md` section 11. The founder does it after all the code is in.
+
 **Phase 1:** nothing. The dev secrets are in and work.
 
 **Phase 2** (I'll send click steps when we get there):

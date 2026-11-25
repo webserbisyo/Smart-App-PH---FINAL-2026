@@ -125,3 +125,29 @@ Each shop opens at `<slug>.webserbisyo.com`; `shop.webserbisyo.com/<slug>` is th
 5. Open `kanto-smash.webserbisyo.com` and `shop.webserbisyo.com/kanto-smash` on your phone: both must show the same shop.
 
 Every DNS change needs your yes; I can do steps 1, 2 and 4 with the Vercel connector once you say yes.
+
+## 11. Staging setup after launch phases 1 to 3 (decision T116)
+
+Phases 1 to 3 are built and merged. The founder does these steps later, in this order, once all the code is in. Until then everything runs on a laptop or in CI. Never paste a key, token or password in chat, a doc or the repo.
+
+1. **Resend:** create the account, add the domain `mail.webserbisyo.com` and say yes to its DNS records (Vercel › Domains › `webserbisyo.com` › DNS records).
+2. **Supabase dev › Authentication › Emails:**
+   - SMTP Settings: turn on custom SMTP and use Resend (host `smtp.resend.com`, port 465, user `resend`, password = a Resend API key), sender `codes@mail.webserbisyo.com`.
+   - Rate Limits: emails sent per hour = 100.
+   - Email OTP: length 6 digits, expires in 600 seconds.
+   - Templates: show only the code (`{{ .Token }}`), with no link. Do the same for Reset password (section 8).
+3. **Supabase dev › Project Settings:**
+   - JWT Keys: if it still shows the legacy secret, switch to the new signing keys.
+   - API Keys: create a **secret key** (`sb_secret_...`) named `staging`. Paste it only into Railway (step 5).
+4. **IP address forwarding (`sb-forwarded-for`):** Supabase dev › Authentication › Rate Limits › **IP Address Forwarding** › on. This makes login limits count each phone, not Railway's one address.
+5. **Railway:** sign up for Hobby (about $5 a month), then New project › Deploy from GitHub repo › `webserbisyo/Smart-App-PH---FINAL-2026`, region Singapore. The env list (names only; values come from Supabase and your password manager):
+   - `APP_ENV` = `staging`, `TRUST_PROXY_HOPS` = `1`, `DB_POOL_MAX` = `5`
+   - `SUPABASE_URL` = the dev project URL, `SUPABASE_SECRET_KEY` = the key from step 3
+   - `DATABASE_URL` = Supabase dev › Connect › Transaction pooler (port 6543), without `sslmode`
+   - `DATABASE_CA_CERT` = Supabase dev › Database settings › SSL Configuration › Download certificate
+   - `CORS_ORIGINS` = `https://staging-app.webserbisyo.com`
+   - `ADMIN_EMAIL` = your login email; leave the `META_*` values empty
+6. **DNS:** say yes to `api-staging.webserbisyo.com` (Railway) and `staging-app.webserbisyo.com` (the dashboard on Vercel). Claude adds them with the Vercel connector after your yes.
+7. **Last:** Supabase dev › Data API › off. The apps never call Supabase from the browser (decision T34), so nothing breaks.
+
+**Then we test together on staging:** log in from an iPhone in Safari, and set up one food shop and one retail shop from sign-up to an edited storefront, on a phone and a laptop.
