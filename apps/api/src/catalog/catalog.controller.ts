@@ -102,7 +102,9 @@ export class CatalogController {
   @Post('items/bulk')
   @Can('menu:manage')
   @HttpCode(200)
-  bulkItems(@Body({ schema: BulkItemsInputSchema }) body: BulkItemsInput): Promise<BulkItemsResult> {
+  bulkItems(
+    @Body({ schema: BulkItemsInputSchema }) body: BulkItemsInput,
+  ): Promise<BulkItemsResult> {
     return this.catalog.bulk(body);
   }
 

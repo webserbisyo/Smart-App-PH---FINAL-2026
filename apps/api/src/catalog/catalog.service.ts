@@ -217,13 +217,17 @@ export class CatalogService {
         .where(and(eq(itemVariants.tenantId, shopId), inArray(itemVariants.id, ids)));
       if (found.length !== ids.length) throw notFound();
       // One update per distinct state: a typical bulk action is one or two statements.
-      const byState = new Map<string, { availability: Availability; until: string | null; ids: string[] }>();
+      const byState = new Map<
+        string,
+        { availability: Availability; until: string | null; ids: string[] }
+      >();
       for (const change of input.variants) {
         const until = await this.untilFor(change.availability, change.soldOutUntil ?? null);
         const key = `${change.availability}|${until ?? ''}`;
         const entry = byState.get(key);
         if (entry) entry.ids.push(change.variantId);
-        else byState.set(key, { availability: change.availability, until, ids: [change.variantId] });
+        else
+          byState.set(key, { availability: change.availability, until, ids: [change.variantId] });
       }
       for (const state of byState.values()) {
         await tx
@@ -363,7 +367,9 @@ export class CatalogService {
         .where(eq(variantTemplates.tenantId, shopId));
       if ((have?.n ?? 0) >= VARIANT_LIMITS.templates) throw fieldError('name', 'too_many');
       const templateId = randomUUID();
-      await tx.insert(variantTemplates).values({ id: templateId, tenantId: shopId, name: draft.name });
+      await tx
+        .insert(variantTemplates)
+        .values({ id: templateId, tenantId: shopId, name: draft.name });
       await this.writeTemplateOptions(templateId, draft.options, new Set());
       return { template: await this.templateOrNotFound(templateId), ...result };
     }
@@ -554,15 +560,25 @@ export class CatalogService {
     }
 
     // 5. Photos, cover first.
-    await tx.delete(itemPhotos).where(and(eq(itemPhotos.tenantId, shopId), eq(itemPhotos.itemId, itemId)));
+    await tx
+      .delete(itemPhotos)
+      .where(and(eq(itemPhotos.tenantId, shopId), eq(itemPhotos.itemId, itemId)));
     if (photoIds.length > 0) {
       await tx.insert(itemPhotos).values(
-        photoIds.map((mediaId, sort) => ({ tenantId: shopId, itemId, mediaId, sort, isCover: sort === 0 })),
+        photoIds.map((mediaId, sort) => ({
+          tenantId: shopId,
+          itemId,
+          mediaId,
+          sort,
+          isCover: sort === 0,
+        })),
       );
     }
 
     // 6. Choice rows and their values, written again; names map to the new value ids.
-    await tx.delete(itemAxes).where(and(eq(itemAxes.tenantId, shopId), eq(itemAxes.itemId, itemId)));
+    await tx
+      .delete(itemAxes)
+      .where(and(eq(itemAxes.tenantId, shopId), eq(itemAxes.itemId, itemId)));
     const valueIdAt: Map<string, string>[] = [];
     for (const [position, axis] of draft.axes.entries()) {
       const axisId = randomUUID();
@@ -623,7 +639,9 @@ export class CatalogService {
           .set(fieldsV)
           .where(and(eq(itemVariants.tenantId, shopId), eq(itemVariants.id, variantId)));
       } else {
-        await tx.insert(itemVariants).values({ id: variantId, tenantId: shopId, itemId, ...fieldsV });
+        await tx
+          .insert(itemVariants)
+          .values({ id: variantId, tenantId: shopId, itemId, ...fieldsV });
       }
       for (const axisValueId of known) links.push({ tenantId: shopId, variantId, axisValueId });
     }
@@ -643,7 +661,12 @@ export class CatalogService {
       .where(and(eq(itemPairings.tenantId, shopId), eq(itemPairings.itemId, itemId)));
     if (pairingIds.length > 0) {
       await tx.insert(itemPairings).values(
-        pairingIds.map((pairedItemId, sort) => ({ tenantId: shopId, itemId, pairedItemId, sort })),
+        pairingIds.map((pairedItemId, sort) => ({
+          tenantId: shopId,
+          itemId,
+          pairedItemId,
+          sort,
+        })),
       );
     }
     return itemId;
@@ -749,7 +772,11 @@ export class CatalogService {
       );
     const now = new Date();
     const known = HoursSettingsSchema.parse({
-      hours: hours.map((h) => ({ day: h.day, open: h.open.slice(0, 5), close: h.close.slice(0, 5) })),
+      hours: hours.map((h) => ({
+        day: h.day,
+        open: h.open.slice(0, 5),
+        close: h.close.slice(0, 5),
+      })),
       closures: daysOff,
     });
     const next = nextOpening(

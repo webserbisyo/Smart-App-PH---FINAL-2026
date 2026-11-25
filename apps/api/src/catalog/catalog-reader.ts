@@ -59,7 +59,10 @@ export function readAvailability(
     }
     return { availability, soldOutUntil: iso(soldOutUntil) };
   }
-  return { availability: availability === 'sold_out' ? 'sold_out' : 'available', soldOutUntil: null };
+  return {
+    availability: availability === 'sold_out' ? 'sold_out' : 'available',
+    soldOutUntil: null,
+  };
 }
 
 function groupBy<T, K>(rows: readonly T[], key: (row: T) => K): Map<K, T[]> {
@@ -298,7 +301,9 @@ export class CatalogReader {
     const usage = await tx
       .select({ groupId: itemOptionGroups.groupId, n: sql<number>`count(*)::int` })
       .from(itemOptionGroups)
-      .where(and(eq(itemOptionGroups.tenantId, shopId), inArray(itemOptionGroups.groupId, groupIds)))
+      .where(
+        and(eq(itemOptionGroups.tenantId, shopId), inArray(itemOptionGroups.groupId, groupIds)),
+      )
       .groupBy(itemOptionGroups.groupId);
     const optionsOf = groupBy(optionRows, (o) => o.groupId);
     const usedBy = new Map(usage.map((u) => [u.groupId, Number(u.n)]));
