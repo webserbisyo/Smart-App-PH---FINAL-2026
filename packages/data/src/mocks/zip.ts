@@ -93,14 +93,5 @@ export function makeZip(entries: readonly ZipEntry[], at: Date): Uint8Array<Arra
   return out;
 }
 
-/** One spreadsheet cell: quoted, and a leading = + - @ made harmless (docs/api.md, CSV rule). */
-export function csvCell(value: string | number): string {
-  const text = String(value);
-  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
-
-/** A CSV with a BOM, so Excel opens the peso sign and ñ right. */
-export function csv(rows: readonly (readonly (string | number)[])[]): string {
-  return `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}\r\n`;
-}
+// The spreadsheet rules live in core, so the API's real export writes the same cells.
+export { csv, csvCell } from '@smartapp/core';

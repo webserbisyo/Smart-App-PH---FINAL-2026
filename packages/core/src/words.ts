@@ -2686,6 +2686,57 @@ export const pushWords = {
   },
 } as const;
 
+// The owner's data export (T66, phase 6): the spreadsheet headings inside the ZIP. Its own export, so no
+// screen carries these words.
+export const exportWords = {
+  ordersHeader: [
+    'Order',
+    'Placed (Manila)',
+    'Business day',
+    'Type',
+    'Status',
+    'Customer',
+    'Phone',
+    'Email',
+    'Address',
+    'Items',
+    'Subtotal (PHP)',
+    'Discount (PHP)',
+    'Delivery fee (PHP)',
+    'Total (PHP)',
+    'Payment',
+    'Paid',
+    'Refund (PHP)',
+    'Note',
+  ],
+  paymentsHeader: [
+    'Order',
+    'Placed (Manila)',
+    'Payment',
+    'Amount (PHP)',
+    'Paid',
+    'Photo sent (Manila)',
+    'Reference',
+    'Photo check',
+    'Checked (Manila)',
+    'Proof file',
+  ],
+  proofStatus: { pending: 'Checking', approved: 'Approved', rejected: 'Not accepted' },
+  proofFile: (orderNo: number, n: number, ext: string) =>
+    `proofs/order-${orderNo}${n > 1 ? `-${n}` : ''}.${ext}`,
+  reward: (title: string) => `Reward: ${title}`,
+} as const;
+
+// The email the founder gets when an owner asks to delete their account (api.md: no self-delete at launch).
+export const founderEmailWords = {
+  deleteSubject: (shop: string) => `Delete request: ${shop}`,
+  deleteLine: (shop: string, slug: string, email: string) =>
+    `The owner of ${shop} (${slug}) asked to delete their account and shop. Their login: ${email}.`,
+  deleteNext:
+    'Reply to them, offer a data export first, then close the shop in Super Admin › Shops.',
+  open: 'Open the shop in Super Admin',
+} as const;
+
 // The receipt's day words (Q10, T117): a small export, so every page that shows a time can use it.
 export const receiptDateWords = { today: 'Today', tomorrow: 'Tomorrow' } as const;
 

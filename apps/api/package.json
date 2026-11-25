@@ -23,6 +23,7 @@
     "@smartapp/core": "workspace:*",
     "@supabase/supabase-js": "2.117.3",
     "drizzle-orm": "0.45.4",
+    "fflate": "0.8.3",
     "helmet": "8.3.0",
     "jose": "6.2.12",
     "pg": "8.23.1",

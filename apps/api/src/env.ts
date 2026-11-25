@@ -57,6 +57,9 @@ export const EnvSchema = z
     // laptop, emails are only recorded.
     RESEND_API_KEY: optionalText(z.string().regex(/^re_[A-Za-z0-9_]{10,200}$/)),
     EMAIL_FROM: optionalText(z.string().min(5).max(200)),
+    // The founder's own login email: Super Admin on a laptop (seed:demo), and where an owner's account
+    // delete request goes.
+    ADMIN_EMAIL: optionalText(z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)),
     META_GRAPH_VERSION: z
       .string()
       .regex(/^v\d+\.\d+$/)
@@ -81,6 +84,7 @@ export const EnvSchema = z
       'VAPID_SUBJECT',
       'RESEND_API_KEY',
       'EMAIL_FROM',
+      'ADMIN_EMAIL',
     ] as const) {
       if (!env[key])
         ctx.addIssue({ code: 'custom', path: [key], message: 'Needed outside development' });

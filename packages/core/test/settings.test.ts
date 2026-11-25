@@ -22,6 +22,10 @@ import {
   startingAvatar,
   storageLevel,
   storagePercent,
+  csv,
+  csvCell,
+  exportFileMonth,
+  exportRangeDays,
 } from '../src/index.js';
 
 const mnl = (local: string) => new Date(`${local.replace(' ', 'T')}:00+08:00`).toISOString();
@@ -197,5 +201,29 @@ describe('Storage › Files (T93)', () => {
     expect(sortFiles(files, 'newest').map((f) => f.id)).toEqual(['b', 'c', 'a']);
     expect(sortFiles(files, 'oldest').map((f) => f.id)).toEqual(['a', 'c', 'b']);
     expect(sortFiles(files, 'largest').map((f) => f.id)).toEqual(['b', 'c', 'a']);
+  });
+});
+
+describe('the data export (phase 6)', () => {
+  // 1 AM on Dec 1 in Manila is still Nov 30 in UTC: the Manila month counts.
+  const at = new Date('2026-11-30T17:00:00Z');
+
+  it('covers Manila business days by range', () => {
+    expect(exportRangeDays('this_month', at)).toEqual({ from: '2026-12-01', to: null });
+    expect(exportRangeDays('last_month', at)).toEqual({ from: '2026-11-01', to: '2026-12-01' });
+    expect(exportRangeDays('everything', at)).toEqual({ from: null, to: null });
+    expect(exportRangeDays('last_month', new Date('2027-01-10T04:00:00Z'))).toEqual({
+      from: '2026-12-01',
+      to: '2027-01-01',
+    });
+    expect(exportFileMonth('last_month', at)).toBe('2026-11');
+    expect(exportFileMonth('everything', at)).toBe('all');
+  });
+
+  it('writes spreadsheet cells that never run as formulas', () => {
+    expect(csvCell('=SUM(A1)')).toBe(`"'=SUM(A1)"`);
+    expect(csvCell('-5')).toBe(`"'-5"`);
+    expect(csvCell('Say "hi"')).toBe('"Say ""hi"""');
+    expect(csv([['a', 1]])).toBe('﻿"a","1"\r\n');
   });
 });

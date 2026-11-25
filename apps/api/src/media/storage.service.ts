@@ -1,16 +1,20 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   CleanupPreviewSchema,
+  FilesDownloadSchema,
+  manilaDate,
   MEDIA_BUCKETS,
   PROOF_KEEP_DAYS,
   STORAGE_KINDS,
+  STORAGE_FOLDERS,
   StorageSummarySchema,
   StoredFileListSchema,
   words,
   type CleanupKind,
   type CleanupPreview,
+  type FilesDownload,
   type FileUse,
   type MediaBucket,
   type StorageFolder,
@@ -20,10 +24,20 @@ import {
   type StoredFileList,
 } from '@smartapp/core';
 import { sql } from 'drizzle-orm';
-import { ApiFailure } from '../common/api-failure.js';
+import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
 import { JobsService } from '../jobs/jobs.service.js';
+import { mapLimit } from '../push/push-delivery.service.js';
+import {
+  DOWNLOADS_FOLDER,
+  EXPORT_LINK_HOURS,
+  ExportsService,
+  extensionOf,
+  ZIP_MAX_BYTES,
+} from './exports.service.js';
+import { MediaStorage } from './media-storage.js';
 import { MediaService } from './media.service.js';
+import { zipSync, type Zippable } from 'fflate';
 
 // Confirmed uploads nothing uses are removed after a day (the Storage page says they clear by themselves).
 const UNUSED_HOURS = 24;
@@ -34,6 +48,7 @@ interface FileRow extends Record<string, unknown> {
   kind: string;
   bucket: string;
   path: string;
+  mime: string;
   bytes: number | string;
   confirmed: boolean;
   created_at: string;
@@ -121,6 +136,8 @@ export class StorageService {
     @Inject(Db) private readonly db: Db,
     @Inject(MediaService) private readonly media: MediaService,
     @Inject(JobsService) private readonly jobs: JobsService,
+    @Inject(ExportsService) private readonly exports: ExportsService,
+    @Inject(MediaStorage) private readonly storage: MediaStorage,
   ) {}
 
   async getStorage(): Promise<StorageSummary> {
@@ -157,20 +174,20 @@ export class StorageService {
       cleanups: await this.cleanupOffers(rows),
       unusedUploads: unused,
       proofDays: PROOF_KEEP_DAYS,
-      // Exports come with their own phase (6).
-      lastExport: null,
+      lastExport: await this.exports.latest(),
     });
   }
 
   /** What a cleanup would delete now, with a token so Run deletes exactly this list (cleanup_changed). */
   async previewCleanup(kind: CleanupKind): Promise<CleanupPreview> {
     const files = await this.cleanupFiles(kind, await this.files(this.db.shopId));
+    // Archived photos were never customer data; proofs count as saved when the last export holds them all.
+    const saved = kind === 'archived_photos' ? null : await this.exports.exportedProofIds();
     return CleanupPreviewSchema.parse({
       kind,
       files: files.length,
       bytes: files.reduce((sum, f) => sum + Number(f.bytes), 0),
-      // Archived photos were never customer data; proofs need an export first (phase 6).
-      savedCopy: kind === 'archived_photos',
+      savedCopy: saved === null || (files.length > 0 && files.every((f) => saved.has(f.id))),
       token: cleanupToken(files),
     });
   }
@@ -210,6 +227,62 @@ export class StorageService {
 
   async listFiles(folder: StorageFolder): Promise<StoredFileList> {
     const rows = await this.files(this.db.shopId);
+    return StoredFileListSchema.parse({ folder, files: this.views(rows, folder) });
+  }
+
+  /** The ticked files in one ZIP (named as the Files tab shows them), with a 24-hour link. */
+  async downloadFiles(ids: readonly string[]): Promise<FilesDownload> {
+    const shopId = this.db.shopId;
+    const rows = await this.files(shopId);
+    const wanted = new Set(ids);
+    const picked = STORAGE_FOLDERS.flatMap((folder) => this.views(rows, folder)).filter((f) =>
+      wanted.has(f.id),
+    );
+    // Another shop's file, or one already gone, answers Not found (rule 12).
+    if (picked.length !== wanted.size) throw notFound();
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const total = picked.reduce((n, f) => n + f.bytes, 0);
+    if (total > ZIP_MAX_BYTES) throw new ApiFailure('file_too_large', 413);
+    const bodies = await mapLimit(picked, 4, async (f) => {
+      const row = byId.get(f.id);
+      return row && isBucket(row.bucket) ? this.storage.download(row.bucket, row.path) : null;
+    });
+    const files: Zippable = {};
+    const used = new Set<string>();
+    picked.forEach((f, i) => {
+      const body = bodies[i];
+      if (!body) return;
+      const base = `${f.folder}/${f.name.replace(/\.[a-z0-9]+$/i, '')}`;
+      const ext = extensionOf(byId.get(f.id)?.mime ?? null);
+      let name = `${base}.${ext}`;
+      for (let n = 2; used.has(name); n++) name = `${base}-${n}.${ext}`;
+      used.add(name);
+      files[name] = [body, { level: 0 }];
+    });
+    const count = Object.keys(files).length;
+    if (count === 0) throw notFound();
+    const today = manilaDate(new Date());
+    const path = `${DOWNLOADS_FOLDER}/${today}/${shopId}-${randomUUID()}.zip`;
+    const zip = zipSync(files);
+    await this.storage.put('exports', path, Buffer.from(zip), 'application/zip', 0);
+    const url = await this.storage.signedRead('exports', path, EXPORT_LINK_HOURS * 3600);
+    if (!url) throw new ApiFailure('unknown', 502);
+    const [shop] = (
+      await this.db.tx.execute<{ slug: string }>(
+        sql`select slug from public.tenants where id = ${shopId}`,
+      )
+    ).rows;
+    return FilesDownloadSchema.parse({
+      fileName: `${shop?.slug ?? 'shop'}-files-${today}.zip`,
+      url,
+      files: count,
+    });
+  }
+
+  private views(
+    rows: readonly (FileRow & { uses: number })[],
+    folder: StorageFolder,
+  ): StoredFile[] {
     const files: StoredFile[] = [];
     const perDay = new Map<string, number>();
     let banner = 0;
@@ -243,7 +316,7 @@ export class StorageService {
       });
     }
     files.sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt));
-    return StoredFileListSchema.parse({ folder, files });
+    return files;
   }
 
   /** All the ticked files or none: any file in use, still arriving or not the shop's answers file_locked. */
@@ -303,7 +376,7 @@ export class StorageService {
    * The files a cleanup takes:
    * - archived_photos: menu photos whose every use is an archived item (photo or option photo);
    * - old_proofs: payment photos of finished orders (completed, cancelled, expired) older than 7 days;
-   * - exported_proofs: proofs inside the owner's last export (phase 6).
+   * - exported_proofs: proofs inside the owner's last export with photos.
    */
   private async cleanupFiles(
     kind: CleanupKind,
@@ -338,7 +411,9 @@ export class StorageService {
       const ids = new Set(old.rows.map((r) => r.media_id));
       return rows.filter((row) => ids.has(row.id));
     }
-    return [];
+    // exported_proofs: payment photos inside the owner's last export.
+    const saved = await this.exports.exportedProofIds();
+    return rows.filter((row) => row.bucket === 'proofs' && saved.has(row.id));
   }
 
   /** The screen words the use from its kind (settingsWords.storage.files.usedBy) with this label. */
@@ -368,7 +443,7 @@ export class StorageService {
           union all select photo_media_id from public.billing_messages where tenant_id = ${shopId}
         ) all_uses where media_id is not null group by media_id
       )
-      select m.id, m.kind, m.bucket, m.path, m.bytes, m.confirmed_at is not null as confirmed,
+      select m.id, m.kind, m.bucket, m.path, m.mime, m.bytes, m.confirmed_at is not null as confirmed,
              m.created_at, u.use_kind, u.use_id, u.use_label,
              coalesce(a.uses, 0) + case when u.use_kind = 'avatar' then 1 else 0 end as uses
         from public.media_files m

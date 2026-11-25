@@ -52,6 +52,7 @@ describe('settings', () => {
     VAPID_SUBJECT: 'mailto:codes@mail.webserbisyo.com',
     RESEND_API_KEY: 're_0123456789abcdef',
     EMAIL_FROM: 'Smart App PH <alerts@mail.webserbisyo.com>',
+    ADMIN_EMAIL: 'founder@example.com',
   };
 
   it('production refuses to start without the secret key', () => {
@@ -63,7 +64,12 @@ describe('settings', () => {
   it('production refuses to start without the storefront secrets', () => {
     expect(EnvSchema.safeParse({ ...live, SERVER_READ_SECRET: undefined }).success).toBe(false);
     expect(EnvSchema.safeParse({ ...live, STOREFRONT_URL: undefined }).success).toBe(false);
-    for (const key of ['STOREFRONT_REVALIDATE_SECRET', 'VAPID_PRIVATE_KEY', 'RESEND_API_KEY']) {
+    for (const key of [
+      'STOREFRONT_REVALIDATE_SECRET',
+      'VAPID_PRIVATE_KEY',
+      'RESEND_API_KEY',
+      'ADMIN_EMAIL',
+    ]) {
       expect(EnvSchema.safeParse({ ...live, [key]: undefined }).success).toBe(false);
     }
   });

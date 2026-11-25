@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Put } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Post, Put } from '@nestjs/common';
 import {
   CentavosSchema,
   DeliverySettingsSchema,
@@ -22,6 +22,7 @@ import {
 import { z } from 'zod';
 import type { CallerUser } from '../auth/caller.js';
 import { Can, CurrentUser } from '../auth/decorators.js';
+import { AccountDeleteService } from './account-delete.service.js';
 import { SettingsService } from './settings.service.js';
 
 // The last order type and the last way to pay have their own codes (last_order_type, last_payment_method),
@@ -35,7 +36,10 @@ const PaymentsInputSchema = z.object({
 /** api.md "Settings (owner)": one read, one save per section (T64 to T68). */
 @Controller('owner')
 export class SettingsController {
-  constructor(@Inject(SettingsService) private readonly settings: SettingsService) {}
+  constructor(
+    @Inject(SettingsService) private readonly settings: SettingsService,
+    @Inject(AccountDeleteService) private readonly accountDelete: AccountDeleteService,
+  ) {}
 
   @Get('settings')
   @Can('shop:view')
@@ -107,5 +111,13 @@ export class SettingsController {
     @Body({ schema: NotificationPrefsSchema }) body: NotificationPrefs,
   ): Promise<NotificationPrefs> {
     return this.settings.saveNotificationPrefs(user, body);
+  }
+
+  /** No self-delete at launch: the founder gets the request by email. Owner only (settings:manage). */
+  @Post('account/delete-request')
+  @Can('settings:manage')
+  @HttpCode(200)
+  requestAccountDelete(@CurrentUser() user: CallerUser): Promise<{ ok: true }> {
+    return this.accountDelete.request(user);
   }
 }

@@ -1,22 +1,27 @@
-import { Body, Controller, Get, HttpCode, Inject, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query } from '@nestjs/common';
 import {
   CleanupKindEnum,
+  CreateExportInputSchema,
   StorageFolderEnum,
   StoredFileIdsInputSchema,
   type CleanupPreview,
+  type CreateExportInput,
+  type DataExport,
+  type FilesDownload,
   type StorageSummary,
   type StoredFileIdsInput,
   type StoredFileList,
 } from '@smartapp/core';
 import { z } from 'zod';
 import { Can } from '../auth/decorators.js';
+import { ExportsService } from './exports.service.js';
 import { StorageService } from './storage.service.js';
 
 const FolderQuerySchema = z.object({ folder: StorageFolderEnum });
 const CleanupQuerySchema = z.object({ kind: CleanupKindEnum });
 const CleanupInputSchema = z.object({ kind: CleanupKindEnum, token: z.string().min(1).max(64) });
 
-/** api.md "Settings (owner)": Storage and its Files tab (T66, T93). Exports come with phase 6. */
+/** api.md "Settings (owner)": Storage and its Files tab (T66, T93). */
 @Controller('owner/storage')
 export class StorageController {
   constructor(@Inject(StorageService) private readonly storage: StorageService) {}
@@ -59,5 +64,35 @@ export class StorageController {
     @Body({ schema: StoredFileIdsInputSchema }) body: StoredFileIdsInput,
   ): Promise<StorageSummary> {
     return this.storage.deleteFiles(body.ids);
+  }
+
+  @Post('files/download')
+  @Can('files:manage')
+  @HttpCode(200)
+  downloadStoredFiles(
+    @Body({ schema: StoredFileIdsInputSchema }) body: StoredFileIdsInput,
+  ): Promise<FilesDownload> {
+    return this.storage.downloadFiles(body.ids);
+  }
+}
+
+/** api.md "Settings (owner)": the saved copy of orders and payments (T66, phase 6). */
+@Controller('owner/exports')
+export class ExportsController {
+  constructor(@Inject(ExportsService) private readonly exports: ExportsService) {}
+
+  @Post()
+  @Can('files:manage')
+  @HttpCode(200)
+  createExport(
+    @Body({ schema: CreateExportInputSchema }) body: CreateExportInput,
+  ): Promise<DataExport> {
+    return this.exports.create(body);
+  }
+
+  @Get(':id')
+  @Can('files:manage')
+  getExport(@Param('id') id: string): Promise<DataExport> {
+    return this.exports.get(id);
   }
 }
