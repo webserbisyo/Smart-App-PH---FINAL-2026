@@ -177,6 +177,15 @@ export class SupabaseAuthProvider implements AuthProvider {
     if (error) throw this.mapped(error, 'unknown');
   }
 
+  async getUserEmail(userId: string): Promise<string | null> {
+    const { data, error } = await this.client().auth.admin.getUserById(userId);
+    if (error) {
+      if (error.status === 404) return null;
+      throw this.mapped(error, 'unknown');
+    }
+    return data.user.email?.toLowerCase() ?? null;
+  }
+
   async refresh(refreshToken: string, info: ClientInfo): Promise<AuthSession> {
     const { data, error } = await this.client(info).auth.refreshSession({
       refresh_token: refreshToken,

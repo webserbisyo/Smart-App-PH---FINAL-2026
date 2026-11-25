@@ -13,9 +13,14 @@ import {
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
-import { orderRatings, orders, paymentProofs } from '../db/generated/schema.js';
+import { orderRatings, orders, paymentProofs, tenants } from '../db/generated/schema.js';
+import { EmailOutbox } from '../email/email-outbox.service.js';
 import { MediaService } from '../media/media.service.js';
 import { OrderReader, type OrderView } from '../orders/order-reader.js';
+import { pushOrderOf } from '../orders/order-steps.service.js';
+import { platformOf, type PushSubscriptionInput } from '../push/push-endpoints.js';
+import { PushOutbox } from '../push/push-outbox.service.js';
+import { PushSubscriptions } from '../push/push-subscriptions.service.js';
 import { ShopReader } from './shop-reader.js';
 
 // A payment photo is taken while the order waits for its money, and only in its first week (phases-4-6).
@@ -35,6 +40,9 @@ export class ReceiptsService {
     @Inject(ShopReader) private readonly shops: ShopReader,
     @Inject(OrderReader) private readonly reader: OrderReader,
     @Inject(MediaService) private readonly media: MediaService,
+    @Inject(PushOutbox) private readonly push: PushOutbox,
+    @Inject(PushSubscriptions) private readonly subscriptions: PushSubscriptions,
+    @Inject(EmailOutbox) private readonly emails: EmailOutbox,
   ) {}
 
   async getOrder(slug: string, token: string): Promise<OrderReceipt> {
@@ -82,20 +90,52 @@ export class ReceiptsService {
     }
     const reference = input.referenceNo.trim();
     const file = await this.media.confirmProof(input.path);
-    await this.db.tx.insert(paymentProofs).values({
-      tenantId: this.db.shopId,
-      orderId: view.id,
-      mediaId: file.id,
-      referenceNo: hasReference(reference) ? reference.slice(0, 40) : null,
-      status: 'pending',
-    });
+    const [proof] = await this.db.tx
+      .insert(paymentProofs)
+      .values({
+        tenantId: this.db.shopId,
+        orderId: view.id,
+        mediaId: file.id,
+        referenceNo: hasReference(reference) ? reference.slice(0, 40) : null,
+        status: 'pending',
+      })
+      .returning({ id: paymentProofs.id });
+    if (!proof) throw new ApiFailure('unknown', 500);
     await this.db.tx
       .update(orders)
       .set({ paymentStatus: 'pending' })
       .where(and(eq(orders.tenantId, this.db.shopId), eq(orders.id, view.id)));
+    // The owner checks it: a push to their devices (Q2) and, when they want it, an email.
+    await this.push.toOwner('owner_payment', pushOrderOf(view), `pay:${proof.id}`);
+    this.emails.ownerAlert(
+      'payment_to_check',
+      {
+        orderId: view.id,
+        orderNo: view.row.orderNo,
+        total: view.row.total,
+        shop: await this.shopName(),
+      },
+      `payment:${proof.id}`,
+    );
     const after = await this.reader.byId(view.id);
     if (!after) throw notFound();
     return this.reader.payment(after);
+  }
+
+  /**
+   * Notify me on the receipt (T13): this phone gets the order's steps. Anyone with the link may ask; the
+   * push carries no more than the link already shows.
+   */
+  async subscribePush(
+    slug: string,
+    token: string,
+    subscription: PushSubscriptionInput,
+    userAgent: string | undefined,
+  ): Promise<{ ok: true }> {
+    const view = await this.order(slug, token);
+    const id = await this.subscriptions.save(subscription, platformOf(userAgent), null);
+    await this.subscriptions.linkOrder(id, view.id);
+    return { ok: true };
   }
 
   /** Stars for a finished order, once. */
@@ -118,6 +158,14 @@ export class ReceiptsService {
       comment,
       at: new Date(saved?.createdAt ?? Date.now()).toISOString(),
     });
+  }
+
+  private async shopName(): Promise<string> {
+    const [shop] = await this.db.tx
+      .select({ name: tenants.name })
+      .from(tenants)
+      .where(eq(tenants.id, this.db.shopId));
+    return shop?.name ?? '';
   }
 
   /** The order behind a receipt link; `lock` holds it until the commit (two photos at once wait in line). */

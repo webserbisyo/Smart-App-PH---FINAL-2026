@@ -3,6 +3,7 @@ import { CatalogModule } from '../catalog/catalog.module.js';
 import { MediaModule } from '../media/media.module.js';
 import { ShopReader } from '../public/shop-reader.js';
 import { OrderBook } from './order-book.js';
+import { OrderJobs } from './order-jobs.js';
 import { OrderReader } from './order-reader.js';
 import { OrderSteps } from './order-steps.service.js';
 import { OwnerOrdersController } from './owner-orders.controller.js';
@@ -15,7 +16,7 @@ import { OwnerOrdersService } from './owner-orders.service.js';
 @Module({
   imports: [CatalogModule, MediaModule],
   controllers: [OwnerOrdersController],
-  providers: [ShopReader, OrderBook, OrderReader, OrderSteps, OwnerOrdersService],
+  providers: [ShopReader, OrderBook, OrderReader, OrderSteps, OwnerOrdersService, OrderJobs],
   exports: [ShopReader, OrderBook, OrderReader, OrderSteps],
 })
 export class OrdersModule {}

@@ -43,6 +43,20 @@ export const EnvSchema = z
       .optional()
       .or(z.literal('').transform(() => undefined)),
     STOREFRONT_REVALIDATE_SECRET: optionalText(z.string().min(32)),
+    // The dashboard's address (launch phase 5): links in the owner's pushes and emails.
+    DASHBOARD_URL: z
+      .url()
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
+    // One platform key pair for every shop's pushes (Q5, R6). Without them on a laptop, pushes are only
+    // recorded, never sent. The subject is a real mailto: or https: address (Apple refuses others).
+    VAPID_PUBLIC_KEY: optionalText(z.string().regex(/^[A-Za-z0-9_-]{80,100}$/)),
+    VAPID_PRIVATE_KEY: optionalText(z.string().regex(/^[A-Za-z0-9_-]{40,50}$/)),
+    VAPID_SUBJECT: optionalText(z.string().regex(/^(mailto:[^\s@]+@[^\s@]+|https:\/\/\S+)$/)),
+    // The owner's emails go through Resend's HTTPS API (Q4: Railway blocks mail ports). Without a key on a
+    // laptop, emails are only recorded.
+    RESEND_API_KEY: optionalText(z.string().regex(/^re_[A-Za-z0-9_]{10,200}$/)),
+    EMAIL_FROM: optionalText(z.string().min(5).max(200)),
     META_GRAPH_VERSION: z
       .string()
       .regex(/^v\d+\.\d+$/)
@@ -61,6 +75,12 @@ export const EnvSchema = z
       'STOREFRONT_URL',
       'STOREFRONT_REVALIDATE_SECRET',
       'SERVER_READ_SECRET',
+      'DASHBOARD_URL',
+      'VAPID_PUBLIC_KEY',
+      'VAPID_PRIVATE_KEY',
+      'VAPID_SUBJECT',
+      'RESEND_API_KEY',
+      'EMAIL_FROM',
     ] as const) {
       if (!env[key])
         ctx.addIssue({ code: 'custom', path: [key], message: 'Needed outside development' });

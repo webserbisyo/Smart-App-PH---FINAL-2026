@@ -20,6 +20,8 @@ import { ApiFailure } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
 import { orderEvents, orders, tenants } from '../db/generated/schema.js';
 import { EditorService } from '../editor/editor.service.js';
+import { EmailOutbox } from '../email/email-outbox.service.js';
+import { PushOutbox } from '../push/push-outbox.service.js';
 import { failOnQuote, OrderBook, uuidOrNull } from '../orders/order-book.js';
 import { ShopReader } from './shop-reader.js';
 
@@ -47,6 +49,8 @@ export class StorefrontService {
     @Inject(ShopReader) private readonly shops: ShopReader,
     @Inject(OrderBook) private readonly book: OrderBook,
     @Inject(EditorService) private readonly editor: EditorService,
+    @Inject(PushOutbox) private readonly push: PushOutbox,
+    @Inject(EmailOutbox) private readonly emails: EmailOutbox,
   ) {}
 
   /** A live or demo shop as customers see it; anything else is Not found (rule 12). */
@@ -198,6 +202,24 @@ export class StorefrontService {
       by: 'customer',
       at: placedAt,
     });
+    // The owner hears about it on their own devices (Q2) and, when they want it, by email.
+    await this.push.toOwner(
+      'owner_new_order',
+      {
+        id: order.id,
+        orderNo,
+        type: payload.type,
+        token: ticket.token,
+        total: q.total,
+        customerName: payload.customer.name,
+      },
+      `new:${order.id}`,
+    );
+    this.emails.ownerAlert(
+      'new_order',
+      { orderId: order.id, orderNo, total: q.total, shop: shop.storefront.info.name },
+      `new_order:${order.id}`,
+    );
     return { orderId: order.id, orderNo, token: ticket.token };
   }
 

@@ -2645,6 +2645,41 @@ export const ordersWords = {
   },
 } as const;
 
+// Pushes and emails the API sends (launch phase 5, T117). Its own export, so no page carries these words.
+// Customers see the shop's name as the title; the owner's alerts never carry a customer's phone or address.
+export const pushWords = {
+  // The worker shows this when a push can't be read: an iPhone drops a subscription that shows nothing (X9).
+  fallbackTitle: 'New update',
+  fallbackBody: 'Open the app for details.',
+  status: {
+    preparing: (no: string) => `Order ${no} was accepted. It is being prepared.`,
+    readyPickup: (no: string) => `Order ${no} is ready. Show your order number at the counter.`,
+    readyDelivery: (no: string) => `Order ${no} is ready. The rider picks it up next.`,
+    onTheWay: (no: string) => `Order ${no} is on the way.`,
+    cancelled: (no: string) => `Order ${no} was cancelled. Open it to see why.`,
+    expired: (no: string) => `Order ${no} was cancelled: the payment did not come in time.`,
+    proofRejected: (no: string) =>
+      `Your payment photo for order ${no} was not approved. Open it to send another.`,
+  },
+  owner: {
+    newOrder: (no: string, total: string) => `New order ${no} · ${total}`,
+    newOrderBody: (name: string, type: string) => `${name} · ${type}. Open Orders to accept it.`,
+    payment: (no: string) => `Payment photo to check · ${no}`,
+    paymentBody: (name: string, total: string) => `${name} sent ${total}. Check it, then tap Yes or No.`,
+  },
+  orderType: { walk_in: 'Walk-in', pickup: 'Pickup', delivery: 'Delivery' },
+  email: {
+    newOrderSubject: (shop: string, no: string) => `${shop}: new order ${no}`,
+    newOrderLine: (no: string, total: string) => `You have a new order ${no} for ${total}.`,
+    paymentSubject: (shop: string, no: string) => `${shop}: payment photo to check for ${no}`,
+    paymentLine: (no: string, total: string) =>
+      `A customer sent a payment photo for order ${no} (${total}). Check it, then tap Yes or No.`,
+    open: 'Open the order',
+    why: (shop: string) =>
+      `You get this because these emails are on for ${shop}. Turn them off in Settings › Notifications.`,
+  },
+} as const;
+
 // The receipt's day words (Q10, T117): a small export, so every page that shows a time can use it.
 export const receiptDateWords = { today: 'Today', tomorrow: 'Tomorrow' } as const;
 

@@ -18,6 +18,7 @@ import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
 import { orderEvents, orders, paymentProofs } from '../db/generated/schema.js';
+import { PushOutbox, type PushOrder } from '../push/push-outbox.service.js';
 import { OrderBook, uuidOrNull } from './order-book.js';
 import { OrderReader, type OrderView } from './order-reader.js';
 
@@ -35,6 +36,7 @@ export class OrderSteps {
     @Inject(Db) private readonly db: Db,
     @Inject(OrderReader) private readonly reader: OrderReader,
     @Inject(OrderBook) private readonly book: OrderBook,
+    @Inject(PushOutbox) private readonly push: PushOutbox,
   ) {}
 
   /** The order, locked until the commit; another shop's id or a bad id is Not found. */
@@ -71,7 +73,8 @@ export class OrderSteps {
     );
     if (!check.ok) throw new ApiFailure(check.code, 409);
     const at = new Date().toISOString();
-    await this.step(view.id, to, 'shop', at);
+    const eventId = await this.step(view.id, to, 'shop', at);
+    await this.push.orderStep(pushOrderOf(view), to, eventId);
     if (trackingUrl) {
       await this.db.tx
         .update(orders)
@@ -135,7 +138,8 @@ export class OrderSteps {
           : {}),
       })
       .where(and(eq(orders.tenantId, this.db.shopId), eq(orders.id, view.id)));
-    await this.step(view.id, 'cancelled', 'shop', at);
+    const eventId = await this.step(view.id, 'cancelled', 'shop', at);
+    await this.push.orderStep(pushOrderOf(view), 'cancelled', eventId);
     await this.giveBack(view);
     return this.fresh(view.id);
   }
@@ -154,7 +158,8 @@ export class OrderSteps {
     ) {
       return false;
     }
-    await this.step(view.id, 'expired', 'system', new Date().toISOString());
+    const eventId = await this.step(view.id, 'expired', 'system', new Date().toISOString());
+    await this.push.orderStep(pushOrderOf(view), 'expired', eventId);
     await this.db.tx
       .update(orders)
       .set({ payBy: null })
@@ -212,6 +217,7 @@ export class OrderSteps {
       )
       .where(and(eq(orders.tenantId, this.db.shopId), eq(orders.id, view.id)));
     await this.markChatSeen(view.id, at);
+    if (!approve && proof) await this.push.proofRejected(pushOrderOf(view), proof.id);
     return this.reader.payment(await this.fresh(view.id));
   }
 
@@ -280,24 +286,23 @@ export class OrderSteps {
       where tenant_id = ${this.db.shopId} and id = ${orderId}::uuid`);
   }
 
-  /** Writes one status step and moves the order to it. */
+  /** Writes one status step and moves the order to it; answers the step's id (its push waits on it). */
   async step(
     orderId: string,
     status: OrderStatus,
     by: 'customer' | 'shop' | 'system',
     at: string,
-  ): Promise<void> {
-    await this.db.tx.insert(orderEvents).values({
-      tenantId: this.db.shopId,
-      orderId,
-      status,
-      by,
-      at,
-    });
+  ): Promise<string> {
+    const [event] = await this.db.tx
+      .insert(orderEvents)
+      .values({ tenantId: this.db.shopId, orderId, status, by, at })
+      .returning({ id: orderEvents.id });
+    if (!event) throw new ApiFailure('unknown', 500);
     await this.db.tx
       .update(orders)
       .set({ status, lastStepAt: at })
       .where(and(eq(orders.tenantId, this.db.shopId), eq(orders.id, orderId)));
+    return event.id;
   }
 
   /** What a cancelled or expired order held goes back once: each item's count for its day. */
@@ -307,4 +312,16 @@ export class OrderSteps {
       manilaDate(view.receipt.dueAt),
     );
   }
+}
+
+/** What a push may say about an order: its number, type, link, total and the customer's first name. */
+export function pushOrderOf(view: OrderView): PushOrder {
+  return {
+    id: view.id,
+    orderNo: view.row.orderNo,
+    type: view.receipt.type,
+    token: view.row.token,
+    total: view.row.total,
+    customerName: view.row.customerName,
+  };
 }

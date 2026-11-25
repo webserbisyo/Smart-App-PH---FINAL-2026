@@ -46,6 +46,12 @@ describe('settings', () => {
     STOREFRONT_URL: 'https://shop.webserbisyo.com',
     STOREFRONT_REVALIDATE_SECRET: 'r'.repeat(32),
     SERVER_READ_SECRET: 's'.repeat(32),
+    DASHBOARD_URL: 'https://app.webserbisyo.com',
+    VAPID_PUBLIC_KEY: 'B'.repeat(87),
+    VAPID_PRIVATE_KEY: 'k'.repeat(43),
+    VAPID_SUBJECT: 'mailto:codes@mail.webserbisyo.com',
+    RESEND_API_KEY: 're_0123456789abcdef',
+    EMAIL_FROM: 'Smart App PH <alerts@mail.webserbisyo.com>',
   };
 
   it('production refuses to start without the secret key', () => {
@@ -57,9 +63,9 @@ describe('settings', () => {
   it('production refuses to start without the storefront secrets', () => {
     expect(EnvSchema.safeParse({ ...live, SERVER_READ_SECRET: undefined }).success).toBe(false);
     expect(EnvSchema.safeParse({ ...live, STOREFRONT_URL: undefined }).success).toBe(false);
-    expect(
-      EnvSchema.safeParse({ ...live, STOREFRONT_REVALIDATE_SECRET: undefined }).success,
-    ).toBe(false);
+    for (const key of ['STOREFRONT_REVALIDATE_SECRET', 'VAPID_PRIVATE_KEY', 'RESEND_API_KEY']) {
+      expect(EnvSchema.safeParse({ ...live, [key]: undefined }).success).toBe(false);
+    }
   });
 
   it('production refuses an http dashboard address', () => {

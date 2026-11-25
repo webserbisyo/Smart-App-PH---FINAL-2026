@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, Inject, Param, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
   PaymentMethodEnum,
@@ -9,6 +9,7 @@ import {
 } from '@smartapp/core';
 import { z } from 'zod';
 import { Public } from '../auth/decorators.js';
+import { PushSubscriptionInputSchema } from '../push/push-endpoints.js';
 import { MAX_TOKENS, ReceiptsService } from './receipts.service.js';
 import { STOREFRONT_LIMIT } from './storefront.controller.js';
 
@@ -33,6 +34,9 @@ const RatingInputSchema = z
   })
   .strict();
 type RatingInput = z.infer<typeof RatingInputSchema>;
+
+const PushInputSchema = z.object({ subscription: PushSubscriptionInputSchema }).strict();
+type PushInput = z.infer<typeof PushInputSchema>;
 
 /**
  * The receipt link (`/[shop]/o/[token]`) and the orders a phone kept (api.md "Storefront"). The slug picks the
@@ -86,5 +90,16 @@ export class ReceiptsController {
     @Body({ schema: RatingInputSchema }) body: RatingInput,
   ): Promise<OrderRating> {
     return this.receipts.rateOrder(slug, token, body);
+  }
+
+  @Post('o/:token/push')
+  @HttpCode(200)
+  subscribePush(
+    @Param('slug') slug: string,
+    @Param('token') token: string,
+    @Body({ schema: PushInputSchema }) body: PushInput,
+    @Headers('user-agent') userAgent: string | undefined,
+  ): Promise<{ ok: true }> {
+    return this.receipts.subscribePush(slug, token, body.subscription, userAgent);
   }
 }

@@ -18,6 +18,7 @@ import { JobsModule } from './jobs/jobs.module.js';
 import { MediaModule } from './media/media.module.js';
 import { OrdersModule } from './orders/orders.module.js';
 import { PublicModule } from './public/public.module.js';
+import { PushModule } from './push/push.module.js';
 import { SettingsModule } from './settings/settings.module.js';
 import { ShopModule } from './shop/shop.module.js';
 import { StorefrontCacheModule } from './public/pages-cache.module.js';
@@ -39,6 +40,7 @@ import { StorefrontCacheModule } from './public/pages-cache.module.js';
     JobsModule,
     StorefrontCacheModule,
     AuthModule,
+    PushModule,
     HealthModule,
     ShopModule,
     MediaModule,
