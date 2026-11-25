@@ -94,6 +94,7 @@ export function imageUrl(
   width: number,
   origin = '',
 ): string | null {
+  if (isRemotePicture(ref)) return ref;
   const parsed = parseDemoRef(ref);
   if (!parsed) return null;
 
@@ -125,9 +126,18 @@ export function isLocalPicture(ref: string | null | undefined): ref is string {
   return typeof ref === 'string' && LOCAL_PICTURE.test(ref);
 }
 
+// A real upload (phase 3, T116): NestJS answers its public address in Storage, already made small on the
+// phone, so it is one file with no other sizes.
+const REMOTE_PICTURE = /^https?:\/\/[^\s]+$/;
+
+export function isRemotePicture(ref: string | null | undefined): ref is string {
+  return typeof ref === 'string' && REMOTE_PICTURE.test(ref);
+}
+
 export function imageSources(ref: string | null | undefined, origin = ''): ImageSources | null {
   // One file, no AVIF copy: ShopImage leaves the AVIF source out when it is empty.
-  if (isLocalPicture(ref)) return { avif: '', webp: `${ref} 1600w`, widths: [1600] };
+  if (isLocalPicture(ref) || isRemotePicture(ref))
+    return { avif: '', webp: `${ref} 1600w`, widths: [1600] };
   const parsed = parseDemoRef(ref);
   if (!parsed) return null;
 

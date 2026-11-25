@@ -334,6 +334,23 @@ export const MEDIA_BUCKETS = ['menu', 'look', 'qr', 'profile', 'proofs', 'plan-p
 export const MediaBucketEnum = z.enum(MEDIA_BUCKETS);
 export type MediaBucket = z.infer<typeof MediaBucketEnum>;
 
+// Where each owner upload is kept (T116). Public buckets serve through the CDN; the plan receipt is private.
+export const UPLOAD_BUCKET: Record<UploadKind, MediaBucket> = {
+  logo: 'look',
+  banner: 'look',
+  category: 'look',
+  news_photo: 'look',
+  item: 'menu',
+  qr: 'qr',
+  avatar: 'profile',
+  plan_proof: 'plan-proofs',
+};
+
+// The picture types Storage takes (the media_files CHECK and every bucket's allowed types).
+export const IMAGE_MIME_TYPES = ['image/webp', 'image/jpeg', 'image/png', 'image/gif'] as const;
+export const ImageMimeEnum = z.enum(IMAGE_MIME_TYPES);
+export type ImageMime = z.infer<typeof ImageMimeEnum>;
+
 // The emails waiting to go to an owner (the outbox). The first four follow the owner's switches in
 // NotificationPrefs; "your shop is live", plan reminders and payment answers always go out (T88).
 export const EMAIL_KINDS = [

@@ -13,6 +13,7 @@ import { createApiOnboardingAdapter } from './api/onboarding';
 import { createApiOwnerAuth } from './api/owner-auth';
 import { createApiOwnerEditorAdapter } from './api/owner-editor';
 import { createApiOwnerSettingsAdapter } from './api/owner-settings';
+import { createApiUploadsAdapter } from './api/uploads';
 import { lazyAdapters } from './lazy';
 import type { DataAdapters } from './types';
 
@@ -51,6 +52,7 @@ export function createAdapters(source: DataSource, options: AdapterOptions = {})
     ...(usesApi(plan, 'onboarding')
       ? { onboarding: createApiOnboardingAdapter({ baseUrl, getToken }) }
       : {}),
+    ...(usesApi(plan, 'uploads') ? { uploads: createApiUploadsAdapter(baseUrl) } : {}),
     ...(usesApi(plan, 'ownerSettings')
       ? { ownerSettings: createApiOwnerSettingsAdapter({ baseUrl, getToken }) }
       : {}),

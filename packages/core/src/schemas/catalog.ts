@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { IconKeyEnum, CategoryIconStyleEnum, type CategoryIconStyle } from '../icons.js';
 import { CentavosSchema, IdSchema, IsoDateTimeSchema, MediaRefSchema } from './common.js';
-import { AvailabilityEnum, ItemStatusEnum, SortKindEnum } from './enums.js';
+import { AvailabilityEnum, ItemStatusEnum, SortKindEnum, UploadKindEnum } from './enums.js';
 import { VARIANT_LIMITS } from '../rules/variant-limits.js';
 
 export { CategoryIconStyleEnum, type CategoryIconStyle };
@@ -351,11 +351,28 @@ export const RemoveVariantTemplateResultSchema = z.object({
 });
 export type RemoveVariantTemplateResult = z.infer<typeof RemoveVariantTemplateResultSchema>;
 
+// What the screen asks for: the kind (which bucket) and the size after shrinking (T65, T66).
+export const CreateUploadInputSchema = z.object({
+  kind: UploadKindEnum,
+  bytes: z.number().int().min(0).optional(),
+});
+export type CreateUploadInput = z.infer<typeof CreateUploadInputSchema>;
+
+// Step 1 of an upload (T116): a place in the shop's storage. The phone sends the file to `uploadUrl`
+// (a signed link that works for 2 hours), then confirms it with `id`.
 export const UploadResultSchema = z.object({
+  id: z.string().min(1),
   uploadUrl: z.string(),
   path: z.string(),
 });
 export type UploadResult = z.infer<typeof UploadResultSchema>;
+
+// Step 2: NestJS checks the real size and type and counts the file; `ref` is what the shop saves (X7).
+export const ConfirmUploadResultSchema = z.object({
+  ref: MediaRefSchema,
+  bytes: z.number().int().min(0),
+});
+export type ConfirmUploadResult = z.infer<typeof ConfirmUploadResultSchema>;
 
 export const SortOrderInputSchema = z.object({
   kind: SortKindEnum,

@@ -8,7 +8,6 @@ import {
   OwnerVariantTemplateSchema,
   RemoveVariantTemplateResultSchema,
   SaveVariantTemplateResultSchema,
-  UploadResultSchema,
 } from '@smartapp/core';
 import type { OwnerCatalogAdapter } from '../types';
 import { fetchApi } from '../../api-client';
@@ -184,13 +183,5 @@ export function createApiOwnerCatalogAdapter({
       });
     },
 
-    async createUploadUrl(input) {
-      const headers = await authHeaders();
-      return fetchApi(`${baseUrl}/owner/uploads`, UploadResultSchema, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(input),
-      });
-    },
   };
 }

@@ -15,6 +15,7 @@ import type {
   PlatformAdapter,
   ShowcaseAdapter,
   StorefrontAdapter,
+  UploadsAdapter,
 } from './types';
 
 export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
@@ -101,7 +102,11 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     removeVariantTemplate: async (input) =>
       (await real()).ownerCatalog.removeVariantTemplate(input),
     saveSortOrder: async (input) => (await real()).ownerCatalog.saveSortOrder(input),
-    createUploadUrl: async (input) => (await real()).ownerCatalog.createUploadUrl(input),
+  };
+
+  const uploads: UploadsAdapter = {
+    createUploadUrl: async (input) => (await real()).uploads.createUploadUrl(input),
+    confirmUpload: async (input) => (await real()).uploads.confirmUpload(input),
   };
 
   const ownerMembers: OwnerMembersAdapter = {
@@ -226,6 +231,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     ownerOrders,
     ownerSamples,
     ownerCatalog,
+    uploads,
     ownerMembers,
     ownerNews,
     ownerSettings,

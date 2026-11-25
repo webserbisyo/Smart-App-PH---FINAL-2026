@@ -826,6 +826,8 @@ function TryUpload() {
     }
     setResult({
       ref: '',
+      // A try-out: shrunk on the phone only, never sent.
+      sample: true,
       preview: URL.createObjectURL(prepared.image.blob),
       image: prepared.image,
       original: URL.createObjectURL(file),

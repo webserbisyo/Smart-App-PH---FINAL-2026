@@ -83,6 +83,7 @@ import {
   SortOrderInputSchema,
   UploadKindEnum,
   UploadResultSchema,
+  ConfirmUploadResultSchema,
   type ErrorCode,
   type MemberAccount,
   type OrderPayload,
@@ -2842,16 +2843,29 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         }
       });
     },
+  };
 
+  // Uploads (T116): the same two steps as NestJS. The pretend address takes no file; confirm answers the path.
+  const pendingUploads = new Map<string, { path: string; bytes: number }>();
+  const uploads: DataAdapters['uploads'] = {
     createUploadUrl: async ({ kind, bytes }) => {
       UploadKindEnum.parse(kind);
       // NestJS checks the shop's storage before it signs an upload (T66).
       await settingsMock.reserveUpload(kind, bytes);
       return run('catalog', () => {
+        const uploadId = `upload-${makeToken(rng).slice(0, 10)}`;
         const path = `uploads/${kind}/${Date.now()}-${makeToken(rng).slice(0, 6)}.webp`;
-        return UploadResultSchema.parse({ uploadUrl: `mock://upload/${path}`, path });
+        pendingUploads.set(uploadId, { path, bytes: bytes ?? 0 });
+        return UploadResultSchema.parse({ id: uploadId, uploadUrl: `mock://upload/${path}`, path });
       });
     },
+    confirmUpload: async ({ id: uploadId }) =>
+      run('catalog', () => {
+        const pending = pendingUploads.get(uploadId);
+        if (!pending) fail('not_found', 404);
+        pendingUploads.delete(uploadId);
+        return ConfirmUploadResultSchema.parse({ ref: pending.path, bytes: pending.bytes });
+      }),
   };
 
   // Owner Members (decisions T57 to T60). The shop comes from the owner's login, like the catalog.
@@ -3326,6 +3340,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     ownerOrders,
     ownerSamples,
     ownerCatalog,
+    uploads,
     ownerMembers,
     ownerNews: newsMock.adapter,
     ownerSettings: settingsMock.adapter,

@@ -11,7 +11,9 @@ import type {
   SortOrderInput,
   UploadKind,
 } from '@smartapp/core';
+import { errorWords } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
+import { ApiRequestError } from '../../api-client';
 import { ownerHomeQk } from '../owner-home/qk';
 import { ownerSettingsQk } from '../owner-settings/qk';
 import { ownerCatalogQk } from './qk';
@@ -290,13 +292,58 @@ export function useSaveSortOrder() {
 
 /** Asks for room and a signed upload (T66): `bytes` is the size after shrinking. The meter moves after. */
 export function useCreateUploadUrl() {
-  const { ownerCatalog } = useAdapters();
+  const { uploads } = useAdapters();
   const qc = useQueryClient();
 
   return useMutation({
     mutationFn: (input: { kind: UploadKind; bytes?: number | undefined }) =>
-      ownerCatalog.createUploadUrl(input),
+      uploads.createUploadUrl(input),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ownerSettingsQk.storage() }),
+  });
+}
+
+/** What an upload gives the screen: the ref to save, and whether it only lives on this phone (sample data). */
+export interface SentUpload {
+  ref: string;
+  bytes: number;
+  sample: boolean;
+}
+
+/**
+ * One owner picture, all three steps (T116): room and a signed place, the file sent straight to storage,
+ * then the confirm that checks it and counts it. On sample data the pretend place takes no file.
+ */
+export function useUploadImage() {
+  const { uploads } = useAdapters();
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { kind: UploadKind; blob: Blob }): Promise<SentUpload> => {
+      const target = await uploads.createUploadUrl({ kind: input.kind, bytes: input.blob.size });
+      const sample = target.uploadUrl.startsWith('mock://');
+      if (!sample) {
+        let response: Response;
+        try {
+          response = await fetch(target.uploadUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': input.blob.type, 'x-upsert': 'false' },
+            body: input.blob,
+          });
+        } catch {
+          throw new ApiRequestError({ status: 0, code: 'offline', message: errorWords('offline') });
+        }
+        if (!response.ok) {
+          throw new ApiRequestError({
+            status: response.status,
+            code: 'unknown',
+            message: errorWords('unknown'),
+          });
+        }
+      }
+      const done = await uploads.confirmUpload({ id: target.id });
+      return { ref: done.ref, bytes: done.bytes, sample };
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: ownerSettingsQk.storage() }),
   });
 }
 

@@ -174,7 +174,7 @@ describe('ownerCatalog mock adapter', () => {
 
   it('generates upload URLs', async () => {
     const { store } = testStore(mnl('2026-10-26 12:00'));
-    const upload = await store.ownerCatalog.createUploadUrl({ kind: 'item' });
+    const upload = await store.uploads.createUploadUrl({ kind: 'item' });
     expect(UploadResultSchema.safeParse(upload).success).toBe(true);
     expect(upload.path).toContain('uploads/item/');
   });

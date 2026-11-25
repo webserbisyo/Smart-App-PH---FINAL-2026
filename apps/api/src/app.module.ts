@@ -9,9 +9,12 @@ import { ScopeInterceptor } from './auth/scope.interceptor.js';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter.js';
 import { createStandardSchemaValidationPipe } from './common/pipes/validation.pipe.js';
 import { DbModule } from './db/db.module.js';
+import { EditorModule } from './editor/editor.module.js';
 import { validateEnv } from './env.js';
 import { HealthModule } from './health/health.module.js';
 import { JobsModule } from './jobs/jobs.module.js';
+import { MediaModule } from './media/media.module.js';
+import { SettingsModule } from './settings/settings.module.js';
 import { ShopModule } from './shop/shop.module.js';
 
 // Guards run in this order: our Origin and header check (CSRF), the rate limit, then who is calling.
@@ -25,6 +28,9 @@ import { ShopModule } from './shop/shop.module.js';
     AuthModule,
     HealthModule,
     ShopModule,
+    MediaModule,
+    SettingsModule,
+    EditorModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: OriginGuard },

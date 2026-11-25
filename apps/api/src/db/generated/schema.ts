@@ -2,15 +2,16 @@
 // change a migration in supabase/migrations, then pull again (decision T116, Q9).
 import {
   pgTable,
+  foreignKey,
   pgPolicy,
   check,
-  boolean,
-  integer,
+  uuid,
   text,
   timestamp,
-  foreignKey,
-  uuid,
   jsonb,
+  boolean,
+  integer,
+  uniqueIndex,
   index,
   unique,
   bigint,
@@ -18,11 +19,49 @@ import {
   doublePrecision,
   smallint,
   time,
-  uniqueIndex,
   primaryKey,
 } from 'drizzle-orm/pg-core';
 import { authUsers } from 'drizzle-orm/supabase';
 import { sql } from 'drizzle-orm';
+
+export const profiles = pgTable(
+  'profiles',
+  {
+    id: uuid().primaryKey().notNull(),
+    fullName: text('full_name'),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    phone: text(),
+    avatar: jsonb(),
+    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.id],
+      foreignColumns: [authUsers.id],
+      name: 'profiles_id_fkey',
+    }).onDelete('cascade'),
+    pgPolicy('profiles_admin', {
+      as: 'permissive',
+      for: 'select',
+      to: ['app_admin'],
+      using: sql`true`,
+    }),
+    pgPolicy('profiles_own', { as: 'permissive', for: 'all', to: ['app_api'] }),
+    check(
+      'profiles_avatar_check',
+      sql`(avatar IS NULL) OR ((jsonb_typeof(avatar) = 'object'::text) AND ((avatar ->> 'kind'::text) = ANY (ARRAY['face'::text, 'custom'::text, 'initials'::text, 'photo'::text])))`,
+    ),
+    check(
+      'profiles_full_name_check',
+      sql`(char_length(full_name) >= 1) AND (char_length(full_name) <= 80)`,
+    ),
+    check('profiles_phone_check', sql`phone ~ '^\+639[0-9]{9}$'::text`),
+  ],
+);
 
 export const platformSettings = pgTable(
   'platform_settings',
@@ -67,42 +106,72 @@ export const platformSettings = pgTable(
   ],
 );
 
-export const profiles = pgTable(
-  'profiles',
+export const paymentAccounts = pgTable(
+  'payment_accounts',
   {
-    id: uuid().primaryKey().notNull(),
-    fullName: text('full_name'),
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    tenantId: uuid('tenant_id').notNull(),
+    method: text().notNull(),
+    bank: text(),
+    accountName: text('account_name'),
+    accountNumber: text('account_number'),
+    qrMediaId: uuid('qr_media_id'),
+    isSample: boolean('is_sample').default(false).notNull(),
+    sort: integer().default(0).notNull(),
+    removedAt: timestamp('removed_at', { withTimezone: true, mode: 'string' }),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
-      .defaultNow()
-      .notNull(),
-    phone: text(),
-    avatar: jsonb(),
-    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
       .defaultNow()
       .notNull(),
   },
   (table) => [
+    uniqueIndex('payment_accounts_one_per_method')
+      .using(
+        'btree',
+        table.tenantId.asc().nullsLast().op('uuid_ops'),
+        table.method.asc().nullsLast().op('uuid_ops'),
+      )
+      .where(sql`((removed_at IS NULL) AND (method <> 'bank'::text))`),
+    index('payment_accounts_qr').using('btree', table.qrMediaId.asc().nullsLast().op('uuid_ops')),
     foreignKey({
-      columns: [table.id],
-      foreignColumns: [authUsers.id],
-      name: 'profiles_id_fkey',
+      columns: [table.tenantId],
+      foreignColumns: [tenants.id],
+      name: 'payment_accounts_tenant_id_fkey',
     }).onDelete('cascade'),
-    pgPolicy('profiles_admin', {
+    foreignKey({
+      columns: [table.tenantId, table.qrMediaId],
+      foreignColumns: [mediaFiles.id, mediaFiles.tenantId],
+      name: 'payment_accounts_tenant_id_qr_media_id_fkey',
+    }).onDelete('restrict'),
+    unique('payment_accounts_tenant_id_id_key').on(table.id, table.tenantId),
+    pgPolicy('shop_own', {
       as: 'permissive',
-      for: 'select',
-      to: ['app_admin'],
-      using: sql`true`,
+      for: 'all',
+      to: ['app_api'],
+      using: sql`(tenant_id = private.current_tenant())`,
+      withCheck: sql`(tenant_id = private.current_tenant())`,
     }),
-    pgPolicy('profiles_own', { as: 'permissive', for: 'all', to: ['app_api'] }),
+    pgPolicy('shop_admin', { as: 'permissive', for: 'all', to: ['app_admin'] }),
     check(
-      'profiles_avatar_check',
-      sql`(avatar IS NULL) OR ((jsonb_typeof(avatar) = 'object'::text) AND ((avatar ->> 'kind'::text) = ANY (ARRAY['face'::text, 'custom'::text, 'initials'::text, 'photo'::text])))`,
+      'payment_accounts_account_name_check',
+      sql`(char_length(account_name) >= 1) AND (char_length(account_name) <= 80)`,
     ),
     check(
-      'profiles_full_name_check',
-      sql`(char_length(full_name) >= 1) AND (char_length(full_name) <= 80)`,
+      'payment_accounts_account_number_check',
+      sql`(char_length(account_number) >= 1) AND (char_length(account_number) <= 40)`,
     ),
-    check('profiles_phone_check', sql`phone ~ '^\+639[0-9]{9}$'::text`),
+    check(
+      'payment_accounts_bank_check',
+      sql`bank = ANY (ARRAY['bdo'::text, 'bpi'::text, 'metrobank'::text, 'landbank'::text, 'pnb'::text, 'security_bank'::text, 'unionbank'::text, 'rcbc'::text, 'chinabank'::text, 'eastwest'::text, 'gotyme'::text, 'seabank'::text, 'other'::text])`,
+    ),
+    check('payment_accounts_check', sql`(method = 'bank'::text) = (bank IS NOT NULL)`),
+    check(
+      'payment_accounts_check1',
+      sql`((method = ANY (ARRAY['cash'::text, 'cod'::text])) AND (account_name IS NULL) AND (account_number IS NULL) AND (qr_media_id IS NULL)) OR ((method <> ALL (ARRAY['cash'::text, 'cod'::text])) AND (account_name IS NOT NULL) AND (account_number IS NOT NULL))`,
+    ),
+    check(
+      'payment_accounts_method_check',
+      sql`method = ANY (ARRAY['cash'::text, 'cod'::text, 'gcash'::text, 'maya'::text, 'bank'::text, 'qr_ph'::text])`,
+    ),
   ],
 );
 
@@ -248,25 +317,47 @@ export const tenants = pgTable(
   ],
 );
 
-export const reservedSlugs = pgTable(
-  'reserved_slugs',
+export const deliveryDistanceRows = pgTable(
+  'delivery_distance_rows',
   {
-    slug: text().primaryKey().notNull(),
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    tenantId: uuid('tenant_id').notNull(),
+    fromM: integer('from_m').notNull(),
+    toM: integer('to_m').notNull(),
+    fee: integer().notNull(),
+    etaText: text('eta_text').notNull(),
+    minOrder: integer('min_order').default(0).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .defaultNow()
+      .notNull(),
   },
-  () => [
-    pgPolicy('reserved_slugs_admin', {
+  (table) => [
+    index('delivery_distance_rows_tenant').using(
+      'btree',
+      table.tenantId.asc().nullsLast().op('int4_ops'),
+      table.fromM.asc().nullsLast().op('int4_ops'),
+    ),
+    foreignKey({
+      columns: [table.tenantId],
+      foreignColumns: [tenants.id],
+      name: 'delivery_distance_rows_tenant_id_fkey',
+    }).onDelete('cascade'),
+    pgPolicy('shop_admin', {
       as: 'permissive',
       for: 'all',
       to: ['app_admin'],
       using: sql`true`,
       withCheck: sql`true`,
     }),
-    pgPolicy('reserved_slugs_read', {
-      as: 'permissive',
-      for: 'select',
-      to: ['app_admin', 'app_api'],
-    }),
-    check('reserved_slugs_slug_check', sql`slug = lower(slug)`),
+    pgPolicy('shop_own', { as: 'permissive', for: 'all', to: ['app_api'] }),
+    check('delivery_distance_rows_check', sql`to_m > from_m`),
+    check(
+      'delivery_distance_rows_eta_text_check',
+      sql`(char_length(eta_text) >= 1) AND (char_length(eta_text) <= 40)`,
+    ),
+    check('delivery_distance_rows_fee_check', sql`fee >= 0`),
+    check('delivery_distance_rows_from_m_check', sql`from_m >= 0`),
+    check('delivery_distance_rows_min_order_check', sql`min_order >= 0`),
   ],
 );
 
@@ -430,6 +521,28 @@ export const shopSettings = pgTable(
   ],
 );
 
+export const reservedSlugs = pgTable(
+  'reserved_slugs',
+  {
+    slug: text().primaryKey().notNull(),
+  },
+  () => [
+    pgPolicy('reserved_slugs_admin', {
+      as: 'permissive',
+      for: 'all',
+      to: ['app_admin'],
+      using: sql`true`,
+      withCheck: sql`true`,
+    }),
+    pgPolicy('reserved_slugs_read', {
+      as: 'permissive',
+      for: 'select',
+      to: ['app_admin', 'app_api'],
+    }),
+    check('reserved_slugs_slug_check', sql`slug = lower(slug)`),
+  ],
+);
+
 export const storefrontContent = pgTable(
   'storefront_content',
   {
@@ -531,211 +644,6 @@ export const closures = pgTable(
   ],
 );
 
-export const paymentAccounts = pgTable(
-  'payment_accounts',
-  {
-    id: uuid().defaultRandom().primaryKey().notNull(),
-    tenantId: uuid('tenant_id').notNull(),
-    method: text().notNull(),
-    bank: text(),
-    accountName: text('account_name'),
-    accountNumber: text('account_number'),
-    qrMediaId: uuid('qr_media_id'),
-    isSample: boolean('is_sample').default(false).notNull(),
-    sort: integer().default(0).notNull(),
-    removedAt: timestamp('removed_at', { withTimezone: true, mode: 'string' }),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    uniqueIndex('payment_accounts_one_per_method')
-      .using(
-        'btree',
-        table.tenantId.asc().nullsLast().op('uuid_ops'),
-        table.method.asc().nullsLast().op('uuid_ops'),
-      )
-      .where(sql`((removed_at IS NULL) AND (method <> 'bank'::text))`),
-    index('payment_accounts_qr').using('btree', table.qrMediaId.asc().nullsLast().op('uuid_ops')),
-    foreignKey({
-      columns: [table.tenantId],
-      foreignColumns: [tenants.id],
-      name: 'payment_accounts_tenant_id_fkey',
-    }).onDelete('cascade'),
-    foreignKey({
-      columns: [table.tenantId, table.qrMediaId],
-      foreignColumns: [mediaFiles.id, mediaFiles.tenantId],
-      name: 'payment_accounts_tenant_id_qr_media_id_fkey',
-    }).onDelete('restrict'),
-    unique('payment_accounts_tenant_id_id_key').on(table.id, table.tenantId),
-    pgPolicy('shop_own', {
-      as: 'permissive',
-      for: 'all',
-      to: ['app_api'],
-      using: sql`(tenant_id = private.current_tenant())`,
-      withCheck: sql`(tenant_id = private.current_tenant())`,
-    }),
-    pgPolicy('shop_admin', { as: 'permissive', for: 'all', to: ['app_admin'] }),
-    check(
-      'payment_accounts_account_name_check',
-      sql`(char_length(account_name) >= 1) AND (char_length(account_name) <= 80)`,
-    ),
-    check(
-      'payment_accounts_account_number_check',
-      sql`(char_length(account_number) >= 1) AND (char_length(account_number) <= 40)`,
-    ),
-    check(
-      'payment_accounts_bank_check',
-      sql`bank = ANY (ARRAY['bdo'::text, 'bpi'::text, 'metrobank'::text, 'landbank'::text, 'pnb'::text, 'security_bank'::text, 'unionbank'::text, 'rcbc'::text, 'chinabank'::text, 'eastwest'::text, 'gotyme'::text, 'seabank'::text, 'other'::text])`,
-    ),
-    check('payment_accounts_check', sql`(method = 'bank'::text) = (bank IS NOT NULL)`),
-    check(
-      'payment_accounts_check1',
-      sql`((method = ANY (ARRAY['cash'::text, 'cod'::text])) AND (account_name IS NULL) AND (account_number IS NULL) AND (qr_media_id IS NULL)) OR ((method <> ALL (ARRAY['cash'::text, 'cod'::text])) AND (account_name IS NOT NULL) AND (account_number IS NOT NULL))`,
-    ),
-    check(
-      'payment_accounts_method_check',
-      sql`method = ANY (ARRAY['cash'::text, 'cod'::text, 'gcash'::text, 'maya'::text, 'bank'::text, 'qr_ph'::text])`,
-    ),
-  ],
-);
-
-export const deliveryDistanceRows = pgTable(
-  'delivery_distance_rows',
-  {
-    id: uuid().defaultRandom().primaryKey().notNull(),
-    tenantId: uuid('tenant_id').notNull(),
-    fromM: integer('from_m').notNull(),
-    toM: integer('to_m').notNull(),
-    fee: integer().notNull(),
-    etaText: text('eta_text').notNull(),
-    minOrder: integer('min_order').default(0).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    index('delivery_distance_rows_tenant').using(
-      'btree',
-      table.tenantId.asc().nullsLast().op('int4_ops'),
-      table.fromM.asc().nullsLast().op('int4_ops'),
-    ),
-    foreignKey({
-      columns: [table.tenantId],
-      foreignColumns: [tenants.id],
-      name: 'delivery_distance_rows_tenant_id_fkey',
-    }).onDelete('cascade'),
-    pgPolicy('shop_admin', {
-      as: 'permissive',
-      for: 'all',
-      to: ['app_admin'],
-      using: sql`true`,
-      withCheck: sql`true`,
-    }),
-    pgPolicy('shop_own', { as: 'permissive', for: 'all', to: ['app_api'] }),
-    check('delivery_distance_rows_check', sql`to_m > from_m`),
-    check(
-      'delivery_distance_rows_eta_text_check',
-      sql`(char_length(eta_text) >= 1) AND (char_length(eta_text) <= 40)`,
-    ),
-    check('delivery_distance_rows_fee_check', sql`fee >= 0`),
-    check('delivery_distance_rows_from_m_check', sql`from_m >= 0`),
-    check('delivery_distance_rows_min_order_check', sql`min_order >= 0`),
-  ],
-);
-
-export const categories = pgTable(
-  'categories',
-  {
-    id: uuid().defaultRandom().primaryKey().notNull(),
-    tenantId: uuid('tenant_id').notNull(),
-    name: text().notNull(),
-    icon: jsonb().notNull(),
-    iconMediaId: uuid('icon_media_id'),
-    sort: integer().default(0).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    index('categories_icon_media').using(
-      'btree',
-      table.iconMediaId.asc().nullsLast().op('uuid_ops'),
-    ),
-    index('categories_tenant').using(
-      'btree',
-      table.tenantId.asc().nullsLast().op('int4_ops'),
-      table.sort.asc().nullsLast().op('int4_ops'),
-    ),
-    foreignKey({
-      columns: [table.tenantId],
-      foreignColumns: [tenants.id],
-      name: 'categories_tenant_id_fkey',
-    }).onDelete('cascade'),
-    foreignKey({
-      columns: [table.tenantId, table.iconMediaId],
-      foreignColumns: [mediaFiles.id, mediaFiles.tenantId],
-      name: 'categories_tenant_id_icon_media_id_fkey',
-    }).onDelete('restrict'),
-    unique('categories_tenant_id_id_key').on(table.id, table.tenantId),
-    pgPolicy('shop_admin', {
-      as: 'permissive',
-      for: 'all',
-      to: ['app_admin'],
-      using: sql`true`,
-      withCheck: sql`true`,
-    }),
-    pgPolicy('shop_own', { as: 'permissive', for: 'all', to: ['app_api'] }),
-    check(
-      'categories_check',
-      sql`((icon ->> 'kind'::text) = 'image'::text) = (icon_media_id IS NOT NULL)`,
-    ),
-    check(
-      'categories_icon_check',
-      sql`(jsonb_typeof(icon) = 'object'::text) AND ((icon ->> 'kind'::text) = ANY (ARRAY['fluent'::text, 'emoji'::text, 'image'::text]))`,
-    ),
-    check('categories_name_check', sql`(char_length(name) >= 1) AND (char_length(name) <= 40)`),
-    check('categories_sort_check', sql`sort >= 0`),
-  ],
-);
-
-export const deliveryZones = pgTable(
-  'delivery_zones',
-  {
-    id: uuid().defaultRandom().primaryKey().notNull(),
-    tenantId: uuid('tenant_id').notNull(),
-    name: text().notNull(),
-    fee: integer().notNull(),
-    etaText: text('eta_text').notNull(),
-    sort: integer().default(0).notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.tenantId],
-      foreignColumns: [tenants.id],
-      name: 'delivery_zones_tenant_id_fkey',
-    }).onDelete('cascade'),
-    unique('delivery_zones_tenant_id_id_key').on(table.id, table.tenantId),
-    pgPolicy('shop_admin', {
-      as: 'permissive',
-      for: 'all',
-      to: ['app_admin'],
-      using: sql`true`,
-      withCheck: sql`true`,
-    }),
-    pgPolicy('shop_own', { as: 'permissive', for: 'all', to: ['app_api'] }),
-    check(
-      'delivery_zones_eta_text_check',
-      sql`(char_length(eta_text) >= 1) AND (char_length(eta_text) <= 40)`,
-    ),
-    check('delivery_zones_fee_check', sql`fee >= 0`),
-    check('delivery_zones_name_check', sql`(char_length(name) >= 1) AND (char_length(name) <= 60)`),
-  ],
-);
-
 export const items = pgTable(
   'items',
   {
@@ -796,6 +704,98 @@ export const items = pgTable(
       'items_status_check',
       sql`status = ANY (ARRAY['active'::text, 'hidden'::text, 'archived'::text])`,
     ),
+  ],
+);
+
+export const deliveryZones = pgTable(
+  'delivery_zones',
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    tenantId: uuid('tenant_id').notNull(),
+    name: text().notNull(),
+    fee: integer().notNull(),
+    etaText: text('eta_text').notNull(),
+    sort: integer().default(0).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.tenantId],
+      foreignColumns: [tenants.id],
+      name: 'delivery_zones_tenant_id_fkey',
+    }).onDelete('cascade'),
+    unique('delivery_zones_tenant_id_id_key').on(table.id, table.tenantId),
+    pgPolicy('shop_admin', {
+      as: 'permissive',
+      for: 'all',
+      to: ['app_admin'],
+      using: sql`true`,
+      withCheck: sql`true`,
+    }),
+    pgPolicy('shop_own', { as: 'permissive', for: 'all', to: ['app_api'] }),
+    check(
+      'delivery_zones_eta_text_check',
+      sql`(char_length(eta_text) >= 1) AND (char_length(eta_text) <= 40)`,
+    ),
+    check('delivery_zones_fee_check', sql`fee >= 0`),
+    check('delivery_zones_name_check', sql`(char_length(name) >= 1) AND (char_length(name) <= 60)`),
+  ],
+);
+
+export const categories = pgTable(
+  'categories',
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    tenantId: uuid('tenant_id').notNull(),
+    name: text().notNull(),
+    icon: jsonb().notNull(),
+    iconMediaId: uuid('icon_media_id'),
+    sort: integer().default(0).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('categories_icon_media').using(
+      'btree',
+      table.iconMediaId.asc().nullsLast().op('uuid_ops'),
+    ),
+    index('categories_tenant').using(
+      'btree',
+      table.tenantId.asc().nullsLast().op('int4_ops'),
+      table.sort.asc().nullsLast().op('int4_ops'),
+    ),
+    foreignKey({
+      columns: [table.tenantId],
+      foreignColumns: [tenants.id],
+      name: 'categories_tenant_id_fkey',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.tenantId, table.iconMediaId],
+      foreignColumns: [mediaFiles.id, mediaFiles.tenantId],
+      name: 'categories_tenant_id_icon_media_id_fkey',
+    }).onDelete('restrict'),
+    unique('categories_tenant_id_id_key').on(table.id, table.tenantId),
+    pgPolicy('shop_admin', {
+      as: 'permissive',
+      for: 'all',
+      to: ['app_admin'],
+      using: sql`true`,
+      withCheck: sql`true`,
+    }),
+    pgPolicy('shop_own', { as: 'permissive', for: 'all', to: ['app_api'] }),
+    check(
+      'categories_check',
+      sql`((icon ->> 'kind'::text) = 'image'::text) = (icon_media_id IS NOT NULL)`,
+    ),
+    check(
+      'categories_icon_check',
+      sql`(jsonb_typeof(icon) = 'object'::text) AND ((icon ->> 'kind'::text) = ANY (ARRAY['fluent'::text, 'emoji'::text, 'image'::text]))`,
+    ),
+    check('categories_name_check', sql`(char_length(name) >= 1) AND (char_length(name) <= 40)`),
+    check('categories_sort_check', sql`sort >= 0`),
   ],
 );
 

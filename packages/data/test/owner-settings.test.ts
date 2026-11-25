@@ -183,9 +183,9 @@ describe('ownerSettings mock adapter (T64 to T68)', () => {
   it('full storage stops menu uploads but never proofs or plan receipts', async () => {
     const { store } = shopStore('kanto-smash', { storage: 'full' });
     expect(
-      await errorCode(store.ownerCatalog.createUploadUrl({ kind: 'item', bytes: 200_000 })),
+      await errorCode(store.uploads.createUploadUrl({ kind: 'item', bytes: 200_000 })),
     ).toBe('storage_full');
-    const receipt = await store.ownerCatalog.createUploadUrl({
+    const receipt = await store.uploads.createUploadUrl({
       kind: 'plan_proof',
       bytes: 200_000,
     });
@@ -195,7 +195,7 @@ describe('ownerSettings mock adapter (T64 to T68)', () => {
   it('uploads move the meter', async () => {
     const { store } = shopStore('aqualinis');
     const before = await store.ownerSettings.getStorage();
-    await store.ownerCatalog.createUploadUrl({ kind: 'item', bytes: 180_000 });
+    await store.uploads.createUploadUrl({ kind: 'item', bytes: 180_000 });
     const after = await store.ownerSettings.getStorage();
     expect(after.usedBytes - before.usedBytes).toBe(180_000);
   });
