@@ -475,3 +475,6 @@ export interface DataAdapters {
   platform: PlatformAdapter;
   showcase: ShowcaseAdapter;
 }
+
+/** What a shop page needs: the storefront and the customer's sign-in. */
+export type ShopAdapters = Pick<DataAdapters, 'storefront' | 'customerAuth'>;

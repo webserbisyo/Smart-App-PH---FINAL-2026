@@ -70,7 +70,10 @@ const RecordPaymentInputSchema = z
 type RecordPaymentInput = z.infer<typeof RecordPaymentInputSchema>;
 
 const AdvanceInputSchema = z
-  .object({ toStatus: OrderStatusEnum, trackingUrl: z.url().max(500).optional() })
+  .object({
+    toStatus: OrderStatusEnum,
+    trackingUrl: z.union([z.url().max(500), z.literal('')]).optional(),
+  })
   .strict();
 type AdvanceInput = z.infer<typeof AdvanceInputSchema>;
 
@@ -88,7 +91,7 @@ type CancelInput = z.infer<typeof CancelInputSchema>;
 const DeliveryInputSchema = z
   .object({
     provider: z.string().max(40).optional(),
-    trackingUrl: z.url().max(500).optional(),
+    trackingUrl: z.union([z.url().max(500), z.literal('')]).optional(),
     riderName: z.string().max(60).optional(),
     riderPhone: z.string().max(20).optional(),
   })

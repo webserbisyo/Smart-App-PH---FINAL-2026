@@ -13,6 +13,7 @@ import type {
   OnboardingAdapter,
   OwnerSettingsAdapter,
   PlatformAdapter,
+  ShopAdapters,
   ShowcaseAdapter,
   StorefrontAdapter,
   UploadsAdapter,
@@ -21,8 +22,12 @@ import type {
 // The sample-data store loads only when a screen first asks for data.
 export const loadMockStore = () => import('../mocks/browser').then((m) => m.getMockStore());
 
-export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
-  let loading: Promise<DataAdapters> | null = null;
+/**
+ * The storefront's two areas only, so a shop page carries none of the owner wrappers (the JS budget). The
+ * dashboard's set below reuses them.
+ */
+export function lazyShopAdapters(load: () => Promise<ShopAdapters>): ShopAdapters {
+  let loading: Promise<ShopAdapters> | null = null;
   const real = () => (loading ??= load());
 
   const storefront: StorefrontAdapter = {
@@ -54,6 +59,14 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     verifyCustomerCode: async (input) => (await real()).customerAuth.verifyCustomerCode(input),
     signOutCustomer: async () => (await real()).customerAuth.signOutCustomer(),
   };
+
+  return { storefront, customerAuth };
+}
+
+export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
+  let loading: Promise<DataAdapters> | null = null;
+  const real = () => (loading ??= load());
+  const { storefront, customerAuth } = lazyShopAdapters(real);
 
   const ownerOrders: OwnerOrdersAdapter = {
     listOrders: async (input) => (await real()).ownerOrders.listOrders(input),

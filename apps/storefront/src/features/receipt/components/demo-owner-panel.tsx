@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { isDemoShopSlug, isFinal, words, type OrderReceipt } from '@smartapp/core';
-import { qk, useAdapters, useQueryClient } from '@smartapp/data';
+import { qk, sampleOwnerOrders, useQueryClient, type OwnerOrdersAdapter } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import {
   Collapsible,
@@ -20,7 +20,6 @@ export interface DemoOwnerPanelProps {
 }
 
 export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
-  const { ownerOrders } = useAdapters();
   const { shop } = useShop();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
@@ -33,6 +32,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
 
   async function resolveOrderId(): Promise<string | null> {
     try {
+      const ownerOrders = await sampleOwnerOrders();
       const openOrders = await ownerOrders.listOrders({ slug, open: true });
       const found = openOrders.find((o) => o.token === order.token);
       if (found) return found.id;
@@ -47,7 +47,9 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
     }
   }
 
-  async function runAction(action: (orderId: string) => Promise<unknown>) {
+  async function runAction(
+    action: (orderId: string, ownerOrders: OwnerOrdersAdapter) => Promise<unknown>,
+  ) {
     setIsPending(true);
     try {
       const orderId = await resolveOrderId();
@@ -55,7 +57,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
         alert('Could not locate order ID in mock store');
         return;
       }
-      await action(orderId);
+      await action(orderId, await sampleOwnerOrders());
       await queryClient.invalidateQueries({ queryKey: qk.order(slug, order.token) });
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Action failed');
@@ -113,7 +115,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                   className="h-7 flex-1 text-xs"
                   disabled={isPending || !isProofPending}
                   onClick={() =>
-                    runAction((id) =>
+                    runAction((id, ownerOrders) =>
                       ownerOrders.reviewPayment({ slug, orderId: id, approve: true }),
                     )
                   }
@@ -128,7 +130,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                   className="h-7 flex-1 text-xs text-destructive hover:text-destructive"
                   disabled={isPending || !isProofPending}
                   onClick={() =>
-                    runAction((id) =>
+                    runAction((id, ownerOrders) =>
                       ownerOrders.reviewPayment({
                         slug,
                         orderId: id,
@@ -152,7 +154,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                 className="h-7 w-full text-xs"
                 disabled={isPending}
                 onClick={() =>
-                  runAction((id) =>
+                  runAction((id, ownerOrders) =>
                     ownerOrders.recordPayment({
                       slug,
                       orderId: id,
@@ -175,7 +177,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                 className="h-7 w-full text-xs"
                 disabled={isPending || (!isPaid && order.type !== 'delivery')}
                 onClick={() =>
-                  runAction((id) =>
+                  runAction((id, ownerOrders) =>
                     ownerOrders.advanceOrder({ slug, orderId: id, toStatus: 'preparing' }),
                   )
                 }
@@ -193,7 +195,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                 className="h-7 w-full text-xs"
                 disabled={isPending}
                 onClick={() =>
-                  runAction((id) =>
+                  runAction((id, ownerOrders) =>
                     ownerOrders.advanceOrder({ slug, orderId: id, toStatus: 'ready' }),
                   )
                 }
@@ -211,7 +213,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                 className="h-7 w-full text-xs"
                 disabled={isPending}
                 onClick={() =>
-                  runAction(async (id) => {
+                  runAction(async (id, ownerOrders) => {
                     await ownerOrders.saveDeliveryInfo({
                       slug,
                       orderId: id,
@@ -240,7 +242,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                 className="h-7 w-full text-xs"
                 disabled={isPending}
                 onClick={() =>
-                  runAction((id) =>
+                  runAction((id, ownerOrders) =>
                     ownerOrders.advanceOrder({ slug, orderId: id, toStatus: 'completed' }),
                   )
                 }
@@ -282,7 +284,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                   className="h-7 flex-1 text-xs text-destructive hover:bg-destructive/10"
                   disabled={isPending}
                   onClick={() =>
-                    runAction((id) =>
+                    runAction((id, ownerOrders) =>
                       ownerOrders.cancelOrder({
                         slug,
                         orderId: id,
@@ -302,7 +304,7 @@ export function DemoOwnerPanel({ slug, order }: DemoOwnerPanelProps) {
                     className="h-7 flex-1 text-xs text-destructive hover:bg-destructive/10"
                     disabled={isPending}
                     onClick={() =>
-                      runAction((id) =>
+                      runAction((id, ownerOrders) =>
                         ownerOrders.cancelOrder({
                           slug,
                           orderId: id,
