@@ -173,6 +173,9 @@ export const words = {
     calendarCount: (n: number) => `${n} ${n === 1 ? 'order' : 'orders'} for later days`,
   },
   shell: {
+    // A newer dashboard is live (T117): one tap loads it.
+    updateReady: 'New version ready',
+    refresh: 'Refresh',
     myShop: 'My shop',
     open: 'Open',
     mainNav: 'Main',

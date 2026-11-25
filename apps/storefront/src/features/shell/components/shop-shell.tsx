@@ -10,7 +10,7 @@ import { CartButton } from '@smartapp/ui/compositions/cart-button';
 import { StorefrontDock } from '@smartapp/ui/compositions/storefront-dock';
 import { useBasketView } from '../../basket/components/use-basket-view';
 import { useFromNews, useItemOpen, useOnCheckout, usePullRefreshOn, useShopNav } from './nav';
-import { PullRing, usePullToRefresh } from './pull-to-refresh';
+import { PullRing, usePullToRefresh } from '@smartapp/ui/compositions/pull-to-refresh';
 import { useShop } from './shop-context';
 import { TopBar } from './top-bar';
 

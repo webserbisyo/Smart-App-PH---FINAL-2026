@@ -15,6 +15,7 @@ import { ArrowDownIcon } from 'lucide-react';
  * at the top of the page a downward drag pulls the page with resistance, a ring fills as it goes, past the
  * line the arrow turns, letting go there refreshes and holds the page open on a spinning ring, then it
  * glides back. A sideways first move belongs to carousels and chip rows, so it never starts a pull.
+ * Shared by the storefront shell and the dashboard's Home, Orders and Members (T117).
  */
 
 /** Ionic's pullMin is 60: past this much page travel, letting go refreshes. */
