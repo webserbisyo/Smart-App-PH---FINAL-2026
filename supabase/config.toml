@@ -255,6 +255,11 @@ content_path = "./supabase/templates/confirmation.html"
 subject = "Your Smart App PH password code"
 content_path = "./supabase/templates/recovery.html"
 
+# A member's sign-in code on a shop's app (launch phase 6, D2): an account that already exists.
+[auth.email.template.magic_link]
+subject = "Your sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"

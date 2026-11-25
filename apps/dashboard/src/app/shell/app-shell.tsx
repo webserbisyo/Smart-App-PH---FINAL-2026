@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { cn } from 'cn';
 import { Outlet, useRouterState } from '@tanstack/react-router';
 import { words } from '@smartapp/core';
-import type { UserClaims } from '@smartapp/data';
+import { useQueryClient, type UserClaims } from '@smartapp/data';
 import { BottomDock } from '@smartapp/ui/compositions/bottom-dock';
+import { PullRing, usePullToRefresh } from '@smartapp/ui/compositions/pull-to-refresh';
 import { Sheet, SheetContent, SheetTitle } from '@smartapp/ui/components/sheet';
 import { SidebarInset, SidebarProvider } from '@smartapp/ui/components/sidebar';
 import { useFormFactor } from '@smartapp/ui/hooks/use-form-factor';
@@ -18,6 +19,11 @@ import { AppSidebar } from './app-sidebar.js';
 import { ShareShopSheet } from './share-shop-sheet.js';
 import { SupportBanner } from './support-banner.js';
 import { TopBar } from './top-bar.js';
+import { UpdateBar } from './update-bar.js';
+
+// Pull to refresh on the pages an owner checks again and again (T117): Home, Orders and Members. It reads the
+// screen's data again without reloading the page; touch screens only (the hook checks).
+const PULL_PAGES: ReadonlySet<string> = new Set(['/', '/orders', '/members']);
 
 // The installed sidebar keeps its open/collapsed choice in this cookie.
 function sidebarStartsOpen(): boolean {
@@ -39,6 +45,11 @@ function Shell({ claims }: { claims: UserClaims }) {
   const nav = useNavItems({ onShare: () => setShareOpen(true) });
   useNewOrderKey(true);
   usePageTitle(page.title);
+  const queryClient = useQueryClient();
+  const { ref: pageRef, store: pullStore } = usePullToRefresh(
+    () => queryClient.refetchQueries({ type: 'active' }),
+    PULL_PAGES.has(pathname),
+  );
 
   const isTablet = formFactor === 'tablet';
   const showDock = formFactor === 'phone' && !page.hideDock;
@@ -70,10 +81,12 @@ function Shell({ claims }: { claims: UserClaims }) {
             claims={claims}
             onOpenMenu={() => setMenuOpen(true)}
           />
+          <PullRing store={pullStore} />
           <div
+            ref={pageRef}
             id="main"
             tabIndex={-1}
-            className={cn('flex flex-1 flex-col outline-none', showDock && 'pb-dock')}
+            className={cn('flex flex-1 pull-shift flex-col outline-none', showDock && 'pb-dock')}
           >
             <Outlet />
           </div>
@@ -100,6 +113,7 @@ function Shell({ claims }: { claims: UserClaims }) {
         />
       ) : null}
 
+      <UpdateBar aboveDock={showDock} />
       <ShareShopSheet url={storefrontUrl(shop.slug)} open={shareOpen} onOpenChange={setShareOpen} />
     </div>
   );

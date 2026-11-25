@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS, words } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { OrdersScreen } from '@/features/orders/components/orders-screen';
 import { OrdersSkeleton } from '@/features/orders/components/orders-skeleton';
 
@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: OrdersPageProps): Promise<Metadata> {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) return {};
   return {
     title: words.orders.metaTitle(shop.storefront.info.name),
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: OrdersPageProps): Promise<Met
 
 async function OrdersPageContent({ params }: OrdersPageProps) {
   const { shop: slug } = await params;
-  if (!getStorefrontForServer(slug)) notFound();
+  if (!(await getShop(slug))) notFound();
   // The orders live on this phone (and in the member's account), so the list renders in the browser.
   return <OrdersScreen />;
 }

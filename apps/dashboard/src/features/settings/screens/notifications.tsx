@@ -5,6 +5,7 @@ import { errorCodeOf, useNotificationPrefs, useSaveNotificationPrefs } from '@sm
 import { Field, FieldDescription, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { PageError } from '@/app/page-state';
+import { DeviceAlertsCard } from '../device-alerts-card.js';
 import {
   SaveBar,
   SettingsCard,
@@ -53,6 +54,7 @@ function NotificationsForm({ prefs }: { prefs: NotificationPrefs }) {
 
   return (
     <SettingsPage id="notifications">
+      <DeviceAlertsCard />
       <SettingsCard title={W.emailCard}>
         <div className="flex flex-col gap-3">
           {ROWS.map((row) => (

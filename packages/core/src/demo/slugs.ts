@@ -23,3 +23,13 @@ export function isDemoShopSlug(slug: string): slug is DemoShopSlug {
 export function isReservedShopSlug(slug: string): slug is ReservedShopSlug {
   return RESERVED_SHOP_SLUGS.some((s) => s === slug.toLowerCase());
 }
+
+// "Start with samples" (T117, phase 4): a demo shop takes its own pack; a real shop the pack of its type.
+const SAMPLE_PACK_OF_KIND: Readonly<Record<'food' | 'retail', DemoShopSlug>> = {
+  food: 'kanto-smash',
+  retail: 'tala-apparel',
+};
+
+export function samplePackFor(slug: string, kind: 'food' | 'retail'): DemoShopSlug {
+  return isDemoShopSlug(slug) ? slug : SAMPLE_PACK_OF_KIND[kind];
+}

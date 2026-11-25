@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   canAskToGoLive,
+  defaultVariantTemplates,
   isShopSlug,
   MyShopSchema,
   newShopContent,
@@ -31,6 +32,8 @@ import {
   supportSessions,
   tenantMembers,
   tenants,
+  variantTemplates,
+  variantTemplateValues,
 } from '../db/generated/schema.js';
 import type { CallerUser } from '../auth/caller.js';
 
@@ -123,6 +126,25 @@ export class ShopService {
     await this.db.tx
       .insert(storefrontContent)
       .values({ tenantId: shopId, draft: content, published: content });
+    // The kind's ready-made variants (Size, Cup size...), as a new shop on sample data starts with.
+    for (const [i, template] of defaultVariantTemplates(input.shop.kind).entries()) {
+      const templateId = randomUUID();
+      // The list shows them oldest first; a millisecond apart keeps the kind's own order.
+      await this.db.tx.insert(variantTemplates).values({
+        id: templateId,
+        tenantId: shopId,
+        name: template.name,
+        createdAt: sql`now() + make_interval(secs => ${i} / 1000.0)`,
+      });
+      await this.db.tx.insert(variantTemplateValues).values(
+        template.options.map((option, sort) => ({
+          tenantId: shopId,
+          templateId,
+          label: option.name,
+          sort,
+        })),
+      );
+    }
     if (lead?.phone) {
       await this.db.tx
         .update(profiles)

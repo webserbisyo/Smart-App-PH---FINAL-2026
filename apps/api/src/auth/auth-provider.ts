@@ -43,11 +43,18 @@ export interface AuthProvider {
     client: ClientInfo,
   ): Promise<void>;
   verifySignupCode(email: string, code: string, client: ClientInfo): Promise<AuthSession>;
+  /**
+   * A member's 6-digit sign-in code (launch phase 6, D2): makes the account the first time. The code is
+   * checked with verifySignupCode (Supabase's `email` type covers both).
+   */
+  sendEmailCode(email: string, client: ClientInfo): Promise<void>;
   resendSignupCode(email: string, client: ClientInfo): Promise<void>;
   /** Answers the same whether or not the email has an account (rule 12). */
   sendRecoveryCode(email: string, client: ClientInfo): Promise<void>;
   verifyRecoveryCode(email: string, code: string, client: ClientInfo): Promise<AuthSession>;
   setPassword(userId: string, password: string): Promise<void>;
+  /** The account's email, for the owner's alerts (launch phase 5); null when the account is gone. */
+  getUserEmail(userId: string): Promise<string | null>;
   refresh(refreshToken: string, client: ClientInfo): Promise<AuthSession>;
   /** `local` ends this session, `others` every other one, `global` all of them. */
   signOut(accessToken: string, scope: 'local' | 'others' | 'global'): Promise<void>;

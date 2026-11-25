@@ -10,6 +10,9 @@ export interface StoredObject {
   mime: string;
 }
 
+// The private bucket for the owner's export and file downloads (X10); never a MediaBucket upload kind.
+export type StorageBucket = MediaBucket | 'exports';
+
 // The browser may keep a public picture for a year: every change gets a new path (R13).
 export const PUBLIC_CACHE_SECONDS = 31_536_000;
 
@@ -39,26 +42,54 @@ export class MediaStorage {
   }
 
   /** Where the phone sends the file (works for 2 hours, R12). */
-  async signedUpload(bucket: MediaBucket, path: string): Promise<string> {
+  async signedUpload(bucket: StorageBucket, path: string): Promise<string> {
     const { data, error } = await this.storage().from(bucket).createSignedUploadUrl(path);
     if (error) throw this.failure('sign', error);
     return data.signedUrl;
   }
 
+  /** A small file the API itself sends (a member's cropped photo): never replaces one already there. */
+  async put(
+    bucket: StorageBucket,
+    path: string,
+    body: Buffer,
+    mime: string,
+    cacheSeconds = PUBLIC_CACHE_SECONDS,
+  ): Promise<void> {
+    const { error } = await this.storage()
+      .from(bucket)
+      .upload(path, body, { contentType: mime, cacheControl: String(cacheSeconds) });
+    if (error) throw this.failure('put', error);
+  }
+
   /** The sent file's real size and type, or null when nothing arrived. */
-  async stat(bucket: MediaBucket, path: string): Promise<StoredObject | null> {
+  async stat(bucket: StorageBucket, path: string): Promise<StoredObject | null> {
     const { data, error } = await this.storage().from(bucket).info(path);
     if (error || !data) return null;
     if (typeof data.size !== 'number') return null;
     return { bytes: data.size, mime: data.contentType ?? '' };
   }
 
-  async remove(bucket: MediaBucket, paths: readonly string[]): Promise<void> {
+  async remove(bucket: StorageBucket, paths: readonly string[]): Promise<void> {
     if (paths.length === 0) return;
     const { error } = await this.storage()
       .from(bucket)
       .remove([...paths]);
     if (error) throw this.failure('remove', error);
+  }
+
+  /** A file the API reads back (proof photos and pictures for the owner's ZIP), or null when it is gone. */
+  async download(bucket: StorageBucket, path: string): Promise<Uint8Array | null> {
+    const { data, error } = await this.storage().from(bucket).download(path);
+    if (error) return null;
+    return new Uint8Array(await data.arrayBuffer());
+  }
+
+  /** The names directly inside a folder (files and folders), up to 1,000. */
+  async list(bucket: StorageBucket, folder: string): Promise<string[]> {
+    const { data, error } = await this.storage().from(bucket).list(folder, { limit: 1000 });
+    if (error) throw this.failure('list', error);
+    return data.map((entry) => entry.name);
   }
 
   /** A public bucket's address for a path (no call to Storage). */
@@ -71,7 +102,7 @@ export class MediaStorage {
   }
 
   /** A private file's short link (proofs and plan receipts). */
-  async signedRead(bucket: MediaBucket, path: string, seconds: number): Promise<string | null> {
+  async signedRead(bucket: StorageBucket, path: string, seconds: number): Promise<string | null> {
     const { data, error } = await this.storage().from(bucket).createSignedUrl(path, seconds);
     return error ? null : data.signedUrl;
   }

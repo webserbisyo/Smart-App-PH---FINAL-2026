@@ -33,6 +33,7 @@ import {
   WalletIcon,
   type LucideIcon,
 } from 'lucide-react';
+import { useNow } from '@smartapp/data';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { DrawnCheckIcon } from '@smartapp/ui/compositions/drawn-check';
 import {
@@ -204,8 +205,10 @@ export function ReceiptHeader({
   const readyAt = readyAboutAt(order, storefront.prepMinutes);
   const steps = useMemo(() => resolveReceiptSteps(order, kind, readyAt), [order, kind, readyAt]);
 
+  // "Today, 3:30 PM" once the phone knows the time; the full date on the server's first paint (Q10).
+  const now = useNow();
   const typeLine = order.scheduledAt
-    ? `${words.shop.orderType[order.type]} · ${words.receipt.scheduled(formatManilaDateTime(order.scheduledAt))}`
+    ? `${words.shop.orderType[order.type]} · ${words.receipt.scheduled(formatManilaDateTime(order.scheduledAt, now))}`
     : words.shop.orderType[order.type];
   const T = words.receipt.ticket;
 
@@ -263,7 +266,9 @@ export function ReceiptHeader({
                 <span className="font-medium">{typeLine}</span>
               </TicketRow>
               <TicketRow icon={Clock3Icon}>
-                <span className="tabular">{T.placed(formatManilaDateTime(order.placedAt))}</span>
+                <span className="tabular">
+                  {T.placed(formatManilaDateTime(order.placedAt, now))}
+                </span>
               </TicketRow>
               {readyAt && !cancelled ? (
                 <TicketRow icon={TimerIcon}>
@@ -308,7 +313,7 @@ export function ReceiptHeader({
               </span>
               {order.scheduledAt && order.type !== 'walk_in' ? (
                 <span className="text-xs font-semibold tabular">
-                  {words.location.summary(order.type, formatManilaDateTime(order.scheduledAt))}
+                  {words.location.summary(order.type, formatManilaDateTime(order.scheduledAt, now))}
                 </span>
               ) : null}
             </figcaption>

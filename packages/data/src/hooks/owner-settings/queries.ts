@@ -21,6 +21,27 @@ export function useOwnerProfile() {
   });
 }
 
+/** The push key, read before the tap so the browser asks right away (iPhone wants the ask on the tap). */
+export function useOwnerPushKey(enabled: boolean) {
+  const { ownerSettings } = useAdapters();
+  return useQuery({
+    queryKey: ownerSettingsQk.pushKey(),
+    queryFn: () => ownerSettings.getOwnerPushKey(),
+    enabled,
+    staleTime: Infinity,
+  });
+}
+
+/** Whether this device gets new-order alerts; `endpoint` is its push address (null: none yet). */
+export function useDeviceAlerts(endpoint: string | null) {
+  const { ownerSettings } = useAdapters();
+  return useQuery({
+    queryKey: ownerSettingsQk.deviceAlerts(endpoint ?? ''),
+    queryFn: () => ownerSettings.getDeviceAlerts({ endpoint: endpoint ?? '' }),
+    enabled: endpoint !== null,
+  });
+}
+
 export function useNotificationPrefs() {
   const { ownerSettings } = useAdapters();
   return useQuery({

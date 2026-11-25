@@ -13,6 +13,7 @@ import type {
   OnboardingAdapter,
   OwnerSettingsAdapter,
   PlatformAdapter,
+  ShopAdapters,
   ShowcaseAdapter,
   StorefrontAdapter,
   UploadsAdapter,
@@ -21,8 +22,12 @@ import type {
 // The sample-data store loads only when a screen first asks for data.
 export const loadMockStore = () => import('../mocks/browser').then((m) => m.getMockStore());
 
-export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
-  let loading: Promise<DataAdapters> | null = null;
+/**
+ * The storefront's two areas only, so a shop page carries none of the owner wrappers (the JS budget). The
+ * dashboard's set below reuses them.
+ */
+export function lazyShopAdapters(load: () => Promise<ShopAdapters>): ShopAdapters {
+  let loading: Promise<ShopAdapters> | null = null;
   const real = () => (loading ??= load());
 
   const storefront: StorefrontAdapter = {
@@ -36,6 +41,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     submitProof: async (input) => (await real()).storefront.submitProof(input),
     rateOrder: async (input) => (await real()).storefront.rateOrder(input),
     subscribePush: async (input) => (await real()).storefront.subscribePush(input),
+    getPushKey: async () => (await real()).storefront.getPushKey(),
     resolveMapsLink: async (input) => (await real()).storefront.resolveMapsLink(input),
     joinAsMember: async (input) => (await real()).storefront.joinAsMember(input),
     getMyAccount: async (input) => (await real()).storefront.getMyAccount(input),
@@ -47,6 +53,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     getNewsChoice: async (input) => (await real()).storefront.getNewsChoice(input),
     setNewsChoice: async (input) => (await real()).storefront.setNewsChoice(input),
     listShopNews: async (input) => (await real()).storefront.listShopNews(input),
+    markNewsOpened: async (input) => (await real()).storefront.markNewsOpened(input),
   };
 
   const customerAuth: CustomerAuthAdapter = {
@@ -54,6 +61,14 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     verifyCustomerCode: async (input) => (await real()).customerAuth.verifyCustomerCode(input),
     signOutCustomer: async () => (await real()).customerAuth.signOutCustomer(),
   };
+
+  return { storefront, customerAuth };
+}
+
+export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
+  let loading: Promise<DataAdapters> | null = null;
+  const real = () => (loading ??= load());
+  const { storefront, customerAuth } = lazyShopAdapters(real);
 
   const ownerOrders: OwnerOrdersAdapter = {
     listOrders: async (input) => (await real()).ownerOrders.listOrders(input),
@@ -105,6 +120,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     removeVariantTemplate: async (input) =>
       (await real()).ownerCatalog.removeVariantTemplate(input),
     saveSortOrder: async (input) => (await real()).ownerCatalog.saveSortOrder(input),
+    bulkItems: async (input) => (await real()).ownerCatalog.bulkItems(input),
   };
 
   const uploads: UploadsAdapter = {
@@ -159,6 +175,10 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     getNotificationPrefs: async () => (await real()).ownerSettings.getNotificationPrefs(),
     saveNotificationPrefs: async (input) =>
       (await real()).ownerSettings.saveNotificationPrefs(input),
+    getOwnerPushKey: async () => (await real()).ownerSettings.getOwnerPushKey(),
+    getDeviceAlerts: async (input) => (await real()).ownerSettings.getDeviceAlerts(input),
+    turnOnDeviceAlerts: async (input) => (await real()).ownerSettings.turnOnDeviceAlerts(input),
+    turnOffDeviceAlerts: async (input) => (await real()).ownerSettings.turnOffDeviceAlerts(input),
     getPlan: async () => (await real()).ownerSettings.getPlan(),
     submitPlanPayment: async (input) => (await real()).ownerSettings.submitPlanPayment(input),
     sendPlanNote: async (input) => (await real()).ownerSettings.sendPlanNote(input),

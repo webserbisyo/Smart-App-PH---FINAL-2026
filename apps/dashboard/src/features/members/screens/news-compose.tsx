@@ -543,7 +543,7 @@ function Composer({
             label={W.photoLabel}
             help={W.photoHelp}
             src={newsPhotoSrc(form.photo, 640)}
-            onUploaded={(upload) => set({ photo: upload.preview })}
+            onUploaded={(upload) => set({ photo: upload.sample ? upload.preview : upload.ref })}
             onRemove={() => set({ photo: null })}
             shape="rounded"
             disabled={!online}

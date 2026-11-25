@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { SHOP_PACKS } from '../src/demo/packs/index.js';
 import type { Storefront } from '../src/schemas/storefront.js';
 import { formatPeso, optionPriceLabel, parsePeso, pesoAmountText } from '../src/rules/money.js';
-import { formatClock, formatManila, manilaDate, minutesUntil } from '../src/rules/time.js';
+import {
+  formatClock,
+  formatManila,
+  manilaDate,
+  minutesUntil,
+  receiptDate,
+} from '../src/rules/time.js';
 import {
   isSoldOutToday,
   nextOpening,
@@ -94,6 +100,15 @@ describe('time', () => {
     expect(formatManila(mnl('2026-10-25 15:40'), 'datetime')).toBe('Sun 25 Oct, 3:40 PM');
     expect(manilaDate('2026-10-25T17:00:00Z')).toBe('2026-10-26');
     expect(minutesUntil(mnl('2026-10-26 12:30'), mnl('2026-10-26 12:00'))).toBe(30);
+  });
+
+  it('words an order time the receipt way (Q10)', () => {
+    const now = mnl('2026-11-28 23:50');
+    expect(receiptDate(mnl('2026-11-28 23:55'), now)).toBe('Today, 11:55 PM');
+    expect(receiptDate(mnl('2026-11-29 15:30'), now)).toBe('Tomorrow, 3:30 PM');
+    expect(receiptDate(mnl('2026-11-30 15:30'), now)).toBe('Mon, Nov 30, 3:30 PM');
+    // A saved line always writes the date.
+    expect(receiptDate(mnl('2026-11-29 15:30'))).toBe('Sun, Nov 29, 3:30 PM');
   });
 });
 

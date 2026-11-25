@@ -7,5 +7,6 @@ import { EditorService } from './editor.service.js';
   imports: [MediaModule],
   controllers: [EditorController],
   providers: [EditorService],
+  exports: [EditorService],
 })
 export class EditorModule {}

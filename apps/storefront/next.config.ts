@@ -11,10 +11,15 @@ const dashboardOrigin = new URL(
 // and asks search engines not to index it. Live builds leave NEXT_PUBLIC_APP_ENV unset or `production`.
 const preview = process.env.NEXT_PUBLIC_APP_ENV === 'preview';
 
+// Whether any storefront area reads NestJS (launch phase 5). Written into the build, so a sample-data build
+// drops the API adapter's loader from the shop pages' JS.
+const takesApi =
+  process.env.NEXT_PUBLIC_DATA_SOURCE === 'api' || Boolean(process.env.NEXT_PUBLIC_API_AREAS);
+
 const nextConfig: NextConfig = {
   cacheComponents: true,
   // Shared packages test this to keep the sample-data tools in preview builds only.
-  env: { SMARTAPP_PREVIEW: preview ? '1' : '0' },
+  env: { SMARTAPP_PREVIEW: preview ? '1' : '0', SMARTAPP_TAKES_API: takesApi ? '1' : '0' },
   partialPrefetching: true,
   // `pnpm dev` opened from a phone on the same Wi-Fi (http://192.168.x.x:3000). Next blocks its dev
   // scripts from unknown addresses, which leaves the page on skeletons. Dev only.

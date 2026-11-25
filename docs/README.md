@@ -14,7 +14,8 @@ Which doc answers which question (decision T101). Rules first, then plans, then 
 | How do we measure ads (Meta Pixel and CAPI)?     | `blueprints/meta.md`                                                                |
 | The school paper                                 | `capstone.md` (draft)                                                               |
 | In what order do we wire, launch and sell?       | `blueprints/launch-phases.md` (9 phases, every table and area placed)               |
-| How do we build phases 1 to 3?                   | `blueprints/phases-1-3.md` (research, cross-check, tasks; proposed)                 |
+| How do we build phases 1 to 3?                   | `blueprints/phases-1-3.md` (research, cross-check, tasks; approved, built)          |
+| How do we build phases 4 to 6?                   | `blueprints/phases-4-6.md` (research, cross-check, push plan, tasks; proposed)      |
 | Where are we now?                                | `PROGRESS.md` (tasks; UI approved and Done per area), `CHANGELOG.md` (what changed) |
 | Why was something decided?                       | `decisions.md` (every approved decision, T01 onward)                                |
 

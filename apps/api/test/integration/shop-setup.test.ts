@@ -2,41 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { sql } from 'drizzle-orm';
 import {
-  ConfirmUploadResultSchema,
   OwnerSettingsSchema,
   StorefrontDraftStateSchema,
   StoredFileListSchema,
   UploadResultSchema,
 } from '@smartapp/core';
 import { Db } from '../../src/db/db.service.js';
-import { integrationApp, ownerWithShop } from './support.js';
-
-// A tiny real WebP (1 x 1), so Storage keeps a real picture.
-const WEBP = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64');
-
-type Agent = Awaited<ReturnType<typeof ownerWithShop>>['agent'];
-
-/** The three upload steps a phone takes: room, the file to the signed link, confirm. */
-async function upload(
-  agent: Agent,
-  kind: string,
-  body: Buffer = WEBP,
-  type = 'image/webp',
-): Promise<{ id: string; ref: string; bytes: number }> {
-  const created = UploadResultSchema.parse(
-    (await agent.post('/owner/uploads').send({ kind, bytes: body.length }).expect(201)).body,
-  );
-  const sent = await fetch(created.uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': type },
-    body,
-  });
-  expect(sent.ok).toBe(true);
-  const done = ConfirmUploadResultSchema.parse(
-    (await agent.post(`/owner/uploads/${created.id}/confirm`).send({}).expect(200)).body,
-  );
-  return { id: created.id, ...done };
-}
+import { integrationApp, ownerWithShop, upload, WEBP } from './support.js';
 
 describe('shop setup (phase 3)', () => {
   let app: NestExpressApplication;

@@ -1,4 +1,5 @@
 // Manila time (UTC+8, no daylight saving). Times are stored as ISO UTC strings.
+import { receiptDateWords } from '../words.js';
 
 export const MANILA_OFFSET_MINUTES = 8 * 60;
 const MS_MINUTE = 60_000;
@@ -105,6 +106,23 @@ export function formatManila(value: string | Date, format: ManilaFormat = 'datet
     case 'long':
       return `${p.day} ${month} ${p.year}, ${formatClock(value)}`;
   }
+}
+
+/**
+ * When an order is for, the receipt's way (Q10, T117): "Today, 3:30 PM", "Tomorrow, 3:30 PM", then
+ * "Sat, Nov 29, 3:30 PM" (Manila). Without `now` the date is always written out, so a saved chat line never
+ * goes stale.
+ */
+export function receiptDate(value: string | Date, now?: string | Date): string {
+  const clock = formatClock(value);
+  if (now !== undefined) {
+    const day = manilaDate(value);
+    const today = manilaDate(now);
+    if (day === today) return `${receiptDateWords.today}, ${clock}`;
+    if (day === addDays(today, 1)) return `${receiptDateWords.tomorrow}, ${clock}`;
+  }
+  const p = manilaParts(value);
+  return `${DAY_NAMES[p.weekday] ?? ''}, ${MONTH_NAMES[p.month - 1] ?? ''} ${p.day}, ${clock}`;
 }
 
 /** The Manila month's short name, "Nov". */

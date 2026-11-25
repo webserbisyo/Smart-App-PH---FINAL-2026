@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS, vocab, words } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { MenuContent } from '@/features/menu/components/menu-content';
 import { MenuSkeleton } from '@/features/menu/components/menu-skeleton';
 
@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: MenuPageProps): Promise<Metadata> {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) return {};
   const kind = vocab(shop.storefront.info.kind);
   const title = `${kind.catalog} · ${shop.storefront.info.name}`;
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: MenuPageProps): Promise<Metad
 
 async function CachedMenu({ slug }: { slug: string }) {
   'use cache';
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) notFound();
 
   const kind = vocab(shop.storefront.info.kind);

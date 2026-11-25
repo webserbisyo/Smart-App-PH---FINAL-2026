@@ -1,4 +1,4 @@
-import { createHmac, hkdfSync, randomBytes } from 'node:crypto';
+import { createHmac, hkdfSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -18,6 +18,7 @@ import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
 import { storefrontContent, storefrontMedia } from '../db/generated/schema.js';
 import { MediaService } from '../media/media.service.js';
+import { StorefrontCache } from '../public/pages-cache.service.js';
 
 // The Editor's preview link works for 30 minutes (api.md "Editor": short-lived, owner-only, one shop).
 const PREVIEW_MINUTES = 30;
@@ -48,6 +49,7 @@ export class EditorService {
   constructor(
     @Inject(Db) private readonly db: Db,
     @Inject(MediaService) private readonly media: MediaService,
+    @Inject(StorefrontCache) private readonly pages: StorefrontCache,
     @Inject(ConfigService) config: ConfigService,
   ) {
     // Derived from the server's secret (no extra setting to manage); a random key on a laptop without one.
@@ -116,6 +118,8 @@ export class EditorService {
     const row = done[0];
     if (!row) throw new ApiFailure('draft_conflict', 409);
     await this.syncPictures();
+    // Customers see the new look on their next visit (R8).
+    await this.pages.shopChanged();
     return { contentVersion: row.contentVersion };
   }
 
@@ -146,6 +150,20 @@ export class EditorService {
     const body = `${this.db.shopId}.${Math.floor(expires.getTime() / 1000)}`;
     const signature = createHmac('sha256', this.previewKey).update(body).digest('base64url');
     return { token: `${body}.${signature}`, expiresAt: expires.toISOString() };
+  }
+
+  /** The shop a preview token was made for, while it lasts; null for anything else (preview_expired). */
+  previewShopOf(token: string): string | null {
+    const [shopId, expires, signature] = token.split('.');
+    if (!shopId || !expires || !signature || !/^\d{1,12}$/.test(expires)) return null;
+    const expected = createHmac('sha256', this.previewKey)
+      .update(`${shopId}.${expires}`)
+      .digest('base64url');
+    const a = Buffer.from(signature);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+    if (Number(expires) * 1000 < Date.now()) return null;
+    return shopId;
   }
 
   /** Sample pictures are fine; anything else must be a confirmed logo or banner upload of this shop. */

@@ -352,19 +352,18 @@ export function useBulkSetSoldOut() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: {
+    // One request, all or nothing (Q7, T117).
+    mutationFn: (input: {
       items: { variantId: string; availability: Availability; soldOutUntil?: string | null }[];
-    }) => {
-      await Promise.all(
-        input.items.map((item) =>
-          ownerCatalog.setSoldOut({
-            variantId: item.variantId,
-            availability: item.availability,
-            soldOutUntil: item.soldOutUntil ?? null,
-          }),
-        ),
-      );
-    },
+    }) =>
+      ownerCatalog.bulkItems({
+        action: 'soldOut',
+        variants: input.items.map((item) => ({
+          variantId: item.variantId,
+          availability: item.availability,
+          soldOutUntil: item.soldOutUntil ?? null,
+        })),
+      }),
     onMutate: async ({ items }) => {
       await qc.cancelQueries({ queryKey: ownerCatalogQk.items() });
       const previous = qc.getQueryData<OwnerItem[]>(ownerCatalogQk.items());
@@ -405,11 +404,8 @@ export function useBulkSetItemStatus() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { itemIds: string[]; status: ItemStatus }) => {
-      await Promise.all(
-        input.itemIds.map((id) => ownerCatalog.setItemStatus({ id, status: input.status })),
-      );
-    },
+    mutationFn: (input: { itemIds: string[]; status: ItemStatus }) =>
+      ownerCatalog.bulkItems({ action: 'status', ids: input.itemIds, status: input.status }),
     onMutate: async ({ itemIds, status }) => {
       await qc.cancelQueries({ queryKey: ownerCatalogQk.items() });
       const previous = qc.getQueryData<OwnerItem[]>(ownerCatalogQk.items());
@@ -439,31 +435,12 @@ export function useBulkMoveCategory() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { items: OwnerItem[]; targetCategoryId: string }) => {
-      await Promise.all(
-        input.items.map((item) =>
-          ownerCatalog.saveItem({
-            id: item.id,
-            draft: {
-              categoryId: input.targetCategoryId,
-              name: item.name,
-              description: item.description,
-              photos: item.photos,
-              basePrice: item.basePrice,
-              axes: item.axes,
-              variants: item.variants,
-              optionGroupIds: item.optionGroupIds,
-              pairingIds: item.pairingIds,
-              featured: item.featured,
-              isNew: item.isNew,
-              noticeDays: item.noticeDays,
-              dailyLimit: item.dailyLimit,
-              status: item.status,
-            },
-          }),
-        ),
-      );
-    },
+    mutationFn: (input: { items: OwnerItem[]; targetCategoryId: string }) =>
+      ownerCatalog.bulkItems({
+        action: 'move',
+        ids: input.items.map((item) => item.id),
+        categoryId: input.targetCategoryId,
+      }),
     onMutate: async ({ items, targetCategoryId }) => {
       await qc.cancelQueries({ queryKey: ownerCatalogQk.items() });
       const previous = qc.getQueryData<OwnerItem[]>(ownerCatalogQk.items());

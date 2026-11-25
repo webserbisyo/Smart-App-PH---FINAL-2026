@@ -3,7 +3,13 @@
 // the screens, the mock and later NestJS.
 import type { DistanceRow, OpeningRange } from '../schemas/storefront.js';
 import type { OwnerAvatar, StoredFile } from '../schemas/settings.js';
-import type { FileRange, FileSort, PlanStatus, StorageLevel } from '../schemas/enums.js';
+import type {
+  ExportRange,
+  FileRange,
+  FileSort,
+  PlanStatus,
+  StorageLevel,
+} from '../schemas/enums.js';
 import { OWNER_FACES_PER_STYLE } from './avatar.js';
 import { addDays, clockMinutes, manilaDate } from './time.js';
 
@@ -143,6 +149,38 @@ export function fileInRange(
     case 'pick':
       return picked === null || (day >= picked.from && day <= picked.to);
   }
+}
+
+/**
+ * The Manila business days an export covers, `from` included and `to` left out; null is open. This month
+ * runs to today, last month is the whole month before; everything has no ends.
+ */
+export function exportRangeDays(
+  range: ExportRange,
+  at: Date,
+): { from: string | null; to: string | null } {
+  if (range === 'everything') return { from: null, to: null };
+  const thisMonth = `${manilaDate(at).slice(0, 7)}-01`;
+  if (range === 'this_month') return { from: thisMonth, to: null };
+  return { from: `${addDays(thisMonth, -1).slice(0, 7)}-01`, to: thisMonth };
+}
+
+/** The month an export's file is named after (YYYY-MM), or `all`. */
+export function exportFileMonth(range: ExportRange, at: Date): string {
+  const { from } = exportRangeDays(range, at);
+  return from === null ? 'all' : from.slice(0, 7);
+}
+
+/** One spreadsheet cell: quoted, and a leading = + - @ made harmless (docs/api.md, CSV rule). */
+export function csvCell(value: string | number): string {
+  const text = String(value);
+  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
+  return `"${safe.replace(/"/g, '""')}"`;
+}
+
+/** A CSV with a BOM, so Excel opens the peso sign and ñ right. */
+export function csv(rows: readonly (readonly (string | number)[])[]): string {
+  return `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}\r\n`;
 }
 
 /** Newest first (the default), oldest first, or largest first; ties keep the newest first. */

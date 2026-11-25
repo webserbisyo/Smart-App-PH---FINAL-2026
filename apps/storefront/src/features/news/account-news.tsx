@@ -4,7 +4,13 @@ import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
 import { BellIcon, ChevronRightIcon, MegaphoneIcon } from 'lucide-react';
 import { formatManila, imageSources, shopNewsWords, type ShopNewsItem } from '@smartapp/core';
-import { useNewsChoice, useOnline, useSetNewsChoice, useShopNews } from '@smartapp/data';
+import {
+  useNewsChoice,
+  useOnline,
+  usePushKey,
+  useSetNewsChoice,
+  useShopNews,
+} from '@smartapp/data';
 import {
   Drawer,
   DrawerContent,
@@ -135,12 +141,13 @@ function SettingsBody({
   const [asking, setAsking] = useState(false);
   const save = useSetNewsChoice(slug);
   const online = useOnline();
+  const pushKey = usePushKey(state === 'ask');
 
   async function turnOn() {
     setAsking(true);
-    const result = await enablePush();
+    const result = await enablePush(pushKey.data?.key ?? null).catch(() => null);
     setAsking(false);
-    setState(result.ok ? 'granted' : 'denied');
+    if (result) setState(result.ok ? 'granted' : 'denied');
   }
 
   function setNews(next: boolean) {

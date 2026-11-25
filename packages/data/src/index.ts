@@ -4,7 +4,16 @@ export * from './hooks/auth';
 export * from './device-storage';
 export * from './adapters/types';
 export { createAdapters, createOwnerAuth, planOf, type AdapterOptions } from './adapters/create';
-export { DataProvider, resetDemoData, SampleDataProvider, useAdapters } from './adapters/index';
+export { createShopAdapters, type ShopAdapterOptions } from './adapters/create-shop';
+export {
+  DataProvider,
+  resetDemoData,
+  SampleDataProvider,
+  sampleOwnerOrders,
+  ShopDataProvider,
+  useAdapters,
+  useShopAdapters,
+} from './adapters/index';
 export * from './hooks/showcase';
 export * from './env';
 export * from './api-areas';

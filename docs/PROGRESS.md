@@ -124,22 +124,27 @@ Each area lists its screens; tick UI approved and Done separately.
   - [ ] Done
 - Shops and settings (Settings: Your shop, You, hours, ordering, delivery, payments, Plan and storage; Editor draft and Publish; uploads and Storage)
   - [x] UI approved
-  - [x] Built on NestJS and tested against local Supabase in CI: Settings sections, uploads, Storage files, Editor draft, Publish and preview link (launch phase 3; T116, PR #48). Plan, exports and cleanups come with phases 4 to 7
+  - [x] Built on NestJS and tested against local Supabase in CI: Settings sections, uploads, Storage files, Editor draft, Publish and preview link (launch phase 3; T116, PR #48). Cleanups (phase 4), exports, file downloads and the account delete request (phase 6, T117, PR #49) followed; the plan comes with phase 7
   - [ ] Done
 - Catalog (Menu or Products: items, variants and templates, add-ons, categories, photos, archive)
   - [x] UI approved
+  - [x] Built on NestJS and tested against local Supabase: categories, items with choices and versions, add-ons, ready-made choices, sort, sold out today, bulk actions in one request, archived photo cleanup, storefront refresh after changes (launch phase 4; T117, PR #49). Start with samples and Clear samples with photo copies followed (T117, PR #49)
   - [ ] Done
 - Storefront reads (shop home, menu, item sheet, shop info, closed and busy states)
   - [x] UI approved
+  - [x] Built on NestJS and tested against local Supabase: storefront pages read on the server with cached pages refreshed by the API, quote, schedule, shop addresses (launch phases 4 and 5; T117, PR #49)
   - [ ] Done
 - Orders and payments (checkout and Place order, receipt and status, proofs, order chat, owner Orders Board, List and Calendar, Change time, Recall, expiry job)
   - [x] UI approved
+  - [x] Built on NestJS and tested against local Supabase: Place order in one transaction, receipts, payment photos, order chat, owner Orders, New order and Edit order, expiry job, order pushes and the owner's emails (launch phase 5; T117, PR #49)
   - [ ] Done
 - Members and stamps (Join, Rewards, account and picture and saved places (R22), Members page, counter stamps with Undo, claims, limited prizes)
   - [x] UI approved
+  - [x] Built on NestJS and tested against local Supabase: member login by emailed code, Join with the welcome stamp, stamps on completed orders, Rewards and claims, the owner's Members page, counter stamps with Undo, the stamp card, push News with its limits and send job, the counter note on a member (launch phase 6; T117, PR #49)
   - [ ] Done
 - Reports (Home: today, Needs you, Sales card, best sellers, busy hours; exports)
   - [x] UI approved
+  - [x] Built on NestJS and tested against local Supabase: Home, trends and the period picker from one 60-day read (a hand count for a food and a retail shop; 10,000 orders well under a second), exports as a ZIP with a 24-hour link (launch phase 6; T117, PR #49)
   - [ ] Done
 - Platform (Super Admin, go-live approval, plan payments, Billing chat, help mode with audit, Meta Conversions API job, emails through Resend)
   - [x] UI approved

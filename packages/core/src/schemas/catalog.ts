@@ -380,6 +380,43 @@ export const SortOrderInputSchema = z.object({
 });
 export type SortOrderInput = z.infer<typeof SortOrderInputSchema>;
 
+// Bulk menu actions (Q7, T117): one request, one transaction, all or nothing.
+export const BULK_ITEMS_MAX = 100;
+// Sold out works per size, so an item's every combination comes along (100 items x 30 at most).
+export const BULK_VARIANTS_MAX = BULK_ITEMS_MAX * VARIANT_LIMITS.combos;
+
+export const BulkVariantChangeSchema = z.object({
+  variantId: IdSchema,
+  availability: AvailabilityEnum,
+  // Null with "sold out today": the server picks the next opening.
+  soldOutUntil: IsoDateTimeSchema.nullable().optional(),
+});
+export type BulkVariantChange = z.infer<typeof BulkVariantChangeSchema>;
+
+export const BulkItemsInputSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('status'),
+    ids: z.array(IdSchema).min(1).max(BULK_ITEMS_MAX),
+    status: ItemStatusEnum,
+  }),
+  z.object({
+    action: z.literal('move'),
+    ids: z.array(IdSchema).min(1).max(BULK_ITEMS_MAX),
+    categoryId: IdSchema,
+  }),
+  z.object({
+    action: z.literal('soldOut'),
+    variants: z.array(BulkVariantChangeSchema).min(1).max(BULK_VARIANTS_MAX),
+  }),
+]);
+export type BulkItemsInput = z.infer<typeof BulkItemsInputSchema>;
+
+export const BulkItemsResultSchema = z.object({
+  // How many items changed.
+  count: z.number().int().min(0),
+});
+export type BulkItemsResult = z.infer<typeof BulkItemsResultSchema>;
+
 export const CatalogSchema = z.object({
   categories: z.array(CategorySchema),
   items: z.array(ItemSchema),

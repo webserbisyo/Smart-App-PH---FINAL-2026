@@ -2,6 +2,7 @@
 // shares it at scope "/". Caching table: docs/decisions.md T26 and the PR body.
 import type { PrecacheEntry, RuntimeCaching, SerwistGlobalConfig } from 'serwist';
 import { CacheFirst, ExpirationPlugin, NetworkOnly, Serwist, StaleWhileRevalidate } from 'serwist';
+import { pushWords, readPushMessage } from '@smartapp/core';
 import { isPrivateUrl, keepsOffline } from '../features/install/cache-rules';
 
 declare global {
@@ -72,14 +73,30 @@ const serwist = new Serwist({
 
 serwist.addEventListeners();
 
-// Order status pushes (T13). The API words the message; the worker only shows it and opens the receipt.
-interface OrderPush {
-  title: string;
-  body: string;
-  url: string;
-  icon: string | undefined;
-  tag: string | undefined;
+// Order status pushes (T13, launch phase 5). The API words the message in the Declarative Web Push shape;
+// the worker shows it and opens the receipt. A push it can't read still shows a notice (X9): an iPhone drops
+// a subscription whose push shows nothing.
+function pushJson(data: PushMessageData | null): unknown {
+  try {
+    return data?.json();
+  } catch {
+    return null;
+  }
 }
+
+self.addEventListener('push', (event) => {
+  const push = readPushMessage(pushJson(event.data), {
+    title: pushWords.fallbackTitle,
+    body: pushWords.fallbackBody,
+  });
+  event.waitUntil(
+    self.registration.showNotification(push.title, {
+      body: push.body,
+      ...(push.tag ? { tag: push.tag } : {}),
+      data: { url: push.path },
+    }),
+  );
+});
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -90,43 +107,6 @@ function sameOriginPath(value: unknown): string | null {
     ? value
     : null;
 }
-
-function pushJson(data: PushMessageData | null): unknown {
-  try {
-    return data?.json();
-  } catch {
-    return null;
-  }
-}
-
-function readPush(data: PushMessageData | null): OrderPush | null {
-  const value = pushJson(data);
-  if (!isRecord(value) || typeof value.title !== 'string' || typeof value.body !== 'string') {
-    return null;
-  }
-  const url = sameOriginPath(value.url);
-  if (!url) return null;
-  return {
-    title: value.title,
-    body: value.body,
-    url,
-    icon: sameOriginPath(value.icon) ?? undefined,
-    tag: typeof value.tag === 'string' ? value.tag : undefined,
-  };
-}
-
-self.addEventListener('push', (event) => {
-  const push = readPush(event.data);
-  if (!push) return;
-  event.waitUntil(
-    self.registration.showNotification(push.title, {
-      body: push.body,
-      ...(push.icon ? { icon: push.icon } : {}),
-      ...(push.tag ? { tag: push.tag } : {}),
-      data: { url: push.url },
-    }),
-  );
-});
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

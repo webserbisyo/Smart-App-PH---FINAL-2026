@@ -3,7 +3,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import type { PublicShop } from '@smartapp/core';
-import { DataProvider, useAdapters } from '../../adapters/index';
+import { ShopDataProvider, useShopAdapters } from '../../adapters/index';
+import type { ShopAdapters } from '../../adapters/types';
 import { getDeviceStorage } from '../../device-storage';
 import type { DataSource } from '../../env';
 import { qk } from './qk';
@@ -16,7 +17,7 @@ declare const process: {
 
 function DevScenario({ slug, source }: { slug: string; source: DataSource }) {
   const client = useQueryClient();
-  const adapters = useAdapters();
+  const adapters = useShopAdapters();
   useEffect(() => {
     if (
       (process.env.NODE_ENV === 'production' && process.env.SMARTAPP_PREVIEW !== '1') ||
@@ -47,11 +48,14 @@ function DevScenario({ slug, source }: { slug: string; source: DataSource }) {
 export function StorefrontDataProvider({
   slug,
   source,
+  adapters,
   initialShop,
   children,
 }: {
   slug: string;
   source: DataSource;
+  // The API's shop adapters; left out, the sample shops.
+  adapters?: ShopAdapters | undefined;
   // Read on the server for this request, so the first paint needs no fetch.
   initialShop: PublicShop;
   children: ReactNode;
@@ -73,10 +77,10 @@ export function StorefrontDataProvider({
   });
   return (
     <QueryClientProvider client={client}>
-      <DataProvider source={source}>
+      <ShopDataProvider source={source} adapters={adapters}>
         <DevScenario slug={slug} source={source} />
         {children}
-      </DataProvider>
+      </ShopDataProvider>
     </QueryClientProvider>
   );
 }

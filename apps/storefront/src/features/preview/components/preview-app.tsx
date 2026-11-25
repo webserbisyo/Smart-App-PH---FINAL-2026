@@ -18,6 +18,7 @@ import {
   type StorefrontContent,
 } from '@smartapp/core';
 import { StorefrontDataProvider } from '@smartapp/data';
+import { shopAdapters } from '@/features/shell/shop-adapters';
 import { useNow } from '@smartapp/data';
 import type { DataSource } from '@smartapp/data/env';
 import { AppToaster } from '@smartapp/ui/compositions/app-toaster';
@@ -381,7 +382,12 @@ export function PreviewApp({
       fontPair={look.fontPair}
       withPortals
     >
-      <StorefrontDataProvider slug={shop.storefront.slug} source={source} initialShop={shop}>
+      <StorefrontDataProvider
+        slug={shop.storefront.slug}
+        source={source}
+        adapters={shopAdapters}
+        initialShop={shop}
+      >
         <AppToaster>
           <ShopProvider initialShop={shop} preview previewPage={page}>
             <InfoSheetSync open={page === 'about'} onClosed={backHome} />

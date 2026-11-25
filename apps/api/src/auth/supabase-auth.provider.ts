@@ -148,6 +148,14 @@ export class SupabaseAuthProvider implements AuthProvider {
     return sessionOf(data.session, data.user);
   }
 
+  async sendEmailCode(email: string, info: ClientInfo): Promise<void> {
+    const { error } = await this.client(info).auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    });
+    if (error) throw this.mapped(error, 'unknown');
+  }
+
   async resendSignupCode(email: string, info: ClientInfo): Promise<void> {
     const { error } = await this.client(info).auth.resend({ type: 'signup', email });
     if (error) throw this.mapped(error, 'unknown');
@@ -175,6 +183,15 @@ export class SupabaseAuthProvider implements AuthProvider {
   async setPassword(userId: string, password: string): Promise<void> {
     const { error } = await this.client().auth.admin.updateUserById(userId, { password });
     if (error) throw this.mapped(error, 'unknown');
+  }
+
+  async getUserEmail(userId: string): Promise<string | null> {
+    const { data, error } = await this.client().auth.admin.getUserById(userId);
+    if (error) {
+      if (error.status === 404) return null;
+      throw this.mapped(error, 'unknown');
+    }
+    return data.user.email?.toLowerCase() ?? null;
   }
 
   async refresh(refreshToken: string, info: ClientInfo): Promise<AuthSession> {

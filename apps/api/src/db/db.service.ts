@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type * as schema from './generated/schema.js';
@@ -24,6 +24,9 @@ export interface TxScope {
 interface TxStore {
   tx: Tx;
   scope: TxScope;
+  // Work that must wait for the commit (a push, an email, the storefront's cache): a rolled-back change
+  // never reaches the outside.
+  afterCommit: (() => Promise<void>)[];
 }
 
 // A runaway query never holds a pooled connection for long (jobs included).
@@ -40,6 +43,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 @Injectable()
 export class Db {
   private readonly store = new AsyncLocalStorage<TxStore>();
+  private readonly logger = new Logger('Db');
 
   constructor(@Inject(DRIZZLE) private readonly root: Database) {}
 
@@ -76,20 +80,41 @@ export class Db {
     }
     // One retry for a deadlock or serialization failure; anything else goes to the error filter.
     for (let attempt = 0; ; attempt++) {
+      const afterCommit: (() => Promise<void>)[] = [];
       try {
-        return await this.root.transaction(async (tx) => {
+        const result = await this.root.transaction(async (tx) => {
           await tx.execute(
             sql`select set_config('app.user_id', ${scope.userId ?? ''}, true), set_config('app.tenant_id', ${scope.shopId ?? ''}, true), set_config('statement_timeout', ${STATEMENT_TIMEOUT}, true)`,
           );
           await tx.execute(
             scope.role === 'admin' ? sql`set local role app_admin` : sql`set local role app_api`,
           );
-          return this.store.run({ tx, scope: { ...scope } }, fn);
+          return this.store.run({ tx, scope: { ...scope }, afterCommit }, fn);
         });
+        this.runAfterCommit(afterCommit);
+        return result;
       } catch (error) {
         if (attempt === 0 && isRetryableDbError(error)) continue;
         throw error;
       }
+    }
+  }
+
+  /**
+   * Runs `work` once the current transaction commits (never when it rolls back). It does not hold up the
+   * answer, and a failure is logged without the details (they can carry customer data, rule 12).
+   */
+  afterCommit(work: () => Promise<void>): void {
+    this.current().afterCommit.push(work);
+  }
+
+  private runAfterCommit(work: readonly (() => Promise<void>)[]): void {
+    for (const job of work) {
+      void job().catch((error: unknown) => {
+        this.logger.warn(
+          `After-commit work failed: ${error instanceof Error ? error.name : 'error'}`,
+        );
+      });
     }
   }
 

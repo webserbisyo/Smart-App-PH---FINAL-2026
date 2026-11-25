@@ -23,11 +23,13 @@
     "@smartapp/core": "workspace:*",
     "@supabase/supabase-js": "2.117.3",
     "drizzle-orm": "0.45.4",
+    "fflate": "0.8.3",
     "helmet": "8.3.0",
     "jose": "6.2.12",
     "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
+    "web-push": "4.0.0",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -37,6 +39,7 @@
     "@types/node": "24.19.2",
     "@types/pg": "8.23.1",
     "@types/supertest": "7.2.1",
+    "@types/web-push": "3.6.4",
     "drizzle-kit": "0.31.11",
     "supertest": "7.3.1",
     "typescript": "catalog:",

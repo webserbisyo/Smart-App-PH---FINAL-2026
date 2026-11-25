@@ -11,7 +11,7 @@ import {
   type OwnerAvatar,
   type PaymentMethod,
 } from '@smartapp/core';
-import { useAdapters } from '../../adapters/index';
+import { useShopAdapters } from '../../adapters/index';
 import { ApiRequestError } from '../../api-client';
 import { putProofFile, saveProofPreview } from '../../proof-files';
 import { rememberOrderToken, saveReceipt, useGuestOrderTokens, useOnline } from './device';
@@ -34,7 +34,7 @@ function useDebounced<T>(value: T, ms: number): T {
 }
 
 export function useStorefront(slug: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   return useQuery({
     queryKey: qk.storefront(slug),
     queryFn: () => storefront.getStorefront({ slug }),
@@ -51,7 +51,7 @@ export function useRefreshShop(slug: string): () => Promise<void> {
 
 /** Re-quoted 400 ms after the basket or checkout changes; keeps the last good answer while it refetches. */
 export function useQuote(slug: string, payload: OrderPayload | null) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const debounced = useDebounced(payload, QUOTE_DEBOUNCE_MS);
   return useQuery({
     queryKey: qk.quote(slug, debounced),
@@ -67,7 +67,7 @@ export function useQuote(slug: string, payload: OrderPayload | null) {
 
 /** Place order: off while offline, never retried in the background (the clientKey makes a manual retry safe). */
 export function usePlaceOrder(slug: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const online = useOnline();
   const client = useQueryClient();
   const mutation = useMutation({
@@ -94,7 +94,7 @@ export function usePlaceOrder(slug: string) {
 
 /** Polls every 15 s while the order is open and stops when it ends; keeps a copy on the phone for offline. */
 export function useOrder(slug: string, token: string, initialOrder?: OrderReceipt | null) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const query = useQuery({
     queryKey: qk.order(slug, token),
     queryFn: () => storefront.getOrder({ slug, token }),
@@ -114,7 +114,7 @@ export function useOrder(slug: string, token: string, initialOrder?: OrderReceip
 }
 
 export function useMyOrders(slug: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const tokens = useGuestOrderTokens(slug);
   return useQuery({
     queryKey: qk.myOrders(slug, tokens),
@@ -124,7 +124,7 @@ export function useMyOrders(slug: string) {
 
 // Order again on My orders: loads the full order (its lines) when the button is tapped.
 export function useLoadOrder(slug: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const client = useQueryClient();
   return useMutation({
     retry: false,
@@ -138,7 +138,7 @@ export function useLoadOrder(slug: string) {
 }
 
 export function useSubmitProof(slug: string, token: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const client = useQueryClient();
   return useMutation({
     networkMode: 'always',
@@ -161,7 +161,7 @@ export function useSubmitProof(slug: string, token: string) {
 }
 
 export function useRateOrder(slug: string, token: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const client = useQueryClient();
   return useMutation({
     networkMode: 'always',
@@ -172,9 +172,21 @@ export function useRateOrder(slug: string, token: string) {
   });
 }
 
+// The push key, read before the tap so Notify me asks right away (iPhone wants the ask on the tap itself).
+export function usePushKey(enabled: boolean) {
+  const { storefront } = useShopAdapters();
+  return useQuery({
+    queryKey: qk.pushKey(),
+    queryFn: () => storefront.getPushKey(),
+    enabled,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+}
+
 // Notify me on the receipt (T10). The mock stores nothing; T13 passes the service worker's subscription.
 export function useSubscribePush(slug: string, token: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   return useMutation({
     networkMode: 'always',
     retry: false,
@@ -184,12 +196,12 @@ export function useSubscribePush(slug: string, token: string) {
 }
 
 export function useMyAccount(slug: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   return useQuery({ queryKey: qk.account(slug), queryFn: () => storefront.getMyAccount({ slug }) });
 }
 
 export function useJoin(slug: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const client = useQueryClient();
   return useMutation({
     networkMode: 'always',
@@ -209,7 +221,7 @@ export function useJoin(slug: string) {
 
 /** Saves the member's picture on their account (T95); null goes back to the Fun face. */
 export function useSaveMyAvatar(slug: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const client = useQueryClient();
   return useMutation({
     mutationFn: (avatar: OwnerAvatar | null) => storefront.saveMyAvatar({ slug, avatar }),
@@ -218,7 +230,7 @@ export function useSaveMyAvatar(slug: string) {
 }
 
 export function useSendCode() {
-  const { customerAuth } = useAdapters();
+  const { customerAuth } = useShopAdapters();
   return useMutation({
     networkMode: 'always',
     retry: false,
@@ -227,7 +239,7 @@ export function useSendCode() {
 }
 
 export function useVerifyCode() {
-  const { customerAuth } = useAdapters();
+  const { customerAuth } = useShopAdapters();
   const client = useQueryClient();
   return useMutation({
     networkMode: 'always',
@@ -239,7 +251,7 @@ export function useVerifyCode() {
 
 // Sign out on this phone: the member session ends; the basket and favourites stay.
 export function useSignOutCustomer() {
-  const { customerAuth } = useAdapters();
+  const { customerAuth } = useShopAdapters();
   const client = useQueryClient();
   return useMutation({
     networkMode: 'always',
@@ -250,7 +262,7 @@ export function useSignOutCustomer() {
 }
 
 export function useClaimReward(slug: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const client = useQueryClient();
   return useMutation({
     networkMode: 'always',
@@ -264,7 +276,7 @@ export function useClaimReward(slug: string) {
 }
 
 export function useResolveMapsLink() {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   return useMutation({
     networkMode: 'always',
     retry: false,
@@ -273,7 +285,7 @@ export function useResolveMapsLink() {
 }
 
 export function useSaveAddress(slug: string) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   const client = useQueryClient();
   return useMutation({
     networkMode: 'always',
@@ -288,7 +300,7 @@ export function useSchedule(
   type: OrderType,
   lines: readonly { itemId: string; qty: number }[],
 ) {
-  const { storefront } = useAdapters();
+  const { storefront } = useShopAdapters();
   return useQuery({
     queryKey: qk.schedule(slug, type, lines),
     queryFn: () => storefront.getSchedule({ slug, type, lines }),

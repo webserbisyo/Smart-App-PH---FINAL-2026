@@ -2,7 +2,7 @@
 
 import { useId, useState, useSyncExternalStore } from 'react';
 import { words } from '@smartapp/core';
-import { useOnline, usePushOrders, useSubscribePush } from '@smartapp/data';
+import { useOnline, usePushKey, usePushOrders, useSubscribePush } from '@smartapp/data';
 import { Label } from '@smartapp/ui/components/label';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Bell, BellOff } from 'lucide-react';
@@ -24,6 +24,7 @@ export function NotifyCard({ slug, token }: { slug: string; token: string }) {
   const isOnline = useOnline();
   const subscribe = useSubscribePush(slug, token);
   const pushOrders = usePushOrders(slug);
+  const pushKey = usePushKey(state === 'ask' || state === 'granted');
   const [asking, setAsking] = useState(false);
   const switchId = useId();
   const W = words.receipt.notify;
@@ -49,9 +50,9 @@ export function NotifyCard({ slug, token }: { slug: string; token: string }) {
       return;
     }
     setAsking(true);
-    const result = await enablePush();
+    const result = await enablePush(pushKey.data?.key ?? null).catch(() => null);
     setAsking(false);
-    if (!result.ok) return;
+    if (!result?.ok) return;
     subscribe.mutate(result.subscription, { onSuccess: () => pushOrders.set(token, true) });
   }
 

@@ -2645,6 +2645,108 @@ export const ordersWords = {
   },
 } as const;
 
+// Pushes and emails the API sends (launch phase 5, T117). Its own export, so no page carries these words.
+// Customers see the shop's name as the title; the owner's alerts never carry a customer's phone or address.
+export const pushWords = {
+  // The worker shows this when a push can't be read: an iPhone drops a subscription that shows nothing (X9).
+  fallbackTitle: 'New update',
+  fallbackBody: 'Open the app for details.',
+  status: {
+    preparing: (no: string) => `Order ${no} was accepted. It is being prepared.`,
+    readyPickup: (no: string) => `Order ${no} is ready. Show your order number at the counter.`,
+    readyDelivery: (no: string) => `Order ${no} is ready. The rider picks it up next.`,
+    onTheWay: (no: string) => `Order ${no} is on the way.`,
+    cancelled: (no: string) => `Order ${no} was cancelled. Open it to see why.`,
+    expired: (no: string) => `Order ${no} was cancelled: the payment did not come in time.`,
+    proofRejected: (no: string) =>
+      `Your payment photo for order ${no} was not approved. Open it to send another.`,
+    // Completed is one push with the stamp (T106): sent only when the order earned one.
+    doneStamp: (no: string, have: number, goal: number) =>
+      `Order ${no} is done. You got a stamp: ${have} of ${goal}.`,
+    doneReward: (no: string, reward: string) =>
+      `Order ${no} is done. Your reward is ready: ${reward}.`,
+  },
+  owner: {
+    newOrder: (no: string, total: string) => `New order ${no} · ${total}`,
+    newOrderBody: (name: string, type: string) => `${name} · ${type}. Open Orders to accept it.`,
+    payment: (no: string) => `Payment photo to check · ${no}`,
+    paymentBody: (name: string, total: string) =>
+      `${name} sent ${total}. Check it, then tap Yes or No.`,
+  },
+  orderType: { walk_in: 'Walk-in', pickup: 'Pickup', delivery: 'Delivery' },
+  email: {
+    newOrderSubject: (shop: string, no: string) => `${shop}: new order ${no}`,
+    newOrderLine: (no: string, total: string) => `You have a new order ${no} for ${total}.`,
+    paymentSubject: (shop: string, no: string) => `${shop}: payment photo to check for ${no}`,
+    paymentLine: (no: string, total: string) =>
+      `A customer sent a payment photo for order ${no} (${total}). Check it, then tap Yes or No.`,
+    open: 'Open the order',
+    why: (shop: string) =>
+      `You get this because these emails are on for ${shop}. Turn them off in Settings › Notifications.`,
+  },
+} as const;
+
+// The owner's data export (T66, phase 6): the spreadsheet headings inside the ZIP. Its own export, so no
+// screen carries these words.
+export const exportWords = {
+  ordersHeader: [
+    'Order',
+    'Placed (Manila)',
+    'Business day',
+    'Type',
+    'Status',
+    'Customer',
+    'Phone',
+    'Email',
+    'Address',
+    'Items',
+    'Subtotal (PHP)',
+    'Discount (PHP)',
+    'Delivery fee (PHP)',
+    'Total (PHP)',
+    'Payment',
+    'Paid',
+    'Refund (PHP)',
+    'Note',
+  ],
+  paymentsHeader: [
+    'Order',
+    'Placed (Manila)',
+    'Payment',
+    'Amount (PHP)',
+    'Paid',
+    'Photo sent (Manila)',
+    'Reference',
+    'Photo check',
+    'Checked (Manila)',
+    'Proof file',
+  ],
+  proofStatus: { pending: 'Checking', approved: 'Approved', rejected: 'Not accepted' },
+  proofFile: (orderNo: number, n: number, ext: string) =>
+    `proofs/order-${orderNo}${n > 1 ? `-${n}` : ''}.${ext}`,
+  reward: (title: string) => `Reward: ${title}`,
+} as const;
+
+// The email the founder gets when an owner asks to delete their account (api.md: no self-delete at launch).
+export const founderEmailWords = {
+  deleteSubject: (shop: string) => `Delete request: ${shop}`,
+  deleteLine: (shop: string, slug: string, email: string) =>
+    `The owner of ${shop} (${slug}) asked to delete their account and shop. Their login: ${email}.`,
+  deleteNext:
+    'Reply to them, offer a data export first, then close the shop in Super Admin › Shops.',
+  open: 'Open the shop in Super Admin',
+} as const;
+
+// The receipt's day words (Q10, T117): a small export, so every page that shows a time can use it.
+export const receiptDateWords = { today: 'Today', tomorrow: 'Tomorrow' } as const;
+
+// The dashboard's "New version ready · Refresh" bar (T117). Its own export, so the storefront's pages never
+// carry these words (the JS budget, T31).
+export const updateBarWords = {
+  ready: 'New version ready',
+  refresh: 'Refresh',
+} as const;
+
 // Owner Members page (decisions T57 to T60).
 // New order and Edit order (T111): the owner makes an order for a walk-in, Messenger or phone customer,
 // and changes a received order while it is New, Preparing or Ready.
@@ -3423,7 +3525,8 @@ export const settingsWords = {
     delivery: 'Fees by distance from your shop, or by named areas. You book the rider yourself.',
     payments: 'How customers pay you. Transfers need a screenshot you check by hand.',
     account: 'You, the owner. Customers never see this page.',
-    notifications: 'Emails we send you. The order sound is the bell on the Orders page.',
+    notifications:
+      'Alerts on this device and the emails we send you. The order sound is the bell on the Orders page.',
     plan: 'One plan with everything. You pay Smart App PH by GCash or Maya.',
     storage: 'Your 500 MB, what uses it, and how to save a copy.',
   },
@@ -3677,6 +3780,18 @@ export const settingsWords = {
     sendTo: 'Send to',
     sendToBad: 'Type an email address, like you@example.com.',
     sendToHelp: 'Usually your login email. A shared shop inbox works too.',
+    // New-order alerts on this phone or laptop (launch phase 5, Q2).
+    deviceCard: 'Alerts on this device',
+    deviceAlerts: 'New orders and payment photos',
+    deviceAlertsHelp: 'A notice on this phone or laptop, even with the screen off',
+    deviceOn: 'Alerts are on for this device.',
+    deviceIphone:
+      'On iPhone, add the dashboard to your Home Screen first, then open it from there.',
+    deviceDenied: 'Notifications are blocked for this site. Allow them in your browser settings.',
+    deviceUnsupported: 'This browser can’t show alerts. Try Chrome, Edge or Safari.',
+    deviceFailed: 'Alerts didn’t turn on. Check your connection, then try again.',
+    deviceTurnedOn: 'Alerts turned on',
+    deviceTurnedOff: 'Alerts turned off',
   },
   plan: {
     yourPlan: 'Your plan',

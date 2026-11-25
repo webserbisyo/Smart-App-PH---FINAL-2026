@@ -21,6 +21,10 @@ export class JobsService {
     this.stopping = true;
   }
 
+  isStopping(): boolean {
+    return this.stopping;
+  }
+
   async runLocked(name: string, fn: () => Promise<void>): Promise<JobOutcome> {
     if (this.stopping) return 'skipped';
     try {

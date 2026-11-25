@@ -19,8 +19,8 @@ import {
   type PaymentMethod,
   type PublicShop,
   type ShopRhythm,
+  methodsFor,
 } from '@smartapp/core';
-import { methodsFor } from './quote';
 import { int, mulberry32, type Rng } from './rng';
 import type { ArchivedOrder, OrderRecord, ShopState } from './state';
 

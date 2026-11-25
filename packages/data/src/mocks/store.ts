@@ -81,6 +81,7 @@ import {
   SaveVariantTemplateInputSchema,
   SaveVariantTemplateResultSchema,
   SortOrderInputSchema,
+  BulkItemsInputSchema,
   UploadKindEnum,
   UploadResultSchema,
   ConfirmUploadResultSchema,
@@ -122,6 +123,8 @@ import {
   paidStatusFor,
   type OwnerOrderPayload,
   type Quote,
+  methodsFor,
+  quote,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
 import { currentMockOwner } from './owner-auth';
@@ -146,7 +149,6 @@ import {
   peopleOf,
   type Person,
 } from './members-view';
-import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
 import { getDeviceStorage } from '../device-storage';
 import { createEditorMock } from './editor';
@@ -1320,12 +1322,20 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         return { news: newsMock.setChoice(slug, news) };
       }),
     listShopNews: ({ slug }) => run('storefront', () => newsMock.inbox(slug)),
+    markNewsOpened: ({ slug }) =>
+      run('storefront', () => {
+        requireShop(slug);
+        return { ok: true as const };
+      }),
 
     subscribePush: ({ slug, token }) =>
       run('storefront', () => {
         orderByToken(requireShop(slug), token);
         return { ok: true as const };
       }),
+
+    // Sample data sends no pushes: Notify me is kept on the phone only.
+    getPushKey: () => run('storefront', () => ({ key: null })),
 
     resolveMapsLink: ({ url }) =>
       run('storefront', () => {
@@ -2841,6 +2851,47 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
           }
           s.shop.catalog.items = sorted;
         }
+      });
+    },
+
+    // Bulk menu actions (Q7, T117): every item is checked first, so a refusal changes nothing.
+    bulkItems: async (input) => {
+      const slug = await resolveOwnerShopSlug();
+      const parsed = BulkItemsInputSchema.parse(input);
+      return run('catalog', () => {
+        const s = requireShop(slug);
+        const items = s.shop.catalog.items;
+        if (parsed.action === 'soldOut') {
+          const targets = parsed.variants.map((change) => {
+            const item = items.find((i) => i.variants.some((v) => v.id === change.variantId));
+            const variant = item?.variants.find((v) => v.id === change.variantId);
+            if (!item || !variant) fail('not_found', 404);
+            return { item, variant, change };
+          });
+          for (const { variant, change } of targets) {
+            variant.availability = change.availability;
+            variant.soldOutUntil =
+              change.availability === 'sold_out_today'
+                ? (change.soldOutUntil ?? nextOpening(s.shop.storefront, now()))
+                : null;
+          }
+          return { count: new Set(targets.map((t) => t.item.id)).size };
+        }
+        const picked = [...new Set(parsed.ids)].map((id) => {
+          const item = items.find((i) => i.id === id);
+          if (!item) fail('not_found', 404);
+          return item;
+        });
+        if (parsed.action === 'status') {
+          if (parsed.status !== 'active' && picked.some((i) => isRewardItem(s, i.id)))
+            fail('item_is_reward', 409);
+          for (const item of picked) item.status = parsed.status;
+          return { count: picked.length };
+        }
+        if (!s.shop.catalog.categories.some((c) => c.id === parsed.categoryId))
+          fail('not_found', 404);
+        for (const item of picked) item.categoryId = parsed.categoryId;
+        return { count: picked.length };
       });
     },
   };

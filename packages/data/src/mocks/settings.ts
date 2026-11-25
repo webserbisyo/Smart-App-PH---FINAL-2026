@@ -114,6 +114,8 @@ interface OwnerState {
   slug: string;
   profile: OwnerProfile;
   prefs: NotificationPrefs;
+  // Sample data has no push key: "this device" is one switch kept here.
+  deviceAlerts: boolean;
   trialEndsAt: string | null;
   paidUntil: string | null;
   history: PlanPayment[];
@@ -368,6 +370,7 @@ export function createSettingsMock(deps: SettingsMockDeps) {
       slug,
       profile: OwnerProfileSchema.parse({ name, email, avatar: startingAvatar(name) }),
       prefs: { newOrder: true, paymentToCheck: true, storage: true, planPayment: true, email },
+      deviceAlerts: false,
       trialEndsAt:
         story.paidDays === null ? new Date(now().getTime() + 9 * DAY).toISOString() : null,
       paidUntil,
@@ -946,6 +949,32 @@ export function createSettingsMock(deps: SettingsMockDeps) {
     getNotificationPrefs: async () => {
       const { o } = await current();
       return run('settings', () => o.prefs);
+    },
+
+    getOwnerPushKey: async () => {
+      await current();
+      return run('settings', () => ({ key: null }));
+    },
+
+    getDeviceAlerts: async () => {
+      const { o } = await current();
+      return run('settings', () => ({ on: o.deviceAlerts }));
+    },
+
+    turnOnDeviceAlerts: async () => {
+      const { o } = await current();
+      return run('settings', () => {
+        o.deviceAlerts = true;
+        return { on: true };
+      });
+    },
+
+    turnOffDeviceAlerts: async () => {
+      const { o } = await current();
+      return run('settings', () => {
+        o.deviceAlerts = false;
+        return { on: false };
+      });
     },
 
     saveNotificationPrefs: async (input) => {

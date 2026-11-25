@@ -13,6 +13,8 @@ import type {
   HomeTrends,
   AdjustStampsInput,
   Availability,
+  BulkItemsInput,
+  BulkItemsResult,
   ClaimCancelReason,
   CounterChange,
   CustomerPage,
@@ -165,6 +167,8 @@ export interface StorefrontAdapter {
     token: string;
     subscription: unknown;
   }): Promise<{ ok: true }>;
+  // The platform's push key (launch phase 5, Q5); null where pushes are only recorded (sample data, a laptop).
+  getPushKey(): Promise<{ key: string | null }>;
   resolveMapsLink(input: { url: string }): Promise<LatLng>;
   joinAsMember(input: {
     slug: string;
@@ -191,6 +195,8 @@ export interface StorefrontAdapter {
   getNewsChoice(input: { slug: string }): Promise<{ news: boolean }>;
   setNewsChoice(input: { slug: string; news: boolean }): Promise<{ news: boolean }>;
   listShopNews(input: { slug: string }): Promise<ShopNewsItem[]>;
+  // A news push was tapped: its delivery id rides in the link (`d`), so the owner's results count it.
+  markNewsOpened(input: { slug: string; deliveryId: string }): Promise<{ ok: true }>;
 }
 
 export interface CustomerAuthAdapter {
@@ -309,6 +315,8 @@ export interface OwnerCatalogAdapter {
   saveVariantTemplate(input: SaveVariantTemplateInput): Promise<SaveVariantTemplateResult>;
   removeVariantTemplate(input: { id: string }): Promise<RemoveVariantTemplateResult>;
   saveSortOrder(input: SortOrderInput): Promise<void>;
+  // Bulk menu actions (Q7, T117): one call, all or nothing.
+  bulkItems(input: BulkItemsInput): Promise<BulkItemsResult>;
 }
 
 // The owner's uploads (T65, T66, T116): every owner picture goes through these two steps, whatever area it
@@ -372,6 +380,12 @@ export interface OwnerSettingsAdapter {
   requestAccountDelete(): Promise<{ ok: true }>;
   getNotificationPrefs(): Promise<NotificationPrefs>;
   saveNotificationPrefs(input: NotificationPrefs): Promise<NotificationPrefs>;
+  // New-order alerts on this phone or laptop (launch phase 5, Q2). The key is null where pushes are only
+  // recorded (sample data, a laptop); a device is named by its push address.
+  getOwnerPushKey(): Promise<{ key: string | null }>;
+  getDeviceAlerts(input: { endpoint: string }): Promise<{ on: boolean }>;
+  turnOnDeviceAlerts(input: { subscription: unknown }): Promise<{ on: boolean }>;
+  turnOffDeviceAlerts(input: { endpoint: string }): Promise<{ on: boolean }>;
   getPlan(): Promise<Plan>;
   submitPlanPayment(input: SubmitPlanPaymentInput): Promise<Plan>;
   // The Billing chat (T88): a short note to Smart App PH.
@@ -471,3 +485,6 @@ export interface DataAdapters {
   platform: PlatformAdapter;
   showcase: ShowcaseAdapter;
 }
+
+/** What a shop page needs: the storefront and the customer's sign-in. */
+export type ShopAdapters = Pick<DataAdapters, 'storefront' | 'customerAuth'>;

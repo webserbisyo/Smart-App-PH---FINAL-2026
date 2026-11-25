@@ -6,7 +6,13 @@ import type { AppEnv, DataSource } from '../env';
 import type { OwnerAuth } from '../owner-auth';
 import { createApiOnboardingAdapter } from './api/onboarding';
 import { createApiOwnerAuth } from './api/owner-auth';
+import { createApiOwnerCatalogAdapter } from './api/owner-catalog';
 import { createApiOwnerEditorAdapter } from './api/owner-editor';
+import { createApiOwnerHomeAdapter } from './api/owner-home';
+import { createApiOwnerMembersAdapter } from './api/owner-members';
+import { createApiOwnerNewsAdapter } from './api/owner-news';
+import { createApiOwnerOrdersAdapter } from './api/owner-orders';
+import { createApiOwnerSamplesAdapter } from './api/owner-samples';
 import { createApiOwnerSettingsAdapter } from './api/owner-settings';
 import { createApiUploadsAdapter } from './api/uploads';
 import { lazyAdapters, loadMockStore } from './lazy';
@@ -44,8 +50,26 @@ export function createAdapters(source: DataSource, options: AdapterOptions = {})
     ...(usesApi(plan, 'ownerSettings')
       ? { ownerSettings: createApiOwnerSettingsAdapter({ baseUrl, getToken }) }
       : {}),
+    ...(usesApi(plan, 'ownerCatalog')
+      ? {
+          ownerCatalog: createApiOwnerCatalogAdapter({ baseUrl, getToken }),
+          ownerSamples: createApiOwnerSamplesAdapter({ baseUrl, getToken }),
+        }
+      : {}),
     ...(usesApi(plan, 'ownerEditor')
       ? { ownerEditor: createApiOwnerEditorAdapter({ baseUrl, getToken }) }
+      : {}),
+    ...(usesApi(plan, 'ownerOrders')
+      ? { ownerOrders: createApiOwnerOrdersAdapter({ baseUrl, getToken }) }
+      : {}),
+    ...(usesApi(plan, 'ownerMembers')
+      ? { ownerMembers: createApiOwnerMembersAdapter({ baseUrl, getToken }) }
+      : {}),
+    ...(usesApi(plan, 'ownerNews')
+      ? { ownerNews: createApiOwnerNewsAdapter({ baseUrl, getToken }) }
+      : {}),
+    ...(usesApi(plan, 'ownerHome')
+      ? { ownerHome: createApiOwnerHomeAdapter({ baseUrl, getToken }) }
       : {}),
   };
 }

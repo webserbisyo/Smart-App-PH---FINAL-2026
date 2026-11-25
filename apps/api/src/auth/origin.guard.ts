@@ -2,7 +2,7 @@ import { Inject, Injectable, type CanActivate, type ExecutionContext } from '@ne
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
 import { ApiFailure } from '../common/api-failure.js';
-import { corsOrigins } from '../env.js';
+import { corsOrigins, originAllowed } from '../env.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -17,9 +17,11 @@ export const CSRF_HEADER = 'x-smartapp';
 @Injectable()
 export class OriginGuard implements CanActivate {
   private readonly origins: Set<string>;
+  private readonly shopDomain: string | undefined;
 
   constructor(@Inject(ConfigService) config: ConfigService) {
     this.origins = new Set(corsOrigins(config.getOrThrow<string>('CORS_ORIGINS')));
+    this.shopDomain = config.get<string>('SHOP_DOMAIN');
   }
 
   canActivate(context: ExecutionContext): boolean {
@@ -27,7 +29,10 @@ export class OriginGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<Request>();
     if (SAFE_METHODS.has(req.method)) return true;
     const origin = req.headers.origin;
-    if (req.headers[CSRF_HEADER] !== '1' || (origin !== undefined && !this.origins.has(origin))) {
+    if (
+      req.headers[CSRF_HEADER] !== '1' ||
+      (origin !== undefined && !originAllowed(origin, this.origins, this.shopDomain))
+    ) {
       throw new ApiFailure('not_allowed', 403);
     }
     return true;

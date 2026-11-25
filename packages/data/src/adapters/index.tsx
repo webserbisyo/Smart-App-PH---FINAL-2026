@@ -1,8 +1,8 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { DataSource } from '../env';
-import { lazyAdapters, loadMockStore } from './lazy';
-import type { DataAdapters } from './types';
+import { lazyAdapters, lazyShopAdapters, loadMockStore } from './lazy';
+import type { DataAdapters, OwnerOrdersAdapter, ShopAdapters } from './types';
 
 /** Clears every demo change on this phone (the kit page and dev panel Reset). */
 export async function resetDemoData(): Promise<void> {
@@ -35,6 +35,43 @@ export function useAdapters(): DataAdapters {
   const adapters = useContext(AdaptersContext);
   if (!adapters) throw new Error('useAdapters needs a <DataProvider> above it');
   return adapters;
+}
+
+const ShopAdaptersContext = createContext<ShopAdapters | null>(null);
+
+/**
+ * A shop page's data root: only the storefront's two areas, so the owner adapters stay out of the
+ * storefront's first-load JS. Without `adapters` it reads the sample shops.
+ */
+export function ShopDataProvider({
+  source,
+  adapters: given,
+  children,
+}: {
+  source: DataSource;
+  adapters?: ShopAdapters | undefined;
+  children: ReactNode;
+}) {
+  const adapters = useMemo(() => {
+    if (given) return given;
+    if (source !== 'mock') throw new Error('Pass the shop adapters to use the API.');
+    return lazyShopAdapters(loadMockStore);
+  }, [given, source]);
+  return <ShopAdaptersContext.Provider value={adapters}>{children}</ShopAdaptersContext.Provider>;
+}
+
+/** The storefront hooks' adapters: a shop page's own set, else the app's full set (the dashboard's tour). */
+export function useShopAdapters(): ShopAdapters {
+  const shop = useContext(ShopAdaptersContext);
+  const all = useContext(AdaptersContext);
+  const adapters = shop ?? all;
+  if (!adapters) throw new Error('useShopAdapters needs a <ShopDataProvider> above it');
+  return adapters;
+}
+
+/** The sample shops' owner Orders, for the demo panel on a preview build's receipt (loads on first use). */
+export function sampleOwnerOrders(): Promise<OwnerOrdersAdapter> {
+  return loadMockStore().then((store) => store.ownerOrders);
 }
 
 /**

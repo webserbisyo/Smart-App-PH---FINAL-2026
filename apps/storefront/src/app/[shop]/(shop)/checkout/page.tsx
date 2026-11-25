@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS, words } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { CheckoutFormWrapper } from '@/features/checkout/components/checkout-wrapper';
 import { CheckoutSkeleton } from '@/features/checkout/components/checkout-skeleton';
 
@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: CheckoutPageProps): Promise<Metadata> {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) return {};
   return {
     title: words.checkout.metaTitle(shop.storefront.info.name),
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: CheckoutPageProps): Promise<M
 
 async function CheckoutPageContent({ params }: CheckoutPageProps) {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) notFound();
 
   return <CheckoutFormWrapper />;

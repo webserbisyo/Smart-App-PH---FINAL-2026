@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS, words } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { PrivacyNotice } from '@/features/legal/components/privacy-notice';
 
@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PrivacyPageProps): Promise<Metadata> {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) return {};
   const name = shop.storefront.info.name;
   return { title: words.privacy.metaTitle(name), description: words.privacy.intro(name) };
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PrivacyPageProps): Promise<Me
 // Static per shop (T14): the same notice for everyone, cached with the shop.
 async function CachedPrivacy({ slug }: { slug: string }) {
   'use cache';
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) notFound();
   return <PrivacyNotice storefront={shop.storefront} />;
 }

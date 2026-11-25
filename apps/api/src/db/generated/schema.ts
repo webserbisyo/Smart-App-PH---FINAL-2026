@@ -933,6 +933,7 @@ export const members = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
       .defaultNow()
       .notNull(),
+    note: text(),
   },
   (table) => [
     check(
@@ -942,7 +943,7 @@ export const members = pgTable(
     check('members_check', sql`(erased_at IS NOT NULL) OR (email IS NOT NULL)`),
     check(
       'members_check1',
-      sql`(erased_at IS NULL) OR ((email IS NULL) AND (phone IS NULL) AND (user_id IS NULL))`,
+      sql`(erased_at IS NULL) OR ((email IS NULL) AND (phone IS NULL) AND (user_id IS NULL) AND (note IS NULL))`,
     ),
     check(
       'members_email_check',
@@ -953,6 +954,10 @@ export const members = pgTable(
       sql`(char_length(member_code) >= 4) AND (char_length(member_code) <= 16)`,
     ),
     check('members_name_check', sql`(char_length(name) >= 1) AND (char_length(name) <= 80)`),
+    check(
+      'members_note_check',
+      sql`(note IS NULL) OR ((char_length(note) >= 1) AND (char_length(note) <= 300))`,
+    ),
     check('members_phone_check', sql`phone ~ '^\+639[0-9]{9}$'::text`),
     foreignKey({
       columns: [table.avatarMediaId, table.tenantId],
@@ -1214,9 +1219,10 @@ export const orderLineOptions = pgTable(
   {
     tenantId: uuid('tenant_id').notNull(),
     lineId: uuid('line_id').notNull(),
-    optionId: uuid('option_id').notNull(),
+    optionId: uuid('option_id'),
     name: text().notNull(),
     price: integer().notNull(),
+    id: uuid().defaultRandom().primaryKey().notNull(),
   },
   (table) => [
     check(
@@ -1233,7 +1239,7 @@ export const orderLineOptions = pgTable(
       columns: [table.optionId, table.tenantId],
       foreignColumns: [options.id, options.tenantId],
       name: 'order_line_options_tenant_id_option_id_fkey',
-    }).onDelete('restrict'),
+    }).onDelete('set null'),
     foreignKey({
       columns: [table.tenantId],
       foreignColumns: [tenants.id],
@@ -1247,7 +1253,7 @@ export const orderLineOptions = pgTable(
       'btree',
       table.tenantId.asc().nullsLast().op('uuid_ops'),
     ),
-    primaryKey({ columns: [table.lineId, table.optionId], name: 'order_line_options_pkey' }),
+    unique('order_line_options_line_option_key').on(table.lineId, table.optionId),
   ],
 );
 
@@ -1258,7 +1264,7 @@ export const orderLines = pgTable(
     tenantId: uuid('tenant_id').notNull(),
     orderId: uuid('order_id').notNull(),
     itemId: uuid('item_id').notNull(),
-    variantId: uuid('variant_id').notNull(),
+    variantId: uuid('variant_id'),
     name: text().notNull(),
     variantLabel: text('variant_label'),
     note: text().default('').notNull(),
@@ -1290,7 +1296,7 @@ export const orderLines = pgTable(
       columns: [table.tenantId, table.variantId],
       foreignColumns: [itemVariants.id, itemVariants.tenantId],
       name: 'order_lines_tenant_id_variant_id_fkey',
-    }).onDelete('restrict'),
+    }).onDelete('set null'),
     foreignKey({
       columns: [table.tenantId],
       foreignColumns: [tenants.id],
@@ -2128,6 +2134,80 @@ export const pushDeliveries = pgTable(
   ],
 );
 
+export const pushOutbox = pgTable(
+  'push_outbox',
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    tenantId: uuid('tenant_id').notNull(),
+    subscriptionId: uuid('subscription_id').notNull(),
+    kind: text().notNull(),
+    payload: jsonb().notNull(),
+    dedupeKey: text('dedupe_key').notNull(),
+    topic: text(),
+    ttlSeconds: integer('ttl_seconds').default(3600).notNull(),
+    urgency: text().default('normal').notNull(),
+    status: text().default('queued').notNull(),
+    attempts: smallint().default(0).notNull(),
+    sendAfter: timestamp('send_after', { withTimezone: true, mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true, mode: 'string' }),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check('push_outbox_attempts_check', sql`(attempts >= 0) AND (attempts <= 10)`),
+    check('push_outbox_check', sql`(status = 'sent'::text) = (sent_at IS NOT NULL)`),
+    check(
+      'push_outbox_dedupe_key_check',
+      sql`(char_length(dedupe_key) >= 8) AND (char_length(dedupe_key) <= 160)`,
+    ),
+    check(
+      'push_outbox_kind_check',
+      sql`kind = ANY (ARRAY['order_status'::text, 'owner_new_order'::text, 'owner_payment'::text, 'stamp_added'::text, 'reward_ready'::text])`,
+    ),
+    check(
+      'push_outbox_payload_check',
+      sql`(jsonb_typeof(payload) = 'object'::text) AND (pg_column_size(payload) < 4000)`,
+    ),
+    check(
+      'push_outbox_status_check',
+      sql`status = ANY (ARRAY['queued'::text, 'sent'::text, 'failed'::text, 'gone'::text])`,
+    ),
+    check('push_outbox_topic_check', sql`topic ~ '^[A-Za-z0-9_-]{1,32}$'::text`),
+    check('push_outbox_ttl_seconds_check', sql`(ttl_seconds >= 60) AND (ttl_seconds <= 86400)`),
+    check('push_outbox_urgency_check', sql`urgency = ANY (ARRAY['normal'::text, 'high'::text])`),
+    foreignKey({
+      columns: [table.subscriptionId, table.tenantId],
+      foreignColumns: [pushSubscriptions.id, pushSubscriptions.tenantId],
+      name: 'push_outbox_tenant_id_subscription_id_fkey',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.tenantId],
+      foreignColumns: [tenants.id],
+      name: 'push_outbox_tenant_id_fkey',
+    }).onDelete('cascade'),
+    index('push_outbox_queue')
+      .using('btree', table.sendAfter.asc().nullsLast().op('timestamptz_ops'))
+      .where(sql`(status = 'queued'::text)`),
+    index('push_outbox_subscription').using(
+      'btree',
+      table.subscriptionId.asc().nullsLast().op('uuid_ops'),
+    ),
+    index('push_outbox_tenant').using(
+      'btree',
+      table.tenantId.asc().nullsLast().op('uuid_ops'),
+      table.createdAt.asc().nullsLast().op('uuid_ops'),
+    ),
+    unique('push_outbox_tenant_id_subscription_id_dedupe_key_key').on(
+      table.tenantId,
+      table.subscriptionId,
+      table.dedupeKey,
+    ),
+  ],
+);
+
 export const pushSubscriptions = pgTable(
   'push_subscriptions',
   {
@@ -2145,6 +2225,7 @@ export const pushSubscriptions = pgTable(
     platform: text().default('other').notNull(),
     lastOkAt: timestamp('last_ok_at', { withTimezone: true, mode: 'string' }),
     failCount: smallint('fail_count').default(0).notNull(),
+    userId: uuid('user_id'),
   },
   (table) => [
     check(
@@ -2156,6 +2237,7 @@ export const pushSubscriptions = pgTable(
       sql`(char_length(endpoint) >= 10) AND (char_length(endpoint) <= 1000)`,
     ),
     check('push_subscriptions_fail_count_check', sql`(fail_count >= 0) AND (fail_count <= 100)`),
+    check('push_subscriptions_owner_or_customer', sql`(user_id IS NULL) OR (member_id IS NULL)`),
     check(
       'push_subscriptions_p256dh_check',
       sql`(char_length(p256dh) >= 10) AND (char_length(p256dh) <= 200)`,
@@ -2174,6 +2256,11 @@ export const pushSubscriptions = pgTable(
       foreignColumns: [tenants.id],
       name: 'push_subscriptions_tenant_id_fkey',
     }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [authUsers.id],
+      name: 'push_subscriptions_user_id_fkey',
+    }).onDelete('cascade'),
     index('push_subscriptions_member').using(
       'btree',
       table.memberId.asc().nullsLast().op('uuid_ops'),
@@ -2181,6 +2268,13 @@ export const pushSubscriptions = pgTable(
     index('push_subscriptions_news')
       .using('btree', table.tenantId.asc().nullsLast().op('uuid_ops'))
       .where(sql`news`),
+    index('push_subscriptions_user')
+      .using(
+        'btree',
+        table.tenantId.asc().nullsLast().op('uuid_ops'),
+        table.userId.asc().nullsLast().op('uuid_ops'),
+      )
+      .where(sql`(user_id IS NOT NULL)`),
     unique('push_subscriptions_tenant_id_endpoint_key').on(table.tenantId, table.endpoint),
     unique('push_subscriptions_tenant_id_id_key').on(table.id, table.tenantId),
   ],
@@ -2939,6 +3033,7 @@ export const variantTemplates = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
       .defaultNow()
       .notNull(),
+    isSample: boolean('is_sample').default(false).notNull(),
   },
   (table) => [
     check(
@@ -2950,8 +3045,11 @@ export const variantTemplates = pgTable(
       foreignColumns: [tenants.id],
       name: 'variant_templates_tenant_id_fkey',
     }).onDelete('cascade'),
+    index('variant_templates_tenant').using(
+      'btree',
+      table.tenantId.asc().nullsLast().op('uuid_ops'),
+    ),
     unique('variant_templates_tenant_id_id_key').on(table.id, table.tenantId),
-    uniqueIndex('variant_templates_name').using('btree', sql`tenant_id`, sql`lower(name)`),
   ],
 );
 

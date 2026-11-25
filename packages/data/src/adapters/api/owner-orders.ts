@@ -92,7 +92,7 @@ export function createApiOwnerOrdersAdapter({
     async getProofUrl(input) {
       const headers = await authHeaders();
       const res = await fetchApi(
-        `${baseUrl}/owner/orders/proof-url?path=${encodeURIComponent(input.path)}`,
+        `${baseUrl}/owner/proofs?path=${encodeURIComponent(input.path)}`,
         z.object({ url: z.string() }),
         { method: 'GET', headers },
       );
@@ -119,15 +119,12 @@ export function createApiOwnerOrdersAdapter({
     async reviewPayment(input) {
       const headers = await authHeaders();
       return fetchApi(
-        `${baseUrl}/owner/orders/${encodeURIComponent(input.orderId)}/payment`,
+        `${baseUrl}/owner/payments/${encodeURIComponent(input.orderId)}/review`,
         PaymentSchema,
         {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            approve: input.approve,
-            rejectReason: input.rejectReason ?? null,
-          }),
+          body: JSON.stringify({ approve: input.approve, rejectReason: input.rejectReason }),
         },
       );
     },
@@ -135,7 +132,7 @@ export function createApiOwnerOrdersAdapter({
     async recordPayment(input) {
       const headers = await authHeaders();
       return fetchApi(
-        `${baseUrl}/owner/orders/${encodeURIComponent(input.orderId)}/payment/record`,
+        `${baseUrl}/owner/orders/${encodeURIComponent(input.orderId)}/payments`,
         PaymentSchema,
         {
           method: 'POST',
@@ -198,10 +195,7 @@ export function createApiOwnerOrdersAdapter({
         {
           method: 'POST',
           headers,
-          body: JSON.stringify({
-            toStatus: input.toStatus,
-            trackingUrl: input.trackingUrl ?? null,
-          }),
+          body: JSON.stringify({ toStatus: input.toStatus, trackingUrl: input.trackingUrl }),
         },
       );
     },
@@ -275,10 +269,10 @@ export function createApiOwnerOrdersAdapter({
           method: 'PATCH',
           headers,
           body: JSON.stringify({
-            provider: input.provider ?? null,
-            trackingUrl: input.trackingUrl ?? null,
-            riderName: input.riderName ?? null,
-            riderPhone: input.riderPhone ?? null,
+            provider: input.provider,
+            trackingUrl: input.trackingUrl,
+            riderName: input.riderName,
+            riderPhone: input.riderPhone,
           }),
         },
       );
