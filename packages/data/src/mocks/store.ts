@@ -83,6 +83,7 @@ import {
   SortOrderInputSchema,
   UploadKindEnum,
   UploadResultSchema,
+  ConfirmUploadResultSchema,
   type ErrorCode,
   type MemberAccount,
   type OrderPayload,
@@ -123,7 +124,7 @@ import {
   type Quote,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
-import { getAuthClient, getClaims } from '../auth';
+import { currentMockOwner } from './owner-auth';
 import type { DataAdapters } from '../adapters/types';
 import {
   DEMO_CUSTOMER,
@@ -323,16 +324,7 @@ export function setMockOwnerSlug(slug: string | null): void {
 
 async function resolveOwnerShopSlug(): Promise<string> {
   if (activeMockOwnerSlug) return activeMockOwnerSlug;
-  const client = getAuthClient();
-  if (client) {
-    try {
-      const claims = await getClaims(client);
-      if (claims?.demoShop) return claims.demoShop;
-    } catch {
-      // ignore
-    }
-  }
-  return 'kanto-smash';
+  return currentMockOwner()?.demoShop ?? 'kanto-smash';
 }
 
 export function createMockStore(options: MockStoreOptions = {}): MockStore {
@@ -648,8 +640,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     requireShop: (slug) => requireShop(slug),
     ownerShop: () => resolveOwnerShopSlug(),
     ownerClaims: async () => {
-      const client = getAuthClient();
-      const claims = client ? await getClaims(client) : null;
+      const claims = currentMockOwner();
       // The founder's own account is never a shop owner's profile (T88).
       return claims?.isAdmin ? null : claims;
     },
@@ -730,10 +721,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         scenario: () => scenario(),
         setup: platformSetup,
         ownerShop: () => resolveOwnerShopSlug(),
-        ownerClaims: async () => {
-          const client = getAuthClient();
-          return client ? getClaims(client) : null;
-        },
+        ownerClaims: async () => currentMockOwner(),
         book: (slug) => settingsMock.book(slug),
         billingLine: settingsMock.billingLine,
         storageUsed: (slug) => settingsMock.storageUsed(slug),
@@ -750,6 +738,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
   const onboarding: DataAdapters['onboarding'] = {
     saveSignupLead: async (input) => (await loadPlatform()).onboarding.saveSignupLead(input),
     registerShop: async (input) => (await loadPlatform()).onboarding.registerShop(input),
+    getMyShop: async () => (await loadPlatform()).onboarding.getMyShop(),
     trackEvent: async (input) => (await loadPlatform()).onboarding.trackEvent(input),
     getOnboarding: async () => (await loadPlatform()).onboarding.getOnboarding(),
     askToGoLive: async () => (await loadPlatform()).onboarding.askToGoLive(),
@@ -2854,16 +2843,29 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         }
       });
     },
+  };
 
+  // Uploads (T116): the same two steps as NestJS. The pretend address takes no file; confirm answers the path.
+  const pendingUploads = new Map<string, { path: string; bytes: number }>();
+  const uploads: DataAdapters['uploads'] = {
     createUploadUrl: async ({ kind, bytes }) => {
       UploadKindEnum.parse(kind);
       // NestJS checks the shop's storage before it signs an upload (T66).
       await settingsMock.reserveUpload(kind, bytes);
       return run('catalog', () => {
+        const uploadId = `upload-${makeToken(rng).slice(0, 10)}`;
         const path = `uploads/${kind}/${Date.now()}-${makeToken(rng).slice(0, 6)}.webp`;
-        return UploadResultSchema.parse({ uploadUrl: `mock://upload/${path}`, path });
+        pendingUploads.set(uploadId, { path, bytes: bytes ?? 0 });
+        return UploadResultSchema.parse({ id: uploadId, uploadUrl: `mock://upload/${path}`, path });
       });
     },
+    confirmUpload: async ({ id: uploadId }) =>
+      run('catalog', () => {
+        const pending = pendingUploads.get(uploadId);
+        if (!pending) fail('not_found', 404);
+        pendingUploads.delete(uploadId);
+        return ConfirmUploadResultSchema.parse({ ref: pending.path, bytes: pending.bytes });
+      }),
   };
 
   // Owner Members (decisions T57 to T60). The shop comes from the owner's login, like the catalog.
@@ -3338,6 +3340,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     ownerOrders,
     ownerSamples,
     ownerCatalog,
+    uploads,
     ownerMembers,
     ownerNews: newsMock.adapter,
     ownerSettings: settingsMock.adapter,

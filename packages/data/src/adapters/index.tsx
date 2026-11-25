@@ -1,29 +1,33 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { DataSource } from '../env';
-import { lazyAdapters } from './lazy';
+import { lazyAdapters, loadMockStore } from './lazy';
 import type { DataAdapters } from './types';
-
-const loadMockStore = () => import('../mocks/browser').then((m) => m.getMockStore());
 
 /** Clears every demo change on this phone (the kit page and dev panel Reset). */
 export async function resetDemoData(): Promise<void> {
   (await loadMockStore()).reset();
 }
 
-export function createAdapters(source: DataSource): DataAdapters {
-  if (source === 'api') {
-    throw new Error(
-      'API adapters are added area by area in phase 4; set DATA_SOURCE=mock for now.',
-    );
-  }
+// Without given adapters only sample data is possible: an app on the API builds them with createAdapters.
+function sampleAdapters(source: DataSource): DataAdapters {
+  if (source !== 'mock') throw new Error('Pass the adapters from createAdapters to use the API.');
   return lazyAdapters(loadMockStore);
 }
 
 const AdaptersContext = createContext<DataAdapters | null>(null);
 
-export function DataProvider({ source, children }: { source: DataSource; children: ReactNode }) {
-  const adapters = useMemo(() => createAdapters(source), [source]);
+/** Pass `adapters` when the app also needs them outside React (the dashboard's route guards). */
+export function DataProvider({
+  source,
+  adapters: given,
+  children,
+}: {
+  source: DataSource;
+  adapters?: DataAdapters | undefined;
+  children: ReactNode;
+}) {
+  const adapters = useMemo(() => given ?? sampleAdapters(source), [given, source]);
   return <AdaptersContext.Provider value={adapters}>{children}</AdaptersContext.Provider>;
 }
 

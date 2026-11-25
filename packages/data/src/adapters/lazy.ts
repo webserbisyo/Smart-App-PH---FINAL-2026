@@ -15,7 +15,11 @@ import type {
   PlatformAdapter,
   ShowcaseAdapter,
   StorefrontAdapter,
+  UploadsAdapter,
 } from './types';
+
+// The sample-data store loads only when a screen first asks for data.
+export const loadMockStore = () => import('../mocks/browser').then((m) => m.getMockStore());
 
 export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
   let loading: Promise<DataAdapters> | null = null;
@@ -101,7 +105,11 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     removeVariantTemplate: async (input) =>
       (await real()).ownerCatalog.removeVariantTemplate(input),
     saveSortOrder: async (input) => (await real()).ownerCatalog.saveSortOrder(input),
-    createUploadUrl: async (input) => (await real()).ownerCatalog.createUploadUrl(input),
+  };
+
+  const uploads: UploadsAdapter = {
+    createUploadUrl: async (input) => (await real()).uploads.createUploadUrl(input),
+    confirmUpload: async (input) => (await real()).uploads.confirmUpload(input),
   };
 
   const ownerMembers: OwnerMembersAdapter = {
@@ -183,6 +191,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
   const onboarding: OnboardingAdapter = {
     saveSignupLead: async (input) => (await real()).onboarding.saveSignupLead(input),
     registerShop: async (input) => (await real()).onboarding.registerShop(input),
+    getMyShop: async () => (await real()).onboarding.getMyShop(),
     trackEvent: async (input) => (await real()).onboarding.trackEvent(input),
     getOnboarding: async () => (await real()).onboarding.getOnboarding(),
     askToGoLive: async () => (await real()).onboarding.askToGoLive(),
@@ -225,6 +234,7 @@ export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
     ownerOrders,
     ownerSamples,
     ownerCatalog,
+    uploads,
     ownerMembers,
     ownerNews,
     ownerSettings,

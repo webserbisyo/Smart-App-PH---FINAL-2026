@@ -13,6 +13,7 @@ import {
 } from '@smartapp/core';
 import {
   errorCodeOf,
+  type UserClaims,
   useRegisterShop,
   useResendSignupCode,
   useSaveSignupLead,
@@ -53,13 +54,12 @@ import { notify } from '@smartapp/ui/compositions/notify';
 import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
 import { cn } from 'cn';
 import { newEventId, pixelTrack, readFbp, type Attribution } from '@/app/meta-pixel';
-import { supabase } from '@/app/supabase';
+import { ownerAuth } from '@/app/data';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { PasswordInput } from './password-input.js';
 
 const W = signupWords;
 const TERMS_VERSION = '2026-11';
-const RESEND_SECONDS = 60;
 const KIND_ICON: Record<ShopKind, React.ReactNode> = {
   food: <UtensilsIcon aria-hidden="true" />,
   retail: <PackageIcon aria-hidden="true" />,
@@ -107,11 +107,11 @@ function youProblems(you: You): Partial<Record<keyof You, string>> {
   return out;
 }
 
-function shopProblems(shop: Shop): Partial<Record<keyof Shop, string>> {
+function shopProblems(shop: Shop, needsPassword: boolean): Partial<Record<keyof Shop, string>> {
   const out: Partial<Record<keyof Shop, string>> = {};
   if (shop.shopName.trim().length < 2) out.shopName = W.shop.shopNameBad;
   if (shop.city.trim().length < 2) out.city = W.shop.cityBad;
-  if (shop.password.length < 8) out.password = W.you.passwordBad;
+  if (needsPassword && shop.password.length < 8) out.password = W.you.passwordBad;
   return out;
 }
 
@@ -119,33 +119,39 @@ function shopProblems(shop: Shop): Partial<Record<keyof Shop, string>> {
  * The sign-up form (decision T89, slimmer step 1 in T108 L3): 1 You (name, email, mobile), saved as a lead on
  * Continue; 2 Your shop, its colour and the password; 3 the email code. Every step tells Meta through NestJS
  * with the same id the pixel used (T90). The shop name, kind and colour go up to the page for the phone.
+ * `finishing` is an owner who confirmed the code but has no shop yet: the form opens on step 2, without the
+ * password, and makes the shop (T116).
  */
 export function SignupForm({
   attribution,
   onDraft,
+  finishing = null,
   className,
 }: {
   attribution: Attribution;
   onDraft?: ((draft: ShopDraft) => void) | undefined;
+  finishing?: UserClaims | null | undefined;
   className?: string | undefined;
 }) {
   const navigate = useNavigate();
   const online = useOnlineStatus();
   const saveLead = useSaveSignupLead();
-  const signUp = useSignUp(supabase);
-  const verify = useVerifySignupCode(supabase);
-  const resend = useResendSignupCode(supabase);
+  const signUp = useSignUp(ownerAuth);
+  const verify = useVerifySignupCode(ownerAuth);
+  const resend = useResendSignupCode(ownerAuth);
   const register = useRegisterShop();
   const nextAction = useAsyncAction();
   const createAction = useAsyncAction();
-  const [step, setStep] = React.useState<Step>(1);
+  const [step, setStep] = React.useState<Step>(finishing ? 2 : 1);
   const [tried, setTried] = React.useState(false);
   const [leadId, setLeadId] = React.useState<string | null>(null);
+  // The code was right: a second press only makes the shop again (a used code would fail).
+  const [verified, setVerified] = React.useState(finishing !== null);
   const [you, setYou] = React.useState<You>({
-    fullName: '',
-    email: '',
+    fullName: finishing?.fullName ?? '',
+    email: finishing?.email ?? '',
     phone: '',
-    terms: false,
+    terms: finishing !== null,
   });
   const [shop, setShopState] = React.useState<Shop>({
     shopName: '',
@@ -167,7 +173,7 @@ export function SignupForm({
   const heading = React.useRef<HTMLHeadingElement>(null);
 
   const yp = youProblems(you);
-  const sp = shopProblems(shop);
+  const sp = shopProblems(shop, !verified);
   const show = <T extends string>(problems: Partial<Record<T, string>>, key: T) =>
     tried ? problems[key] : undefined;
 
@@ -242,24 +248,24 @@ export function SignupForm({
     await navigate({ to: '/' });
   };
 
-  // Step 2: the account (Supabase Auth behind NestJS later, T34), then the code, or straight in.
+  // Step 2: the account (Supabase Auth behind NestJS, T34) emails the code; an owner who already confirmed it
+  // makes the shop straight away.
   const onShop = async () => {
     setTried(true);
     if (Object.keys(sp).length > 0) return;
-    const phone = normalisePhPhone(you.phone);
     try {
       await createAction.run(async () => {
+        if (verified) {
+          await finish();
+          return;
+        }
         const res = await signUp.mutateAsync({
           fullName: you.fullName.trim(),
           email: you.email.trim().toLowerCase(),
           password: shop.password,
-          phone: phone.ok ? phone.e164 : undefined,
         });
-        if (res.session) await finish();
-        else {
-          setResendAt(new Date(Date.now() + RESEND_SECONDS * 1000).toISOString());
-          goTo(3);
-        }
+        setResendAt(res.resendAt);
+        goTo(3);
       });
     } catch (err) {
       const c = codeOf(err);
@@ -278,12 +284,21 @@ export function SignupForm({
       setCodeError(W.code.bad);
       return;
     }
+    if (!verified) {
+      try {
+        await verify.mutateAsync({ email: you.email.trim().toLowerCase(), code: value });
+        setVerified(true);
+      } catch (err) {
+        const c = codeOf(err);
+        setCodeError(errorWords(c === 'unknown' ? 'invalid_code' : c));
+        return;
+      }
+    }
     try {
-      await verify.mutateAsync({ email: you.email.trim().toLowerCase(), code: value });
       await finish();
     } catch (err) {
       const c = codeOf(err);
-      setCodeError(errorWords(c === 'unknown' ? 'invalid_code' : c));
+      setCodeError(c === 'unknown' ? W.error : errorWords(c));
     }
   };
 
@@ -338,6 +353,7 @@ export function SignupForm({
             </h2>
           </CardTitle>
           {step === 3 ? <CardDescription>{W.code.sent(you.email.trim())}</CardDescription> : null}
+          {step === 2 && finishing ? <CardDescription>{W.shop.finishing}</CardDescription> : null}
         </div>
       </CardHeader>
       <CardContent>
@@ -543,28 +559,32 @@ export function SignupForm({
                 />
                 <FieldDescription>{W.shop.facebookHelp}</FieldDescription>
               </Field>
-              <Field data-invalid={show(sp, 'password') ? true : undefined}>
-                <FieldLabel htmlFor="su-password">{W.shop.password}</FieldLabel>
-                <PasswordInput
-                  id="su-password"
-                  capsId="su-password-caps"
-                  autoComplete="new-password"
-                  value={shop.password}
-                  maxLength={72}
-                  aria-invalid={show(sp, 'password') ? true : undefined}
-                  onChange={(e) => setShop({ ...shop, password: e.target.value })}
-                />
-                {show(sp, 'password') ? (
-                  <FieldError>{sp.password}</FieldError>
-                ) : (
-                  <FieldDescription>{W.shop.passwordHelp}</FieldDescription>
-                )}
-              </Field>
+              {verified ? null : (
+                <Field data-invalid={show(sp, 'password') ? true : undefined}>
+                  <FieldLabel htmlFor="su-password">{W.shop.password}</FieldLabel>
+                  <PasswordInput
+                    id="su-password"
+                    capsId="su-password-caps"
+                    autoComplete="new-password"
+                    value={shop.password}
+                    maxLength={72}
+                    aria-invalid={show(sp, 'password') ? true : undefined}
+                    onChange={(e) => setShop({ ...shop, password: e.target.value })}
+                  />
+                  {show(sp, 'password') ? (
+                    <FieldError>{sp.password}</FieldError>
+                  ) : (
+                    <FieldDescription>{W.shop.passwordHelp}</FieldDescription>
+                  )}
+                </Field>
+              )}
               <div className="flex gap-2">
-                <Button type="button" variant="outline" className="h-12" onClick={() => goTo(1)}>
-                  <ArrowLeftIcon aria-hidden="true" />
-                  {W.shop.back}
-                </Button>
+                {finishing ? null : (
+                  <Button type="button" variant="outline" className="h-12" onClick={() => goTo(1)}>
+                    <ArrowLeftIcon aria-hidden="true" />
+                    {W.shop.back}
+                  </Button>
+                )}
                 <AsyncButton
                   type="submit"
                   status={createAction.status}
@@ -598,8 +618,8 @@ export function SignupForm({
               onResend={() => {
                 void resend
                   .mutateAsync({ email: you.email.trim().toLowerCase() })
-                  .then(() => {
-                    setResendAt(new Date(Date.now() + RESEND_SECONDS * 1000).toISOString());
+                  .then((res) => {
+                    setResendAt(res.resendAt);
                     notify({ title: W.code.resent, tone: 'success' });
                   })
                   .catch((err: unknown) =>
@@ -618,9 +638,11 @@ export function SignupForm({
             >
               {verify.isPending || register.isPending ? W.code.confirming : W.code.confirm}
             </Button>
-            <Button variant="link" className="h-11 self-center" onClick={() => goTo(1)}>
-              {W.code.wrongEmail}
-            </Button>
+            {verified ? null : (
+              <Button variant="link" className="h-11 self-center" onClick={() => goTo(1)}>
+                {W.code.wrongEmail}
+              </Button>
+            )}
           </div>
         ) : null}
       </CardContent>

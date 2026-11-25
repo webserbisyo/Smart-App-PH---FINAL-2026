@@ -1,6 +1,6 @@
 // Sign-up and going live for NestJS (T89, T90). Same rows as docs/api.md "Sign-up and going live". The lead
 // and the browser events are public (rate-limited); registerShop and the rest need the owner's login (T34).
-import { OwnerOnboardingSchema, SignupLeadResultSchema } from '@smartapp/core';
+import { MyShopSchema, OwnerOnboardingSchema, SignupLeadResultSchema } from '@smartapp/core';
 import { z } from 'zod';
 import { fetchApi } from '../../api-client';
 import type { OnboardingAdapter } from '../types';
@@ -36,6 +36,8 @@ export function createApiOnboardingAdapter({
   return {
     saveSignupLead: (input) => call('/signup/leads', SignupLeadResultSchema, 'POST', input),
     registerShop: (input) => call('/signup/shop', OwnerOnboardingSchema, 'POST', input),
+    getMyShop: async () =>
+      (await call('/owner/shop', z.object({ shop: MyShopSchema.nullable() }), 'GET')).shop,
     trackEvent: (input) => call('/track', OkSchema, 'POST', input),
     getOnboarding: () => call('/owner/onboarding', OwnerOnboardingSchema, 'GET'),
     askToGoLive: () => call('/owner/onboarding/ask', OwnerOnboardingSchema, 'POST', {}),

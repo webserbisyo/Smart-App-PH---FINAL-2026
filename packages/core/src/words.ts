@@ -1387,6 +1387,11 @@ export const words = {
       variant_is_reward:
         'That option is your stamp card prize. Choose another prize first, then remove it.',
       item_is_reward: 'This is your stamp card prize. Change the prize first.',
+      slug_taken: 'That shop link is taken. Try another one.',
+      slug_reserved: 'That shop link is kept for Smart App PH. Try another one.',
+      slug_invalid: 'Use 3 to 40 small letters, numbers or dashes for the shop link.',
+      already_has_shop: 'This account already has a shop. Log in to open it.',
+      not_allowed: 'Your account can’t do this. Ask the shop owner.',
       storage_full:
         'Your 500 MB is full. Free some space in Settings, Storage and data, then add the photo again.',
       file_not_image: "This file isn't a photo. Pick a JPEG, PNG or WebP.",
@@ -4719,6 +4724,8 @@ export const signupWords = {
     back: 'Back',
     create: 'Create my shop',
     creating: 'Creating your shop',
+    // An owner who confirmed the email code but left before the shop was made (T116).
+    finishing: 'Your email is confirmed. Add your shop to finish.',
   },
   code: {
     title: 'Check your email',

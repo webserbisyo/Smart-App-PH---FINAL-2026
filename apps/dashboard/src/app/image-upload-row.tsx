@@ -18,7 +18,7 @@ import {
   errorCodeOf,
   prepareImage,
   shrinkPercent,
-  useCreateUploadUrl,
+  useUploadImage,
   type PreparedImage,
   type PrepareImageResult,
 } from '@smartapp/data';
@@ -55,8 +55,10 @@ export function uploadProblemText(result: Exclude<PrepareImageResult, { ok: true
 }
 
 export interface UploadedImage {
-  // What is saved with the setting (the storage path from NestJS).
+  // What is saved with the setting: the picture's address from NestJS (T116), or a pretend path on sample data.
   ref: string;
+  // Sample data: nothing left the phone.
+  sample: boolean;
   // A local copy to show it right away.
   preview: string;
   image: PreparedImage;
@@ -69,7 +71,7 @@ export interface UploadedImage {
  * the owner's photo, the plan receipt and the Storage try-out.
  */
 export function useImageUpload(kind: UploadKind, maxSide: number) {
-  const createUpload = useCreateUploadUrl();
+  const send = useUploadImage();
   const [busy, setBusy] = React.useState<'shrinking' | 'uploading' | null>(null);
   const [problem, setProblem] = React.useState<string | null>(null);
 
@@ -84,19 +86,12 @@ export function useImageUpload(kind: UploadKind, maxSide: number) {
     }
     setBusy('uploading');
     try {
-      const target = await createUpload.mutateAsync({ kind, bytes: result.image.after });
-      // The mock signs a pretend address; a real one takes the file (phase 4).
-      if (!target.uploadUrl.startsWith('mock://')) {
-        const response = await fetch(target.uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': result.image.blob.type },
-          body: result.image.blob,
-        });
-        if (!response.ok) throw new Error('upload_failed');
-      }
+      // Room, the file straight to storage, then NestJS checks and counts it (T116).
+      const sent = await send.mutateAsync({ kind, blob: result.image.blob });
       setBusy(null);
       return {
-        ref: target.path,
+        ref: sent.ref,
+        sample: sent.sample,
         preview: URL.createObjectURL(result.image.blob),
         image: result.image,
         original: URL.createObjectURL(file),

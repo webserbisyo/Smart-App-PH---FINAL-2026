@@ -110,6 +110,19 @@ export const TrackInputSchema = z.object({
 });
 export type TrackInput = z.infer<typeof TrackInputSchema>;
 
+// ---------- the owner's shop (getMyShop, decision T116) ----------
+
+// The signed-in owner's shop, or null when sign-up stopped before step 2 (the dashboard sends them back there).
+export const MyShopSchema = z.object({
+  id: IdSchema,
+  slug: z.string().min(3).max(40),
+  name: z.string().min(1).max(60),
+  kind: ShopKindEnum,
+  stage: ShopStageEnum,
+  isDemo: z.boolean(),
+});
+export type MyShop = z.infer<typeof MyShopSchema>;
+
 // ---------- the owner's side of going live ----------
 
 export const OnboardingStepSchema = z.object({

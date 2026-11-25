@@ -64,6 +64,7 @@ import type {
   Schedule,
   SendCodeResult,
   SortOrderInput,
+  ConfirmUploadResult,
   UploadKind,
   UploadResult,
   CleanupKind,
@@ -105,6 +106,7 @@ import type {
   ListAdminPaymentsInput,
   ListAdminShopsInput,
   OwnerOnboarding,
+  MyShop,
   PlatformSetup,
   RecordPlanPaymentInput,
   RegisterShopInput,
@@ -307,8 +309,15 @@ export interface OwnerCatalogAdapter {
   saveVariantTemplate(input: SaveVariantTemplateInput): Promise<SaveVariantTemplateResult>;
   removeVariantTemplate(input: { id: string }): Promise<RemoveVariantTemplateResult>;
   saveSortOrder(input: SortOrderInput): Promise<void>;
+}
+
+// The owner's uploads (T65, T66, T116): every owner picture goes through these two steps, whatever area it
+// is for (menu, look, payment QR, own photo, plan receipt), so the area can move to the API on its own.
+export interface UploadsAdapter {
   // bytes: the size after shrinking, checked against the shop's storage (T66); never asked for proofs.
   createUploadUrl(input: { kind: UploadKind; bytes?: number | undefined }): Promise<UploadResult>;
+  // After the phone sent the file: the real size and type are checked and the file counts (X7).
+  confirmUpload(input: { id: string }): Promise<ConfirmUploadResult>;
 }
 
 // The shop comes from the owner's login (T34), so no method takes a slug.
@@ -406,6 +415,8 @@ export interface OwnerEditorAdapter {
 export interface OnboardingAdapter {
   saveSignupLead(input: SignupLeadInput): Promise<SignupLeadResult>;
   registerShop(input: RegisterShopInput): Promise<OwnerOnboarding>;
+  // The signed-in owner's shop, or null when sign-up stopped before the shop step (T116).
+  getMyShop(): Promise<MyShop | null>;
   trackEvent(input: TrackInput): Promise<{ ok: true }>;
   getOnboarding(): Promise<OwnerOnboarding>;
   askToGoLive(): Promise<OwnerOnboarding>;
@@ -450,6 +461,7 @@ export interface DataAdapters {
   ownerOrders: OwnerOrdersAdapter;
   ownerSamples: OwnerSamplesAdapter;
   ownerCatalog: OwnerCatalogAdapter;
+  uploads: UploadsAdapter;
   ownerMembers: OwnerMembersAdapter;
   ownerNews: OwnerNewsAdapter;
   ownerSettings: OwnerSettingsAdapter;

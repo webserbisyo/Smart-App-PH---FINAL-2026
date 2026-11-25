@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('../src/app/supabase.js', () => ({ supabase: {} }));
 vi.mock('../src/app/env.js', () => ({
   env: {
-    VITE_SUPABASE_URL: 'http://localhost:54321',
-    VITE_SUPABASE_PUBLISHABLE_KEY: 'test',
     VITE_API_URL: 'http://localhost:4000',
     VITE_STOREFRONT_URL: 'http://localhost:3000',
     VITE_SHOW_KIT: 'false',

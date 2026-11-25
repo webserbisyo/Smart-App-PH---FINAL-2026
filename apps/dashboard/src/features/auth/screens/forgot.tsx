@@ -21,16 +21,13 @@ import {
 import { Input } from '@smartapp/ui/components/input';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { OtpResend } from '@smartapp/ui/compositions/otp-resend';
-import { supabase } from '@/app/supabase';
+import { ownerAuth } from '@/app/data';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { usePageTitle } from '@/app/use-page-title';
 import { AuthFrame } from '../auth-frame.js';
 import { PasswordInput } from '../password-input.js';
 
 const W = authWords.forgotPage;
-const RESEND_SECONDS = 60;
-// When Resend unlocks again.
-const nextResend = () => new Date(Date.now() + RESEND_SECONDS * 1000).toISOString();
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
@@ -41,8 +38,8 @@ export function ForgotScreen() {
   usePageTitle(W.pageTitle);
   const navigate = useNavigate();
   const online = useOnlineStatus();
-  const send = useSendResetCode(supabase);
-  const reset = useResetPassword(supabase);
+  const send = useSendResetCode(ownerAuth);
+  const reset = useResetPassword(ownerAuth);
   const [step, setStep] = React.useState<'email' | 'code'>('email');
   const [email, setEmail] = React.useState('');
   const [code, setCode] = React.useState('');
@@ -60,8 +57,8 @@ export function ForgotScreen() {
   const sendCode = async (resend: boolean) => {
     setError(null);
     try {
-      await send.mutateAsync({ email: clean });
-      setResendAt(nextResend());
+      const sent = await send.mutateAsync({ email: clean });
+      setResendAt(sent.resendAt);
       if (resend) notify({ title: W.resent, tone: 'success' });
       else {
         setTried(false);

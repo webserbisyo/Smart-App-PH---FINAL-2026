@@ -30,15 +30,19 @@ Codes: `invalid_login`, `email_taken`, `weak_password`, `invalid_code`, `code_ex
 
 ## Shop (owner, `/owner/...`)
 
-| Method            | HTTP                  | Input → Output                                                                                                                                                                                                                         |
-| ----------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `getMyShop`       | GET `/owner/shop`     | → `Shop \| null`                                                                                                                                                                                                                       |
-| `createMyShop`    | POST `/owner/shop`    | `{ kind, name, slug }` → `Shop` (stage `setting_up`, T89)                                                                                                                                                                              |
-| `isSlugFree`      | GET `/slugs/:slug`    | → `boolean`                                                                                                                                                                                                                            |
-| `saveSortOrder`   | PUT `/owner/sort`     | `{ kind, ids }`                                                                                                                                                                                                                        |
-| `createUploadUrl` | POST `/owner/uploads` | `{ kind: logo\|banner\|item\|category\|qr\|avatar\|plan_proof, bytes? }` → signed upload URL + `path` for exactly that size (shrunk on the phone, T65). Refuses `storage_full` when the 500 MB is used, never for a plan receipt (T66) |
+| Method            | HTTP                              | Input → Output                                                                                                                                                                                                                                                                                                                             |
+| ----------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `getMyShop`       | GET `/owner/shop`                 | → `Shop \| null`                                                                                                                                                                                                                                                                                                                           |
+| `createMyShop`    | POST `/owner/shop`                | `{ kind, name, slug }` → `Shop` (stage `setting_up`, T89)                                                                                                                                                                                                                                                                                  |
+| `isSlugFree`      | GET `/slugs/:slug`                | → `boolean`                                                                                                                                                                                                                                                                                                                                |
+| `saveSortOrder`   | PUT `/owner/sort`                 | `{ kind, ids }`                                                                                                                                                                                                                                                                                                                            |
+| `createUploadUrl` | POST `/owner/uploads`             | `{ kind: logo\|banner\|category\|news_photo\|item\|qr\|avatar\|plan_proof, bytes }` → `{ id, uploadUrl, path }`: a signed link for one file (shrunk on the phone, T65) and an unconfirmed `media_files` row. Refuses `storage_full` when the 500 MB is used, never for a plan receipt (T66). The browser then PUTs the file to `uploadUrl` |
+| `confirmUpload`   | POST `/owner/uploads/:id/confirm` | → `{ ref, bytes }` once the file arrived: NestJS reads its real size and type from Storage, counts it, and checks the limit again (`storage_full`, `file_not_image`, `file_too_large`; a wrong file is removed). `ref` is the picture's public address, or the bare path for a private plan receipt                                        |
 
-Codes: `slug_taken`, `slug_reserved`, `slug_invalid`, `already_has_shop`, `not_allowed`, `storage_full`.
+Codes: `slug_taken`, `slug_reserved`, `slug_invalid`, `already_has_shop`, `not_allowed`, `storage_full`, `file_not_image`, `file_too_large`.
+
+The two upload steps are their own adapter area, `uploads` (`UploadsAdapter`), so a build can take them from NestJS while
+the Menu stays on sample data (decision T116). `useUploadImage` runs create, send and confirm in one call.
 
 ## Settings (owner)
 
@@ -69,7 +73,9 @@ The whole Settings area (decisions T64 to T68). One read, one save per section; 
 | `downloadStoredFiles`                            | POST `/owner/storage/files/download`            | `{ ids }` → `FilesDownload` (`fileName`, a zip `url` that works for 24 hours, `files`) (T93)                                                                                                                                                                                                                                          |
 | `createExport` / `getExport`                     | POST `/owner/exports`, GET `/owner/exports/:id` | `{ range, parts }` → `DataExport` (`preparing`, `ready` with a 24-hour link, `failed`, `expired`)                                                                                                                                                                                                                                     |
 
-Every stored file has a row in `media_files` (shop, kind, path, bytes, made, used by), so the meter is a sum, not a bucket scan. The limit lives on the plan (`storage_limit_bytes`). Uploads not confirmed in an hour, and proofs past 30 days, are removed by the NestJS job planned for proof deletion (no pg_cron, rule 13).
+Every stored file has a row in `media_files` (shop, kind, path, bytes, made, used by), so the meter is a sum, not a bucket scan. The limit lives on the plan (`storage_limit_bytes`). NestJS jobs (no pg_cron, rule 13) remove uploads not confirmed within an hour (hourly) and confirmed uploads nothing has used for a day (3 AM Manila); proofs past 30 days go with the orders in phase 4.
+
+**Built on the API in phase 3 (T116):** `getSettings`, every `save…` row above, profile, notifications, `getStorage`, `listStoredFiles` and `deleteStoredFiles`. A file in use is locked until the owner changes that setting. Still on sample data until their phase: `previewCleanup` and `runCleanup` (old proofs and archived photos come with orders and the menu, phases 4 and 5), `downloadStoredFiles`, `createExport` and `getExport` (phase 6), `getPlan` and the plan chat rows (phase 7), and `requestAccountDelete` (phase 6). Until then `getStorage` answers `cleanups: []` and `lastExport: null`.
 
 Codes: `storage_full`, `file_not_image`, `file_too_large`, `export_not_ready`, `cleanup_changed`, `file_locked`, `last_order_type`, `last_payment_method`, `hours_overlap`.
 
@@ -241,6 +247,8 @@ Blueprint B with the full Insights page.
 announcement, section switches). The look's colours are `brandColor`, `pageColor` and `cardColor` (hex; `cardColor` null
 follows the page), `surface` worked out from the page colour, and `logoShape` (`circle` or `rounded`) (T76). Name and contact stay in Settings (T64), the Best seller switch in Menu (T44), the
 stamp card in Members. Codes: `draft_conflict`.
+
+On the API (phase 3) every save bumps `baseVersion`; Publish copies the draft to what customers see and Discard copies it back, both in one transaction. The pictures a draft or the live look uses are kept in `storefront_media`, so Storage locks them. The preview token is signed by NestJS (HMAC, 30 minutes, one shop).
 
 **Preview messages (T72).** The Editor frames the storefront's `/[shop]/preview` and talks to it with `postMessage`.
 Both sides check the other's origin (`VITE_STOREFRONT_URL`, `NEXT_PUBLIC_DASHBOARD_URL`) and parse every message with

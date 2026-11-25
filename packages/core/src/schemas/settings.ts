@@ -34,6 +34,7 @@ import {
   DeliverySettingsSchema,
   OpeningRangeSchema,
   PaymentAccountsSchema,
+  PaymentAccountSchema,
   ShopContactSchema,
 } from './storefront.js';
 
@@ -79,7 +80,11 @@ export const OwnerSettingsSchema = z.object({
   hours: HoursSettingsSchema,
   ordering: OrderingSettingsSchema,
   delivery: DeliverySettingsSchema,
-  payments: PaymentSettingsSchema,
+  // A new shop has no way to pay yet (T116): the read may be empty; a save still needs one (last_payment_method).
+  payments: z.object({
+    payments: z.array(PaymentAccountSchema),
+    codMaxTotal: CentavosSchema.nullable(),
+  }),
   booked: BookedCountsSchema,
 });
 export type OwnerSettings = z.infer<typeof OwnerSettingsSchema>;

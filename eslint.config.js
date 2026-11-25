@@ -229,14 +229,9 @@ export default tseslint.config(
       ],
     },
   },
-  // Import wall: packages/data calls NestJS only (decision T34); login files excepted until auth moves to NestJS
+  // Import wall: packages/data calls NestJS only (decisions T34, T116: login moved to NestJS, no exceptions left)
   {
     files: ['packages/data/**/*.{ts,tsx}'],
-    ignores: [
-      'packages/data/src/auth.ts',
-      'packages/data/src/server.ts',
-      'packages/data/src/hooks/auth.ts',
-    ],
     rules: {
       'no-restricted-imports': [
         'error',

@@ -1,18 +1,13 @@
-export * from './auth';
+export * from './owner-auth';
 export * from './api-client';
 export * from './hooks/auth';
-export type * from './database.types';
 export * from './device-storage';
 export * from './adapters/types';
-export {
-  createAdapters,
-  DataProvider,
-  resetDemoData,
-  SampleDataProvider,
-  useAdapters,
-} from './adapters/index';
+export { createAdapters, createOwnerAuth, planOf, type AdapterOptions } from './adapters/create';
+export { DataProvider, resetDemoData, SampleDataProvider, useAdapters } from './adapters/index';
 export * from './hooks/showcase';
 export * from './env';
+export * from './api-areas';
 export * from './hooks/storefront/qk';
 export * from './hooks/storefront/device';
 export * from './hooks/storefront/queries';

@@ -108,11 +108,11 @@ Order of areas: login first, then shops and settings, catalog, orders and paymen
 
 ### 4.1 API base (before the first area)
 
-- [ ] Drizzle over `pg`, one transaction per request with `set local role app_api` and the shop setting (D1)
-- [ ] Guards in order: login, shop from `tenant_members`, `@Can()`; a test fails on any route without `@Public()` or `@Can()`
-- [ ] Graceful shutdown, health check that also asks the database, 100 kB body limit
-- [ ] Rate limits on public routes (`@nestjs/throttler`, approved in T104)
-- [ ] Timed jobs with `@nestjs/schedule` and advisory locks (D5)
+- [x] Drizzle over `pg`, one transaction per request with `set local role app_api` and the shop setting (D1; T116, PR #48)
+- [x] Guards in order: login, shop from `tenant_members`, `@Can()`; a test fails on any route without `@Public()` or `@Can()` (T116, PR #48)
+- [x] Graceful shutdown, health check that also asks the database, 100 kB body limit (T116, PR #48)
+- [x] Rate limits on public routes (`@nestjs/throttler`, approved in T104; T116, PR #48)
+- [x] Timed jobs with `@nestjs/schedule` and advisory locks (D5; T116, PR #48)
 
 ### 4.2 Areas
 
@@ -120,9 +120,11 @@ Each area lists its screens; tick UI approved and Done separately.
 
 - Login and sign-up (owner login, sign-up 3 steps, password codes, member join codes; Supabase leaves `packages/data`, T34)
   - [x] UI approved
+  - [x] Owner side built on NestJS and tested against local Supabase in CI (launch phase 2; T116, PR #48). Member join codes come with phase 6
   - [ ] Done
 - Shops and settings (Settings: Your shop, You, hours, ordering, delivery, payments, Plan and storage; Editor draft and Publish; uploads and Storage)
   - [x] UI approved
+  - [x] Built on NestJS and tested against local Supabase in CI: Settings sections, uploads, Storage files, Editor draft, Publish and preview link (launch phase 3; T116, PR #48). Plan, exports and cleanups come with phases 4 to 7
   - [ ] Done
 - Catalog (Menu or Products: items, variants and templates, add-ons, categories, photos, archive)
   - [x] UI approved

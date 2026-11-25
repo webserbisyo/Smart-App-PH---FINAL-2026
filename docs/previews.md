@@ -44,7 +44,7 @@ Make **two new projects**. Don't reuse the old `storefront` and `dashboard` proj
    - `VITE_SHOW_KIT` = `true`
    - `VITE_STOREFRONT_URL` = the storefront address from step 1.6 (kit photos and "View shop" use it)
    - `VITE_API_URL` = `https://api.webserbisyo.com` (not called on sample data; any https address works)
-   - `VITE_SUPABASE_URL` = `https://example.supabase.co` and `VITE_SUPABASE_PUBLISHABLE_KEY` = `preview` (not called with the sample sign-in; real values also work, and then real sign-in works too)
+   - No Supabase variables: since T116 the dashboard signs in through NestJS only. The two old `VITE_SUPABASE_*` variables can be deleted from the project; they are ignored. Leave `VITE_API_AREAS` unset so every area stays on sample data
    - `ENABLE_EXPERIMENTAL_COREPACK` = `1`
 5. **Deploy**, then set Node.js Version `24.x` as above.
 

@@ -1,143 +1,65 @@
+// The owner's login hooks (decision T116). They take the app's OwnerAuth (createOwnerAuth), which calls NestJS
+// or, on sample data, the small mock: never Supabase from the browser (T34).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { LoginInput, SignUpInput } from '@smartapp/core';
-import { getClaims, mapAuthError, mapCodeError, type UserClaims } from '../auth';
-import type { Database } from '../database.types';
+import type { LoginInput, ResetPasswordInput, SignUpInput, VerifyCodeInput } from '@smartapp/core';
+import type { OwnerAuth, UserClaims } from '../owner-auth';
 
 export const authKeys = {
   session: ['auth', 'session'] as const,
 };
 
-export function useSession(client: SupabaseClient<Database>) {
+export function useSession(auth: OwnerAuth) {
   return useQuery<UserClaims | null>({
     queryKey: authKeys.session,
-    queryFn: () => getClaims(client),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryFn: () => auth.getSession(),
+    staleTime: 1000 * 60 * 5,
   });
 }
 
-export function useSignIn(client: SupabaseClient<Database>) {
+export function useSignIn(auth: OwnerAuth) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ email, password }: LoginInput) => {
-      const { data, error } = await client.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        throw mapAuthError(error, true);
-      }
-      return data;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.session });
-    },
+    mutationFn: (input: LoginInput) => auth.signIn(input),
+    onSuccess: (claims) => queryClient.setQueryData(authKeys.session, claims),
   });
 }
 
-export function useSignUp(client: SupabaseClient<Database>) {
+/** Makes the account and emails the 6-digit code (T89). */
+export function useSignUp(auth: OwnerAuth) {
+  return useMutation({ mutationFn: (input: SignUpInput) => auth.signUp(input) });
+}
+
+/** The 6-digit code from the sign-up email: confirms the email and signs the owner in. */
+export function useVerifySignupCode(auth: OwnerAuth) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      fullName,
-      email,
-      password,
-      phone,
-    }: SignUpInput & { phone?: string | undefined }) => {
-      const { data, error } = await client.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            ...(phone ? { phone } : {}),
-          },
-        },
-      });
-      if (error) {
-        throw mapAuthError(error, false);
-      }
-      return data;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.session });
-    },
+    mutationFn: (input: VerifyCodeInput) => auth.verifySignupCode(input),
+    onSuccess: (claims) => queryClient.setQueryData(authKeys.session, claims),
   });
 }
 
-/** The 6-digit code from the sign-up email (T89): confirms the email and signs the owner in. */
-export function useVerifySignupCode(client: SupabaseClient<Database>) {
+export function useResendSignupCode(auth: OwnerAuth) {
+  return useMutation({ mutationFn: (input: { email: string }) => auth.resendSignupCode(input) });
+}
+
+/** Forgot password, step 1 (T108): answers the same whether or not the email has an account (rule 12). */
+export function useSendResetCode(auth: OwnerAuth) {
+  return useMutation({ mutationFn: (input: { email: string }) => auth.sendResetCode(input) });
+}
+
+/** Forgot password, step 2: the code signs the owner in and the new password is saved. */
+export function useResetPassword(auth: OwnerAuth) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ email, code }: { email: string; code: string }) => {
-      const { data, error } = await client.auth.verifyOtp({ email, token: code, type: 'email' });
-      if (error) throw mapCodeError(error);
-      return data;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.session });
-    },
+    mutationFn: (input: ResetPasswordInput) => auth.resetPassword(input),
+    onSuccess: (claims) => queryClient.setQueryData(authKeys.session, claims),
   });
 }
 
-/** Sends the sign-up code again. */
-export function useResendSignupCode(client: SupabaseClient<Database>) {
-  return useMutation({
-    mutationFn: async ({ email }: { email: string }) => {
-      const { error } = await client.auth.resend({ type: 'signup', email });
-      if (error) throw mapAuthError(error, false);
-    },
-  });
-}
-
-/**
- * Forgot password, step 1 (T108): emails a 6-digit code. It answers the same whether or not the email has an
- * account, so nobody can test which emails are owners (rule 12).
- */
-export function useSendResetCode(client: SupabaseClient<Database>) {
-  return useMutation({
-    mutationFn: async ({ email }: { email: string }) => {
-      const { error } = await client.auth.resetPasswordForEmail(email);
-      if (error && /rate|too many|seconds/i.test(error.message)) throw mapCodeError(error, true);
-    },
-  });
-}
-
-/** Forgot password, step 2 (T108): the code signs the owner in, then the new password is saved. */
-export function useResetPassword(client: SupabaseClient<Database>) {
+export function useSignOut(auth: OwnerAuth) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      email,
-      code,
-      newPassword,
-    }: {
-      email: string;
-      code: string;
-      newPassword: string;
-    }) => {
-      const verified = await client.auth.verifyOtp({ email, token: code, type: 'recovery' });
-      if (verified.error) throw mapCodeError(verified.error);
-      const saved = await client.auth.updateUser({ password: newPassword });
-      if (saved.error) throw mapAuthError(saved.error, false);
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.session });
-    },
-  });
-}
-
-export function useSignOut(client: SupabaseClient<Database>) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      const { error } = await client.auth.signOut();
-      if (error) {
-        throw mapAuthError(error, false);
-      }
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: authKeys.session });
-    },
+    mutationFn: () => auth.signOut(),
+    onSuccess: () => queryClient.setQueryData(authKeys.session, null),
   });
 }

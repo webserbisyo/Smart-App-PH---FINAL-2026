@@ -24,13 +24,18 @@ import { NewsComposeSearchSchema } from '../features/members/news-search.js';
 import { MembersSearchSchema } from '../features/members/search.js';
 import { OrdersSearchSchema } from '../features/orders/search.js';
 import { AdminPaymentsSearchSchema, AdminShopsSearchSchema } from '../features/admin/search.js';
-import { setMockOwnerSlug } from '@smartapp/data';
 import { requireAdmin } from './admin.js';
 import { NotFoundPage } from './not-found.js';
 import { AdminShell } from './shell/admin-shell.js';
 import { currentSupport } from './support.js';
 import { rememberPreviousPath } from './back.js';
-import { LoginSearchSchema, requireAuth, requireGuest, signOut } from './guards.js';
+import {
+  LoginSearchSchema,
+  requireAuth,
+  requireGuest,
+  requireSignupOpen,
+  signOut,
+} from './guards.js';
 import type { PageMeta } from './page-meta.js';
 import { AppShell } from './shell/app-shell.js';
 import { ShopContext, resolveShop } from './shop.js';
@@ -192,9 +197,14 @@ const loginRoute = createRoute({
 const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/signup',
-  beforeLoad: () => requireGuest(),
-  component: SignupScreen,
+  beforeLoad: () => requireSignupOpen(),
+  component: SignupPage,
 });
+
+function SignupPage() {
+  const { finishing } = signupRoute.useRouteContext();
+  return <SignupScreen finishing={finishing} />;
+}
 
 const forgotRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -216,7 +226,7 @@ const editorRoute = createRoute({
   path: '/editor',
   beforeLoad: async () => {
     const claims = await requireAuth();
-    return { shop: resolveShop(claims) };
+    return { shop: await resolveShop(claims) };
   },
   component: EditorPage,
 });
@@ -240,10 +250,7 @@ const shellRoute = createRoute({
     if (claims.isAdmin && !claims.demoShop && !currentSupport()) {
       throw redirect({ to: '/admin' });
     }
-    const shop = resolveShop(claims);
-    if (shop.slug) {
-      setMockOwnerSlug(shop.slug);
-    }
+    const shop = await resolveShop(claims);
     return { claims, shop };
   },
   component: ShellLayout,

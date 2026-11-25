@@ -29,12 +29,13 @@ import {
 import { CatalogSchema } from './catalog.js';
 import { RewardSchema, StampRuleSchema } from './loyalty.js';
 
+// The maxima mirror the shop_settings CHECKs (X3), so a long value is a field error, not a database error.
 export const ShopContactSchema = z.object({
-  phone: z.string().min(1).nullable(),
-  messengerUsername: z.string().min(1).nullable(),
-  facebookUrl: z.url().nullable(),
-  googleReviewUrl: z.url().nullable(),
-  address: z.string().min(1).nullable(),
+  phone: z.string().min(1).max(20).nullable(),
+  messengerUsername: z.string().min(1).max(100).nullable(),
+  facebookUrl: z.url().max(200).nullable(),
+  googleReviewUrl: z.url().max(300).nullable(),
+  address: z.string().min(1).max(200).nullable(),
   showAddress: z.boolean(),
   pin: LatLngSchema.nullable(),
   pickupNote: z.string().max(200).nullable(),

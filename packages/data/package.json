@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
-    "./env": "./src/env.ts"
+    "./env": "./src/env.ts",
+    "./api-areas": "./src/api-areas.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -16,8 +17,6 @@
   },
   "dependencies": {
     "@smartapp/core": "workspace:*",
-    "@supabase/ssr": "0.12.7",
-    "@supabase/supabase-js": "2.117.3",
     "@tanstack/react-query": "5.104.1",
     "react": "catalog:",
     "zod": "catalog:"

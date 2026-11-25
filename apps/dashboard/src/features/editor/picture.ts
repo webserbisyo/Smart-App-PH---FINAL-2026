@@ -10,7 +10,10 @@ export function pictureSrc(ref: string | null | undefined, width: number): strin
   return imageUrl(ref, width, env.VITE_STOREFRONT_URL);
 }
 
-/** A mock upload keeps the picture itself, so the storefront preview (another address) can show it. */
+/**
+ * A sample-data upload keeps the picture itself, so the storefront preview (another address) can show it; a
+ * real one is the address NestJS answered (T116).
+ */
 export async function pictureRef(upload: UploadedImage): Promise<string> {
-  return env.VITE_DATA_SOURCE === 'mock' ? blobToDataUrl(upload.image.blob) : upload.ref;
+  return upload.sample ? blobToDataUrl(upload.image.blob) : upload.ref;
 }
