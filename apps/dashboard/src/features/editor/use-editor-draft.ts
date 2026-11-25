@@ -12,78 +12,16 @@ import {
   usePublishStorefront,
   useSaveStorefrontDraft,
 } from '@smartapp/data';
+import { useStore } from 'zustand';
 import { useOnlineStatus } from '@/app/use-online-status';
+import { createEditorStore } from './editor-store';
 
-// Rules E1 to E5 (decision T74): the draft saves itself, Undo keeps 50 steps, a drag or a run of typing in one
-// field is one step, a save from an older version stops and asks.
-const HISTORY_STEPS = 50;
+// Rules E1 to E5 (decision T74): the draft saves itself, Undo keeps 50 steps (editor-store.ts, on Zustand and
+// Zundo), a drag or a run of typing in one field is one step, a save from an older version stops and asks.
 const SAVE_DELAY_MS = 800;
 const RETRY_MS = 5000;
-const MERGE_MS = 1500;
 
 export type SaveStatus = 'live' | 'saving' | 'saved' | 'offline' | 'failed' | 'conflict';
-
-interface History {
-  content: StorefrontContent;
-  past: StorefrontContent[];
-  future: StorefrontContent[];
-  // The field the last change came from, so typing or a colour drag merges into one Undo step.
-  key: string | null;
-  at: number;
-}
-
-type HistoryAction =
-  | {
-      type: 'change';
-      update: (content: StorefrontContent) => StorefrontContent;
-      key: string | null;
-      at: number;
-    }
-  | { type: 'undo' }
-  | { type: 'redo' }
-  | { type: 'reset'; content: StorefrontContent };
-
-function historyReducer(state: History, action: HistoryAction): History {
-  switch (action.type) {
-    case 'change': {
-      const next = action.update(state.content);
-      if (sameContent(next, state.content)) return state;
-      const merge =
-        action.key !== null && action.key === state.key && action.at - state.at < MERGE_MS;
-      return {
-        content: next,
-        past: merge ? state.past : [...state.past, state.content].slice(-HISTORY_STEPS),
-        future: [],
-        key: action.key,
-        at: action.at,
-      };
-    }
-    case 'undo': {
-      const previous = state.past.at(-1);
-      if (!previous) return state;
-      return {
-        content: previous,
-        past: state.past.slice(0, -1),
-        future: [state.content, ...state.future],
-        key: null,
-        at: 0,
-      };
-    }
-    case 'redo': {
-      const [next, ...rest] = state.future;
-      if (!next) return state;
-      return {
-        content: next,
-        past: [...state.past, state.content],
-        future: rest,
-        key: null,
-        at: 0,
-      };
-    }
-    case 'reset':
-      return { content: action.content, past: [], future: [], key: null, at: 0 };
-  }
-}
 
 type Phase = 'idle' | 'saving' | 'failed' | 'conflict';
 
@@ -110,13 +48,11 @@ export function useEditorDraft(
   initial: StorefrontDraftState,
   refetch: () => Promise<StorefrontDraftState>,
 ): EditorDraft {
-  const [history, dispatch] = React.useReducer(historyReducer, {
-    content: initial.draft,
-    past: [],
-    future: [],
-    key: null,
-    at: 0,
-  });
+  const [editor] = React.useState(() => createEditorStore(initial.draft));
+  const { store } = editor;
+  const content = useStore(store, (state) => state.content);
+  const canUndo = useStore(store.temporal, (state) => state.pastStates.length > 0);
+  const canRedo = useStore(store.temporal, (state) => state.futureStates.length > 0);
   const [server, setServer] = React.useState(initial);
   const [phase, setPhase] = React.useState<Phase>('idle');
   const online = useOnlineStatus();
@@ -126,12 +62,12 @@ export function useEditorDraft(
   const { mutateAsync: discardDraft } = useDiscardStorefrontDraft();
 
   // The latest values for the async steps below, which outlive a render.
-  const contentRef = React.useRef(history.content);
+  const contentRef = React.useRef(content);
   const serverRef = React.useRef(server);
   const inFlight = React.useRef<Promise<StorefrontDraftState> | null>(null);
   React.useEffect(() => {
-    contentRef.current = history.content;
-  }, [history.content]);
+    contentRef.current = content;
+  }, [content]);
 
   const takeServer = React.useCallback((next: StorefrontDraftState) => {
     serverRef.current = next;
@@ -163,7 +99,7 @@ export function useEditorDraft(
     }
   }, [persist]);
 
-  const dirty = !sameContent(history.content, server.draft);
+  const dirty = !sameContent(content, server.draft);
 
   // Save a moment after the last change; after a failed save, try again a little later.
   React.useEffect(() => {
@@ -173,7 +109,7 @@ export function useEditorDraft(
       phase === 'failed' ? RETRY_MS : SAVE_DELAY_MS,
     );
     return () => window.clearTimeout(timer);
-  }, [dirty, online, phase, history.content, autosave]);
+  }, [dirty, online, phase, content, autosave]);
 
   // Leaving with a change not saved yet asks first.
   React.useEffect(() => {
@@ -184,8 +120,8 @@ export function useEditorDraft(
   }, [dirty]);
 
   const changes = React.useMemo(
-    () => editorChanges(server.published, history.content),
-    [server.published, history.content],
+    () => editorChanges(server.published, content),
+    [server.published, content],
   );
 
   let status: SaveStatus;
@@ -197,8 +133,8 @@ export function useEditorDraft(
 
   const update = React.useCallback(
     (fn: (content: StorefrontContent) => StorefrontContent, key?: string) =>
-      dispatch({ type: 'change', update: fn, key: key ?? null, at: Date.now() }),
-    [],
+      editor.change(fn, key ?? null, Date.now()),
+    [editor],
   );
 
   const publish = React.useCallback(async () => {
@@ -213,16 +149,16 @@ export function useEditorDraft(
     await discardDraft();
     const fresh = await refetch();
     takeServer(fresh);
-    dispatch({ type: 'reset', content: fresh.draft });
+    editor.reset(fresh.draft);
     setPhase('idle');
-  }, [discardDraft, refetch, takeServer]);
+  }, [discardDraft, editor, refetch, takeServer]);
 
   const loadNewer = React.useCallback(async () => {
     const fresh = await refetch();
     takeServer(fresh);
-    dispatch({ type: 'reset', content: fresh.draft });
+    editor.reset(fresh.draft);
     setPhase('idle');
-  }, [refetch, takeServer]);
+  }, [editor, refetch, takeServer]);
 
   // Keep mine: take the newer version number, and the next save writes this draft over it.
   const keepMine = React.useCallback(async () => {
@@ -231,16 +167,16 @@ export function useEditorDraft(
   }, [refetch, takeServer]);
 
   return {
-    content: history.content,
+    content,
     published: server.published,
     changes,
     status,
     online,
     update,
-    undo: React.useCallback(() => dispatch({ type: 'undo' }), []),
-    redo: React.useCallback(() => dispatch({ type: 'redo' }), []),
-    canUndo: history.past.length > 0,
-    canRedo: history.future.length > 0,
+    undo: React.useCallback(() => editor.undo(), [editor]),
+    redo: React.useCallback(() => editor.redo(), [editor]),
+    canUndo,
+    canRedo,
     publish,
     discard,
     loadNewer,

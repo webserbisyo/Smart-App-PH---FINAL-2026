@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-25 Launch phases 1 to 3 built (T116): NestJS ground (Drizzle with per-shop scope and roles, guards, errors, health, rate limits, locked jobs), owner accounts (cookie login, sign-up with the emailed code, finish-your-shop, forgot password) with the dashboard calling NestJS only, and shop setup (six Storage buckets, two-step uploads with real size checks, Settings, Storage files, Editor draft and Publish); per-area data switch; API integration tests in CI (#48)
 - 2026-11-25 Phases 1 to 3 build plan (proposed): `blueprints/phases-1-3.md` with research findings, database cross-check, sample data plan, tasks and 12 founder questions
 - 2026-11-25 Shop status dot (T115): the storefront logo shows a still green, orange or grey dot (shadcn AvatarBadge) instead of the turning ring, with Busy, Closed or Paused under the logo
 - 2026-11-24 Checkout and Join start fresh (T114): a second order no longer reopens the last order's printer box or reuses its order key; Place order waits for how you'll order; the booked time and note clear after each order; Join is empty after Sign out; empty basket checkout shows Browse menu

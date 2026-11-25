@@ -1,6 +1,20 @@
-# Phases 1 to 3: build plan (PROPOSED)
+# Phases 1 to 3: build plan (APPROVED, BUILT)
 
-The detailed plan for launch phases 1 (Ground), 2 (Accounts) and 3 (Shop setup) from `launch-phases.md`. Written 2026-11-25 from `main` @ 0a3273b after research in the official docs. Status: **proposed**, waiting for the founder's yes on section 7. Nothing here is built yet. `launch-phases.md` stays the map; this file is the build spec for these three phases. Where they differ, this file wins once approved.
+The detailed plan for launch phases 1 (Ground), 2 (Accounts) and 3 (Shop setup) from `launch-phases.md`. Written 2026-11-25 from `main` @ 0a3273b after research in the official docs. Status: **approved** (decision T116) and **built** on PR #48 (see Status below). `launch-phases.md` stays the map; this file is the build spec for these three phases. Where they differ, this file wins once approved.
+
+## Status (2026-11-25, PR #48)
+
+Built and tested against local Supabase in CI (141 database tests, 25 API unit tests, 25 API integration tests):
+
+- **Phase 1:** Drizzle over `pg` with one transaction per request (`set local role`, shop and user settings), the pulled schema mirror with a drift check, guards (`@Public()` or `@Can()` on every route, shop from `tenant_members`, CSRF header and Origin), the Postgres error map, health with the database, rate limits, `JobsService.runLocked`, the per-area data switch, API integration tests in CI.
+- **Phase 2:** reserved links, sign-up (lead, Supabase sign-up, 6-digit code, `registerShop` in one transaction), cookie login with refresh, forgot password, sign out everywhere, finish-your-shop for an owner who left after the code; the dashboard calls NestJS only (no `@supabase` outside `apps/api`).
+- **Phase 3:** six Storage buckets, two-step uploads with the real size and type checked at confirm, hourly and nightly cleanup jobs, every Settings section, profile and notifications, Storage meter, files and delete, the Editor draft with version check, Publish, Discard and the preview link, Undo on Zustand and Zundo.
+
+Left, and why:
+
+- **Needs the founder (section 8):** Railway staging, DNS for `api-staging.` and `staging-app.`, the dev Supabase settings (Resend SMTP, code template and expiry, secret key, JWT signing keys, `sb-forwarded-for`, Data API off). The "Done when" checks on staging (iPhone Safari login, a food and a retail shop set up from a phone and a laptop) wait for these.
+- **Later phases by design:** plan and Billing chat (7), exports, downloads, cleanups and the account delete request (4 to 6), member codes (6). Their screens stay on sample data.
+- **The dev database** gets the two new migrations when this PR merges to `main` (CI applies them to dev only, D9).
 
 ## 0. Brief
 

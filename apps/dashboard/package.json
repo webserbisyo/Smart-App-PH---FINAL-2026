@@ -23,7 +23,9 @@
     "react-dom": "catalog:",
     "react-hook-form": "7.89.0",
     "recharts": "3.8.0",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "zundo": "2.3.0",
+    "zustand": "5.1.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
