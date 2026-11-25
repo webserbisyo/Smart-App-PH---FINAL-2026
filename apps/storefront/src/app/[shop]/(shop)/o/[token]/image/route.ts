@@ -1,7 +1,7 @@
 import { createElement, type CSSProperties, type ReactNode } from 'react';
 import { ImageResponse } from 'next/og';
 import { formatPeso, oklchToHex, parseOklch, shopPalette, words } from '@smartapp/core';
-import { getOrderReceiptForServer, getStorefrontForServer } from '@smartapp/data/server';
+import { getReceipt, getShop } from '@/server/shop-read';
 import { formatManilaDateTime, formatOrderNumber } from '@/features/receipt/receipt-rules';
 import { paymentChip } from '@/features/receipt/receipt-look';
 
@@ -25,8 +25,8 @@ function el(type: string, style: CSSProperties, ...children: ReactNode[]) {
  */
 export async function GET(_request: Request, { params }: RouteProps): Promise<Response> {
   const { shop: slug, token } = await params;
-  const storefront = getStorefrontForServer(slug);
-  const order = await getOrderReceiptForServer(slug, token);
+  const storefront = await getShop(slug);
+  const order = await getReceipt(slug, token);
 
   if (!storefront || !order) {
     return new Response(null, { status: 404 });

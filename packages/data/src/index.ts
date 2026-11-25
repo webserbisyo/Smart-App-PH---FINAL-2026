@@ -4,6 +4,7 @@ export * from './hooks/auth';
 export * from './device-storage';
 export * from './adapters/types';
 export { createAdapters, createOwnerAuth, planOf, type AdapterOptions } from './adapters/create';
+export { createShopAdapters, type ShopAdapterOptions } from './adapters/create-shop';
 export {
   DataProvider,
   resetDemoData,

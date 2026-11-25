@@ -39,22 +39,32 @@ describe('settings', () => {
     ).toBe(false);
   });
 
+  const live = {
+    ...base,
+    APP_ENV: 'production',
+    SUPABASE_SECRET_KEY: 'sb_secret_0123456789abcdef',
+    STOREFRONT_URL: 'https://shop.webserbisyo.com',
+    STOREFRONT_REVALIDATE_SECRET: 'r'.repeat(32),
+    SERVER_READ_SECRET: 's'.repeat(32),
+  };
+
   it('production refuses to start without the secret key', () => {
     expect(EnvSchema.safeParse({ ...base, APP_ENV: 'production' }).success).toBe(false);
+    expect(EnvSchema.safeParse({ ...live, SUPABASE_SECRET_KEY: undefined }).success).toBe(false);
+    expect(EnvSchema.safeParse(live).success).toBe(true);
+  });
+
+  it('production refuses to start without the storefront secrets', () => {
+    expect(EnvSchema.safeParse({ ...live, SERVER_READ_SECRET: undefined }).success).toBe(false);
+    expect(EnvSchema.safeParse({ ...live, STOREFRONT_URL: undefined }).success).toBe(false);
     expect(
-      EnvSchema.safeParse({
-        ...base,
-        APP_ENV: 'production',
-        SUPABASE_SECRET_KEY: 'sb_secret_0123456789abcdef',
-      }).success,
-    ).toBe(true);
+      EnvSchema.safeParse({ ...live, STOREFRONT_REVALIDATE_SECRET: undefined }).success,
+    ).toBe(false);
   });
 
   it('production refuses an http dashboard address', () => {
     const env = {
-      ...base,
-      APP_ENV: 'production',
-      SUPABASE_SECRET_KEY: 'sb_secret_0123456789abcdef',
+      ...live,
       CORS_ORIGINS: 'http://app.webserbisyo.com',
     };
     expect(EnvSchema.safeParse(env).success).toBe(false);

@@ -9,7 +9,7 @@ import {
   shopPalette,
   shortName,
 } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 
 interface ManifestContext {
   params: Promise<{ shop: string }>;
@@ -50,7 +50,7 @@ function icons(slug: string) {
  */
 export async function GET(_request: Request, { params }: ManifestContext) {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) return new Response(null, { status: 404 });
   const { name, tagline } = shop.storefront.info;
   const { look } = shop.storefront;

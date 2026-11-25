@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS, words } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { Spinner } from '@smartapp/ui/components/spinner';
 import { RewardsScreen } from '@/features/rewards/components/rewards-screen';
 
@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: RewardsPageProps): Promise<Metadata> {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) return {};
   return {
     title: words.rewards.metaTitle(shop.storefront.info.name),
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: RewardsPageProps): Promise<Me
 
 async function RewardsPageContent({ params }: RewardsPageProps) {
   const { shop: slug } = await params;
-  if (!getStorefrontForServer(slug)) notFound();
+  if (!(await getShop(slug))) notFound();
   // Member data lives in the customer's session on this phone, so the screen renders in the browser.
   return <RewardsScreen />;
 }

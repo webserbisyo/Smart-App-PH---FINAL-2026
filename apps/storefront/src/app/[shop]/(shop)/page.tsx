@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { AspectRatio } from '@smartapp/ui/components/aspect-ratio';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { HomeSections } from '@/features/home/components/home-sections';
@@ -17,7 +17,7 @@ export function generateStaticParams() {
 // Home: the sections live in HomeSections, shared with the Editor's preview (decision T72).
 async function CachedShopHome({ slug }: { slug: string }) {
   'use cache';
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) notFound();
 
   // Static build reference time; client parts (chips, info card) follow the live clock via useNow().

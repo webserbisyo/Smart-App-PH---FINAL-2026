@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS, words } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { Spinner } from '@smartapp/ui/components/spinner';
 import { AccountScreen } from '@/features/rewards/components/account-screen';
 
@@ -16,7 +16,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: AccountPageProps): Promise<Metadata> {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) return {};
   return {
     title: words.account.metaTitle(shop.storefront.info.name),
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: AccountPageProps): Promise<Me
 
 async function AccountPageContent({ params }: AccountPageProps) {
   const { shop: slug } = await params;
-  if (!getStorefrontForServer(slug)) notFound();
+  if (!(await getShop(slug))) notFound();
   // Member data lives in the customer's session on this phone, so the screen renders in the browser.
   return <AccountScreen />;
 }

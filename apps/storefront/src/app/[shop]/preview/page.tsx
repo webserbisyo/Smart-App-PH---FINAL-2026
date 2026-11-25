@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS, editorPreviewWords } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { dashboardOrigin, dataSource } from '@/env';
 import { PreviewApp } from '@/features/preview/components/preview-app';
@@ -18,7 +18,7 @@ export function generateStaticParams() {
 // Never in search results; the headers in next.config.ts also stop any page but the dashboard framing it.
 export async function generateMetadata({ params }: PreviewPageProps): Promise<Metadata> {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   return {
     title: editorPreviewWords.title(shop?.storefront.info.name ?? slug),
     robots: { index: false, follow: false },
@@ -29,7 +29,7 @@ async function PreviewContent({ params }: PreviewPageProps) {
   const { shop: slug } = await params;
   // What customers see now. The Editor sends the draft over postMessage; with the API, a short-lived
   // preview token reads the draft here instead (createPreviewToken, phase 4).
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) notFound();
   return <PreviewApp initialShop={shop} dashboardOrigin={dashboardOrigin} source={dataSource} />;
 }

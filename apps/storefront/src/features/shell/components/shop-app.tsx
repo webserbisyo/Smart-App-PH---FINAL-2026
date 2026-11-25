@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import type { PublicShop } from '@smartapp/core';
 import { StorefrontDataProvider } from '@smartapp/data';
+import { shopAdapters } from '../shop-adapters';
 import { AppToaster } from '@smartapp/ui/compositions/app-toaster';
 import { dataSource } from '@/env';
 import { AppWorker } from '../../install/components/app-worker';
@@ -22,7 +23,12 @@ const PreviewSwitches =
 /** Client root of a shop: data, toasts and the app frame. */
 export function ShopApp({ shop, children }: { shop: PublicShop; children: ReactNode }) {
   return (
-    <StorefrontDataProvider slug={shop.storefront.slug} source={dataSource} initialShop={shop}>
+    <StorefrontDataProvider
+      slug={shop.storefront.slug}
+      source={dataSource}
+      adapters={shopAdapters}
+      initialShop={shop}
+    >
       <AppToaster>
         <ShopProvider initialShop={shop}>
           <InstallWatcher />

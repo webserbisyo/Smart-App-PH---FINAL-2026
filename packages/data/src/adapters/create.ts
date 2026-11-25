@@ -8,6 +8,7 @@ import { createApiOnboardingAdapter } from './api/onboarding';
 import { createApiOwnerAuth } from './api/owner-auth';
 import { createApiOwnerCatalogAdapter } from './api/owner-catalog';
 import { createApiOwnerEditorAdapter } from './api/owner-editor';
+import { createApiOwnerOrdersAdapter } from './api/owner-orders';
 import { createApiOwnerSettingsAdapter } from './api/owner-settings';
 import { createApiUploadsAdapter } from './api/uploads';
 import { lazyAdapters, loadMockStore } from './lazy';
@@ -50,6 +51,9 @@ export function createAdapters(source: DataSource, options: AdapterOptions = {})
       : {}),
     ...(usesApi(plan, 'ownerEditor')
       ? { ownerEditor: createApiOwnerEditorAdapter({ baseUrl, getToken }) }
+      : {}),
+    ...(usesApi(plan, 'ownerOrders')
+      ? { ownerOrders: createApiOwnerOrdersAdapter({ baseUrl, getToken }) }
       : {}),
   };
 }

@@ -7,7 +7,7 @@ import {
   OPENING_LOGO_PX,
   openingColours,
 } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { splashScreen } from '@/features/install/install-rules';
 
 interface RouteProps {
@@ -40,7 +40,7 @@ function el(type: string, style: CSSProperties, ...children: ReactNode[]) {
 export async function GET(request: Request, { params }: RouteProps): Promise<Response> {
   const { shop: slug, size } = await params;
   const screen = splashScreen(size);
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!screen || !shop) return new Response(null, { status: 404 });
 
   const { look } = shop.storefront;

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS, words } from '@smartapp/core';
 import { DEMO_RECEIPT_TOKENS } from '@smartapp/data';
-import { getOrderReceiptForServer, getStorefrontForServer } from '@smartapp/data/server';
+import { getReceipt, getShop } from '@/server/shop-read';
 import { ReceiptWrapper } from '@/features/receipt/components/receipt-wrapper';
 import { ReceiptSkeleton } from '@/features/receipt/components/receipt-skeleton';
 
@@ -23,7 +23,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: ReceiptPageProps): Promise<Metadata> {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) return { robots: { index: false, follow: false } };
   return {
     title: words.receipt.metaTitle(shop.storefront.info.name),
@@ -34,10 +34,10 @@ export async function generateMetadata({ params }: ReceiptPageProps): Promise<Me
 
 async function ReceiptPageContent({ params }: ReceiptPageProps) {
   const { shop: slug, token } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) notFound();
 
-  const initialOrder = await getOrderReceiptForServer(slug, token);
+  const initialOrder = await getReceipt(slug, token);
 
   return <ReceiptWrapper slug={slug} token={token} initialOrder={initialOrder} />;
 }

@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { connection } from 'next/server';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import ShopNotFound from '../not-found';
 
 interface UnknownPageProps {
@@ -19,7 +19,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 async function Unknown({ params }: UnknownPageProps) {
   await connection();
   const { shop } = await params;
-  if (!getStorefrontForServer(shop)) notFound();
+  if (!(await getShop(shop))) notFound();
   return <ShopNotFound />;
 }
 

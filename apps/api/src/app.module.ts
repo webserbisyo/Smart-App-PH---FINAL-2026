@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthGuard } from './auth/auth.guard.js';
@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { CatalogModule } from './catalog/catalog.module.js';
 import { OriginGuard } from './auth/origin.guard.js';
 import { ScopeInterceptor } from './auth/scope.interceptor.js';
+import { serverReadSkip } from './auth/server-read.js';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter.js';
 import { createStandardSchemaValidationPipe } from './common/pipes/validation.pipe.js';
 import { DbModule } from './db/db.module.js';
@@ -25,8 +26,15 @@ import { StorefrontCacheModule } from './public/pages-cache.module.js';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
-    // 120 calls a minute per address by default; sign-in and sign-up routes set stricter limits.
-    ThrottlerModule.forRoot({ throttlers: [{ name: 'default', ttl: 60_000, limit: 120 }] }),
+    // 120 calls a minute per address by default; sign-in and sign-up routes set stricter limits. The
+    // storefront's server reads carry the shared secret and skip it (launch phase 5).
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [{ name: 'default', ttl: 60_000, limit: 120 }],
+        skipIf: serverReadSkip(config.get<string>('SERVER_READ_SECRET')),
+      }),
+    }),
     DbModule,
     JobsModule,
     StorefrontCacheModule,

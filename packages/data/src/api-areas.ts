@@ -13,6 +13,9 @@ export const API_AREAS = [
   'ownerSettings',
   'ownerEditor',
   'ownerCatalog',
+  'ownerOrders',
+  'storefront',
+  'customerAuth',
 ] as const;
 export const ApiAreaEnum = z.enum(API_AREAS);
 export type ApiArea = z.infer<typeof ApiAreaEnum>;
@@ -54,3 +57,15 @@ export function dataPlan(
 export function usesApi(plan: DataPlan, area: ApiArea): boolean {
   return plan.apiAreas.has(area);
 }
+
+// Kept here, not in env.ts: module-level schemas stay in a bundle that imports their file, and the shop
+// pages' JS imports env.ts.
+// A shared server secret (the storefront's SERVER_READ_SECRET and STOREFRONT_REVALIDATE_SECRET): at least 32
+// characters, or unset on a laptop.
+export const ServerSecretSchema = z
+  .string()
+  .min(32)
+  .optional()
+  .or(z.literal('').transform(() => undefined));
+// The NestJS address; unset while every area reads sample data.
+export const ApiUrlSchema = z.url().optional();

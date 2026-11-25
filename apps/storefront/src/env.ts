@@ -12,6 +12,14 @@ export const dataSource = DataSourceSchema.parse(process.env.NEXT_PUBLIC_DATA_SO
 // development, preview (hosted sample data with the Preview panel, T100) or production.
 export const appEnv = AppEnvSchema.parse(process.env.NEXT_PUBLIC_APP_ENV || undefined);
 
+// The NestJS address and the areas a sample-data build takes from it (launch phase 5, per-area switch).
+// Plain text here, so no schema reaches the shop pages' JS; server/env.ts checks both with Zod at start.
+export const apiUrl = process.env.NEXT_PUBLIC_API_URL || undefined;
+export const apiAreas = (process.env.NEXT_PUBLIC_API_AREAS || '')
+  .split(',')
+  .map((area) => area.trim())
+  .filter((area) => area.length > 0);
+
 // SERWIST_DEV=1 turns the service worker on in `next dev` (off by default, so hot reload stays sane).
 export const serwistDev = SwitchSchema.parse(process.env.SERWIST_DEV || undefined) === '1';
 

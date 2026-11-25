@@ -1,6 +1,7 @@
 // Pure rules for the receipt screen (T10): countdown, Messenger text, timeline steps, formatting.
 import {
   isTransfer,
+  receiptDate,
   timelineSteps,
   vocab,
   words,
@@ -123,22 +124,13 @@ export function formatManilaTime(isoString: string): string {
   }
 }
 
-/** Formats an ISO date into Manila date + time (e.g. "Oct 25, 3:42 PM") */
-export function formatManilaDateTime(isoString: string): string {
-  try {
-    const d = new Date(isoString);
-    if (Number.isNaN(d.getTime())) return '';
-    return new Intl.DateTimeFormat('en-PH', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZone: 'Asia/Manila',
-    }).format(d);
-  } catch {
-    return '';
-  }
+/**
+ * A receipt's date and time in Manila (Q10): "Today, 3:30 PM", "Tomorrow, 3:30 PM", else "Sat, Nov 29,
+ * 3:30 PM". Without `now` (the server's first paint, the printed slip) always the full date.
+ */
+export function formatManilaDateTime(isoString: string, now?: string | null): string {
+  if (Number.isNaN(new Date(isoString).getTime())) return '';
+  return receiptDate(isoString, now ?? undefined);
 }
 
 export function isOrderCancelled(status: OrderStatus): boolean {

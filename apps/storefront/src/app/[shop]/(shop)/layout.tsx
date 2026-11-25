@@ -7,7 +7,7 @@ import {
   isDemoShopSlug,
   shopPalette,
 } from '@smartapp/core';
-import { getStorefrontForServer } from '@smartapp/data/server';
+import { getShop } from '@/server/shop-read';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
 import { AppSplash } from '@/features/install/components/app-splash';
@@ -42,7 +42,7 @@ function brandFiles(slug: string) {
 
 export async function generateMetadata({ params }: ShopLayoutProps): Promise<Metadata> {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   if (!shop) return {};
   const { name, tagline } = shop.storefront.info;
   const files = brandFiles(slug);
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
 
 async function ShopFrame({ params, children }: ShopLayoutProps) {
   const { shop: slug } = await params;
-  const shop = getStorefrontForServer(slug);
+  const shop = await getShop(slug);
   // Unknown, pending or suspended: the page calls notFound() (Cache Components wants it there).
   if (!shop) return children;
   const { brandColor, surface, pageColor, cardColor, fontPair } = shop.storefront.look;
