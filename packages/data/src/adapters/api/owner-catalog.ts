@@ -182,6 +182,5 @@ export function createApiOwnerCatalogAdapter({
         body: JSON.stringify(input),
       });
     },
-
   };
 }

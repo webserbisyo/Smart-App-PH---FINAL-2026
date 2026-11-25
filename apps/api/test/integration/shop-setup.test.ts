@@ -12,10 +12,7 @@ import { Db } from '../../src/db/db.service.js';
 import { integrationApp, ownerWithShop } from './support.js';
 
 // A tiny real WebP (1 x 1), so Storage keeps a real picture.
-const WEBP = Buffer.from(
-  'UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA',
-  'base64',
-);
+const WEBP = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64');
 
 type Agent = Awaited<ReturnType<typeof ownerWithShop>>['agent'];
 
@@ -77,7 +74,8 @@ describe('shop setup (phase 3)', () => {
       pickupNote: 'Gate beside the bakery',
     };
     const saved = OwnerSettingsSchema.parse(
-      (await agent.put('/owner/settings/shop').send({ name: 'Facts Cafe', contact }).expect(200)).body,
+      (await agent.put('/owner/settings/shop').send({ name: 'Facts Cafe', contact }).expect(200))
+        .body,
     );
     expect(saved.shop).toEqual({ name: 'Facts Cafe', contact });
 
@@ -139,7 +137,10 @@ describe('shop setup (phase 3)', () => {
       prepMinutes: 25,
       takeOrdersWhileClosed: false,
     };
-    const none = await agent.put('/owner/settings/ordering').send({ orderTypes: [], rules }).expect(400);
+    const none = await agent
+      .put('/owner/settings/ordering')
+      .send({ orderTypes: [], rules })
+      .expect(400);
     expect(none.body.code).toBe('last_order_type');
     const ordering = OwnerSettingsSchema.parse(
       (
@@ -188,7 +189,10 @@ describe('shop setup (phase 3)', () => {
 
     const gap = await agent
       .put('/owner/settings/delivery')
-      .send({ ...delivery, distance: [delivery.distance[0], { ...delivery.distance[1], fromKm: 3 }] })
+      .send({
+        ...delivery,
+        distance: [delivery.distance[0], { ...delivery.distance[1], fromKm: 3 }],
+      })
       .expect(400);
     expect(Object.keys(gap.body.fieldErrors)).toContain('distance.1');
   });
@@ -206,7 +210,15 @@ describe('shop setup (phase 3)', () => {
     expect(empty.body.code).toBe('last_payment_method');
 
     const payments = [
-      { id: 'cash-1', method: 'cash', bank: null, accountName: null, accountNumber: null, qr: null, sample: false },
+      {
+        id: 'cash-1',
+        method: 'cash',
+        bank: null,
+        accountName: null,
+        accountNumber: null,
+        qr: null,
+        sample: false,
+      },
       {
         id: 'gcash-1',
         method: 'gcash',
@@ -218,8 +230,12 @@ describe('shop setup (phase 3)', () => {
       },
     ];
     const saved = OwnerSettingsSchema.parse(
-      (await agent.put('/owner/settings/payments').send({ payments, codMaxTotal: 50000 }).expect(200))
-        .body,
+      (
+        await agent
+          .put('/owner/settings/payments')
+          .send({ payments, codMaxTotal: 50000 })
+          .expect(200)
+      ).body,
     );
     expect(saved.payments.payments.map((p) => p.method)).toEqual(['cash', 'gcash']);
     const gcash = saved.payments.payments[1];
@@ -241,14 +257,20 @@ describe('shop setup (phase 3)', () => {
           .expect(200)
       ).body,
     );
-    expect(edited.payments.payments[1]).toMatchObject({ id: gcash?.id, accountName: 'Ana B. Cruz' });
+    expect(edited.payments.payments[1]).toMatchObject({
+      id: gcash?.id,
+      accountName: 'Ana B. Cruz',
+    });
 
     // The QR is in use, so Storage won't delete it.
     const files = StoredFileListSchema.parse(
       (await agent.get('/owner/storage/files?folder=qr').expect(200)).body,
     );
     expect(files.files).toHaveLength(1);
-    expect(files.files[0]).toMatchObject({ lock: 'in_use', usedBy: { kind: 'qr', label: 'GCash' } });
+    expect(files.files[0]).toMatchObject({
+      lock: 'in_use',
+      usedBy: { kind: 'qr', label: 'GCash' },
+    });
     const locked = await agent
       .post('/owner/storage/files/delete')
       .send({ ids: [files.files[0]?.id] })
@@ -294,7 +316,10 @@ describe('shop setup (phase 3)', () => {
     );
     expect(unused.files.map((f) => f.id)).toEqual([qr.id]);
     const after = (
-      await a.agent.post('/owner/storage/files/delete').send({ ids: [qr.id] }).expect(200)
+      await a.agent
+        .post('/owner/storage/files/delete')
+        .send({ ids: [qr.id] })
+        .expect(200)
     ).body;
     expect(after.usedBytes).toBe(0);
     const gone = await fetch(qr.ref);
@@ -321,7 +346,10 @@ describe('shop setup (phase 3)', () => {
     await db.run({ userId: null, shopId: null, role: 'admin' }, () =>
       db.tx.execute(sql`update public.tenants set storage_limit_bytes = 100 where id = ${shopId}`),
     );
-    const full = await agent.post('/owner/uploads').send({ kind: 'banner', bytes: 500 }).expect(409);
+    const full = await agent
+      .post('/owner/uploads')
+      .send({ kind: 'banner', bytes: 500 })
+      .expect(409);
     expect(full.body.code).toBe('storage_full');
     await agent.post('/owner/uploads').send({ kind: 'plan_proof', bytes: 500 }).expect(201);
   });
@@ -339,14 +367,23 @@ describe('shop setup (phase 3)', () => {
         .send({ name: 'Ana Cruz', avatar: { kind: 'photo', ref: photo.ref, bytes: 999 } })
         .expect(200)
     ).body;
-    expect(saved).toMatchObject({ name: 'Ana Cruz', avatar: { kind: 'photo', ref: photo.ref, bytes: WEBP.length } });
+    expect(saved).toMatchObject({
+      name: 'Ana Cruz',
+      avatar: { kind: 'photo', ref: photo.ref, bytes: WEBP.length },
+    });
     const files = StoredFileListSchema.parse(
       (await agent.get('/owner/storage/files?folder=profile').expect(200)).body,
     );
     expect(files.files[0]?.lock).toBe('in_use');
 
     const prefs = (await agent.get('/owner/notifications').expect(200)).body;
-    expect(prefs).toEqual({ newOrder: true, paymentToCheck: true, storage: true, planPayment: true, email });
+    expect(prefs).toEqual({
+      newOrder: true,
+      paymentToCheck: true,
+      storage: true,
+      planPayment: true,
+      email,
+    });
     const changed = (
       await agent
         .put('/owner/notifications')
@@ -367,7 +404,8 @@ describe('shop setup (phase 3)', () => {
     const logo = await upload(agent, 'logo');
     const content = { ...start.draft, logo: logo.ref, tagline: 'Fresh every day' };
     const saved = StorefrontDraftStateSchema.parse(
-      (await agent.put('/owner/storefront/draft').send({ content, baseVersion: 0 }).expect(200)).body,
+      (await agent.put('/owner/storefront/draft').send({ content, baseVersion: 0 }).expect(200))
+        .body,
     );
     expect(saved.baseVersion).toBe(1);
     expect(saved.draft.logo).toBe(logo.ref);
@@ -387,7 +425,9 @@ describe('shop setup (phase 3)', () => {
       .expect(400);
     expect(foreign.body.fieldErrors).toEqual({ logo: ['invalid'] });
 
-    expect((await agent.post('/owner/storefront/draft').send({ baseVersion: 1 }).expect(200)).body).toEqual({
+    expect(
+      (await agent.post('/owner/storefront/draft').send({ baseVersion: 1 }).expect(200)).body,
+    ).toEqual({
       contentVersion: 1,
     });
     const live = StorefrontDraftStateSchema.parse(
@@ -408,7 +448,9 @@ describe('shop setup (phase 3)', () => {
       .put('/owner/storefront/draft')
       .send({ content: { ...content, tagline: 'Changed my mind' }, baseVersion: 1 })
       .expect(200);
-    expect((await agent.delete('/owner/storefront/draft').expect(200)).body).toEqual({ contentVersion: 1 });
+    expect((await agent.delete('/owner/storefront/draft').expect(200)).body).toEqual({
+      contentVersion: 1,
+    });
     const back = StorefrontDraftStateSchema.parse(
       (await agent.get('/owner/storefront/draft').expect(200)).body,
     );

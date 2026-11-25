@@ -3,18 +3,11 @@ export * from './api-client';
 export * from './hooks/auth';
 export * from './device-storage';
 export * from './adapters/types';
-export {
-  createAdapters,
-  createOwnerAuth,
-  planOf,
-  type AdapterOptions,
-  DataProvider,
-  resetDemoData,
-  SampleDataProvider,
-  useAdapters,
-} from './adapters/index';
+export { createAdapters, createOwnerAuth, planOf, type AdapterOptions } from './adapters/create';
+export { DataProvider, resetDemoData, SampleDataProvider, useAdapters } from './adapters/index';
 export * from './hooks/showcase';
 export * from './env';
+export * from './api-areas';
 export * from './hooks/storefront/qk';
 export * from './hooks/storefront/device';
 export * from './hooks/storefront/queries';

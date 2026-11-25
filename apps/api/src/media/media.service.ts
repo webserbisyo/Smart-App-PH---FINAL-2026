@@ -58,7 +58,10 @@ export class MediaService {
     @Inject(JobsService) private readonly jobs: JobsService,
   ) {}
 
-  async createUpload(input: { kind: UploadKind; bytes?: number | undefined }): Promise<UploadResult> {
+  async createUpload(input: {
+    kind: UploadKind;
+    bytes?: number | undefined;
+  }): Promise<UploadResult> {
     const shopId = this.db.shopId;
     const bucket = UPLOAD_BUCKET[input.kind];
     const id = randomUUID();

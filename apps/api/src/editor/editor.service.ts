@@ -30,7 +30,9 @@ function isoOrNull(value: string | null): string | null {
 function picturesOf(content: StorefrontContent): { field: string; ref: string }[] {
   const out: { field: string; ref: string }[] = [];
   if (content.logo) out.push({ field: 'logo', ref: content.logo });
-  content.look.banners.forEach((banner, i) => out.push({ field: `look.banners.${i}.ref`, ref: banner.ref }));
+  content.look.banners.forEach((banner, i) =>
+    out.push({ field: `look.banners.${i}.ref`, ref: banner.ref }),
+  );
   return out;
 }
 

@@ -14,6 +14,7 @@ export * from './rules/palette.js';
 export * from './rules/opening.js';
 export * from './schemas/common.js';
 export * from './schemas/enums.js';
+export * from './schemas/uploads.js';
 export * from './schemas/storefront.js';
 export * from './schemas/catalog.js';
 export * from './schemas/basket.js';

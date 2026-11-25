@@ -80,7 +80,12 @@ export class SettingsService {
     const shopId = this.db.shopId;
     const tx = this.db.tx;
     const [shop] = await tx
-      .select({ slug: tenants.slug, name: tenants.name, kind: tenants.kind, isDemo: tenants.isDemo })
+      .select({
+        slug: tenants.slug,
+        name: tenants.name,
+        kind: tenants.kind,
+        isDemo: tenants.isDemo,
+      })
       .from(tenants)
       .where(eq(tenants.id, shopId));
     const [s] = await tx.select().from(shopSettings).where(eq(shopSettings.tenantId, shopId));
@@ -372,7 +377,11 @@ export class SettingsService {
       (p) => TRANSFER_METHODS.includes(p.method) && (!p.accountName || !p.accountNumber),
     );
     if (missing.length > 0) {
-      throw new ApiFailure('invalid_input', 400, fieldErrors(missing.map((p) => [p.id, 'missing'])));
+      throw new ApiFailure(
+        'invalid_input',
+        400,
+        fieldErrors(missing.map((p) => [p.id, 'missing'])),
+      );
     }
 
     const qrIds = new Map<string, string | null>();
@@ -482,7 +491,10 @@ export class SettingsService {
     });
   }
 
-  async saveNotificationPrefs(user: CallerUser, input: NotificationPrefs): Promise<NotificationPrefs> {
+  async saveNotificationPrefs(
+    user: CallerUser,
+    input: NotificationPrefs,
+  ): Promise<NotificationPrefs> {
     const email = input.email.trim().toLowerCase();
     await this.db.tx
       .update(tenantMembers)

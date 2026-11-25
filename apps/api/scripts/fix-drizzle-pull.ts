@@ -28,6 +28,12 @@ if (text.includes('[users.id]')) {
 // The bigint identity ceiling is the default anyway and cannot be a JS number without losing precision.
 text = text.replaceAll(/,\s*maxValue:\s*9223372036854775807/g, '');
 
+// drizzle-kit prints tables, constraints and composite key columns in whatever order Postgres returns them,
+// and it mixes up same-named policies between tables, so two pulls of one database differ and CI's drift
+// check failed on order alone. The policies go (RLS lives in the migrations and is tested there; the API's
+// query builder never reads them), and everything else is put in a fixed order.
+text = canonical(text);
+
 // Tables with only policies get `(table) => [...]` without using `table`, which lint rejects.
 text = text
   .split('export const ')
@@ -43,3 +49,56 @@ const header =
   '// change a migration in supabase/migrations, then pull again (decision T116, Q9).\n';
 
 writeFileSync(schemaPath, header + text);
+
+function canonical(source: string): string {
+  const [imports = '', ...tables] = source.split(/\n(?=export const )/);
+  const body = tables
+    .map(canonicalTable)
+    .sort((a, b) => a.localeCompare(b))
+    .join('\n');
+  // One sorted name list per import line, without pgPolicy now that no policy is left.
+  const sortedImports = imports.replace(/import \{([^}]+)\} from/g, (_match, names: string) => {
+    const list = names
+      .split(',')
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0 && name !== 'pgPolicy')
+      .sort((a, b) => a.localeCompare(b));
+    return `import { ${list.join(', ')} } from`;
+  });
+  return `${sortedImports.trimEnd()}\n\n${body}`;
+}
+
+function canonicalTable(chunk: string): string {
+  const open = chunk.indexOf('}, (table) => [\n');
+  const close = chunk.lastIndexOf('\n]);');
+  if (open === -1 || close === -1) return chunk.trimEnd() + '\n';
+  const head = chunk.slice(0, open);
+  const lines = chunk.slice(open + '}, (table) => [\n'.length, close).split('\n');
+  // An entry starts on a line with one tab; its own lines (a foreignKey's object) have more.
+  const entries: string[] = [];
+  for (const line of lines) {
+    if (/^\t\S/.test(line) || entries.length === 0) entries.push(line);
+    else entries[entries.length - 1] += `\n${line}`;
+  }
+  const kept = entries
+    .filter((entry) => !entry.startsWith('\tpgPolicy('))
+    .map(canonicalForeignKey)
+    .sort((a, b) => a.localeCompare(b));
+  if (kept.length === 0) return `${head}});\n`;
+  return `${head}}, (table) => [\n${kept.join('\n')}\n]);\n`;
+}
+
+// drizzle-kit lists a composite foreign key's local and foreign columns each in its own random order (so the
+// pairs it prints are not even reliable). The query builder never reads keys, so both lists are just sorted.
+function canonicalForeignKey(entry: string): string {
+  return entry.replace(
+    /(columns|foreignColumns): \[([^\]]+)\]/g,
+    (_match, key: string, names: string) => {
+      const list = names
+        .split(',')
+        .map((name) => name.trim())
+        .sort((a, b) => a.localeCompare(b));
+      return `${key}: [${list.join(', ')}]`;
+    },
+  );
+}

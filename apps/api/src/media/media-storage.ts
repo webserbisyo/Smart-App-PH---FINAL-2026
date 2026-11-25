@@ -55,7 +55,9 @@ export class MediaStorage {
 
   async remove(bucket: MediaBucket, paths: readonly string[]): Promise<void> {
     if (paths.length === 0) return;
-    const { error } = await this.storage().from(bucket).remove([...paths]);
+    const { error } = await this.storage()
+      .from(bucket)
+      .remove([...paths]);
     if (error) throw this.failure('remove', error);
   }
 

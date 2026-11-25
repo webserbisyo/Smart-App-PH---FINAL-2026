@@ -18,6 +18,9 @@ import type {
   UploadsAdapter,
 } from './types';
 
+// The sample-data store loads only when a screen first asks for data.
+export const loadMockStore = () => import('../mocks/browser').then((m) => m.getMockStore());
+
 export function lazyAdapters(load: () => Promise<DataAdapters>): DataAdapters {
   let loading: Promise<DataAdapters> | null = null;
   const real = () => (loading ??= load());

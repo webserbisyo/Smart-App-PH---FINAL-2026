@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { ApiAreasSchema, AppEnvSchema, DataSourceSchema } from '@smartapp/data/env';
+import { ApiAreasSchema } from '@smartapp/data/api-areas';
+import { AppEnvSchema, DataSourceSchema } from '@smartapp/data/env';
 
 const envSchema = z.object({
   // NestJS (decision T34): the only server the dashboard talks to. No Supabase address or key here (T116).

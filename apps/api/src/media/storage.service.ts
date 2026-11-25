@@ -47,7 +47,15 @@ function isBucket(value: string): value is MediaBucket {
   return MEDIA_BUCKETS.some((bucket) => bucket === value);
 }
 
-const FILE_USE_KINDS: readonly FileUse[] = ['item', 'logo', 'banner', 'category', 'qr', 'avatar', 'order'];
+const FILE_USE_KINDS: readonly FileUse[] = [
+  'item',
+  'logo',
+  'banner',
+  'category',
+  'qr',
+  'avatar',
+  'order',
+];
 function fileUseOf(value: string | null): FileUse | null {
   return FILE_USE_KINDS.find((kind) => kind === value) ?? null;
 }
@@ -161,7 +169,10 @@ export class StorageService {
         bytes: Number(row.bytes),
         uploadedAt: new Date(row.created_at).toISOString(),
         // Customers' payment screenshots never show here (T93): only public pictures have a ref.
-        ref: isBucket(row.bucket) && row.bucket !== 'proofs' ? this.media.refOf(row.bucket, row.path) : null,
+        ref:
+          isBucket(row.bucket) && row.bucket !== 'proofs'
+            ? this.media.refOf(row.bucket, row.path)
+            : null,
         usedBy:
           use && row.use_id
             ? { kind: use, id: row.use_id, label: this.useLabel(use, label) }
@@ -178,9 +189,7 @@ export class StorageService {
   async deleteFiles(ids: readonly string[]): Promise<StorageSummary> {
     const wanted = new Set(ids);
     const rows = (await this.files(this.db.shopId)).filter((row) => wanted.has(row.id));
-    const free = rows.filter(
-      (row) => row.confirmed && row.uses === 0 && storageKindOf(row.bucket),
-    );
+    const free = rows.filter((row) => row.confirmed && row.uses === 0 && storageKindOf(row.bucket));
     if (free.length !== wanted.size) throw new ApiFailure('file_locked', 409);
     await this.media.deleteFiles(free);
     return this.getStorage();
