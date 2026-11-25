@@ -37,6 +37,7 @@ export * from './rules/time.js';
 export * from './rules/hours.js';
 export * from './rules/options.js';
 export * from './rules/delivery.js';
+export * from './rules/quote.js';
 export * from './rules/order-rules.js';
 export * from './rules/order-chat.js';
 export * from './rules/order-timing.js';

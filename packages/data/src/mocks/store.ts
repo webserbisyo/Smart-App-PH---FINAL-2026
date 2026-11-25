@@ -123,6 +123,8 @@ import {
   paidStatusFor,
   type OwnerOrderPayload,
   type Quote,
+  methodsFor,
+  quote,
 } from '@smartapp/core';
 import { ApiRequestError } from '../api-client';
 import { currentMockOwner } from './owner-auth';
@@ -147,7 +149,6 @@ import {
   peopleOf,
   type Person,
 } from './members-view';
-import { methodsFor, quote } from './quote';
 import { mulberry32, token as makeToken, type Rng } from './rng';
 import { getDeviceStorage } from '../device-storage';
 import { createEditorMock } from './editor';

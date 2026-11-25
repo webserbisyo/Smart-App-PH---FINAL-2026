@@ -15,6 +15,8 @@ import { validateEnv } from './env.js';
 import { HealthModule } from './health/health.module.js';
 import { JobsModule } from './jobs/jobs.module.js';
 import { MediaModule } from './media/media.module.js';
+import { OrdersModule } from './orders/orders.module.js';
+import { PublicModule } from './public/public.module.js';
 import { SettingsModule } from './settings/settings.module.js';
 import { ShopModule } from './shop/shop.module.js';
 import { StorefrontCacheModule } from './public/pages-cache.module.js';
@@ -35,6 +37,8 @@ import { StorefrontCacheModule } from './public/pages-cache.module.js';
     SettingsModule,
     EditorModule,
     CatalogModule,
+    OrdersModule,
+    PublicModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: OriginGuard },

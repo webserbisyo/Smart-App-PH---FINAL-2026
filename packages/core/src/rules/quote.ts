@@ -1,23 +1,13 @@
-// The mock server's quote: every rule from core, the same way the API will run it.
-import {
-  deliveryFee,
-  lineIdentity,
-  openState,
-  pickupSlots,
-  readyEstimate,
-  rewardState,
-  unitPrice,
-  validateLinePicks,
-  variantAvailability,
-  variantLabel,
-  type MemberAccount,
-  type OrderPayload,
-  type PaymentMethod,
-  type PublicShop,
-  type Quote,
-  type QuoteLine,
-  type QuoteProblem,
-} from '@smartapp/core';
+// The order quote (T117, phases 4-6 plan section 3): the mock and NestJS price and check an order with this one
+// function, so both answer the same.
+import type { MemberAccount } from '../schemas/loyalty.js';
+import type { OrderPayload, Quote, QuoteLine, QuoteProblem } from '../schemas/order.js';
+import type { PaymentMethod } from '../schemas/enums.js';
+import type { PublicShop } from '../schemas/storefront.js';
+import { deliveryFee } from './delivery.js';
+import { openState, pickupSlots, readyEstimate, variantAvailability } from './hours.js';
+import { lineIdentity, unitPrice, validateLinePicks, variantLabel } from './options.js';
+import { rewardState } from './stamps.js';
 
 export interface QuoteContext {
   shop: PublicShop;

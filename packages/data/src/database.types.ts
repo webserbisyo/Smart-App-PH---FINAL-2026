@@ -1073,16 +1073,42 @@ isOneToOne: false
       referencedColumns: ["tenant_id","id"]
     }
                   ]
-                },"push_subscriptions": {
+                },"push_outbox": {
                   Row: {
-                    "auth": string,"created_at": string,"endpoint": string,"fail_count": number,"id": string,"last_ok_at": string | null,"member_id": string | null,"news": boolean,"news_changed_at": string | null,"p256dh": string,"platform": string,"tenant_id": string
+                    "attempts": number,"created_at": string,"dedupe_key": string,"id": string,"kind": string,"payload": NonNullable<Json>,"send_after": string,"sent_at": string | null,"status": string,"subscription_id": string,"tenant_id": string,"topic": string | null,"ttl_seconds": number,"urgency": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "auth": string,"created_at"?: string,"endpoint": string,"fail_count"?: number,"id"?: string,"last_ok_at"?: string | null,"member_id"?: string | null,"news"?: boolean,"news_changed_at"?: string | null,"p256dh": string,"platform"?: string,"tenant_id": string
+                    "attempts"?: number,"created_at"?: string,"dedupe_key": string,"id"?: string,"kind": string,"payload": NonNullable<Json>,"send_after"?: string,"sent_at"?: string | null,"status"?: string,"subscription_id": string,"tenant_id": string,"topic"?: string | null,"ttl_seconds"?: number,"urgency"?: string
                   }
                   Update: {
-                    "auth"?: string,"created_at"?: string,"endpoint"?: string,"fail_count"?: number,"id"?: string,"last_ok_at"?: string | null,"member_id"?: string | null,"news"?: boolean,"news_changed_at"?: string | null,"p256dh"?: string,"platform"?: string,"tenant_id"?: string
+                    "attempts"?: number,"created_at"?: string,"dedupe_key"?: string,"id"?: string,"kind"?: string,"payload"?: NonNullable<Json>,"send_after"?: string,"sent_at"?: string | null,"status"?: string,"subscription_id"?: string,"tenant_id"?: string,"topic"?: string | null,"ttl_seconds"?: number,"urgency"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "push_outbox_tenant_id_fkey"
+      columns: ["tenant_id"]
+isOneToOne: false
+      referencedRelation: "tenants"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "push_outbox_tenant_id_subscription_id_fkey"
+      columns: ["tenant_id","subscription_id"]
+isOneToOne: false
+      referencedRelation: "push_subscriptions"
+      referencedColumns: ["tenant_id","id"]
+    }
+                  ]
+                },"push_subscriptions": {
+                  Row: {
+                    "auth": string,"created_at": string,"endpoint": string,"fail_count": number,"id": string,"last_ok_at": string | null,"member_id": string | null,"news": boolean,"news_changed_at": string | null,"p256dh": string,"platform": string,"tenant_id": string,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "auth": string,"created_at"?: string,"endpoint": string,"fail_count"?: number,"id"?: string,"last_ok_at"?: string | null,"member_id"?: string | null,"news"?: boolean,"news_changed_at"?: string | null,"p256dh": string,"platform"?: string,"tenant_id": string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "auth"?: string,"created_at"?: string,"endpoint"?: string,"fail_count"?: number,"id"?: string,"last_ok_at"?: string | null,"member_id"?: string | null,"news"?: boolean,"news_changed_at"?: string | null,"p256dh"?: string,"platform"?: string,"tenant_id"?: string,"user_id"?: string | null
                   }
                   Relationships: [
                     {
