@@ -63,6 +63,12 @@ export const ErrorCode = [
   'item_has_orders',
   'variant_is_reward',
   'item_is_reward',
+  // Shop link and access (owner, T116)
+  'slug_taken',
+  'slug_reserved',
+  'slug_invalid',
+  'already_has_shop',
+  'not_allowed',
   // Settings, storage and plan (owner)
   'storage_full',
   'file_not_image',

@@ -5,6 +5,7 @@ export { DEMO_SHOPS } from './demo/shops.js';
 export * from './words.js';
 export * from './face-words.js';
 export * from './errors.js';
+export * from './permissions.js';
 export * from './icons.js';
 export * from './art.js';
 export * from './media.js';
@@ -53,12 +54,13 @@ export * from './rules/variant-pricing.js';
 export * from './rules/variant-templates.js';
 export * from './rules/members.js';
 export * from './rules/settings.js';
+export * from './rules/slug.js';
 export * from './rules/avatar.js';
 export * from './rules/face-parts.js';
 export * from './rules/owner-home.js';
 export * from './rules/editor.js';
 export * from './rules/news.js';
-export * from './rules/platform.js';
+
 export * from './demo/rhythm.js';
 export { SHOP_PACKS } from './demo/packs/index.js';
 export {

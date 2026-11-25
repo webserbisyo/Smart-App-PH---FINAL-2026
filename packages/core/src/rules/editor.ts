@@ -3,7 +3,8 @@
 import type { EditorSection, StorefrontContent } from '../schemas/editor.js';
 import type { FontPair, LogoShape, ShopSurface } from '../schemas/enums.js';
 import type { SectionSwitches, Storefront } from '../schemas/storefront.js';
-import { hexToOklch } from './palette.js';
+import { DEFAULT_OPENING } from '../schemas/storefront.js';
+import { DEFAULT_BRAND_COLOR, hexToOklch } from './palette.js';
 
 export type SectionSwitchKey = keyof SectionSwitches;
 
@@ -188,4 +189,41 @@ export function colourFamily(hex: string): ColourFamily {
   if (h < 285) return 'blue';
   if (h < 320) return 'purple';
   return 'pink';
+}
+
+/**
+ * A new shop's first look (sign-up, T89/T108): the colour picked on step 2 (or the default blue), no
+ * banners yet, and every section on except the members count, which only shows once there are members.
+ * Draft and published both start here, so the Editor opens with nothing to publish.
+ */
+export function newShopContent(brandColor: string | null): StorefrontContent {
+  return {
+    logo: null,
+    tagline: null,
+    about: null,
+    look: {
+      brandColor: brandColor ?? DEFAULT_BRAND_COLOR,
+      surface: 'light',
+      pageColor: null,
+      cardColor: null,
+      logoShape: 'circle',
+      fontPair: 'malinaw',
+      banners: [],
+      bannerSeconds: 5,
+      announcement: null,
+      sections: {
+        banners: true,
+        announcement: true,
+        rewards: true,
+        favourites: true,
+        categories: true,
+        bestSellers: true,
+        about: true,
+        hours: true,
+        contact: true,
+        membersCount: false,
+      },
+      opening: { ...DEFAULT_OPENING },
+    },
+  };
 }
