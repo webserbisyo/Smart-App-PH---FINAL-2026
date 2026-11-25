@@ -297,17 +297,22 @@ export class ExportsService {
     const orders = z.array(OrderRowSchema).parse(
       (
         await this.db.tx.execute(sql`
+          with items as (
+            select l.order_id, string_agg(l.qty || ' × ' || l.name
+              || coalesce(' (' || nullif(l.variant_label, '') || ')', ''), '; ' order by l.sort) as items
+            from public.order_lines l
+            join public.orders o on o.tenant_id = l.tenant_id and o.id = l.order_id
+            where l.tenant_id = ${shopId} and ${days}
+            group by l.order_id
+          )
           select o.id, o.order_no, o.placed_at, o.business_date::text as business_date, o.type, o.status,
             o.customer_name, o.customer_phone, o.customer_email,
             concat_ws(', ', nullif(o.house_no, ''), nullif(o.floor, ''), nullif(o.address_line, ''),
               nullif(o.landmark, '')) as address,
             o.subtotal, o.discount, o.delivery_fee, o.total, o.payment_method, o.payment_status,
-            o.refund_amount, o.note, o.reward_title,
-            coalesce((
-              select string_agg(l.qty || ' × ' || l.name
-                || coalesce(' (' || nullif(l.variant_label, '') || ')', ''), '; ' order by l.sort)
-              from public.order_lines l where l.tenant_id = o.tenant_id and l.order_id = o.id), '') as items
+            o.refund_amount, o.note, o.reward_title, coalesce(i.items, '') as items
           from public.orders o
+          left join items i on i.order_id = o.id
           where o.tenant_id = ${shopId} and ${days}
           order by o.placed_at, o.order_no`)
       ).rows,

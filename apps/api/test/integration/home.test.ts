@@ -132,11 +132,16 @@ describe('owner Home (phase 6)', () => {
         from copies c
         join public.order_lines l on l.order_id = ${first.orderId}::uuid`);
     });
+    // As autovacuum would after a busy day: the planner knows the shop grew.
+    await db.run(ADMIN, async () => {
+      await db.tx.execute(sql`analyze public.orders, public.order_lines`);
+    });
     const started = performance.now();
     const home = HomeSummarySchema.parse((await shop.agent.get('/owner/home').expect(200)).body);
     const took = performance.now() - started;
     expect(home.daysWithOrders).toBeGreaterThan(50);
     // A laptop answers in about a quarter second; CI machines are slower, so the bar is generous.
     expect(took).toBeLessThan(3000);
-  });
+    // Seeding 10,000 orders takes most of the time on a CI machine.
+  }, 120_000);
 });

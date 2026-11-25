@@ -141,18 +141,30 @@ export class OwnerHomeService {
     const today = manilaDate(now);
     const since = addDays(today, -HOME_HISTORY_DAYS);
     // One pass: the kept history by business date, and open orders due later (bookings).
+    // The lines join once by order (a hash join), never a lookup per order: 10,000 orders stay fast even
+    // before Postgres has fresh statistics for a shop that just grew.
     const result = await this.db.tx.execute(sql`
-      select o.placed_at, o.due_at, o.pay_by, o.total, o.type, o.status, o.payment_method,
-        o.payment_status, o.payment_account_id, o.member_id is not null as member,
-        coalesce((
-          select json_agg(json_build_object('itemId', coalesce(l.item_id::text, ''), 'name', l.name,
-            'qty', l.qty, 'lineTotal', l.line_total) order by l.sort)
-          from public.order_lines l where l.tenant_id = o.tenant_id and l.order_id = o.id), '[]') as lines
-      from public.orders o
-      where o.tenant_id = ${this.db.shopId}
-        and o.status not in ('cancelled', 'expired')
-        and (o.business_date >= ${since}::date
-          or (o.status not in ('completed') and o.due_at > now()))`);
+      with picked as (
+        select o.id, o.placed_at, o.due_at, o.pay_by, o.total, o.type, o.status, o.payment_method,
+          o.payment_status, o.payment_account_id, o.member_id is not null as member
+        from public.orders o
+        where o.tenant_id = ${this.db.shopId}
+          and o.status not in ('cancelled', 'expired')
+          and (o.business_date >= ${since}::date
+            or (o.status not in ('completed') and o.due_at > now()))
+      ),
+      lines as (
+        select l.order_id, json_agg(json_build_object('itemId', coalesce(l.item_id::text, ''),
+          'name', l.name, 'qty', l.qty, 'lineTotal', l.line_total) order by l.sort) as lines
+        from public.order_lines l
+        join picked p on p.id = l.order_id
+        where l.tenant_id = ${this.db.shopId}
+        group by l.order_id
+      )
+      select p.placed_at, p.due_at, p.pay_by, p.total, p.type, p.status, p.payment_method,
+        p.payment_status, p.payment_account_id, p.member, coalesce(x.lines, '[]') as lines
+      from picked p
+      left join lines x on x.order_id = p.id`);
     const rows = z.array(OrderSchema).parse(result.rows);
     const live = rows.filter((o) => countsAsSale(saleCheck(o), now));
     const sales = live
