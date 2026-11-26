@@ -63,11 +63,11 @@ Each skill sits in `.agents/skills/<name>/SKILL.md` (Antigravity) and `.claude/s
 
 ## Launch and hosting
 
-| Question                                          | Read           |
-| ------------------------------------------------- | -------------- |
-| Public demo links on sample data (Vercel)         | `previews.md`  |
-| What the founder must get or do before going live | `launch.md`    |
-| Words for selling: video script, Messenger, FAQ   | `sales-kit.md` |
+| Question                                        | Read           |
+| ----------------------------------------------- | -------------- |
+| Public demo links on sample data (Vercel)       | `previews.md`  |
+| Every by-hand step to launch, in order (A to H) | `launch.md`    |
+| Words for selling: video script, Messenger, FAQ | `sales-kit.md` |
 
 ## Other folders
 

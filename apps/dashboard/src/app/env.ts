@@ -6,6 +6,12 @@ const envSchema = z.object({
   // NestJS (decision T34): the only server the dashboard talks to. No Supabase address or key here (T116).
   VITE_API_URL: z.url(),
   VITE_STOREFRONT_URL: z.url(),
+  // The sample shops' storefront (T118 task 9.2): the demo link on sample data, so the links in Super Admin ›
+  // Setup always open full shops. Empty: VITE_STOREFRONT_URL.
+  VITE_SAMPLES_URL: z
+    .url()
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
   VITE_SHOW_KIT: z.enum(['true', 'false']).default('false'),
   // development, preview (hosted sample data with the Preview panel, T100) or production.
   VITE_APP_ENV: AppEnvSchema,
