@@ -34,7 +34,7 @@ Phases 1 to 9 are built and merged (T116, T117, T118). The code is done. What is
 The 56 tables are in `supabase/migrations/`, but the dev database (Smart App PH MVP FINAL) does not have them yet. After you add three secrets, every push to `main` applies new migrations to dev by itself. It never touches a live database.
 
 1. Open supabase.com and sign in. Click your avatar (top right) › **Account preferences** › **Access Tokens** › **Generate new token**. Name: `github-migrations`. Expiry: the longest offered. Copy it 🔒.
-2. Open the project **Smart App PH MVP FINAL** › **Project Settings** (gear, bottom left) › **Database**. Under **Database password** press **Reset database password**, then **Generate a password**, copy it 🔒, press **Reset password**.
+2. Open the project **Smart App PH MVP FINAL** › **Project Settings** (gear, bottom left) › **Database**. If the dev database password is already in your password manager, use it. If not: under **Database password** press **Reset database password**, then **Generate a password**, copy it 🔒, press **Reset password** (and update `DATABASE_URL` anywhere you used the old one).
 3. Open github.com › `webserbisyo/Smart-App-PH---FINAL-2026` › **Settings** (top tabs) › left side **Secrets and variables** › **Actions** › green **New repository secret**. Add three, one at a time (Name, then Secret, then **Add secret**):
    - `SUPABASE_ACCESS_TOKEN` = the token from step 1
    - `SUPABASE_DB_PASSWORD` = the password from step 2
