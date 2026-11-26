@@ -2838,6 +2838,16 @@ export const updateBarWords = {
   refresh: 'Refresh',
 } as const;
 
+// A dashboard page that broke while loading (the router's error screen): no codes, Try again and a way home.
+export const pageErrorWords = {
+  title: 'This page didn’t load',
+  body: 'Check your connection, then try again.',
+  tryAgain: 'Try again',
+  goHome: 'Go to Home',
+  // A newer dashboard went live while this one was open: it reloads onto the new version by itself.
+  updating: 'Opening the newest version',
+} as const;
+
 // Owner Members page (decisions T57 to T60).
 // New order and Edit order (T111): the owner makes an order for a walk-in, Messenger or phone customer,
 // and changes a received order while it is New, Preparing or Ready.
