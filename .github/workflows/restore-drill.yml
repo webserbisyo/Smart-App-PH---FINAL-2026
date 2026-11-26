@@ -44,7 +44,7 @@ jobs:
         if: steps.when.outputs.go == 'true'
         run: |
           if [ -z "$LIVE_DB_URL" ]; then
-            echo "::error::LIVE_DB_URL is missing in the restore-drill environment (docs/launch.md section 13)."
+            echo "::error::LIVE_DB_URL is missing in the restore-drill environment (docs/launch.md Part G2)."
             exit 1
           fi
 

@@ -260,7 +260,7 @@ function SetupForm({ initial }: { initial: PlatformSetup }) {
 
 /** The sample shops' links (T118 task 9.2), ready to paste into a Messenger reply. */
 function SampleLinks() {
-  const base = env.VITE_STOREFRONT_URL;
+  const base = (env.VITE_SAMPLES_URL ?? env.VITE_STOREFRONT_URL).replace(/\/+$/, '');
   const all = `${base}/samples`;
   const links = DEMO_SHOPS.map((shop) => ({ ...shop, url: `${base}/${shop.slug}` }));
   const reply = W.reply(all, links.map((l) => `${l.name}: ${l.url}`).join('\n'));

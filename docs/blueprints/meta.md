@@ -76,7 +76,7 @@ Sending switch, test mode with Meta's test code, Send a test event (a made-up te
 ## 7. Testing
 
 On the laptop database the tests use a recording Graph API (`apps/api/test/integration/platform.test.ts`). On
-staging: test mode on with Meta's test code, then the steps in `launch.md` section 13.
+staging: test mode on with Meta's test code, then the steps in `launch.md` Part F.
 
 ## Sources
 
