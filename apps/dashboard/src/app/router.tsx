@@ -24,7 +24,7 @@ import { NewsComposeSearchSchema } from '../features/members/news-search.js';
 import { MembersSearchSchema } from '../features/members/search.js';
 import { OrdersSearchSchema } from '../features/orders/search.js';
 import { AdminPaymentsSearchSchema, AdminShopsSearchSchema } from '../features/admin/search.js';
-import { requireAdmin } from './admin.js';
+import { requireAdmin, requireSecondStepOwed } from './admin.js';
 import { NotFoundPage } from './not-found.js';
 import { AdminShell } from './shell/admin-shell.js';
 import { currentSupport } from './support.js';
@@ -45,6 +45,10 @@ import { ShopContext, resolveShop } from './shop.js';
 const ForgotScreen = lazyRouteComponent(
   () => import('../features/auth/screens/forgot.js'),
   'ForgotScreen',
+);
+const SecondStepScreen = lazyRouteComponent(
+  () => import('../features/auth/screens/second-step.js'),
+  'SecondStepScreen',
 );
 const LoginScreen = lazyRouteComponent(
   () => import('../features/auth/screens/login.js'),
@@ -212,6 +216,19 @@ const forgotRoute = createRoute({
   beforeLoad: () => requireGuest(),
   component: ForgotScreen,
 });
+
+// Super Admin's authenticator code (T118 Q16), outside the admin shell so nothing there loads first.
+const secondStepRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/second-step',
+  beforeLoad: async () => ({ claims: await requireSecondStepOwed() }),
+  component: SecondStepPage,
+});
+
+function SecondStepPage() {
+  const { claims } = secondStepRoute.useRouteContext();
+  return <SecondStepScreen claims={claims} />;
+}
 
 const logoutRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -517,6 +534,7 @@ const baseRoutes = [
   loginRoute,
   signupRoute,
   forgotRoute,
+  secondStepRoute,
   logoutRoute,
   editorRoute,
   adminRoute.addChildren(adminChildren),

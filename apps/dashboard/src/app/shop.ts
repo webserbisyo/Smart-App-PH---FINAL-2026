@@ -3,7 +3,7 @@ import { redirect } from '@tanstack/react-router';
 import { DEMO_SHOPS, words, type ShopKind } from '@smartapp/core';
 import { setMockOwnerSlug, type UserClaims } from '@smartapp/data';
 import { adapters, realShops } from './data.js';
-import { currentSupport } from './support.js';
+import { clearSupport, currentSupport } from './support.js';
 import { warmPreview } from './warm-preview.js';
 
 export interface CurrentShop {
@@ -40,6 +40,15 @@ function sampleShop(slug0: string | undefined): CurrentShop {
  */
 export async function resolveShop(claims: UserClaims): Promise<CurrentShop> {
   const helping = claims.isAdmin ? currentSupport() : null;
+  if (helping && realShops) {
+    // NestJS answers with the shop being helped while its session is open (the help cookie).
+    const helped = await adapters.onboarding.getMyShop();
+    if (!helped) {
+      clearSupport();
+      throw redirect({ to: '/admin' });
+    }
+    return shopOf(helped.slug, helped.name, helped.kind);
+  }
   if (helping || claims.demoShop || !realShops) {
     return sampleShop(helping?.slug ?? claims.demoShop);
   }

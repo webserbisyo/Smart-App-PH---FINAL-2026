@@ -66,6 +66,7 @@ export class SessionService {
         email: typeof payload['email'] === 'string' ? payload['email'] : '',
         fullName: typeof fullName === 'string' && fullName.length > 0 ? fullName : null,
         isAdmin: appMeta['platform_admin'] === true,
+        aal2: payload['aal'] === 'aal2',
       };
     } catch (error) {
       // A project still signing with the shared secret has no public key: ask Supabase instead.

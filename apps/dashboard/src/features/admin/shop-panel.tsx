@@ -22,6 +22,7 @@ import {
   formatPeso,
   formatPhPhone,
   formatStorage,
+  metaDaysLeft,
   PLAN_REJECT_REASONS,
   signupWords,
   supportWords,
@@ -39,9 +40,17 @@ import {
   useReviewPlanPayment,
   useSendBillingNote,
   useSendPlanReminder,
+  useSetTestShop,
+  useUndoPlanApproval,
 } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
-import { Field, FieldError, FieldLabel } from '@smartapp/ui/components/field';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import {
   Item,
@@ -51,6 +60,7 @@ import {
   ItemTitle,
 } from '@smartapp/ui/components/item';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
+import { Switch } from '@smartapp/ui/components/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
@@ -103,6 +113,8 @@ export function ShopPanel({
   const detail = query.data && query.data.id === id ? query.data : undefined;
   const head: AdminShopRow | undefined = detail ?? (seed && seed.id === id ? seed : undefined);
   const pending = detail?.pending ?? null;
+  const now = useNow().getTime();
+  const undo = detail?.undo && new Date(detail.undo.until).getTime() > now ? detail.undo : null;
 
   return (
     <ResponsiveSheet
@@ -113,7 +125,9 @@ export function ShopPanel({
       title={head?.name ?? P.close}
       header={<PanelHeader row={head} onClose={onClose} />}
       footer={
-        detail && tab === 'billing' && pending ? (
+        detail && undo ? (
+          <UndoBar shop={detail} paymentId={undo.paymentId} until={undo.until} />
+        ) : detail && tab === 'billing' && pending ? (
           <ReviewBar shop={detail} payment={pending} />
         ) : undefined
       }
@@ -423,6 +437,8 @@ function Overview({ shop, onClose }: { shop: AdminShopDetail; onClose: () => voi
         ) : null}
       </section>
 
+      {!shop.hasDemoData ? <TestShopSwitch shop={shop} /> : null}
+
       <ExtraDaysDialog
         shop={shop}
         open={ask === 'extra'}
@@ -449,6 +465,73 @@ function Overview({ shop, onClose }: { shop: AdminShopDetail; onClose: () => voi
         open={ask === 'owner'}
         onOpenChange={(o) => setAsk(o ? 'owner' : null)}
       />
+    </div>
+  );
+}
+
+/** A test shop (T118 Q7): the founder's own tries never reach Meta or Today's money. */
+function TestShopSwitch({ shop }: { shop: AdminShopDetail }) {
+  const online = useOnlineStatus();
+  const set = useSetTestShop();
+  return (
+    <Field orientation="horizontal" className="rounded-xl border border-border p-3">
+      <FieldContent>
+        <FieldLabel htmlFor="shop-test">{P.testShop}</FieldLabel>
+        <FieldDescription>{P.testShopLine}</FieldDescription>
+      </FieldContent>
+      <Switch
+        id="shop-test"
+        checked={shop.isTest}
+        disabled={!online || set.isPending}
+        onCheckedChange={(isTest) =>
+          void set
+            .mutateAsync({ shopId: shop.id, isTest })
+            .then(() => notify({ title: isTest ? P.testOn : P.testOff, tone: 'success' }))
+            .catch(failed)
+        }
+      />
+    </Field>
+  );
+}
+
+/**
+ * The 10 minutes after an approval (T118 Q4): its Purchase, its email and the new paid-until can still be
+ * taken back, before Meta or the owner hears anything.
+ */
+function UndoBar({
+  shop,
+  paymentId,
+  until,
+}: {
+  shop: AdminShopDetail;
+  paymentId: string;
+  until: string;
+}) {
+  const online = useOnlineStatus();
+  const undo = useUndoPlanApproval();
+  const action = useAsyncAction();
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <p className="flex-1 text-sm text-foreground">{P.undoLine(formatManila(until, 'time'))}</p>
+      <AsyncButton
+        variant="outline"
+        status={action.status}
+        busyLabel={P.undoing}
+        doneLabel={P.undo}
+        disabled={!online}
+        className="h-11 md:h-9"
+        onClick={() =>
+          void action
+            .run(async () => {
+              await undo.mutateAsync({ shopId: shop.id, paymentId });
+              notify({ title: P.undone, tone: 'success' });
+            })
+            .catch(failed)
+        }
+      >
+        <RotateCcwIcon aria-hidden="true" />
+        {P.undo}
+      </AsyncButton>
     </div>
   );
 }
@@ -488,6 +571,7 @@ function ReviewBar({ shop, payment }: { shop: AdminShopDetail; payment: PlanPaym
   const [why, setWhy] = React.useState('');
   const [tried, setTried] = React.useState(false);
   const shown = formatPeso(mode === 'amount' ? amount : payment.amount);
+  const metaDays = metaDaysLeft(payment.submittedAt, useNow());
 
   const doApprove = () =>
     void approve
@@ -550,6 +634,7 @@ function ReviewBar({ shop, payment }: { shop: AdminShopDetail; payment: PlanPaym
         <ShieldCheckIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
         {B.checkApp}
       </p>
+      <p className="text-xs text-muted-foreground">{P.metaDays(metaDays)}</p>
       {mode === 'amount' ? (
         <div className="grid gap-2 sm:grid-cols-2">
           <Field>
@@ -625,6 +710,8 @@ function activityLine(a: ShopActivity): string {
       );
     case 'payment_recorded':
       return L.payment_recorded(amount);
+    case 'payment_undone':
+      return L.payment_undone(amount);
     case 'reminder':
       return L.reminder;
     case 'extra_days':

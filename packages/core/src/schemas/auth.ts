@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { words } from '../words.js';
 
+export const ADMIN_STEPS = ['enroll', 'code', 'done'] as const;
+export type AdminStep = (typeof ADMIN_STEPS)[number];
+
 export const LoginSchema = z.object({
   email: z
     .string(words.validation.emailRequired)
@@ -71,8 +74,23 @@ export const OwnerSessionSchema = z.object({
   fullName: z.string().nullable(),
   // The founder's Super Admin (app_metadata.platform_admin on the account, never set by the user).
   isAdmin: z.boolean(),
+  // Super Admin's second step (T118 Q16): null when it does not apply (an owner, or a laptop with it off),
+  // `enroll` before the authenticator app is set up, `code` until this login's code is typed, `done` after.
+  adminStep: z.enum(ADMIN_STEPS).nullable().default(null),
 });
 export type OwnerSession = z.infer<typeof OwnerSessionSchema>;
+
+// Setting up the authenticator app: the otpauth link the QR carries, and the same secret as text for typing
+// in by hand. Shown once, to the signed-in founder only.
+export const SecondStepSetupSchema = z.object({
+  factorId: z.string().min(1),
+  uri: z.string().startsWith('otpauth://totp/'),
+  secret: z.string().min(16).max(64),
+});
+export type SecondStepSetup = z.infer<typeof SecondStepSetupSchema>;
+
+export const SecondStepCodeInputSchema = z.object({ code: EmailCodeSchema });
+export type SecondStepCodeInput = z.input<typeof SecondStepCodeInputSchema>;
 
 export const OkSchema = z.object({ ok: z.literal(true) });
 export type Ok = z.infer<typeof OkSchema>;

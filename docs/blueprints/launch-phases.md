@@ -2,7 +2,7 @@
 
 Nine phases take Smart App PH from "every screen works on sample data" to "shops pay ₱399 a month". Phases 1 to 7 wire the backend area by area, phase 8 sets up the live product and phase 9 is selling. Target: the first paying shop in December 2026, so every phase stays as small as launch allows. Written 2026-11-20 from the repo as it stands (main @ bdc7a80); a general map, not a build spec.
 
-**How to use it.** Take one phase at a time into the project chat. For that phase we brainstorm, research the topics listed, settle the open logic, then write the task prompts. A phase is finished only when its "Done when" passes on the dev database. `PROGRESS.md` stays the tick list (each phase names its lines there); `A-mvp.md` wins on scope. Phases 1 to 3 have a detailed build plan in `phases-1-3.md` (approved and built, T116). Phases 4 to 6 have one in `phases-4-6.md` (approved and built, T117). Phases 7 to 9 have one in `phases-7-9.md` (proposed 2026-11-25: Meta event design, billing, Super Admin, go live, selling, and the founder's full by-hand list).
+**How to use it.** Take one phase at a time into the project chat. For that phase we brainstorm, research the topics listed, settle the open logic, then write the task prompts. A phase is finished only when its "Done when" passes on the dev database. `PROGRESS.md` stays the tick list (each phase names its lines there); `A-mvp.md` wins on scope. Phases 1 to 3 have a detailed build plan in `phases-1-3.md` (approved and built, T116). Phases 4 to 6 have one in `phases-4-6.md` (approved and built, T117). Phases 7 to 9 have one in `phases-7-9.md` (approved and built, T118; the by-hand list is `launch.md` section 13).
 
 ## Where we start (checked 2026-11-20)
 
@@ -195,7 +195,7 @@ Opened from a card on the Board, the panel stays as it is today. UI only (`chats
 
 ## Phase 7. Plan, billing, Super Admin and Meta
 
-**Build plan:** `phases-7-9.md` sections 4 and 5 (proposed). It answers the "Still to settle" list below as questions Q9 to Q12.
+**Build plan:** `phases-7-9.md` sections 4 and 5 (approved and built, T118). It answers the "Still to settle" list below as questions Q9 to Q12.
 
 **Goal.** You can approve shops, take ₱399 payments, help owners and see which ad brought each paying shop, without touching SQL.
 
@@ -216,7 +216,7 @@ Opened from a card on the Board, the panel stays as it is today. UI only (`chats
 
 ## Phase 8. Go live: live setup and hardening
 
-**Build plan:** `phases-7-9.md` section 6 (proposed). It recommends answers to conflicts 3 and 4 below (Q14, Q15).
+**Build plan:** `phases-7-9.md` section 6 (approved, T118: live migrations workflow, second step, headers, restore drill and k6 built). It recommends answers to conflicts 3 and 4 below (Q14, Q15).
 
 **Goal.** A separate live product that is safe, backed up and passes launch acceptance on real phones.
 
@@ -255,7 +255,7 @@ The subdomain is the one link we print and send (QR, share, emails, install, pus
 
 ## Phase 9. Sell: pilot and first paying shops
 
-**Build plan:** `phases-7-9.md` section 7 (proposed).
+**Build plan:** `phases-7-9.md` section 7 (approved, T118: QR poster, sample links and `sales-kit.md` built).
 
 **Goal.** Real shops pay ₱399 and keep using it.
 

@@ -18,7 +18,7 @@ import { tenantMembers } from '../db/generated/schema.js';
 import { callerOf } from './caller.js';
 import { Can, NO_TRANSACTION_KEY } from './decorators.js';
 import { readCookie, supportCookieName } from './session-cookies.js';
-import type { ApiEnv } from '../env.js';
+import { secondStepRequired, type ApiEnv } from '../env.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HelpSchema = z.object({ id: z.string(), tenant_id: z.string() });
@@ -38,13 +38,16 @@ const WRITES = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 @Injectable()
 export class ScopeInterceptor implements NestInterceptor {
   private readonly supportCookie: string;
+  private readonly secondStep: boolean;
 
   constructor(
     @Inject(Reflector) private readonly reflector: Reflector,
     @Inject(Db) private readonly db: Db,
     @Inject(ConfigService) config: ConfigService,
   ) {
-    this.supportCookie = supportCookieName(config.get<ApiEnv>('APP_ENV') ?? 'development');
+    const appEnv = config.get<ApiEnv>('APP_ENV') ?? 'development';
+    this.supportCookie = supportCookieName(appEnv);
+    this.secondStep = secondStepRequired(appEnv, config.get<'on' | 'off'>('ADMIN_SECOND_STEP'));
   }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -63,6 +66,10 @@ export class ScopeInterceptor implements NestInterceptor {
       (async () => {
         const help =
           !admin && permission && user?.isAdmin ? await this.openSupport(request, user.id) : null;
+        // Super Admin and help mode need this login's authenticator code (T118 Q16); others never see this.
+        if ((admin || help) && user?.isAdmin && this.secondStep && user.aal2 !== true) {
+          throw new ApiFailure('second_step_needed', 403);
+        }
         return this.db.run(
           {
             userId: user?.id ?? null,

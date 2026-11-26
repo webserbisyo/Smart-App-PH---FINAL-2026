@@ -73,6 +73,12 @@ export const ADMIN_ROUTES: readonly CatalogRoute[] = [
   { path: '/admin/payments', open: '/admin/payments', label: 'Payments', scan: true },
   { path: '/admin/tracking', open: '/admin/tracking', label: 'Tracking', scan: true },
   { path: '/admin/setup', open: '/admin/setup', label: 'Setup', scan: true },
+  {
+    path: '/second-step',
+    label: 'Second step (authenticator code)',
+    scan: false,
+    note: 'Only on the API with the second step on; sample data goes straight to Super Admin',
+  },
 ];
 
 /** Dashboard pages for someone signed out. */

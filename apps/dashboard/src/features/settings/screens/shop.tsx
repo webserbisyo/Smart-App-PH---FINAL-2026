@@ -4,6 +4,7 @@ import {
   CircleAlertIcon,
   ExternalLinkIcon,
   MapPinIcon,
+  PrinterIcon,
   XIcon,
 } from 'lucide-react';
 import {
@@ -23,6 +24,7 @@ import { Input } from '@smartapp/ui/components/input';
 import { Spinner } from '@smartapp/ui/components/spinner';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { CopyButton } from '@smartapp/ui/compositions/copy-button';
+import { useQrPoster } from '@/app/qr-poster';
 import { useShop } from '@/app/shop';
 import { storefrontUrl } from '@/app/use-nav-items';
 import { ShopPreview } from '../previews.js';
@@ -107,6 +109,7 @@ function ShopForm({ settings }: { settings: OwnerSettings }) {
   const section = useSectionSave(settingsWords.sectionTitles.shop);
   const set = (patch: Partial<ShopDraft>) => setDraft((d) => ({ ...d, ...patch }));
   const link = storefrontUrl(shop.slug);
+  const poster = useQrPoster(settings.shop.name, link);
 
   const problems = {
     name: draft.name.trim() ? undefined : W.nameRequired,
@@ -170,6 +173,26 @@ function ShopForm({ settings }: { settings: OwnerSettings }) {
             </p>
             <FieldDescription>{W.kindHelp}</FieldDescription>
           </Field>
+        </SettingsCard>
+
+        <SettingsCard title={W.posterTitle}>
+          <p className="text-sm text-muted-foreground">{W.posterHelp}</p>
+          <div className="flex flex-wrap gap-2">
+            {(['a4', 'a6'] as const).map((size) => (
+              <Button
+                key={size}
+                type="button"
+                variant="outline"
+                className="h-11 gap-1.5 md:h-9"
+                disabled={poster.printing}
+                onClick={() => poster.print(size)}
+              >
+                <PrinterIcon aria-hidden="true" />
+                {size === 'a4' ? W.posterA4 : W.posterA6}
+              </Button>
+            ))}
+          </div>
+          {poster.node}
         </SettingsCard>
 
         <SettingsCard title={W.reachCard}>

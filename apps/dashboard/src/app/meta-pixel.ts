@@ -16,6 +16,8 @@ type Fbq = ((...args: unknown[]) => void) & {
   push?: Fbq | undefined;
   loaded: boolean;
   version: string;
+  // Meta's switch for counting a page view on every in-app route change; off, we count one per real load.
+  disablePushState?: boolean | undefined;
 };
 
 declare global {
@@ -95,10 +97,14 @@ export function readFbp(): string | null {
 
 let started = false;
 
-/** Loads fbevents.js once (Meta's own snippet, written out) and counts the page view. */
-export function startPixel(): boolean {
+/**
+ * Loads fbevents.js once (Meta's own snippet, written out) and counts the page view. Only on /signup, never
+ * for the founder (T118 Q7): the caller passes `admin` from the session when there is one. The pixel's own
+ * guesses are off (automatic events and a page view per route change), so it fires only what we name.
+ */
+export function startPixel(admin = false): boolean {
   const id = env.VITE_META_PIXEL_ID;
-  if (!id) return false;
+  if (!id || admin) return false;
   if (started) return true;
   started = true;
   const queue: unknown[][] = [];
@@ -116,6 +122,8 @@ export function startPixel(): boolean {
   script.async = true;
   script.src = 'https://connect.facebook.net/en_US/fbevents.js';
   document.head.append(script);
+  fbq.disablePushState = true;
+  fbq('set', 'autoConfig', false, id);
   fbq('init', id);
   return true;
 }

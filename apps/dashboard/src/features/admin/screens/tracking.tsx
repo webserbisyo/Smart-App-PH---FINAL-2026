@@ -63,6 +63,7 @@ const T = A.tracking;
 const failed = (err: unknown) => notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
 
 const STATUS_LOOK: Record<TrackStatus, { icon: React.ReactNode; className: string }> = {
+  waiting: { icon: <CircleDashedIcon />, className: 'bg-warning-soft text-warning-text' },
   queued: { icon: <CircleDashedIcon />, className: 'bg-muted text-muted-foreground' },
   sent: { icon: <CircleCheckIcon />, className: 'bg-success-soft text-success-text' },
   failed: { icon: <CircleAlertIcon />, className: 'bg-destructive/10 text-destructive-text' },

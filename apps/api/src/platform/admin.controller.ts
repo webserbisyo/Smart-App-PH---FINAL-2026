@@ -48,9 +48,9 @@ import type { CallerUser } from '../auth/caller.js';
 import { Can, CurrentUser, NoTransaction } from '../auth/decorators.js';
 import { clearSupportCookie, setSupportCookie } from '../auth/session-cookies.js';
 import { clientInfo } from '../auth/session.service.js';
-import { notFound } from '../common/api-failure.js';
+import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
-import type { ApiEnv } from '../env.js';
+import { secondStepRequired, type ApiEnv } from '../env.js';
 import { ShopService } from '../shop/shop.service.js';
 import { AdminReader } from './admin-reader.js';
 import { AdminService } from './admin.service.js';
@@ -91,6 +91,7 @@ const UUID = new ParseUUIDPipe();
 @Controller('admin')
 export class AdminController {
   private readonly env: ApiEnv;
+  private readonly secondStep: boolean;
 
   constructor(
     @Inject(AdminReader) private readonly reader: AdminReader,
@@ -102,6 +103,7 @@ export class AdminController {
     @Inject(ConfigService) config: ConfigService,
   ) {
     this.env = config.get<ApiEnv>('APP_ENV') ?? 'development';
+    this.secondStep = secondStepRequired(this.env, config.get<'on' | 'off'>('ADMIN_SECOND_STEP'));
   }
 
   @Get('today')
@@ -133,6 +135,8 @@ export class AdminController {
     @Body({ schema: CreateClientInputSchema }) body: CreateClientInput,
   ): Promise<AdminShopDetail> {
     if (!user.isAdmin) throw notFound();
+    // No transaction here, so the scope interceptor's second-step check is done by hand (T118 Q16).
+    if (this.secondStep && user.aal2 !== true) throw new ApiFailure('second_step_needed', 403);
     const ownerId = await this.auth.createOwnerAccount(body.email, body.fullName);
     const owner: CallerUser = {
       id: ownerId,

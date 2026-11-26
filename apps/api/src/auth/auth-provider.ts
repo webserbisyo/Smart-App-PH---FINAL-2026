@@ -23,6 +23,7 @@ export type AuthFailureCode = Extract<
   | 'code_expired'
   | 'rate_limited'
   | 'not_signed_in'
+  | 'not_allowed'
   | 'unknown'
 >;
 
@@ -65,6 +66,22 @@ export interface AuthProvider {
   signOut(accessToken: string, scope: 'local' | 'others' | 'global'): Promise<void>;
   /** For tokens our own check cannot verify (a project still on a shared JWT secret). */
   getUser(accessToken: string): Promise<AuthUser | null>;
+  /** Whether the account has a set-up authenticator app (Super Admin's second step, T118 Q16). */
+  hasTotp(userId: string): Promise<boolean>;
+  /**
+   * Starts setting up an authenticator app for this login. Any half-done setup is dropped first; refused
+   * (not_allowed) once a set-up app exists, so a stolen password can never add its own.
+   */
+  enrollTotp(userId: string, accessToken: string): Promise<TotpSetup>;
+  /** Checks the app's 6-digit code; answers the same login raised to the second step (aal2). */
+  verifyTotp(userId: string, accessToken: string, code: string): Promise<AuthSession>;
+}
+
+export interface TotpSetup {
+  factorId: string;
+  // The otpauth:// link the authenticator app's QR carries.
+  uri: string;
+  secret: string;
 }
 
 export const AUTH_PROVIDER = Symbol('AUTH_PROVIDER');

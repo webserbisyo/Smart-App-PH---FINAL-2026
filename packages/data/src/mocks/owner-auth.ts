@@ -124,4 +124,7 @@ export const mockOwnerAuth: OwnerAuth = {
     });
     return claimsOf(address);
   },
+  // Sample-data owners are never the platform admin, so the second step does not exist here (rule 12).
+  startSecondStep: async () => fail('not_found', 404),
+  verifySecondStep: async () => fail('not_found', 404),
 };

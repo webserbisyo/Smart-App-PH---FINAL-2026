@@ -1,0 +1,110 @@
+name: Restore drill
+
+# T118 task 8.3: once a month, prove the live data can be rebuilt. The live tables are dumped, restored into a
+# throwaway local database built from our own migrations, and their row counts compared. Only the counts are
+# kept (as a run artifact); the dump never leaves the runner. Supabase Pro's daily backups stay the real
+# backup; this drill shows our migrations still match live and the data loads back.
+on:
+  schedule:
+    # 03:00 Manila on the 1st of each month (19:00 UTC the day before).
+    - cron: '0 19 28-31 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: restore-drill
+  cancel-in-progress: false
+
+jobs:
+  drill:
+    name: Dump, restore and compare
+    runs-on: ubuntu-latest
+    # Holds LIVE_DB_URL (the session pooler address with the password). Limit it to main in GitHub
+    # (Settings, Environments, restore-drill, Deployment branches).
+    environment: restore-drill
+    env:
+      LIVE_DB_URL: ${{ secrets.LIVE_DB_URL }}
+      LOCAL_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      COUNT_SQL: >-
+        select table_name || ' ' || (xpath('/row/c/text()',
+        query_to_xml(format('select count(*) as c from public.%I', table_name), false, true, '')))[1]::text
+        from information_schema.tables where table_schema = 'public' and table_type = 'BASE TABLE'
+        order by table_name
+    steps:
+      - name: Only on the last day of the month (cron runs 28 to 31)
+        id: when
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$(date -u -d tomorrow +%d)" = "01" ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check the secret is set
+        if: steps.when.outputs.go == 'true'
+        run: |
+          if [ -z "$LIVE_DB_URL" ]; then
+            echo "::error::LIVE_DB_URL is missing in the restore-drill environment (docs/launch.md section 13)."
+            exit 1
+          fi
+
+      - name: Checkout
+        if: steps.when.outputs.go == 'true'
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        if: steps.when.outputs.go == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        if: steps.when.outputs.go == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.when.outputs.go == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Dump the live tables
+        if: steps.when.outputs.go == 'true'
+        run: |
+          pnpm exec supabase db dump --db-url "$LIVE_DB_URL" --data-only --schema public -f "$RUNNER_TEMP/data.sql"
+          docker run --rm --network host postgres:17-alpine psql "$LIVE_DB_URL" -At -c "$COUNT_SQL" > "$RUNNER_TEMP/live-counts.txt"
+
+      - name: Build a throwaway database from our migrations
+        if: steps.when.outputs.go == 'true'
+        run: pnpm exec supabase db start
+
+      - name: Restore the dump into it
+        if: steps.when.outputs.go == 'true'
+        run: |
+          docker run --rm --network host -v "$RUNNER_TEMP:/drill" postgres:17-alpine \
+            psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 --single-transaction \
+            -c 'set session_replication_role = replica' -f /drill/data.sql > /dev/null
+          rm -f "$RUNNER_TEMP/data.sql"
+          docker run --rm --network host postgres:17-alpine psql "$LOCAL_DB_URL" -At -c "$COUNT_SQL" > "$RUNNER_TEMP/restored-counts.txt"
+
+      - name: Compare row counts
+        if: steps.when.outputs.go == 'true'
+        run: |
+          {
+            echo "## Restore drill"
+            echo
+            echo '```'
+            diff "$RUNNER_TEMP/live-counts.txt" "$RUNNER_TEMP/restored-counts.txt" && echo "Every table has the same number of rows."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          diff -q "$RUNNER_TEMP/live-counts.txt" "$RUNNER_TEMP/restored-counts.txt"
+
+      - name: Keep the counts
+        if: always() && steps.when.outputs.go == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: restore-drill-counts
+          path: |
+            ${{ runner.temp }}/live-counts.txt
+            ${{ runner.temp }}/restored-counts.txt
+          retention-days: 90
+          if-no-files-found: ignore

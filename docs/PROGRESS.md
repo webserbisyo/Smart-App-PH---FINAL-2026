@@ -148,6 +148,7 @@ Each area lists its screens; tick UI approved and Done separately.
   - [ ] Done
 - Platform (Super Admin, go-live approval, plan payments, Billing chat, help mode with audit, Meta Conversions API job, emails through Resend)
   - [x] UI approved
+  - [x] Built on NestJS and tested against local Supabase: owner Plan with payment events at the owner's own time, Super Admin (approve with a 10-minute Undo, test shops, record, extra days, reminders, close, create a client shop), help mode with an audit row per write, the Meta sender with too-old, token and retry rules, plan reminders and pause, the daily summary email, Super Admin's authenticator second step (launch phases 7 and 8; T118)
   - [ ] Done
 
 ## Phase 5: Launch
@@ -162,8 +163,10 @@ From `A-mvp.md` sections 5 and 6 and `docs/launch.md`. The founder does the by-h
 - [ ] Vercel Pro, storefront and dashboard on their domains (`*.webserbisyo.com` per shop with `shop.webserbisyo.com/<slug>` as backup, `app.webserbisyo.com`; T105); old rsvp domains removed
 - [ ] Resend domain verified; emails from `codes@mail.webserbisyo.com` (sign-up code, shop is live, reminders, payment answers, new-order email N10)
 - [ ] Branch protection on `main`
+- [x] Live migrations only through the "Apply migrations to live" workflow with your approval (T118 Q14; code done, set up in `launch.md` section 13)
+- [x] Security headers on the dashboard and storefront, Super Admin second step (T118; code done)
 - [ ] Jobs running: expire unpaid transfers, delete proof photos after 30 days, clear unconfirmed uploads, send outbox, drop old leads (D6)
-- [ ] Restore from a backup tried once and written down
+- [ ] Restore from a backup tried once and written down (the monthly "Restore drill" workflow is built; run it once, `launch.md` section 13)
 - [ ] Meta: Pixel and Conversions API tested in Test events (`launch.md` sections 2 to 7)
 - [ ] Super Admin set up: platform admin flag, Setup values (`launch.md` sections 5 and 6)
 - [ ] Terms and privacy notices checked by someone who knows RA 10173; breach plan written

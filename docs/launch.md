@@ -174,6 +174,73 @@ The demo links (`smartapp-demo-*.vercel.app`) keep sample data: change nothing t
 
 **Then we test together on staging:** acceptance 1 to 4 (`A-mvp.md` section 5) with a real iPhone and Android phone: place an order, send a payment photo, accept it on the dashboard, get the pushes, join as a member and earn a stamp, send one News, and download an export.
 
-## 13. Phases 7 to 9: your list (proposed)
+## 13. Phases 7 to 9: your list (decision T118)
 
-The full by-hand list for phases 7 (Meta, payments, Super Admin), 8 (live) and 9 (selling) is in `blueprints/phases-7-9.md` section 11, in order. It moves here once you approve that plan.
+Never paste a key, token or password in chat, a doc or the repo. Do these after the phase 7 to 9 code is merged,
+in this order. Sections 11 and 12 come first.
+
+### After phase 7 (on staging)
+
+1. **Meta Business portfolio, Facebook Page, ad account** (section 1) if not yet made.
+2. **Pixel ID**: Events Manager › Connect data › Web › "Smart App PH" › copy the ID (2.1).
+3. **Pixel settings** in Events Manager: Automatic events (track without code) **off**; Automatic advanced
+   matching **on** for email and phone only (Q6); Traffic permissions: allow only `webserbisyo.com`.
+4. **Conversions API token** (2.2) and **test event code** (2.3), only into Railway.
+5. **Domain verification** of `webserbisyo.com` in Business settings › Brand safety › Domains; say yes to the TXT
+   record and I add it in Vercel.
+6. **Railway staging › Variables**: `META_PIXEL_ID`, `META_CAPI_TOKEN`, `META_TEST_EVENT_CODE`,
+   `META_GRAPH_VERSION` = `v27.0`. (No help-mode secret is needed: the help cookie only works with your own
+   admin login.)
+7. **Vercel staging dashboard › Environment**: `VITE_META_PIXEL_ID`, `VITE_MESSENGER_URL`, and add `platform` to
+   `VITE_API_AREAS`. Redeploy.
+8. **GCash and Maya receiving accounts**, then Super Admin › Setup (section 6).
+9. **Make yourself Super Admin** on staging (section 5), then log in. Super Admin now asks for a **second step**:
+   install Google Authenticator, Microsoft Authenticator or 1Password on your phone, scan the QR it shows, type the
+   6 digits. Every later login asks for the 6 digits. Lost phone: Supabase › Authentication › Users › your account
+   › remove the factor, then set it up again.
+10. **Test together** (section 7). Don't mark this shop as a test: on staging, test mode already sends everything
+    to Test events only. Private window, ad link, sign up a test shop, Ask to go live, approve, pay ₱399, approve,
+    wait 11 minutes, check each event once in Test events; try Undo approval on a second payment and check nothing
+    new appears; open the shop in help mode and send a payment (locked); then test mode off and remove
+    `META_TEST_EVENT_CODE`.
+
+### After phase 8 (live)
+
+1. **Supabase**: new project "Smart App PH LIVE", Singapore, **Pro** (about $25 a month). Settings as D7: custom
+   SMTP through Resend, email confirmation on, 6-digit codes for 600 seconds, leaked-password protection, IP
+   address forwarding, a secret key for Railway, auto-expose new tables off, and Data API off last. Authenticator
+   app (TOTP) MFA stays on (it is on by default).
+2. **GitHub › Settings › Environments**:
+   - `production`: Required reviewers: you; Deployment branches: `main`; secrets `SUPABASE_ACCESS_TOKEN`,
+     `SUPABASE_LIVE_DB_PASSWORD`, `SUPABASE_LIVE_PROJECT_REF`. Then Actions › "Apply migrations to live" › Run
+     workflow › type `APPLY` › Approve. It refuses to run unless the Check workflow passed on that commit.
+   - `restore-drill`: Deployment branches: `main`; secret `LIVE_DB_URL` (the live session pooler address with the
+     password). Then Actions › "Restore drill" › Run workflow once and read its summary (every table should show
+     the same rows). It then runs by itself at 3:00 AM Manila on the 1st of each month.
+3. **Railway**: a production service, every variable from sections 11 and 12 and above with live values, a **new**
+   push key pair and new secrets (never staging's), and "wait for checks" on.
+4. **Vercel Pro** (about $20 a month): live storefront and dashboard projects (the demo projects stay), their env,
+   "wait for checks" on. The security headers come from the repo (`apps/dashboard/vercel.json`,
+   `apps/storefront/next.config.ts`); nothing to set.
+5. **Domains** (section 10) with your DNS yes, and remove the old rsvp domains.
+6. **Resend**: confirm `mail.webserbisyo.com` is verified; plan the $20 plan before the third busy shop.
+7. **Uptime monitor**: a free account (for example UptimeRobot), three checks every 5 minutes: `api.webserbisyo.com/health`,
+   `app.webserbisyo.com`, one shop link; alerts to your email. The API also emails you an 8:00 AM summary.
+8. **Second step on live**: log in to live Super Admin and set up your authenticator app again (a new account there).
+9. **Load test on staging** (optional before the first ad): with a shop marked as a test, run the k6 command at the
+   top of `tooling/load/storefront.js`, then close the test orders.
+10. **Lawyer** checks Terms, Privacy notice, the shop privacy template and the shop data agreement (RA 10173), and
+    whether NPC registration is needed.
+11. **Acceptance 1 to 8** on your Android and iPhone with me.
+
+### Phase 9 (selling)
+
+1. DTI business name, BIR registration and invoices (ask an accountant about EOPT invoices for a monthly service).
+2. A GCash or Maya account that fits business receipts; check its monthly receiving limit.
+3. Pick two pilot shops (one food, one retail) and book their setup calls; they go straight to the trial (Q18).
+4. Print each pilot shop's QR poster: their Settings › Shop › Print A4 poster (or A6 card for the counter).
+5. Ads: payment method on the ad account, one campaign with the ad link (section 3), optimise on
+   CompleteRegistration first (Q8), a small daily budget.
+6. Record the walkthrough video from `docs/sales-kit.md`; use its Messenger replies and Super Admin › Setup ›
+   "Sample shops to send".
+7. Every Monday: 30 minutes on the funnel with me.

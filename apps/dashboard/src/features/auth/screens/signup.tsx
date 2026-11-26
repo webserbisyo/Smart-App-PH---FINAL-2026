@@ -86,7 +86,7 @@ export function SignupScreen({ finishing = null }: { finishing?: UserClaims | nu
   const onOpen = React.useEffectEvent(() => {
     if (counted.current) return;
     counted.current = true;
-    startPixel();
+    startPixel(finishing?.isAdmin ?? false);
     send('PageView');
   });
   React.useEffect(() => onOpen(), []);

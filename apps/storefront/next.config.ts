@@ -30,6 +30,20 @@ const nextConfig: NextConfig = {
   // The service worker is checked for updates on every visit (never served from the HTTP cache).
   async headers() {
     return [
+      // Security headers on every page (T118 task 8.4). No frame-ancestors here: the Editor's preview page
+      // sets its own (the dashboard frames it). Location is the customer's Use my location button.
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(self), payment=(), usb=()',
+          },
+        ],
+      },
       ...(preview
         ? [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]
         : []),

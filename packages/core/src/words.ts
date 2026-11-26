@@ -3630,6 +3630,16 @@ export const settingsWords = {
     copy: 'Copy',
     copied: 'Link copied',
     shareQr: 'Share QR',
+    // The counter poster (T118 task 9.2): the shop's QR to print, big for a wall or small for the counter.
+    posterTitle: 'QR poster',
+    posterHelp:
+      'Print it for your wall or counter. Customers scan it to order and join your stamp card.',
+    posterA4: 'Print A4 poster',
+    posterA6: 'Print A6 card',
+    posterScan: 'Scan to order',
+    posterJoin: 'Join our stamp card and get rewards',
+    posterOr: 'Or open',
+    posterBy: 'Made with Smart App PH',
     kind: 'Shop type',
     kindHelp: 'Set when you signed up. It picks the words (Menu or Products).',
     kindName: { food: 'Food', retail: 'Retail' },
@@ -5195,6 +5205,28 @@ export const supportWords = {
   noDemoData: 'This sample shop has no demo menu. Try one of the 5 demo shops.',
 };
 
+// Super Admin's second step (T118 Q16): an authenticator app code after the password.
+export const secondStepWords = {
+  pageTitle: 'Second step',
+  setupTitle: 'Set up your authenticator app',
+  setupLine:
+    'Super Admin can open every shop, so it needs a code from your phone too. Use Google Authenticator, Microsoft Authenticator or 1Password.',
+  scan: 'Scan this QR with the app',
+  orType: 'Or type this key in the app',
+  copyKey: 'Copy key',
+  codeTitle: 'Type the code from your authenticator app',
+  codeLine: 'Open the app on your phone and type the 6 digits it shows for Smart App PH.',
+  codeLabel: '6-digit code',
+  verify: 'Open Super Admin',
+  verifying: 'Checking',
+  loading: 'Getting your QR ready',
+  loadError: 'We could not start the setup. Check your internet and try again.',
+  tryAgain: 'Try again',
+  lostPhone:
+    'Lost your phone? Remove the app from your account in Supabase (Authentication, Users), then set it up again here.',
+  signOut: 'Log out',
+} as const;
+
 export const adminWords = {
   area: 'Super Admin',
   cancel: 'Cancel',
@@ -5411,6 +5443,20 @@ export const adminWords = {
     reopened: 'Shop opened again.',
     deleteForever: 'Delete forever',
     noActivity: 'Nothing here yet.',
+    testShop: 'Test shop',
+    testShopLine:
+      'For your own tries: Meta hears nothing from it and its money stays out of Today.',
+    testOn: 'Marked as a test shop',
+    testOff: 'No longer a test shop',
+    undoLine: (time: string) =>
+      `Approved. Meta and the owner's email wait until ${time}, so you can still take it back.`,
+    undo: 'Undo approval',
+    undoing: 'Taking it back',
+    undone: 'Approval taken back. The payment is waiting again.',
+    metaDays: (days: number) =>
+      days <= 0
+        ? 'Sent over 7 days ago: Meta will not count this Purchase. Approve it anyway if the money came.'
+        : `Meta counts this Purchase if you approve it in the next ${days === 1 ? 'day' : `${days} days`}.`,
   },
   activity: {
     signed_up: 'Signed up',
@@ -5420,6 +5466,7 @@ export const adminWords = {
     payment_approved: (amount: string) => `You approved ${amount}`,
     payment_rejected: (reason: string) => `You did not approve a payment: ${reason}`,
     payment_recorded: (amount: string) => `You recorded ${amount} paid outside the app`,
+    payment_undone: (amount: string) => `You took back the approval of ${amount}`,
     reminder: 'Reminder sent',
     extra_days: (days: number, reason: string) =>
       `You gave ${countOf(days, 'extra day', 'extra days')}: ${reason}`,
@@ -5563,13 +5610,25 @@ export const adminWords = {
     events: 'Events',
     eventsHint: 'Newest first. Customer details are never shown or kept in full.',
     via: { browser_server: 'browser + server', server: 'server', browser: 'browser' },
-    status: { queued: 'Waiting', sent: 'Sent', failed: 'Failed', skipped: 'Skipped' },
+    status: {
+      waiting: 'On hold',
+      queued: 'Sending soon',
+      sent: 'Sent',
+      failed: 'Failed',
+      skipped: 'Skipped',
+    },
     problem: {
       token_expired: 'Meta says the token expired',
       rejected: 'Meta did not accept it',
       timeout: 'Meta did not answer',
       no_match_data: 'Not enough details to match',
       off: 'Sending was off',
+      too_old: 'Over 7 days old, so Meta no longer counts it',
+      not_approved: 'The payment was not approved',
+      demo_shop: 'A demo shop',
+      test_shop: 'A test shop',
+      help_mode: 'Done in help mode',
+      admin: 'Done by you, not the owner',
     },
     retry: 'Send again',
     retrying: 'Sending',
@@ -5620,7 +5679,14 @@ export const adminWords = {
       'Unpaid: shop pauses in 7 days',
       'Payment approved, or not approved with the reason',
     ],
-    remindersHint: 'These go out from NestJS once the API is connected.',
+    remindersHint: 'The API sends these by email and in the Billing chat at 9:00 AM Manila.',
+    // T118 task 9.2: links for Messenger replies to people who ask about the app.
+    samplesCard: 'Sample shops to send',
+    samplesHint: 'For Messenger replies: people try a shop like a customer would, then sign up.',
+    samplesAll: 'All sample shops',
+    copyReply: 'Copy the reply',
+    reply: (all: string, links: string) =>
+      `Here are sample shops you can try, just like your customers would:\n${links}\n\nAll of them: ${all}\n\nWhen you're ready, sign up for the 14-day free trial.`,
     save: 'Save',
     saving: 'Saving',
     saved: 'Setup saved.',

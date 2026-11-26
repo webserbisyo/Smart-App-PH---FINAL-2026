@@ -60,6 +60,9 @@ export const EnvSchema = z
     // The founder's own login email: Super Admin on a laptop (seed:demo), and where an owner's account
     // delete request goes.
     ADMIN_EMAIL: optionalText(z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)),
+    // Super Admin's authenticator app code (T118 Q16). Always on in staging and production; `on` tries it
+    // on a laptop (local Supabase needs TOTP turned on in supabase/config.toml, which it is).
+    ADMIN_SECOND_STEP: z.enum(['on', 'off']).default('off'),
     META_GRAPH_VERSION: z
       .string()
       .regex(/^v\d+\.\d+$/)
@@ -100,6 +103,11 @@ export const EnvSchema = z
   });
 
 export type Env = z.infer<typeof EnvSchema>;
+
+/** Whether Super Admin needs the authenticator code (T118 Q16): never off outside a laptop. */
+export function secondStepRequired(appEnv: ApiEnv, setting: 'on' | 'off' | undefined): boolean {
+  return appEnv !== 'development' || setting === 'on';
+}
 
 /** The dashboard and storefront addresses allowed to call with cookies (exact matches, never `*`). */
 export function corsOrigins(raw: string): string[] {

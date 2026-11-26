@@ -7,6 +7,8 @@ export interface CallerUser {
   fullName: string | null;
   // The founder's Super Admin flag (app_metadata.platform_admin), set only from Supabase's side.
   isAdmin: boolean;
+  // This login passed the authenticator app code (Supabase's aal2), for Super Admin's second step (T118 Q16).
+  aal2?: boolean | undefined;
 }
 
 /** The caller's shop, from tenant_members (rule 12: never from the URL or body). */
