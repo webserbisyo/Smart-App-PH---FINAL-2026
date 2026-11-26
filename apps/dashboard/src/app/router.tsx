@@ -26,6 +26,7 @@ import { OrdersSearchSchema } from '../features/orders/search.js';
 import { AdminPaymentsSearchSchema, AdminShopsSearchSchema } from '../features/admin/search.js';
 import { requireAdmin, requireSecondStepOwed } from './admin.js';
 import { NotFoundPage } from './not-found.js';
+import { RouteError } from './route-error.js';
 import { AdminShell } from './shell/admin-shell.js';
 import { currentSupport } from './support.js';
 import { rememberPreviousPath } from './back.js';
@@ -599,6 +600,8 @@ const routeTree =
 export const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
+  // Our own error screen on every page, inside the shell (the router's default is bare English with Show Error).
+  defaultErrorComponent: RouteError,
   // Back to a list lands where the owner was, not at the top (decision T47).
   scrollRestoration: true,
 });
