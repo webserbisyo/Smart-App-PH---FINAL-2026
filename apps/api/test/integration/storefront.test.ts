@@ -115,7 +115,7 @@ describe('storefront ordering (phase 5)', () => {
     const variantId = item.variants[0]?.id ?? '';
     await asAdmin(async () => {
       await db.tx.execute(
-        sql`update public.tenants set stage = 'live', asked_at = now(), live_at = now() where id = ${owner.shopId}::uuid`,
+        sql`update public.tenants set stage = 'live', asked_at = now(), live_at = now(), trial_ends_at = now() + interval '14 days' where id = ${owner.shopId}::uuid`,
       );
       await db.tx.execute(
         sql`delete from public.opening_hours where tenant_id = ${owner.shopId}::uuid`,

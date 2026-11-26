@@ -6,6 +6,7 @@ import {
   StorefrontContentSchema,
   type PublicShop,
   type PublicStampCard,
+  planStatus,
 } from '@smartapp/core';
 import { and, asc, count, eq, gte, isNull, sql } from 'drizzle-orm';
 import { CatalogReader } from '../catalog/catalog-reader.js';
@@ -88,6 +89,37 @@ export class ShopReader {
       sql`select private.tenant_by_slug(${clean}) as id`,
     );
     return result.rows[0]?.id ?? null;
+  }
+
+  /**
+   * The shop for a customer's page, quote or order: a live shop whose plan has paused (T118 Q11) shows
+   * "Not taking orders right now" and refuses orders, like the owner's own pause. Demo shops never pause.
+   */
+  async readForCustomers(): Promise<PublicShop> {
+    const shop = await this.read('published');
+    if (!(await this.planPaused())) return shop;
+    return {
+      ...shop,
+      storefront: { ...shop.storefront, pause: { ...shop.storefront.pause, paused: true } },
+    };
+  }
+
+  async planPaused(): Promise<boolean> {
+    const [row] = await this.db.tx
+      .select({
+        stage: tenants.stage,
+        isDemo: tenants.isDemo,
+        trialEndsAt: tenants.trialEndsAt,
+        paidUntil: tenants.paidUntil,
+      })
+      .from(tenants)
+      .where(eq(tenants.id, this.db.shopId));
+    if (!row || row.isDemo || row.stage !== 'live') return false;
+    const plan = {
+      trialEndsAt: iso(row.trialEndsAt),
+      paidUntil: row.paidUntil?.slice(0, 10) ?? null,
+    };
+    return planStatus(plan, new Date()) === 'paused';
   }
 
   /** The transaction's shop as customers see it (`published`), or the Editor's draft (`draft`). */

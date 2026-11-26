@@ -1,7 +1,13 @@
 // The owner's login hooks (decision T116). They take the app's OwnerAuth (createOwnerAuth), which calls NestJS
 // or, on sample data, the small mock: never Supabase from the browser (T34).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { LoginInput, ResetPasswordInput, SignUpInput, VerifyCodeInput } from '@smartapp/core';
+import type {
+  LoginInput,
+  ResetPasswordInput,
+  SecondStepCodeInput,
+  SignUpInput,
+  VerifyCodeInput,
+} from '@smartapp/core';
 import type { OwnerAuth, UserClaims } from '../owner-auth';
 
 export const authKeys = {
@@ -52,6 +58,19 @@ export function useResetPassword(auth: OwnerAuth) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: ResetPasswordInput) => auth.resetPassword(input),
+    onSuccess: (claims) => queryClient.setQueryData(authKeys.session, claims),
+  });
+}
+
+/** Super Admin's authenticator setup (T118 Q16): one QR per visit, never fetched again by itself. */
+export function useStartSecondStep(auth: OwnerAuth) {
+  return useMutation({ mutationFn: () => auth.startSecondStep() });
+}
+
+export function useVerifySecondStep(auth: OwnerAuth) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SecondStepCodeInput) => auth.verifySecondStep(input),
     onSuccess: (claims) => queryClient.setQueryData(authKeys.session, claims),
   });
 }

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { MailIcon, SaveIcon, WifiOffIcon } from 'lucide-react';
 import {
   adminWords,
+  DEMO_SHOPS,
   errorWords,
   formatPeso,
   planAmount,
@@ -28,8 +29,10 @@ import { Input } from '@smartapp/ui/components/input';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Switch } from '@smartapp/ui/components/switch';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
+import { CopyButton } from '@smartapp/ui/compositions/copy-button';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { PageHeader } from '@smartapp/ui/compositions/page-header';
+import { env } from '@/app/env';
 import { Notice } from '@/app/notice';
 import { PageError } from '@/app/page-state';
 import { PesoInput } from '@/app/peso-input';
@@ -236,6 +239,8 @@ function SetupForm({ initial }: { initial: PlatformSetup }) {
         </CardContent>
       </Card>
 
+      <SampleLinks />
+
       <div className="sticky bottom-20 z-10 flex justify-end md:bottom-4">
         <AsyncButton
           type="submit"
@@ -250,5 +255,35 @@ function SetupForm({ initial }: { initial: PlatformSetup }) {
         </AsyncButton>
       </div>
     </form>
+  );
+}
+
+/** The sample shops' links (T118 task 9.2), ready to paste into a Messenger reply. */
+function SampleLinks() {
+  const base = env.VITE_STOREFRONT_URL;
+  const all = `${base}/samples`;
+  const links = DEMO_SHOPS.map((shop) => ({ ...shop, url: `${base}/${shop.slug}` }));
+  const reply = W.reply(all, links.map((l) => `${l.name}: ${l.url}`).join('\n'));
+  return (
+    <Card className="gap-3">
+      <CardHeader>
+        <CardTitle>{W.samplesCard}</CardTitle>
+        <CardDescription>{W.samplesHint}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-1">
+          {[{ slug: 'samples', name: W.samplesAll, url: all }, ...links].map((l) => (
+            <li key={l.slug} className="flex items-center justify-between gap-2 text-sm">
+              <span className="min-w-0">
+                <span className="font-medium text-foreground">{l.name}</span>
+                <span className="block truncate text-muted-foreground">{l.url}</span>
+              </span>
+              <CopyButton value={l.url} iconOnly className="size-11 shrink-0 md:size-9" />
+            </li>
+          ))}
+        </ul>
+        <CopyButton value={reply} label={W.copyReply} className="h-11 self-start md:h-9" />
+      </CardContent>
+    </Card>
   );
 }

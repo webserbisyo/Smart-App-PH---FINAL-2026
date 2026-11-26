@@ -73,3 +73,24 @@ export function readCookie(header: string | undefined, name: string): string | n
   }
   return null;
 }
+
+// Help mode (T91): the founder's open support session, for at most an hour. It only means something next to
+// a Super Admin login: the API looks the session up for that login, so the cookie alone opens nothing.
+export const SUPPORT_COOKIE_MAX_AGE_MS = 60 * 60 * 1000;
+
+export function supportCookieName(env: ApiEnv): string {
+  return env === 'development' ? 'sa_help' : '__Host-sa_help';
+}
+
+export function setSupportCookie(
+  res: Response,
+  env: ApiEnv,
+  sessionId: string,
+  maxAgeMs: number,
+): void {
+  res.cookie(supportCookieName(env), sessionId, { ...baseOptions(env), maxAge: maxAgeMs });
+}
+
+export function clearSupportCookie(res: Response, env: ApiEnv): void {
+  res.clearCookie(supportCookieName(env), baseOptions(env));
+}

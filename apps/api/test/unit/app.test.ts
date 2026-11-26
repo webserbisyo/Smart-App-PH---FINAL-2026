@@ -116,6 +116,7 @@ describe('the API shell', () => {
       email: 'ana@example.com',
       fullName: 'Ana',
       isAdmin: false,
+      adminStep: null,
     });
     const cookies = res.headers['set-cookie'];
     const list = Array.isArray(cookies) ? cookies : [String(cookies)];

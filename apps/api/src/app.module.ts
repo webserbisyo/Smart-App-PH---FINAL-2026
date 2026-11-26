@@ -20,6 +20,7 @@ import { SamplesModule } from './samples/samples.module.js';
 import { MembersModule } from './members/members.module.js';
 import { MediaModule } from './media/media.module.js';
 import { OrdersModule } from './orders/orders.module.js';
+import { PlatformModule } from './platform/platform.module.js';
 import { PublicModule } from './public/public.module.js';
 import { PushModule } from './push/push.module.js';
 import { SettingsModule } from './settings/settings.module.js';
@@ -55,6 +56,7 @@ import { StorefrontCacheModule } from './public/pages-cache.module.js';
     MembersModule,
     HomeModule,
     SamplesModule,
+    PlatformModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: OriginGuard },

@@ -14,6 +14,7 @@ import { createApiOwnerNewsAdapter } from './api/owner-news';
 import { createApiOwnerOrdersAdapter } from './api/owner-orders';
 import { createApiOwnerSamplesAdapter } from './api/owner-samples';
 import { createApiOwnerSettingsAdapter } from './api/owner-settings';
+import { createApiPlatformAdapter } from './api/platform';
 import { createApiUploadsAdapter } from './api/uploads';
 import { lazyAdapters, loadMockStore } from './lazy';
 import type { DataAdapters } from './types';
@@ -71,6 +72,9 @@ export function createAdapters(source: DataSource, options: AdapterOptions = {})
     ...(usesApi(plan, 'ownerHome')
       ? { ownerHome: createApiOwnerHomeAdapter({ baseUrl, getToken }) }
       : {}),
+    ...(usesApi(plan, 'platform')
+      ? { platform: createApiPlatformAdapter({ baseUrl, getToken }) }
+      : {}),
   };
 }
 
@@ -93,5 +97,7 @@ export function createOwnerAuth(source: DataSource, options: AdapterOptions = {}
     resendSignupCode: async (input) => (await mock()).resendSignupCode(input),
     sendResetCode: async (input) => (await mock()).sendResetCode(input),
     resetPassword: async (input) => (await mock()).resetPassword(input),
+    startSecondStep: async () => (await mock()).startSecondStep(),
+    verifySecondStep: async (input) => (await mock()).verifySecondStep(input),
   };
 }

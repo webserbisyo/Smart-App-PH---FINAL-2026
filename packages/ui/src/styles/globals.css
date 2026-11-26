@@ -1316,6 +1316,37 @@
     overflow: visible;
     overflow-wrap: anywhere;
   }
+  /* The shop's QR poster (T118 task 9.2): only the poster prints, on A4 or A6 paper, in paper colours. */
+  body:has(> [data-slot='print-poster']) > :not([data-slot='print-poster']) {
+    display: none !important;
+  }
+  body:has(> [data-slot='print-poster']) {
+    background: var(--paper);
+    min-height: 0;
+  }
+  [data-slot='print-poster'],
+  [data-slot='print-poster'] * {
+    color-scheme: light;
+    color: var(--paper-foreground) !important;
+  }
+  [data-slot='print-poster'][data-size='a4'] {
+    page: poster-a4;
+    min-height: 297mm;
+    padding: 20mm;
+  }
+  [data-slot='print-poster'][data-size='a6'] {
+    page: poster-a6;
+    min-height: 148mm;
+    padding: 8mm;
+  }
+}
+@page poster-a4 {
+  size: A4 portrait;
+  margin: 0;
+}
+@page poster-a6 {
+  size: A6 portrait;
+  margin: 0;
 }
 
 /* The Preview pill (decision T100): always bottom left, out of the way of the main actions (Place order,

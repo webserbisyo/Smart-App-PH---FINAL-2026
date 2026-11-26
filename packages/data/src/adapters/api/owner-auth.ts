@@ -3,6 +3,7 @@
 import {
   OkSchema,
   OwnerSessionSchema,
+  SecondStepSetupSchema,
   SendCodeResultSchema,
   type OwnerSession,
 } from '@smartapp/core';
@@ -18,6 +19,7 @@ function claimsOf(session: OwnerSession): UserClaims {
     email: session.email,
     fullName: session.fullName ?? undefined,
     isAdmin: session.isAdmin,
+    adminStep: session.adminStep,
   };
 }
 
@@ -49,5 +51,8 @@ export function createApiOwnerAuth(baseUrl: string): OwnerAuth {
     sendResetCode: (input) => post('/forgot/code', SendCodeResultSchema, input),
     resetPassword: async (input) =>
       claimsOf(await post('/forgot/reset', OwnerSessionSchema, input)),
+    startSecondStep: () => post('/second-step/setup', SecondStepSetupSchema),
+    verifySecondStep: async (input) =>
+      claimsOf(await post('/second-step/verify', OwnerSessionSchema, input)),
   };
 }

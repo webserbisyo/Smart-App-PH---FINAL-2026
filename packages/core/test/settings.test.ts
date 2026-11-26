@@ -117,6 +117,15 @@ describe('plan (T67)', () => {
     expect(planCoversUntil('2026-12-05', 1, now)).toBe('2027-01-05');
     expect(planCoversUntil('2026-10-01', 3, now)).toBe('2027-02-05');
   });
+
+  it('counts a payment in the grace days from the paid-until day (T118 Q10)', () => {
+    const now = mnl('2026-12-05 10:00');
+    // 3 days late: still from Dec 2, so the grace days are not free.
+    expect(planCoversUntil('2026-12-02', 1, now)).toBe('2027-01-02');
+    // The last day of grace, then the first paused day.
+    expect(planCoversUntil('2026-11-28', 1, now)).toBe('2026-12-28');
+    expect(planCoversUntil('2026-11-27', 1, now)).toBe('2027-01-05');
+  });
 });
 
 describe('uploads (T65)', () => {

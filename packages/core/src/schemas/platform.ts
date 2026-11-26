@@ -21,6 +21,7 @@ import {
   SignupChannelEnum,
   SupportReasonEnum,
   TrackEventNameEnum,
+  TrackProblemEnum,
   TrackStatusEnum,
   TrackViaEnum,
 } from './enums.js';
@@ -152,7 +153,8 @@ export const AdminShopRowSchema = z.object({
   city: z.string().max(60),
   ownerName: z.string().min(1).max(80),
   ownerEmail: z.email(),
-  ownerPhone: PhMobileSchema,
+  // Null when the owner never gave one (a shop made before sign-up kept the mobile).
+  ownerPhone: PhMobileSchema.nullable(),
   stage: ShopStageEnum,
   // null until the shop is live (the trial starts at approval, T89).
   planStatus: PlanStatusEnum.nullable(),
@@ -180,6 +182,8 @@ export const AdminShopRowSchema = z.object({
   setupDone: z.number().int().min(0).max(4),
   // The 5 demo shops have full demo data; help mode can open them (mock only).
   hasDemoData: z.boolean(),
+  // Marked as a test by the founder: nothing goes to Meta and it stays out of Today's money (T118 Q7).
+  isTest: z.boolean().default(false),
 });
 export type AdminShopRow = z.infer<typeof AdminShopRowSchema>;
 
@@ -206,6 +210,8 @@ export const AdminShopDetailSchema = AdminShopRowSchema.extend({
   thread: z.array(BillingMessageSchema),
   activity: z.array(ShopActivitySchema),
   remindedAt: IsoDateTimeSchema.nullable(),
+  // The last approval can be taken back until `until` (10 minutes, T118 Q4).
+  undo: z.object({ paymentId: IdSchema, until: IsoDateTimeSchema }).nullable().default(null),
 });
 export type AdminShopDetail = z.infer<typeof AdminShopDetailSchema>;
 
@@ -257,6 +263,14 @@ export const ReviewPlanPaymentInputSchema = z.discriminatedUnion('verdict', [
   }),
 ]);
 export type ReviewPlanPaymentInput = z.infer<typeof ReviewPlanPaymentInputSchema>;
+
+// Undo approval (T118 Q4): only the newest approval, within its 10 minutes.
+export const UndoApprovalInputSchema = z.object({ shopId: IdSchema, paymentId: IdSchema });
+export type UndoApprovalInput = z.infer<typeof UndoApprovalInputSchema>;
+
+// Mark a shop as a test (T118 Q7): no Meta events, left out of Today's money and funnel.
+export const SetTestShopInputSchema = z.object({ shopId: IdSchema, isTest: z.boolean() });
+export type SetTestShopInput = z.infer<typeof SetTestShopInputSchema>;
 
 // Money received outside the app (cash, a bank transfer to the founder): same path as Approve (T88).
 export const RecordPlanPaymentInputSchema = z.object({
@@ -401,7 +415,7 @@ export const TrackEventSchema = z.object({
   subject: z.string().max(80),
   value: CentavosSchema.nullable(),
   // Meta's own error code or our reason for skipping, never a token or a customer's data.
-  problem: z.enum(['token_expired', 'rejected', 'timeout', 'no_match_data', 'off']).nullable(),
+  problem: TrackProblemEnum.nullable(),
   test: z.boolean(),
 });
 export type TrackEvent = z.infer<typeof TrackEventSchema>;

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, PackageIcon, UtensilsIcon } from 'lucide-react';
 import {
   ApiErrorSchema,
@@ -60,6 +60,8 @@ import { PasswordInput } from './password-input.js';
 
 const W = signupWords;
 const TERMS_VERSION = '2026-11';
+// The ready moment's confetti and toast show this long before the dashboard loads.
+const READY_PAUSE_MS = 1400;
 const KIND_ICON: Record<ShopKind, React.ReactNode> = {
   food: <UtensilsIcon aria-hidden="true" />,
   retail: <PackageIcon aria-hidden="true" />,
@@ -133,7 +135,6 @@ export function SignupForm({
   finishing?: UserClaims | null | undefined;
   className?: string | undefined;
 }) {
-  const navigate = useNavigate();
   const online = useOnlineStatus();
   const saveLead = useSaveSignupLead();
   const signUp = useSignUp(ownerAuth);
@@ -245,7 +246,10 @@ export function SignupForm({
       description: W.done.line,
       tone: 'success',
     });
-    await navigate({ to: '/' });
+    // A full page load into the dashboard leaves Meta's pixel behind on /signup (T118): it never sees the
+    // owner's pages. The short wait lets the confetti and the toast show first.
+    await new Promise((done) => window.setTimeout(done, READY_PAUSE_MS));
+    window.location.assign('/');
   };
 
   // Step 2: the account (Supabase Auth behind NestJS, T34) emails the code; an owner who already confirmed it

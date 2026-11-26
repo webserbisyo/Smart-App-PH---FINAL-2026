@@ -4,20 +4,21 @@ Which doc answers which question (decision T101). Rules first, then plans, then 
 
 ## Start here
 
-| Question                                         | Read                                                                                |
-| ------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| What are the rules for any change?               | `AGENTS.md` (repo root)                                                             |
-| What is the product, its stack and its shape?    | `blueprints/foundation.md`                                                          |
-| What ships at launch, what comes after?          | `blueprints/A-mvp.md`, `blueprints/B-full.md`                                       |
-| Why does it exist, who uses it, how is it built? | `blueprints/system.md` (the proposal)                                               |
-| Which pages and features, and their status?      | `blueprints/features.md`                                                            |
-| How do we measure ads (Meta Pixel and CAPI)?     | `blueprints/meta.md`                                                                |
-| The school paper                                 | `capstone.md` (draft)                                                               |
-| In what order do we wire, launch and sell?       | `blueprints/launch-phases.md` (9 phases, every table and area placed)               |
-| How do we build phases 1 to 3?                   | `blueprints/phases-1-3.md` (research, cross-check, tasks; approved, built)          |
-| How do we build phases 4 to 6?                   | `blueprints/phases-4-6.md` (research, cross-check, push plan, tasks; proposed)      |
-| Where are we now?                                | `PROGRESS.md` (tasks; UI approved and Done per area), `CHANGELOG.md` (what changed) |
-| Why was something decided?                       | `decisions.md` (every approved decision, T01 onward)                                |
+| Question                                         | Read                                                                                          |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| What are the rules for any change?               | `AGENTS.md` (repo root)                                                                       |
+| What is the product, its stack and its shape?    | `blueprints/foundation.md`                                                                    |
+| What ships at launch, what comes after?          | `blueprints/A-mvp.md`, `blueprints/B-full.md`                                                 |
+| Why does it exist, who uses it, how is it built? | `blueprints/system.md` (the proposal)                                                         |
+| Which pages and features, and their status?      | `blueprints/features.md`                                                                      |
+| How do we measure ads (Meta Pixel and CAPI)?     | `blueprints/meta.md`                                                                          |
+| The school paper                                 | `capstone.md` (draft)                                                                         |
+| In what order do we wire, launch and sell?       | `blueprints/launch-phases.md` (9 phases, every table and area placed)                         |
+| How do we build phases 1 to 3?                   | `blueprints/phases-1-3.md` (research, cross-check, tasks; approved, built)                    |
+| How do we build phases 4 to 6?                   | `blueprints/phases-4-6.md` (research, cross-check, push plan, tasks; approved)                |
+| How do we build phases 7 to 9?                   | `blueprints/phases-7-9.md` (Meta design, billing, go live, selling; approved and built, T118) |
+| Where are we now?                                | `PROGRESS.md` (tasks; UI approved and Done per area), `CHANGELOG.md` (what changed)           |
+| Why was something decided?                       | `decisions.md` (every approved decision, T01 onward)                                          |
 
 ## Building a screen
 
@@ -62,10 +63,11 @@ Each skill sits in `.agents/skills/<name>/SKILL.md` (Antigravity) and `.claude/s
 
 ## Launch and hosting
 
-| Question                                          | Read          |
-| ------------------------------------------------- | ------------- |
-| Public demo links on sample data (Vercel)         | `previews.md` |
-| What the founder must get or do before going live | `launch.md`   |
+| Question                                          | Read           |
+| ------------------------------------------------- | -------------- |
+| Public demo links on sample data (Vercel)         | `previews.md`  |
+| What the founder must get or do before going live | `launch.md`    |
+| Words for selling: video script, Messenger, FAQ   | `sales-kit.md` |
 
 ## Other folders
 

@@ -1,7 +1,14 @@
 // Super Admin, sign-up and Meta tracking rules (decisions T88 to T92). Shared by the mock and NestJS, so the
 // shapes Meta receives are tested once. Hashing (SHA-256) happens in NestJS; these only normalise.
-import type { AdminFlag, ShopStage, SignupChannel, TrackEventName } from '../schemas/enums.js';
+import type {
+  AdminFlag,
+  ShopStage,
+  SignupChannel,
+  TrackEventName,
+  TrackProblem,
+} from '../schemas/enums.js';
 import type { OnboardingStep, SignupSource } from '../schemas/platform.js';
+import { PLAN_GRACE_DAYS } from './settings.js';
 import { addDays, manilaDate } from './time.js';
 
 const DAY = 86_400_000;
@@ -77,11 +84,90 @@ export function metaEventId(name: TrackEventName, id: string): string {
   return `${EVENT_ID_PREFIX[name]}:${id}`;
 }
 
-/** Meta refuses a whole request when an event is older than 7 days, so the time never goes past that. */
+// Meta refuses a WHOLE request when any event in it is more than 7 days old (Server Event parameters,
+// read 2026-11-25). We stop an hour short, and an older event is skipped, never sent with a moved time
+// (the RSVP app's mistake F3): its true time stays the owner's action.
+export const META_SEND_WINDOW_MS = 7 * DAY - 60 * 60_000;
+
+/** Meta's event_time: the Unix seconds of when it really happened (never later than now). */
 export function metaEventTime(at: Date | string, now: Date): number {
-  const ms = Math.min(new Date(at).getTime(), now.getTime());
-  const oldest = now.getTime() - 7 * DAY + 60_000;
-  return Math.floor(Math.max(ms, oldest) / 1000);
+  return Math.floor(Math.min(new Date(at).getTime(), now.getTime()) / 1000);
+}
+
+/** True when Meta would refuse this event's time (past the 7-day window less an hour). */
+export function metaTooOld(at: Date | string, now: Date): boolean {
+  return now.getTime() - new Date(at).getTime() > META_SEND_WINDOW_MS;
+}
+
+/** Whole days left before an owner's payment is too old for Meta (Super Admin's "Meta counts N more days"). */
+export function metaDaysLeft(sentAt: Date | string, now: Date): number {
+  const left = new Date(sentAt).getTime() + META_SEND_WINDOW_MS - now.getTime();
+  return left <= 0 ? 0 : Math.ceil(left / DAY);
+}
+
+// The 10 minutes an approval's Meta events wait, so Undo approval can take it back (T118 Q4).
+export const UNDO_APPROVAL_MS = 10 * 60_000;
+
+/**
+ * Why an event must not go to Meta (T118 section 4.3), or null. One check for every place that writes an
+ * event: the founder's own accounts, help mode, demo shops and shops marked as a test never send.
+ */
+export function trackingBlock(context: {
+  // A Super Admin is the one signed in (the founder testing sign-up, or any admin route).
+  adminCaller?: boolean;
+  // The request runs in help mode (the founder acting as the owner).
+  helpMode?: boolean;
+  isDemo?: boolean;
+  isTest?: boolean;
+}): TrackProblem | null {
+  if (context.adminCaller) return 'admin';
+  if (context.helpMode) return 'help_mode';
+  if (context.isDemo) return 'demo_shop';
+  if (context.isTest) return 'test_shop';
+  return null;
+}
+
+// ---------- plan reminders (T118 Q9) ----------
+
+export const PLAN_REMINDER_STAGES = [
+  'trial_3d',
+  'trial_last',
+  'due_7d',
+  'end_day',
+  'grace_3d',
+  'paused',
+] as const;
+export type PlanReminderStage = (typeof PLAN_REMINDER_STAGES)[number];
+
+/**
+ * The reminder a shop is owed on a Manila day, with the end day it is about (the dedupe key), or null.
+ * Trial: 3 days before and on the last day. Paid plan: 7 days before, on the end day. Both: 3 days into the
+ * grace and the day it pauses. A missed day is still sent the next day; an older one is not.
+ */
+export function planReminderStage(
+  plan: { trialEndsAt: string | null; paidUntil: string | null },
+  now: Date,
+): { stage: PlanReminderStage; end: string } | null {
+  const end = plan.paidUntil ?? (plan.trialEndsAt ? manilaDate(plan.trialEndsAt) : null);
+  if (!end) return null;
+  const trial = plan.paidUntil === null;
+  const days: [PlanReminderStage, string][] = trial
+    ? [
+        ['trial_3d', addDays(end, -3)],
+        ['trial_last', end],
+      ]
+    : [
+        ['due_7d', addDays(end, -7)],
+        ['end_day', end],
+      ];
+  days.push(['grace_3d', addDays(end, 3)], ['paused', addDays(end, PLAN_GRACE_DAYS + 1)]);
+  const today = manilaDate(now);
+  const yesterday = addDays(today, -1);
+  let found: { stage: PlanReminderStage; end: string } | null = null;
+  for (const [stage, day] of days) {
+    if (day <= today && day >= yesterday) found = { stage, end };
+  }
+  return found;
 }
 
 // ---------- where a sign-up came from ----------

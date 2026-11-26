@@ -224,14 +224,17 @@ export function planGraceUntil(paidUntil: string | null): string | null {
   return paidUntil ? addDays(paidUntil, PLAN_GRACE_DAYS) : null;
 }
 
-/** The day a payment of some months pays up to, counted on from the paid-until day (or today). */
+/**
+ * The day a payment of some months pays up to. It counts on from the paid-until day, also during the 7 days of
+ * grace, so the grace is never free days (T118 Q10); once the shop has paused it counts from today.
+ */
 export function planCoversUntil(
   paidUntil: string | null,
   months: number,
   now: string | Date,
 ): string {
   const today = manilaDate(now);
-  const from = paidUntil && paidUntil >= today ? paidUntil : today;
+  const from = paidUntil && addDays(paidUntil, PLAN_GRACE_DAYS) >= today ? paidUntil : today;
   const [y = 0, m = 1, d = 1] = from.split('-').map(Number);
   const target = new Date(Date.UTC(y, m - 1 + months, d));
   return target.toISOString().slice(0, 10);

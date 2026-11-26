@@ -1409,6 +1409,9 @@ export const words = {
       support_locked:
         'This is locked while you help as the owner. The owner can do it from their own login.',
       name_mismatch: "The name doesn't match. Type the shop's name exactly as shown.",
+      approval_undo_expired:
+        'Too late to undo: the 10 minutes passed. Write to the owner in the chat if something is wrong.',
+      second_step_needed: 'Type the 6-digit code from your authenticator app to open Super Admin.',
       news_week_limit: '2 news a week is the most. Pick a later day.',
       news_day_limit: 'One news a day. Pick another day.',
       news_quiet_hours: 'News waits for 8 AM. Pick a time from 8 AM to 9 PM.',
@@ -2686,6 +2689,94 @@ export const pushWords = {
   },
 } as const;
 
+// The plan and Super Admin emails (T118, phases-7-9.md task 7.8). Only the API sends them, so they live in
+// their own export and never reach a screen's bundle. Plain words, the next step in each, no customer data.
+export const planEmailWords = {
+  open: 'Open your dashboard',
+  openAdmin: 'Open Super Admin',
+  sign: 'Smart App PH',
+  shopLive: {
+    subject: (shop: string) => `${shop} is live`,
+    line: (shop: string, trialEnd: string) =>
+      `${shop} is live and taking orders. Your free trial runs until ${trialEnd}. Share your link and QR poster with your customers.`,
+  },
+  // The subject names the day, so a reminder the founder sends by hand on another day is still true.
+  reminder: {
+    trial_3d: {
+      subject: (end: string) => `Your free trial ends on ${end}`,
+      line: (end: string, amount: string) =>
+        `Your free trial ends on ${end}. Pay ${amount} a month in Plan to keep taking orders.`,
+    },
+    trial_last: {
+      subject: () => 'Your free trial ends today',
+      line: (end: string, amount: string) =>
+        `Your free trial ends today, ${end}. Pay ${amount} in Plan so your shop keeps taking orders.`,
+    },
+    due_7d: {
+      subject: (end: string) => `Your plan is due on ${end}`,
+      line: (end: string, amount: string) =>
+        `Your plan is paid until ${end}. Pay ${amount} in Plan before then.`,
+    },
+    end_day: {
+      subject: () => 'Your plan is due today',
+      line: (end: string, amount: string) =>
+        `Your plan is paid until today, ${end}. Pay ${amount} in Plan to keep taking orders.`,
+    },
+    grace_3d: {
+      subject: () => 'Your plan is overdue',
+      line: (end: string, amount: string) =>
+        `Your plan ended on ${end}. Your shop still takes orders for a few more days. Pay ${amount} in Plan so it does not pause.`,
+    },
+    paused: {
+      subject: () => 'Your shop is paused',
+      line: (end: string, amount: string) =>
+        `Your plan ended on ${end}, so your shop is not taking new orders. You can still see everything. Pay ${amount} in Plan to open it again.`,
+    },
+  },
+  approved: {
+    subject: 'Payment received. Salamat!',
+    line: (amount: string, until: string) =>
+      `We received your payment of ${amount}. Your plan is paid until ${until}.`,
+    note: 'This is a receipt note, not an official invoice.',
+  },
+  rejected: {
+    subject: 'We could not approve your payment',
+    line: (reason: string) =>
+      `We could not approve your payment: ${reason}. Send a new screenshot from Plan, or write to us in the Billing chat.`,
+  },
+  helpStarted: {
+    subject: 'Smart App PH support opened your dashboard',
+    line: (minutes: number) =>
+      `Our support opened your dashboard to help you, for up to ${minutes} minutes. Everything they do is logged. Write to us in the Billing chat if you did not ask for this.`,
+  },
+  planPayment: {
+    subject: (shop: string) => `Plan payment to check: ${shop}`,
+    line: (shop: string, amount: string) =>
+      `${shop} sent a plan payment of ${amount}. Check the screenshot and approve it in Super Admin.`,
+  },
+  summary: {
+    subject: (date: string) => `Smart App PH daily summary, ${date}`,
+    line: (parts: {
+      live: number;
+      toCheck: number;
+      sent: number;
+      failed: number;
+      tooOld: number;
+      tokenProblem: boolean;
+    }) =>
+      [
+        `Live shops: ${parts.live}`,
+        `Payments to check: ${parts.toCheck}`,
+        `Meta events sent in the last day: ${parts.sent}`,
+        `Meta events failed: ${parts.failed}`,
+        `Payments too old for Meta: ${parts.tooOld}`,
+        parts.tokenProblem
+          ? 'Meta refused the access token. Replace it in Railway, then press Retry in Tracking.'
+          : 'Meta token: working',
+      ].join('\n'),
+  },
+} as const;
+
 // The owner's data export (T66, phase 6): the spreadsheet headings inside the ZIP. Its own export, so no
 // screen carries these words.
 export const exportWords = {
@@ -3539,6 +3630,16 @@ export const settingsWords = {
     copy: 'Copy',
     copied: 'Link copied',
     shareQr: 'Share QR',
+    // The counter poster (T118 task 9.2): the shop's QR to print, big for a wall or small for the counter.
+    posterTitle: 'QR poster',
+    posterHelp:
+      'Print it for your wall or counter. Customers scan it to order and join your stamp card.',
+    posterA4: 'Print A4 poster',
+    posterA6: 'Print A6 card',
+    posterScan: 'Scan to order',
+    posterJoin: 'Join our stamp card and get rewards',
+    posterOr: 'Or open',
+    posterBy: 'Made with Smart App PH',
     kind: 'Shop type',
     kindHelp: 'Set when you signed up. It picks the words (Menu or Products).',
     kindName: { food: 'Food', retail: 'Retail' },
@@ -5104,6 +5205,28 @@ export const supportWords = {
   noDemoData: 'This sample shop has no demo menu. Try one of the 5 demo shops.',
 };
 
+// Super Admin's second step (T118 Q16): an authenticator app code after the password.
+export const secondStepWords = {
+  pageTitle: 'Second step',
+  setupTitle: 'Set up your authenticator app',
+  setupLine:
+    'Super Admin can open every shop, so it needs a code from your phone too. Use Google Authenticator, Microsoft Authenticator or 1Password.',
+  scan: 'Scan this QR with the app',
+  orType: 'Or type this key in the app',
+  copyKey: 'Copy key',
+  codeTitle: 'Type the code from your authenticator app',
+  codeLine: 'Open the app on your phone and type the 6 digits it shows for Smart App PH.',
+  codeLabel: '6-digit code',
+  verify: 'Open Super Admin',
+  verifying: 'Checking',
+  loading: 'Getting your QR ready',
+  loadError: 'We could not start the setup. Check your internet and try again.',
+  tryAgain: 'Try again',
+  lostPhone:
+    'Lost your phone? Remove the app from your account in Supabase (Authentication, Users), then set it up again here.',
+  signOut: 'Log out',
+} as const;
+
 export const adminWords = {
   area: 'Super Admin',
   cancel: 'Cancel',
@@ -5320,6 +5443,20 @@ export const adminWords = {
     reopened: 'Shop opened again.',
     deleteForever: 'Delete forever',
     noActivity: 'Nothing here yet.',
+    testShop: 'Test shop',
+    testShopLine:
+      'For your own tries: Meta hears nothing from it and its money stays out of Today.',
+    testOn: 'Marked as a test shop',
+    testOff: 'No longer a test shop',
+    undoLine: (time: string) =>
+      `Approved. Meta and the owner's email wait until ${time}, so you can still take it back.`,
+    undo: 'Undo approval',
+    undoing: 'Taking it back',
+    undone: 'Approval taken back. The payment is waiting again.',
+    metaDays: (days: number) =>
+      days <= 0
+        ? 'Sent over 7 days ago: Meta will not count this Purchase. Approve it anyway if the money came.'
+        : `Meta counts this Purchase if you approve it in the next ${days === 1 ? 'day' : `${days} days`}.`,
   },
   activity: {
     signed_up: 'Signed up',
@@ -5329,6 +5466,7 @@ export const adminWords = {
     payment_approved: (amount: string) => `You approved ${amount}`,
     payment_rejected: (reason: string) => `You did not approve a payment: ${reason}`,
     payment_recorded: (amount: string) => `You recorded ${amount} paid outside the app`,
+    payment_undone: (amount: string) => `You took back the approval of ${amount}`,
     reminder: 'Reminder sent',
     extra_days: (days: number, reason: string) =>
       `You gave ${countOf(days, 'extra day', 'extra days')}: ${reason}`,
@@ -5472,13 +5610,25 @@ export const adminWords = {
     events: 'Events',
     eventsHint: 'Newest first. Customer details are never shown or kept in full.',
     via: { browser_server: 'browser + server', server: 'server', browser: 'browser' },
-    status: { queued: 'Waiting', sent: 'Sent', failed: 'Failed', skipped: 'Skipped' },
+    status: {
+      waiting: 'On hold',
+      queued: 'Sending soon',
+      sent: 'Sent',
+      failed: 'Failed',
+      skipped: 'Skipped',
+    },
     problem: {
       token_expired: 'Meta says the token expired',
       rejected: 'Meta did not accept it',
       timeout: 'Meta did not answer',
       no_match_data: 'Not enough details to match',
       off: 'Sending was off',
+      too_old: 'Over 7 days old, so Meta no longer counts it',
+      not_approved: 'The payment was not approved',
+      demo_shop: 'A demo shop',
+      test_shop: 'A test shop',
+      help_mode: 'Done in help mode',
+      admin: 'Done by you, not the owner',
     },
     retry: 'Send again',
     retrying: 'Sending',
@@ -5529,7 +5679,14 @@ export const adminWords = {
       'Unpaid: shop pauses in 7 days',
       'Payment approved, or not approved with the reason',
     ],
-    remindersHint: 'These go out from NestJS once the API is connected.',
+    remindersHint: 'The API sends these by email and in the Billing chat at 9:00 AM Manila.',
+    // T118 task 9.2: links for Messenger replies to people who ask about the app.
+    samplesCard: 'Sample shops to send',
+    samplesHint: 'For Messenger replies: people try a shop like a customer would, then sign up.',
+    samplesAll: 'All sample shops',
+    copyReply: 'Copy the reply',
+    reply: (all: string, links: string) =>
+      `Here are sample shops you can try, just like your customers would:\n${links}\n\nAll of them: ${all}\n\nWhen you're ready, sign up for the 14-day free trial.`,
     save: 'Save',
     saving: 'Saving',
     saved: 'Setup saved.',

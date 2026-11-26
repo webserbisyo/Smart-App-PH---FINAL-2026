@@ -9,9 +9,11 @@ import type {
   PlatformSetup,
   RecordPlanPaymentInput,
   ReviewPlanPaymentInput,
+  SetTestShopInput,
   SetTrackingInput,
   StartSupportInput,
   TrackingSummary,
+  UndoApprovalInput,
 } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
 import { ownerSettingsQk } from '../owner-settings/qk';
@@ -43,6 +45,16 @@ export function useApproveGoLive() {
 export function useReviewPlanPayment() {
   const { platform } = useAdapters();
   return useShopMutation((input: ReviewPlanPaymentInput) => platform.reviewPlanPayment(input));
+}
+
+export function useUndoPlanApproval() {
+  const { platform } = useAdapters();
+  return useShopMutation((input: UndoApprovalInput) => platform.undoPlanApproval(input));
+}
+
+export function useSetTestShop() {
+  const { platform } = useAdapters();
+  return useShopMutation((input: SetTestShopInput) => platform.setTestShop(input));
 }
 
 export function useRecordPlanPayment() {

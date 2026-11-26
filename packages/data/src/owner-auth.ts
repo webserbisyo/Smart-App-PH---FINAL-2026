@@ -2,8 +2,11 @@
 // session in httpOnly cookies. The browser never holds a token or a Supabase key (T34). On sample data
 // (development and preview builds) a small mock stands in, so the demo links keep working.
 import type {
+  AdminStep,
   LoginInput,
   ResetPasswordInput,
+  SecondStepCodeInput,
+  SecondStepSetup,
   SendCodeResult,
   SignUpInput,
   VerifyCodeInput,
@@ -17,6 +20,8 @@ export interface UserClaims {
   demoShop?: string | undefined;
   // The platform admin (Super Admin, T88): set on the account by Smart App PH, never by the user.
   isAdmin?: boolean | undefined;
+  // Super Admin's second step (T118 Q16); absent where it does not apply.
+  adminStep?: AdminStep | null | undefined;
 }
 
 export interface OwnerAuth {
@@ -31,4 +36,8 @@ export interface OwnerAuth {
   /** Forgot password (T108): the same answer for every email; only rate_limited shows. */
   sendResetCode(input: { email: string }): Promise<SendCodeResult>;
   resetPassword(input: ResetPasswordInput): Promise<UserClaims>;
+  /** Super Admin's authenticator app setup: the QR, the first time only (T118 Q16). */
+  startSecondStep(): Promise<SecondStepSetup>;
+  /** The app's 6-digit code; answers the claims with adminStep `done`. */
+  verifySecondStep(input: SecondStepCodeInput): Promise<UserClaims>;
 }

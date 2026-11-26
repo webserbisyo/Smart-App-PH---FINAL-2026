@@ -144,6 +144,9 @@ describe('Push News (phase 6)', () => {
     expect(counted.audiences.find((a) => a.audience === 'members')?.phones).toBe(1);
 
     // The draft goes now (or at 8 AM in quiet hours); a second one the same day waits for tomorrow.
+    // Count pushes from here: in the daytime, saving a news for now sends it at once (runSoon), before
+    // the send job below runs.
+    const before = pushes.sent.length;
     const first = OwnerNewsSchema.parse(
       (await shop.agent.patch(`/owner/news/${draft.id}`).send(news(shop)).expect(200)).body,
     );
@@ -182,7 +185,6 @@ describe('Push News (phase 6)', () => {
     await shop.agent.get(`/owner/news/${later.id}`).expect(404);
 
     // The send job (a clock past the due time) sends one push per phone, then marks it sent.
-    const before = pushes.sent.length;
     for (let i = 0; i < 5; i++) {
       await sender.runOnce(noonIn(1));
       const now = OwnerNewsSchema.parse(
