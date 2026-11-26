@@ -217,6 +217,8 @@ You want the first paying shop in December, and the domain renews on Dec 19 (aut
 
 ## 11. By hand: your full list
 
+> Since 2026-11-26 the one list to follow is `docs/launch.md` (Parts A to H). This section is the plan it came from.
+
 Never paste a key, token or password in chat, a doc or the repo. Do these after the code for that phase is merged, in this order. Sections 11 and 12 of `launch.md` (staging from phases 1 to 6) come first.
 
 ### After phase 7 (on staging)

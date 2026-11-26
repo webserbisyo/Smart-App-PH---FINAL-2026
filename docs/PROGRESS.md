@@ -157,18 +157,19 @@ From `A-mvp.md` sections 5 and 6 and `docs/launch.md`. The founder does the by-h
 
 ### 5.1 Set up live
 
+- [x] One launch guide with every by-hand step in order, Parts A to H (`launch.md`, 2026-11-26)
 - [ ] Live Supabase project on Pro with daily backups; dev becomes staging (D4)
 - [ ] Live Supabase settings: custom SMTP through Resend, email confirmation on, code expiry 10 minutes, leaked-password protection on, Data API off, "automatically expose new tables" off
 - [ ] Railway API on its domain, Singapore, health check set
 - [ ] Vercel Pro, storefront and dashboard on their domains (`*.webserbisyo.com` per shop with `shop.webserbisyo.com/<slug>` as backup, `app.webserbisyo.com`; T105); old rsvp domains removed
 - [ ] Resend domain verified; emails from `codes@mail.webserbisyo.com` (sign-up code, shop is live, reminders, payment answers, new-order email N10)
-- [ ] Branch protection on `main`
-- [x] Live migrations only through the "Apply migrations to live" workflow with your approval (T118 Q14; code done, set up in `launch.md` section 13)
+- [ ] Live deploys wait for green checks: Railway Wait for CI and Vercel Deployment Checks (T118 Q15, in place of branch protection; `launch.md` Parts C3 and G4)
+- [x] Live migrations only through the "Apply migrations to live" workflow with your approval (T118 Q14; code done, set up in `launch.md` Part G2)
 - [x] Security headers on the dashboard and storefront, Super Admin second step (T118; code done)
 - [ ] Jobs running: expire unpaid transfers, delete proof photos after 30 days, clear unconfirmed uploads, send outbox, drop old leads (D6)
-- [ ] Restore from a backup tried once and written down (the monthly "Restore drill" workflow is built; run it once, `launch.md` section 13)
-- [ ] Meta: Pixel and Conversions API tested in Test events (`launch.md` sections 2 to 7)
-- [ ] Super Admin set up: platform admin flag, Setup values (`launch.md` sections 5 and 6)
+- [ ] Restore from a backup tried once and written down (the monthly "Restore drill" workflow is built; run it once, `launch.md` Part G2)
+- [ ] Meta: Pixel and Conversions API tested in Test events (`launch.md` Part F)
+- [ ] Super Admin set up: platform admin flag, Setup values (`launch.md` Part D3)
 - [ ] Terms and privacy notices checked by someone who knows RA 10173; breach plan written
 
 ### 5.2 Launch acceptance (on a real phone)

@@ -233,6 +233,8 @@ About 18 to 27 working days for the three phases. The founder's first paying sho
 
 ## 10. What the founder does by hand
 
+> Since 2026-11-26 the one list to follow is `docs/launch.md` (Parts A to H). This section is the plan it came from.
+
 Everything here waits until the code is in (founder, 2026-11-25), and is added to `docs/launch.md` as section 12 when these phases are built.
 
 1. **Push keys:** on the laptop, `npx web-push generate-vapid-keys` once; paste both into Railway (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`), never in chat.
