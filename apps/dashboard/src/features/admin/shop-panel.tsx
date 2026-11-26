@@ -234,20 +234,24 @@ function Overview({ shop, onClose }: { shop: AdminShopDetail; onClose: () => voi
         </span>
       ),
     },
-    {
-      id: 'mobile',
-      label: P.mobile,
-      value: (
-        <span className="flex items-center gap-1 tabular-nums">
-          {formatPhPhone(shop.ownerPhone)}
-          <CopyButton
-            value={formatPhPhone(shop.ownerPhone).replace(/\s/g, '')}
-            iconOnly
-            className="-my-1 size-8"
-          />
-        </span>
-      ),
-    },
+    ...(shop.ownerPhone
+      ? [
+          {
+            id: 'mobile',
+            label: P.mobile,
+            value: (
+              <span className="flex items-center gap-1 tabular-nums">
+                {formatPhPhone(shop.ownerPhone)}
+                <CopyButton
+                  value={formatPhPhone(shop.ownerPhone).replace(/\s/g, '')}
+                  iconOnly
+                  className="-my-1 size-8"
+                />
+              </span>
+            ),
+          },
+        ]
+      : []),
     { id: 'kind', label: P.kind, value: signupWords.shop.kinds[shop.kind] },
     { id: 'city', label: P.city, value: shop.city },
     ...(shop.facebookPage ? [{ id: 'fb', label: P.facebook, value: shop.facebookPage }] : []),

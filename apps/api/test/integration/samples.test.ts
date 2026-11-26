@@ -160,7 +160,7 @@ describe('Start with samples and Clear samples (phase 4, X4)', () => {
     // Open the shop and order one sample item.
     await db.run(ADMIN, async () => {
       await db.tx.execute(sql`
-        update public.tenants set stage = 'live', asked_at = now(), live_at = now() where id = ${owner.shopId}::uuid`);
+        update public.tenants set stage = 'live', asked_at = now(), live_at = now(), trial_ends_at = now() + interval '14 days' where id = ${owner.shopId}::uuid`);
       await db.tx.execute(
         sql`delete from public.opening_hours where tenant_id = ${owner.shopId}::uuid`,
       );

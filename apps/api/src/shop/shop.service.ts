@@ -4,6 +4,7 @@ import {
   canAskToGoLive,
   defaultVariantTemplates,
   isShopSlug,
+  metaEventId,
   MyShopSchema,
   newShopContent,
   OwnerOnboardingSchema,
@@ -14,8 +15,10 @@ import {
   type MyShop,
   type OnboardingStep,
   type OwnerOnboarding,
+  type BrowserTrackEvent,
   type RegisterShopInput,
   type SignupLeadInput,
+  type TrackInput,
 } from '@smartapp/core';
 import { and, count, eq, gt, isNull, sql } from 'drizzle-orm';
 import { ApiFailure, notFound } from '../common/api-failure.js';
@@ -36,6 +39,18 @@ import {
   variantTemplateValues,
 } from '../db/generated/schema.js';
 import type { CallerUser } from '../auth/caller.js';
+import { TrackWriter } from '../platform/track-writer.js';
+
+/** The visitor's or owner's own request, for Meta (T118 Q2): never the founder's. */
+export interface RequestClient {
+  ip: string | null;
+  ua: string | null;
+  // A Super Admin is signed in (the founder trying sign-up): events are kept as skipped (T118 section 4.3).
+  adminCaller: boolean;
+}
+
+// The browser may report these on /track; Lead and CompleteRegistration come with their own steps.
+const TRACKED_BY_BROWSER: readonly BrowserTrackEvent[] = ['PageView', 'Contact'];
 
 /**
  * Shops: their links, sign-up and going live (api.md "Shop" and "Sign-up and going live"). Every method runs
@@ -43,7 +58,10 @@ import type { CallerUser } from '../auth/caller.js';
  */
 @Injectable()
 export class ShopService {
-  constructor(@Inject(Db) private readonly db: Db) {}
+  constructor(
+    @Inject(Db) private readonly db: Db,
+    @Inject(TrackWriter) private readonly track: TrackWriter,
+  ) {}
 
   async isSlugFree(slug: string): Promise<boolean> {
     if (!isShopSlug(slug)) return false;
@@ -53,9 +71,9 @@ export class ShopService {
     return result.rows[0]?.free === true;
   }
 
-  /** The signed-in owner's shop or null (sign-up stopped before the shop step). */
+  /** The signed-in owner's shop or null (sign-up stopped before the shop step). In help mode, the helped shop. */
   async getMyShop(user: CallerUser): Promise<MyShop | null> {
-    const shopId = await this.shopIdOf(user.id);
+    const shopId = this.db.helping ? this.db.shopId : await this.shopIdOf(user.id);
     if (!shopId) return null;
     await this.db.useShop(shopId);
     const [row] = await this.db.tx
@@ -72,8 +90,8 @@ export class ShopService {
     return row ? MyShopSchema.parse(row) : null;
   }
 
-  /** Sign-up step 1 (T89): saved before any account exists. Meta's Lead event comes in phase 7. */
-  async saveSignupLead(input: SignupLeadInput): Promise<{ leadId: string }> {
+  /** Sign-up step 1 (T89): saved before any account exists, with Meta's Lead (the browser's event id). */
+  async saveSignupLead(input: SignupLeadInput, client: RequestClient): Promise<{ leadId: string }> {
     // The id is made here: the API's role may add a lead but not read one back (RLS), so no RETURNING.
     const leadId = randomUUID();
     await this.db.tx.insert(signupLeads).values({
@@ -87,14 +105,57 @@ export class ShopService {
       fbp: input.fbp,
       fbc: input.fbc,
     });
+    await this.track.write({
+      name: 'Lead',
+      eventId: input.eventId,
+      via: 'browser_server',
+      status: 'queued',
+      tenantId: null,
+      leadId,
+      person: {
+        email: input.email,
+        phone: input.phone,
+        fullName: input.fullName,
+        externalId: leadId,
+        fbp: input.fbp,
+        fbc: input.fbc,
+      },
+      pageUrl: input.pageUrl,
+      actionSource: 'website',
+      causedBy: 'visitor',
+      client,
+      block: { adminCaller: client.adminCaller },
+    });
     return { leadId };
+  }
+
+  /** The sign-up page's PageView and Contact (T90): kept for the sender, never answered with Meta's reply. */
+  async trackBrowser(input: TrackInput, client: RequestClient): Promise<void> {
+    if (!TRACKED_BY_BROWSER.includes(input.name)) return;
+    await this.track.write({
+      name: input.name,
+      eventId: input.eventId,
+      via: 'browser_server',
+      status: 'queued',
+      tenantId: null,
+      person: { fbp: input.fbp, fbc: input.fbc },
+      pageUrl: input.pageUrl,
+      actionSource: 'website',
+      causedBy: 'visitor',
+      client,
+      block: { adminCaller: client.adminCaller },
+    });
   }
 
   /**
    * Sign-up step 3, after the email code (X11): the shop, its owner, its settings and look rows, and the
    * lead hand-over, in one transaction. The price comes from platform_settings, never from the browser.
    */
-  async registerShop(user: CallerUser, input: RegisterShopInput): Promise<OwnerOnboarding> {
+  async registerShop(
+    user: CallerUser,
+    input: RegisterShopInput,
+    client: RequestClient,
+  ): Promise<OwnerOnboarding> {
     if (await this.shopIdOf(user.id)) throw new ApiFailure('already_has_shop', 409);
     const [platform] = await this.db.tx
       .select({ priceMonthly: platformSettings.priceMonthly })
@@ -151,6 +212,29 @@ export class ShopService {
         .set({ phone: lead.phone, updatedAt: sql`now()` })
         .where(eq(profiles.id, user.id));
     }
+    const fromLead = lead ? await this.leadCookies(shopId) : null;
+    await this.track.write({
+      name: 'CompleteRegistration',
+      eventId: input.eventId,
+      via: 'browser_server',
+      status: 'queued',
+      tenantId: shopId,
+      leadId: input.leadId,
+      person: {
+        email: user.email,
+        phone: lead?.phone ?? null,
+        fullName: user.fullName,
+        city: input.shop.city,
+        externalId: user.id,
+        fbp: input.fbp ?? fromLead?.fbp ?? null,
+        fbc: input.fbc ?? fromLead?.fbc ?? null,
+      },
+      pageUrl: input.pageUrl,
+      actionSource: 'website',
+      causedBy: 'owner',
+      client,
+      block: { adminCaller: client.adminCaller || user.isAdmin },
+    });
     return this.onboardingOf(shopId);
   }
 
@@ -158,7 +242,11 @@ export class ShopService {
     return this.onboardingOf(shopId);
   }
 
-  async askToGoLive(shopId: string): Promise<OwnerOnboarding> {
+  async askToGoLive(
+    shopId: string,
+    user: CallerUser,
+    client: RequestClient,
+  ): Promise<OwnerOnboarding> {
     const current = await this.onboardingOf(shopId);
     if (!canAskToGoLive(current.stage, current.steps))
       throw new ApiFailure('setup_incomplete', 409);
@@ -166,7 +254,64 @@ export class ShopService {
       .update(tenants)
       .set({ stage: 'asked', askedAt: sql`now()`, updatedAt: sql`now()` })
       .where(eq(tenants.id, shopId));
+    const [shop] = await this.db.tx
+      .select({ city: tenants.city, isDemo: tenants.isDemo, isTest: tenants.isTest })
+      .from(tenants)
+      .where(eq(tenants.id, shopId));
+    const helping = this.db.helping !== null;
+    const cookies = await this.leadCookies(shopId);
+    await this.track.write({
+      name: 'SubmitApplication',
+      eventId: metaEventId('SubmitApplication', shopId),
+      via: 'server',
+      status: 'queued',
+      tenantId: shopId,
+      person: {
+        email: user.email,
+        fullName: user.fullName,
+        city: shop?.city ?? null,
+        externalId: user.id,
+        fbp: cookies?.fbp ?? null,
+        fbc: cookies?.fbc ?? null,
+      },
+      actionSource: 'website',
+      causedBy: 'owner',
+      client,
+      block: {
+        adminCaller: !helping && client.adminCaller,
+        helpMode: helping,
+        isDemo: shop?.isDemo === true,
+        isTest: shop?.isTest === true,
+      },
+    });
     return this.onboardingOf(shopId);
+  }
+
+  /** Meta's own cookies from the shop's sign-up lead, so later events match the same person. */
+  private async leadCookies(
+    shopId: string,
+  ): Promise<{ fbp: string | null; fbc: string | null } | null> {
+    const [lead] = await this.db.tx
+      .select({ fbp: signupLeads.fbp, fbc: signupLeads.fbc })
+      .from(signupLeads)
+      .where(eq(signupLeads.tenantId, shopId))
+      .limit(1);
+    return lead ?? null;
+  }
+
+  /** The owner's mobile on their profile (a shop the founder makes for a client). */
+  async setOwnerPhone(userId: string, phone: string): Promise<void> {
+    await this.db.tx
+      .update(profiles)
+      .set({ phone, updatedAt: sql`now()` })
+      .where(eq(profiles.id, userId));
+  }
+
+  /** The shop an owner just made; Not found when there is none. */
+  async shopOfOwner(userId: string): Promise<string> {
+    const shopId = await this.shopIdOf(userId);
+    if (!shopId) throw notFound();
+    return shopId;
   }
 
   private async shopIdOf(userId: string): Promise<string | null> {

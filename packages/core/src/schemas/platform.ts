@@ -153,7 +153,8 @@ export const AdminShopRowSchema = z.object({
   city: z.string().max(60),
   ownerName: z.string().min(1).max(80),
   ownerEmail: z.email(),
-  ownerPhone: PhMobileSchema,
+  // Null when the owner never gave one (a shop made before sign-up kept the mobile).
+  ownerPhone: PhMobileSchema.nullable(),
   stage: ShopStageEnum,
   // null until the shop is live (the trial starts at approval, T89).
   planStatus: PlanStatusEnum.nullable(),

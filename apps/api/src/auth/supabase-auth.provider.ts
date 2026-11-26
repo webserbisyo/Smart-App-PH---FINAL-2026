@@ -180,6 +180,16 @@ export class SupabaseAuthProvider implements AuthProvider {
     return sessionOf(data.session, data.user);
   }
 
+  async createOwnerAccount(email: string, fullName: string): Promise<string> {
+    const { data, error } = await this.client().auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+    });
+    if (error) throw this.mapped(error, 'unknown');
+    return data.user.id;
+  }
+
   async setPassword(userId: string, password: string): Promise<void> {
     const { error } = await this.client().auth.admin.updateUserById(userId, { password });
     if (error) throw this.mapped(error, 'unknown');

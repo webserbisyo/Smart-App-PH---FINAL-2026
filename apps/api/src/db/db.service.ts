@@ -19,6 +19,8 @@ export interface TxScope {
   userId: string | null;
   shopId: string | null;
   role: 'api' | 'admin';
+  // Help mode (T91, D8): the founder's open support session, when the request acts as a shop's owner.
+  supportSessionId?: string | null;
 }
 
 interface TxStore {
@@ -67,6 +69,11 @@ export class Db {
     const id = this.current().scope.userId;
     if (!id) throw new Error('This transaction has no signed-in user.');
     return id;
+  }
+
+  /** The open support session when the request runs in help mode, else null. */
+  get helping(): string | null {
+    return this.current().scope.supportSessionId ?? null;
   }
 
   inTransaction(): boolean {

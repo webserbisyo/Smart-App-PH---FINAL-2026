@@ -2689,6 +2689,94 @@ export const pushWords = {
   },
 } as const;
 
+// The plan and Super Admin emails (T118, phases-7-9.md task 7.8). Only the API sends them, so they live in
+// their own export and never reach a screen's bundle. Plain words, the next step in each, no customer data.
+export const planEmailWords = {
+  open: 'Open your dashboard',
+  openAdmin: 'Open Super Admin',
+  sign: 'Smart App PH',
+  shopLive: {
+    subject: (shop: string) => `${shop} is live`,
+    line: (shop: string, trialEnd: string) =>
+      `${shop} is live and taking orders. Your free trial runs until ${trialEnd}. Share your link and QR poster with your customers.`,
+  },
+  // The subject names the day, so a reminder the founder sends by hand on another day is still true.
+  reminder: {
+    trial_3d: {
+      subject: (end: string) => `Your free trial ends on ${end}`,
+      line: (end: string, amount: string) =>
+        `Your free trial ends on ${end}. Pay ${amount} a month in Plan to keep taking orders.`,
+    },
+    trial_last: {
+      subject: () => 'Your free trial ends today',
+      line: (end: string, amount: string) =>
+        `Your free trial ends today, ${end}. Pay ${amount} in Plan so your shop keeps taking orders.`,
+    },
+    due_7d: {
+      subject: (end: string) => `Your plan is due on ${end}`,
+      line: (end: string, amount: string) =>
+        `Your plan is paid until ${end}. Pay ${amount} in Plan before then.`,
+    },
+    end_day: {
+      subject: () => 'Your plan is due today',
+      line: (end: string, amount: string) =>
+        `Your plan is paid until today, ${end}. Pay ${amount} in Plan to keep taking orders.`,
+    },
+    grace_3d: {
+      subject: () => 'Your plan is overdue',
+      line: (end: string, amount: string) =>
+        `Your plan ended on ${end}. Your shop still takes orders for a few more days. Pay ${amount} in Plan so it does not pause.`,
+    },
+    paused: {
+      subject: () => 'Your shop is paused',
+      line: (end: string, amount: string) =>
+        `Your plan ended on ${end}, so your shop is not taking new orders. You can still see everything. Pay ${amount} in Plan to open it again.`,
+    },
+  },
+  approved: {
+    subject: 'Payment received. Salamat!',
+    line: (amount: string, until: string) =>
+      `We received your payment of ${amount}. Your plan is paid until ${until}.`,
+    note: 'This is a receipt note, not an official invoice.',
+  },
+  rejected: {
+    subject: 'We could not approve your payment',
+    line: (reason: string) =>
+      `We could not approve your payment: ${reason}. Send a new screenshot from Plan, or write to us in the Billing chat.`,
+  },
+  helpStarted: {
+    subject: 'Smart App PH support opened your dashboard',
+    line: (minutes: number) =>
+      `Our support opened your dashboard to help you, for up to ${minutes} minutes. Everything they do is logged. Write to us in the Billing chat if you did not ask for this.`,
+  },
+  planPayment: {
+    subject: (shop: string) => `Plan payment to check: ${shop}`,
+    line: (shop: string, amount: string) =>
+      `${shop} sent a plan payment of ${amount}. Check the screenshot and approve it in Super Admin.`,
+  },
+  summary: {
+    subject: (date: string) => `Smart App PH daily summary, ${date}`,
+    line: (parts: {
+      live: number;
+      toCheck: number;
+      sent: number;
+      failed: number;
+      tooOld: number;
+      tokenProblem: boolean;
+    }) =>
+      [
+        `Live shops: ${parts.live}`,
+        `Payments to check: ${parts.toCheck}`,
+        `Meta events sent in the last day: ${parts.sent}`,
+        `Meta events failed: ${parts.failed}`,
+        `Payments too old for Meta: ${parts.tooOld}`,
+        parts.tokenProblem
+          ? 'Meta refused the access token. Replace it in Railway, then press Retry in Tracking.'
+          : 'Meta token: working',
+      ].join('\n'),
+  },
+} as const;
+
 // The owner's data export (T66, phase 6): the spreadsheet headings inside the ZIP. Its own export, so no
 // screen carries these words.
 export const exportWords = {

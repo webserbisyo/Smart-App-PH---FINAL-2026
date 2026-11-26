@@ -232,7 +232,8 @@ export async function liveShop(
   await db.run({ userId: null, shopId: null, role: 'admin' }, async () => {
     const id = owner.shopId;
     await db.tx.execute(
-      sql`update public.tenants set stage = 'live', asked_at = now(), live_at = now() where id = ${id}::uuid`,
+      // Live on its free trial, as the founder's approval leaves it (a live shop with no plan is paused, T118).
+      sql`update public.tenants set stage = 'live', asked_at = now(), live_at = now(), trial_ends_at = now() + interval '14 days' where id = ${id}::uuid`,
     );
     await db.tx.execute(sql`delete from public.opening_hours where tenant_id = ${id}::uuid`);
     await db.tx.execute(sql`

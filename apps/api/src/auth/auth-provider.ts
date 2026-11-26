@@ -53,6 +53,11 @@ export interface AuthProvider {
   sendRecoveryCode(email: string, client: ClientInfo): Promise<void>;
   verifyRecoveryCode(email: string, code: string, client: ClientInfo): Promise<AuthSession>;
   setPassword(userId: string, password: string): Promise<void>;
+  /**
+   * An owner account the founder makes for a client (T88): confirmed, no password yet. The owner sets one
+   * with a 6-digit code (sendRecoveryCode). Answers the new user's id; email_taken when it exists.
+   */
+  createOwnerAccount(email: string, fullName: string): Promise<string>;
   /** The account's email, for the owner's alerts (launch phase 5); null when the account is gone. */
   getUserEmail(userId: string): Promise<string | null>;
   refresh(refreshToken: string, client: ClientInfo): Promise<AuthSession>;

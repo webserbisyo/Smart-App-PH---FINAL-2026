@@ -42,6 +42,9 @@ const UNIQUE_CODES: Record<string, ErrorCode> = {
   tenant_members_pkey: 'already_has_shop',
   // The same reference number cannot pay two orders unless the shop turned it down.
   payment_proofs_reference: 'duplicate_reference',
+  // A plan payment's reference across every shop (T88); one waiting payment per shop.
+  plan_payments_reference: 'duplicate_reference',
+  plan_payments_one_pending: 'payment_not_pending',
 };
 
 export interface MappedDbError {

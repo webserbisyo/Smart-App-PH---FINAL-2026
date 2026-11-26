@@ -61,7 +61,7 @@ export class StorefrontService {
   /** A live or demo shop as customers see it; anything else is Not found (rule 12). */
   async getStorefront(slug: string): Promise<PublicShop> {
     await this.shops.enterShop(slug);
-    return this.shops.read('published');
+    return this.shops.readForCustomers();
   }
 
   /**
@@ -88,14 +88,14 @@ export class StorefrontService {
     lines: readonly { itemId: string; qty: number }[],
   ): Promise<Schedule> {
     await this.shops.enterShop(slug);
-    const shop = await this.shops.read();
+    const shop = await this.shops.readForCustomers();
     return this.schedule(shop, lines, new Date());
   }
 
   /** The server's price check, always called before Place order. */
   async quoteOrder(slug: string, payload: OrderPayload, user: CallerUser | null): Promise<Quote> {
     await this.shops.enterShop(slug);
-    const shop = await this.shops.read();
+    const shop = await this.shops.readForCustomers();
     const now = new Date();
     if (payload.scheduledAt) {
       await this.checkSlot(shop, payload, payload.scheduledAt, now);
@@ -133,7 +133,7 @@ export class StorefrontService {
       throw new ApiFailure('invalid_input', 422, { phone: [words.shop.phoneInvalid] });
     }
 
-    const shop = await this.shops.read();
+    const shop = await this.shops.readForCustomers();
     const now = new Date();
     const placedAt = now.toISOString();
     if (payload.scheduledAt) {

@@ -1,7 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Interval } from '@nestjs/schedule';
-import { formatPeso, pushWords } from '@smartapp/core';
+import {
+  billingWords,
+  formatManila,
+  formatPeso,
+  planEmailWords,
+  PLAN_REMINDER_STAGES,
+  PlanRejectReasonEnum,
+  pushWords,
+} from '@smartapp/core';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { AUTH_PROVIDER, type AuthProvider } from '../auth/auth-provider.js';
@@ -17,6 +25,22 @@ const BATCH = 20;
 const PARALLEL = 4;
 
 export type OwnerEmailKind = 'new_order' | 'payment_to_check';
+// The plan's emails (T118, task 7.8). plan_payment goes to the founder; the rest to the shop's owners.
+export type PlatformEmailKind =
+  'shop_live' | 'plan_reminder' | 'plan_answer' | 'help_started' | 'plan_payment';
+
+// Names and numbers only, like the order emails.
+export const PlatformEmailSchema = z.object({
+  shop: z.string(),
+  amount: z.number().int().nullable().default(null),
+  // A Manila day: the trial's end, the paid-until day.
+  until: z.string().nullable().default(null),
+  stage: z.enum(PLAN_REMINDER_STAGES).nullable().default(null),
+  reason: PlanRejectReasonEnum.nullable().default(null),
+  verdict: z.enum(['approved', 'rejected']).nullable().default(null),
+  minutes: z.number().int().nullable().default(null),
+});
+export type PlatformEmail = z.input<typeof PlatformEmailSchema>;
 
 // Ids and numbers only: an email row never keeps a customer's name, phone or address.
 const OrderEmailSchema = z.object({
@@ -69,6 +93,88 @@ export class EmailOutbox {
     });
   }
 
+  /**
+   * Queues a plan email once the caller's transaction commits, and sends it at once. `owners` = every owner of
+   * the shop; `plan` = the owners who keep plan emails on (Settings › Notifications); else one address.
+   */
+  platformAlert(
+    shopId: string,
+    kind: PlatformEmailKind,
+    email: PlatformEmail,
+    key: string,
+    to: 'owners' | 'plan' | string,
+    // Held back (an approval's 10 minutes for Undo, T118 Q4); the 30-second job sends it then.
+    delayMs = 0,
+  ): void {
+    this.db.afterCommit(async () => {
+      const ids = await this.enqueuePlatform(shopId, kind, email, key, to, delayMs);
+      if (ids.length > 0) await this.sendDue(ids);
+    });
+  }
+
+  async enqueuePlatform(
+    shopId: string,
+    kind: PlatformEmailKind,
+    email: PlatformEmail,
+    key: string,
+    to: 'owners' | 'plan' | string,
+    delayMs = 0,
+  ): Promise<string[]> {
+    let recipients: { userId: string; to: string }[];
+    if (to === 'owners' || to === 'plan') {
+      const flag = to === 'plan' ? sql`and notify_plan_payment` : sql``;
+      const members = await this.db.run(ADMIN, async () => {
+        const result = await this.db.tx.execute(sql`
+          select user_id, notify_email from public.tenant_members where tenant_id = ${shopId}::uuid ${flag}`);
+        return z.array(RecipientSchema).parse(result.rows);
+      });
+      recipients = [];
+      for (const m of members) {
+        const address = m.notify_email ?? (await this.auth.getUserEmail(m.user_id));
+        if (address) recipients.push({ userId: m.user_id, to: address.toLowerCase() });
+      }
+    } else {
+      recipients = [{ userId: 'founder', to: to.toLowerCase() }];
+    }
+    return this.insertRows(
+      shopId,
+      kind,
+      PlatformEmailSchema.parse(email),
+      key,
+      recipients,
+      delayMs,
+    );
+  }
+
+  private async insertRows(
+    shopId: string,
+    kind: string,
+    payload: unknown,
+    key: string,
+    recipients: readonly { userId: string; to: string }[],
+    delayMs = 0,
+  ): Promise<string[]> {
+    if (recipients.length === 0) return [];
+    return this.db.run(ADMIN, async () => {
+      const ids: string[] = [];
+      for (const r of recipients) {
+        const result = await this.db.tx.execute(sql`
+          insert into public.notification_outbox (tenant_id, kind, to_email, payload, dedupe_key, send_after)
+          values (${shopId}::uuid, ${kind}, ${r.to}, ${JSON.stringify(payload)}::jsonb, ${`${key}:${r.userId}`.slice(0, 120)},
+            now() + make_interval(secs => ${delayMs / 1000}))
+          on conflict (tenant_id, dedupe_key) do nothing
+          returning id`);
+        ids.push(
+          ...z
+            .array(z.object({ id: z.string() }))
+            .parse(result.rows)
+            .map((row) => row.id),
+        );
+      }
+      return ids;
+    });
+  }
+
   /** Writes one row per owner who wants this email; answers the new rows. */
   async enqueue(
     shopId: string,
@@ -87,24 +193,7 @@ export class EmailOutbox {
       const to = m.notify_email ?? (await this.auth.getUserEmail(m.user_id));
       if (to) recipients.push({ userId: m.user_id, to: to.toLowerCase() });
     }
-    if (recipients.length === 0) return [];
-    return this.db.run(ADMIN, async () => {
-      const ids: string[] = [];
-      for (const r of recipients) {
-        const result = await this.db.tx.execute(sql`
-          insert into public.notification_outbox (tenant_id, kind, to_email, payload, dedupe_key)
-          values (${shopId}::uuid, ${kind}, ${r.to}, ${JSON.stringify(email)}::jsonb, ${`${key}:${r.userId}`})
-          on conflict (tenant_id, dedupe_key) do nothing
-          returning id`);
-        ids.push(
-          ...z
-            .array(z.object({ id: z.string() }))
-            .parse(result.rows)
-            .map((row) => row.id),
-        );
-      }
-      return ids;
-    });
+    return this.insertRows(shopId, kind, email, key, recipients);
   }
 
   @Interval('email-outbox', 30_000)
@@ -167,6 +256,8 @@ export class EmailOutbox {
 
   /** The words for one row; null for a kind this sender does not write yet. */
   render(row: { kind: string; to_email: string; payload: unknown }): EmailMessage | null {
+    if (row.kind !== 'new_order' && row.kind !== 'payment_to_check')
+      return this.renderPlatform(row);
     const data = OrderEmailSchema.safeParse(row.payload);
     if (!data.success) return null;
     const w = pushWords.email;
@@ -195,6 +286,87 @@ export class EmailOutbox {
         `<p><small>${escapeHtml(why)}</small></p>`,
       ].join(''),
     };
+  }
+
+  private renderPlatform(row: {
+    kind: string;
+    to_email: string;
+    payload: unknown;
+  }): EmailMessage | null {
+    const data = PlatformEmailSchema.safeParse(row.payload);
+    if (!data.success) return null;
+    const m = platformMessage(row.kind, data.data);
+    if (!m) return null;
+    const w = planEmailWords;
+    const link = m.admin ? `${this.dashboardUrl}/admin` : `${this.dashboardUrl}/settings/plan`;
+    const open = m.admin ? w.openAdmin : w.open;
+    const lines = [m.line, ...(m.extra ? [m.extra] : [])];
+    return {
+      to: row.to_email,
+      subject: m.subject,
+      text: `${lines.join('\n\n')}\n\n${open}: ${link}\n\n${w.sign}`,
+      html: [
+        ...lines.map((l) => `<p>${escapeHtml(l)}</p>`),
+        `<p><a href="${escapeHtml(link)}">${escapeHtml(open)}</a></p>`,
+        `<p><small>${escapeHtml(w.sign)}</small></p>`,
+      ].join(''),
+    };
+  }
+}
+
+/** The plan emails' words (task 7.8); null for a kind or shape we do not know. */
+function platformMessage(
+  kind: string,
+  e: z.infer<typeof PlatformEmailSchema>,
+): { subject: string; line: string; extra: string | null; admin: boolean } | null {
+  const w = planEmailWords;
+  const amount = e.amount !== null ? formatPeso(e.amount) : '';
+  const until = e.until ? formatManila(`${e.until}T12:00:00+08:00`, 'date') : '';
+  switch (kind) {
+    case 'shop_live':
+      return {
+        subject: w.shopLive.subject(e.shop),
+        line: w.shopLive.line(e.shop, until),
+        extra: null,
+        admin: false,
+      };
+    case 'plan_reminder': {
+      if (!e.stage) return null;
+      const r = w.reminder[e.stage];
+      return { subject: r.subject(until), line: r.line(until, amount), extra: null, admin: false };
+    }
+    case 'plan_answer':
+      if (e.verdict === 'approved')
+        return {
+          subject: w.approved.subject,
+          line: w.approved.line(amount, until),
+          extra: w.approved.note,
+          admin: false,
+        };
+      if (e.verdict === 'rejected' && e.reason)
+        return {
+          subject: w.rejected.subject,
+          line: w.rejected.line(billingWords.reasons[e.reason]),
+          extra: null,
+          admin: false,
+        };
+      return null;
+    case 'help_started':
+      return {
+        subject: w.helpStarted.subject,
+        line: w.helpStarted.line(e.minutes ?? 60),
+        extra: null,
+        admin: false,
+      };
+    case 'plan_payment':
+      return {
+        subject: w.planPayment.subject(e.shop),
+        line: w.planPayment.line(e.shop, amount),
+        extra: null,
+        admin: true,
+      };
+    default:
+      return null;
   }
 }
 

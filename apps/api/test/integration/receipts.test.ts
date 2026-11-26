@@ -86,7 +86,7 @@ describe('receipts (phase 5)', () => {
     await asAdmin(async () => {
       const id = owner.shopId;
       await db.tx.execute(
-        sql`update public.tenants set stage = 'live', asked_at = now(), live_at = now() where id = ${id}::uuid`,
+        sql`update public.tenants set stage = 'live', asked_at = now(), live_at = now(), trial_ends_at = now() + interval '14 days' where id = ${id}::uuid`,
       );
       await db.tx.execute(sql`delete from public.opening_hours where tenant_id = ${id}::uuid`);
       await db.tx.execute(sql`

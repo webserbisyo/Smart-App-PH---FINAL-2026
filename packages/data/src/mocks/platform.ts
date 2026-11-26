@@ -1335,7 +1335,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
               r.ownerName.toLowerCase().includes(q) ||
               r.ownerEmail.includes(q) ||
               r.city.toLowerCase().includes(q) ||
-              (digits.length >= 4 && r.ownerPhone.replace(/^\+63/, '0').includes(digits)),
+              (digits.length >= 4 && (r.ownerPhone ?? '').replace(/^\+63/, '0').includes(digits)),
           )
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
         return AdminShopListSchema.parse({ rows: found, counts });
