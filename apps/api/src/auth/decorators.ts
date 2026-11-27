@@ -13,7 +13,7 @@ export const Can = Reflector.createDecorator<Permission>();
 
 /**
  * Never in help mode (T91): a Super Admin helping a shop gets `support_locked` (403) here. For the owner's
- * password, sign-ins, profile, plan payments and chat, account delete, deleting files and sending news.
+ * password, sign-ins, profile, plan payments and photos, account delete, deleting files and sending news.
  */
 export const NOT_IN_HELP_KEY = 'notInHelp';
 export const NotInHelp = () => SetMetadata(NOT_IN_HELP_KEY, true);

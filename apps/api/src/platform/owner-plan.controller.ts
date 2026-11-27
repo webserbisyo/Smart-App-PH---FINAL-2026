@@ -46,7 +46,6 @@ export class OwnerPlanController {
   }
 
   @Post('notes')
-  @NotInHelp()
   @Can('settings:manage')
   @HttpCode(201)
   sendNote(
