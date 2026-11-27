@@ -123,7 +123,7 @@ export function PayQr({ qr, method, accountName, amount, shopName, sample }: Pay
             <Button
               type="button"
               variant="outline"
-              className="h-11 rounded-full border-paper-foreground/20 bg-paper text-paper-foreground hover:bg-paper-foreground/5 dark:border-paper-foreground/20 dark:bg-paper dark:hover:bg-paper-foreground/5"
+              className="h-11 rounded-full border-paper-foreground/20 bg-paper text-paper-foreground hover:bg-paper-foreground/5 hover:text-paper-foreground dark:border-paper-foreground/20 dark:bg-paper dark:hover:bg-paper-foreground/5"
               onClick={() => {
                 setState('loading');
                 setAttempt((n) => n + 1);
@@ -179,12 +179,14 @@ export function PayQr({ qr, method, accountName, amount, shopName, sample }: Pay
         </ol>
         <p className="hidden text-sm md:block">{Q.desktopLine}</p>
 
+        {/* The outline button turns its text to the page's foreground on hover, which is near white in a
+            dark shop: on the white paper card both buttons keep the paper's ink (T127). */}
         <Button
           type="button"
           variant="outline"
           disabled={failed || saving}
           onClick={() => void onSave()}
-          className="h-11 w-full gap-2 rounded-full border-paper-foreground/20 bg-paper text-paper-foreground hover:bg-paper-foreground/5 sm:w-auto sm:self-start dark:border-paper-foreground/20 dark:bg-paper dark:hover:bg-paper-foreground/5"
+          className="h-11 w-full gap-2 rounded-full border-paper-foreground/20 bg-paper text-paper-foreground hover:bg-paper-foreground/5 hover:text-paper-foreground sm:w-auto sm:self-start dark:border-paper-foreground/20 dark:bg-paper dark:hover:bg-paper-foreground/5"
         >
           <DownloadIcon aria-hidden="true" />
           {Q.save}

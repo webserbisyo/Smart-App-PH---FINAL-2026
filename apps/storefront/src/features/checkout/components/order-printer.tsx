@@ -31,6 +31,8 @@ export interface OrderPrinterProps {
   onSkip: () => void;
   onRetry: () => void;
   onClose: () => void;
+  // A jam the customer can fix here instead of trying again, e.g. "Remove sold-out item" (T127).
+  fix?: { label: string; onClick: () => void } | null | undefined;
 }
 
 /**
@@ -38,7 +40,15 @@ export interface OrderPrinterProps {
  * while the order is sent, then the receipt opens. Skip opens it at once; an error is a paper jam with
  * Try again; offline says so. Composes the installed Dialog, so focus and Escape work as usual.
  */
-export function OrderPrinter({ state, slip, error, onSkip, onRetry, onClose }: OrderPrinterProps) {
+export function OrderPrinter({
+  state,
+  slip,
+  error,
+  onSkip,
+  onRetry,
+  onClose,
+  fix = null,
+}: OrderPrinterProps) {
   const P = words.checkout.printer;
   const stuck = state === 'jam' || state === 'offline';
   const title =
@@ -105,9 +115,15 @@ export function OrderPrinter({ state, slip, error, onSkip, onRetry, onClose }: O
 
         {stuck ? (
           <div className="flex w-full flex-col gap-2">
-            <Button size="lg" className="h-11 rounded-full" onClick={onRetry}>
-              {P.tryAgain}
-            </Button>
+            {fix && state === 'jam' ? (
+              <Button size="lg" className="h-11 rounded-full" onClick={fix.onClick}>
+                {fix.label}
+              </Button>
+            ) : (
+              <Button size="lg" className="h-11 rounded-full" onClick={onRetry}>
+                {P.tryAgain}
+              </Button>
+            )}
             <Button variant="outline" size="lg" className="h-11 rounded-full" onClick={onClose}>
               {P.back}
             </Button>

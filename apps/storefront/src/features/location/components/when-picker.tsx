@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   BanIcon,
-  CalendarDaysIcon,
   CalendarIcon,
   CircleSlashIcon,
   HourglassIcon,
@@ -13,12 +12,17 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import {
+  dayPeriodOf,
   formatClock,
   manilaDate,
+  openingPeriod,
   openState,
   openStateText,
+  SLOT_STRIP_DAYS,
+  slotsByPeriod,
   words,
   type ScheduleDayState,
+  orderFlowWords,
 } from '@smartapp/core';
 import { useBasket, useSchedule } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
@@ -34,30 +38,29 @@ import {
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { DayChips, TimeChips, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
-import { cn } from '@smartapp/ui/lib/utils';
+import { DayChips, SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
 import { useShop } from '../../shell/components/shop-context';
 import {
   asapChoice,
   asapDetail,
   dayChipLabel,
-  DAY_CHIPS,
+  dayLongLabel,
   firstOpenDay,
   nextOpenSlot,
   noDaysLine,
   noticeLine,
   resolvePick,
-  slotPeriods,
   whenSummary,
   type BookableType,
   type WhenMode,
 } from '../when-rules';
 
-// The full calendar loads only when "More dates" opens (react-day-picker stays out of the page).
-const MoreDatesCalendar = dynamic(() => import('./more-dates-calendar'), {
-  ssr: false,
-  loading: () => <Skeleton className="m-3 h-72 w-64 rounded-xl" />,
-});
+// The month (the owner's Change time one, T127) loads only for a shop that books more than a week ahead,
+// so react-day-picker stays out of every page's first JavaScript.
+const SlotMonth = dynamic(
+  () => import('@smartapp/ui/compositions/slot-month').then((m) => m.SlotMonth),
+  { ssr: false, loading: () => <Skeleton className="h-80 w-full rounded-2xl" /> },
+);
 
 export interface WhenValue {
   mode: WhenMode;
@@ -90,9 +93,10 @@ const FEW_LEFT = 2;
 
 /**
  * The When picker (O6), used by the How and where sheet (also opened from checkout): ASAP or Schedule,
- * then a day strip (up to 14 chips, More dates beyond) and time chips grouped Morning, Afternoon and
- * Evening. Days, notice and limits come from the shop's schedule; it refreshes with the basket and never
- * keeps a time that is no longer open.
+ * then the shared slot picker (T127, the same one as the owner's Change time and New order): day chips
+ * for a window of a week or less, a month for a longer one, and the times in Morning, Afternoon and
+ * Evening tabs. Days, notice and limits come from the shop's schedule; it refreshes with the basket and
+ * never keeps a time that is no longer open.
  */
 export function WhenPicker({
   type,
@@ -115,7 +119,8 @@ export function WhenPicker({
   const asap = asapChoice(sf, data, now);
   // The day the customer tapped; the shown day falls back to the picked time's day or the first open.
   const [pickedDay, setPickedDay] = useState<string | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
+  // The part of the day the customer tapped; else the picked time's part or the first with an open time.
+  const [pickedPeriod, setPickedPeriod] = useState<string | null>(null);
 
   // ASAP isn't offered (notice, closed, busy): switch to Schedule on the earliest open time, so one
   // tap on Save still works; the summary shows the time and the customer can change it.
@@ -152,17 +157,53 @@ export function WhenPicker({
   }, [data, bookable, onBookableChange]);
 
   const activeDay = data?.days.find((d) => d.date === day);
-  const chips = data?.days.slice(0, DAY_CHIPS) ?? [];
-  const hasMore = (data?.days.length ?? 0) > DAY_CHIPS;
-  const dayInStrip = chips.some((d) => d.date === day);
+  const days = data?.days ?? [];
+  const monthView = days.length > SLOT_STRIP_DAYS;
   const notice = data ? noticeLine(data, type) : null;
-  const periods = activeDay?.state === 'open' ? slotPeriods(activeDay.slots) : [];
+  const daySlots = activeDay?.state === 'open' ? activeDay.slots : [];
+  const shownPeriod = pickedPeriod ?? openingPeriod(daySlots, value.at);
   const messenger = sf.info.contact.messengerUsername;
 
   const pickDay = (date: string) => {
     setPickedDay(date);
+    setPickedPeriod(null);
     if (value.at && manilaDate(value.at) !== date) onChange({ mode: 'schedule', at: null });
   };
+
+  // Closed, full and too-soon days say so with an icon and a word, and can't be picked.
+  const dayChips = days.map((d): SlotChip => {
+    const label = dayChipLabel(d.date, now);
+    if (d.state === 'open') return { value: d.date, label };
+    const StateIcon = DAY_STATE_ICON[d.state];
+    const stateWord = words.location.dayState[d.state];
+    return {
+      value: d.date,
+      label,
+      detail: stateWord,
+      icon: <StateIcon aria-hidden="true" className="size-3" />,
+      disabled: true,
+      ariaLabel: words.location.dayDisabled(label, stateWord),
+    };
+  });
+
+  const periods = slotsByPeriod(daySlots).map((group) => ({
+    value: group.period,
+    label: words.location.periods[group.period],
+    detail: orderFlowWords.periodOpen(group.slots.filter((s) => s.state === 'open').length),
+    chips: group.slots.map((slot): SlotChip => {
+      const full = slot.state === 'full';
+      const left = slot.left ?? null;
+      const few = !full && left !== null && left <= FEW_LEFT;
+      return {
+        value: slot.at,
+        label: formatClock(slot.at),
+        detail: full ? words.location.slotFull : few ? words.location.slotLeft(left) : undefined,
+        tone: few ? 'warning' : 'muted',
+        disabled: full,
+        struck: full,
+      };
+    }),
+  }));
 
   return (
     <FieldSet className="min-w-0 gap-3">
@@ -263,65 +304,32 @@ export function WhenPicker({
               </Alert>
             ) : null}
 
-            {/* Day strip: Today, Tomorrow, then "Wed 5"; closed, full and too-soon days say so. */}
+            {/* A week or less: Today, Tomorrow, then "Wed 5" chips. Longer: a month (T127). */}
             <div className="flex min-w-0 flex-col gap-2">
               <span className="text-sm font-medium">{words.location.dayLabel}</span>
-              <DayChips
-                label={words.location.dayLabel}
-                value={day && dayInStrip ? day : null}
-                onValueChange={(date) => {
-                  pickDay(date);
-                  setMoreOpen(false);
-                }}
-                pressedClassName={PRESSED}
-                chips={chips.map((d): SlotChip => {
-                  const label = dayChipLabel(d.date, now);
-                  if (d.state === 'open') return { value: d.date, label };
-                  const StateIcon = DAY_STATE_ICON[d.state];
-                  const stateWord = words.location.dayState[d.state];
-                  return {
-                    value: d.date,
-                    label,
-                    detail: stateWord,
-                    icon: <StateIcon aria-hidden="true" className="size-3" />,
-                    disabled: true,
-                    ariaLabel: words.location.dayDisabled(label, stateWord),
-                  };
-                })}
-                trailing={
-                  hasMore ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      aria-expanded={moreOpen}
-                      aria-pressed={Boolean(day && !dayInStrip)}
-                      onClick={() => setMoreOpen((open) => !open)}
-                      className={cn(
-                        'h-16 min-w-18 shrink-0 flex-col gap-0.5 rounded-2xl px-3 text-sm font-semibold aria-pressed:border-transparent',
-                        PRESSED,
-                      )}
-                    >
-                      <CalendarDaysIcon aria-hidden="true" className="size-4" />
-                      <span>
-                        {day && !dayInStrip ? dayChipLabel(day, now) : words.location.moreDates}
-                      </span>
-                    </Button>
-                  ) : null
-                }
-              />
-              {/* More dates opens a month inside the sheet, under the strip, never over it (T85). */}
-              {hasMore && moreOpen ? (
-                <div className="flex justify-center rounded-2xl border bg-card">
-                  <MoreDatesCalendar
-                    days={data.days}
-                    selected={day}
-                    onPick={(date) => {
-                      pickDay(date);
-                      setMoreOpen(false);
-                    }}
+              {monthView ? (
+                <>
+                  <SlotMonth
+                    days={dayChips.map((chip) => ({
+                      date: chip.value,
+                      disabled: chip.disabled,
+                      ariaLabel: chip.disabled ? chip.ariaLabel : dayLongLabel(chip.value),
+                    }))}
+                    value={day}
+                    onValueChange={pickDay}
+                    today={manilaDate(now)}
                   />
-                </div>
-              ) : null}
+                  <p className="text-xs text-muted-foreground">{words.location.moreDatesLegend}</p>
+                </>
+              ) : (
+                <DayChips
+                  label={words.location.dayLabel}
+                  value={day}
+                  onValueChange={pickDay}
+                  pressedClassName={PRESSED}
+                  chips={dayChips}
+                />
+              )}
             </div>
 
             {notice ? (
@@ -331,40 +339,23 @@ export function WhenPicker({
               </p>
             ) : null}
 
-            {/* Time chips for the picked day, grouped Morning, Afternoon and Evening. */}
-            {activeDay ? (
+            {/* The picked day's times in Morning, Afternoon and Evening tabs (T127). */}
+            {activeDay && periods.length > 0 ? (
               <div className="flex flex-col gap-3">
                 <span className="text-sm font-medium">{words.location.timeLabel(type)}</span>
-                {periods.map((group) => (
-                  <div key={group.period} className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                      {words.location.periods[group.period]}
-                    </span>
-                    <TimeChips
-                      label={words.location.periods[group.period]}
-                      value={value.at}
-                      onValueChange={(at) => onChange({ mode: 'schedule', at })}
-                      pressedClassName={PRESSED}
-                      chips={group.slots.map((slot): SlotChip => {
-                        const full = slot.state === 'full';
-                        const left = slot.left ?? null;
-                        const few = !full && left !== null && left <= FEW_LEFT;
-                        return {
-                          value: slot.at,
-                          label: formatClock(slot.at),
-                          detail: full
-                            ? words.location.slotFull
-                            : few
-                              ? words.location.slotLeft(left)
-                              : undefined,
-                          tone: few ? 'warning' : 'muted',
-                          disabled: full,
-                          struck: full,
-                        };
-                      })}
-                    />
-                  </div>
-                ))}
+                <SlotPeriodTabs
+                  label={orderFlowWords.partLabel}
+                  periods={periods}
+                  period={shownPeriod}
+                  onPeriodChange={setPickedPeriod}
+                  value={value.at}
+                  onValueChange={(at) => {
+                    setPickedPeriod(dayPeriodOf(at));
+                    onChange({ mode: 'schedule', at });
+                  }}
+                  pressedClassName={PRESSED}
+                  chipsClassName="grid grid-cols-3 sm:grid-cols-4"
+                />
               </div>
             ) : null}
 

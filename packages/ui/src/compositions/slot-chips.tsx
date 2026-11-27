@@ -2,12 +2,15 @@
 
 import type { ReactNode } from 'react';
 import { Scroller } from '@smartapp/ui/components/scroller';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { cn } from 'cn';
 
 // Day and time chips (T85): the customer's When picker, the owner's Change time and the phone Calendar
 // pick a day and a time the same way, so they are learned once. Built from the installed Toggle Group
 // and Scroller; each app passes its own pressed colour (the shop's colour on the storefront).
+// T127: the times always come in part-of-day tabs (SlotPeriodTabs), and a window longer than a week
+// picks its day on a month (slot-month.tsx, its own file so the calendar loads only where it is shown).
 
 export type ChipTone = 'default' | 'muted' | 'warning' | 'danger' | 'primary';
 
@@ -171,5 +174,82 @@ export function TimeChips({
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
+  );
+}
+
+export interface SlotPeriod {
+  value: string;
+  // "Morning"
+  label: ReactNode;
+  // "4 open"
+  detail?: ReactNode | undefined;
+  chips: readonly SlotChip[];
+}
+
+export interface SlotPeriodTabsProps {
+  periods: readonly SlotPeriod[];
+  // The part on screen; null opens on the first one.
+  period: string | null;
+  onPeriodChange: (period: string) => void;
+  value: string | null;
+  onValueChange: (value: string) => void;
+  // Names the row of parts, e.g. "Part of the day".
+  label: string;
+  pressedClassName: string;
+  chipsClassName?: string | undefined;
+  className?: string | undefined;
+}
+
+/**
+ * The times of one day in part-of-day tabs (T127, from Change time): Morning, Afternoon and Evening each
+ * with how many are open, then that part's time chips. A long day stays one short list instead of 50 chips.
+ */
+export function SlotPeriodTabs({
+  periods,
+  period,
+  onPeriodChange,
+  value,
+  onValueChange,
+  label,
+  pressedClassName,
+  chipsClassName,
+  className,
+}: SlotPeriodTabsProps) {
+  const shown = periods.find((p) => p.value === period) ?? periods[0];
+  if (!shown) return null;
+  return (
+    <Tabs
+      value={shown.value}
+      onValueChange={(next) => {
+        const picked = periods.find((p) => p.value === next);
+        if (picked) onPeriodChange(picked.value);
+      }}
+      className={cn('gap-3', className)}
+    >
+      <TabsList aria-label={label} className="h-auto w-full">
+        {periods.map((p) => (
+          <TabsTrigger key={p.value} value={p.value} className="h-11 flex-1 flex-col gap-0 py-1">
+            <span className="font-semibold">{p.label}</span>
+            {p.detail ? (
+              <span className="text-xs font-normal text-muted-foreground tabular-nums">
+                {p.detail}
+              </span>
+            ) : null}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {periods.map((p) => (
+        <TabsContent key={p.value} value={p.value}>
+          <TimeChips
+            label={typeof p.label === 'string' ? p.label : label}
+            value={value}
+            onValueChange={onValueChange}
+            pressedClassName={pressedClassName}
+            chips={p.chips}
+            className={chipsClassName}
+          />
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 }

@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  canQuickAdd,
-  formatPeso,
-  imageSources,
-  words,
-  type Category,
-  type Item,
-  type OptionGroup,
-} from '@smartapp/core';
+import { imageSources, itemPriceLabel, words, type Category, type Item } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import { Card, CardContent } from '@smartapp/ui/components/card';
 import { Hitbox } from '@smartapp/ui/components/hitbox';
@@ -18,8 +10,8 @@ import { PlusIcon } from 'lucide-react';
 export interface ItemSheetGoesWellWithProps {
   items: readonly Item[];
   categories: readonly Category[];
-  optionGroups: readonly OptionGroup[];
-  onQuickAdd: (item: Item) => void;
+  /** "+": adds at once when the item has no choices to make, else opens it over this sheet. */
+  onAdd: (item: Item) => void;
   onOpenItem: (itemId: string) => void;
 }
 
@@ -29,8 +21,7 @@ export interface ItemSheetGoesWellWithProps {
 export function ItemSheetGoesWellWith({
   items,
   categories,
-  optionGroups,
-  onQuickAdd,
+  onAdd,
   onOpenItem,
 }: ItemSheetGoesWellWithProps) {
   if (items.length === 0) return null;
@@ -42,9 +33,7 @@ export function ItemSheetGoesWellWith({
       </h4>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {items.slice(0, 4).map((item) => {
-          const isQuick = canQuickAdd(item, optionGroups);
-          const firstVariant = item.variants[0];
-          const priceLabel = firstVariant ? formatPeso(firstVariant.price) : '';
+          const priceLabel = itemPriceLabel(item);
           const photo = item.photos[0];
           const category = categories.find((c) => c.id === item.categoryId);
 
@@ -86,13 +75,7 @@ export function ItemSheetGoesWellWith({
                       variant="secondary"
                       className="size-6 rounded-full"
                       aria-label={words.storefrontShell.menu.addItem(item.name)}
-                      onClick={() => {
-                        if (isQuick) {
-                          onQuickAdd(item);
-                        } else {
-                          onOpenItem(item.id);
-                        }
-                      }}
+                      onClick={() => onAdd(item)}
                     >
                       <PlusIcon className="size-3" aria-hidden="true" />
                     </Button>

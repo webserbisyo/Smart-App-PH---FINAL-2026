@@ -1,23 +1,20 @@
 import * as React from 'react';
 import { ArrowLeftIcon, ArrowRightIcon, BanIcon, WifiOffIcon } from 'lucide-react';
-import type { BoardOrder, Schedule, ScheduleDay } from '@smartapp/core';
-import { errorWords, formatClock, manilaDate, ordersWords } from '@smartapp/core';
+import type { BoardOrder, Schedule } from '@smartapp/core';
+import { errorWords, formatClock, manilaDate, ordersWords, SLOT_STRIP_DAYS } from '@smartapp/core';
 import { errorCodeOf, useRescheduleOrder, useRescheduleSchedule } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
-import { Calendar, CalendarDayButton } from '@smartapp/ui/components/calendar';
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@smartapp/ui/components/field';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Switch } from '@smartapp/ui/components/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@smartapp/ui/components/tabs';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { notify } from '@smartapp/ui/compositions/notify';
-import { TimeChips, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import { DayChips, SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import { SlotMonth, type SlotMonthDay } from '@smartapp/ui/compositions/slot-month';
 import { copyText } from '@smartapp/ui/lib/copy-text';
-import { cn } from 'cn';
-import { dateFromKey, keyFromDate } from '@/app/day-key';
 import { Notice } from '@/app/notice';
-import { dayLong, periodOf, whenShort } from '@/app/orders/calendar-days';
+import { dayChipLabel, dayLong, periodOf, whenShort } from '@/app/orders/calendar-days';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { clockOf } from './calendar-facts.js';
@@ -301,94 +298,33 @@ function timeChips(ct: ChangeTime, slots: Schedule['days'][number]['slots']): Sl
 
 // ---------------------------------------------------------------- The month
 
-interface MonthFacts {
-  days: ReadonlyMap<string, ScheduleDay>;
-  // The day the order is on now.
-  current: string;
-}
-
-const MonthFactsContext = React.createContext<MonthFacts | null>(null);
-
-/** A day of the month: its number, how many orders are on it, crossed out when closed, "Full" in red. */
-// The calendar's own day label is replaced by the number and the count below.
-function MonthDayButton({ className, ...props }: React.ComponentProps<typeof CalendarDayButton>) {
-  const facts = React.useContext(MonthFactsContext);
-  const key = keyFromDate(props.day.date);
-  const day = facts?.days.get(key);
-  const count = day?.booked ?? 0;
-  const word =
-    day?.state === 'closed'
-      ? ordersWords.bookings.closed
-      : day?.state === 'full'
-        ? ordersWords.bookings.full
-        : day?.state === 'too_soon'
-          ? ordersWords.bookings.tooSoon
-          : count > 0
-            ? W.dayOrders(count)
-            : null;
-  return (
-    <CalendarDayButton
-      {...props}
-      aria-label={[dayLong(key), word, key === facts?.current ? W.now : null]
+/** A day of the month for the shared picker (T127): crossed out when closed, "Full" in red, else its count. */
+function monthDays(ct: ChangeTime, days: Schedule['days']): SlotMonthDay[] {
+  const current = manilaDate(ct.currentAt);
+  return days.map((day): SlotMonthDay => {
+    const count = day.booked ?? 0;
+    const word =
+      day.state === 'closed'
+        ? ordersWords.bookings.closed
+        : day.state === 'full'
+          ? ordersWords.bookings.full
+          : day.state === 'too_soon'
+            ? ordersWords.bookings.tooSoon
+            : count > 0
+              ? W.dayOrders(count)
+              : null;
+    return {
+      date: day.date,
+      disabled: day.state !== 'open' && !(day.state === 'full' && ct.allowAnyway),
+      detail: day.state === 'full' ? ordersWords.bookings.full : count > 0 ? count : undefined,
+      tone: day.state === 'full' ? 'danger' : 'muted',
+      struck: day.state === 'closed',
+      current: day.date === current,
+      ariaLabel: [dayLong(day.date), word, day.date === current ? W.now : null]
         .filter(Boolean)
-        .join(', ')}
-      className={cn(
-        'aspect-auto h-11 gap-0 tabular-nums',
-        day?.state === 'closed' && 'line-through',
-        key === facts?.current && 'border-2 border-dashed border-primary',
-        className,
-      )}
-    >
-      {props.day.date.getDate()}
-      {day?.state === 'full' ? (
-        <span className="font-semibold text-destructive">{ordersWords.bookings.full}</span>
-      ) : count > 0 ? (
-        <span>{count}</span>
-      ) : null}
-    </CalendarDayButton>
-  );
-}
-
-const MONTH_COMPONENTS = { DayButton: MonthDayButton };
-
-function MonthPicker({ ct, days }: { ct: ChangeTime; days: Schedule['days'] }) {
-  const first = days[0]?.date;
-  const last = days.at(-1)?.date;
-  const facts = React.useMemo<MonthFacts>(
-    () => ({ days: new Map(days.map((d) => [d.date, d])), current: manilaDate(ct.currentAt) }),
-    [days, ct.currentAt],
-  );
-  const [month, setMonth] = React.useState(() => dateFromKey(ct.day ?? first ?? ct.today));
-  if (!first || !last) return null;
-  return (
-    <MonthFactsContext value={facts}>
-      <div className="rounded-2xl border bg-card p-1">
-        <Calendar
-          mode="single"
-          month={month}
-          onMonthChange={setMonth}
-          selected={ct.day ? dateFromKey(ct.day) : undefined}
-          startMonth={dateFromKey(first)}
-          endMonth={dateFromKey(last)}
-          onSelect={(d) => {
-            if (d) ct.setDay(keyFromDate(d));
-          }}
-          disabled={(d) => {
-            const state = facts.days.get(keyFromDate(d))?.state;
-            return state !== 'open' && !(state === 'full' && ct.allowAnyway);
-          }}
-          showOutsideDays={false}
-          className="w-full bg-transparent"
-          classNames={{
-            root: 'w-full',
-            day: 'group/day relative w-full p-0 text-center select-none',
-            today: 'rounded-md bg-muted text-foreground',
-          }}
-          components={MONTH_COMPONENTS}
-        />
-      </div>
-    </MonthFactsContext>
-  );
+        .join(', '),
+    };
+  });
 }
 
 /** The picker: a month that is always there, the times by part of the day, then telling the customer. */
@@ -452,8 +388,47 @@ export function ChangeTimeBody({ ct }: { ct: ChangeTime }) {
             </span>
           ) : null}
         </div>
-        <MonthPicker ct={ct} days={days} />
-        <p className="text-xs text-muted-foreground">{W.legend}</p>
+        {/* Today and up to a week ahead: day chips; a longer window: the month (T127). */}
+        {days.length > SLOT_STRIP_DAYS ? (
+          <>
+            <SlotMonth
+              days={monthDays(ct, days)}
+              value={ct.day}
+              onValueChange={ct.setDay}
+              today={ct.today}
+            />
+            <p className="text-xs text-muted-foreground">{W.legend}</p>
+          </>
+        ) : (
+          <DayChips
+            label={W.dateLabel}
+            value={ct.day}
+            onValueChange={ct.setDay}
+            pressedClassName={PRESSED}
+            chips={monthDays(ct, days).map((day, i): SlotChip => {
+              const state = days[i]?.state;
+              const count = days[i]?.booked ?? 0;
+              return {
+                value: day.date,
+                label: dayChipLabel(day.date, ct.today),
+                detail:
+                  state === 'closed'
+                    ? ordersWords.bookings.closed
+                    : state === 'full'
+                      ? ordersWords.bookings.full
+                      : state === 'too_soon'
+                        ? ordersWords.bookings.tooSoon
+                        : count > 0
+                          ? W.dayOrders(count)
+                          : undefined,
+                tone: day.tone,
+                disabled: day.disabled,
+                current: day.current,
+                ariaLabel: day.ariaLabel,
+              };
+            })}
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -474,41 +449,24 @@ export function ChangeTimeBody({ ct }: { ct: ChangeTime }) {
             {W.noTimes}
           </p>
         ) : (
-          <Tabs
-            value={shown.period}
-            onValueChange={(value) => {
+          <SlotPeriodTabs
+            label={W.partLabel}
+            periods={groups.map((group) => ({
+              value: group.period,
+              label: ordersWords.bookings[group.period],
+              detail: W.openCount(group.open),
+              chips: timeChips(ct, group.slots),
+            }))}
+            period={shown.period}
+            onPeriodChange={(value) => {
               const next = PERIODS.find((p) => p === value);
               if (next) ct.setPeriod(next);
             }}
-            className="gap-3"
-          >
-            <TabsList aria-label={W.partLabel} className="h-auto w-full">
-              {groups.map((group) => (
-                <TabsTrigger
-                  key={group.period}
-                  value={group.period}
-                  className="h-11 flex-1 flex-col gap-0 py-1 md:h-10"
-                >
-                  <span className="font-semibold">{ordersWords.bookings[group.period]}</span>
-                  <span className="text-xs font-normal text-muted-foreground tabular-nums">
-                    {W.openCount(group.open)}
-                  </span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            {groups.map((group) => (
-              <TabsContent key={group.period} value={group.period}>
-                <TimeChips
-                  label={ordersWords.bookings[group.period]}
-                  value={ct.at}
-                  onValueChange={ct.setAt}
-                  pressedClassName={PRESSED}
-                  chips={timeChips(ct, group.slots)}
-                  className="grid grid-cols-3 sm:grid-cols-4"
-                />
-              </TabsContent>
-            ))}
-          </Tabs>
+            value={ct.at}
+            onValueChange={ct.setAt}
+            pressedClassName={PRESSED}
+            chipsClassName="grid grid-cols-3 sm:grid-cols-4"
+          />
         )}
       </div>
 

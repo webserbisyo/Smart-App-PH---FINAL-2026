@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createDeviceStorage, storageKey } from '../src/device-storage';
-import { mergeLine, removeLine } from '../src/hooks/storefront/device';
+import { mergeLine, removeLine, updateLine } from '../src/hooks/storefront/device';
 import { lineIdentity } from '@smartapp/core';
 
 function mapBackend() {
@@ -99,5 +99,56 @@ describe('basket remove with Undo', () => {
 
   it('returns null for a line that is gone', () => {
     expect(removeLine([a], lineIdentity(b))).toBeNull();
+  });
+});
+
+describe('basket edit (T127)', () => {
+  const a = { ...line, optionIds: ['a'], qty: 1 };
+  const b = { ...line, optionIds: ['b'], qty: 2 };
+  const c = { ...line, optionIds: ['c'], qty: 1 };
+
+  it('changes the whole line in the same place', () => {
+    const result = updateLine(
+      [a, b, c],
+      lineIdentity(b),
+      { ...b, note: 'less ice', qty: 3 },
+      false,
+    );
+    expect(result?.joined).toBe(false);
+    expect(result?.lines.map((l) => [l.optionIds[0], l.note, l.qty])).toEqual([
+      ['a', '', 1],
+      ['b', 'less ice', 3],
+      ['c', '', 1],
+    ]);
+  });
+
+  it('Just 1 keeps the rest on the old line and adds the changed one', () => {
+    const result = updateLine([a, b], lineIdentity(b), { ...b, note: 'no sugar', qty: 1 }, true);
+    expect(result?.joined).toBe(false);
+    expect(result?.lines.map((l) => [l.optionIds[0], l.note, l.qty])).toEqual([
+      ['a', '', 1],
+      ['b', '', 1],
+      ['b', 'no sugar', 1],
+    ]);
+  });
+
+  it('joins a line that now matches another one, capped at 99', () => {
+    const result = updateLine([a, b, c], lineIdentity(c), { ...c, optionIds: ['a'] }, false);
+    expect(result?.joined).toBe(true);
+    expect(result?.lines).toEqual([{ ...a, qty: 2 }, b]);
+    const big = { ...a, qty: 98 };
+    expect(updateLine([big, b], lineIdentity(b), { ...b, optionIds: ['a'] }, false)?.lines).toEqual(
+      [{ ...big, qty: 99 }],
+    );
+    const split = updateLine([a, b], lineIdentity(b), { ...b, optionIds: ['a'], qty: 1 }, true);
+    expect(split?.joined).toBe(true);
+    expect(split?.lines).toEqual([
+      { ...a, qty: 2 },
+      { ...b, qty: 1 },
+    ]);
+  });
+
+  it('returns null for a line that is gone', () => {
+    expect(updateLine([a], lineIdentity(b), b, false)).toBeNull();
   });
 });

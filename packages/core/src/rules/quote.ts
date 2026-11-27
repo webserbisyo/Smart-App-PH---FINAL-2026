@@ -5,7 +5,13 @@ import type { OrderPayload, Quote, QuoteLine, QuoteProblem } from '../schemas/or
 import type { PaymentMethod } from '../schemas/enums.js';
 import type { PublicShop } from '../schemas/storefront.js';
 import { deliveryFee } from './delivery.js';
-import { openState, pickupSlots, readyEstimate, variantAvailability } from './hours.js';
+import {
+  availabilityAt,
+  openState,
+  pickupSlots,
+  readyEstimate,
+  variantAvailability,
+} from './hours.js';
 import { lineIdentity, unitPrice, validateLinePicks, variantLabel } from './options.js';
 import { rewardState } from './stamps.js';
 
@@ -51,6 +57,8 @@ export function quote(
   const sf = shop.storefront;
   const { items, optionGroups } = shop.catalog;
   const problems: QuoteProblem[] = [];
+  // Stock is judged at the booked time (T127), so "Sold out today" can still be booked for tomorrow.
+  const stockAt = availabilityAt(payload.scheduledAt, now);
 
   const lines: QuoteLine[] = payload.lines.map((line) => {
     const item = items.find((i) => i.id === line.itemId);
@@ -87,7 +95,7 @@ export function quote(
       unitPrice: price,
       lineTotal: price * line.qty,
       photo: item.photos[0] ?? null,
-      problems: validateLinePicks(item, optionGroups, line, now),
+      problems: validateLinePicks(item, optionGroups, line, stockAt),
     };
   });
 
@@ -149,7 +157,7 @@ export function quote(
       reward.kind === 'free_item' ? items.find((i) => i.id === reward.itemId) : undefined;
     const freeVariant = freeItem?.variants.find((v) => v.id === reward.variantId);
     const freeAvailable = freeVariant
-      ? variantAvailability(freeVariant, now) === 'available'
+      ? variantAvailability(freeVariant, stockAt) === 'available'
       : false;
     const rs =
       card.status === 'off'

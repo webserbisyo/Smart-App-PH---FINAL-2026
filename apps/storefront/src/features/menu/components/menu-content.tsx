@@ -304,7 +304,6 @@ function MenuView({
           catalog={catalog}
           itemId={params.item}
           onClose={handleCloseItem}
-          onOpenItem={handleOpenItem}
           now={now}
         />
       ) : null}

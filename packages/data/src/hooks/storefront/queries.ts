@@ -53,7 +53,7 @@ export function useRefreshShop(slug: string): () => Promise<void> {
 export function useQuote(slug: string, payload: OrderPayload | null) {
   const { storefront } = useShopAdapters();
   const debounced = useDebounced(payload, QUOTE_DEBOUNCE_MS);
-  return useQuery({
+  const query = useQuery({
     queryKey: qk.quote(slug, debounced),
     queryFn: () => {
       if (!debounced) throw offlineError();
@@ -63,6 +63,13 @@ export function useQuote(slug: string, payload: OrderPayload | null) {
     placeholderData: keepPreviousData,
     staleTime: 0,
   });
+  // The shown answer is for the order as it is now (T127): not the last answer kept on screen while the
+  // new one loads, nor one for the order before the debounce caught up. Place order waits for a current one.
+  const isCurrent =
+    query.data !== undefined &&
+    !query.isPlaceholderData &&
+    JSON.stringify(debounced) === JSON.stringify(payload);
+  return Object.assign(query, { isCurrent });
 }
 
 /** Place order: off while offline, never retried in the background (the clientKey makes a manual retry safe). */

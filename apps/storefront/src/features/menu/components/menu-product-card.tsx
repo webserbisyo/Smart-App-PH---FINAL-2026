@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  canQuickAdd,
   imageSources,
   itemPriceLabel,
   itemSoldOutLabel,
@@ -9,23 +8,10 @@ import {
   type Catalog,
   type Item,
 } from '@smartapp/core';
-import { useBasket, useFavourites } from '@smartapp/data';
+import { useFavourites } from '@smartapp/data';
 import { ProductCard, type ProductBadge } from '@smartapp/ui/compositions/product-card';
 import { useShop } from '../../shell/components/shop-context';
-import { useAddedToast } from '../use-added-toast';
-
-/** Adds an item that has one variant and no required choice, and says so (the card's "+"). */
-export function useQuickAdd(): (item: Item) => void {
-  const { slug } = useShop();
-  const basket = useBasket(slug);
-  const addedToast = useAddedToast();
-  return (item) => {
-    const variant = item.variants[0];
-    if (!variant) return;
-    basket.add({ itemId: item.id, variantId: variant.id, optionIds: [], note: '', qty: 1 });
-    addedToast(item.name);
-  };
-}
+import { useQuickAdd } from '../use-quick-add';
 
 export interface MenuProductCardProps {
   item: Item;
@@ -88,7 +74,9 @@ export function MenuProductCard({
       }}
       add={{
         label: words.storefrontShell.menu.addItem(item.name),
-        onClick: () => (canQuickAdd(item, catalog.optionGroups) ? quickAdd(item) : onOpen(item.id)),
+        onClick: () => {
+          if (!quickAdd(item)) onOpen(item.id);
+        },
       }}
       className={className}
     />
