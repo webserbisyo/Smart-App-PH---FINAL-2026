@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
       capable: true,
       title: shortName(appName),
       statusBarStyle: 'default',
-      // The launch picture per iPhone and iPad screen: the shop's icon on its opening colour (R51, T93, T121).
+      // The launch picture per iPhone and iPad screen: the shop's logo alone on its opening colour (R51, T122).
       startupImage: IOS_SCREENS.map((screen) => ({
         url: `/${slug}/splash/${splashSizeName(screen)}`,
         media: splashMedia(screen),
@@ -54,6 +54,9 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
     ...(files
       ? { openGraph: { title: name, description: tagline ?? name, images: [files.og] } }
       : {}),
+    // iPhone uses the launch pictures only with Apple's own tag (T122); Next 16 writes just the standard
+    // `mobile-web-app-capable` for `appleWebApp.capable`, so without this the app opened white.
+    other: { 'apple-mobile-web-app-capable': 'yes' },
     ...(isDemoShopSlug(slug) ? {} : { robots: { index: false, follow: false } }),
   };
 }

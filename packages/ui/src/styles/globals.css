@@ -645,9 +645,9 @@
   z-index: var(--z-splash);
 }
 
-/* The installed app's launch (decisions R51, T93): the shop's icon and name on its opening colour, the
-   same picture iPhone shows while the app starts, fading into the page as soon as it paints (80 ms hold,
-   300 ms fade). The logo moves as the owner picked (`data-motion` on the splash): fade (grows a little),
+/* The installed app's launch (decisions R51, T93, T122): the shop's logo on its opening colour, at the same
+   spot as the picture iPhone shows while the app starts, its name fading in under it, then leaving for the
+   page (see `app-splash` for the timing). The logo moves as the owner picked (`data-motion` on the splash): fade (grows a little),
    pop, rise, pulse or none; pop and pulse finish before the fade. Only in the installed app; never in a
    browser tab or under reduced motion. */
 @keyframes splash-out {
@@ -720,35 +720,62 @@
   }
 }
 
-/* The installed app's splash (T93, T94): stays until the page is ready (`InstallWatcher` sets data-ready once
-   the logo's motion has played), and leaves after 3 s whatever happens, so a page whose script fails still
-   opens. Only in the installed app. */
+/* The installed app's splash (T93, T94, T122): stays until the page is ready (`InstallWatcher` sets data-ready,
+   never before 1 s from launch), and leaves after 3 s whatever happens, so a page whose script fails still
+   opens. Its logo, words and loader leave first (`splash-content`), then the colour, so nothing ghosts over
+   the page. It takes taps while it shows, so a tap never lands on a hidden button. Installed app only. */
 @utility app-splash {
   display: none;
   pointer-events: none;
   @media (display-mode: standalone) {
     display: flex;
-    animation: splash-out var(--duration-slow) var(--ease-standard) 3s both;
+    pointer-events: auto;
+    animation: splash-out var(--duration-base) var(--ease-standard) 3s both;
     &[data-ready] {
       animation-name: splash-leave;
-      animation-delay: 0ms;
+      animation-delay: var(--duration-fast);
     }
   }
 }
 
-/* The owner dashboard's opening screen (T121): the Smart App PH mark on the page colour, light or dark, written
-   into index.html so it paints before any script loads. Same timing as the shop app: it leaves once the app
-   has drawn (`data-ready`, never before 1 s from launch) and after 3 s whatever happens. Installed app only. */
+/* The owner dashboard's opening screen (T121, T122): the Smart App PH mark on the page colour, light or dark,
+   written into index.html so it paints before any script loads. Same timing and exit as the shop app's. */
 @utility boot-splash {
   display: none;
   pointer-events: none;
   @media (display-mode: standalone) {
     display: flex;
-    animation: splash-out var(--duration-slow) var(--ease-standard) 3s both;
+    pointer-events: auto;
+    animation: splash-out var(--duration-base) var(--ease-standard) 3s both;
     &[data-ready] {
       animation-name: splash-leave;
-      animation-delay: 0ms;
+      animation-delay: var(--duration-fast);
     }
+  }
+}
+
+/* What sits on the opening screen's colour; it leaves first (T122). */
+@utility splash-content {
+  [data-ready] > & {
+    animation: splash-leave var(--duration-fast) var(--ease-standard) both;
+  }
+}
+
+/* Moves the opening screen's logo up by half the status bar in the installed iPhone app (`--launch-lift`, set
+   before the first paint), so it sits exactly on the launch picture's logo (T122). Zero anywhere else. */
+@utility launch-lift {
+  translate: 0 calc(var(--launch-lift, 0px) * -1);
+}
+
+/* The name and tagline under the logo fade in just after the first frame (T122): the launch picture shows the
+   logo alone, since it can't use the shop's font. */
+@utility splash-text {
+  opacity: 0;
+  animation: splash-loader-in var(--duration-base) var(--ease-standard) var(--duration-fast)
+    forwards;
+  @media (prefers-reduced-motion: reduce) {
+    opacity: 1;
+    animation: none;
   }
 }
 
@@ -760,13 +787,11 @@
   }
 }
 
-/* The loader under the logo: appears only after a second (on hold in the Editor, after the motion). */
+/* The loader: appears once the logo's motion has played, in the app and in the Editor's preview alike (T122). */
 @utility splash-loader {
   opacity: 0;
-  animation: splash-loader-in var(--duration-base) var(--ease-standard) 1s forwards;
-  [data-play='hold'] & {
-    animation-delay: var(--duration-slow);
-  }
+  animation: splash-loader-in var(--duration-base) var(--ease-standard) var(--duration-slow)
+    forwards;
 }
 
 @utility splash-dot {

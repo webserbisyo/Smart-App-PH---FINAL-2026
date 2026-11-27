@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-27 T122 iPhone logo screen: the shop app's launch pictures now show (Apple's capable tag), the logo no longer jumps at the hand-off (lifted by half the status bar), the picture is the logo alone with the name fading in under it, the dots show after the logo's motion, logo and words leave before the colour, no taps through the screen, pictures cached on Vercel
 - 2026-11-27 T121 installed apps open on their logo, never white: the shop opening screen goes out in the first bytes (no white placeholder), real shops get PNG icons, opening screen and iPhone pictures from their logo (logos now upload as PNG), launch pictures for every iPhone and iPad, a dashboard opening screen in light and dark, the logo stays 1 s to 3 s
 - 2026-11-27 T120 batch 4, plan, news and help mode: help mode cannot touch the owner's password, profile, plan money, deletes or news sends; trial days kept on an early payment; month-end plan dates; news lapse follows the plan's pause rule; plan and stamp card changes refresh the shop page; a family can share a phone number
 - 2026-11-27 T120 batch 3, counter: a handed-over walk-in earns the member's stamp, New order can use a member's prize (stamps held, limited prize counted, given back on cancel), Sold out today comes back at the first opening after today

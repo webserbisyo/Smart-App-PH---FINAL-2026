@@ -14,6 +14,15 @@ export { SHORT_NAME_MAX, shortName } from '@smartapp/core';
 export const SPLASH_ID = 'app-splash';
 export const SPLASH_MIN_MS = 1000;
 
+/**
+ * Runs before the first paint (T122). iPhone draws the launch picture over the whole screen, but an installed
+ * web app's page starts under the status bar, so a logo centred in the page sits half a status bar lower than
+ * the picture's and jumps at the handoff. This sets `--launch-lift` to that half (iPhone only, portrait), and
+ * the opening screen moves up by it (`launch-lift`). The dashboard's index.html carries the same lines.
+ */
+export const LAUNCH_LIFT_SCRIPT =
+  "try{if(navigator.standalone===true){var l=(screen.height-innerHeight)/2;if(l>0&&l<40)document.documentElement.style.setProperty('--launch-lift',l+'px')}}catch(e){}";
+
 /** iPhone and iPad Safari: no install prompt, so the card shows the Share steps. Other iOS browsers: none. */
 export function isIosSafari(userAgent: string): boolean {
   const ios = /iPhone|iPad|iPod/.test(userAgent);

@@ -4765,8 +4765,7 @@ export const editorWords = {
     motions: { fade: 'Fade', pop: 'Pop', rise: 'Rise', pulse: 'Pulse', none: 'None' },
     loader: 'While it loads',
     loaders: { dots: 'Dots', bar: 'Bar', ring: 'Ring', none: 'None' },
-    loaderHelp:
-      'Shows only when your page takes longer than a second. On fast internet nobody sees it.',
+    loaderHelp: 'Shows near the bottom just after your logo moves, and leaves with it.',
     logoSize: 'Logo size',
     logoSizes: { small: 'Small', medium: 'Medium', large: 'Large' },
     appName: 'App name',
@@ -4785,7 +4784,7 @@ export const editorWords = {
     watchAria: 'Play the whole opening into your page',
     phoneOnly:
       'The preview stays on your opening screen while you are here. It shows in the installed phone app only.',
-    note: 'Customers who already installed your shop see a new colour or name within a day or two. Phones set to reduce motion show it still.',
+    note: 'Android phones that already installed your shop get a new colour, logo or name within a day or two. iPhones get it when the app is added again. Phones set to reduce motion show it still.',
   },
   about: {
     label: 'About your shop',

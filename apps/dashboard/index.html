@@ -27,23 +27,34 @@
         if (a === 'dark' || (a === 'system' && matchMedia('(prefers-color-scheme: dark)').matches))
           document.documentElement.classList.add('dark');
       } catch (e) {}
+      // Lines the opening screen up with iPhone's launch picture (decision T122; storefront LAUNCH_LIFT_SCRIPT).
+      try {
+        if (navigator.standalone === true) {
+          var l = (screen.height - innerHeight) / 2;
+          if (l > 0 && l < 40)
+            document.documentElement.style.setProperty('--launch-lift', l + 'px');
+        }
+      } catch (e) {}
     </script>
   </head>
   <body>
-    <!-- The installed app's opening screen (decision T121): painted before any script, in light or dark from
+    <!-- The installed app's opening screen (decisions T121, T122): painted before any script, in light or dark from
          the line above. app/boot-splash.ts lets it go once the app has drawn; CSS removes it at 3 s anyway. -->
     <div
       id="boot-splash"
       aria-hidden="true"
-      class="boot-splash fixed inset-0 z-splash items-center justify-center bg-background"
+      class="boot-splash fixed inset-0 z-splash bg-background"
     >
-      <img
-        src="/brand/smartappph-mark-gradient.webp"
-        alt=""
-        width="96"
-        height="96"
-        class="size-24"
-      />
+      <!-- The content leaves first, then the colour (T122); lifted to sit exactly on the launch picture. -->
+      <div class="absolute inset-0 flex splash-content items-center justify-center">
+        <img
+          src="/brand/smartappph-mark-gradient.webp"
+          alt=""
+          width="96"
+          height="96"
+          class="size-24 launch-lift"
+        />
+      </div>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

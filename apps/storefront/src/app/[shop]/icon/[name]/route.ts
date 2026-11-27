@@ -85,6 +85,8 @@ export async function GET(request: Request, { params }: RouteProps): Promise<Res
   return new ImageResponse(picture, {
     width: size,
     height: size,
-    headers: { 'Cache-Control': 'public, max-age=86400' },
+    headers: {
+      'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
+    },
   });
 }

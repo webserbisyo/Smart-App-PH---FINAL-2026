@@ -17,7 +17,7 @@ const LOGO_CLASS: Record<OpeningLogoSize, string> = {
   large: 'size-32 rounded-4xl',
 };
 
-// Under the logo while a slow page gets ready (T94); it fades in only after a second (`splash-loader`).
+// Near the bottom while the page gets ready (T94); it fades in once the logo's motion has played (T122).
 function SplashLoader({ loader }: { loader: OpeningLoader }) {
   if (loader === 'none') return null;
   return (
@@ -51,9 +51,9 @@ export interface SplashScreenProps {
 }
 
 /**
- * The opening screen as drawn (decisions R51, T93, T94): the shop's icon, name and tagline on its opening
- * colour, the logo moving as the owner picked, and a loader for slow pages. The same layout as the iPhone
- * launch picture (/<slug>/splash/<size>), so the app goes from that picture straight into the shop.
+ * The opening screen as drawn (decisions R51, T93, T94, T122): the shop's logo in the middle of its opening
+ * colour, moving as the owner picked, with its name and tagline fading in under it and a loader. The iPhone
+ * launch picture (/<slug>/splash/<size>) is the logo alone at the same spot, so nothing jumps at the handoff.
  */
 export function SplashScreen({
   name,
@@ -69,6 +69,7 @@ export function SplashScreen({
   const px = OPENING_LOGO_PX[opening.logoSize];
   const showName = opening.showName || !icon;
   const line = opening.showTagline && tagline ? tagline : null;
+  const words = showName || line;
   return (
     <div
       id={id}
@@ -76,33 +77,41 @@ export function SplashScreen({
       data-motion={opening.motion}
       data-play={play}
       style={cssVars({ '--splash-bg': colours.background, '--splash-fg': colours.foreground })}
-      className={cn(
-        'fixed inset-0 z-splash flex-col items-center justify-center bg-(--splash-bg) text-(--splash-fg)',
-        className,
-      )}
+      className={cn('fixed inset-0 z-splash bg-(--splash-bg) text-(--splash-fg)', className)}
     >
-      <div className={cn('flex flex-col items-center gap-4', !icon && 'splash-logo')}>
-        {icon ? (
-          <img
-            src={icon}
-            alt=""
-            width={px}
-            height={px}
-            // The first thing the opening screen needs (T121): fetched before the page's other pictures.
-            fetchPriority="high"
-            className={cn('splash-logo', LOGO_CLASS[opening.logoSize])}
-          />
-        ) : null}
-        {showName || line ? (
-          <div className="flex flex-col items-center gap-1 px-6 text-center">
-            {showName ? (
-              <span className="text-xl font-bold text-balance">{appNameOf(name, opening)}</span>
-            ) : null}
-            {line ? <span className="text-sm text-balance opacity-80">{line}</span> : null}
-          </div>
-        ) : null}
+      {/* Logo, words and loader leave first, then the colour (T122). */}
+      <div className="absolute inset-0 flex splash-content items-center justify-center">
+        {/* The logo sits exactly in the middle, where the iPhone launch picture has it (lifted by half the
+            status bar in the installed app); the name and tagline fade in under it (T122). */}
+        <div className="relative flex launch-lift flex-col items-center">
+          {icon ? (
+            <img
+              src={icon}
+              alt=""
+              width={px}
+              height={px}
+              // The first thing the opening screen needs (T121): fetched before the page's other pictures.
+              fetchPriority="high"
+              className={cn('splash-logo', LOGO_CLASS[opening.logoSize])}
+            />
+          ) : null}
+          {words ? (
+            <div
+              className={cn(
+                icon ? 'absolute top-full left-1/2 mt-4 w-screen -translate-x-1/2' : 'splash-logo',
+              )}
+            >
+              <div className="flex splash-text flex-col items-center gap-1 px-6 text-center">
+                {showName ? (
+                  <span className="text-xl font-bold text-balance">{appNameOf(name, opening)}</span>
+                ) : null}
+                {line ? <span className="text-sm text-balance opacity-80">{line}</span> : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <SplashLoader loader={opening.loader} />
       </div>
-      <SplashLoader loader={opening.loader} />
     </div>
   );
 }

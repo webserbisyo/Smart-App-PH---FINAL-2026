@@ -88,6 +88,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] No more "Something went wrong" flash: the dashboard's own error screen inside the shell (Try again, Go to Home), one quiet reload onto a newer version when a page part is gone, the storefront worker kept for the whole deploy, and a first visit that saves only what the offline page needs (decision T119; built 2026-11-26, waiting for review)
 - [x] Audit fixes before the first paying shop, in 4 batches: checkout and menu, pre-live setup (Editor preview, the dashboard's own shop read, Remove samples), counter stamps and the New order prize, plan days, news, help mode locks and shared phones (decision T120; built 2026-11-27, waiting for review)
 - [x] Installed apps open on their logo, never a white screen: shop opening screen in the first bytes, PNG icons and launch pictures from a real shop's logo, every iPhone and iPad size, a dashboard opening screen in light and dark, 1 s to 3 s, no delay setting (decision T121; built 2026-11-27, waiting for review)
+- [x] iPhone logo screen hand-off: shop launch pictures used (Apple's tag), logo lined up with the picture (no jump), logo-only picture with the name fading in, dots that show, a clean exit and no taps through it (decision T122; built 2026-11-27, waiting for review)
 
 ## Phase 4: Backend, area by area
 
