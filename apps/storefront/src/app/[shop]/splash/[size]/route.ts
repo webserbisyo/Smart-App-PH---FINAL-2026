@@ -46,6 +46,9 @@ export async function GET(request: Request, { params }: RouteProps): Promise<Res
       justifyContent: 'center',
       width: '100%',
       height: '100%',
+      // The page starts under the status bar, so its centred logo sits half a status bar below the screen's
+      // centre; this padding puts the picture's logo on the same spot (T125).
+      paddingTop: screen.statusBar * ratio,
       backgroundColor: colours.background,
     },
     iconSrc

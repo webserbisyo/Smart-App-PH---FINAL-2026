@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import sharp from 'sharp';
 import { DEMO_MEDIA } from '../packages/core/src/demo/media.js';
 import { DEMO_SHOP_SLUGS } from '../packages/core/src/demo/slugs.js';
+import { IOS_SCREENS, splashSizeName } from '../packages/core/src/rules/ios-screens.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -228,6 +229,10 @@ describe('Demo Assets Integrity and Budgets', () => {
         expectedFiles.add(`${slug}/brand/icon-192.png`);
         expectedFiles.add(`${slug}/brand/apple-touch-icon.png`);
         expectedFiles.add(`${slug}/brand/og.jpg`);
+        // iPhone and iPad launch pictures (T125, tooling/scripts/shop-splash.ts).
+        for (const screen of IOS_SCREENS) {
+          expectedFiles.add(`${slug}/splash/${splashSizeName(screen)}.png`);
+        }
       }
       // The sample payment QR (T107, tooling/scripts/demo-qr.ts): lossless WebP only.
       expectedFiles.add(`${slug}/brand/qr-640.webp`);

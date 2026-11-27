@@ -27,7 +27,7 @@ export function splashIconUrl(slug: string, logo: string | null): string | null 
 }
 
 // Bump when the launch picture's drawing changes (app/[shop]/splash/[size]/route.ts), so iPhone asks again.
-const SPLASH_DRAWING = 't123';
+const SPLASH_DRAWING = 't124';
 
 /**
  * The tag on a shop's launch picture addresses (T123): it changes with the picture's colour, logo or logo
@@ -46,6 +46,15 @@ export function splashPictureVersion(
     String(OPENING_LOGO_PX[look.opening.logoSize]),
     splashIconUrl(slug, logo) ?? '',
   );
+}
+
+/**
+ * A shop's launch picture for one screen (T125): a demo shop's ready-made file in public/demo/<slug>/splash
+ * (tooling/scripts/shop-splash.ts), else drawn on request and tagged with what it shows.
+ */
+export function splashPictureUrl(slug: string, sizeName: string, tag: string): string {
+  if (demoBrandFiles(slug)) return `/demo/${slug}/splash/${sizeName}.png`;
+  return `/${slug}/splash/${sizeName}?v=${tag}`;
 }
 
 // The PNG icons drawn for a shop without ready-made files (Android needs a PNG of 512 px or more for its

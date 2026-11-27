@@ -59,7 +59,7 @@ describe('install rules', () => {
   });
 
   it('names each iPhone launch picture by its real pixels and finds it again', () => {
-    const iphone13 = { width: 390, height: 844, ratio: 3 } as const;
+    const iphone13 = { width: 390, height: 844, ratio: 3, statusBar: 47 } as const;
     expect(splashSizeName(iphone13)).toBe('1170x2532');
     expect(splashScreen('1170x2532')).toEqual(iphone13);
     expect(splashScreen('1170x2533')).toBeNull();

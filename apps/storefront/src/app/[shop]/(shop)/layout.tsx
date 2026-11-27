@@ -17,6 +17,7 @@ import {
   demoBrandFiles,
   shopIconUrls,
   splashIconUrl,
+  splashPictureUrl,
   splashPictureVersion,
 } from '@/features/install/shop-icons';
 import { ShopApp } from '@/features/shell/components/shop-app';
@@ -52,7 +53,7 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
       statusBarStyle: 'default',
       // The launch picture per iPhone and iPad screen: the shop's logo alone on its opening colour (R51, T122).
       startupImage: IOS_SCREENS.map((screen) => ({
-        url: `/${slug}/splash/${splashSizeName(screen)}?v=${splashTag}`,
+        url: splashPictureUrl(slug, splashSizeName(screen), splashTag),
         media: splashMedia(screen),
       })),
     },

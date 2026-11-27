@@ -4,34 +4,40 @@
 // tooling/scripts/dashboard-splash.ts). No imports, so that script and vite.config.ts can load this file.
 
 /**
- * Every current iPhone and iPad screen in CSS pixels and pixel ratio (portrait). Phones from the iPhone SE
+ * Every current iPhone and iPad screen in CSS pixels and pixel ratio (portrait), with its status bar height.
+ * iOS draws the launch picture over the whole screen, but the installed app's page starts under the status
+ * bar, so a logo centred on the page sits half a status bar lower than one centred on the screen. The
+ * pictures move their logo down by that much, so the page needs no script to line up
+ * (T125). Status bars: 20 on home-button phones and older iPads, 24 on newer iPads, 44 to 62 on phones with a
+ * notch or Dynamic Island (390x844 is 47, which matches the founder's iPhone screenshots; the others are the
+ * sizes as we know them, not measured, and the iPhone Air is assumed like the 17 Pro). Phones from the iPhone SE
  * (1st gen) to the iPhone 17 family and the iPhone Air; iPads from the 9.7" to the 13" iPad Pro.
  */
 export const IOS_SCREENS = [
   // iPhones
-  { width: 440, height: 956, ratio: 3 },
-  { width: 430, height: 932, ratio: 3 },
-  { width: 428, height: 926, ratio: 3 },
-  { width: 420, height: 912, ratio: 3 },
-  { width: 414, height: 896, ratio: 3 },
-  { width: 414, height: 896, ratio: 2 },
-  { width: 414, height: 736, ratio: 3 },
-  { width: 402, height: 874, ratio: 3 },
-  { width: 393, height: 852, ratio: 3 },
-  { width: 390, height: 844, ratio: 3 },
-  { width: 375, height: 812, ratio: 3 },
-  { width: 375, height: 667, ratio: 2 },
-  { width: 320, height: 568, ratio: 2 },
+  { width: 440, height: 956, ratio: 3, statusBar: 62 },
+  { width: 430, height: 932, ratio: 3, statusBar: 59 },
+  { width: 428, height: 926, ratio: 3, statusBar: 47 },
+  { width: 420, height: 912, ratio: 3, statusBar: 62 },
+  { width: 414, height: 896, ratio: 3, statusBar: 44 },
+  { width: 414, height: 896, ratio: 2, statusBar: 48 },
+  { width: 414, height: 736, ratio: 3, statusBar: 20 },
+  { width: 402, height: 874, ratio: 3, statusBar: 62 },
+  { width: 393, height: 852, ratio: 3, statusBar: 59 },
+  { width: 390, height: 844, ratio: 3, statusBar: 47 },
+  { width: 375, height: 812, ratio: 3, statusBar: 44 },
+  { width: 375, height: 667, ratio: 2, statusBar: 20 },
+  { width: 320, height: 568, ratio: 2, statusBar: 20 },
   // iPads
-  { width: 1032, height: 1376, ratio: 2 },
-  { width: 1024, height: 1366, ratio: 2 },
-  { width: 834, height: 1210, ratio: 2 },
-  { width: 834, height: 1194, ratio: 2 },
-  { width: 834, height: 1112, ratio: 2 },
-  { width: 820, height: 1180, ratio: 2 },
-  { width: 810, height: 1080, ratio: 2 },
-  { width: 768, height: 1024, ratio: 2 },
-  { width: 744, height: 1133, ratio: 2 },
+  { width: 1032, height: 1376, ratio: 2, statusBar: 24 },
+  { width: 1024, height: 1366, ratio: 2, statusBar: 24 },
+  { width: 834, height: 1210, ratio: 2, statusBar: 24 },
+  { width: 834, height: 1194, ratio: 2, statusBar: 24 },
+  { width: 834, height: 1112, ratio: 2, statusBar: 20 },
+  { width: 820, height: 1180, ratio: 2, statusBar: 24 },
+  { width: 810, height: 1080, ratio: 2, statusBar: 20 },
+  { width: 768, height: 1024, ratio: 2, statusBar: 20 },
+  { width: 744, height: 1133, ratio: 2, statusBar: 24 },
 ] as const;
 
 export type IosScreen = (typeof IOS_SCREENS)[number];

@@ -12,7 +12,8 @@
     "avatars": "node scripts/default-avatars.ts",
     "art": "node scripts/fluent-art.ts",
     "budget": "node scripts/js-budget.ts",
-    "dashboard:splash": "node scripts/dashboard-splash.ts"
+    "dashboard:splash": "node scripts/dashboard-splash.ts",
+    "shop:splash": "node scripts/shop-splash.ts"
   },
   "devDependencies": {
     "@dicebear/adventurer": "9.4.3",

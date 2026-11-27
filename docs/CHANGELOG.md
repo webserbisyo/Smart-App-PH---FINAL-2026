@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-27 T125 Installed app opening: dashboard back exactly to the T121 version that showed its logo at once on iPhone, the logo position fix moved into the launch pictures (no script before the first frame), demo shops get ready-made launch pictures (pnpm --filter @smartapp/tooling shop:splash)
 - 2026-11-27 T124 toasts and update bar: tapping a toast's button closes it (no double Undo), Refresh on the storefront's New version bar always reloads (fallback when the browser never says the new version took over) and the bar stays until tapped and also shows in a second tab, Notify me off stops the order's pushes on the server (POST `/s/:slug/o/:token/push/off`), Busy and Pause on Orders show Busy/Paused, offer Resume and toast, Goes well with uses the menu's words
 - 2026-11-27 T123 Launch pictures: each address carries a tag from what the picture shows and is kept for a year (both apps), and the shop app fetches the matching picture while the iPhone install steps show
 - 2026-11-27 T122 iPhone logo screen: the shop app's launch pictures now show (Apple's capable tag), the logo no longer jumps at the hand-off (lifted by half the status bar), the picture is the logo alone with the name fading in under it, the dots show after the logo's motion, logo and words leave before the colour, no taps through the screen, pictures cached on Vercel

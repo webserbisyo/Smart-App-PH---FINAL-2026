@@ -81,9 +81,9 @@ export function SplashScreen({
     >
       {/* Logo, words and loader leave first, then the colour (T122). */}
       <div className="absolute inset-0 flex splash-content items-center justify-center">
-        {/* The logo sits exactly in the middle, where the iPhone launch picture has it (lifted by half the
-            status bar in the installed app); the name and tagline fade in under it (T122). */}
-        <div className="relative flex launch-lift flex-col items-center">
+        {/* The logo sits exactly in the middle of the page, where the iPhone launch picture has it (the picture
+            moves its logo down by half the status bar, T125); the name and tagline fade in under it (T122). */}
+        <div className="relative flex flex-col items-center">
           {icon ? (
             <img
               src={icon}

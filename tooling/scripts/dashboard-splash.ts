@@ -5,8 +5,9 @@ import sharp from 'sharp';
 
 // The owner dashboard's iPhone and iPad launch pictures (decision T121): the Smart App PH mark on the page
 // colour, light and dark, one per screen in packages/core/src/rules/ios-screens.ts. They match the opening
-// screen in apps/dashboard/index.html (the mark at 96 CSS px, centred), so the app goes from the picture
-// straight into the page. Run after a screen is added: pnpm --filter @smartapp/tooling dashboard:splash
+// screen in apps/dashboard/index.html (the mark at 96 CSS px, centred on the page), so the app goes from the
+// picture straight into the page: the page starts under the status bar, so the picture's mark sits half a
+// status bar below the screen's centre (T125). Run after a screen is added: pnpm --filter @smartapp/tooling dashboard:splash
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '../..');
 const SCREENS_FILE = path.join(ROOT, 'packages/core/src/rules/ios-screens.ts');
@@ -21,6 +22,7 @@ interface Screen {
   width: number;
   height: number;
   ratio: number;
+  statusBar: number;
 }
 
 function isScreen(value: unknown): value is Screen {
@@ -31,7 +33,9 @@ function isScreen(value: unknown): value is Screen {
     'height' in value &&
     typeof value.height === 'number' &&
     'ratio' in value &&
-    typeof value.ratio === 'number'
+    typeof value.ratio === 'number' &&
+    'statusBar' in value &&
+    typeof value.statusBar === 'number'
   );
 }
 
@@ -54,10 +58,12 @@ async function main() {
     const height = screen.height * screen.ratio;
     const side = MARK_CSS_PX * screen.ratio;
     const mark = await sharp(MARK).resize(side, side).png().toBuffer();
+    const left = Math.round((width - side) / 2);
+    const top = Math.round((height - side) / 2 + (screen.statusBar / 2) * screen.ratio);
     for (const [theme, background] of Object.entries(THEMES)) {
       const file = path.join(OUTPUT, `dashboard-${width}x${height}-${theme}.png`);
       await sharp({ create: { width, height, channels: 3, background } })
-        .composite([{ input: mark, gravity: 'center' }])
+        .composite([{ input: mark, left, top }])
         .png({ compressionLevel: 9, palette: true })
         .toFile(file);
     }
