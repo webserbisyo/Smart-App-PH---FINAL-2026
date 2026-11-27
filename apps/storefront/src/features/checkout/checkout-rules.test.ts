@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatPeso,
   normalisePhPhone,
   words,
   SHOP_PACKS,
@@ -8,7 +9,7 @@ import {
   type PaymentMethod,
   type PhBank,
 } from '@smartapp/core';
-import { checkPlaceOrderEligibility, resolvePaymentOptions } from './checkout-rules';
+import { checkPlaceOrderEligibility, problemBlock, resolvePaymentOptions } from './checkout-rules';
 
 function makePayment(
   method: PaymentMethod,
@@ -216,5 +217,28 @@ describe('checkPlaceOrderEligibility', () => {
     });
     expect(withAddressNoZone.canPlace).toBe(false);
     expect(withAddressNoZone.missingField).toBe('zone');
+  });
+});
+
+describe('problemBlock', () => {
+  const at = (code: Parameters<typeof problemBlock>[0]['code'], amount: number | null = null) =>
+    problemBlock({ code, amount, km: null });
+
+  it('blocks on a way to pay the shop does not take (it no longer falls through)', () => {
+    expect(at('payment_unavailable')).toEqual({
+      canPlace: false,
+      reason: words.errors.codes.payment_unavailable,
+      missingField: 'payment',
+    });
+  });
+
+  it('words the minimum order with its amount', () => {
+    expect(at('below_min_order', 20_000)?.missingField).toBe('basket');
+    expect(at('below_min_order', 20_000)?.reason).toBe(words.shop.minOrder(formatPeso(20_000)));
+  });
+
+  it('blocks a reward or order type the shop cannot take', () => {
+    expect(at('reward_unavailable')?.canPlace).toBe(false);
+    expect(at('fulfillment_unavailable')?.missingField).toBe('type');
   });
 });

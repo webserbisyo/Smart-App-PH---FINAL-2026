@@ -16,7 +16,7 @@ import {
   type LatLng,
   type OrderType,
 } from '@smartapp/core';
-import { useBasket, useResolveMapsLink } from '@smartapp/data';
+import { useResolveMapsLink } from '@smartapp/data';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import { Button } from '@smartapp/ui/components/button';
 import {
@@ -51,6 +51,7 @@ import {
   LocateFixedIcon,
   MapPinIcon,
 } from 'lucide-react';
+import { useBasketView } from '../../basket/components/use-basket-view';
 import { useShop } from '../../shell/components/shop-context';
 import { ORDER_TYPE_ICON } from './order-type-icons';
 import { useLocationChoice } from './use-location-choice';
@@ -84,7 +85,7 @@ function HowWhereForm({
 }) {
   const { slug, shop } = useShop();
   const sf = shop.storefront;
-  const basket = useBasket(slug);
+  const { goodRows } = useBasketView(shop);
   const resolveMaps = useResolveMapsLink();
   const { choice, address, save } = useLocationChoice(slug);
 
@@ -180,8 +181,8 @@ function HowWhereForm({
     return () => clearTimeout(timer);
   }, [geoStatus]);
 
-  // Delivery fee & range result
-  const basketSubtotal = basket.lines.reduce((acc, l) => acc + l.qty * 100, 0);
+  // Delivery fee & range result, from the basket's real prices (the same lines the basket shows).
+  const basketSubtotal = goodRows.reduce((sum, row) => sum + row.lineTotal, 0);
   const deliveryResult = deliveryFee(sf, { spot, zoneId }, basketSubtotal);
 
   // Google maps search link for "Fix pin in Google Maps"
@@ -206,7 +207,9 @@ function HowWhereForm({
   }
 
   const isTooFar = !deliveryResult.ok && deliveryResult.code === 'out_of_range';
-  const isDeliveryDisabled = type === 'delivery' && (isTooFar || !deliveryResult.ok);
+  // Below the minimum order the address still saves: checkout asks for more items, not a new address.
+  const belowMin = !deliveryResult.ok && deliveryResult.code === 'below_min_order';
+  const isDeliveryDisabled = type === 'delivery' && !deliveryResult.ok && !belowMin;
 
   const zone = chosenZone(sf, zoneId);
   const typeCols = TYPE_COLS[Math.min(sf.orderTypes.length, 3)] ?? 'grid-cols-3';
@@ -423,6 +426,16 @@ function HowWhereForm({
                 </Button>
               </AlertDescription>
             </Alert>
+          ) : belowMin ? (
+            <div
+              role="status"
+              className="flex items-center gap-3 rounded-2xl bg-muted px-3.5 py-3 text-foreground"
+            >
+              <MapPinIcon aria-hidden="true" className="size-5 shrink-0" />
+              <span className="text-sm font-semibold tabular">
+                {words.shop.minOrder(formatPeso(deliveryResult.minOrder))}
+              </span>
+            </div>
           ) : null}
 
           {/* Rider details: pattern c-field-2 */}

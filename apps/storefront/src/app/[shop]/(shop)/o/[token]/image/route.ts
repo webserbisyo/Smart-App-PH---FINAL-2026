@@ -95,7 +95,8 @@ export async function GET(_request: Request, { params }: RouteProps): Promise<Re
         padding: '48px 64px 40px',
       },
       el('span', { fontSize: 48, fontWeight: 700 }, info.name),
-      info.contact.address
+      // A home-based shop can hide its address (showAddress); the saved picture keeps it hidden too.
+      info.contact.address && info.contact.showAddress
         ? el('span', { fontSize: 20, marginTop: 8, opacity: 0.85 }, info.contact.address)
         : null,
     ),

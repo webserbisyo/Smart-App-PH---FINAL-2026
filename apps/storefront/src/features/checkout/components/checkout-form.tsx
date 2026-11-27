@@ -34,6 +34,7 @@ import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { AlertTriangleIcon } from 'lucide-react';
 import { formatManilaDateTime } from '../../receipt/receipt-rules';
+import { useBasketView } from '../../basket/components/use-basket-view';
 import { useShop } from '../../shell/components/shop-context';
 import { useWhenIdle } from '../../shell/use-when-idle';
 import { useLocationChoice } from '../../location/components/use-location-choice';
@@ -278,6 +279,7 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
             }
           : null,
       paymentMethod: paymentMethod ?? (orderType === 'delivery' ? 'cod' : 'cash'),
+      paymentAccountId,
       note: note.trim() || null,
       useReward: readyReward && !readyReward.soldOutToday ? useReward : false,
     };
@@ -290,16 +292,18 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
     email,
     address,
     paymentMethod,
+    paymentAccountId,
     note,
     readyReward,
     useReward,
   ]);
 
   const { data: quote, isLoading: isQuoteLoading } = useQuote(slug, quotePayload);
+  const { goodRows } = useBasketView(shop, quote ?? null);
   const placeOrder = usePlaceOrder(slug);
 
   // Totals
-  const localSubtotal = basket.lines.reduce((sum, l) => sum + l.qty * 100, 0);
+  const localSubtotal = goodRows.reduce((sum, row) => sum + row.lineTotal, 0);
   const subtotal = quote?.subtotal ?? localSubtotal;
   const discount = quote?.discount ?? 0;
   const deliveryFee = orderType === 'delivery' ? (quote?.deliveryFee ?? null) : null;
@@ -322,6 +326,15 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
     );
   }, [paymentOptions, paymentMethod, paymentAccountId]);
   const selectedPaymentMethod = selectedOption?.method ?? null;
+  // The price check follows the way to pay the screen shows: when the picked one drops out (over the COD
+  // limit, a bank removed) or none was picked yet, the shown one becomes the pick.
+  if (
+    selectedOption &&
+    (selectedOption.method !== paymentMethod || selectedOption.accountId !== paymentAccountId)
+  ) {
+    setPaymentMethod(selectedOption.method);
+    setPaymentAccountId(selectedOption.accountId);
+  }
 
   // Flagged lines count
   const flaggedCount = quote?.lines.filter((l) => l.problems.length > 0).length ?? 0;

@@ -8,6 +8,7 @@ import {
   type OrderType,
   type PaymentMethod,
   type Quote,
+  type QuoteProblem,
   type Storefront,
 } from '@smartapp/core';
 import { words } from '@smartapp/core';
@@ -210,41 +211,60 @@ export function checkPlaceOrderEligibility(
     return { canPlace: false, reason: null, missingField: null };
   }
 
-  if (quote?.problems && quote.problems.length > 0) {
-    const first = quote.problems[0];
-    if (first) {
-      switch (first.code) {
-        case 'cod_limit':
-          return {
-            canPlace: false,
-            reason: words.checkout.codLimitReached,
-            missingField: 'payment',
-          };
-        case 'out_of_range':
-          return { canPlace: false, reason: words.checkout.outOfRange, missingField: 'address' };
-        case 'below_min_order':
-          return {
-            canPlace: false,
-            reason: first.amount
-              ? words.shop.minOrder(formatPeso(first.amount))
-              : words.checkout.belowMinOrder,
-            missingField: 'basket',
-          };
-        case 'zone_required':
-          return { canPlace: false, reason: words.location.chooseArea, missingField: 'zone' };
-        case 'slot_unavailable':
-          return { canPlace: false, reason: words.location.slotFilled, missingField: null };
-        case 'shop_closed':
-        case 'shop_busy':
-        case 'shop_paused':
-          return { canPlace: false, reason: words.shop.notTakingOrders, missingField: null };
-        default:
-          break;
-      }
-    }
+  // Every problem the price check found counts, not only the first (a transfer-only shop's first problem
+  // can be the payment, hiding a minimum order behind it).
+  for (const problem of quote?.problems ?? []) {
+    const blocked = problemBlock(problem);
+    if (blocked) return blocked;
   }
 
   return { canPlace: true, reason: null, missingField: null };
+}
+
+/** What one price-check problem says on the Place order button, or null when it does not block. */
+export function problemBlock(problem: QuoteProblem): PlaceOrderEligibilityResult | null {
+  switch (problem.code) {
+    case 'cod_limit':
+      return { canPlace: false, reason: words.checkout.codLimitReached, missingField: 'payment' };
+    case 'payment_unavailable':
+      return {
+        canPlace: false,
+        reason: words.errors.codes.payment_unavailable,
+        missingField: 'payment',
+      };
+    case 'out_of_range':
+      return { canPlace: false, reason: words.checkout.outOfRange, missingField: 'address' };
+    case 'below_min_order':
+      return {
+        canPlace: false,
+        reason: problem.amount
+          ? words.shop.minOrder(formatPeso(problem.amount))
+          : words.checkout.belowMinOrder,
+        missingField: 'basket',
+      };
+    case 'zone_required':
+      return { canPlace: false, reason: words.location.chooseArea, missingField: 'zone' };
+    case 'slot_unavailable':
+      return { canPlace: false, reason: words.location.slotFilled, missingField: null };
+    case 'fulfillment_unavailable':
+      return {
+        canPlace: false,
+        reason: words.errors.codes.fulfillment_unavailable,
+        missingField: 'type',
+      };
+    case 'reward_unavailable':
+      return {
+        canPlace: false,
+        reason: words.errors.codes.reward_unavailable,
+        missingField: null,
+      };
+    case 'shop_closed':
+    case 'shop_busy':
+    case 'shop_paused':
+      return { canPlace: false, reason: words.shop.notTakingOrders, missingField: null };
+    case 'empty_basket':
+      return { canPlace: false, reason: null, missingField: 'basket' };
+  }
 }
 
 /** Generates a safe idempotency key for client-side retries. */

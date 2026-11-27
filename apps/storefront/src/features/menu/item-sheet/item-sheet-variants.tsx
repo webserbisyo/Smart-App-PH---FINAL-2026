@@ -3,7 +3,6 @@
 import {
   findVariant,
   formatPeso,
-  possibleValues,
   variantAvailability,
   words,
   type Item,
@@ -116,19 +115,34 @@ export function ItemSheetVariants({
   // 2 or 3 axes (e.g. Size and Colour, or Size, Patty, Temperature) -> c-toggle-group-4 chips per axis
   const currentValues = selectedVariant?.values ?? item.variants[0]?.values ?? [];
 
+  const buyable = item.variants.filter((v) => variantAvailability(v, now) === 'available');
+  const bestBuyable = (picked: readonly string[], axisIndex: number) => {
+    let best: (typeof buyable)[number] | null = null;
+    let bestScore = -1;
+    for (const v of buyable) {
+      if (v.values[axisIndex] !== picked[axisIndex]) continue;
+      const score = v.values.filter((value, i) => value === picked[i]).length;
+      if (score > bestScore) {
+        best = v;
+        bestScore = score;
+      }
+    }
+    return best;
+  };
+
   const handleAxisChange = (axisIndex: number, newValue: string) => {
     if (!newValue) return; // Controlled: ignore empty values
 
     const nextPicked = [...currentValues];
     nextPicked[axisIndex] = newValue;
 
-    // Check if exact variant exists
-    let matched = findVariant(item, nextPicked);
-
-    // If exact variant doesn't exist, find first possible variant with this picked value
-    if (!matched) {
-      matched = item.variants.find((v) => v.values[axisIndex] === newValue) ?? null;
-    }
+    // The exact pair when it can be bought; else the buyable size with this value that keeps the most of
+    // the other picks (S · White from M · Black switches the colour too), so no buyable pair is out of reach.
+    const exact = findVariant(item, nextPicked);
+    const matched =
+      exact && variantAvailability(exact, now) === 'available'
+        ? exact
+        : (bestBuyable(nextPicked, axisIndex) ?? exact);
 
     if (matched) {
       onSelectVariant(matched);
@@ -140,7 +154,6 @@ export function ItemSheetVariants({
     <div className="flex flex-col gap-4">
       {item.axes.map((axis, axisIndex) => {
         const pickedForAxis = currentValues[axisIndex] ?? '';
-        const allowedValues = possibleValues(item, axisIndex, currentValues);
 
         return (
           <div key={axis.name} className="flex flex-col gap-2">
@@ -160,14 +173,9 @@ export function ItemSheetVariants({
               className="flex flex-wrap justify-start gap-2"
             >
               {axis.values.map((v) => {
-                const isPossible = allowedValues.includes(v.name);
-                // Also check if the combination variant is sold out
-                const testCombo = [...currentValues];
-                testCombo[axisIndex] = v.name;
-                const comboVariant = findVariant(item, testCombo);
-                const isSoldOut =
-                  comboVariant && variantAvailability(comboVariant, now) !== 'available';
-                const isDisabled = !isPossible || isSoldOut;
+                // Crossed out only when no size with this value can be bought; picking a value that does
+                // not fit the other picks moves them to a pair that can (handleAxisChange).
+                const isDisabled = !buyable.some((variant) => variant.values[axisIndex] === v.name);
 
                 return (
                   <ToggleGroupItem
