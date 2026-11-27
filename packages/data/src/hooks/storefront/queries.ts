@@ -195,6 +195,16 @@ export function useSubscribePush(slug: string, token: string) {
   });
 }
 
+/** Notify me off: the server stops the order's steps to this phone's push address. */
+export function useUnsubscribePush(slug: string, token: string) {
+  const { storefront } = useShopAdapters();
+  return useMutation({
+    networkMode: 'always',
+    retry: false,
+    mutationFn: (endpoint: string) => storefront.unsubscribePush({ slug, token, endpoint }),
+  });
+}
+
 export function useMyAccount(slug: string) {
   const { storefront } = useShopAdapters();
   return useQuery({ queryKey: qk.account(slug), queryFn: () => storefront.getMyAccount({ slug }) });

@@ -169,6 +169,8 @@ export interface StorefrontAdapter {
     token: string;
     subscription: unknown;
   }): Promise<{ ok: true }>;
+  // Notify me off: this phone (its push address) stops getting the order's steps.
+  unsubscribePush(input: { slug: string; token: string; endpoint: string }): Promise<{ ok: true }>;
   // The platform's push key (launch phase 5, Q5); null where pushes are only recorded (sample data, a laptop).
   getPushKey(): Promise<{ key: string | null }>;
   resolveMapsLink(input: { url: string }): Promise<LatLng>;

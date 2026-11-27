@@ -52,6 +52,14 @@ export async function enablePush(key: string | null): Promise<EnablePushResult> 
   return { ok: true, subscription: made.toJSON() };
 }
 
+/** This phone's push address, when it has one (Notify me off tells the server which phone stops). */
+export async function currentPushEndpoint(): Promise<string | null> {
+  if (!('serviceWorker' in navigator)) return null;
+  const registration = await navigator.serviceWorker.getRegistration();
+  const subscription = registration ? await registration.pushManager.getSubscription() : null;
+  return subscription?.endpoint ?? null;
+}
+
 /** Dev only: shows what an order update looks like, through the worker when it runs. */
 export async function showTestNotification(input: {
   title: string;

@@ -12,6 +12,7 @@ import type {
 import { useAdapters } from '../../adapters/index';
 import { ownerHomeQk } from '../owner-home/qk';
 import { ownerMembersQk } from '../owner-members/qk';
+import { qk as storefrontQk } from '../storefront/qk';
 import { ownerOrdersQk } from './qk';
 
 export function useSetPause(slug: string) {
@@ -23,6 +24,8 @@ export function useSetPause(slug: string) {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: ownerOrdersQk.orders(slug) });
       qc.invalidateQueries({ queryKey: ownerHomeQk.all });
+      // Busy and paused live on the shop: Home's notice and the Orders menu read them from there.
+      qc.invalidateQueries({ queryKey: storefrontQk.storefront(slug), exact: true });
     },
   });
 }

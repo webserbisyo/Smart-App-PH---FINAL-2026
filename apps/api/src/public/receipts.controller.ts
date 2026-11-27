@@ -50,6 +50,8 @@ type RatingInput = z.infer<typeof RatingInputSchema>;
 
 const PushInputSchema = z.object({ subscription: PushSubscriptionInputSchema }).strict();
 type PushInput = z.infer<typeof PushInputSchema>;
+const PushOffSchema = z.object({ endpoint: z.string().min(10).max(1000) }).strict();
+type PushOff = z.infer<typeof PushOffSchema>;
 
 /**
  * The receipt link (`/[shop]/o/[token]`) and the orders a phone kept (api.md "Storefront"). The slug picks the
@@ -127,5 +129,16 @@ export class ReceiptsController {
       userAgent,
       await this.sessions.member(req, res),
     );
+  }
+
+  /** Notify me off: this phone stops getting the order's steps. */
+  @Post('o/:token/push/off')
+  @HttpCode(200)
+  unsubscribePush(
+    @Param('slug') slug: string,
+    @Param('token') token: string,
+    @Body({ schema: PushOffSchema }) body: PushOff,
+  ): Promise<{ ok: true }> {
+    return this.receipts.unsubscribePush(slug, token, body.endpoint);
   }
 }

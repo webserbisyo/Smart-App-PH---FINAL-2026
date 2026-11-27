@@ -103,6 +103,8 @@ export function createApiStorefrontAdapter({ baseUrl }: ApiStorefrontOptions): S
       call(`${order(slug, token)}/rating`, OrderRatingSchema, 'POST', { stars, comment }),
     subscribePush: ({ slug, token, subscription }) =>
       call(`${order(slug, token)}/push`, OkSchema, 'POST', { subscription }),
+    unsubscribePush: ({ slug, token, endpoint }) =>
+      call(`${order(slug, token)}/push/off`, OkSchema, 'POST', { endpoint }),
     getPushKey: () => call('/push/key', PushKeySchema, 'GET'),
     resolveMapsLink: ({ url }) => call('/maps/resolve', LatLngSchema, 'POST', { url }),
     joinAsMember: ({ slug, name, phone, orderToken, avatar }) =>

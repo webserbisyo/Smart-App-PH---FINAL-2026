@@ -154,6 +154,13 @@ export class ReceiptsService {
     return { ok: true };
   }
 
+  /** Notify me off: this phone stops getting the order's steps (a push already on its way may still come). */
+  async unsubscribePush(slug: string, token: string, endpoint: string): Promise<{ ok: true }> {
+    const view = await this.order(slug, token);
+    await this.subscriptions.unlinkOrder(endpoint, view.id);
+    return { ok: true };
+  }
+
   /** Stars for a finished order, once. */
   async rateOrder(
     slug: string,

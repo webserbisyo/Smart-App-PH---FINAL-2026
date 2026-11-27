@@ -41,6 +41,7 @@ export function lazyShopAdapters(load: () => Promise<ShopAdapters>): ShopAdapter
     submitProof: async (input) => (await real()).storefront.submitProof(input),
     rateOrder: async (input) => (await real()).storefront.rateOrder(input),
     subscribePush: async (input) => (await real()).storefront.subscribePush(input),
+    unsubscribePush: async (input) => (await real()).storefront.unsubscribePush(input),
     getPushKey: async () => (await real()).storefront.getPushKey(),
     resolveMapsLink: async (input) => (await real()).storefront.resolveMapsLink(input),
     joinAsMember: async (input) => (await real()).storefront.joinAsMember(input),

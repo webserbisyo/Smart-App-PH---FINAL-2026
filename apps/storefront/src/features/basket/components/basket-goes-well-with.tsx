@@ -47,11 +47,8 @@ export function BasketGoesWellWith({
       qty: 1,
     });
 
-    notify({
-      title: words.storefrontShell.menu.added,
-      description: `${item.name} added`,
-      tone: 'success',
-    });
+    // Same words as adding from the menu; no View basket here, the basket is already open.
+    notify({ title: words.storefrontShell.menu.addedToast(item.name), tone: 'success' });
   };
 
   return (

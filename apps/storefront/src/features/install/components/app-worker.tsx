@@ -12,9 +12,42 @@ import { keepsOffline } from '../cache-rules';
 // Pages already handed to the worker in this visit (one fetch each, not one per tap).
 const handed = new Set<string>();
 
+// The update bar shows once per visit, from the worker's event or the check on open.
+let offered = false;
+// Refresh reloads even when the "new version in control" signal never comes (iPhone Home Screen apps) or
+// came before the tap (another tab or the installed app took the update first).
+const RELOAD_FALLBACK_MS = 1500;
+
+function reloadOnNewVersion(): void {
+  let reloading = false;
+  const reload = () => {
+    if (reloading) return;
+    reloading = true;
+    window.location.reload();
+  };
+  navigator.serviceWorker.addEventListener('controllerchange', reload, { once: true });
+  void navigator.serviceWorker
+    .getRegistration()
+    .then((registration) => registration?.waiting?.postMessage({ type: 'SKIP_WAITING' }))
+    .catch(() => {});
+  window.setTimeout(reload, RELOAD_FALLBACK_MS);
+}
+
+/** "New version ready · Refresh": stays until tapped or closed, never reloads by itself (T13). */
+function offerUpdate(): void {
+  if (offered) return;
+  offered = true;
+  notify({
+    title: words.install.updateReady,
+    persist: true,
+    action: { label: words.install.refresh, onClick: reloadOnNewVersion },
+  });
+}
+
 /**
  * The shop frame's side of the service worker (T13): saves Home, Menu, My orders and Rewards for offline,
- * remembers the shop for the offline page, and offers a waiting update with Refresh (never by itself).
+ * remembers the shop for the offline page, and offers a waiting update with Refresh (never by itself). Refresh
+ * hands over to the new version and reloads, with a fallback when the browser never says it took over.
  */
 export function AppWorker() {
   const { slug, shop } = useShop();
@@ -37,20 +70,20 @@ export function AppWorker() {
   }, [serwist, pathname]);
 
   useEffect(() => {
+    // A version that was already waiting before this page listened (a second tab, the app reopened).
+    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+    void navigator.serviceWorker
+      .getRegistration()
+      .then((registration) => {
+        if (registration?.waiting) offerUpdate();
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!serwist) return;
-    const onWaiting = () =>
-      notify({
-        title: words.install.updateReady,
-        action: {
-          label: words.install.refresh,
-          onClick: () => {
-            serwist.addEventListener('controlling', () => window.location.reload());
-            serwist.messageSkipWaiting();
-          },
-        },
-      });
-    serwist.addEventListener('waiting', onWaiting);
-    return () => serwist.removeEventListener('waiting', onWaiting);
+    serwist.addEventListener('waiting', offerUpdate);
+    return () => serwist.removeEventListener('waiting', offerUpdate);
   }, [serwist]);
 
   return null;

@@ -71,6 +71,15 @@ export class PushSubscriptions {
       .onConflictDoNothing();
   }
 
+  /** Notify me off on the receipt: this phone stops getting the order's steps (its other orders stay). */
+  async unlinkOrder(endpoint: string, orderId: string): Promise<void> {
+    await this.db.tx.execute(sql`
+      delete from public.order_push p
+      using public.push_subscriptions s
+      where p.tenant_id = ${this.db.shopId}::uuid and p.order_id = ${orderId}::uuid
+        and s.tenant_id = p.tenant_id and s.id = p.subscription_id and s.endpoint = ${endpoint}`);
+  }
+
   /** The phone belongs to this member (signed in on it). */
   async linkMember(subscriptionId: string, memberId: string): Promise<void> {
     await this.db.tx

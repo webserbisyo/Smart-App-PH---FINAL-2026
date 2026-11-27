@@ -790,6 +790,7 @@ export const words = {
       off: 'Get an alert on this phone when your order moves.',
       on: "We'll tell you when it's ready.",
       failed: "Couldn't turn on alerts. Try again.",
+      failedOff: "Couldn't turn off alerts. Try again.",
     },
     stamps: {
       earned: 'This order earned 1 stamp',

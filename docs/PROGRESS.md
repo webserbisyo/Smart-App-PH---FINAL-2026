@@ -90,6 +90,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Installed apps open on their logo, never a white screen: shop opening screen in the first bytes, PNG icons and launch pictures from a real shop's logo, every iPhone and iPad size, a dashboard opening screen in light and dark, 1 s to 3 s, no delay setting (decision T121; built 2026-11-27, waiting for review)
 - [x] iPhone logo screen hand-off: shop launch pictures used (Apple's tag), logo lined up with the picture (no jump), logo-only picture with the name fading in, dots that show, a clean exit and no taps through it (decision T122; built 2026-11-27, waiting for review)
 - [x] Launch pictures by tagged address, kept a year, fetched while the iPhone install steps show (decision T123; built 2026-11-27, waiting for the founder's iPhone test)
+- [x] Toasts and update bar: a toast's button closes it (Undo runs once), Refresh always reloads onto the new version and the bar waits for a tap, Notify me off stops the order's pushes on the server, Busy and Pause on Orders show their state and a toast (decision T124; built 2026-11-27, waiting for review)
 
 ## Phase 4: Backend, area by area
 

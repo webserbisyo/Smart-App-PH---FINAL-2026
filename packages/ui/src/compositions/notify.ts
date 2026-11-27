@@ -61,15 +61,25 @@ export function notify({
   durationMs,
 }: NotifyInput): string {
   count += 1;
+  const id = `notify-${count}`;
   const options: ToastOptions = {
-    id: `notify-${count}`,
+    id,
     title,
     description,
     type: tone,
     timeout:
       tone === 'error' || persist ? 0 : (durationMs ?? (tone === 'success' ? SUCCESS_MS : INFO_MS)),
     priority: tone === 'error' ? 'high' : 'low',
-    actionProps: action ? { children: action.label, onClick: action.onClick } : undefined,
+    // A tapped button closes its toast, so Undo can't run twice (Base UI leaves the toast open).
+    actionProps: action
+      ? {
+          children: action.label,
+          onClick: () => {
+            closeToast(id);
+            action.onClick();
+          },
+        }
+      : undefined,
   };
   if (manager) return manager.add(options);
   waiting.push(options);
@@ -77,7 +87,7 @@ export function notify({
     wanted = true;
     for (const listener of listeners) listener();
   }
-  return `notify-${count}`;
+  return id;
 }
 
 /** Closes a toast that notify() showed, e.g. the Undo toast once Undo is pressed. */

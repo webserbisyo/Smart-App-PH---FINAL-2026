@@ -2,11 +2,17 @@
 
 import { useId, useState, useSyncExternalStore } from 'react';
 import { words } from '@smartapp/core';
-import { useOnline, usePushKey, usePushOrders, useSubscribePush } from '@smartapp/data';
+import {
+  useOnline,
+  usePushKey,
+  usePushOrders,
+  useSubscribePush,
+  useUnsubscribePush,
+} from '@smartapp/data';
 import { Label } from '@smartapp/ui/components/label';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Bell, BellOff } from 'lucide-react';
-import { enablePush, pushState, type PushState } from '../../install/push';
+import { currentPushEndpoint, enablePush, pushState, type PushState } from '../../install/push';
 import { NewsBox } from '../../news/news-box';
 
 const CARD = 'rounded-3xl bg-card p-5 shadow-xs ring-1 ring-foreground/8 sm:p-6';
@@ -23,6 +29,7 @@ export function NotifyCard({ slug, token }: { slug: string; token: string }) {
   const state = useSyncExternalStore<PushState>(noSubscribe, pushState, () => 'unsupported');
   const isOnline = useOnline();
   const subscribe = useSubscribePush(slug, token);
+  const unsubscribe = useUnsubscribePush(slug, token);
   const pushOrders = usePushOrders(slug);
   const pushKey = usePushKey(state === 'ask' || state === 'granted');
   const [asking, setAsking] = useState(false);
@@ -39,14 +46,21 @@ export function NotifyCard({ slug, token }: { slug: string; token: string }) {
         ? words.install.pushDenied
         : subscribe.isError
           ? W.failed
-          : on
-            ? W.on
-            : W.off;
+          : unsubscribe.isError
+            ? W.failedOff
+            : on
+              ? W.on
+              : W.off;
 
-  // Asks for permission only on this tap (T13); turning it off is kept on the phone.
+  // Asks for permission only on this tap (T13). Off tells the server too, so the steps really stop.
   async function handleChange(next: boolean) {
     if (!next) {
-      pushOrders.set(token, false);
+      const endpoint = await currentPushEndpoint().catch(() => null);
+      if (!endpoint) {
+        pushOrders.set(token, false);
+        return;
+      }
+      unsubscribe.mutate(endpoint, { onSuccess: () => pushOrders.set(token, false) });
       return;
     }
     setAsking(true);
@@ -80,7 +94,7 @@ export function NotifyCard({ slug, token }: { slug: string; token: string }) {
           id={switchId}
           checked={on}
           onCheckedChange={(next) => void handleChange(next)}
-          disabled={blocked || !isOnline || asking || subscribe.isPending}
+          disabled={blocked || !isOnline || asking || subscribe.isPending || unsubscribe.isPending}
           aria-describedby={`${switchId}-line`}
         />
       </div>

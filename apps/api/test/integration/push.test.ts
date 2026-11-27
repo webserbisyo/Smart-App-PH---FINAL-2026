@@ -124,6 +124,44 @@ describe('pushes and owner emails (phase 5)', () => {
       .expect(404);
   });
 
+  it("stops the order's steps on a phone that turned Notify me off", async () => {
+    const shop = await liveShop(app, 'push-off');
+    const placed = await place(shop);
+    const customer = subscription();
+    const other = await place(shop);
+    for (const order of [placed, other]) {
+      await phone(app)
+        .post(`/s/${shop.slug}/o/${order.token}/push`)
+        .send({ subscription: customer })
+        .expect(200);
+    }
+    await phone(app)
+      .post(`/s/${shop.slug}/o/${placed.token}/push/off`)
+      .send({ endpoint: customer.endpoint })
+      .expect(200);
+    // A wrong token is Not found, like the receipt.
+    await phone(app)
+      .post(`/s/${shop.slug}/o/${'x'.repeat(24)}/push/off`)
+      .send({ endpoint: customer.endpoint })
+      .expect(404);
+
+    for (const order of [placed, other]) {
+      await shop.agent
+        .post(`/owner/orders/${order.orderId}/advance`)
+        .send({ toStatus: 'preparing' })
+        .expect(200);
+    }
+    await dueNow(shop.shopId);
+    const before = pushes.sent.length;
+    await delivery.sendDue();
+    const sent = pushes.sent
+      .slice(before)
+      .filter((p) => p.target.endpoint === customer.endpoint)
+      .map((p) => MessageSchema.parse(JSON.parse(p.body)).notification.navigate);
+    // Only the order that still has Notify me on.
+    expect(sent).toEqual([`http://localhost:3000/${shop.slug}/o/${other.token}`]);
+  });
+
   it("tells the owner's device and email about a new order, then the customer about each step", async () => {
     const shop = await liveShop(app, 'push-steps');
     const ownerDevice = subscription('web.push.apple.com');
