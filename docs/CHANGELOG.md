@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-27 T120 batch 2, pre-live setup: the Editor preview works before go-live (preview token), the dashboard reads its own shop through GET /owner/storefront (works before go-live and in help mode), Remove samples is one server call and its dialog says the card turns off
 - 2026-11-27 T120 batch 1, checkout and menu: delivery address saves on shops with a minimum order (real basket prices), checkout quotes the way to pay it shows and reads every price-check problem, every buyable Size and Colour can be picked, the receipt picture hides a hidden address, the storefront rule tests run in CI
 - 2026-11-26 T119 "Something went wrong" flash fixed: the dashboard's own error screen on every page (inside the shell, Try again and Go to Home, no error text), one reload onto the new version when a page part from an older deploy is gone, the storefront service worker kept for the whole deploy (no failing rebuilds on Vercel), and the worker saves 18 files up front instead of 413 (about 2.9 MB less on a first visit) (#52)
 - 2026-11-26 Launch guide: `launch.md` rewritten as one ordered list of every by-hand step from phases 1 to 9 (Parts A to H: dev database secrets, Resend and Supabase login emails, Railway and Vercel staging with exact settings, tests, Meta, live, selling); Super Admin's sample shop links can point at the demo storefront (`VITE_SAMPLES_URL`); the unused `SUPPORT_SESSION_SECRET` left `.env.example`

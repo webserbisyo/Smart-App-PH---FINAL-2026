@@ -10,6 +10,7 @@ import {
   type PreviewPage,
   type StorefrontContent,
 } from '@smartapp/core';
+import { useCreatePreviewToken } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { cssVars } from '@smartapp/ui/lib/css-vars';
@@ -29,8 +30,13 @@ const SLOW_AFTER_MS = 4_000;
 
 const storefrontOrigin = new URL(env.VITE_STOREFRONT_URL).origin;
 
-export function previewUrl(slug: string): string {
-  return `${env.VITE_STOREFRONT_URL}/${slug}/preview`;
+/**
+ * The preview page's address. With the API a short-lived token (createPreviewToken, 30 minutes) lets the
+ * storefront read the draft before the shop is live; without one it reads the shop as customers see it.
+ */
+export function previewUrl(slug: string, token: string | null = null): string {
+  const base = `${env.VITE_STOREFRONT_URL}/${slug}/preview`;
+  return token ? `${base}?${new URLSearchParams({ token }).toString()}` : base;
 }
 
 function useBoxSize(ref: React.RefObject<HTMLElement | null>) {
@@ -96,6 +102,24 @@ export function PreviewFrame({
   const [failed, setFailed] = React.useState(false);
   const [slow, setSlow] = React.useState(false);
   const [attempt, setAttempt] = React.useState(0);
+  // A fresh preview token for each load (Try again included); null when none could be made, so the page
+  // still opens as customers see it. Undefined while it is being made.
+  const { mutateAsync: makeToken } = useCreatePreviewToken();
+  const [token, setToken] = React.useState<{ attempt: number; value: string | null } | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    makeToken()
+      .then((made) => {
+        if (live) setToken({ attempt, value: made.token });
+      })
+      .catch(() => {
+        if (live) setToken({ attempt, value: null });
+      });
+    return () => {
+      live = false;
+    };
+  }, [attempt, makeToken]);
+  const frameToken = token?.attempt === attempt ? token.value : undefined;
   const handlers = React.useRef({ onSelect, onPage, onText });
   React.useEffect(() => {
     handlers.current = { onSelect, onPage, onText };
@@ -195,7 +219,7 @@ export function PreviewFrame({
           <iframe
             key={attempt}
             ref={frameRef}
-            src={previewUrl(slug)}
+            src={frameToken === undefined ? undefined : previewUrl(slug, frameToken)}
             title={W.frameTitle}
             className="h-(--frame-h) w-(--frame-w) origin-top-left scale-(--frame-scale) border-0"
             style={cssVars({

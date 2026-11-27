@@ -1,20 +1,7 @@
 import * as React from 'react';
 import { SparklesIcon } from 'lucide-react';
-import {
-  actionWords,
-  catalogWords,
-  errorWords,
-  type Category,
-  type OwnerItem,
-} from '@smartapp/core';
-import {
-  useOwnerOptionGroups,
-  useRemoveCategory,
-  useRemoveItem,
-  useRemoveOptionGroup,
-  useSetItemStatus,
-  errorCodeOf,
-} from '@smartapp/data';
+import { actionWords, catalogWords, errorWords, type OwnerItem } from '@smartapp/core';
+import { useClearSamples, errorCodeOf } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import {
   AlertDialog,
@@ -28,14 +15,15 @@ import {
 import { notify } from '@smartapp/ui/compositions/notify';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { Notice } from '@/app/notice';
+import { useShop } from '@/app/shop';
 
 export interface SamplesBannerProps {
   items: readonly OwnerItem[];
-  categories: readonly Category[];
 }
 
 // One banner for the sample menu instead of a "Sample" tag on every row (decision T42).
-// Remove samples touches the menu only: the shop's look and stamp card stay.
+// Remove samples is one server call (api.md "Samples (owner)", audit F-11): the sample items, pictures and the
+// categories and add-ons they leave empty go, an ordered sample is archived, and the card turns off.
 const SEEN_KEY = 'smartapp.dashboard.samplesSeen';
 
 function readSeen(): boolean {
@@ -46,12 +34,9 @@ function readSeen(): boolean {
   }
 }
 
-export function SamplesBanner({ items, categories }: SamplesBannerProps) {
-  const { data: groups = [] } = useOwnerOptionGroups();
-  const removeItem = useRemoveItem();
-  const setStatus = useSetItemStatus();
-  const removeCategory = useRemoveCategory();
-  const removeGroup = useRemoveOptionGroup();
+export function SamplesBanner({ items }: SamplesBannerProps) {
+  const { slug } = useShop();
+  const clearSamples = useClearSamples();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const removeAction = useAsyncAction();
   // The full card shows on the first visit; after that it is one line (T93), remembered on this device.
@@ -69,38 +54,12 @@ export function SamplesBanner({ items, categories }: SamplesBannerProps) {
 
   const handleRemove = async () => {
     try {
-      await removeAction.run(() => removeAll());
+      await removeAction.run(() => clearSamples.mutateAsync({ slug }));
       notify({ title: catalogWords.samplesRemoved(samples.length), tone: 'success' });
       setConfirmOpen(false);
     } catch (err: unknown) {
       notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
     }
-  };
-
-  const removeAll = async () => {
-    const sampleIds = new Set(samples.map((item) => item.id));
-    // An item with past orders cannot be deleted, so it is archived instead.
-    await Promise.all(
-      samples.map((item) =>
-        item.hasOrders
-          ? setStatus.mutateAsync({ id: item.id, status: 'archived' })
-          : removeItem.mutateAsync({ id: item.id }),
-      ),
-    );
-    const remaining = items.filter((item) => !sampleIds.has(item.id) || item.hasOrders);
-    const sampleCategoryIds = new Set(samples.map((item) => item.categoryId));
-    const emptyCategories = categories.filter(
-      (c) => sampleCategoryIds.has(c.id) && !remaining.some((item) => item.categoryId === c.id),
-    );
-    const keptGroupIds = new Set(
-      remaining.filter((item) => !sampleIds.has(item.id)).flatMap((item) => item.optionGroupIds),
-    );
-    const sampleGroupIds = new Set(samples.flatMap((item) => item.optionGroupIds));
-    const unusedGroups = groups.filter((g) => sampleGroupIds.has(g.id) && !keptGroupIds.has(g.id));
-    await Promise.all([
-      ...emptyCategories.map((c) => removeCategory.mutateAsync({ id: c.id })),
-      ...unusedGroups.map((g) => removeGroup.mutateAsync({ id: g.id })),
-    ]);
   };
 
   return (

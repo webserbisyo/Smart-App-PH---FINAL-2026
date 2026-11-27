@@ -265,6 +265,7 @@ Blueprint B with the full Insights page.
 | `publishStorefront`      | POST `/owner/storefront/draft`         | `{ baseVersion }` → `{ contentVersion }`; copies the draft onto the shop in one transaction                              |
 | `discardStorefrontDraft` | DELETE `/owner/storefront/draft`       | → `{ contentVersion }`; the draft becomes what customers see                                                             |
 | `createPreviewToken`     | POST `/owner/storefront/preview-token` | → `{ token, expiresAt }` (short-lived, owner-only, one shop)                                                             |
+| `getStorefront` (owner)  | GET `/owner/storefront`                | → `PublicShop` of the owner's own shop as customers see it; works before go-live and in help mode (T120, audit F-39)     |
 
 `StorefrontContent` (core `schemas/editor.ts`) is the logo, tagline, About text and the whole look (colours, banners,
 announcement, section switches). The look's colours are `brandColor`, `pageColor` and `cardColor` (hex; `cardColor` null

@@ -3,7 +3,9 @@
 import {
   ContentVersionSchema,
   PreviewTokenSchema,
+  PublicShopSchema,
   StorefrontDraftStateSchema,
+  type PublicShop,
 } from '@smartapp/core';
 import type { z } from 'zod';
 import { fetchApi } from '../../api-client';
@@ -42,5 +44,23 @@ export function createApiOwnerEditorAdapter({
     publishStorefront: (input) => call('/storefront/draft', ContentVersionSchema, 'POST', input),
     discardStorefrontDraft: () => call('/storefront/draft', ContentVersionSchema, 'DELETE'),
     createPreviewToken: () => call('/storefront/preview-token', PreviewTokenSchema, 'POST', {}),
+  };
+}
+
+/**
+ * The owner's own shop as customers see it (GET /owner/storefront), for the dashboard's `getStorefront`.
+ * The public `/s/:slug` answers Not found until the shop is live and in help mode (audit F-39); the slug the
+ * screens pass only keys the cache, the shop comes from the login.
+ */
+export function createApiOwnShopRead({
+  baseUrl,
+  getToken,
+}: ApiOwnerEditorOptions): () => Promise<PublicShop> {
+  return async () => {
+    const token = await getToken();
+    return fetchApi(`${baseUrl}/owner/storefront`, PublicShopSchema, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
   };
 }

@@ -40,6 +40,20 @@ export async function readShopFromApi(
   return body === null ? null : PublicShopSchema.parse(body);
 }
 
+/**
+ * The Editor's draft for the owner's preview (works before the shop is live), from the signed token the
+ * dashboard made. Never cached; null when the token ran out or is not this shop's.
+ */
+export async function readShopPreviewFromApi(
+  slug: string,
+  token: string,
+  options: ServerReadOptions,
+): Promise<PublicShop | null> {
+  const query = new URLSearchParams({ token }).toString();
+  const body = await serverGet(`/s/${encodeURIComponent(slug)}/preview?${query}`, options);
+  return body === null ? null : PublicShopSchema.parse(body);
+}
+
 /** One order's receipt from NestJS (never cached: it changes with every step). */
 export async function readReceiptFromApi(
   slug: string,

@@ -1933,7 +1933,7 @@ export const catalogWords = {
   removeSamples: 'Remove samples',
   removeSamplesTitle: 'Remove all sample items?',
   removeSamplesDescription:
-    'This deletes the sample items, and the sample categories and add-ons nothing else uses. Your own items stay.',
+    'This deletes the sample items and pictures, and the sample categories and add-ons nothing else uses. The stamp card turns off until you set it up. Your own items and photos stay.',
   samplesRemoved: (count: number) => `Removed ${count} sample ${count === 1 ? 'item' : 'items'}`,
   selectAll: 'Select all',
   selectNone: 'Clear',

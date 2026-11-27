@@ -7,7 +7,7 @@ import type { OwnerAuth } from '../owner-auth';
 import { createApiOnboardingAdapter } from './api/onboarding';
 import { createApiOwnerAuth } from './api/owner-auth';
 import { createApiOwnerCatalogAdapter } from './api/owner-catalog';
-import { createApiOwnerEditorAdapter } from './api/owner-editor';
+import { createApiOwnerEditorAdapter, createApiOwnShopRead } from './api/owner-editor';
 import { createApiOwnerHomeAdapter } from './api/owner-home';
 import { createApiOwnerMembersAdapter } from './api/owner-members';
 import { createApiOwnerNewsAdapter } from './api/owner-news';
@@ -58,7 +58,15 @@ export function createAdapters(source: DataSource, options: AdapterOptions = {})
         }
       : {}),
     ...(usesApi(plan, 'ownerEditor')
-      ? { ownerEditor: createApiOwnerEditorAdapter({ baseUrl, getToken }) }
+      ? {
+          ownerEditor: createApiOwnerEditorAdapter({ baseUrl, getToken }),
+          // The dashboard reads its own shop through the owner route, so it works before going live and
+          // in help mode (audit F-39); the rest of the storefront area is the customer's and stays as is.
+          storefront: {
+            ...mock.storefront,
+            getStorefront: createApiOwnShopRead({ baseUrl, getToken }),
+          },
+        }
       : {}),
     ...(usesApi(plan, 'ownerOrders')
       ? { ownerOrders: createApiOwnerOrdersAdapter({ baseUrl, getToken }) }

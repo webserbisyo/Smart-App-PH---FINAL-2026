@@ -4,17 +4,32 @@ import {
   SaveStorefrontDraftInputSchema,
   type ContentVersion,
   type PreviewToken,
+  type PublicShop,
   type PublishStorefrontInput,
   type SaveStorefrontDraftInput,
   type StorefrontDraftState,
 } from '@smartapp/core';
 import { Can } from '../auth/decorators.js';
+import { ShopReader } from '../public/shop-reader.js';
 import { EditorService } from './editor.service.js';
 
 /** api.md "Editor (owner)". */
 @Controller('owner/storefront')
 export class EditorController {
-  constructor(@Inject(EditorService) private readonly editor: EditorService) {}
+  constructor(
+    @Inject(EditorService) private readonly editor: EditorService,
+    @Inject(ShopReader) private readonly shops: ShopReader,
+  ) {}
+
+  /**
+   * The owner's own shop as customers see it, for the dashboard (New order, Home, the nav, Members). Works
+   * before the shop is live and in help mode, where the public `/s/:slug` answers Not found (audit F-39).
+   */
+  @Get()
+  @Can('shop:view')
+  getMine(): Promise<PublicShop> {
+    return this.shops.readForCustomers();
+  }
 
   @Get('draft')
   @Can('shop:view')

@@ -8,6 +8,7 @@ import {
   getStorefrontForServer,
   readReceiptFromApi,
   readShopFromApi,
+  readShopPreviewFromApi,
 } from '@smartapp/data/server';
 import { apiUrl, serverReadSecret, storefrontOnApi } from './env';
 
@@ -28,4 +29,18 @@ export async function getShop(slug: string): Promise<PublicShop | null> {
 export async function getReceipt(slug: string, token: string): Promise<OrderReceipt | null> {
   if (!storefrontOnApi || !apiUrl) return getOrderReceiptForServer(slug, token);
   return readReceiptFromApi(slug, token, { apiUrl, secret: serverReadSecret });
+}
+
+/**
+ * The Editor's preview (T72): with the API and a preview token, the draft (a shop still setting up too);
+ * otherwise the shop as customers see it. Never cached.
+ */
+export async function getPreviewShop(
+  slug: string,
+  token: string | null,
+): Promise<PublicShop | null> {
+  if (storefrontOnApi && apiUrl && token) {
+    return readShopPreviewFromApi(slug, token, { apiUrl, secret: serverReadSecret });
+  }
+  return getShop(slug);
 }

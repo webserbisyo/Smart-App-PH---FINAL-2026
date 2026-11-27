@@ -29,6 +29,7 @@ import {
   useBulkSetItemStatus,
   useBulkMoveCategory,
   useAdapters,
+  useApplySamplePack,
   errorCodeOf,
 } from '@smartapp/data';
 import { useShop } from '@/app/shop';
@@ -103,6 +104,7 @@ export function ItemsList() {
   const isOnline = useOnlineStatus();
   const dockClearance = useDockClearance();
   const { ownerSamples } = useAdapters();
+  const applySamples = useApplySamplePack();
   const { actions, dialogs } = useItemActions();
 
   const {
@@ -365,9 +367,7 @@ export function ItemsList() {
   const handlePopulateSamples = async () => {
     if (!ownerSamples) return;
     try {
-      await ownerSamples.applySamplePack({ slug, packSlug: samplePackFor(slug, kind) });
-      void refetchItems();
-      void refetchCats();
+      await applySamples.mutateAsync({ slug, packSlug: samplePackFor(slug, kind) });
     } catch (err: unknown) {
       notify({ title: errorWords(errorCodeOf(err)), tone: 'error' });
     }
@@ -439,9 +439,7 @@ export function ItemsList() {
         </Notice>
       ) : null}
 
-      {!selecting && !isReordering && !isArchived ? (
-        <SamplesBanner items={items ?? []} categories={categories ?? []} />
-      ) : null}
+      {!selecting && !isReordering && !isArchived ? <SamplesBanner items={items ?? []} /> : null}
 
       {(items ?? []).length > 0 ? (
         <div className="space-y-3">

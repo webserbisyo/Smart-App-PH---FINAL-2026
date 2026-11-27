@@ -14,8 +14,11 @@ import type {
 import { errorWords } from '@smartapp/core';
 import { useAdapters } from '../../adapters/index';
 import { ApiRequestError } from '../../api-client';
+import { ownerEditorQk } from '../owner-editor/qk';
 import { ownerHomeQk } from '../owner-home/qk';
+import { ownerMembersQk } from '../owner-members/qk';
 import { ownerSettingsQk } from '../owner-settings/qk';
+import { qk as storefrontQk } from '../storefront/qk';
 import { ownerCatalogQk } from './qk';
 
 export function useSaveCategory() {
@@ -464,5 +467,39 @@ export function useBulkMoveCategory() {
       qc.invalidateQueries({ queryKey: ownerCatalogQk.items() });
       qc.invalidateQueries({ queryKey: ownerHomeQk.all });
     },
+  });
+}
+
+/**
+ * "Start with samples" and "Remove samples" (api.md "Samples (owner)"): the server changes the menu, the
+ * look and the stamp card in one go, so every view of them is read again after.
+ */
+function useSamplesSettled() {
+  const qc = useQueryClient();
+  return (slug: string) => {
+    void qc.invalidateQueries({ queryKey: ownerCatalogQk.all });
+    void qc.invalidateQueries({ queryKey: ownerEditorQk.all });
+    void qc.invalidateQueries({ queryKey: ownerMembersQk.stampCard() });
+    void qc.invalidateQueries({ queryKey: storefrontQk.storefront(slug) });
+    void qc.invalidateQueries({ queryKey: ownerHomeQk.all });
+  };
+}
+
+export function useApplySamplePack() {
+  const { ownerSamples } = useAdapters();
+  const settled = useSamplesSettled();
+  return useMutation({
+    mutationFn: (input: { slug: string; packSlug: string }) => ownerSamples.applySamplePack(input),
+    onSettled: (_data, _err, input) => settled(input.slug),
+  });
+}
+
+/** One server call removes every sample (audit F-11): a sample stamp prize can no longer block it. */
+export function useClearSamples() {
+  const { ownerSamples } = useAdapters();
+  const settled = useSamplesSettled();
+  return useMutation({
+    mutationFn: (input: { slug: string }) => ownerSamples.clearSamples(input),
+    onSettled: (_data, _err, input) => settled(input.slug),
   });
 }

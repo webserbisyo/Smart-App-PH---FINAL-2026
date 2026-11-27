@@ -2,13 +2,14 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { DEMO_SHOP_SLUGS, editorPreviewWords } from '@smartapp/core';
-import { getShop } from '@/server/shop-read';
+import { getPreviewShop, getShop } from '@/server/shop-read';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { dashboardOrigin, dataSource } from '@/env';
 import { PreviewApp } from '@/features/preview/components/preview-app';
 
 interface PreviewPageProps {
   params: Promise<{ shop: string }>;
+  searchParams: Promise<{ token?: string | string[] | undefined }>;
 }
 
 export function generateStaticParams() {
@@ -25,11 +26,12 @@ export async function generateMetadata({ params }: PreviewPageProps): Promise<Me
   };
 }
 
-async function PreviewContent({ params }: PreviewPageProps) {
+async function PreviewContent({ params, searchParams }: PreviewPageProps) {
   const { shop: slug } = await params;
-  // What customers see now. The Editor sends the draft over postMessage; with the API, a short-lived
-  // preview token reads the draft here instead (createPreviewToken, phase 4).
-  const shop = await getShop(slug);
+  const { token } = await searchParams;
+  // The Editor sends the draft over postMessage. With the API, its short-lived preview token reads the
+  // draft here first, so a shop still setting up (not live yet) has a preview too.
+  const shop = await getPreviewShop(slug, typeof token === 'string' ? token : null);
   if (!shop) notFound();
   return <PreviewApp initialShop={shop} dashboardOrigin={dashboardOrigin} source={dataSource} />;
 }
