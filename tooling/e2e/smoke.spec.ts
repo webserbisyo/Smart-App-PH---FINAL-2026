@@ -969,12 +969,16 @@ test.describe('scheduling (O6)', () => {
 
     // The earliest open time is picked; pick another one on that day.
     await expect(sheet.getByText(/^Pickup Thu 29 Oct/)).toBeVisible();
+    // Times sit in part-of-day tabs (T127): open Afternoon, then pick its first time.
+    await sheet.getByRole('tab', { name: /^Afternoon/ }).click();
     const times = sheet.getByRole('group', { name: 'Afternoon' }).getByRole('button');
     await times.first().click();
     const summary = (await sheet.getByText(/^Pickup Thu 29 Oct/).textContent()) ?? '';
     await page.locator('#how-where-save').click();
     await expect(page.locator('#how-where-save')).not.toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(summary, { exact: true }).filter({ visible: true })).toHaveCount(1);
+    // Checkout names the booked time once, in the How line ("Pickup · Thu 29 Oct, 3 PM", T127).
+    const booked = summary.replace(/^Pickup /, 'Pickup · ');
+    await expect(page.getByText(booked, { exact: true }).filter({ visible: true })).toHaveCount(1);
 
     await page.locator('#checkout-name').fill('Ana Reyes');
     await page.locator('#checkout-phone').fill('09171234567');
