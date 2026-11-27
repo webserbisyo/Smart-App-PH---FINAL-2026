@@ -300,6 +300,15 @@
   }
 }
 
+/* Drawer backdrops stay fixed to the screen everywhere (T126). The installed drawer switches to
+   position: absolute on iPhone and iPad Safari (a Base UI docs trick for iOS 26 that only works with
+   their inset-scrollbar lock, which iOS never uses), so after scrolling the dim and blur stayed at the
+   top of the page and the screen behind the sheet showed sharp. Unlayered, so it outranks the
+   installed @supports class. */
+[data-slot='drawer-overlay'] {
+  position: fixed;
+}
+
 /* Toasts sit on the toast layer, above open sheets and drawers, so Undo stays reachable. Unlayered, so
    it outranks the installed viewport's own z-index. */
 [data-slot='toast-viewport'] {

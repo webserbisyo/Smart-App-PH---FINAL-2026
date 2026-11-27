@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { FilterXIcon, ReceiptTextIcon, Share2Icon, WifiOffIcon, XIcon } from 'lucide-react';
+import {
+  FilterXIcon,
+  HistoryIcon,
+  ReceiptTextIcon,
+  Share2Icon,
+  WifiOffIcon,
+  XIcon,
+} from 'lucide-react';
 import type { BoardOrder, OrderType } from '@smartapp/core';
 import {
   ORDER_TYPES,
@@ -16,6 +23,7 @@ import {
   useChats,
   useOpenOrders,
   useOrdersByDate,
+  useOrderSearch,
   useStorefront,
 } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
@@ -88,6 +96,8 @@ export function OrdersScreen() {
   const takesBookings = (sf?.daysAhead ?? 1) > 1;
   const views: readonly OrderView[] = takesBookings ? ORDER_VIEWS : ['board', 'list'];
   const view = search.view && views.includes(search.view) ? search.view : 'board';
+  // A Board search also looks through every day (T126), so done and cancelled orders are found too.
+  const anyDay = useOrderSearch(shop.slug, view === 'board' ? query : '');
   const types: readonly OrderType[] = sf?.orderTypes ?? ORDER_TYPES;
   const delivers = types.includes('delivery');
 
@@ -120,6 +130,24 @@ export function OrdersScreen() {
     [filter, pay, accounts],
   );
   const shown = React.useMemo(() => live.filter(matchesShown), [live, matchesShown]);
+
+  // Matches the Board doesn't show: finished, cancelled or from earlier days (T126).
+  const pastCount = React.useMemo(() => {
+    if (!query.trim()) return 0;
+    const onBoard = new Set(shown.map((o) => o.id));
+    return (anyDay.data ?? []).filter((o) => !onBoard.has(o.id) && matchesShown(o)).length;
+  }, [query, shown, anyDay.data, matchesShown]);
+  const showPast = React.useCallback(
+    () =>
+      setSearch({
+        view: 'list',
+        day: undefined,
+        from: undefined,
+        to: undefined,
+        status: undefined,
+      }),
+    [setSearch],
+  );
 
   const laterCount = React.useMemo(
     () =>
@@ -239,17 +267,29 @@ export function OrdersScreen() {
       />
     );
   } else if (shown.length === 0 && hasFilters) {
-    boardBody = (
-      <PageEmpty
-        icon={<FilterXIcon className="size-8 text-muted-foreground" />}
-        title={ordersWords.states.noMatches}
-        action={
-          <Button variant="outline" onClick={clearFilters} className="h-11 md:h-9">
-            {ordersWords.states.clearFilters}
-          </Button>
-        }
-      />
-    );
+    boardBody =
+      pastCount > 0 ? (
+        <PageEmpty
+          icon={<HistoryIcon className="size-8 text-muted-foreground" />}
+          title={ordersWords.states.noOpenMatches}
+          description={ordersWords.states.pastMatches(pastCount)}
+          action={
+            <Button variant="outline" onClick={showPast} className="h-11 md:h-9">
+              {ordersWords.states.showPast}
+            </Button>
+          }
+        />
+      ) : (
+        <PageEmpty
+          icon={<FilterXIcon className="size-8 text-muted-foreground" />}
+          title={ordersWords.states.noMatches}
+          action={
+            <Button variant="outline" onClick={clearFilters} className="h-11 md:h-9">
+              {ordersWords.states.clearFilters}
+            </Button>
+          }
+        />
+      );
   } else if (live.length === 0 && done.count === 0) {
     boardBody = (
       <PageEmpty
@@ -270,24 +310,40 @@ export function OrdersScreen() {
     );
   } else {
     boardBody = (
-      <Board
-        orders={shown}
-        now={now}
-        kind={shop.kind}
-        delivers={delivers}
-        isPhone={isPhone}
-        disabled={!isOnline}
-        fresh={fresh}
-        laterCount={laterCount}
-        done={done}
-        phoneStage={phoneStage}
-        onPhoneStageChange={(stage) => setSearch({ stage }, { replace: true })}
-        onOpen={openOrder}
-        onAdvance={step.advance}
-        onPayAndComplete={step.payAndComplete}
-        onShowLater={() => setSearch({ view: 'list', day: 'today', status: 'new' })}
-        onShowDone={() => setSearch({ view: 'list', day: 'today', status: 'done' })}
-      />
+      <>
+        {pastCount > 0 ? (
+          <Notice
+            tone="info"
+            icon={<HistoryIcon className="size-4" />}
+            className="mb-3"
+            action={
+              <Button variant="outline" onClick={showPast} className="h-11 md:h-8">
+                {ordersWords.states.showPast}
+              </Button>
+            }
+          >
+            <span>{ordersWords.states.pastMatches(pastCount)}</span>
+          </Notice>
+        ) : null}
+        <Board
+          orders={shown}
+          now={now}
+          kind={shop.kind}
+          delivers={delivers}
+          isPhone={isPhone}
+          disabled={!isOnline}
+          fresh={fresh}
+          laterCount={laterCount}
+          done={done}
+          phoneStage={phoneStage}
+          onPhoneStageChange={(stage) => setSearch({ stage }, { replace: true })}
+          onOpen={openOrder}
+          onAdvance={step.advance}
+          onPayAndComplete={step.payAndComplete}
+          onShowLater={() => setSearch({ view: 'list', day: 'today', status: 'new' })}
+          onShowDone={() => setSearch({ view: 'list', day: 'today', status: 'done' })}
+        />
+      </>
     );
   }
 

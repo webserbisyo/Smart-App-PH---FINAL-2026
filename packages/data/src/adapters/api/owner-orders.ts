@@ -36,6 +36,7 @@ export function createApiOwnerOrdersAdapter({
       const headers = await authHeaders();
       const params = new URLSearchParams();
       if ('open' in input && input.open) params.set('open', 'true');
+      if ('anyDay' in input && input.anyDay) params.set('any', 'true');
       if ('from' in input) {
         params.set('from', input.from);
         params.set('to', input.to);

@@ -110,10 +110,11 @@ export function ShopShell({ children }: { children: ReactNode }) {
       <SkipNav>{words.shell.skipToContent}</SkipNav>
       <TopBar />
       <PullRing store={pullStore} />
+      {/* The page is its own layer (isolate, T126): nothing in it can climb over the sticky top bar. */}
       <main
         ref={pageRef}
         id={MAIN_CONTENT_ID}
-        className="mx-auto w-full max-w-280 min-w-0 flex-1 pull-shift px-4 pt-4 pb-dock lg:pb-10"
+        className="isolate mx-auto w-full max-w-280 min-w-0 flex-1 pull-shift px-4 pt-4 pb-dock lg:pb-10"
         tabIndex={-1}
       >
         {children}

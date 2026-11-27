@@ -214,7 +214,9 @@ export interface OwnerOrdersAdapter {
     input:
       | { slug: string; open: true; q?: string | undefined }
       // Orders made from one business day to another, both included (T95: at most 92 days).
-      | { slug: string; from: string; to: string; q?: string | undefined },
+      | { slug: string; from: string; to: string; q?: string | undefined }
+      // A search on any day (T126): name, phone, order number or pickup code, newest first.
+      | { slug: string; anyDay: true; q: string },
   ): Promise<BoardOrder[]>;
   // The Calendar (T95): every order due in the range, walk-in, order now and booked; cancelled and
   // expired left out.

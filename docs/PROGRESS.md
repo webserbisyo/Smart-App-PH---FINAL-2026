@@ -92,6 +92,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Launch pictures by tagged address, kept a year, fetched while the iPhone install steps show (decision T123; built 2026-11-27, waiting for the founder's iPhone test)
 - [x] Opening back to the T121 version that worked on iPhone, logo position fixed inside the pictures, ready-made demo shop pictures (decision T125; built 2026-11-27, waiting for the founder's iPhone test)
 - [x] Toasts and update bar: a toast's button closes it (Undo runs once), Refresh always reloads onto the new version and the bar waits for a tap, Notify me off stops the order's pushes on the server, Busy and Pause on Orders show their state and a toast (decision T124; built 2026-11-27, waiting for review)
+- [x] Orders search: phone in any format, finished orders found without dates; storefront announcement strip under the top bar and the iPhone sheet blur after scrolling fixed (decision T126; built 2026-11-27, waiting for review)
 
 ## Phase 4: Backend, area by area
 

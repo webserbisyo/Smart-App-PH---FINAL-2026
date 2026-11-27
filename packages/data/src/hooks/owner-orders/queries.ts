@@ -29,6 +29,18 @@ export function useOrdersInRange(slug: string, from: string, to: string, q?: str
   });
 }
 
+/** Orders on any day that match a search (T126): finished ones too, newest first. */
+export function useOrderSearch(slug: string, q: string) {
+  const { ownerOrders } = useAdapters();
+  const text = q.trim();
+  return useQuery({
+    queryKey: ownerOrdersQk.anyDay(slug, text),
+    queryFn: () => ownerOrders.listOrders({ slug, anyDay: true, q: text }),
+    enabled: Boolean(slug && text),
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function useScheduledOrders(slug: string, from: string, to: string) {
   const { ownerOrders } = useAdapters();
   return useQuery({

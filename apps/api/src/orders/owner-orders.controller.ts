@@ -45,9 +45,16 @@ const ListQuerySchema = z
     open: z.enum(['true']).optional(),
     from: IsoDateSchema.optional(),
     to: IsoDateSchema.optional(),
+    // Any day (T126): a search that also finds finished orders; needs q.
+    any: z.enum(['true']).optional(),
     q: z.string().max(60).optional(),
   })
-  .refine((v) => v.open === 'true' || (v.from !== undefined && v.to !== undefined));
+  .refine(
+    (v) =>
+      v.open === 'true' ||
+      (v.from !== undefined && v.to !== undefined) ||
+      (v.any === 'true' && (v.q ?? '').trim() !== ''),
+  );
 type ListQuery = z.infer<typeof ListQuerySchema>;
 
 const RangeQuerySchema = z.object({ from: IsoDateSchema, to: IsoDateSchema });
@@ -132,7 +139,9 @@ export class OwnerOrdersController {
     return this.orders.listOrders(
       query.open === 'true'
         ? { open: true, q: query.q }
-        : { from: query.from, to: query.to, q: query.q },
+        : query.any === 'true'
+          ? { anyDay: true, q: query.q }
+          : { from: query.from, to: query.to, q: query.q },
     );
   }
 

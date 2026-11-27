@@ -137,6 +137,33 @@ describe('owner Orders (phase 5)', () => {
     expect(list).toHaveLength(1);
   });
 
+  it('search finds a cancelled order on any day, with the phone typed any way (T126)', async () => {
+    const shop = await liveShop(app, 'oo-search');
+    const typed = nextPhone(); // 0919XXXXXXX, saved as +63919XXXXXXX
+    const placed = await place(shop, {
+      customer: { name: 'Bea', phone: typed, email: null },
+    });
+    await shop.agent
+      .post(`/owner/orders/${placed.orderId}/cancel`)
+      .send({ reason: 'Customer asked' })
+      .expect(200);
+
+    // The open-orders search no longer has it; the any-day search does, however the phone is typed.
+    const open = BoardSchema.parse(
+      (await shop.agent.get('/owner/orders').query({ open: 'true', q: 'bea' }).expect(200)).body,
+    );
+    expect(open).toEqual([]);
+    const spaced = `${typed.slice(0, 4)} ${typed.slice(4, 7)} ${typed.slice(7)}`;
+    for (const q of [typed, spaced, `+63 ${typed.slice(1)}`, typed.slice(1), 'Bea']) {
+      const found = BoardSchema.parse(
+        (await shop.agent.get('/owner/orders').query({ any: 'true', q }).expect(200)).body,
+      );
+      expect(found.map((o) => o.id)).toEqual([placed.orderId]);
+    }
+    // Any day needs something to search for.
+    await shop.agent.get('/owner/orders').query({ any: 'true' }).expect(400);
+  });
+
   it('moves an order forward, takes it back within 10 seconds, and needs payment to finish', async () => {
     const shop = await liveShop(app, 'oo-steps');
     const placed = await place(shop);

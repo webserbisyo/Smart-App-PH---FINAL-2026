@@ -40,6 +40,7 @@ import {
   MemberAccountSchema,
   soldOutTodayUntil,
   normalisePhPhone,
+  phoneSearchText,
   openState,
   OrderPayloadSchema,
   OrderRatingSchema,
@@ -190,6 +191,8 @@ const MAX_PROOFS = PROOFS_PER_ORDER;
 // How long the demo shop takes to open a new payment photo (T87).
 const DEMO_SEEN_MS = 10_000;
 const UNPAID_LIMIT = 3;
+// Rows an any-day order search returns, newest first (T126; the API's limit too).
+const ANY_DAY_ROWS = 200;
 
 export interface MockPersistence {
   load(): unknown;
@@ -1759,25 +1762,38 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
       run('orders', () => {
         const s = requireShop(input.slug);
         if (scenario().empty || scenario().ordersMode === 'empty') return [];
+        const anyDay = 'anyDay' in input;
         let list =
           'open' in input
             ? s.orders.filter((o) => !isFinal(o.receipt.status))
-            : s.orders.filter((o) => o.businessDate >= input.from && o.businessDate <= input.to);
-        if (input.q) {
-          const query = input.q.trim().toLowerCase();
+            : 'from' in input
+              ? s.orders.filter((o) => o.businessDate >= input.from && o.businessDate <= input.to)
+              : s.orders;
+        const query = input.q?.trim().toLowerCase() ?? '';
+        if (anyDay && !query) return [];
+        if (query) {
           // "#012" and "012" find order 12, the way the owner reads the number.
           const numberQuery = query.replace(/^#?0*/, '');
+          // 0917 123 4567, +63 917… or 917… find +639171234567 (T126).
+          const phoneQuery = phoneSearchText(query);
           list = list.filter((o) => {
-            const matchesNo = numberQuery !== '' && String(o.receipt.orderNo).includes(numberQuery);
+            const matchesNo =
+              numberQuery !== '' &&
+              /^\d+$/.test(numberQuery) &&
+              String(o.receipt.orderNo).includes(numberQuery);
             const matchesName = o.receipt.customerName.toLowerCase().includes(query);
-            const matchesPhone = o.customerPhone.toLowerCase().includes(query);
+            const matchesPhone =
+              o.customerPhone.toLowerCase().includes(query) ||
+              (phoneQuery !== null && o.customerPhone.includes(phoneQuery));
             const matchesCode = o.receipt.pickupCode.toLowerCase().includes(query);
             return matchesNo || matchesName || matchesPhone || matchesCode;
           });
         }
-        return list
-          .sort((a, b) => a.receipt.placedAt.localeCompare(b.receipt.placedAt))
-          .map((o) => toBoardOrder(s, o));
+        const sorted = list.sort((a, b) => a.receipt.placedAt.localeCompare(b.receipt.placedAt));
+        // Any-day search: the newest matches, like the API's limit.
+        return (anyDay ? sorted.slice(-ANY_DAY_ROWS).reverse() : sorted).map((o) =>
+          toBoardOrder(s, o),
+        );
       }),
 
     listScheduled: ({ slug, from, to }) =>

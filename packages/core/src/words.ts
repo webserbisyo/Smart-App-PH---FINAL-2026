@@ -2177,7 +2177,7 @@ export const ordersWords = {
     stillOpen: (day: string) => `Still open from ${day}. Move it, mark it done or cancel it.`,
   },
   toolbar: {
-    searchPlaceholder: 'Search name, # or code',
+    searchPlaceholder: 'Search name, phone, # or code',
     searchLabel: 'Search orders',
     openSearch: 'Search orders',
     closeSearch: 'Close search',
@@ -2599,6 +2599,8 @@ export const ordersWords = {
     emptyDay: (date: string) => `No orders on ${date}.`,
     emptyUpcoming: 'No orders booked for later days.',
     showToday: 'Show today',
+    // A search with no dates picked looks through every day (T126).
+    allDays: 'All days',
     cols: {
       order: 'Order',
       date: 'Date',
@@ -2627,6 +2629,11 @@ export const ordersWords = {
     emptyBoardTitle: 'No orders yet',
     noMatches: 'No orders match',
     clearFilters: 'Clear filters',
+    // A Board search also looks through earlier and finished orders (T126).
+    noOpenMatches: 'No open orders match',
+    pastMatches: (count: number) =>
+      count === 1 ? '1 past order matches.' : `${count} past orders match.`,
+    showPast: 'Show past orders',
     // The Paid to filter from Home's money rows (T84).
     paidTo: (place: string) => `Paid to ${place}`,
     paidToClear: (place: string) => `Show all payments, not only ${place}`,

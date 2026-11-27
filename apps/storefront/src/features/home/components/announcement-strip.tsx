@@ -19,7 +19,9 @@ export function AnnouncementStrip({ announcement }: { announcement: Announcement
       <Marquee
         speed={28}
         pauseOnHover
-        className="rounded-full bg-shop-10-soft text-shop-10-soft-foreground"
+        // isolate (T126): the marquee's fade edges are z-10, the same layer as the sticky top bar, so
+        // without their own layer they paint over the bar once the strip scrolls under it.
+        className="isolate rounded-full bg-shop-10-soft text-shop-10-soft-foreground"
       >
         <MarqueeContent>
           <MarqueeItem className="flex items-center gap-2 py-2 pr-8 text-sm font-medium">

@@ -24,7 +24,7 @@ import {
   salesTotal,
   statusStage,
 } from '@smartapp/core';
-import { errorCodeOf, useOrdersInRange, useScheduledOrders } from '@smartapp/data';
+import { errorCodeOf, useOrderSearch, useOrdersInRange, useScheduledOrders } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Badge } from '@smartapp/ui/components/reui/badge';
 import {
@@ -306,15 +306,24 @@ export function ListView({
   const setSearch = useSetOrdersSearch();
   const isPhone = useFormFactor() === 'phone';
   const today = manilaDate(now);
-  const { pick, dates } = listPeriod(search, today);
-  const multiDay = dates.from !== dates.to;
-  const [sort, setSort] = React.useState<Sort>({ key: 'time', asc: true });
+  // A search with no dates picked looks through every day (T126): done and cancelled orders too.
+  const anyDay = query.trim() !== '' && !search.day && !search.from && !search.to;
+  const period = listPeriod(search, today);
+  const pick = anyDay ? null : period.pick;
+  const dates = period.dates;
+  const multiDay = anyDay || dates.from !== dates.to;
+  // Newest first when searching every day; otherwise by time.
+  const [sortPick, setSort] = React.useState<Sort | null>(null);
+  const sort = React.useMemo<Sort>(
+    () => sortPick ?? { key: 'time', asc: !anyDay },
+    [sortPick, anyDay],
+  );
 
   // Days up to today list the orders made then; later days list the orders due then (from the Calendar).
   const madeTo = dates.to < today ? dates.to : today;
   const dueFrom = dates.from > today ? dates.from : addDays(today, 1);
-  const wantsMade = dates.from <= today;
-  const wantsDue = dates.to > today;
+  const wantsMade = !anyDay && dates.from <= today;
+  const wantsDue = !anyDay && dates.to > today;
   const made = useOrdersInRange(
     slug,
     wantsMade ? dates.from : '',
@@ -322,12 +331,23 @@ export function ListView({
     query || undefined,
   );
   const due = useScheduledOrders(slug, wantsDue ? dueFrom : '', wantsDue ? dates.to : '');
-  const pending = (wantsMade && made.isPending) || (wantsDue && due.isPending);
-  const failed = wantsMade && made.isError ? made : wantsDue && due.isError ? due : null;
+  const found = useOrderSearch(slug, anyDay ? query : '');
+  const pending =
+    (wantsMade && made.isPending) || (wantsDue && due.isPending) || (anyDay && found.isPending);
+  const failed =
+    wantsMade && made.isError
+      ? made
+      : wantsDue && due.isError
+        ? due
+        : anyDay && found.isError
+          ? found
+          : null;
 
   const madeData = made.data;
   const dueData = due.data;
+  const foundData = found.data;
   const all = React.useMemo(() => {
+    if (anyDay) return (foundData ?? []).filter(matches);
     const seen = new Set<string>();
     const out: BoardOrder[] = [];
     for (const o of wantsMade ? (madeData ?? []) : []) {
@@ -347,7 +367,7 @@ export function ListView({
       out.push(o);
     }
     return out.filter(matches);
-  }, [wantsMade, wantsDue, madeData, dueData, query, matches]);
+  }, [anyDay, foundData, wantsMade, wantsDue, madeData, dueData, query, matches]);
 
   const counts = React.useMemo(() => {
     const out: Record<ListStatus, number> = {
@@ -371,7 +391,8 @@ export function ListView({
   const shownStatuses = LIST_STATUSES.filter((s) => counts[s] > 0 || s === status);
   const chipStatuses: (ListStatus | 'all')[] = ['all', ...shownStatuses];
   const footer = L.footer(rows.length, formatPeso(salesTotal(rows, now)));
-  const label = pick ? L.picks[pick] : rangeText(dates, L.period.range);
+  const label = anyDay ? L.allDays : pick ? L.picks[pick] : rangeText(dates, L.period.range);
+  const rowsKey = anyDay ? `all|${status ?? ''}` : `${dates.from}|${dates.to}|${status ?? ''}`;
 
   let body: React.ReactNode;
   if (pending) {
@@ -430,7 +451,7 @@ export function ListView({
     body = (
       <PhoneList
         // A new period or status starts again at the first rows.
-        key={`${dates.from}|${dates.to}|${status ?? ''}`}
+        key={rowsKey}
         orders={rows}
         kind={kind}
         now={now}
@@ -443,7 +464,7 @@ export function ListView({
   } else {
     body = (
       <OrdersGrid
-        key={`${dates.from}|${dates.to}|${status ?? ''}`}
+        key={rowsKey}
         orders={rows}
         kind={kind}
         now={now}
@@ -452,7 +473,7 @@ export function ListView({
         footer={footer}
         sort={sort}
         onSort={(key) =>
-          setSort((s) => (s.key === key ? { key, asc: !s.asc } : { key, asc: key !== 'total' }))
+          setSort(sort.key === key ? { key, asc: !sort.asc } : { key, asc: key !== 'total' })
         }
         onOpen={onOpen}
       />
@@ -476,7 +497,8 @@ export function ListView({
           onPick={(p) =>
             setSearch(
               {
-                day: p === 'today' ? undefined : p,
+                // While searching, Today is kept in the address so the search stays on today.
+                day: p === 'today' && !query.trim() ? undefined : p,
                 from: undefined,
                 to: undefined,
                 status: undefined,
@@ -489,7 +511,7 @@ export function ListView({
             setSearch(
               quick || picked.from === picked.to
                 ? {
-                    day: quick === 'today' ? undefined : (quick ?? picked.from),
+                    day: quick === 'today' && !query.trim() ? undefined : (quick ?? picked.from),
                     from: undefined,
                     to: undefined,
                     status: undefined,

@@ -11,6 +11,7 @@ import {
   manilaDate,
   methodsFor,
   normalisePhPhone,
+  phoneSearchText,
   openState,
   OpenStateSchema,
   OrderStatusEnum,
@@ -78,6 +79,8 @@ const FINAL = ['completed', 'cancelled', 'expired'];
 const MAX_LIST_DAYS = 92;
 const MAX_CALENDAR_DAYS = 122;
 const MAX_ROWS = 2000;
+// An any-day search (T126) returns the newest matches.
+const ANY_DAY_ROWS = 200;
 const MAX_CHATS = 50;
 const PROOF_LINK_SECONDS = 300;
 
@@ -154,24 +157,31 @@ export class OwnerOrdersService {
     open?: boolean | undefined;
     from?: string | undefined;
     to?: string | undefined;
+    // Any day (T126): every order that matches q, finished ones too, newest first.
+    anyDay?: boolean | undefined;
     q?: string | undefined;
   }): Promise<BoardOrder[]> {
     const where: (SQL | undefined)[] = [eq(orders.tenantId, this.db.shopId)];
-    if (input.from && input.to) {
+    const q = input.q?.trim().toLowerCase() ?? '';
+    if (input.anyDay) {
+      if (!q) throw new ApiFailure('invalid_input', 422);
+    } else if (input.from && input.to) {
       const span = daysBetween(input.from, input.to);
       if (span < 0 || span > MAX_LIST_DAYS) throw new ApiFailure('invalid_input', 422);
       where.push(between(orders.businessDate, input.from, input.to));
     } else {
       where.push(notInArray(orders.status, FINAL));
     }
-    const q = input.q?.trim().toLowerCase() ?? '';
     if (q) {
       // "#012" and "012" find order 12, the way the owner reads the number.
       const numberQuery = q.replace(/^#?0*/, '');
+      // 0917 123 4567, +63 917… or 917… find +639171234567 (T126).
+      const phoneQuery = phoneSearchText(q);
       where.push(
         or(
           ilike(orders.customerName, likeText(q)),
           ilike(orders.customerPhone, likeText(q)),
+          phoneQuery !== null ? ilike(orders.customerPhone, likeText(phoneQuery)) : undefined,
           ilike(orders.pickupCode, likeText(q)),
           numberQuery !== '' && /^\d+$/.test(numberQuery)
             ? sql`${orders.orderNo}::text like ${likeText(numberQuery)}`
@@ -183,8 +193,8 @@ export class OwnerOrdersService {
       .select()
       .from(orders)
       .where(and(...where))
-      .orderBy(asc(orders.placedAt))
-      .limit(MAX_ROWS);
+      .orderBy(input.anyDay ? desc(orders.placedAt) : asc(orders.placedAt))
+      .limit(input.anyDay ? ANY_DAY_ROWS : MAX_ROWS);
     return (await this.reader.views(rows)).map((v) => this.reader.board(v));
   }
 

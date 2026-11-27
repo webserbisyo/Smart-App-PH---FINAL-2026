@@ -5,6 +5,7 @@ export const ownerOrdersQk = {
   open: (slug: string, q?: string) => ['owner-orders', slug, 'open', q ?? ''] as const,
   byRange: (slug: string, from: string, to: string, q?: string) =>
     ['owner-orders', slug, 'range', from, to, q ?? ''] as const,
+  anyDay: (slug: string, q: string) => ['owner-orders', slug, 'any-day', q] as const,
   scheduled: (slug: string, from: string, to: string) =>
     ['owner-orders', slug, 'scheduled', from, to] as const,
   find: (slug: string, code: string) => ['owner-orders', slug, 'find', code] as const,
