@@ -89,6 +89,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Audit fixes before the first paying shop, in 4 batches: checkout and menu, pre-live setup (Editor preview, the dashboard's own shop read, Remove samples), counter stamps and the New order prize, plan days, news, help mode locks and shared phones (decision T120; built 2026-11-27, waiting for review)
 - [x] Installed apps open on their logo, never a white screen: shop opening screen in the first bytes, PNG icons and launch pictures from a real shop's logo, every iPhone and iPad size, a dashboard opening screen in light and dark, 1 s to 3 s, no delay setting (decision T121; built 2026-11-27, waiting for review)
 - [x] iPhone logo screen hand-off: shop launch pictures used (Apple's tag), logo lined up with the picture (no jump), logo-only picture with the name fading in, dots that show, a clean exit and no taps through it (decision T122; built 2026-11-27, waiting for review)
+- [x] Launch pictures by tagged address, kept a year, fetched while the iPhone install steps show (decision T123; built 2026-11-27, waiting for the founder's iPhone test)
 
 ## Phase 4: Backend, area by area
 

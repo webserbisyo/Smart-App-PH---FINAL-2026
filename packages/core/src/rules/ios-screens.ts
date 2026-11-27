@@ -50,3 +50,14 @@ export function splashScreen(sizeName: string): IosScreen | null {
 export function splashMedia(screen: IosScreen): string {
   return `(device-width: ${screen.width}px) and (device-height: ${screen.height}px) and (-webkit-device-pixel-ratio: ${screen.ratio}) and (orientation: portrait)`;
 }
+
+/**
+ * A short tag for a launch picture's address that changes whenever the picture would (decision T123). iPhone
+ * keeps a launch picture by its address, so a new picture gets a new address, and each address can then be
+ * kept for a year without ever being asked for again.
+ */
+export function splashVersion(...parts: readonly string[]): string {
+  let hash = 0;
+  for (const char of parts.join('|')) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return hash.toString(36);
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isShopIconName, shopIconUrls, splashIconUrl } from './shop-icons';
+import { isShopIconName, shopIconUrls, splashIconUrl, splashPictureVersion } from './shop-icons';
 
 describe('shop icons (T121)', () => {
   it('keeps the demo shops on their ready-made files', () => {
@@ -24,5 +24,38 @@ describe('shop icons (T121)', () => {
     expect(isShopIconName('icon-512.png')).toBe(true);
     expect(isShopIconName('../secret.png')).toBe(false);
     expect(isShopIconName('toString')).toBe(false);
+  });
+
+  it('tags the launch picture with what it shows (T123)', () => {
+    const look = {
+      brandColor: '#d7372f',
+      surface: 'light',
+      pageColor: null,
+      cardColor: null,
+      opening: { background: 'page', color: null, logoSize: 'medium' },
+    } as const;
+    const same = splashPictureVersion('kanto-smash', look, null);
+    expect(splashPictureVersion('kanto-smash', look, null)).toBe(same);
+    expect(
+      splashPictureVersion(
+        'kanto-smash',
+        { ...look, brandColor: '#123456', opening: { ...look.opening, background: 'brand' } },
+        null,
+      ),
+    ).not.toBe(same);
+    expect(
+      splashPictureVersion(
+        'kanto-smash',
+        {
+          ...look,
+          opening: {
+            ...look.opening,
+            logoSize: 'large',
+          },
+        },
+        null,
+      ),
+    ).not.toBe(same);
+    expect(splashPictureVersion('kanto-smash', look, null)).toMatch(/^[0-9a-z]+$/);
   });
 });

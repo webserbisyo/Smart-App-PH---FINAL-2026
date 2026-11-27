@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
@@ -28,18 +30,28 @@ function versionFile(): Plugin {
 }
 
 // iPhone and iPad launch pictures (decision T121), light and dark, made by tooling/scripts/dashboard-splash.ts.
-// iOS opens white on any screen without one, so every current screen gets a pair.
+// iOS opens white on any screen without one, so every current screen gets a pair. Each address carries a tag
+// from the file's bytes (T123): iPhone keeps a picture by its address, so a new picture gets a new address,
+// and vercel.json lets phones keep each one for a year.
+function pictureTag(file: string): string {
+  const bytes = readFileSync(resolve(import.meta.dirname, 'public', file.slice(1)));
+  return createHash('sha256').update(bytes).digest('hex').slice(0, 10);
+}
+
 function launchPictures(): Plugin {
   const tags: HtmlTagDescriptor[] = IOS_SCREENS.flatMap((screen) =>
-    (['light', 'dark'] as const).map((theme) => ({
-      tag: 'link',
-      injectTo: 'head' as const,
-      attrs: {
-        rel: 'apple-touch-startup-image',
-        href: `/splash/dashboard-${splashSizeName(screen)}-${theme}.png`,
-        media: `${splashMedia(screen)} and (prefers-color-scheme: ${theme})`,
-      },
-    })),
+    (['light', 'dark'] as const).map((theme) => {
+      const file = `/splash/dashboard-${splashSizeName(screen)}-${theme}.png`;
+      return {
+        tag: 'link',
+        injectTo: 'head' as const,
+        attrs: {
+          rel: 'apple-touch-startup-image',
+          href: `${file}?v=${pictureTag(file)}`,
+          media: `${splashMedia(screen)} and (prefers-color-scheme: ${theme})`,
+        },
+      };
+    }),
   );
   return { name: 'smartapp-launch-pictures', transformIndexHtml: () => tags };
 }

@@ -62,9 +62,12 @@ export async function GET(request: Request, { params }: RouteProps): Promise<Res
   return new ImageResponse(picture, {
     width,
     height,
-    // Kept on Vercel's edge too, so iPhone gets it at once when the app is added (T122).
+    // Kept on Vercel's edge too, so iPhone gets it at once when the app is added (T122). The page asks for
+    // it with a tag that changes with the picture (T123), so a tagged address is kept for a year.
     headers: {
-      'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
+      'Cache-Control': new URL(request.url).searchParams.has('v')
+        ? 'public, max-age=31536000, s-maxage=31536000, immutable'
+        : 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
     },
   });
 }

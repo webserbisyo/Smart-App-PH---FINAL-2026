@@ -1,6 +1,13 @@
 // A shop's app icons and launch logo (T13, R51, T121): the demo shops' ready-made brand files, or for a real
 // shop the logo the owner uploaded, drawn into PNG icons by /<slug>/icon/<name>.
-import { DEMO_MEDIA, imageUrl, isDemoShopSlug } from '@smartapp/core';
+import {
+  DEMO_MEDIA,
+  imageUrl,
+  isDemoShopSlug,
+  OPENING_LOGO_PX,
+  openingColours,
+  splashVersion,
+} from '@smartapp/core';
 
 /** The demo shops' brand files (public/demo/<slug>/brand), or null for any other shop. */
 export function demoBrandFiles(slug: string) {
@@ -17,6 +24,28 @@ export function demoBrandFiles(slug: string) {
 /** The logo the opening screen draws: a demo shop's icon, else the owner's logo, else none (name alone). */
 export function splashIconUrl(slug: string, logo: string | null): string | null {
   return demoBrandFiles(slug)?.splash ?? imageUrl(logo, 512);
+}
+
+// Bump when the launch picture's drawing changes (app/[shop]/splash/[size]/route.ts), so iPhone asks again.
+const SPLASH_DRAWING = 't123';
+
+/**
+ * The tag on a shop's launch picture addresses (T123): it changes with the picture's colour, logo or logo
+ * size, so the route can tell browsers and Vercel to keep each picture for a year.
+ */
+export function splashPictureVersion(
+  slug: string,
+  look: Parameters<typeof openingColours>[0] & {
+    opening: { logoSize: keyof typeof OPENING_LOGO_PX };
+  },
+  logo: string | null,
+): string {
+  return splashVersion(
+    SPLASH_DRAWING,
+    openingColours(look).background,
+    String(OPENING_LOGO_PX[look.opening.logoSize]),
+    splashIconUrl(slug, logo) ?? '',
+  );
 }
 
 // The PNG icons drawn for a shop without ready-made files (Android needs a PNG of 512 px or more for its

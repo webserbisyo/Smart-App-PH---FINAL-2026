@@ -85,3 +85,17 @@ function snapshot(): InstallPlatform {
 export function useInstallPlatform(): InstallPlatform {
   return useSyncExternalStore(subscribe, snapshot, () => 'installed');
 }
+
+/**
+ * Fetches this phone's launch picture while the customer reads the iPhone steps (T123), so it is already on
+ * Vercel's edge and in the phone's cache when they tap Add to Home Screen. Only the one picture that matches.
+ */
+export function warmLaunchPicture(): void {
+  const links = document.querySelectorAll<HTMLLinkElement>('link[rel="apple-touch-startup-image"]');
+  for (const link of links) {
+    if (link.media && matchMedia(link.media).matches) {
+      new Image().src = link.href;
+      return;
+    }
+  }
+}

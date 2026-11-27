@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { DownloadIcon, PlusIcon, ShareIcon, SquarePlusIcon, XIcon } from 'lucide-react';
 import { artPath, words } from '@smartapp/core';
 import { useInstallDismissed, useNow } from '@smartapp/data';
@@ -14,7 +15,7 @@ import {
   StepperTitle,
 } from '@smartapp/ui/components/reui/stepper';
 import { installCardVisible } from '../install-rules';
-import { promptInstall, useInstallPlatform } from '../install-store';
+import { promptInstall, useInstallPlatform, warmLaunchPicture } from '../install-store';
 
 const W = words.install;
 
@@ -33,7 +34,11 @@ export function InstallCard({ slug, shopName }: { slug: string; shopName: string
   const platform = useInstallPlatform();
   const now = useNow();
   const { dismissedAt, dismiss } = useInstallDismissed(slug);
-  if (!installCardVisible({ platform, dismissedAt, now })) return null;
+  const visible = installCardVisible({ platform, dismissedAt, now });
+  useEffect(() => {
+    if (visible && platform === 'ios') warmLaunchPicture();
+  }, [visible, platform]);
+  if (!visible) return null;
 
   return (
     <section

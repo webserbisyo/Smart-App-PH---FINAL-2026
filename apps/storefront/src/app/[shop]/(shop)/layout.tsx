@@ -13,7 +13,12 @@ import {
   splashMedia,
   splashSizeName,
 } from '@/features/install/install-rules';
-import { demoBrandFiles, shopIconUrls, splashIconUrl } from '@/features/install/shop-icons';
+import {
+  demoBrandFiles,
+  shopIconUrls,
+  splashIconUrl,
+  splashPictureVersion,
+} from '@/features/install/shop-icons';
 import { ShopApp } from '@/features/shell/components/shop-app';
 
 interface ShopLayoutProps {
@@ -34,6 +39,8 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
   const files = demoBrandFiles(slug);
   // The installed app's name: the owner's app name, else the shop name (T94).
   const appName = appNameOf(name, shop.storefront.look.opening);
+  // Tagged with what the picture shows, so each one is kept for a year and a new look gets new addresses (T123).
+  const splashTag = splashPictureVersion(slug, shop.storefront.look, shop.storefront.info.logo);
   return {
     title: name,
     description: tagline ?? name,
@@ -45,7 +52,7 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
       statusBarStyle: 'default',
       // The launch picture per iPhone and iPad screen: the shop's logo alone on its opening colour (R51, T122).
       startupImage: IOS_SCREENS.map((screen) => ({
-        url: `/${slug}/splash/${splashSizeName(screen)}`,
+        url: `/${slug}/splash/${splashSizeName(screen)}?v=${splashTag}`,
         media: splashMedia(screen),
       })),
     },
