@@ -287,14 +287,20 @@ test.describe('menu and item sheet (T07)', () => {
     const mSize = page.getByRole('button', { name: 'M', exact: true });
     await mSize.click();
 
-    // Sand colour should be disabled/sold out for size M (blueprint section 14)
+    // Sand is sold out only in M, so it stays pickable: tapping it moves the size to one with Sand in stock
+    // (T120, audit F-08), never to the sold-out pair.
     const sandChip = page.getByRole('button', { name: 'Sand', exact: true });
-    await expect(sandChip).toBeDisabled();
+    await expect(sandChip).toBeEnabled();
+    await sandChip.click();
+    await expect(sandChip).toHaveAttribute('aria-pressed', 'true');
+    await expect(mSize).not.toHaveAttribute('aria-pressed', 'true');
 
-    // Select Black colour
+    // Back to Black in M
     const blackChip = page.getByRole('button', { name: 'Black', exact: true });
-    await expect(blackChip).not.toBeDisabled();
+    await expect(blackChip).toBeEnabled();
     await blackChip.click();
+    await mSize.click();
+    await expect(mSize).toHaveAttribute('aria-pressed', 'true');
 
     // Add to cart
     const addBtn = page.getByRole('button', { name: 'Add · ₱450' });
