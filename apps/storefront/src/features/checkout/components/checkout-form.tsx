@@ -7,14 +7,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   artPath,
   errorWords,
+  availabilityAt,
   formatPeso,
+  goesWellWith,
+  lineIdentity,
   normalisePhPhone,
   rewardState,
   variantAvailability,
   vocab,
   words,
+  type BasketLine as SavedLine,
   type OrderPayload,
   type PaymentMethod,
+  orderFlowWords,
 } from '@smartapp/core';
 import {
   errorCodeOf,
@@ -25,6 +30,7 @@ import {
   useOnline,
   usePlaceOrder,
   useQuote,
+  useRefreshShop,
 } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Pending } from '@smartapp/ui/components/pending';
@@ -34,7 +40,9 @@ import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { useReducedMotion } from '@smartapp/ui/hooks/use-reduced-motion';
 import { AlertTriangleIcon } from 'lucide-react';
 import { formatManilaDateTime } from '../../receipt/receipt-rules';
-import { useBasketView } from '../../basket/components/use-basket-view';
+import { useBasketView, type BasketRow } from '../../basket/components/use-basket-view';
+import { removeRowsWithUndo } from '../../basket/remove-lines';
+import { closeAddedToast } from '../../menu/use-added-toast';
 import { useShop } from '../../shell/components/shop-context';
 import { useWhenIdle } from '../../shell/use-when-idle';
 import { useLocationChoice } from '../../location/components/use-location-choice';
@@ -55,6 +63,29 @@ import type { PrinterSlip, PrinterState } from './order-printer';
 const OrderPrinter = dynamic(() => import('./order-printer').then((m) => m.OrderPrinter), {
   ssr: false,
 });
+
+// Lines that can't be ordered and the Goes well pairings load only when shown (T127, JS budget).
+const CheckoutFixLines = dynamic(() => import('./checkout-fix-lines'), { ssr: false });
+const BasketGoesWellWith = dynamic(
+  () => import('../../basket/components/basket-goes-well-with').then((m) => m.BasketGoesWellWith),
+  { ssr: false },
+);
+
+// Edit a line, or a pairing with choices, opens the item sheet over checkout (T127).
+const ItemSheet = dynamic(
+  () => import('../../menu/item-sheet/item-sheet').then((m) => m.ItemSheet),
+  {
+    ssr: false,
+  },
+);
+
+// Order errors that mean a line can't be ordered any more: the menu is read again and the jam offers to
+// remove those lines (T127).
+const STOCK_CODES: ReadonlySet<string> = new Set([
+  'out_of_stock',
+  'item_unavailable',
+  'invalid_options',
+]);
 
 // The printer's slip takes 1.6 s to feed out (decision R32); the receipt opens once it has, or at
 // once on Skip or under reduced motion.
@@ -101,6 +132,15 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
   const { choice, address } = useLocationChoice(slug);
   const { draft } = useCheckoutDraft(slug);
   const { data: member } = useMyAccount(slug);
+  const refreshShop = useRefreshShop(slug);
+  const [sheet, setSheet] = useState<{ itemId: string; edit: SavedLine | null } | null>(null);
+  const [sheetLoaded, setSheetLoaded] = useState(false);
+  const openSheet = (next: { itemId: string; edit: SavedLine | null }) => {
+    setSheetLoaded(true);
+    setSheet(next);
+  };
+  // The "added · View basket" toast sat on Place order (T127).
+  useEffect(() => closeAddedToast(), []);
 
   // Scheduled slot from query param if passed by basket drawer (e.g. ?scheduled=...)
   const queryScheduled = searchParams.get('scheduled');
@@ -126,6 +166,8 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
 
   // Scheduled time
   const scheduledAt = queryScheduled || choice.scheduledAt;
+  // Stock is judged at the booked time (T127), as the server does.
+  const stockAt = availabilityAt(scheduledAt, now);
 
   // Order type: the customer's pick, or the only way this shop takes orders. Never a silent default.
   const pickedType =
@@ -145,6 +187,8 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
     key: 0,
   });
   const [placedOk, setPlacedOk] = useState(false);
+  // The order was turned away because a line can't be ordered any more (T127).
+  const [stockJam, setStockJam] = useState(false);
   const [printer, setPrinter] = useState<PrinterState | null>(null);
   const [printerLoaded, loadPrinter] = useWhenIdle();
   if (printer !== null && !printerLoaded) loadPrinter();
@@ -298,8 +342,12 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
     useReward,
   ]);
 
-  const { data: quote, isLoading: isQuoteLoading } = useQuote(slug, quotePayload);
-  const { goodRows } = useBasketView(shop, quote ?? null);
+  const quoteQuery = useQuote(slug, quotePayload);
+  const quote = quoteQuery.data;
+  // A quote kept on screen while a newer one loads is not the order as it is now (T127): Place order
+  // waits for the current one.
+  const isQuoteLoading = quotePayload !== null && !quoteQuery.isCurrent && !quoteQuery.isError;
+  const { goodRows, flaggedRows, goodCount } = useBasketView(shop, quote ?? null, stockAt);
   const placeOrder = usePlaceOrder(slug);
 
   // Totals
@@ -336,8 +384,9 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
     setPaymentAccountId(selectedOption.accountId);
   }
 
-  // Flagged lines count
-  const flaggedCount = quote?.lines.filter((l) => l.problems.length > 0).length ?? 0;
+  // Flagged lines, judged on this phone as well as by the last quote (T127).
+  const flaggedCount = flaggedRows.length;
+  const flaggedIds = new Set(flaggedRows.map((r) => r.identity));
 
   // The quote says the picked time filled up: open the picker at that day once per time.
   const quoteRejectedAt =
@@ -361,7 +410,7 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
     spot: address.spot,
     zoneId: address.zoneId,
     paymentMethod: selectedPaymentMethod,
-    quote,
+    quote: isQuoteLoading ? null : quote,
     quoteLoading: isQuoteLoading,
     submitting: placeOrder.isPending,
   });
@@ -389,6 +438,7 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
 
     skipRef.current = false;
     printStartRef.current = Date.now();
+    setStockJam(false);
     setPrinter('printing');
 
     try {
@@ -421,6 +471,11 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
     } catch (err: unknown) {
       const errCode = errorCodeOf(err);
       setPrinter(typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'jam');
+      if (STOCK_CODES.has(errCode)) {
+        // Read the menu again so the lines that can't be ordered show as such, here and in the jam.
+        setStockJam(true);
+        void refreshShop();
+      }
       switch (errCode) {
         case 'rate_limited':
           setSubmitError(words.checkout.rateLimited);
@@ -477,10 +532,10 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
   }
 
   // Quote lines for collapsible
-  const quoteLines =
+  const allLines =
     quote?.lines ??
     basket.lines.map((l) => ({
-      identity: `${l.itemId}-${l.variantId}`,
+      identity: lineIdentity(l),
       itemId: l.itemId,
       variantId: l.variantId,
       optionIds: l.optionIds,
@@ -494,6 +549,35 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
       photo: catalog.items.find((i) => i.id === l.itemId)?.photos[0] ?? null,
       problems: [],
     }));
+  // The summary lists what will be ordered; lines that can't be sit in their own box above it (T127).
+  const quoteLines = allLines.filter((l) => !flaggedIds.has(l.identity));
+  const editRow = (row: BasketRow) => openSheet({ itemId: row.itemId, edit: row.line });
+
+  // Up to 3 pairings under Your order (T127): "+" adds at once, an item with choices opens over checkout.
+  const basketItemIds = new Set(basket.lines.map((l) => l.itemId));
+  const pairings = goesWellWith(
+    catalog,
+    catalog.items.filter((i) => basketItemIds.has(i.id)),
+    stockAt,
+    { exclude: basketItemIds, limit: 3 },
+  );
+
+  // The jam names what sold out and removes it in one tap, back to checkout with the new total (T127).
+  const jamFix =
+    stockJam && flaggedRows.length > 0
+      ? {
+          label: orderFlowWords.removeSoldOut(flaggedRows.length),
+          onClick: () => {
+            removeRowsWithUndo(basket, flaggedRows);
+            setStockJam(false);
+            setPrinter(null);
+          },
+        }
+      : null;
+  const jamError =
+    stockJam && flaggedRows.length > 0
+      ? orderFlowWords.soldOutHint(flaggedRows.map((r) => r.name).join(', '))
+      : submitError;
 
   const slipLines = quoteLines.map((line) => ({
     key: line.identity,
@@ -553,7 +637,25 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-160 flex-col gap-4 pt-2 pb-40">
-      <CheckoutSummary slug={slug} lines={quoteLines} count={basket.count} total={total} />
+      <CheckoutSummary
+        slug={slug}
+        lines={quoteLines}
+        count={goodCount}
+        total={total}
+        footer={
+          // While a line can't be ordered, the page is about fixing that, not adding more.
+          pairings.length > 0 && flaggedRows.length === 0 ? (
+            <BasketGoesWellWith
+              items={pairings}
+              onOpenItem={(itemId) => openSheet({ itemId, edit: null })}
+            />
+          ) : null
+        }
+      />
+
+      {flaggedRows.length > 0 ? (
+        <CheckoutFixLines basket={basket} rows={flaggedRows} onEdit={editRow} />
+      ) : null}
 
       <CheckoutHow
         sf={sf}
@@ -613,13 +715,30 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
         <OrderPrinter
           state={printer}
           slip={slip}
-          error={submitError}
+          error={jamError}
+          fix={jamFix}
           onSkip={skipPrinting}
           onRetry={() => {
             setPrinter(null);
             void handlePlaceOrder();
           }}
-          onClose={() => setPrinter(null)}
+          onClose={() => {
+            setStockJam(false);
+            setPrinter(null);
+          }}
+        />
+      ) : null}
+
+      {sheetLoaded ? (
+        <ItemSheet
+          slug={slug}
+          catalog={catalog}
+          itemId={sheet?.itemId ?? null}
+          edit={sheet?.edit ?? null}
+          onClose={() => setSheet(null)}
+          now={now}
+          nested
+          inBasket
         />
       ) : null}
 

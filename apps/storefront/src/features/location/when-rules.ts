@@ -2,10 +2,13 @@
 // day and time are picked, how the times group, and the lines the picker shows.
 import {
   addDays,
+  DAY_PERIODS,
+  dayPeriodOf,
+  slotsByPeriod,
+  type DayPeriod,
   formatClock,
   formatManila,
   manilaDate,
-  manilaParts,
   readyEstimate,
   slotLabel,
   words,
@@ -17,9 +20,6 @@ import {
 
 export type WhenMode = 'asap' | 'schedule';
 export type BookableType = 'pickup' | 'delivery';
-
-/** At most this many day chips; a longer booking window adds "More dates". */
-export const DAY_CHIPS = 14;
 
 type AsapInput = Parameters<typeof readyEstimate>[0];
 
@@ -85,24 +85,15 @@ export function nextOpenSlot(schedule: Pick<Schedule, 'days'>, from: string): st
   return null;
 }
 
-export type Period = 'morning' | 'afternoon' | 'evening';
-export const PERIODS = ['morning', 'afternoon', 'evening'] as const;
+// One rule for parts of the day everywhere (T127): the shared picker's tabs use the core one.
+export type Period = DayPeriod;
+export const PERIODS = DAY_PERIODS;
+export const periodOf = dayPeriodOf;
+export const slotPeriods = slotsByPeriod;
 
-/** Morning before 12, Afternoon 12 to 5, Evening from 5 (Manila time). */
-export function periodOf(at: string): Period {
-  const { hour } = manilaParts(at);
-  if (hour < 12) return 'morning';
-  if (hour < 17) return 'afternoon';
-  return 'evening';
-}
-
-export function slotPeriods(
-  slots: readonly ScheduleSlot[],
-): { period: Period; slots: ScheduleSlot[] }[] {
-  return PERIODS.map((period) => ({
-    period,
-    slots: slots.filter((s) => periodOf(s.at) === period),
-  })).filter((g) => g.slots.length > 0);
+/** "Fri, 12 Dec", a day said in full (the month's day buttons). */
+export function dayLongLabel(date: string): string {
+  return formatManila(`${date}T12:00:00+08:00`, 'date');
 }
 
 /** "Today", "Tomorrow", then "Wed 5". */

@@ -1,6 +1,6 @@
 'use client';
 
-import { formatPeso, words, type LineProblem } from '@smartapp/core';
+import { formatPeso, words, type LineProblem, orderFlowWords } from '@smartapp/core';
 import { Button } from '@smartapp/ui/components/button';
 import {
   NumberField,
@@ -21,6 +21,12 @@ export interface ItemSheetFooterProps {
   problems: readonly LineProblem[];
   onAdd: () => void;
   onMissingClick: (problem: LineProblem) => void;
+  /** Editing one of several copies: the count stays at 1. */
+  qtyLocked?: boolean | undefined;
+  /** Words for a sold-out pick ("Sold out today · back tomorrow 9 AM"): the button can't be pressed. */
+  soldOut?: string | null | undefined;
+  /** "update" when the sheet edits a basket line. */
+  mode?: 'add' | 'update' | undefined;
 }
 
 /**
@@ -35,7 +41,12 @@ export function ItemSheetFooter({
   problems,
   onAdd,
   onMissingClick,
+  qtyLocked = false,
+  soldOut = null,
+  mode = 'add',
 }: ItemSheetFooterProps) {
+  const sheet = words.storefrontShell.menu.itemSheet;
+  const price = formatPeso(totalPrice);
   const firstProblem = problems.find((p) => p.code === 'required_missing' || p.code === 'too_few');
 
   return (
@@ -47,6 +58,7 @@ export function ItemSheetFooter({
           min={1}
           max={99}
           size="lg"
+          disabled={qtyLocked}
           className="w-32 shrink-0"
           aria-label={words.storefrontShell.menu.itemSheet.quantity}
         >
@@ -57,7 +69,15 @@ export function ItemSheetFooter({
           </NumberFieldGroup>
         </NumberField>
 
-        {firstProblem ? (
+        {soldOut ? (
+          <Button
+            variant="secondary"
+            disabled
+            className="h-12 min-w-0 flex-1 rounded-xl text-sm font-semibold"
+          >
+            <span className="truncate">{soldOut}</span>
+          </Button>
+        ) : firstProblem ? (
           <Button
             variant="outline"
             className="h-12 min-w-0 flex-1 rounded-xl text-sm font-semibold"
@@ -65,15 +85,17 @@ export function ItemSheetFooter({
           >
             <span className="truncate">
               {firstProblem.groupName
-                ? words.storefrontShell.menu.itemSheet.chooseToContinue(firstProblem.groupName)
-                : words.storefrontShell.menu.itemSheet.addWithPrice(formatPeso(totalPrice))}
+                ? sheet.chooseToContinue(firstProblem.groupName)
+                : sheet.addWithPrice(price)}
             </span>
           </Button>
         ) : (
           <AddToCartButton
-            label={words.storefrontShell.menu.itemSheet.addWithPrice(formatPeso(totalPrice))}
-            loadingLabel={words.storefrontShell.menu.itemSheet.adding}
-            addedLabel={words.storefrontShell.menu.itemSheet.added}
+            label={
+              mode === 'update' ? orderFlowWords.updateWithPrice(price) : sheet.addWithPrice(price)
+            }
+            loadingLabel={mode === 'update' ? orderFlowWords.updating : sheet.adding}
+            addedLabel={mode === 'update' ? orderFlowWords.updated : sheet.added}
             loadingMs={ADD_LOADING_MS}
             onClick={onAdd}
             className="min-w-0 flex-1 tabular"

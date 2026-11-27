@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronDownIcon, ChevronLeftIcon } from 'lucide-react';
 import { formatPeso, imageSources, words, type QuoteLine } from '@smartapp/core';
@@ -16,13 +17,15 @@ interface CheckoutSummaryProps {
   lines: QuoteLine[];
   count: number;
   total: number;
+  // Below the folded order, always shown: the Goes well pairings (T127).
+  footer?: ReactNode;
 }
 
 /**
  * Checkout top: back to the menu, the page title and the order folded up with its photos
  * (c-button-49 back, c-collapsible-1 summary).
  */
-export function CheckoutSummary({ slug, lines, count, total }: CheckoutSummaryProps) {
+export function CheckoutSummary({ slug, lines, count, total, footer }: CheckoutSummaryProps) {
   const summaryLabel = words.checkout.itemsSummary(count, formatPeso(total));
   const thumbs = lines.slice(0, 3);
 
@@ -102,6 +105,9 @@ export function CheckoutSummary({ slug, lines, count, total }: CheckoutSummaryPr
             </div>
           ))}
         </CollapsibleContent>
+        {footer ? (
+          <div className="border-t border-border/60 px-4 pb-3 sm:px-5">{footer}</div>
+        ) : null}
       </Collapsible>
     </div>
   );

@@ -13,7 +13,6 @@ import {
 import { Button } from '@smartapp/ui/components/button';
 import { ORDER_TYPE_ICON } from '../../location/components/order-type-icons';
 import { CheckoutStep } from './checkout-step';
-import { whenSummary } from '../../location/when-rules';
 
 // The sheet loads on the first Change, as from the location pill (decision R49).
 const HowWhereSheet = dynamic(
@@ -59,17 +58,14 @@ export function CheckoutHow({
   const state = openState(sf, now);
   const label = locationLabel(sf, choice, now);
 
+  // The label already names a booked time ("Pickup · Today 9:30 AM"), so the line under it only adds the
+  // ready time or the area's ETA for an order now (T127: it said the time twice).
   let detail: string | null = null;
   if (choice.type === 'pickup') {
-    if (choice.scheduledAt) {
-      detail = whenSummary('pickup', choice.scheduledAt, now);
-    } else if (state.state === 'open') {
-      detail = words.shop.readyIn(sf.prepMinutes);
-    }
+    if (!choice.scheduledAt && state.state === 'open') detail = words.shop.readyIn(sf.prepMinutes);
   } else if (choice.type === 'delivery') {
     const zone = chosenZone(sf, choice.zoneId);
-    if (choice.scheduledAt) detail = whenSummary('delivery', choice.scheduledAt, now);
-    else if (zone) detail = zone.etaText;
+    if (!choice.scheduledAt && zone) detail = zone.etaText;
   }
 
   const Icon = ORDER_TYPE_ICON[choice.type ?? sf.orderTypes[0] ?? 'pickup'];

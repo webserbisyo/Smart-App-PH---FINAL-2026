@@ -1,7 +1,7 @@
 'use client';
 
-import { AlertTriangleIcon, XIcon } from 'lucide-react';
-import { formatPeso, QTY_MAX, words } from '@smartapp/core';
+import { AlertTriangleIcon, PencilIcon, XIcon } from 'lucide-react';
+import { formatPeso, QTY_MAX, words, orderFlowWords } from '@smartapp/core';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
 import { Button } from '@smartapp/ui/components/button';
 import { Hitbox } from '@smartapp/ui/components/hitbox';
@@ -24,16 +24,22 @@ import { ShopImage } from '@smartapp/ui/compositions/shop-image';
 import { notify } from '@smartapp/ui/compositions/notify';
 import type { BasketApi } from '@smartapp/data';
 import { isFixableProblem, lineProblemMessage } from '../basket-rules';
+import type { LineProblem } from '@smartapp/core';
 import type { BasketRow } from './use-basket-view';
 
 export interface BasketLineProps {
   row: BasketRow;
   basket: BasketApi;
-  onChooseAgain?: ((itemId: string) => void) | undefined;
+  // Opens the item sheet with this line's picks (T127).
+  onEdit?: ((row: BasketRow) => void) | undefined;
+}
+
+function isSoldOut(problem: LineProblem): boolean {
+  return problem.code === 'sold_out' || problem.code === 'sold_out_today';
 }
 
 // One basket line: patterns c-item-2 (row), c-number-field-2 (quantity), c-button-24 (remove) and c-alert-7 (flagged line).
-export function BasketLine({ row, basket, onChooseAgain }: BasketLineProps) {
+export function BasketLine({ row, basket, onEdit }: BasketLineProps) {
   function remove() {
     const undo = basket.removeWithUndo(row.identity);
     if (!undo) return;
@@ -116,20 +122,34 @@ export function BasketLine({ row, basket, onChooseAgain }: BasketLineProps) {
             )}
 
             {!row.isFlagged ? (
-              <Hitbox
-                size="lg"
-                radius="full"
-                render={
+              <div className="flex items-center gap-2">
+                {onEdit && row.canEdit ? (
                   <Button
-                    size="icon-xs"
-                    variant="outline"
-                    aria-label={words.basket.remove(row.name)}
-                    onClick={remove}
+                    size="xs"
+                    variant="ghost"
+                    className="h-8 gap-1 px-2 text-xs"
+                    aria-label={orderFlowWords.editItem(row.name)}
+                    onClick={() => onEdit(row)}
                   >
-                    <XIcon aria-hidden="true" className="size-3.5" />
+                    <PencilIcon aria-hidden="true" className="size-3.5" />
+                    {orderFlowWords.edit}
                   </Button>
-                }
-              />
+                ) : null}
+                <Hitbox
+                  size="lg"
+                  radius="full"
+                  render={
+                    <Button
+                      size="icon-xs"
+                      variant="outline"
+                      aria-label={words.basket.remove(row.name)}
+                      onClick={remove}
+                    >
+                      <XIcon aria-hidden="true" className="size-3.5" />
+                    </Button>
+                  }
+                />
+              </div>
             ) : null}
           </ItemActions>
         </ItemContent>
@@ -149,17 +169,25 @@ export function BasketLine({ row, basket, onChooseAgain }: BasketLineProps) {
           </div>
 
           <div className="flex items-center gap-2 pl-6">
-            <Button size="xs" variant="outline" className="h-7 text-xs" onClick={remove}>
+            <Button
+              size="xs"
+              variant="outline"
+              className="h-7 text-xs text-foreground hover:text-foreground"
+              onClick={remove}
+            >
               {words.basket.remove(row.name)}
             </Button>
-            {isFixableProblem(firstProblem) && onChooseAgain ? (
+            {onEdit &&
+            row.canEdit &&
+            (isFixableProblem(firstProblem) || isSoldOut(firstProblem)) ? (
               <Button
                 size="xs"
                 variant="default"
                 className="h-7 text-xs"
-                onClick={() => onChooseAgain(row.itemId)}
+                aria-label={orderFlowWords.editItem(row.name)}
+                onClick={() => onEdit(row)}
               >
-                {words.basket.chooseAgain}
+                {orderFlowWords.edit}
               </Button>
             ) : null}
           </div>

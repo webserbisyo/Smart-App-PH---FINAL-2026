@@ -1,9 +1,13 @@
 import * as React from 'react';
 import { BikeIcon, ShoppingBagIcon, StoreIcon } from 'lucide-react';
 import {
+  dayPeriodOf,
   formatClock,
   formatPeso,
   manilaDate,
+  openingPeriod,
+  SLOT_STRIP_DAYS,
+  slotsByPeriod,
   newOrderWords,
   ordersWords,
   type OrderType,
@@ -16,8 +20,9 @@ import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
-import { DayChips, TimeChips, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
-import { dayChipLabel } from '@/app/orders/calendar-days';
+import { DayChips, SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import { SlotMonth } from '@smartapp/ui/compositions/slot-month';
+import { dayChipLabel, dayLong } from '@/app/orders/calendar-days';
 import { PesoInput } from '@/app/peso-input';
 import type { Draft } from './draft.js';
 
@@ -166,6 +171,11 @@ function WhenFields({
   );
   const shownDay = day ?? days.find((d) => pickable(d.state))?.date ?? null;
   const active = days.find((d) => d.date === shownDay);
+  // The part of the day on screen (T127): the picked time's, else the first with an open time.
+  const [period, setPeriod] = React.useState<string | null>(null);
+  const shownPeriod = period ?? openingPeriod(active?.slots ?? [], draft.scheduledAt);
+  // A week or less shows day chips; a longer window a month (T127).
+  const monthView = days.length > SLOT_STRIP_DAYS;
 
   const dayChips: SlotChip[] = days.map((d) => ({
     value: d.date,
@@ -174,17 +184,24 @@ function WhenFields({
     tone: d.state === 'open' ? 'muted' : 'danger',
     disabled: !pickable(d.state),
   }));
-  const timeChips: SlotChip[] = (active?.slots ?? []).map((slot) => {
-    const full = slot.state === 'full';
-    return {
-      value: slot.at,
-      label: formatClock(slot.at),
-      detail: full ? W.when.full : undefined,
-      tone: full ? 'danger' : 'muted',
-      disabled: full && !draft.override,
-      struck: full && !draft.override,
-    };
-  });
+  const chipsOf = (slots: NonNullable<typeof active>['slots']): SlotChip[] =>
+    slots.map((slot) => {
+      const full = slot.state === 'full';
+      return {
+        value: slot.at,
+        label: formatClock(slot.at),
+        detail: full ? W.when.full : undefined,
+        tone: full ? 'danger' : 'muted',
+        disabled: full && !draft.override,
+        struck: full && !draft.override,
+      };
+    });
+  const periods = slotsByPeriod(active?.slots ?? []).map((group) => ({
+    value: group.period,
+    label: ordersWords.bookings[group.period],
+    detail: ordersWords.changeTime.openCount(group.slots.filter((s) => s.state === 'open').length),
+    chips: chipsOf(group.slots),
+  }));
 
   return (
     <div className="flex flex-col gap-3">
@@ -223,28 +240,53 @@ function WhenFields({
           </div>
         ) : (
           <>
-            <DayChips
-              label={W.when.day}
-              chips={dayChips}
-              value={shownDay}
-              onValueChange={(date) => {
-                setDay(date);
-                onChange({ scheduledAt: null });
-              }}
-              pressedClassName={PRESSED}
-            />
-            {timeChips.length === 0 ? (
+            {monthView ? (
+              <SlotMonth
+                days={dayChips.map((chip) => ({
+                  date: chip.value,
+                  disabled: chip.disabled,
+                  detail: chip.detail,
+                  tone: chip.tone,
+                  ariaLabel: [dayLong(chip.value), chip.detail].filter(Boolean).join(', '),
+                }))}
+                value={shownDay}
+                today={today}
+                onValueChange={(date) => {
+                  setDay(date);
+                  setPeriod(null);
+                  onChange({ scheduledAt: null });
+                }}
+              />
+            ) : (
+              <DayChips
+                label={W.when.day}
+                chips={dayChips}
+                value={shownDay}
+                onValueChange={(date) => {
+                  setDay(date);
+                  setPeriod(null);
+                  onChange({ scheduledAt: null });
+                }}
+                pressedClassName={PRESSED}
+              />
+            )}
+            {periods.length === 0 ? (
               <p className="rounded-xl border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
                 {W.when.noTimes}
               </p>
             ) : (
-              <TimeChips
+              <SlotPeriodTabs
                 label={W.when.time}
-                chips={timeChips}
+                periods={periods}
+                period={shownPeriod}
+                onPeriodChange={setPeriod}
                 value={draft.scheduledAt}
-                onValueChange={(at) => onChange({ scheduledAt: at })}
+                onValueChange={(at) => {
+                  setPeriod(dayPeriodOf(at));
+                  onChange({ scheduledAt: at });
+                }}
                 pressedClassName={PRESSED}
-                className="grid grid-cols-3 sm:grid-cols-4"
+                chipsClassName="grid grid-cols-3 sm:grid-cols-4"
               />
             )}
             <Field orientation="horizontal" className="rounded-xl border p-3">

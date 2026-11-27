@@ -8,6 +8,7 @@ import {
   validateLinePicks,
   variantAvailability,
   variantLabel,
+  type BasketLine,
   type ImageSources,
   type LineProblem,
   type PublicShop,
@@ -17,6 +18,10 @@ import { useBasket } from '@smartapp/data';
 
 export interface BasketRow {
   identity: string;
+  // The saved line, so Edit can open the item sheet with its picks (T127).
+  line: BasketLine;
+  // The item is still on the menu with a choice left to make, so Edit can fix or change the line.
+  canEdit: boolean;
   itemId: string;
   variantId: string;
   name: string;
@@ -55,6 +60,8 @@ export function useBasketView(
     if (!item || item.status === 'hidden' || item.status === 'archived') {
       return {
         identity: id,
+        line,
+        canEdit: false,
         itemId: line.itemId,
         variantId: line.variantId,
         name: item?.name ?? 'Item',
@@ -73,6 +80,8 @@ export function useBasketView(
     if (!variant) {
       return {
         identity: id,
+        line,
+        canEdit: true,
         itemId: line.itemId,
         variantId: line.variantId,
         name: item.name,
@@ -121,9 +130,15 @@ export function useBasketView(
 
     const isFlagged = problems.length > 0;
     const finalUnitPrice = newPrice ?? localPrice;
+    // A sold-out pick can still be fixed by Edit when another size or colour can be ordered.
+    const soldOut = avail !== 'available';
+    const canEdit =
+      !soldOut || item.variants.some((v) => variantAvailability(v, nowDate) === 'available');
 
     return {
       identity: id,
+      line,
+      canEdit,
       itemId: line.itemId,
       variantId: line.variantId,
       name: item.name,
@@ -140,8 +155,11 @@ export function useBasketView(
     };
   });
 
+  // Lines that can't be ordered go on top (T127), so they are seen before Checkout.
+  rows.sort((a, b) => Number(b.isFlagged) - Number(a.isFlagged));
   // Totals only include unflagged lines
   const goodRows = rows.filter((r) => !r.isFlagged);
+  const flaggedRows = rows.filter((r) => r.isFlagged);
   const total = goodRows.reduce((sum, r) => sum + r.lineTotal, 0);
   const count = rows.reduce((n, r) => n + r.qty, 0);
   const goodCount = goodRows.reduce((n, r) => n + r.qty, 0);
@@ -150,6 +168,7 @@ export function useBasketView(
     basket,
     rows,
     goodRows,
+    flaggedRows,
     count,
     goodCount,
     total,

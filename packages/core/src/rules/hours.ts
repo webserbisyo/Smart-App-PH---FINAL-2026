@@ -179,6 +179,16 @@ export function variantAvailability(
   return isSoldOutToday(variant, now) ? 'sold_out_today' : 'available';
 }
 
+/**
+ * When stock is judged for an order (T127): the booked time when the order is booked for later, else now.
+ * "Sold out today" ends at the next opening, so a booking for tomorrow can still take the item.
+ */
+export function availabilityAt(scheduledAt: string | null | undefined, now: string | Date): Date {
+  const at = scheduledAt ? new Date(scheduledAt) : null;
+  const nowDate = toDate(now);
+  return at && !Number.isNaN(at.getTime()) && at.getTime() > nowDate.getTime() ? at : nowDate;
+}
+
 /** "Open until 9 PM", "Closed · Opens 5 AM", "Closed · Opens tomorrow 5 AM", "Busy · back 3:40 PM". */
 export function openStateText(state: OpenState, now: string | Date): string {
   if (state.paused) return words.shop.notTakingOrders;

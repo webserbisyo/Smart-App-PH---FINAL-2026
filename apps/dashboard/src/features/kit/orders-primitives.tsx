@@ -28,7 +28,8 @@ import {
 } from '@smartapp/ui/vendor/opensource-ui/booking-slot-calendar';
 import { useCoarsePointer } from '@/app/use-coarse-pointer';
 import { KitSection } from './kit-section.js';
-import { DayChips, TimeChips } from '@smartapp/ui/compositions/slot-chips';
+import { DayChips, SlotPeriodTabs, TimeChips } from '@smartapp/ui/compositions/slot-chips';
+import { SlotMonth } from '@smartapp/ui/compositions/slot-month';
 import { HourglassIcon } from 'lucide-react';
 
 interface DemoCard {
@@ -476,6 +477,16 @@ export function OrdersPrimitiveSections() {
         <SlotChipsExample />
       </KitSection>
 
+      {/* 4c. Slot month and part-of-day tabs (T127) */}
+      <KitSection
+        title="Slot month and part-of-day tabs (our composition)"
+        library="composition (Calendar + Tabs + Toggle Group)"
+        path="packages/ui/src/compositions/slot-month.tsx"
+        usedIn="storefront When picker for windows longer than a week ahead, Change time, New order When (T127)"
+      >
+        <SlotMonthExample />
+      </KitSection>
+
       {/* 5. Booking slots */}
       <KitSection
         title="Booking Slot Calendar"
@@ -558,6 +569,58 @@ function SlotChipsExample() {
           },
           { value: '11', label: '11:00 AM', detail: '2 left', tone: 'warning' },
           { value: '12', label: '12:00 PM' },
+        ]}
+      />
+    </div>
+  );
+}
+
+// Two weeks from 1 Dec 2026: Sundays closed, the 9th full, the 1st too soon.
+const MONTH_DAYS = Array.from({ length: 14 }, (_, i) => {
+  const date = `2026-12-${String(i + 1).padStart(2, '0')}`;
+  const sunday = new Date(2026, 11, i + 1).getDay() === 0;
+  if (i === 0) return { date, disabled: true, detail: 'Soon', ariaLabel: `${date}, too soon` };
+  if (sunday) return { date, disabled: true, struck: true, ariaLabel: `${date}, closed` };
+  if (i === 8) return { date, disabled: true, detail: 'Full', tone: 'danger' as const };
+  return { date, detail: i % 3 === 0 ? 2 : undefined };
+});
+
+function SlotMonthExample() {
+  const [day, setDay] = useState<string | null>('2026-12-04');
+  const [period, setPeriod] = useState<string | null>('afternoon');
+  const [time, setTime] = useState<string | null>(null);
+  return (
+    <div className="flex max-w-md flex-col gap-4">
+      <SlotMonth days={MONTH_DAYS} value={day} onValueChange={setDay} />
+      <SlotPeriodTabs
+        label="Part of the day"
+        period={period}
+        onPeriodChange={setPeriod}
+        value={time}
+        onValueChange={setTime}
+        pressedClassName="aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+        chipsClassName="grid grid-cols-3"
+        periods={[
+          {
+            value: 'morning',
+            label: 'Morning',
+            detail: '1 open',
+            chips: [
+              { value: '10', label: '10:00 AM', detail: 'Full', struck: true, disabled: true },
+              { value: '11', label: '11:00 AM', detail: '2 left', tone: 'warning' },
+            ],
+          },
+          {
+            value: 'afternoon',
+            label: 'Afternoon',
+            detail: '3 open',
+            chips: [
+              { value: '13', label: '1:00 PM' },
+              { value: '14', label: '2:00 PM' },
+              { value: '15', label: '3:00 PM' },
+            ],
+          },
+          { value: 'evening', label: 'Evening', detail: 'Full', chips: [] },
         ]}
       />
     </div>

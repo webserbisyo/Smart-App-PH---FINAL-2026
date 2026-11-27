@@ -52,6 +52,45 @@ export function mergeLine(lines: readonly BasketLine[], line: BasketLine): Baske
   );
 }
 
+/**
+ * Changes one basket line (T127, Edit in the basket). `split` changes just one of a line of 2 or more: that
+ * line keeps the rest and the changed one becomes its own line. A changed line that now matches another
+ * line joins it (quantities added, capped at 99), so the basket never shows the same thing twice.
+ * Returns null when the line is gone already.
+ */
+export function updateLine(
+  lines: readonly BasketLine[],
+  identity: string,
+  next: BasketLine,
+  split: boolean,
+): { lines: BasketLine[]; joined: boolean } | null {
+  const index = lines.findIndex((l) => lineIdentity(l) === identity);
+  const old = lines[index];
+  if (!old) return null;
+  const normal = { ...next, optionIds: [...next.optionIds].sort(), note: next.note.trim() };
+  const id = lineIdentity(normal);
+  if (split && old.qty > 1) {
+    const kept = lines.map((l, i) => (i === index ? { ...l, qty: l.qty - 1 } : l));
+    const one = { ...normal, qty: 1 };
+    // Nothing changed: the line stays as it was.
+    if (id === identity) return { lines: [...lines], joined: false };
+    const joined = kept.some((l) => lineIdentity(l) === id);
+    return { lines: mergeLine(kept, one), joined };
+  }
+  const rest = lines.filter((_, i) => i !== index);
+  const other = rest.find((l) => lineIdentity(l) === id);
+  if (other) {
+    return {
+      lines: rest.map((l) =>
+        l === other ? { ...l, qty: Math.min(QTY_MAX, l.qty + normal.qty) } : l,
+      ),
+      joined: true,
+    };
+  }
+  // Same place in the basket as before.
+  return { lines: [...rest.slice(0, index), normal, ...rest.slice(index)], joined: false };
+}
+
 /** Removes a line; `restore` puts it back where it was (the Undo toast), unless it was added again meanwhile. */
 export function removeLine(
   lines: readonly BasketLine[],
@@ -82,6 +121,8 @@ export interface BasketApi {
   // Removes a line and returns Undo, or null when the line is gone already.
   removeWithUndo(identity: string): (() => void) | null;
   replace(lines: BasketLine[]): void;
+  // Edit in the basket (T127): 'joined' when the changed line merged into another one; null when gone.
+  update(identity: string, next: BasketLine, split: boolean): 'updated' | 'joined' | null;
   clear(): void;
 }
 
@@ -112,6 +153,12 @@ export function useBasket(slug: string): BasketApi {
       return () => write(result.restore(current()));
     },
     replace: (next) => write(next),
+    update: (identity, next, split) => {
+      const result = updateLine(current(), identity, next, split);
+      if (!result) return null;
+      write(result.lines);
+      return result.joined ? 'joined' : 'updated';
+    },
     clear: () => storage.basket.remove(slug),
   };
 }

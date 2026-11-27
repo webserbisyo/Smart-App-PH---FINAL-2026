@@ -1,15 +1,18 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   artPath,
+  availabilityAt,
   formatClock,
   formatPeso,
+  goesWellWith,
   openState,
   vocab,
   words,
+  type BasketLine as SavedLine,
   type OrderPayload,
 } from '@smartapp/core';
 import {
@@ -26,12 +29,26 @@ import { notify } from '@smartapp/ui/compositions/notify';
 import { useShop } from '../../shell/components/shop-context';
 import { closedStateDecision } from '../basket-rules';
 import { BasketClosedAlert } from './basket-closed-alert';
+import { FlaggedBanner } from './flagged-banner';
 import { BasketGoesWellWith } from './basket-goes-well-with';
 import { BasketHeader } from './basket-header';
 import { BasketLine } from './basket-line';
 import { BasketStampProgress } from './basket-stamp-progress';
 import { BasketTotals } from './basket-totals';
-import { useBasketView } from './use-basket-view';
+import { useBasketView, type BasketRow } from './use-basket-view';
+
+// The item sheet loads the first time a line is edited or a Goes well item with choices is opened.
+const ItemSheet = dynamic(
+  () => import('../../menu/item-sheet/item-sheet').then((m) => m.ItemSheet),
+  {
+    ssr: false,
+  },
+);
+
+interface OpenSheet {
+  itemId: string;
+  edit: SavedLine | null;
+}
 
 export interface BasketPanelProps {
   onBrowse?: (() => void) | undefined;
@@ -39,10 +56,16 @@ export interface BasketPanelProps {
 
 // The basket's lines, alerts, totals and checkout button, laid out to fill the basket drawer.
 export function BasketPanel({ onBrowse }: BasketPanelProps) {
-  const router = useRouter();
   const { slug, shop } = useShop();
   const now = useNow();
   const isOnline = useOnline();
+  // Edit a line or open a Goes well item over the basket; closing it comes back here (T127).
+  const [sheet, setSheet] = useState<OpenSheet | null>(null);
+  const [sheetLoaded, setSheetLoaded] = useState(false);
+  const openSheet = (next: OpenSheet) => {
+    setSheetLoaded(true);
+    setSheet(next);
+  };
 
   const { type: savedType } = useOrderType(slug);
   const { address } = useLastAddress(slug);
@@ -51,8 +74,13 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
   const orderType = savedType ?? shop.storefront.orderTypes[0] ?? 'pickup';
   const paymentMethod = shop.storefront.payments[0]?.method ?? 'cash';
 
+  // Stock is judged at the booked time when the customer picked one ahead (T127), like the server does.
+  const nowDate = now ? new Date(now) : new Date();
+  const stockAt = availabilityAt(draft?.scheduledAt, nowDate);
+  const bookedAt = stockAt.getTime() > nowDate.getTime() ? (draft?.scheduledAt ?? null) : null;
+
   // Base basket view without quote to get initial lines
-  const initialView = useBasketView(shop, null, now);
+  const initialView = useBasketView(shop, null, stockAt);
   const { basket } = initialView;
 
   // Build quote payload only if basket has items
@@ -60,7 +88,7 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
     if (basket.lines.length === 0) return null;
     return {
       type: orderType,
-      scheduledAt: null,
+      scheduledAt: bookedAt,
       lines: basket.lines,
       customer: {
         name: draft?.name || 'Customer',
@@ -81,13 +109,13 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
       note: null,
       useReward: false,
     };
-  }, [basket.lines, orderType, draft, address, paymentMethod]);
+  }, [basket.lines, orderType, bookedAt, draft, address, paymentMethod]);
 
   const quoteQuery = useQuote(slug, quotePayload);
   const quote = quoteQuery.data ?? null;
 
   // Full basket view with live quote data
-  const { rows, goodRows, count } = useBasketView(shop, quote, now);
+  const { rows, goodRows, flaggedRows, count } = useBasketView(shop, quote, stockAt);
 
   const catalog = vocab(shop.storefront.info.kind).catalog;
 
@@ -109,16 +137,30 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
   const discount = quote?.discount ?? 0;
   const total = quote?.total ?? Math.max(0, subtotal - discount) + (deliveryFee ?? 0);
 
-  // Companion items for "Goes well with"
+  // "Goes well with" (T127): the owner's pairings for what is in the basket first, then other
+  // categories; never sold out or already in the basket.
   const basketItemIds = new Set(basket.lines.map((l) => l.itemId));
-  const companionItems = shop.catalog.items
-    .filter((item) => !basketItemIds.has(item.id) && item.status === 'active')
-    .slice(0, 3);
+  const inBasketItems = shop.catalog.items.filter((item) => basketItemIds.has(item.id));
+  const companionItems = goesWellWith(shop.catalog, inBasketItems, stockAt, {
+    exclude: basketItemIds,
+    limit: 3,
+  });
 
-  const handleOpenItem = (itemId: string) => {
-    if (onBrowse) onBrowse();
-    router.push(`/${slug}/menu?item=${itemId}`);
-  };
+  const handleOpenItem = (itemId: string) => openSheet({ itemId, edit: null });
+  const handleEdit = (row: BasketRow) => openSheet({ itemId: row.itemId, edit: row.line });
+
+  const itemSheet = sheetLoaded ? (
+    <ItemSheet
+      slug={slug}
+      catalog={shop.catalog}
+      itemId={sheet?.itemId ?? null}
+      edit={sheet?.edit ?? null}
+      onClose={() => setSheet(null)}
+      now={now}
+      nested
+      inBasket
+    />
+  ) : null;
 
   if (rows.length === 0) {
     return (
@@ -210,20 +252,18 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
           versionResetNotice={basket.notice === 'storage_reset'}
         />
 
+        {/* Lines that can't be ordered sit on top with one Remove (T127). */}
+        <FlaggedBanner basket={basket} rows={flaggedRows} />
+
         <ul className="flex flex-col gap-2.5">
           {rows.map((row) => (
             <li key={row.identity}>
-              <BasketLine row={row} basket={basket} onChooseAgain={handleOpenItem} />
+              <BasketLine row={row} basket={basket} onEdit={handleEdit} />
             </li>
           ))}
         </ul>
 
-        <BasketGoesWellWith
-          items={companionItems}
-          optionGroups={shop.catalog.optionGroups}
-          basket={basket}
-          onOpenItem={handleOpenItem}
-        />
+        <BasketGoesWellWith items={companionItems} onOpenItem={handleOpenItem} />
 
         <BasketStampProgress stampCard={shop.storefront.stampCard} subtotal={subtotal} />
       </div>
@@ -243,6 +283,7 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
           {mainAction}
         </div>
       </div>
+      {itemSheet}
     </div>
   );
 }
