@@ -679,7 +679,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
           reference: ref(),
           status: 'pending',
           submittedAt: at,
-          coversUntil: planCoversUntil(book.paidUntil, l.pending.months, now()),
+          coversUntil: planCoversUntil(book.paidUntil, l.pending.months, now(), book.trialEndsAt),
           rejectReason: null,
           proofUrl: null,
         };
@@ -1425,7 +1425,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
           m.note = d.amountReason;
         }
         p.status = 'approved';
-        p.coversUntil = planCoversUntil(s.book.paidUntil, p.months, now());
+        p.coversUntil = planCoversUntil(s.book.paidUntil, p.months, now(), s.book.trialEndsAt);
         s.book.paidUntil = p.coversUntil;
         s.book.trialEndsAt = null;
         const line = deps.billingLine('admin', 'approved', at, { paymentId: p.id, text: m.note });
@@ -1465,7 +1465,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
         undos.delete(s.id);
         p.status = 'pending';
         p.amount = u.amount;
-        p.coversUntil = planCoversUntil(u.paidUntil, p.months, now());
+        p.coversUntil = planCoversUntil(u.paidUntil, p.months, now(), u.trialEndsAt);
         s.book.paidUntil = u.paidUntil;
         s.book.trialEndsAt = u.trialEndsAt;
         s.book.thread = s.book.thread.filter((l) => l.id !== u.lineId);
@@ -1517,7 +1517,7 @@ export function createPlatformMock(deps: PlatformMockDeps) {
           reference: d.reference,
           status: 'approved',
           submittedAt: at,
-          coversUntil: planCoversUntil(s.book.paidUntil, d.months, now()),
+          coversUntil: planCoversUntil(s.book.paidUntil, d.months, now(), s.book.trialEndsAt),
           rejectReason: null,
           proofUrl: null,
         };

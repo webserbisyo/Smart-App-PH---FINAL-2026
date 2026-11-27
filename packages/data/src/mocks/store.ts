@@ -1355,7 +1355,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         if (!normal.ok) fail('invalid_input', 422, { phone: [words.shop.phoneInvalid] });
         const existing = memberOf(s, session.email);
         if (existing) return accountFor(s, existing);
-        if (s.members.some((m) => m.phone === normal.e164)) fail('phone_in_use', 409);
+        // A family may share one phone number (T120 Q2): only the email finds a card.
         const card = s.shop.storefront.stampCard;
         const at = now().toISOString();
         const member: MemberRecord = {

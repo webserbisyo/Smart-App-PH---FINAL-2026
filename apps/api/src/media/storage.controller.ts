@@ -13,7 +13,7 @@ import {
   type StoredFileList,
 } from '@smartapp/core';
 import { z } from 'zod';
-import { Can } from '../auth/decorators.js';
+import { Can, NotInHelp } from '../auth/decorators.js';
 import { ExportsService } from './exports.service.js';
 import { StorageService } from './storage.service.js';
 
@@ -41,6 +41,7 @@ export class StorageController {
   }
 
   @Post('cleanup')
+  @NotInHelp()
   @Can('files:manage')
   @HttpCode(200)
   runCleanup(
@@ -58,6 +59,7 @@ export class StorageController {
   }
 
   @Post('files/delete')
+  @NotInHelp()
   @Can('files:manage')
   @HttpCode(200)
   deleteStoredFiles(

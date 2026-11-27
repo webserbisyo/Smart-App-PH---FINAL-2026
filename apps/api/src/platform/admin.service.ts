@@ -169,7 +169,12 @@ export class AdminService {
       throw new ApiFailure('invalid_input', 400, { amountReason: ['required'] });
     const amount = changed && input.amount !== null ? input.amount : payment.amount;
     const note = changed ? input.amountReason : null;
-    const coversUntil = planCoversUntil(book.paidUntil, payment.months, new Date());
+    const coversUntil = planCoversUntil(
+      book.paidUntil,
+      payment.months,
+      new Date(),
+      book.trialEndsAt,
+    );
     await this.db.tx.execute(sql`
       update public.plan_payments set status = 'approved', amount = ${amount},
         covers_until = ${coversUntil}::date, decided_at = now(), decided_by = ${this.db.userId}::uuid
@@ -203,6 +208,7 @@ export class AdminService {
       'plan',
       HOLD_MS,
     );
+    await this.storefrontChanged(shopId);
     return this.reader.detail(shopId, false);
   }
 
@@ -220,7 +226,7 @@ export class AdminService {
     const prev = parsed.details;
     await this.db.tx.execute(sql`
       update public.plan_payments set status = 'pending', amount = ${prev.amount},
-        covers_until = ${planCoversUntil(prev.paidUntil, payment.months, new Date())}::date,
+        covers_until = ${planCoversUntil(prev.paidUntil, payment.months, new Date(), prev.trialEndsAt)}::date,
         decided_at = null, decided_by = null
       where id = ${payment.id}::uuid`);
     await this.db.tx.execute(sql`
@@ -240,6 +246,7 @@ export class AdminService {
         and dedupe_key like ${`plan_answer:${payment.id}:%`}`);
     await this.activity(shopId, 'payment_undone', { amount: prev.amount });
     await this.audit(shopId, 'payment.undo', payment.id);
+    await this.storefrontChanged(shopId);
     return this.reader.detail(shopId, false);
   }
 
@@ -257,7 +264,7 @@ export class AdminService {
     const shopId = input.shopId;
     const book = await this.plans.book(shopId);
     const first = !(await this.plans.payments(shopId)).some((p) => p.status === 'approved');
-    const coversUntil = planCoversUntil(book.paidUntil, input.months, new Date());
+    const coversUntil = planCoversUntil(book.paidUntil, input.months, new Date(), book.trialEndsAt);
     const paymentId = randomUUID();
     await this.db.tx.execute(sql`
       insert into public.plan_payments (id, tenant_id, months, amount, method, reference, status,
@@ -299,6 +306,7 @@ export class AdminService {
       `plan_answer:${paymentId}`,
       'plan',
     );
+    await this.storefrontChanged(shopId);
     return this.reader.detail(shopId, false);
   }
 
@@ -316,6 +324,7 @@ export class AdminService {
       days: input.days,
       reason: input.reason,
     });
+    await this.storefrontChanged(input.shopId);
     return this.reader.detail(input.shopId, false);
   }
 
@@ -520,6 +529,15 @@ export class AdminService {
   }
 
   // ---------- helpers ----------
+
+  /**
+   * A plan change can pause or unpause the shop's page (T118 Q11), so the storefront's cached page is read
+   * again (audit F-34).
+   */
+  private async storefrontChanged(shopId: string): Promise<void> {
+    await this.db.useShop(shopId);
+    await this.cache.shopChanged();
+  }
 
   private async payment(shopId: string, paymentId: string) {
     const result = await this.db.tx.execute(sql`

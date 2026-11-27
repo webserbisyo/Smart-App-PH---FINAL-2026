@@ -1033,7 +1033,7 @@ export function createSettingsMock(deps: SettingsMockDeps) {
           reference: parsed.data.reference,
           status: 'pending',
           submittedAt: at,
-          coversUntil: planCoversUntil(o.paidUntil, parsed.data.months, now()),
+          coversUntil: planCoversUntil(o.paidUntil, parsed.data.months, now(), o.trialEndsAt),
           rejectReason: null,
           proofUrl: sampleReceiptUrl({
             method: words.shop.paymentMethod[parsed.data.method],

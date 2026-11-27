@@ -226,17 +226,27 @@ export function planGraceUntil(paidUntil: string | null): string | null {
 
 /**
  * The day a payment of some months pays up to. It counts on from the paid-until day, also during the 7 days of
- * grace, so the grace is never free days (T118 Q10); once the shop has paused it counts from today.
+ * grace, so the grace is never free days (T118 Q10); once the shop has paused it counts from today. A payment
+ * during the free trial keeps the trial days: it counts on from the trial's last day (T120 Q1). A month on
+ * from the 31st ends on the month's last day (Jan 31 + 1 month = Feb 28), never in the month after.
  */
 export function planCoversUntil(
   paidUntil: string | null,
   months: number,
   now: string | Date,
+  trialEndsAt: string | null = null,
 ): string {
   const today = manilaDate(now);
-  const from = paidUntil && addDays(paidUntil, PLAN_GRACE_DAYS) >= today ? paidUntil : today;
+  const nowMs = (now instanceof Date ? now : new Date(now)).getTime();
+  const trialDay =
+    !paidUntil && trialEndsAt && new Date(trialEndsAt).getTime() > nowMs
+      ? manilaDate(trialEndsAt)
+      : null;
+  const from =
+    trialDay ?? (paidUntil && addDays(paidUntil, PLAN_GRACE_DAYS) >= today ? paidUntil : today);
   const [y = 0, m = 1, d = 1] = from.split('-').map(Number);
-  const target = new Date(Date.UTC(y, m - 1 + months, d));
+  const lastDay = new Date(Date.UTC(y, m + months, 0)).getUTCDate();
+  const target = new Date(Date.UTC(y, m - 1 + months, Math.min(d, lastDay)));
   return target.toISOString().slice(0, 10);
 }
 

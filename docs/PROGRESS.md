@@ -86,6 +86,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Checkout and Join start fresh: second order fix, pick how you'll order before Place order, booked time and note clear after each order, Join empty after Sign out, empty basket checkout (decision T114; built 2026-11-24, waiting for review)
 - [x] Shop status dot on the storefront logo (green open, orange busy, grey closed) with the word under the name, and the closed sidebar's New order + centred (decision T115; built 2026-11-25, waiting for review)
 - [x] No more "Something went wrong" flash: the dashboard's own error screen inside the shell (Try again, Go to Home), one quiet reload onto a newer version when a page part is gone, the storefront worker kept for the whole deploy, and a first visit that saves only what the offline page needs (decision T119; built 2026-11-26, waiting for review)
+- [x] Audit fixes before the first paying shop, in 4 batches: checkout and menu, pre-live setup (Editor preview, the dashboard's own shop read, Remove samples), counter stamps and the New order prize, plan days, news, help mode locks and shared phones (decision T120; built 2026-11-27, waiting for review)
 
 ## Phase 4: Backend, area by area
 

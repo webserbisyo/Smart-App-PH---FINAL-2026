@@ -58,6 +58,7 @@ import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
 import { members, rewardClaims, stampCards, stampEntries } from '../db/generated/schema.js';
 import { MediaService } from '../media/media.service.js';
+import { StorefrontCache } from '../public/pages-cache.service.js';
 import { uuidOrNull } from '../orders/order-book.js';
 import { ShopReader } from '../public/shop-reader.js';
 import { MemberAccounts, type MemberRow } from './member-accounts.js';
@@ -120,6 +121,7 @@ export class OwnerMembersService {
     @Inject(MemberAccounts) private readonly accounts: MemberAccounts,
     @Inject(StampLedger) private readonly ledger: StampLedger,
     @Inject(MediaService) private readonly media: MediaService,
+    @Inject(StorefrontCache) private readonly pages: StorefrontCache,
   ) {}
 
   // ---- The stamp card --------------------------------------------------------------------------
@@ -202,6 +204,8 @@ export class OwnerMembersService {
       .insert(stampCards)
       .values({ tenantId: shopId, ...values })
       .onConflictDoUpdate({ target: stampCards.tenantId, set: values });
+    // Customers see the card on the shop's page (audit F-34).
+    await this.pages.shopChanged();
     return this.shops.stampCard();
   }
 
@@ -214,6 +218,7 @@ export class OwnerMembersService {
       .returning({ status: stampCards.status });
     // A shop that never saved its card saves the starting one with this status.
     if (updated.length === 0) return this.saveStampCard({ ...card, status });
+    await this.pages.shopChanged();
     return this.shops.stampCard();
   }
 

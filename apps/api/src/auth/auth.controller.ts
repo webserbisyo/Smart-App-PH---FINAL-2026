@@ -26,7 +26,7 @@ import { ApiFailure, notFound } from '../common/api-failure.js';
 import { secondStepRequired, type ApiEnv } from '../env.js';
 import { AUTH_PROVIDER, type AuthProvider, type AuthUser } from './auth-provider.js';
 import type { CallerUser } from './caller.js';
-import { Can, CurrentUser, MaybeUser, NoTransaction, Public } from './decorators.js';
+import { Can, CurrentUser, MaybeUser, NotInHelp, NoTransaction, Public } from './decorators.js';
 import { clientInfo, SessionService } from './session.service.js';
 
 // Supabase waits 60 s between two codes to one email (R10); our answer tells the screen when to offer Resend.
@@ -204,6 +204,7 @@ export class AuthController {
 
   /** Settings › Account (T68): a code to the owner's own email. */
   @Post('password-code')
+  @NotInHelp()
   @Can('account')
   @HttpCode(200)
   @Throttle(CODE_LIMIT)
@@ -216,6 +217,7 @@ export class AuthController {
   }
 
   @Post('password')
+  @NotInHelp()
   @Can('account')
   @HttpCode(200)
   @Throttle(CODE_LIMIT)
@@ -232,6 +234,7 @@ export class AuthController {
   }
 
   @Post('sign-out-all')
+  @NotInHelp()
   @Can('account')
   @HttpCode(200)
   async signOutEverywhere(

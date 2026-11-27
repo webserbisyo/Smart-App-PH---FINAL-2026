@@ -484,7 +484,7 @@ function PayForm({ plan, onClose }: { plan: Plan; onClose: () => void }) {
   const typed = reference.trim();
   const refProblem = typed === '' || typed.length >= 6 ? undefined : W.referenceBad;
   const proofProblem = proof ? undefined : W.proofRequired;
-  const covers = planCoversUntil(plan.paidUntil, months, new Date());
+  const covers = planCoversUntil(plan.paidUntil, months, new Date(), plan.trialEndsAt);
 
   const onSubmit = async () => {
     setTried(true);

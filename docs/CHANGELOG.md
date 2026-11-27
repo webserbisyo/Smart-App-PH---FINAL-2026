@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-27 T120 batch 4, plan, news and help mode: help mode cannot touch the owner's password, profile, plan money, deletes or news sends; trial days kept on an early payment; month-end plan dates; news lapse follows the plan's pause rule; plan and stamp card changes refresh the shop page; a family can share a phone number
 - 2026-11-27 T120 batch 3, counter: a handed-over walk-in earns the member's stamp, New order can use a member's prize (stamps held, limited prize counted, given back on cancel), Sold out today comes back at the first opening after today
 - 2026-11-27 T120 batch 2, pre-live setup: the Editor preview works before go-live (preview token), the dashboard reads its own shop through GET /owner/storefront (works before go-live and in help mode), Remove samples is one server call and its dialog says the card turns off
 - 2026-11-27 T120 batch 1, checkout and menu: delivery address saves on shops with a minimum order (real basket prices), checkout quotes the way to pay it shows and reads every price-check problem, every buyable Size and Colour can be picked, the receipt picture hides a hidden address, the storefront rule tests run in CI

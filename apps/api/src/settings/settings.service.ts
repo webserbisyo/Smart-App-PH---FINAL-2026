@@ -26,6 +26,7 @@ import {
 import { and, asc, count, eq, gte, inArray, isNull, notInArray, sql } from 'drizzle-orm';
 import type { CallerUser } from '../auth/caller.js';
 import { ApiFailure, notFound } from '../common/api-failure.js';
+import { AUTH_PROVIDER, type AuthProvider } from '../auth/auth-provider.js';
 import { Db } from '../db/db.service.js';
 import {
   closures,
@@ -76,6 +77,7 @@ export class SettingsService {
     @Inject(Db) private readonly db: Db,
     @Inject(MediaService) private readonly media: MediaService,
     @Inject(StorefrontCache) private readonly pages: StorefrontCache,
+    @Inject(AUTH_PROVIDER) private readonly auth: AuthProvider,
   ) {}
 
   async getSettings(): Promise<OwnerSettings> {
@@ -488,18 +490,28 @@ export class SettingsService {
   // ---------- emails to the owner ----------
 
   async getNotificationPrefs(user: CallerUser): Promise<NotificationPrefs> {
+    // In help mode the Super Admin reads the shop owner's choices, not their own (audit F-05).
+    const helping = this.db.helping !== null;
     const [m] = await this.db.tx
       .select()
       .from(tenantMembers)
-      .where(and(eq(tenantMembers.tenantId, this.db.shopId), eq(tenantMembers.userId, user.id)));
+      .where(
+        helping
+          ? eq(tenantMembers.tenantId, this.db.shopId)
+          : and(eq(tenantMembers.tenantId, this.db.shopId), eq(tenantMembers.userId, user.id)),
+      )
+      .limit(1);
     if (!m) throw notFound();
+    // X6: no separate address means the login email.
+    const loginEmail = helping ? await this.auth.getUserEmail(m.userId) : user.email;
+    const email = m.notifyEmail ?? loginEmail;
+    if (!email) throw notFound();
     return NotificationPrefsSchema.parse({
       newOrder: m.notifyNewOrder,
       paymentToCheck: m.notifyPaymentToCheck,
       storage: m.notifyStorage,
       planPayment: m.notifyPlanPayment,
-      // X6: no separate address means the login email.
-      email: m.notifyEmail ?? user.email,
+      email,
     });
   }
 

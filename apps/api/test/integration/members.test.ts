@@ -146,18 +146,20 @@ describe('joining, stamps and prizes (phase 6)', () => {
       'pending',
     ]);
 
-    // Joining again gives the same card; another account with this phone is refused.
+    // Joining again gives the same card; a family member's account with this phone gets a card of its own
+    // (a shared phone, T120 Q2), and the guest order stays on the first card.
     const again = await agent
       .post(`/s/${shop.slug}/members`)
       .send({ name: 'Other', phone: mobile })
       .expect(200);
     expect(again.body.memberCode).toBe(joined.body.memberCode);
     const other = await member(uniqueEmail('lito'));
-    await other
+    const lito = await other
       .post(`/s/${shop.slug}/members`)
       .send({ name: 'Lito', phone: mobile })
-      .expect(409)
-      .expect((res) => expect(res.body.code).toBe('phone_in_use'));
+      .expect(200);
+    expect(lito.body.memberCode).not.toBe(joined.body.memberCode);
+    expect(lito.body).toMatchObject({ name: 'Lito', balance: 1, pendingStamps: 0 });
 
     // My orders shows the member's order without any token kept on the phone.
     const mine = await agent.post(`/s/${shop.slug}/my-orders`).send({ tokens: [] }).expect(200);

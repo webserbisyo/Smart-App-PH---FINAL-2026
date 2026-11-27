@@ -11,7 +11,7 @@ import {
 } from '@smartapp/core';
 import type { Request } from 'express';
 import type { CallerUser } from '../auth/caller.js';
-import { Can, CurrentUser } from '../auth/decorators.js';
+import { Can, CurrentUser, NotInHelp } from '../auth/decorators.js';
 import { userAgentOf } from './track-writer.js';
 import { OwnerPlanService } from './owner-plan.service.js';
 
@@ -29,6 +29,7 @@ export class OwnerPlanController {
   }
 
   @Post('payments')
+  @NotInHelp()
   @Can('settings:manage')
   @HttpCode(201)
   @Throttle(PAYMENT_LIMIT)
@@ -45,6 +46,7 @@ export class OwnerPlanController {
   }
 
   @Post('notes')
+  @NotInHelp()
   @Can('settings:manage')
   @HttpCode(201)
   sendNote(
@@ -54,6 +56,7 @@ export class OwnerPlanController {
   }
 
   @Post('photos')
+  @NotInHelp()
   @Can('settings:manage')
   @HttpCode(201)
   sendPhoto(

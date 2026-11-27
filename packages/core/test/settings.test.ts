@@ -126,6 +126,22 @@ describe('plan (T67)', () => {
     expect(planCoversUntil('2026-11-28', 1, now)).toBe('2026-12-28');
     expect(planCoversUntil('2026-11-27', 1, now)).toBe('2027-01-05');
   });
+
+  it('keeps the trial days on an early payment (T120 Q1)', () => {
+    const now = mnl('2026-12-05 10:00');
+    // The trial ends Dec 12 at 3 PM Manila: one month runs to Jan 12.
+    expect(planCoversUntil(null, 1, now, '2026-12-12T07:00:00.000Z')).toBe('2027-01-12');
+    // An ended trial counts from today.
+    expect(planCoversUntil(null, 1, now, '2026-12-01T07:00:00.000Z')).toBe('2027-01-05');
+  });
+
+  it("ends on the month's last day from the 31st (audit F-13)", () => {
+    const now = mnl('2027-01-20 10:00');
+    expect(planCoversUntil('2027-01-31', 1, now)).toBe('2027-02-28');
+    expect(planCoversUntil('2027-08-31', 1, mnl('2027-08-20 10:00'))).toBe('2027-09-30');
+    expect(planCoversUntil('2027-12-31', 6, mnl('2027-12-20 10:00'))).toBe('2028-06-30');
+    expect(planCoversUntil('2027-11-30', 3, mnl('2027-11-20 10:00'))).toBe('2028-02-29');
+  });
 });
 
 describe('uploads (T65)', () => {

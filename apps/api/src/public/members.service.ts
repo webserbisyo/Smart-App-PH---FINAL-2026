@@ -49,9 +49,10 @@ export class MembersService {
   ) {}
 
   /**
-   * Join (M3, P8): the same account joining again gets its card back; a phone already on another member is
-   * `phone_in_use`; an On card gives the welcome stamp; guest orders join the card only by the receipt the
-   * phone has open or the same email, never by phone alone.
+   * Join (M3, P8): the same account joining again gets its card back; a family may share one phone number
+   * (database.md, T120 Q2), so only the email finds a card the shop made before; an On card gives the welcome
+   * stamp; guest orders join the card only by the receipt the phone has open or the same email, never by
+   * phone alone.
    */
   async join(slug: string, user: CallerUser | null, input: JoinInput): Promise<MemberAccount> {
     if (!user?.email) throw notSignedIn();
@@ -74,13 +75,7 @@ export class MembersService {
     const [taken] = await this.db.tx
       .select({ id: members.id, email: members.email, userId: members.userId })
       .from(members)
-      .where(
-        and(
-          eq(members.tenantId, shopId),
-          sql`(${members.phone} = ${phone.e164} or ${members.email} = ${email})`,
-        ),
-      );
-    if (taken && taken.email !== email) throw new ApiFailure('phone_in_use', 409);
+      .where(and(eq(members.tenantId, shopId), eq(members.email, email)));
 
     const picked = input.avatar ? await this.avatarOf(input.avatar) : null;
     let member: MemberRow | undefined;

@@ -203,7 +203,7 @@ function RecordForm({ shop, onClose }: { shop: AdminShopDetail; onClose: () => v
   const [note, setNote] = React.useState('');
   const [tried, setTried] = React.useState(false);
   const refBad = reference.trim().length < 4;
-  const covers = planCoversUntil(shop.paidUntil, months, new Date());
+  const covers = planCoversUntil(shop.paidUntil, months, new Date(), shop.trialEndsAt);
 
   return (
     <form

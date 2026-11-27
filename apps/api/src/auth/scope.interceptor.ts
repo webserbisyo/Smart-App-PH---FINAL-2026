@@ -16,7 +16,7 @@ import { ApiFailure, notFound } from '../common/api-failure.js';
 import { Db } from '../db/db.service.js';
 import { tenantMembers } from '../db/generated/schema.js';
 import { callerOf } from './caller.js';
-import { Can, NO_TRANSACTION_KEY } from './decorators.js';
+import { Can, NO_TRANSACTION_KEY, NOT_IN_HELP_KEY } from './decorators.js';
 import { readCookie, supportCookieName } from './session-cookies.js';
 import { secondStepRequired, type ApiEnv } from '../env.js';
 
@@ -81,6 +81,9 @@ export class ScopeInterceptor implements NestInterceptor {
             if (admin && !user?.isAdmin) throw notFound();
             if (help && permission) {
               if (!roleAllows('owner', permission)) throw new ApiFailure('not_allowed', 403);
+              if (this.reflector.getAllAndOverride<boolean>(NOT_IN_HELP_KEY, targets) === true) {
+                throw new ApiFailure('support_locked', 403);
+              }
               await this.db.useShop(help.tenant_id);
               caller.shop = { id: help.tenant_id, role: 'owner' };
               const result: unknown = await lastValueFrom(next.handle(), {

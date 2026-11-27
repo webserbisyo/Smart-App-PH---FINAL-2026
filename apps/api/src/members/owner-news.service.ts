@@ -138,6 +138,8 @@ export class OwnerNewsService {
    * quiet hours); later at `sendAt`. The limits count every news that is set, sending or sent (P5).
    */
   async save(newsId: string | null, input: SaveNewsInput): Promise<OwnerNews> {
+    // Help mode can write a draft for the owner, never send one (api.md "News").
+    if (this.db.helping && input.mode !== 'draft') throw new ApiFailure('support_locked', 403);
     const now = new Date();
     // One save at a time per shop, so two tabs never both take the week's last news.
     await this.db.tx.execute(

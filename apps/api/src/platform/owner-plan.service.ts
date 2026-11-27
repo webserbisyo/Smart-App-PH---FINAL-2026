@@ -90,7 +90,7 @@ export class OwnerPlanService {
       insert into public.plan_payments (id, tenant_id, months, amount, method, reference, proof_media_id,
         covers_until, created_at)
       values (${paymentId}::uuid, ${shopId}::uuid, ${months}, ${amount}, ${input.method},
-        ${input.reference ?? null}, ${proof.id}::uuid, ${planCoversUntil(book.paidUntil, months, now)}::date,
+        ${input.reference ?? null}, ${proof.id}::uuid, ${planCoversUntil(book.paidUntil, months, now, book.trialEndsAt)}::date,
         ${now.toISOString()}::timestamptz)`);
     await this.db.tx.execute(sql`
       insert into public.billing_messages (tenant_id, "from", kind, payment_id)

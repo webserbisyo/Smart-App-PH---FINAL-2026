@@ -21,7 +21,7 @@ import {
 } from '@smartapp/core';
 import { z } from 'zod';
 import type { CallerUser } from '../auth/caller.js';
-import { Can, CurrentUser } from '../auth/decorators.js';
+import { Can, CurrentUser, NotInHelp } from '../auth/decorators.js';
 import { AccountDeleteService } from './account-delete.service.js';
 import { SettingsService } from './settings.service.js';
 
@@ -90,6 +90,7 @@ export class SettingsController {
   }
 
   @Put('profile')
+  @NotInHelp()
   @Can('account')
   saveProfile(
     @CurrentUser() user: CallerUser,
@@ -104,7 +105,9 @@ export class SettingsController {
     return this.settings.getNotificationPrefs(user);
   }
 
+  // The email on this form is the owner's own, so help mode can read it but not change it.
   @Put('notifications')
+  @NotInHelp()
   @Can('settings:manage')
   saveNotificationPrefs(
     @CurrentUser() user: CallerUser,
@@ -115,6 +118,7 @@ export class SettingsController {
 
   /** No self-delete at launch: the founder gets the request by email. Owner only (settings:manage). */
   @Post('account/delete-request')
+  @NotInHelp()
   @Can('settings:manage')
   @HttpCode(200)
   requestAccountDelete(@CurrentUser() user: CallerUser): Promise<{ ok: true }> {

@@ -238,7 +238,8 @@ describe('ownerSettings mock adapter (T64 to T68)', () => {
     const approved = await store.ownerSettings.getPlan();
     expect(approved.pending).toBeNull();
     expect(approved.status).toBe('active');
-    expect(approved.paidUntil).toBe('2027-02-05');
+    // The trial's 9 days left are kept: 3 months count on from the trial's last day (T120 Q1).
+    expect(approved.paidUntil).toBe('2027-02-14');
     expect(approved.thread.at(-1)?.kind).toBe('approved');
   });
 

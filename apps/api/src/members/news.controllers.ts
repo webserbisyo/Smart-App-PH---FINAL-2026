@@ -27,7 +27,7 @@ import {
 } from '@smartapp/core';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
-import { Can, Public } from '../auth/decorators.js';
+import { Can, NotInHelp, Public } from '../auth/decorators.js';
 import { SessionService } from '../auth/session.service.js';
 import { STOREFRONT_LIMIT } from '../public/storefront.controller.js';
 import { PushSubscriptionInputSchema } from '../push/push-endpoints.js';
@@ -47,6 +47,7 @@ export class OwnerNewsController {
 
   // Before `news/:id`, so "test" is never read as an id.
   @Post('news/test')
+  @NotInHelp()
   @HttpCode(200)
   @Can('members:manage')
   test(@Body({ schema: NewsTestInputSchema }) body: NewsTestInput): Promise<{ ok: true }> {

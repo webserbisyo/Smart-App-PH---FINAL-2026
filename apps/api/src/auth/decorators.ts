@@ -11,6 +11,13 @@ export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
 /** Needs a signed-in caller with this permission (a closed list in core, decision T116). */
 export const Can = Reflector.createDecorator<Permission>();
 
+/**
+ * Never in help mode (T91): a Super Admin helping a shop gets `support_locked` (403) here. For the owner's
+ * password, sign-ins, profile, plan payments and chat, account delete, deleting files and sending news.
+ */
+export const NOT_IN_HELP_KEY = 'notInHelp';
+export const NotInHelp = () => SetMetadata(NOT_IN_HELP_KEY, true);
+
 /** The route never touches the database (auth calls to Supabase, liveness): no transaction is opened. */
 export const NO_TRANSACTION_KEY = 'noTransaction';
 export const NoTransaction = () => SetMetadata(NO_TRANSACTION_KEY, true);

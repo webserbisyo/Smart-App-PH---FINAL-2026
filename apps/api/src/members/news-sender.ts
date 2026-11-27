@@ -6,6 +6,7 @@ import {
   NewsLinkKindEnum,
   newsPath,
   outOfQuiet,
+  planStatus,
 } from '@smartapp/core';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -34,7 +35,10 @@ const CampaignSchema = z.object({
   link_item_id: z.string().nullable(),
   item_ok: z.boolean(),
   paused: z.boolean(),
-  lapsed: z.boolean(),
+  stage: z.string(),
+  is_demo: z.boolean(),
+  trial_ends_at: z.string().nullable(),
+  paid_until: z.string().nullable(),
 });
 
 const QueuedSchema = z.object({
@@ -127,7 +131,8 @@ export class NewsSender {
 
   private async start(campaignId: string, now: Date): Promise<void> {
     const shopId = this.db.shopId;
-    // A plan lapses when the shop is closed, or its paid time and its trial both ended.
+    // A plan lapses when the shop is closed, or a live shop's plan has paused (planStatus: trial, paid time
+    // and the 7 days of grace all over), the same rule as the storefront's (audit F-12).
     const found = CampaignSchema.safeParse(
       (
         await this.db.tx.execute(sql`
@@ -136,9 +141,8 @@ export class NewsSender {
               select 1 from public.items i
               where i.tenant_id = c.tenant_id and i.id = c.link_item_id and i.status = 'active')) as item_ok,
             coalesce(ss.paused, false) as paused,
-            (t.stage = 'closed' or (t.paid_until is not null
-              and t.paid_until < (now() at time zone 'Asia/Manila')::date
-              and (t.trial_ends_at is null or t.trial_ends_at < now()))) as lapsed
+            t.stage, t.is_demo, t.paid_until::text as paid_until,
+            to_char(t.trial_ends_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as trial_ends_at
           from public.push_campaigns c
           join public.tenants t on t.id = c.tenant_id
           left join public.shop_settings ss on ss.tenant_id = c.tenant_id
@@ -147,13 +151,18 @@ export class NewsSender {
     );
     if (!found.success) return;
     const c = found.data;
-    const wait = c.paused
-      ? 'shop_paused'
-      : c.lapsed
-        ? 'plan_lapsed'
-        : c.item_ok
-          ? null
-          : 'link_gone';
+    const lapsed =
+      c.stage === 'closed' ||
+      (c.stage === 'live' &&
+        !c.is_demo &&
+        planStatus(
+          {
+            trialEndsAt: c.trial_ends_at,
+            paidUntil: c.paid_until,
+          },
+          now,
+        ) === 'paused');
+    const wait = c.paused ? 'shop_paused' : lapsed ? 'plan_lapsed' : c.item_ok ? null : 'link_gone';
     if (wait) {
       await this.db.tx.execute(sql`
         update public.push_campaigns set status = 'waiting', wait_reason = ${wait}, updated_at = now()
