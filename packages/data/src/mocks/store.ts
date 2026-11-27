@@ -38,7 +38,7 @@ import {
   UNDO_SECONDS,
   manilaDate,
   MemberAccountSchema,
-  nextOpening,
+  soldOutTodayUntil,
   normalisePhPhone,
   openState,
   OrderPayloadSchema,
@@ -356,8 +356,8 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     if (!pack) return null;
     const { variantTemplates, ...catalog } = pack.catalog;
     const shop: PublicShop = clone({ storefront: pack.storefront, catalog });
-    // "Sold out today" comes back on by itself at the next opening.
-    const reopen = nextOpening(shop.storefront, now());
+    // "Sold out today" comes back on by itself at the first opening after today (audit F-35).
+    const reopen = soldOutTodayUntil(shop.storefront, now());
     for (const item of shop.catalog.items) {
       for (const v of item.variants) {
         if (v.availability === 'sold_out_today' && v.soldOutUntil === null) v.soldOutUntil = reopen;
@@ -2656,7 +2656,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         variant.availability = availability;
         variant.soldOutUntil =
           soldOutUntil ??
-          (availability === 'sold_out_today' ? nextOpening(s.shop.storefront, now()) : null);
+          (availability === 'sold_out_today' ? soldOutTodayUntil(s.shop.storefront, now()) : null);
         const hasOrders = s.orders.some((o) => o.receipt.lines.some((l) => l.itemId === item.id));
         return OwnerItemSchema.parse({ ...item, hasOrders });
       });
@@ -2874,7 +2874,7 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
             variant.availability = change.availability;
             variant.soldOutUntil =
               change.availability === 'sold_out_today'
-                ? (change.soldOutUntil ?? nextOpening(s.shop.storefront, now()))
+                ? (change.soldOutUntil ?? soldOutTodayUntil(s.shop.storefront, now()))
                 : null;
           }
           return { count: new Set(targets.map((t) => t.item.id)).size };

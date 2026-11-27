@@ -5,6 +5,7 @@ import { z } from 'zod';
 import {
   BoardOrderSchema,
   ChatSummarySchema,
+  MemberDetailSchema,
   OpenStateSchema,
   OrderReceiptSchema,
   OwnerOrderCreatedSchema,
@@ -13,8 +14,17 @@ import {
   ScheduleSchema,
   type OrderPayload,
   type OwnerOrderPayload,
+  type StampCardSettings,
 } from '@smartapp/core';
-import { integrationApp, liveShop, nextPhone, phone, WEBP } from './support.js';
+import {
+  integrationApp,
+  latestCode,
+  liveShop,
+  nextPhone,
+  phone,
+  uniqueEmail,
+  WEBP,
+} from './support.js';
 
 type Shop = Awaited<ReturnType<typeof liveShop>>;
 
@@ -318,6 +328,75 @@ describe('owner Orders (phase 5)', () => {
         clientKey: randomUUID(),
       })
       .expect(422);
+  });
+
+  it('New order: a member uses their prize at the counter, and the handed-over order earns its stamp', async () => {
+    const shop = await liveShop(app, 'oo-prize');
+    const card: StampCardSettings = {
+      status: 'on',
+      rule: { minOrderTotal: 0, stampsNeeded: 4, welcomeStamps: 1, maxEarned: 1, period: 'day' },
+      reward: {
+        kind: 'discount',
+        amount: 5000,
+        itemId: null,
+        variantId: null,
+        title: '₱50 off',
+        description: null,
+        image: null,
+        quantityTotal: null,
+        quantityLeft: null,
+        onePerCustomer: false,
+      },
+    };
+    await shop.agent.put('/owner/stamp-card').send(card).expect(200);
+    const email = uniqueEmail('prize');
+    const member = phone(app);
+    await member.post('/auth/member/code').send({ email }).expect(200);
+    const code = await latestCode(email, /code/i);
+    await member.post('/auth/member/verify').send({ email, code }).expect(200);
+    const joined = await member
+      .post(`/s/${shop.slug}/members`)
+      .send({ name: 'Rosa', phone: nextPhone() })
+      .expect(200);
+    const found = await shop.agent
+      .get(`/owner/members/find?code=${encodeURIComponent(String(joined.body.memberCode))}`)
+      .expect(200);
+    const id = z.string().parse(found.body.customerId);
+    // The welcome stamp and three from the counter make the card full.
+    for (let i = 0; i < 3; i++) {
+      await shop.agent
+        .post(`/owner/members/${id}/adjust`)
+        .send({ delta: 1, reason: 'goodwill', note: null })
+        .expect(200);
+    }
+
+    const made = OwnerOrderCreatedSchema.parse(
+      (
+        await shop.agent
+          .post('/owner/orders')
+          .send({
+            payload: ownerPayload(shop, {
+              customer: { kind: 'member', memberId: id },
+              useReward: true,
+            }),
+            pay: { kind: 'paid', amount: null },
+            handedOver: true,
+            clientKey: randomUUID(),
+          })
+          .expect(200)
+      ).body,
+    );
+    expect(made.status).toBe('completed');
+    const detail = OwnerOrderSchema.parse(
+      (await shop.agent.get(`/owner/orders/${made.orderId}`).expect(200)).body,
+    );
+    expect(detail.totals).toMatchObject({ subtotal: 15000, discount: 5000, total: 10000 });
+    expect(detail.rewardTitle).toBe('₱50 off');
+    // 4 used for the prize, 1 earned by the finished order.
+    const after = MemberDetailSchema.parse(
+      (await shop.agent.get(`/owner/members/${id}`).expect(200)).body,
+    );
+    expect(after.balance).toBe(1);
   });
 
   it('Edit order: a new price, a chat line, and order_changed for an old version', async () => {

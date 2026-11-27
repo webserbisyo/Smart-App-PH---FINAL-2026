@@ -57,6 +57,27 @@ export function nextOpening(sf: HoursInput, now: string | Date): string | null {
   return next ? next.start.toISOString() : null;
 }
 
+/**
+ * When "Sold out today" turns itself off (audit F-35): the shop's first opening after today ends in Manila,
+ * so a lunch-and-dinner shop's item stays off through the evening. With no hours set, the start of tomorrow.
+ */
+export function soldOutTodayUntil(
+  sf: Pick<HoursInput, 'hours' | 'closures'>,
+  now: string | Date,
+): string {
+  const tomorrow = manilaToDate(addDays(manilaDate(now), 1), '00:00');
+  const next = nextOpening(
+    {
+      ...sf,
+      pause: { paused: false, busyUntil: null },
+      prepMinutes: 0,
+      takeOrdersWhileClosed: false,
+    },
+    new Date(tomorrow.getTime() - 1),
+  );
+  return next ?? tomorrow.toISOString();
+}
+
 export function openState(sf: HoursInput, now: string | Date): OpenState {
   const t = toDate(now).getTime();
   const intervals = openingIntervals(sf, now);

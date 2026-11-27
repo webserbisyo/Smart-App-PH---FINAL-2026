@@ -65,6 +65,8 @@ import {
   shopSettings,
 } from '../db/generated/schema.js';
 import { MediaStorage } from '../media/media-storage.js';
+import { MemberAccounts } from '../members/member-accounts.js';
+import { StampLedger } from '../members/stamp-ledger.js';
 import { StorefrontCache } from '../public/pages-cache.service.js';
 import { ShopReader } from '../public/shop-reader.js';
 import { failOnQuote, OrderBook, uuidOrNull } from './order-book.js';
@@ -142,6 +144,8 @@ export class OwnerOrdersService {
     @Inject(CatalogReader) private readonly catalog: CatalogReader,
     @Inject(MediaStorage) private readonly storage: MediaStorage,
     @Inject(StorefrontCache) private readonly storefront: StorefrontCache,
+    @Inject(MemberAccounts) private readonly accounts: MemberAccounts,
+    @Inject(StampLedger) private readonly ledger: StampLedger,
   ) {}
 
   // ---- Lists ----------------------------------------------------------------------------------------
@@ -515,9 +519,20 @@ export class OwnerOrdersService {
     const shop = await this.shops.read();
     const scheduledAt = body.type === 'walk_in' ? null : body.scheduledAt;
     if (scheduledAt) await this.book.lockSlot(scheduledAt);
+    const who = await this.ownerCustomer(body);
+    // The member's stamps are held until the commit while their prize is used (Q3, like Place order).
+    const held = who.memberId && body.useReward ? await this.ledger.lock(who.memberId) : 0;
     const q = await this.ownerQuote(shop, body, null);
     failOnQuote(q, 'slot_full');
-    const who = await this.ownerCustomer(body);
+    const card = shop.storefront.stampCard;
+    const redeemed = who.memberId && body.useReward && q.discount > 0 ? card.rule.stampsNeeded : 0;
+    if (redeemed > 0) {
+      // A limited prize loses one piece (S26); the last one can't go twice.
+      const took = await this.db.tx.execute<{ ok: boolean }>(
+        sql`select private.take_prize() as ok`,
+      );
+      if (took.rows[0]?.ok !== true) throw new ApiFailure('reward_all_claimed', 409);
+    }
     const total = q.total;
     let paidAmount = 0;
     if (pay.kind === 'paid') paidAmount = total;
@@ -568,6 +583,7 @@ export class OwnerOrdersService {
         discount: q.discount,
         deliveryFee: q.deliveryFee,
         total,
+        rewardTitle: redeemed > 0 ? card.reward.title.slice(0, 60) : null,
         note: emptyToNull(body.note)?.slice(0, 240) ?? null,
         // The owner made it, so it is seen already (no chime, no New dot).
         seenAt: placedAt,
@@ -578,6 +594,12 @@ export class OwnerOrdersService {
       .returning({ id: orders.id });
     if (!order) throw new ApiFailure('unknown', 500);
     await this.book.writeLines(order.id, shop, q);
+    if (who.memberId && redeemed > 0) {
+      await this.ledger.add(
+        { memberId: who.memberId, kind: 'used', delta: -redeemed, orderId: order.id },
+        held,
+      );
+    }
     await this.db.tx.insert(orderEvents).values({
       tenantId: shopId,
       orderId: order.id,
@@ -587,7 +609,7 @@ export class OwnerOrdersService {
     });
     let status: OwnerOrderCreated['status'] = 'placed';
     if (handedOver) {
-      await this.steps.step(order.id, 'completed', 'shop', placedAt);
+      await this.steps.completeAtCounter(order.id, placedAt);
       status = 'completed';
     }
     return { orderId: order.id, orderNo, token: ticket.token, status };
@@ -756,6 +778,19 @@ export class OwnerOrdersService {
   }
 
   /** The customer on an owner-made order: the picked member, or a guest ("Walk-in" without a name). */
+  /** What the price check needs of the order's member (their balance and stamps on the way), or null. */
+  private async memberStamps(
+    body: OwnerOrderPayload,
+    shop: PublicShop,
+  ): Promise<{ balance: number; pendingStamps: number } | null> {
+    if (body.customer.kind !== 'member') return null;
+    const id = uuidOrNull(body.customer.memberId);
+    const member = id ? await this.accounts.byId(id) : null;
+    if (!member || member.erasedAt) return null;
+    const account = await this.accounts.account(member, shop.storefront.stampCard);
+    return { balance: account.balance, pendingStamps: account.pendingStamps };
+  }
+
   private async ownerCustomer(body: OwnerOrderPayload): Promise<{
     memberId: string | null;
     name: string;
@@ -808,9 +843,10 @@ export class OwnerOrdersService {
     editing: OrderView | null,
   ): Promise<Quote> {
     const sf = shop.storefront;
+    const member = await this.memberStamps(body, shop);
     const base = quote(
-      // A member's prize on a new order arrives with phase 6 (stamps); until then it is reward_unavailable.
-      { shop, now: new Date(), member: null },
+      // A member's prize can be used on a new order (Q3); an edit keeps the prize it had.
+      { shop, now: new Date(), member },
       {
         type: body.type,
         scheduledAt: null,
@@ -818,7 +854,7 @@ export class OwnerOrdersService {
         delivery: null,
         paymentMethod: body.paymentMethod,
         paymentAccountId: body.paymentAccountId,
-        useReward: editing ? false : body.useReward,
+        useReward: editing ? false : body.useReward && member !== null,
       },
     );
     const had = new Map<string, number>();

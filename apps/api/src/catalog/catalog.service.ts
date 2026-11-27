@@ -1,14 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  addDays,
   applyTemplateToItem,
   buildVersions,
   HoursSettingsSchema,
   isInSync,
-  manilaDate,
-  manilaToDate,
-  nextOpening,
+  soldOutTodayUntil,
   VARIANT_LIMITS,
   type Availability,
   type BulkItemsInput,
@@ -770,7 +767,6 @@ export class CatalogService {
           gte(closures.date, sql`(now() at time zone 'Asia/Manila')::date`),
         ),
       );
-    const now = new Date();
     const known = HoursSettingsSchema.parse({
       hours: hours.map((h) => ({
         day: h.day,
@@ -779,15 +775,7 @@ export class CatalogService {
       })),
       closures: daysOff,
     });
-    const next = nextOpening(
-      {
-        ...known,
-        pause: { paused: false, busyUntil: null },
-        prepMinutes: 0,
-        takeOrdersWhileClosed: false,
-      },
-      now,
-    );
-    return next ?? manilaToDate(addDays(manilaDate(now), 1), '00:00').toISOString();
+    // The first opening after today ends, not the next one today (audit F-35).
+    return soldOutTodayUntil(known, new Date());
   }
 }

@@ -15,6 +15,7 @@ import {
   openState,
   openStateText,
   pickupSlots,
+  soldOutTodayUntil,
   variantAvailability,
 } from '../src/rules/hours.js';
 import {
@@ -156,6 +157,24 @@ describe('openState', () => {
 
   it('nextOpening skips the closure', () => {
     expect(nextOpening(kape.storefront, mnl('2026-10-31 23:00'))).toBe(mnl('2026-11-02 07:00'));
+  });
+
+  it('soldOutTodayUntil waits for the first opening after today, not a second opening today', () => {
+    const split = {
+      hours: [0, 1, 2, 3, 4, 5, 6].flatMap((day) => [
+        { day, open: '10:00', close: '14:00' },
+        { day, open: '17:00', close: '22:00' },
+      ]),
+      closures: [],
+    };
+    expect(soldOutTodayUntil(split, mnl('2026-10-26 12:00'))).toBe(mnl('2026-10-27 10:00'));
+    expect(soldOutTodayUntil(split, mnl('2026-10-26 23:30'))).toBe(mnl('2026-10-27 10:00'));
+    expect(soldOutTodayUntil(kape.storefront, mnl('2026-10-31 12:00'))).toBe(
+      mnl('2026-11-02 07:00'),
+    );
+    expect(soldOutTodayUntil({ hours: [], closures: [] }, mnl('2026-10-26 12:00'))).toBe(
+      mnl('2026-10-27 00:00'),
+    );
   });
 });
 

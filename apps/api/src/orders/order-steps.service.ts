@@ -313,6 +313,15 @@ export class OrderSteps {
   }
 
   /**
+   * A walk-in handed over at the counter (New order, T111): Completed at once, and a member's order earns its
+   * stamp like any other finished order (audit F-09).
+   */
+  async completeAtCounter(orderId: string, at: string): Promise<void> {
+    const eventId = await this.step(orderId, 'completed', 'shop', at);
+    await this.earnStamp(await this.fresh(orderId), eventId);
+  }
+
+  /**
    * What a cancelled or expired order held goes back once: each item's count for its day, the stamps its
    * reward used, and a limited prize's piece.
    */
