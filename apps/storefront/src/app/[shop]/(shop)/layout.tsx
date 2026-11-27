@@ -1,15 +1,11 @@
 import type { Metadata } from 'next';
 import { Suspense, type ReactNode } from 'react';
-import {
-  appNameOf,
-  DEMO_MEDIA,
-  DEMO_SHOP_SLUGS,
-  isDemoShopSlug,
-  shopPalette,
-} from '@smartapp/core';
+import { appNameOf, DEMO_SHOP_SLUGS, isDemoShopSlug, shopPalette } from '@smartapp/core';
 import { getShop } from '@/server/shop-read';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { ShopTheme } from '@smartapp/ui/compositions/shop-theme';
+import { cssVars } from '@smartapp/ui/lib/css-vars';
+import { fontPairVars } from '@smartapp/ui/lib/font-pairs';
 import { AppSplash } from '@/features/install/components/app-splash';
 import {
   IOS_SCREENS,
@@ -17,6 +13,7 @@ import {
   splashMedia,
   splashSizeName,
 } from '@/features/install/install-rules';
+import { demoBrandFiles, shopIconUrls, splashIconUrl } from '@/features/install/shop-icons';
 import { ShopApp } from '@/features/shell/components/shop-app';
 
 interface ShopLayoutProps {
@@ -29,23 +26,12 @@ export function generateStaticParams() {
   return DEMO_SHOP_SLUGS.map((shop) => ({ shop }));
 }
 
-function brandFiles(slug: string) {
-  if (!isDemoShopSlug(slug) || !DEMO_MEDIA[slug].logo) return null;
-  const base = `/demo/${slug}/brand`;
-  return {
-    icon: `${base}/icon-192.png`,
-    splash: `${base}/icon-512.png`,
-    apple: `${base}/apple-touch-icon.png`,
-    og: `${base}/og.jpg`,
-  };
-}
-
 export async function generateMetadata({ params }: ShopLayoutProps): Promise<Metadata> {
   const { shop: slug } = await params;
   const shop = await getShop(slug);
   if (!shop) return {};
   const { name, tagline } = shop.storefront.info;
-  const files = brandFiles(slug);
+  const files = demoBrandFiles(slug);
   // The installed app's name: the owner's app name, else the shop name (T94).
   const appName = appNameOf(name, shop.storefront.look.opening);
   return {
@@ -57,17 +43,16 @@ export async function generateMetadata({ params }: ShopLayoutProps): Promise<Met
       capable: true,
       title: shortName(appName),
       statusBarStyle: 'default',
-      // The launch picture per iPhone screen: the shop's icon on its opening colour (R51, T93).
+      // The launch picture per iPhone and iPad screen: the shop's icon on its opening colour (R51, T93, T121).
       startupImage: IOS_SCREENS.map((screen) => ({
         url: `/${slug}/splash/${splashSizeName(screen)}`,
         media: splashMedia(screen),
       })),
     },
+    // Every shop gets a PNG home screen icon (T121): the demo files, else drawn from its logo or initials.
+    icons: { icon: shopIconUrls(slug).icon192, apple: shopIconUrls(slug).apple },
     ...(files
-      ? {
-          icons: { icon: files.icon, apple: files.apple },
-          openGraph: { title: name, description: tagline ?? name, images: [files.og] },
-        }
+      ? { openGraph: { title: name, description: tagline ?? name, images: [files.og] } }
       : {}),
     ...(isDemoShopSlug(slug) ? {} : { robots: { index: false, follow: false } }),
   };
@@ -95,14 +80,31 @@ async function ShopFrame({ params, children }: ShopLayoutProps) {
         name="theme-color"
         content={shopPalette(brandColor, surface, pageColor, cardColor).shop60}
       />
-      <AppSplash
-        name={shop.storefront.info.name}
-        tagline={shop.storefront.info.tagline}
-        icon={brandFiles(slug)?.splash ?? null}
-        look={shop.storefront.look}
-      />
       <ShopApp shop={shop}>{children}</ShopApp>
     </ShopTheme>
+  );
+}
+
+/**
+ * The installed app's opening screen (T121), in a boundary of its own and placed first. The shop frame is
+ * big, so React sends its placeholder (the grey bars on a white page) before it; this small part goes out
+ * in the page's first bytes instead, so the app goes from the phone's launch screen straight to the logo.
+ * The shop's fonts, so the name under the logo matches the page.
+ */
+async function OpeningScreen({ params }: Pick<ShopLayoutProps, 'params'>) {
+  const { shop: slug } = await params;
+  const shop = await getShop(slug);
+  if (!shop) return null;
+  const { info, look } = shop.storefront;
+  return (
+    <div className="contents font-sans" style={cssVars(fontPairVars(look.fontPair))}>
+      <AppSplash
+        name={info.name}
+        tagline={info.tagline}
+        icon={splashIconUrl(slug, info.logo)}
+        look={look}
+      />
+    </div>
   );
 }
 
@@ -123,8 +125,13 @@ function FrameSkeleton() {
 // gets this shell first and streams in (Cache Components with Partial Prefetching).
 export default function ShopLayout(props: ShopLayoutProps) {
   return (
-    <Suspense fallback={<FrameSkeleton />}>
-      <ShopFrame {...props} />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <OpeningScreen params={props.params} />
+      </Suspense>
+      <Suspense fallback={<FrameSkeleton />}>
+        <ShopFrame {...props} />
+      </Suspense>
+    </>
   );
 }

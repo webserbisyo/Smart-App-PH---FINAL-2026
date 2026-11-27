@@ -1,8 +1,6 @@
 import {
   appNameOf,
-  DEMO_MEDIA,
   DEMO_SHOP_SLUGS,
-  isDemoShopSlug,
   oklchToHex,
   openingColours,
   parseOklch,
@@ -10,6 +8,7 @@ import {
   shortName,
 } from '@smartapp/core';
 import { getShop } from '@/server/shop-read';
+import { shopIconUrls } from '@/features/install/shop-icons';
 
 interface ManifestContext {
   params: Promise<{ shop: string }>;
@@ -26,22 +25,15 @@ function hex(value: string): string {
   return color ? oklchToHex(color) : '#ffffff'; // brand-guard-ignore: manifests need a plain colour
 }
 
+// PNG icons for every shop (T121): the demo shops' ready-made files, else drawn from the owner's logo or
+// initials (Android's launch screen needs a PNG of 512 px or more).
 function icons(slug: string) {
-  if (isDemoShopSlug(slug) && DEMO_MEDIA[slug].logo) {
-    const base = `/demo/${slug}/brand`;
-    return [
-      { src: `${base}/icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: `${base}/icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
-      {
-        src: `${base}/icon-maskable-512.png`,
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'maskable',
-      },
-    ];
-  }
-  // No logo yet: the Smart App PH mark (shop initials icons come with uploads).
-  return [{ src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }];
+  const urls = shopIconUrls(slug);
+  return [
+    { src: urls.icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+    { src: urls.icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+    { src: urls.maskable512, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+  ];
 }
 
 /**

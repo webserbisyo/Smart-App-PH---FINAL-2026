@@ -6,7 +6,14 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <!-- Add to Home Screen opens the dashboard on its own (decision T93); offline and push come with the backend. -->
     <link rel="manifest" href="/manifest.webmanifest" />
+    <link
+      rel="preload"
+      as="image"
+      href="/brand/smartappph-mark-gradient.webp"
+      fetchpriority="high"
+    />
     <meta name="apple-mobile-web-app-title" content="Smart App" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#f9fafd" />
     <meta
       name="viewport"
@@ -23,6 +30,21 @@
     </script>
   </head>
   <body>
+    <!-- The installed app's opening screen (decision T121): painted before any script, in light or dark from
+         the line above. app/boot-splash.ts lets it go once the app has drawn; CSS removes it at 3 s anyway. -->
+    <div
+      id="boot-splash"
+      aria-hidden="true"
+      class="boot-splash fixed inset-0 z-splash items-center justify-center bg-background"
+    >
+      <img
+        src="/brand/smartappph-mark-gradient.webp"
+        alt=""
+        width="96"
+        height="96"
+        class="size-24"
+      />
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

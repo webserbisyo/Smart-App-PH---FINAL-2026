@@ -36,6 +36,9 @@ export function calculateTargetDimensions(
 export interface CompressOptions {
   readonly maxSide?: number;
   readonly quality?: number;
+  // 'png' keeps a see-through PNG (the shop logo, T121: the storefront draws its app icons and iPhone launch
+  // pictures from it, and that drawing reads PNG and JPEG only). Default: WebP, else JPEG.
+  readonly format?: 'png' | undefined;
 }
 
 /**
@@ -45,6 +48,7 @@ export interface CompressOptions {
 export async function compressImage(file: Blob | File, options?: CompressOptions): Promise<Blob> {
   const maxSide = options?.maxSide ?? 1600;
   const quality = options?.quality ?? 0.8;
+  const png = options?.format === 'png';
 
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return file;
@@ -73,6 +77,11 @@ export async function compressImage(file: Blob | File, options?: CompressOptions
       }
 
       ctx.drawImage(img, 0, 0, width, height);
+
+      if (png) {
+        canvas.toBlob((blob) => resolve(blob ?? file), 'image/png');
+        return;
+      }
 
       // WebP first. Safari can't write WebP and quietly returns a PNG instead (WebKit bug 226950), which
       // can be bigger than the photo, so anything that isn't a real WebP falls back to JPEG.

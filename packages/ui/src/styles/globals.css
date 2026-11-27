@@ -736,6 +736,22 @@
   }
 }
 
+/* The owner dashboard's opening screen (T121): the Smart App PH mark on the page colour, light or dark, written
+   into index.html so it paints before any script loads. Same timing as the shop app: it leaves once the app
+   has drawn (`data-ready`, never before 1 s from launch) and after 3 s whatever happens. Installed app only. */
+@utility boot-splash {
+  display: none;
+  pointer-events: none;
+  @media (display-mode: standalone) {
+    display: flex;
+    animation: splash-out var(--duration-slow) var(--ease-standard) 3s both;
+    &[data-ready] {
+      animation-name: splash-leave;
+      animation-delay: 0ms;
+    }
+  }
+}
+
 /* The Editor's preview of the splash: holds while the owner edits; "open" plays the opening into the page. */
 @utility splash-preview {
   display: flex;

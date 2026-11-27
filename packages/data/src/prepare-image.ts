@@ -24,6 +24,8 @@ export interface PrepareImageOptions {
   // Longest side kept: menu 1080, proof 1600, QR 1000, profile 256 (T65).
   readonly maxSide: number;
   readonly quality?: number | undefined;
+  // 'png' for the shop logo (T121); see compressImage.
+  readonly format?: 'png' | undefined;
 }
 
 async function headOf(file: Blob): Promise<Uint8Array> {
@@ -64,8 +66,14 @@ export async function prepareImage(
     const shrunk = await compressImage(file, {
       maxSide: options.maxSide,
       quality: options.quality ?? 0.8,
+      format: options.format,
     });
-    const keepOriginal = shrunk.size >= file.size && from !== 'heic' && file.type !== '';
+    // A PNG asked for stays a PNG even when the original was a smaller WebP or JPEG.
+    const keepOriginal =
+      shrunk.size >= file.size &&
+      from !== 'heic' &&
+      file.type !== '' &&
+      (options.format !== 'png' || file.type === 'image/png');
     const blob = keepOriginal ? file : shrunk;
     return {
       ok: true,

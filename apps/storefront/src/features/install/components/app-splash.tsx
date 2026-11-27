@@ -88,6 +88,8 @@ export function SplashScreen({
             alt=""
             width={px}
             height={px}
+            // The first thing the opening screen needs (T121): fetched before the page's other pictures.
+            fetchPriority="high"
             className={cn('splash-logo', LOGO_CLASS[opening.logoSize])}
           />
         ) : null}
@@ -107,7 +109,8 @@ export function SplashScreen({
 
 /**
  * The installed app's launch splash. Server-rendered and pure CSS (`app-splash`): it shows only in the
- * installed app, stays until the page is ready (InstallWatcher; at most 3 s) and never blocks a tap.
+ * installed app, stays until the page is ready (InstallWatcher; at least 1 s, at most 3 s) and never blocks a
+ * tap.
  */
 export function AppSplash({
   name,

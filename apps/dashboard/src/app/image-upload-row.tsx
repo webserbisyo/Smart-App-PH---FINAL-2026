@@ -78,7 +78,12 @@ export function useImageUpload(kind: UploadKind, maxSide: number) {
   const upload = async (file: File): Promise<UploadedImage | null> => {
     setProblem(null);
     setBusy('shrinking');
-    const result = await prepareImage(file, { maxSide, quality: kind === 'qr' ? 0.92 : 0.8 });
+    const result = await prepareImage(file, {
+      maxSide,
+      quality: kind === 'qr' ? 0.92 : 0.8,
+      // The logo stays a PNG (T121): the shop's app icons and iPhone launch pictures are drawn from it.
+      format: kind === 'logo' ? 'png' : undefined,
+    });
     if (!result.ok) {
       setBusy(null);
       setProblem(uploadProblemText(result));
