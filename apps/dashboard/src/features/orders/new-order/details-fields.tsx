@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { BikeIcon, ShoppingBagIcon, StoreIcon } from 'lucide-react';
 import {
-  dayPeriodOf,
+  closedShopWords,
   formatClock,
   formatPeso,
   manilaDate,
-  openingPeriod,
-  slotsByPeriod,
   newOrderWords,
   ordersWords,
   type OrderType,
@@ -19,8 +17,9 @@ import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
-import { SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import type { SlotChip } from '@smartapp/ui/compositions/slot-chips';
 import { SlotMonth } from '@smartapp/ui/compositions/slot-month';
+import { SlotTimeColumns, columnSlotsFromChips } from '@smartapp/ui/compositions/slot-time-columns';
 import { dayChipLabel, dayLong } from '@/app/orders/calendar-days';
 import { PesoInput } from '@/app/peso-input';
 import type { Draft } from './draft.js';
@@ -171,9 +170,6 @@ function WhenFields({
   );
   const shownDay = day ?? days.find((d) => pickable(d.state))?.date ?? null;
   const active = days.find((d) => d.date === shownDay);
-  // The part of the day on screen (T127): the picked time's, else the first with an open time.
-  const [period, setPeriod] = React.useState<string | null>(null);
-  const shownPeriod = period ?? openingPeriod(active?.slots ?? [], draft.scheduledAt);
 
   const dayChips: SlotChip[] = days.map((d) => ({
     value: d.date,
@@ -194,12 +190,7 @@ function WhenFields({
         struck: full && !draft.override,
       };
     });
-  const periods = slotsByPeriod(active?.slots ?? []).map((group) => ({
-    value: group.period,
-    label: ordersWords.bookings[group.period],
-    detail: ordersWords.changeTime.openCount(group.slots.filter((s) => s.state === 'open').length),
-    chips: chipsOf(group.slots),
-  }));
+  const timeSlots = columnSlotsFromChips(chipsOf(active?.slots ?? []));
 
   return (
     <div className="flex flex-col gap-3">
@@ -250,27 +241,25 @@ function WhenFields({
               today={today}
               onValueChange={(date) => {
                 setDay(date);
-                setPeriod(null);
                 onChange({ scheduledAt: null });
               }}
             />
-            {periods.length === 0 ? (
+            {timeSlots.length === 0 ? (
               <p className="rounded-xl border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
                 {W.when.noTimes}
               </p>
             ) : (
-              <SlotPeriodTabs
-                label={W.when.time}
-                periods={periods}
-                period={shownPeriod}
-                onPeriodChange={setPeriod}
+              // Hour, Minute and AM or PM from the day's real times (T129).
+              <SlotTimeColumns
+                slots={timeSlots}
                 value={draft.scheduledAt}
-                onValueChange={(at) => {
-                  setPeriod(dayPeriodOf(at));
-                  onChange({ scheduledAt: at });
+                onValueChange={(at) => onChange({ scheduledAt: at })}
+                labels={{
+                  hour: closedShopWords.hour,
+                  minute: closedShopWords.minute,
+                  period: closedShopWords.amPm,
                 }}
                 pressedClassName={PRESSED}
-                chipsClassName="grid grid-cols-3 sm:grid-cols-4"
               />
             )}
             <Field orientation="horizontal" className="rounded-xl border p-3">

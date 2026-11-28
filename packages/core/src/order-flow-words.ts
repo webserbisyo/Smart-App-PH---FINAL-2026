@@ -28,7 +28,4 @@ export const orderFlowWords = {
     `${names} just sold out. Remove it, check your new total, then place your order.`,
   removeSoldOut: (count: number) =>
     count === 1 ? 'Remove sold-out item' : `Remove ${count} sold-out items`,
-  // Under each part of the day: how many times can still be picked.
-  periodOpen: (count: number) => (count === 0 ? 'Full' : `${count} open`),
-  partLabel: 'Part of the day',
 } as const;

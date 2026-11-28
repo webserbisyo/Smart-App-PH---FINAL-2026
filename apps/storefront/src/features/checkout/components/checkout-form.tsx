@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   artPath,
   errorWords,
@@ -20,6 +20,7 @@ import {
   type OrderPayload,
   type PaymentMethod,
   orderFlowWords,
+  closedShopWords,
 } from '@smartapp/core';
 import {
   errorCodeOf,
@@ -122,7 +123,6 @@ interface CheckoutFormProps {
 
 export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { slug, shop } = useShop();
   const sf = shop.storefront;
   const catalog = shop.catalog;
@@ -141,9 +141,6 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
   };
   // The "added · View basket" toast sat on Place order (T127).
   useEffect(() => closeAddedToast(), []);
-
-  // Scheduled slot from query param if passed by basket drawer (e.g. ?scheduled=...)
-  const queryScheduled = searchParams.get('scheduled');
 
   // Customer details state (prefill from draft, fallback to member account)
   const [name, setName] = useState(draft?.name ?? member?.name ?? '');
@@ -164,14 +161,15 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
   const [useReward, setUseReward] = useState(draft?.useReward ?? false);
   const [note, setNote] = useState(draft?.note ?? '');
 
-  // Scheduled time
-  const scheduledAt = queryScheduled || choice.scheduledAt;
-  // Stock is judged at the booked time (T127), as the server does.
-  const stockAt = availabilityAt(scheduledAt, now);
-
   // Order type: the customer's pick, or the only way this shop takes orders. Never a silent default.
   const pickedType =
     choice.type ?? (sf.orderTypes.length === 1 ? (sf.orderTypes[0] ?? null) : null);
+  // The booked time is the customer's pick, and only that (T129): the basket saves its time as the pick
+  // instead of putting it in the link, where it beat every later pick. A walk-in is never booked.
+  const scheduledAt = pickedType === 'walk_in' ? null : choice.scheduledAt;
+  // Stock is judged at the booked time (T127), as the server does.
+  const stockAt = availabilityAt(scheduledAt, now);
+
   // The quote still needs a type before the pick; Place order waits for the pick.
   const orderType = pickedType ?? sf.orderTypes[0] ?? 'pickup';
   // Each new value opens the How and where sheet (Place order tapped before a pick).
@@ -182,9 +180,10 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
 
   // Error feedback state
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [rejected, setRejected] = useState<{ at: string | null; key: number }>({
+  const [rejected, setRejected] = useState<{ at: string | null; key: number; full: boolean }>({
     at: null,
     key: 0,
+    full: false,
   });
   const [placedOk, setPlacedOk] = useState(false);
   // The order was turned away because a line can't be ordered any more (T127).
@@ -219,7 +218,7 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
       paymentMethod: draft?.paymentMethod ?? null,
       paymentAccountId: draft?.paymentAccountId ?? null,
       note: draft?.note ?? '',
-      scheduledAt: queryScheduled || choice.scheduledAt,
+      scheduledAt: choice.scheduledAt,
       useReward: draft?.useReward ?? false,
     }),
   );
@@ -388,11 +387,15 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
   const flaggedCount = flaggedRows.length;
   const flaggedIds = new Set(flaggedRows.map((r) => r.identity));
 
-  // The quote says the picked time filled up: open the picker at that day once per time.
-  const quoteRejectedAt =
-    scheduledAt && quote?.problems.some((p) => p.code === 'slot_unavailable') ? scheduledAt : null;
+  // The quote says the picked time can't be taken (full or not open): open the picker at that day once
+  // per time.
+  const slotProblem = quote?.problems.find(
+    (p) => p.code === 'slot_unavailable' || p.code === 'slot_full',
+  );
+  const quoteRejectedAt = scheduledAt && slotProblem ? scheduledAt : null;
   if (quoteRejectedAt && rejected.at !== quoteRejectedAt) {
-    setRejected((prev) => ({ at: quoteRejectedAt, key: prev.key + 1 }));
+    const full = slotProblem?.code === 'slot_full';
+    setRejected((prev) => ({ at: quoteRejectedAt, key: prev.key + 1, full }));
   }
 
   // Eligibility evaluation
@@ -412,6 +415,7 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
     paymentMethod: selectedPaymentMethod,
     quote: isQuoteLoading ? null : quote,
     quoteLoading: isQuoteLoading,
+    quoteFailed: quoteQuery.isError,
     submitting: placeOrder.isPending,
   });
 
@@ -484,9 +488,17 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
           setSubmitError(words.checkout.pickupTimeInvalid);
           break;
         case 'slot_unavailable':
-          // The time filled up meanwhile: the picker opens at that day, everything else stays filled in.
-          setSubmitError(words.location.slotFilled);
-          setRejected((prev) => ({ at: scheduledAt, key: prev.key + 1 }));
+        case 'slot_full':
+          // The time can't be taken (filled up meanwhile, or not open): the picker opens at that day,
+          // everything else stays filled in. Each says which (T129: "filled up" was said for both).
+          setSubmitError(
+            errCode === 'slot_full' ? closedShopWords.slotFull : closedShopWords.slotNotOpen,
+          );
+          setRejected((prev) => ({
+            at: scheduledAt,
+            key: prev.key + 1,
+            full: errCode === 'slot_full',
+          }));
           break;
         case 'out_of_range':
           setSubmitError(words.checkout.outOfRange);
@@ -662,6 +674,7 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
         choice={choice}
         now={now}
         rejectedAt={rejected.at}
+        rejectedFull={rejected.full}
         rejectKey={rejected.key}
         askKey={askKey}
       />
@@ -703,6 +716,25 @@ export function CheckoutForm({ now, onSpent }: CheckoutFormProps) {
         totalCentavos={total}
         isDelivery={orderType === 'delivery'}
       />
+
+      {/* A failed price check never passes for "no problems" (T129): it says so, with Try again. */}
+      {quotePayload && quoteQuery.isError && isOnline ? (
+        <Alert variant="destructive" role="alert">
+          <AlertTriangleIcon aria-hidden="true" />
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+            <span>{closedShopWords.priceCheckFailed}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-11 rounded-full px-4"
+              onClick={() => void quoteQuery.refetch()}
+            >
+              {closedShopWords.tryAgain}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       {submitError ? (
         <Alert variant="destructive" role="alert">

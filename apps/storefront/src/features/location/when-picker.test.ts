@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { SHOP_PACKS, scheduleDays, type Schedule } from '@smartapp/core';
 import {
   asapChoice,
+  asapReasonLine,
+  asapUnavailableDetail,
   dayChipLabel,
   firstOpenDay,
   noDaysLine,
@@ -166,5 +168,32 @@ describe('O6 When picker: refreshes with the basket', () => {
     expect(firstOpenDay(without)).toBe('2026-10-27');
     expect(firstOpenDay(withCake)).toBe('2026-10-29');
     expect(asapChoice(lola.storefront, withCake, now).available).toBe(false);
+  });
+});
+
+describe('ASAP while the shop is closed (T129)', () => {
+  const lola = SHOP_PACKS['lola-remy'].storefront;
+
+  it('says when the shop opens, not a ready time', () => {
+    const at130 = '2026-11-30T17:30:00.000Z'; // Tue 1 Dec 1:30 AM Manila
+    const asap = asapChoice(lola, undefined, at130);
+    expect(asap).toEqual({ available: false, reason: 'closed' });
+    expect(asapUnavailableDetail(lola, asap.reason, at130)).toBe('Opens 5 AM');
+  });
+
+  it('stops at last orders and says so', () => {
+    const late = '2026-12-01T11:45:00.000Z'; // 7:45 PM Manila
+    const asap = asapChoice(lola, undefined, late);
+    expect(asap).toEqual({ available: false, reason: 'last_orders' });
+    expect(asapUnavailableDetail(lola, asap.reason, late)).toBe('Last orders were 7:40 PM');
+    expect(asapReasonLine(lola, asap.reason, null, late)).toBe(
+      'Last orders were 7:40 PM, so pick a time for later.',
+    );
+  });
+
+  it('is offered before last orders', () => {
+    const early = '2026-12-01T11:30:00.000Z'; // 7:30 PM Manila
+    expect(asapChoice(lola, undefined, early).available).toBe(true);
+    expect(asapUnavailableDetail(lola, null, early)).toBeNull();
   });
 });

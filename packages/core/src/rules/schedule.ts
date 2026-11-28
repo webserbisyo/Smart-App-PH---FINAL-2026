@@ -250,6 +250,23 @@ export function scheduleDays(
   };
 }
 
+/**
+ * Whether a booked time can still be taken (T129): `slot_full` when that time or day is full, else
+ * `slot_unavailable` when it isn't one of the shop's open times (closed, too soon, not a slot). The price
+ * check reports it as a problem; Place order refuses with the same code.
+ */
+export function bookingProblem(
+  schedule: Pick<Schedule, 'days'>,
+  at: string,
+): 'slot_full' | 'slot_unavailable' | null {
+  const iso = new Date(at).toISOString();
+  const day = schedule.days.find((d) => d.date === manilaDate(at));
+  const slot = day?.slots.find((s) => s.at === iso);
+  if (slot?.state === 'full' || day?.state === 'full') return 'slot_full';
+  if (!day || day.state !== 'open' || !slot || slot.state !== 'open') return 'slot_unavailable';
+  return null;
+}
+
 /** The owner can move an order to any open day this far ahead; `daysAhead` only limits customers (T86). */
 export const OWNER_MOVE_DAYS = 60;
 

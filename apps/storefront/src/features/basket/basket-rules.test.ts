@@ -147,12 +147,35 @@ describe('basket rules and helpers', () => {
         openState,
         isOnline: true,
         now: '2026-10-24T20:30:00.000Z', // Oct 25 4:30 AM Manila
+        // The schedule's first bookable time (T129): 6 AM, not 15 minutes after opening.
+        earliest: '2026-10-24T22:00:00.000Z',
       });
       expect(res.state).toBe('closed_with_scheduling');
       expect(res.alertMessage).toContain('Closed now · Opens');
       expect(res.alertMessage).toContain('Your basket is saved.');
-      expect(res.buttonLabel).toContain('Schedule for');
+      expect(res.buttonLabel).toBe('Schedule for Today 6 AM');
+      expect(res.scheduleSlot).toBe('2026-10-24T22:00:00.000Z');
       expect(res.buttonDisabled).toBe(false);
+    });
+
+    it('never offers a time of its own when the schedule has none (T129)', () => {
+      const openState: OpenState = {
+        state: 'closed',
+        closesAt: null,
+        nextOpening: '2026-10-24T21:00:00.000Z',
+        busyUntil: null,
+        paused: false,
+      };
+      const res = closedStateDecision({
+        sf: mockSf,
+        openState,
+        isOnline: true,
+        now: '2026-10-24T20:30:00.000Z',
+        earliest: null,
+      });
+      expect(res.state).toBe('closed_no_scheduling');
+      expect(res.scheduleSlot).toBeNull();
+      expect(res.buttonDisabled).toBe(true);
     });
 
     it('handles closed state without scheduling', () => {

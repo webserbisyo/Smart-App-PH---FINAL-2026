@@ -95,6 +95,7 @@ A short view of this page, with links, is the "Smart App PH: Start here" Claude 
 - [x] Orders search: phone in any format, finished orders found without dates; storefront announcement strip under the top bar and the iPhone sheet blur after scrolling fixed (decision T126; built 2026-11-27, waiting for review)
 - [x] Ordering flow: sold out stopped before checkout, basket line edit, Goes well comes back, one schedule picker for the storefront, Change time and New order, Save QR hover fix (decision T127; built 2026-11-28, waiting for review)
 - [x] One month calendar for every booking, "No times left" for today after the last time (decision T128; built 2026-11-28, waiting for review)
+- [x] Ordering while closed: one booking rule, last orders, Walk-in and ASAP greyed, closed date ranges, Hour / Minute / AM-PM time picker (decision T129; built 2026-11-29, waiting for review)
 
 ## Phase 4: Backend, area by area
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { openState, openStateText, words } from '@smartapp/core';
+import { closedTodayReason, openState, openStateText, words } from '@smartapp/core';
 import { useNow } from '@smartapp/data';
 import { cn } from '@smartapp/ui/lib/utils';
 import { useShop } from '../../shell/components/shop-context';
@@ -32,7 +32,9 @@ export function HeroChips({ demo }: { demo: boolean }) {
     <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap gap-2">
       <span className={CHIP_CLASS} role="status">
         <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', DOT_CLASS[kind])} />
-        <span className="truncate">{openStateText(state, now)}</span>
+        <span className="truncate">
+          {openStateText(state, now, closedTodayReason(shop.storefront, now))}
+        </span>
       </span>
       {demo ? <span className={CHIP_CLASS}>{words.storefrontShell.home.demoChip}</span> : null}
     </div>

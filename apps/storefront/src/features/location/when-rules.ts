@@ -2,6 +2,11 @@
 // day and time are picked, how the times group, and the lines the picker shows.
 import {
   addDays,
+  closedShopWords,
+  lastOrderAt,
+  openState,
+  openingWhen,
+  pastLastOrder,
   DAY_PERIODS,
   dayPeriodOf,
   slotsByPeriod,
@@ -9,6 +14,7 @@ import {
   formatClock,
   formatManila,
   manilaDate,
+  openStateText,
   readyEstimate,
   slotLabel,
   words,
@@ -21,20 +27,62 @@ import {
 export type WhenMode = 'asap' | 'schedule';
 export type BookableType = 'pickup' | 'delivery';
 
-type AsapInput = Parameters<typeof readyEstimate>[0];
+type AsapInput = Parameters<typeof readyEstimate>[0] & Parameters<typeof lastOrderAt>[0];
+
+export type AsapReason = 'notice' | 'closed' | 'last_orders';
 
 /**
- * ASAP is offered only when the shop can start now (open, not paused, not busy past its prep time) and
- * nothing in the basket needs notice. `reason` is the line under the cards when it isn't.
+ * ASAP is offered only when the shop can start now (open, not paused, not busy past its prep time, not
+ * past last orders) and nothing in the basket needs notice. `reason` is the line under the cards when it
+ * isn't: last orders when the shop is open but too close to closing to make it (T129).
  */
 export function asapChoice(
   sf: AsapInput,
   schedule: Pick<Schedule, 'noticeItem'> | undefined,
   now: string | Date,
-): { available: boolean; reason: 'notice' | 'closed' | null } {
+): { available: boolean; reason: AsapReason | null } {
   if (schedule?.noticeItem) return { available: false, reason: 'notice' };
-  if (readyEstimate(sf, now) === null) return { available: false, reason: 'closed' };
+  if (readyEstimate(sf, now) === null)
+    return { available: false, reason: pastLastOrder(sf, now) ? 'last_orders' : 'closed' };
   return { available: true, reason: null };
+}
+
+/**
+ * What the ASAP card says when it can't be picked (T129: it said "Ready in about 20 min" at 1:30 AM):
+ * "Last orders were 7:40 PM", "Opens 6 AM", else the shop's open state. Null while ASAP is offered.
+ */
+export function asapUnavailableDetail(
+  sf: AsapInput,
+  reason: AsapReason | null,
+  now: string | Date,
+): string | null {
+  if (reason === null || reason === 'notice') return null;
+  if (reason === 'last_orders') {
+    const last = lastOrderAt(sf, now);
+    return last ? closedShopWords.lastOrders(formatClock(last)) : null;
+  }
+  const state = openState(sf, now);
+  if (state.state === 'closed' && !state.paused && state.nextOpening)
+    return closedShopWords.opensAt(openingWhen(state.nextOpening, now));
+  return openStateText(state, now);
+}
+
+/** The line under the When cards while ASAP can't be picked, or null while it can. */
+export function asapReasonLine(
+  sf: AsapInput,
+  reason: AsapReason | null,
+  noticeItemName: string | null,
+  now: string | Date,
+): string | null {
+  if (reason === null) return null;
+  if (reason === 'notice')
+    return noticeItemName ? words.location.asapNeedsNotice(noticeItemName) : null;
+  if (reason === 'last_orders') {
+    const last = lastOrderAt(sf, now);
+    if (last) return closedShopWords.lastOrdersPickTime(formatClock(last));
+  }
+  // The line above the When cards already says "Closed · Opens 5 AM"; this one says what to do.
+  return words.location.closedNow;
 }
 
 function openSlotIn(day: ScheduleDay | undefined, at: string | null): ScheduleSlot | undefined {

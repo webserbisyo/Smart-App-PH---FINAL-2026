@@ -4,12 +4,21 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   chosenOrderType,
   chosenZone,
+  closedShopWords,
+  closedTodayReason,
   deliveryFee,
+  formatClock,
   formatPeso,
+  lastOrderAt,
   isShortMapsLink,
   mapsLinkFor,
+  openState,
+  openStateText,
+  openingWhen,
   orderTypeDetail,
   parseMapsLink,
+  pastLastOrder,
+  readyEstimate,
   roundKm,
   words,
   OrderTypeEnum,
@@ -77,11 +86,13 @@ function HowWhereForm({
   onDone,
   initialMode,
   rejectedAt,
+  rejectedFull,
 }: {
   now: string;
   onDone: () => void;
   initialMode?: WhenMode | undefined;
   rejectedAt?: string | null | undefined;
+  rejectedFull?: boolean | undefined;
 }) {
   const { slug, shop } = useShop();
   const sf = shop.storefront;
@@ -89,8 +100,20 @@ function HowWhereForm({
   const resolveMaps = useResolveMapsLink();
   const { choice, address, save } = useLocationChoice(slug);
 
+  // Walk-in means ordering inside the shop now, so it is greyed while the shop is closed, saying when it
+  // opens (T129: hiding it confused people who walk in every day).
+  const shopState = openState(sf, now);
+  const walkInOff = shopState.state === 'closed' && !shopState.paused;
+  const walkInOpens =
+    walkInOff && shopState.nextOpening ? openingWhen(shopState.nextOpening, now) : null;
+  const firstType = sf.orderTypes.find((t) => !(walkInOff && t === 'walk_in'));
+  const savedType = chosenOrderType(sf, choice.type);
+
   const [type, setType] = useState<OrderType>(
-    chosenOrderType(sf, choice.type) ?? sf.orderTypes[0] ?? 'pickup',
+    (savedType === 'walk_in' && walkInOff ? null : savedType) ??
+      firstType ??
+      sf.orderTypes[0] ??
+      'pickup',
   );
   // When (O6): ASAP or a booked day and time, for pickup and delivery; walk-in is never scheduled.
   const [when, setWhen] = useState<WhenValue>({
@@ -212,6 +235,17 @@ function HowWhereForm({
   const isDeliveryDisabled = type === 'delivery' && !deliveryResult.ok && !belowMin;
 
   const zone = chosenZone(sf, zoneId);
+  // Pickup's "Ready in about 20 min" only while an order for now can be made (T129); otherwise the line
+  // says when the shop opens and the When picker below offers a time.
+  const lastOrder = lastOrderAt(sf, now);
+  const typeDetail =
+    type === 'pickup' && !readyEstimate(sf, now)
+      ? lastOrder && pastLastOrder(sf, now)
+        ? closedShopWords.lastOrders(formatClock(lastOrder))
+        : openStateText(shopState, now, closedTodayReason(sf, now))
+      : type === 'walk_in' && walkInOpens
+        ? closedShopWords.walkInClosed(walkInOpens)
+        : orderTypeDetail(sf, type);
   const typeCols = TYPE_COLS[Math.min(sf.orderTypes.length, 3)] ?? 'grid-cols-3';
 
   return (
@@ -236,20 +270,29 @@ function HowWhereForm({
         >
           {sf.orderTypes.map((t) => {
             const Icon = ORDER_TYPE_ICON[t];
+            const off = t === 'walk_in' && walkInOff;
             return (
               <FieldLabel key={t} htmlFor={`how-${t}`} className="rounded-2xl">
-                <Field className="min-h-20 items-center justify-center gap-1.5 text-center">
-                  <RadioGroupItem value={t} id={`how-${t}`} className="sr-only" />
+                <Field
+                  data-disabled={off ? 'true' : undefined}
+                  className="min-h-20 items-center justify-center gap-1.5 text-center"
+                >
+                  <RadioGroupItem value={t} id={`how-${t}`} className="sr-only" disabled={off} />
                   <Icon aria-hidden="true" className="size-6" />
                   <FieldTitle className="justify-center text-sm">
                     {words.shop.orderType[t]}
                   </FieldTitle>
+                  {off && walkInOpens ? (
+                    <FieldDescription className="text-xs">
+                      {closedShopWords.opensAt(walkInOpens)}
+                    </FieldDescription>
+                  ) : null}
                 </Field>
               </FieldLabel>
             );
           })}
         </RadioGroup>
-        <p className="text-sm text-muted-foreground">{orderTypeDetail(sf, type)}</p>
+        <p className="text-sm text-muted-foreground">{typeDetail}</p>
       </FieldSet>
 
       {type === 'pickup' || type === 'delivery' ? (
@@ -260,6 +303,7 @@ function HowWhereForm({
           onChange={onWhenChange}
           onBookableChange={setBookable}
           rejectedAt={rejectedAt}
+          rejectedFull={rejectedFull}
         />
       ) : null}
 
@@ -534,6 +578,7 @@ export function HowWhereSheet({
   now,
   initialMode,
   rejectedAt,
+  rejectedFull,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -542,6 +587,8 @@ export function HowWhereSheet({
   initialMode?: WhenMode | undefined;
   /** A time the shop just turned away: the picker says so and opens at its day. */
   rejectedAt?: string | null | undefined;
+  /** The turned-away time was full, not closed. */
+  rejectedFull?: boolean | undefined;
 }) {
   return (
     <ResponsiveDialog
@@ -557,6 +604,7 @@ export function HowWhereSheet({
           onDone={() => onOpenChange(false)}
           initialMode={initialMode}
           rejectedAt={rejectedAt}
+          rejectedFull={rejectedFull}
         />
       ) : null}
     </ResponsiveDialog>

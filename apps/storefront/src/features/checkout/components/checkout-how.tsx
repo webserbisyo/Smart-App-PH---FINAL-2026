@@ -4,8 +4,11 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   chosenZone,
+  closedShopWords,
   locationLabel,
   openState,
+  openingWhen,
+  readyEstimate,
   words,
   type LocationChoice,
   type Storefront,
@@ -26,6 +29,8 @@ interface CheckoutHowProps {
   now: string;
   /** A time the shop turned away (slot_unavailable); each new `rejectKey` opens the picker at its day. */
   rejectedAt?: string | null | undefined;
+  /** The turned-away time was full, not closed (the picker says which). */
+  rejectedFull?: boolean | undefined;
   rejectKey?: number | undefined;
   /** Each new value opens the sheet (Place order tapped before the customer picked how). */
   askKey?: number | undefined;
@@ -39,6 +44,7 @@ export function CheckoutHow({
   choice,
   now,
   rejectedAt,
+  rejectedFull = false,
   rejectKey = 0,
   askKey = 0,
 }: CheckoutHowProps) {
@@ -62,7 +68,11 @@ export function CheckoutHow({
   // ready time or the area's ETA for an order now (T127: it said the time twice).
   let detail: string | null = null;
   if (choice.type === 'pickup') {
-    if (!choice.scheduledAt && state.state === 'open') detail = words.shop.readyIn(sf.prepMinutes);
+    // Only while an order for now can be made before closing (T129: it said this at 1:30 AM).
+    if (!choice.scheduledAt && readyEstimate(sf, now)) detail = words.shop.readyIn(sf.prepMinutes);
+  } else if (choice.type === 'walk_in') {
+    if (state.state === 'closed' && !state.paused && state.nextOpening)
+      detail = closedShopWords.walkInClosed(openingWhen(state.nextOpening, now));
   } else if (choice.type === 'delivery') {
     const zone = chosenZone(sf, choice.zoneId);
     if (!choice.scheduledAt && zone) detail = zone.etaText;
@@ -105,6 +115,7 @@ export function CheckoutHow({
           onOpenChange={setSheetOpen}
           now={now}
           rejectedAt={rejectedAt}
+          rejectedFull={rejectedFull}
         />
       ) : null}
     </>

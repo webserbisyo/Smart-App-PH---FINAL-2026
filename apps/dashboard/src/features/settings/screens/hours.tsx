@@ -1,7 +1,20 @@
 import * as React from 'react';
-import { CalendarIcon, CopyIcon, PlusIcon, Trash2Icon, XIcon } from 'lucide-react';
 import {
+  AlertTriangleIcon,
+  CalendarIcon,
+  CopyIcon,
+  PlusIcon,
+  Trash2Icon,
+  XIcon,
+} from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import {
+  MAX_CLOSURES,
   WEEKDAYS,
+  addClosures,
+  closedDaysWords,
+  datesBetween,
+  groupClosures,
   copyDayToAll,
   formatManila,
   hoursProblems,
@@ -13,14 +26,17 @@ import {
   type HoursSettings,
   type OpeningRange,
   type OwnerSettings,
+  type OrderStatus,
   type Weekday,
 } from '@smartapp/core';
-import { useNow, useSaveHours } from '@smartapp/data';
+import { useNow, useSaveHours, useScheduledOrders } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Calendar } from '@smartapp/ui/components/calendar';
 import { Field, FieldError, FieldLabel } from '@smartapp/ui/components/field';
 import { Input } from '@smartapp/ui/components/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@smartapp/ui/components/popover';
+import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
+import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
 import { Switch } from '@smartapp/ui/components/switch';
 import {
   TimePicker,
@@ -49,6 +65,14 @@ import {
 } from '../settings-ui.js';
 
 const W = settingsWords.hours;
+const CD = closedDaysWords;
+// Orders still to make: a booked one on a day being closed needs the owner (T129).
+const OPEN_STATUSES: ReadonlySet<OrderStatus> = new Set<OrderStatus>([
+  'placed',
+  'preparing',
+  'ready',
+  'out_for_delivery',
+]);
 const DAY_NAMES = words.storefrontShell.info.dayNames;
 // Monday first, like a printed week.
 const WEEK: readonly Weekday[] = [...WEEKDAYS.slice(1), WEEKDAYS[0]];
@@ -141,7 +165,12 @@ function HoursForm({ settings }: { settings: OwnerSettings }) {
         <p className="text-xs text-muted-foreground">{W.lateHint}</p>
       </SettingsCard>
 
-      <ClosuresCard closures={draft.closures} today={today} onChange={setClosures} />
+      <ClosuresCard
+        slug={shop.slug}
+        closures={draft.closures}
+        today={today}
+        onChange={setClosures}
+      />
 
       <SaveBar
         dirty={dirty}
@@ -334,53 +363,90 @@ function TimeField({
 }
 
 function ClosuresCard({
+  slug,
   closures,
   today,
   onChange,
 }: {
+  slug: string;
   closures: Closure[];
   today: string;
   onChange: (closures: Closure[]) => void;
 }) {
-  const [date, setDate] = React.useState<string | null>(null);
+  // One day, or several in a row (T129): a range is still one closures row per day.
+  const [length, setLength] = React.useState<'one' | 'several'>('one');
+  const [range, setRange] = React.useState<{ from: string; to: string | null } | null>(null);
   const [reason, setReason] = React.useState('');
   const [pickerOpen, setPickerOpen] = React.useState(false);
   const upcoming = closures.filter((c) => c.date >= today);
-  const taken = date !== null && closures.some((c) => c.date === date);
-  const problem = taken ? W.closureTaken : date !== null && date < today ? W.closurePast : null;
+  const groups = groupClosures(upcoming);
+
+  const from = range?.from ?? null;
+  const to = range ? (range.to ?? range.from) : null;
+  const picked = from && to ? datesBetween(from, to) : [];
+  const result = from && to ? addClosures(closures, from, to, reason, today) : null;
+  const problem =
+    result && !result.ok
+      ? result.problem === 'past'
+        ? W.closurePast
+        : result.problem === 'too_many'
+          ? CD.tooMany(MAX_CLOSURES)
+          : picked.length > 1
+            ? CD.allTaken
+            : W.closureTaken
+      : null;
+
+  // Orders already booked on the picked days, so closing them is never a surprise (T129).
+  const booked = useScheduledOrders(slug, from ?? '', to ?? '');
+  const bookedCount = (booked.data?.orders ?? []).filter((o) => OPEN_STATUSES.has(o.status)).length;
 
   const add = () => {
-    if (!date || problem) return;
-    onChange(
-      [...closures, { date, reason: reason.trim() || null }].sort((a, b) =>
-        a.date.localeCompare(b.date),
-      ),
-    );
-    setDate(null);
+    if (!result?.ok) return;
+    onChange(result.closures);
+    setRange(null);
     setReason('');
   };
 
   const label = (key: string) => formatManila(manilaToDate(key, '12:00'), 'date');
+  const groupLabel = (g: { from: string; to: string }) =>
+    g.from === g.to ? label(g.from) : CD.range(label(g.from), label(g.to));
+  const pickedLabel =
+    from && to
+      ? from === to
+        ? label(from)
+        : `${CD.range(label(from), label(to))} · ${CD.dayCount(picked.length)}`
+      : null;
+  const disabledDays = [{ before: localDate(today) }, ...closures.map((c) => localDate(c.date))];
 
   return (
     <SettingsCard title={W.closuresCard} description={W.closuresLine}>
-      {upcoming.length === 0 ? (
+      {groups.length === 0 ? (
         <p className="text-sm text-muted-foreground">{W.noClosures}</p>
       ) : (
         <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
-          {upcoming.map((c) => (
-            <li key={c.date} className="flex min-h-12 items-center gap-3 px-3 py-1.5">
+          {groups.map((g) => (
+            <li key={g.from} className="flex min-h-12 items-center gap-3 px-3 py-1.5">
               <CalendarIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
               <span className="min-w-0 flex-1 text-sm">
-                <span className="font-medium text-foreground">{label(c.date)}</span>
-                {c.reason ? <span className="text-muted-foreground"> · {c.reason}</span> : null}
+                <span className="font-medium text-foreground">{groupLabel(g)}</span>
+                {g.dates.length > 1 ? (
+                  <span className="text-muted-foreground"> · {CD.dayCount(g.dates.length)}</span>
+                ) : null}
+                {g.reason ? <span className="text-muted-foreground"> · {g.reason}</span> : null}
               </span>
               <Button
                 variant="ghost"
                 size="icon"
                 className="size-11 text-muted-foreground md:size-9"
-                aria-label={W.removeClosure(label(c.date))}
-                onClick={() => onChange(closures.filter((x) => x.date !== c.date))}
+                aria-label={
+                  g.dates.length > 1
+                    ? CD.removeRange(groupLabel(g))
+                    : W.removeClosure(groupLabel(g))
+                }
+                onClick={() => {
+                  const drop = new Set(g.dates);
+                  onChange(closures.filter((x) => !drop.has(x.date)));
+                }}
               >
                 <Trash2Icon />
               </Button>
@@ -388,36 +454,87 @@ function ClosuresCard({
           ))}
         </ul>
       )}
-      <div className="@container">
+      <div className="@container flex flex-col gap-3">
+        <ToggleGroup
+          value={[length]}
+          onValueChange={(val) => {
+            const next = val[0] === 'several' ? 'several' : val[0] === 'one' ? 'one' : null;
+            if (!next) return;
+            setLength(next);
+            setRange(null);
+          }}
+          aria-label={CD.howMany}
+          className="justify-start"
+        >
+          <ToggleGroupItem value="one" className="h-11 px-4 text-sm md:h-9">
+            {CD.oneDay}
+          </ToggleGroupItem>
+          <ToggleGroupItem value="several" className="h-11 px-4 text-sm md:h-9">
+            {CD.severalDays}
+          </ToggleGroupItem>
+        </ToggleGroup>
         <div className="flex flex-col gap-3 @lg:flex-row @lg:items-end">
-          <Field className="@lg:w-48" data-invalid={problem ? true : undefined}>
-            <FieldLabel htmlFor="closure-date">{W.date}</FieldLabel>
+          <Field className="min-w-0 @lg:w-64" data-invalid={problem ? true : undefined}>
+            <FieldLabel htmlFor="closure-date">{length === 'one' ? W.date : CD.days}</FieldLabel>
             <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
               <PopoverTrigger
                 render={
                   <Button
                     id="closure-date"
                     variant="outline"
-                    className="h-11 justify-start font-normal md:h-9"
+                    className="h-11 min-w-0 justify-start font-normal md:h-9"
                   />
                 }
               >
                 <CalendarIcon />
-                {date ? label(date) : W.pickDate}
+                <span className="truncate">
+                  {pickedLabel ?? (length === 'one' ? W.pickDate : CD.pickDays)}
+                </span>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date ? localDate(date) : undefined}
-                  disabled={[
-                    { before: localDate(today) },
-                    ...closures.map((c) => localDate(c.date)),
-                  ]}
-                  onSelect={(picked) => {
-                    setDate(picked ? dateKey(picked) : null);
-                    setPickerOpen(false);
-                  }}
-                />
+                {length === 'one' ? (
+                  <Calendar
+                    mode="single"
+                    selected={from ? localDate(from) : undefined}
+                    disabled={disabledDays}
+                    onSelect={(day) => {
+                      setRange(day ? { from: dateKey(day), to: null } : null);
+                      setPickerOpen(false);
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col gap-2 pb-3">
+                    <Calendar
+                      mode="range"
+                      selected={
+                        from
+                          ? {
+                              from: localDate(from),
+                              to: range?.to ? localDate(range.to) : undefined,
+                            }
+                          : undefined
+                      }
+                      disabled={{ before: localDate(today) }}
+                      // First tap starts the days, the second ends them (either order).
+                      onSelect={(_, day) => {
+                        const key = dateKey(day);
+                        if (!range || range.to) {
+                          setRange({ from: key, to: null });
+                          return;
+                        }
+                        setRange(
+                          key < range.from
+                            ? { from: key, to: range.from }
+                            : { from: range.from, to: key },
+                        );
+                        setPickerOpen(false);
+                      }}
+                    />
+                    <p aria-live="polite" className="px-3 text-xs text-muted-foreground">
+                      {range && !range.to ? pickedLabel : CD.pickDays}
+                    </p>
+                  </div>
+                )}
               </PopoverContent>
             </Popover>
           </Field>
@@ -438,18 +555,35 @@ function ClosuresCard({
               }}
             />
           </Field>
-          <Button
-            variant="outline"
-            className="h-11 md:h-9"
-            disabled={!date || problem !== null}
-            onClick={add}
-          >
+          <Button variant="outline" className="h-11 md:h-9" disabled={!result?.ok} onClick={add}>
             <PlusIcon />
-            {W.addClosure}
+            {CD.add(result?.ok ? result.added : 1)}
           </Button>
         </div>
       </div>
       {problem ? <FieldError>{problem}</FieldError> : null}
+      {result?.ok && bookedCount > 0 ? (
+        <Alert variant="warning" role="status">
+          <AlertTriangleIcon aria-hidden="true" />
+          <AlertDescription className="flex flex-col items-start gap-2">
+            <span>{CD.booked(bookedCount)}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 md:h-8"
+              nativeButton={false}
+              render={
+                <Link
+                  to="/orders"
+                  search={{ view: 'bookings', cal: 'day', calDay: from ?? undefined }}
+                />
+              }
+            >
+              {CD.openOrders}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
     </SettingsCard>
   );
 }

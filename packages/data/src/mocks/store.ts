@@ -52,6 +52,7 @@ import {
   OpenStateSchema,
   ownerScheduleDays,
   scheduleDays,
+  bookingProblem,
   parseMapsLink,
   PaymentSchema,
   periodStart,
@@ -1026,6 +1027,23 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     }
   }
 
+  /** Whether the booked time can still be taken (T129): the same check as the API's `checkSlot`. */
+  function bookedTimeProblem(
+    s: ShopState,
+    payload: Pick<OrderPayload, 'scheduledAt' | 'lines'>,
+  ): 'slot_full' | 'slot_unavailable' | null {
+    const at = payload.scheduledAt;
+    if (!at) return null;
+    const sched = scheduleDays(
+      s.shop.storefront,
+      payload.lines,
+      s.shop.catalog.items,
+      computeBookings(s),
+      now(),
+    );
+    return bookingProblem(sched, at);
+  }
+
   const storefront: DataAdapters['storefront'] = {
     getStorefront: ({ slug }) =>
       run('storefront', () => {
@@ -1049,28 +1067,16 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
     quoteOrder: ({ slug, payload }) =>
       run('storefront', () => {
         const s = requireShop(slug);
-        const at = payload.scheduledAt;
-        if (at) {
-          const sched = scheduleDays(
-            s.shop.storefront,
-            payload.lines,
-            s.shop.catalog.items,
-            computeBookings(s),
-            now(),
-          );
-          const day = sched.days.find((d) => d.date === manilaDate(at));
-          const slot = day?.slots.find((sl) => sl.at === at);
-          if (!day || day.state !== 'open' || !slot || slot.state !== 'open') {
-            fail('slot_unavailable', 409);
-          }
-        }
         const member = currentMember(s);
-        return QuoteSchema.parse(
-          quote(
-            { shop: publicShop(s), now: now(), member: member ? accountFor(s, member) : null },
-            payload,
-          ),
+        const q = quote(
+          { shop: publicShop(s), now: now(), member: member ? accountFor(s, member) : null },
+          payload,
         );
+        // A booked time that can't be taken is a problem on the quote, never a failed price check (T129).
+        const booked = bookedTimeProblem(s, payload);
+        if (booked && !q.problems.some((p) => p.code === booked))
+          q.problems.unshift({ code: booked, amount: null, km: null });
+        return QuoteSchema.parse(q);
       }),
 
     placeOrder: ({ slug, payload, clientKey }) =>
@@ -1086,21 +1092,9 @@ export function createMockStore(options: MockStoreOptions = {}): MockStore {
         const phone = normalisePhPhone(body.customer.phone);
         if (!phone.ok) fail('invalid_input', 422, { phone: [words.shop.phoneInvalid] });
 
-        const at = body.scheduledAt;
-        if (at) {
-          const sched = scheduleDays(
-            s.shop.storefront,
-            body.lines,
-            s.shop.catalog.items,
-            computeBookings(s),
-            now(),
-          );
-          const day = sched.days.find((d) => d.date === manilaDate(at));
-          const slot = day?.slots.find((sl) => sl.at === at);
-          if (!day || day.state !== 'open' || !slot || slot.state !== 'open') {
-            fail('slot_unavailable', 409);
-          }
-        }
+        // Full is `slot_full`, any other time it can't take `slot_unavailable`, as the API (T129).
+        const booked = bookedTimeProblem(s, body);
+        if (booked) fail(booked, 409);
 
         const member = currentMember(s);
         const account = member ? accountFor(s, member) : null;

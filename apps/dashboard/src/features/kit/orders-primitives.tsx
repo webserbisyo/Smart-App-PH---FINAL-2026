@@ -28,7 +28,8 @@ import {
 } from '@smartapp/ui/vendor/opensource-ui/booking-slot-calendar';
 import { useCoarsePointer } from '@/app/use-coarse-pointer';
 import { KitSection } from './kit-section.js';
-import { DayChips, SlotPeriodTabs, TimeChips } from '@smartapp/ui/compositions/slot-chips';
+import { DayChips, TimeChips } from '@smartapp/ui/compositions/slot-chips';
+import { SlotTimeColumns } from '@smartapp/ui/compositions/slot-time-columns';
 import { SlotMonth } from '@smartapp/ui/compositions/slot-month';
 import { HourglassIcon } from 'lucide-react';
 
@@ -477,14 +478,24 @@ export function OrdersPrimitiveSections() {
         <SlotChipsExample />
       </KitSection>
 
-      {/* 4c. Slot month and part-of-day tabs (T127) */}
+      {/* 4c. Slot month and time columns (T127, T129) */}
       <KitSection
-        title="Slot month and part-of-day tabs (our composition)"
-        library="composition (Calendar + Tabs + Toggle Group)"
+        title="Slot month (our composition)"
+        library="composition (Calendar)"
         path="packages/ui/src/compositions/slot-month.tsx"
-        usedIn="storefront When picker for windows longer than a week ahead, Change time, New order When (T127)"
+        usedIn="storefront When picker, Change time, New order When (T127, every window since T128)"
       >
         <SlotMonthExample />
+      </KitSection>
+
+      {/* 4d. Slot time columns (T129) */}
+      <KitSection
+        title="Slot time columns (our composition)"
+        library="composition (Scroll Area + Toggle Group)"
+        path="packages/ui/src/compositions/slot-time-columns.tsx"
+        usedIn="storefront When picker, Change time, New order When: Hour, Minute and AM or PM from the shop's real times (T129)"
+      >
+        <SlotTimeColumnsExample />
       </KitSection>
 
       {/* 5. Booking slots */}
@@ -587,42 +598,55 @@ const MONTH_DAYS = Array.from({ length: 14 }, (_, i) => {
 
 function SlotMonthExample() {
   const [day, setDay] = useState<string | null>('2026-12-04');
-  const [period, setPeriod] = useState<string | null>('afternoon');
-  const [time, setTime] = useState<string | null>(null);
   return (
     <div className="flex max-w-md flex-col gap-4">
       <SlotMonth days={MONTH_DAYS} value={day} onValueChange={setDay} />
-      <SlotPeriodTabs
-        label="Part of the day"
-        period={period}
-        onPeriodChange={setPeriod}
-        value={time}
-        onValueChange={setTime}
-        pressedClassName="aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-        chipsClassName="grid grid-cols-3"
-        periods={[
-          {
-            value: 'morning',
-            label: 'Morning',
-            detail: '1 open',
-            chips: [
-              { value: '10', label: '10:00 AM', detail: 'Full', struck: true, disabled: true },
-              { value: '11', label: '11:00 AM', detail: '2 left', tone: 'warning' },
-            ],
-          },
-          {
-            value: 'afternoon',
-            label: 'Afternoon',
-            detail: '3 open',
-            chips: [
-              { value: '13', label: '1:00 PM' },
-              { value: '14', label: '2:00 PM' },
-              { value: '15', label: '3:00 PM' },
-            ],
-          },
-          { value: 'evening', label: 'Evening', detail: 'Full', chips: [] },
-        ]}
-      />
+    </div>
+  );
+}
+
+// Times in Manila: hourly 6 to 11 AM and 2 to 7 PM (8 AM full), then a half-hourly day.
+const kitAt = (clock: string) => new Date(`2026-12-04T${clock}:00+08:00`).toISOString();
+const HOURLY = ['06', '07', '08', '09', '10', '11', '14', '15', '16', '17', '18', '19'].map(
+  (h) => ({
+    at: kitAt(`${h}:00`),
+    disabled: h === '08',
+    struck: h === '08',
+    detail: h === '08' ? 'Full' : h === '10' ? '2 left' : undefined,
+    tone: h === '08' ? ('danger' as const) : h === '10' ? ('warning' as const) : undefined,
+  }),
+);
+const HALF_HOURLY = ['09:00', '09:30', '10:00', '10:30', '11:00', '13:00', '13:30', '14:00'].map(
+  (clock) => ({ at: kitAt(clock), disabled: clock === '10:30', struck: clock === '10:30' }),
+);
+const TIME_COLUMN_LABELS = { hour: 'Hour', minute: 'Minute', period: 'AM or PM' };
+const KIT_PRESSED = 'aria-pressed:bg-primary aria-pressed:text-primary-foreground';
+
+function SlotTimeColumnsExample() {
+  const [hourly, setHourly] = useState<string | null>(kitAt('15:00'));
+  const [half, setHalf] = useState<string | null>(null);
+  return (
+    <div className="grid max-w-2xl gap-6 md:grid-cols-2">
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold">On the hour (no Minute column)</span>
+        <SlotTimeColumns
+          slots={HOURLY}
+          value={hourly}
+          onValueChange={setHourly}
+          labels={TIME_COLUMN_LABELS}
+          pressedClassName={KIT_PRESSED}
+        />
+      </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-sm font-semibold">Every 30 minutes</span>
+        <SlotTimeColumns
+          slots={HALF_HOURLY}
+          value={half}
+          onValueChange={setHalf}
+          labels={TIME_COLUMN_LABELS}
+          pressedClassName={KIT_PRESSED}
+        />
+      </div>
     </div>
   );
 }

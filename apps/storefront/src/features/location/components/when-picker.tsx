@@ -13,16 +13,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import {
-  dayPeriodOf,
+  closedShopWords,
   formatClock,
   manilaDate,
-  openingPeriod,
-  openState,
-  openStateText,
-  slotsByPeriod,
   words,
   type ScheduleDayState,
-  orderFlowWords,
 } from '@smartapp/core';
 import { useBasket, useSchedule } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
@@ -38,11 +33,14 @@ import {
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import type { SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import { SlotTimeColumns, columnSlotsFromChips } from '@smartapp/ui/compositions/slot-time-columns';
 import { useShop } from '../../shell/components/shop-context';
 import {
   asapChoice,
   asapDetail,
+  asapReasonLine,
+  asapUnavailableDetail,
   dayChipLabel,
   dayLongLabel,
   firstOpenDay,
@@ -78,6 +76,8 @@ export interface WhenPickerProps {
   onBookableChange?: ((bookable: boolean) => void) | undefined;
   /** The time the shop just turned away (slot_unavailable): say so and open at its day. */
   rejectedAt?: string | null | undefined;
+  /** The turned-away time was full (slot_full), not closed or too soon. */
+  rejectedFull?: boolean | undefined;
 }
 
 const DAY_STATE_ICON: Record<Exclude<ScheduleDayState, 'open'>, LucideIcon> = {
@@ -94,10 +94,10 @@ const FEW_LEFT = 2;
 
 /**
  * The When picker (O6), used by the How and where sheet (also opened from checkout): ASAP or Schedule,
- * then the shared slot picker (T127, the same one as the owner's Change time and New order): day chips
- * for a window of a week or less, a month for a longer one, and the times in Morning, Afternoon and
- * Evening tabs. Days, notice and limits come from the shop's schedule; it refreshes with the basket and
- * never keeps a time that is no longer open.
+ * then the shared slot picker (the same one as the owner's Change time and New order): the month (T128),
+ * then Hour, Minute and AM or PM columns built only from the shop's real times (T129). Days, notice and
+ * limits come from the shop's schedule; it refreshes with the basket and never keeps a time that is no
+ * longer open.
  */
 export function WhenPicker({
   type,
@@ -106,6 +106,7 @@ export function WhenPicker({
   onChange,
   onBookableChange,
   rejectedAt,
+  rejectedFull = false,
 }: WhenPickerProps) {
   const { slug, shop } = useShop();
   const sf = shop.storefront;
@@ -120,8 +121,6 @@ export function WhenPicker({
   const asap = asapChoice(sf, data, now);
   // The day the customer tapped; the shown day falls back to the picked time's day or the first open.
   const [pickedDay, setPickedDay] = useState<string | null>(null);
-  // The part of the day the customer tapped; else the picked time's part or the first with an open time.
-  const [pickedPeriod, setPickedPeriod] = useState<string | null>(null);
 
   // ASAP isn't offered (notice, closed, busy): switch to Schedule on the earliest open time, so one
   // tap on Save still works; the summary shows the time and the customer can change it.
@@ -161,12 +160,10 @@ export function WhenPicker({
   const days = data?.days ?? [];
   const notice = data ? noticeLine(data, type) : null;
   const daySlots = activeDay?.state === 'open' ? activeDay.slots : [];
-  const shownPeriod = pickedPeriod ?? openingPeriod(daySlots, value.at);
   const messenger = sf.info.contact.messengerUsername;
 
   const pickDay = (date: string) => {
     setPickedDay(date);
-    setPickedPeriod(null);
     if (value.at && manilaDate(value.at) !== date) onChange({ mode: 'schedule', at: null });
   };
 
@@ -189,24 +186,28 @@ export function WhenPicker({
   // Today stays on screen and says why it can't be booked ("Today, No times left", T128).
   const todayChip = dayChips.find((chip) => chip.value === manilaDate(now));
 
-  const periods = slotsByPeriod(daySlots).map((group) => ({
-    value: group.period,
-    label: words.location.periods[group.period],
-    detail: orderFlowWords.periodOpen(group.slots.filter((s) => s.state === 'open').length),
-    chips: group.slots.map((slot): SlotChip => {
+  // The picked day's times as Hour, Minute and AM or PM columns (T129, after time.rdsx.dev).
+  const timeSlots = columnSlotsFromChips(
+    daySlots.map((slot): SlotChip => {
       const full = slot.state === 'full';
       const left = slot.left ?? null;
       const few = !full && left !== null && left <= FEW_LEFT;
+      const time = formatClock(slot.at);
       return {
         value: slot.at,
-        label: formatClock(slot.at),
+        label: time,
         detail: full ? words.location.slotFull : few ? words.location.slotLeft(left) : undefined,
         tone: few ? 'warning' : 'muted',
         disabled: full,
         struck: full,
+        ariaLabel: full
+          ? closedShopWords.timeFull(time)
+          : few
+            ? closedShopWords.timeLeft(time, left)
+            : time,
       };
     }),
-  }));
+  );
 
   return (
     <FieldSet className="min-w-0 gap-3">
@@ -229,7 +230,9 @@ export function WhenPicker({
             <RadioGroupItem value="asap" id="when-asap" disabled={!asap.available} />
             <FieldContent>
               <FieldTitle>{words.location.asap}</FieldTitle>
-              <FieldDescription>{asapDetail(sf, type, now)}</FieldDescription>
+              <FieldDescription>
+                {asapUnavailableDetail(sf, asap.reason, now) ?? asapDetail(sf, type, now)}
+              </FieldDescription>
             </FieldContent>
           </Field>
         </FieldLabel>
@@ -246,9 +249,7 @@ export function WhenPicker({
 
       {data && !asap.available ? (
         <p className="text-sm text-muted-foreground">
-          {asap.reason === 'notice' && data.noticeItem
-            ? words.location.asapNeedsNotice(data.noticeItem.name)
-            : `${openStateText(openState(sf, now), now)}. ${words.location.closedNow}`}
+          {asapReasonLine(sf, asap.reason, data.noticeItem?.name ?? null, now)}
         </p>
       ) : null}
 
@@ -299,7 +300,9 @@ export function WhenPicker({
             {rejectedAt && value.at === null ? (
               <Alert variant="warning" role="alert">
                 <InfoIcon aria-hidden="true" />
-                <AlertDescription>{words.location.slotFilled}</AlertDescription>
+                <AlertDescription>
+                  {rejectedFull ? closedShopWords.slotFull : closedShopWords.slotNotOpen}
+                </AlertDescription>
               </Alert>
             ) : null}
 
@@ -330,22 +333,19 @@ export function WhenPicker({
               </p>
             ) : null}
 
-            {/* The picked day's times in Morning, Afternoon and Evening tabs (T127). */}
-            {activeDay && periods.length > 0 ? (
+            {activeDay && timeSlots.length > 0 ? (
               <div className="flex flex-col gap-3">
                 <span className="text-sm font-medium">{words.location.timeLabel(type)}</span>
-                <SlotPeriodTabs
-                  label={orderFlowWords.partLabel}
-                  periods={periods}
-                  period={shownPeriod}
-                  onPeriodChange={setPickedPeriod}
+                <SlotTimeColumns
+                  slots={timeSlots}
                   value={value.at}
-                  onValueChange={(at) => {
-                    setPickedPeriod(dayPeriodOf(at));
-                    onChange({ mode: 'schedule', at });
+                  onValueChange={(at) => onChange({ mode: 'schedule', at })}
+                  labels={{
+                    hour: closedShopWords.hour,
+                    minute: closedShopWords.minute,
+                    period: closedShopWords.amPm,
                   }}
                   pressedClassName={PRESSED}
-                  chipsClassName="grid grid-cols-3 sm:grid-cols-4"
                 />
               </div>
             ) : null}
