@@ -2,6 +2,7 @@
 
 One line per merged PR, newest first: `- YYYY-MM-DD T<nn> what changed (#PR)`.
 
+- 2026-11-28 T128 Every booking picker (storefront When, Change time, New order) picks month, then day, then time on the shared month calendar; today after the last order time says No times left instead of Too soon.
 - 2026-11-28 T127 Sold out stopped before checkout (sheet button, quick add, basket refresh with flagged lines on top, checkout waits for a current quote, jam removes the sold-out line), stock judged at the booked time; edit basket lines (All 2 / Just 1, joins a matching line); Goes well opens over the sheet or basket and comes back, checkout pairings; one schedule picker (day chips up to a week ahead, month beyond, part-of-day tabs) for the storefront, Change time and New order; Save QR hover contrast fixed
 - 2026-11-27 T126 Orders search finds a phone typed any way (0917…, 0917 123 4567, +63 917…, 917…) and finished orders without picking dates (Board "N past orders match", List "All days", GET /owner/orders?any=true); storefront announcement strip no longer paints over the top bar; iPhone sheet backdrop stays on screen after scrolling (main)
 - 2026-11-27 T125 Installed app opening: dashboard back exactly to the T121 version that showed its logo at once on iPhone, the logo position fix moved into the launch pictures (no script before the first frame), demo shops get ready-made launch pictures (pnpm --filter @smartapp/tooling shop:splash)

@@ -51,6 +51,29 @@ describe('scheduleDays (decision T48)', () => {
     expect(s.noticeItem).toBeNull();
   });
 
+  it('today after the last order time says no times left, not too soon (T128)', () => {
+    // Saturday 11:56 PM: Kanto closes at midnight and needs 20 minutes, so no time is left today.
+    const late = scheduleDays(
+      kanto.storefront,
+      [],
+      kanto.catalog.items,
+      noBookings,
+      mnl('2026-11-28 23:56'),
+    );
+    expect(late.days[0]).toMatchObject({ date: '2026-11-28', state: 'no_times', slots: [] });
+    expect(late.days[1]?.state).toBe('open');
+    // An item's notice days still say too soon.
+    if (!cake) throw new Error('Lola needs the cake');
+    const notice = scheduleDays(
+      lola.storefront,
+      [{ itemId: cake.id, qty: 1 }],
+      lola.catalog.items,
+      noBookings,
+      mnl('2026-10-27 10:00'),
+    );
+    expect(notice.days.slice(0, 2).map((d) => d.state)).toEqual(['too_soon', 'too_soon']);
+  });
+
   it('matches pickupSlots for an open shop on 15-minute slots with no limits', () => {
     const now = mnl('2026-10-26 10:00');
     // pickupSlots covers today and tomorrow, so compare on a one-day-ahead shop.

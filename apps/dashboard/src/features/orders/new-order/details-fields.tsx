@@ -6,7 +6,6 @@ import {
   formatPeso,
   manilaDate,
   openingPeriod,
-  SLOT_STRIP_DAYS,
   slotsByPeriod,
   newOrderWords,
   ordersWords,
@@ -20,7 +19,7 @@ import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { ToggleGroup, ToggleGroupItem } from '@smartapp/ui/components/toggle-group';
-import { DayChips, SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import { SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
 import { SlotMonth } from '@smartapp/ui/compositions/slot-month';
 import { dayChipLabel, dayLong } from '@/app/orders/calendar-days';
 import { PesoInput } from '@/app/peso-input';
@@ -146,6 +145,7 @@ function dayDetail(state: Schedule['days'][number]['state']): string | undefined
   if (state === 'closed') return ordersWords.bookings.closed;
   if (state === 'full') return ordersWords.bookings.full;
   if (state === 'too_soon') return ordersWords.bookings.tooSoon;
+  if (state === 'no_times') return ordersWords.bookings.noTimes;
   return undefined;
 }
 
@@ -165,7 +165,7 @@ function WhenFields({
   const picking = draft.later;
   const days = schedule?.days ?? [];
   const pickable = (state: Schedule['days'][number]['state']) =>
-    state === 'open' || (draft.override && state !== 'closed');
+    state === 'open' || (draft.override && state !== 'closed' && state !== 'no_times');
   const [day, setDay] = React.useState<string | null>(
     draft.scheduledAt ? manilaDate(draft.scheduledAt) : null,
   );
@@ -174,8 +174,6 @@ function WhenFields({
   // The part of the day on screen (T127): the picked time's, else the first with an open time.
   const [period, setPeriod] = React.useState<string | null>(null);
   const shownPeriod = period ?? openingPeriod(active?.slots ?? [], draft.scheduledAt);
-  // A week or less shows day chips; a longer window a month (T127).
-  const monthView = days.length > SLOT_STRIP_DAYS;
 
   const dayChips: SlotChip[] = days.map((d) => ({
     value: d.date,
@@ -240,36 +238,22 @@ function WhenFields({
           </div>
         ) : (
           <>
-            {monthView ? (
-              <SlotMonth
-                days={dayChips.map((chip) => ({
-                  date: chip.value,
-                  disabled: chip.disabled,
-                  detail: chip.detail,
-                  tone: chip.tone,
-                  ariaLabel: [dayLong(chip.value), chip.detail].filter(Boolean).join(', '),
-                }))}
-                value={shownDay}
-                today={today}
-                onValueChange={(date) => {
-                  setDay(date);
-                  setPeriod(null);
-                  onChange({ scheduledAt: null });
-                }}
-              />
-            ) : (
-              <DayChips
-                label={W.when.day}
-                chips={dayChips}
-                value={shownDay}
-                onValueChange={(date) => {
-                  setDay(date);
-                  setPeriod(null);
-                  onChange({ scheduledAt: null });
-                }}
-                pressedClassName={PRESSED}
-              />
-            )}
+            <SlotMonth
+              days={dayChips.map((chip) => ({
+                date: chip.value,
+                disabled: chip.disabled,
+                detail: chip.detail,
+                tone: chip.tone,
+                ariaLabel: [dayLong(chip.value), chip.detail].filter(Boolean).join(', '),
+              }))}
+              value={shownDay}
+              today={today}
+              onValueChange={(date) => {
+                setDay(date);
+                setPeriod(null);
+                onChange({ scheduledAt: null });
+              }}
+            />
             {periods.length === 0 ? (
               <p className="rounded-xl border border-dashed px-3 py-4 text-center text-sm text-muted-foreground">
                 {W.when.noTimes}

@@ -213,7 +213,8 @@ export const SCHEDULE_SLOT_STATES = ['open', 'full'] as const;
 export const ScheduleSlotStateEnum = z.enum(SCHEDULE_SLOT_STATES);
 export type ScheduleSlotState = z.infer<typeof ScheduleSlotStateEnum>;
 
-export const SCHEDULE_DAY_STATES = ['open', 'closed', 'full', 'too_soon'] as const;
+// no_times: the shop opens that day but every time has passed (today after the last order time, T128).
+export const SCHEDULE_DAY_STATES = ['open', 'closed', 'full', 'too_soon', 'no_times'] as const;
 export const ScheduleDayStateEnum = z.enum(SCHEDULE_DAY_STATES);
 export type ScheduleDayState = z.infer<typeof ScheduleDayStateEnum>;
 

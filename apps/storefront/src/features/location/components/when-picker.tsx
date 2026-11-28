@@ -9,6 +9,7 @@ import {
   HourglassIcon,
   InfoIcon,
   MessageCircleIcon,
+  TimerOffIcon,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -18,7 +19,6 @@ import {
   openingPeriod,
   openState,
   openStateText,
-  SLOT_STRIP_DAYS,
   slotsByPeriod,
   words,
   type ScheduleDayState,
@@ -38,7 +38,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@smartapp/ui/components/radio-group';
 import { Alert, AlertDescription } from '@smartapp/ui/components/reui/alert';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
-import { DayChips, SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import { SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
 import { useShop } from '../../shell/components/shop-context';
 import {
   asapChoice,
@@ -55,8 +55,8 @@ import {
   type WhenMode,
 } from '../when-rules';
 
-// The month (the owner's Change time one, T127) loads only for a shop that books more than a week ahead,
-// so react-day-picker stays out of every page's first JavaScript.
+// The month (the owner's Change time one, T127) loads when someone taps Schedule, so react-day-picker
+// stays out of every page's first JavaScript (T128).
 const SlotMonth = dynamic(
   () => import('@smartapp/ui/compositions/slot-month').then((m) => m.SlotMonth),
   { ssr: false, loading: () => <Skeleton className="h-80 w-full rounded-2xl" /> },
@@ -84,6 +84,7 @@ const DAY_STATE_ICON: Record<Exclude<ScheduleDayState, 'open'>, LucideIcon> = {
   closed: CircleSlashIcon,
   full: BanIcon,
   too_soon: HourglassIcon,
+  no_times: TimerOffIcon,
 };
 
 // The shared day and time chips (T85) in the shop's own colour.
@@ -158,7 +159,6 @@ export function WhenPicker({
 
   const activeDay = data?.days.find((d) => d.date === day);
   const days = data?.days ?? [];
-  const monthView = days.length > SLOT_STRIP_DAYS;
   const notice = data ? noticeLine(data, type) : null;
   const daySlots = activeDay?.state === 'open' ? activeDay.slots : [];
   const shownPeriod = pickedPeriod ?? openingPeriod(daySlots, value.at);
@@ -185,6 +185,9 @@ export function WhenPicker({
       ariaLabel: words.location.dayDisabled(label, stateWord),
     };
   });
+
+  // Today stays on screen and says why it can't be booked ("Today, No times left", T128).
+  const todayChip = dayChips.find((chip) => chip.value === manilaDate(now));
 
   const periods = slotsByPeriod(daySlots).map((group) => ({
     value: group.period,
@@ -252,11 +255,7 @@ export function WhenPicker({
       {value.mode === 'schedule' ? (
         schedule.isLoading ? (
           <div className="flex flex-col gap-3" aria-busy="true">
-            <div className="flex gap-2">
-              {[1, 2, 3, 4].map((n) => (
-                <Skeleton key={n} className="h-16 w-18 shrink-0 rounded-2xl" />
-              ))}
-            </div>
+            <Skeleton className="h-80 w-full rounded-2xl" />
             <Skeleton className="h-24 w-full rounded-2xl" />
           </div>
         ) : schedule.isError || !data ? (
@@ -304,32 +303,24 @@ export function WhenPicker({
               </Alert>
             ) : null}
 
-            {/* A week or less: Today, Tomorrow, then "Wed 5" chips. Longer: a month (T127). */}
+            {/* Month, then day, then time (T128): the same month calendar as the dashboard. */}
             <div className="flex min-w-0 flex-col gap-2">
               <span className="text-sm font-medium">{words.location.dayLabel}</span>
-              {monthView ? (
-                <>
-                  <SlotMonth
-                    days={dayChips.map((chip) => ({
-                      date: chip.value,
-                      disabled: chip.disabled,
-                      ariaLabel: chip.disabled ? chip.ariaLabel : dayLongLabel(chip.value),
-                    }))}
-                    value={day}
-                    onValueChange={pickDay}
-                    today={manilaDate(now)}
-                  />
-                  <p className="text-xs text-muted-foreground">{words.location.moreDatesLegend}</p>
-                </>
-              ) : (
-                <DayChips
-                  label={words.location.dayLabel}
-                  value={day}
-                  onValueChange={pickDay}
-                  pressedClassName={PRESSED}
-                  chips={dayChips}
-                />
-              )}
+              <SlotMonth
+                days={dayChips.map((chip) => ({
+                  date: chip.value,
+                  disabled: chip.disabled,
+                  ariaLabel: chip.disabled ? chip.ariaLabel : dayLongLabel(chip.value),
+                }))}
+                value={day}
+                onValueChange={pickDay}
+                today={manilaDate(now)}
+              />
+              <p className="text-xs text-muted-foreground">
+                {todayChip?.disabled && todayChip.ariaLabel
+                  ? `${todayChip.ariaLabel}. ${words.location.moreDatesLegend}`
+                  : words.location.moreDatesLegend}
+              </p>
             </div>
 
             {notice ? (

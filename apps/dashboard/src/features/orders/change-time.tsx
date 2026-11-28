@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ArrowLeftIcon, ArrowRightIcon, BanIcon, WifiOffIcon } from 'lucide-react';
 import type { BoardOrder, Schedule } from '@smartapp/core';
-import { errorWords, formatClock, manilaDate, ordersWords, SLOT_STRIP_DAYS } from '@smartapp/core';
+import { errorWords, formatClock, manilaDate, ordersWords } from '@smartapp/core';
 import { errorCodeOf, useRescheduleOrder, useRescheduleSchedule } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@smartapp/ui/components/field';
@@ -10,11 +10,11 @@ import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { notify } from '@smartapp/ui/compositions/notify';
-import { DayChips, SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import { SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
 import { SlotMonth, type SlotMonthDay } from '@smartapp/ui/compositions/slot-month';
 import { copyText } from '@smartapp/ui/lib/copy-text';
 import { Notice } from '@/app/notice';
-import { dayChipLabel, dayLong, periodOf, whenShort } from '@/app/orders/calendar-days';
+import { dayLong, periodOf, whenShort } from '@/app/orders/calendar-days';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { clockOf } from './calendar-facts.js';
@@ -310,9 +310,11 @@ function monthDays(ct: ChangeTime, days: Schedule['days']): SlotMonthDay[] {
           ? ordersWords.bookings.full
           : day.state === 'too_soon'
             ? ordersWords.bookings.tooSoon
-            : count > 0
-              ? W.dayOrders(count)
-              : null;
+            : day.state === 'no_times'
+              ? ordersWords.bookings.noTimes
+              : count > 0
+                ? W.dayOrders(count)
+                : null;
     return {
       date: day.date,
       disabled: day.state !== 'open' && !(day.state === 'full' && ct.allowAnyway),
@@ -388,47 +390,14 @@ export function ChangeTimeBody({ ct }: { ct: ChangeTime }) {
             </span>
           ) : null}
         </div>
-        {/* Today and up to a week ahead: day chips; a longer window: the month (T127). */}
-        {days.length > SLOT_STRIP_DAYS ? (
-          <>
-            <SlotMonth
-              days={monthDays(ct, days)}
-              value={ct.day}
-              onValueChange={ct.setDay}
-              today={ct.today}
-            />
-            <p className="text-xs text-muted-foreground">{W.legend}</p>
-          </>
-        ) : (
-          <DayChips
-            label={W.dateLabel}
-            value={ct.day}
-            onValueChange={ct.setDay}
-            pressedClassName={PRESSED}
-            chips={monthDays(ct, days).map((day, i): SlotChip => {
-              const state = days[i]?.state;
-              const count = days[i]?.booked ?? 0;
-              return {
-                value: day.date,
-                label: dayChipLabel(day.date, ct.today),
-                detail:
-                  state === 'closed'
-                    ? ordersWords.bookings.closed
-                    : state === 'full'
-                      ? ordersWords.bookings.full
-                      : state === 'too_soon'
-                        ? ordersWords.bookings.tooSoon
-                        : count > 0
-                          ? W.dayOrders(count)
-                          : undefined,
-                tone: day.tone,
-                disabled: day.disabled,
-                current: day.current,
-                ariaLabel: day.ariaLabel,
-              };
-            })}
-          />
-        )}
+        {/* Month, then day, then time (T128): the same month as the storefront and New order. */}
+        <SlotMonth
+          days={monthDays(ct, days)}
+          value={ct.day}
+          onValueChange={ct.setDay}
+          today={ct.today}
+        />
+        <p className="text-xs text-muted-foreground">{W.legend}</p>
       </div>
 
       <div className="flex flex-col gap-3">

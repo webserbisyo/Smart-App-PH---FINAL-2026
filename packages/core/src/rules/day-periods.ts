@@ -3,12 +3,6 @@
 import type { ScheduleSlot } from '../schemas/schedule.js';
 import { manilaParts } from './time.js';
 
-/**
- * A booking window of today and up to a week ahead (8 days) shows as a strip of day chips; a longer one
- * shows a month (the customer's When picker, the owner's Change time and New order pick a day the same way).
- */
-export const SLOT_STRIP_DAYS = 8;
-
 export const DAY_PERIODS = ['morning', 'afternoon', 'evening'] as const;
 export type DayPeriod = (typeof DAY_PERIODS)[number];
 
