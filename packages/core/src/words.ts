@@ -403,12 +403,8 @@ export const words = {
     feeRange: (min: string, max: string) => (min === max ? min : `${min} to ${max}`),
     when: 'When',
     later: 'Later',
-    laterDetail: 'Pick a time today or tomorrow',
-    pickupTime: 'Pickup time',
-    chooseTime: 'Choose a time',
     todayGroup: 'Today',
     tomorrowGroup: 'Tomorrow',
-    noSlots: 'No pickup times left today or tomorrow.',
     closedNow: 'Closed now, so pick a time for when the shop opens.',
     // The When picker (O6): ASAP or Schedule, a day strip and time chips.
     scheduleOption: 'Schedule',
@@ -422,7 +418,6 @@ export const words = {
     dayTomorrow: 'Tomorrow',
     dayState: { closed: 'Closed', full: 'Full', too_soon: 'Too soon', no_times: 'No times left' },
     moreDatesLegend: 'Greyed days can’t be booked.',
-    periods: { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' },
     slotFull: 'Full',
     // Shown on a time once only a few orders fit (T85).
     slotLeft: (n: number) => `${n} left`,
@@ -440,7 +435,6 @@ export const words = {
     pickTime: 'Pick a time',
     dayDisabled: (day: string, state: string) => `${day}, ${state}`,
     area: 'Delivery area',
-    addressAtCheckout: 'You’ll add your address at checkout.',
     save: 'Save',
     // Save names the pick, so the customer sees what they're saying yes to (T85).
     saveWhen: (summary: string) => `Save · ${summary}`,
@@ -455,7 +449,6 @@ export const words = {
     pasteError: 'Paste the full link from Google Maps',
     validLink: 'Link verified',
     addressLine: 'Street address or building',
-    houseNoFloor: 'House no. / floor',
     optionalBadge: 'Optional',
     landmark: 'Landmark',
     landmarkPlaceholder: 'beside the sari-sari store',
@@ -538,8 +531,6 @@ export const words = {
     privacyLink: 'privacy notice',
     placeOrder: 'Place order',
     offlineDisabled: 'You’re offline. Your basket is saved.',
-    closedDisabled: (opens: string) => `Closed now · Opens ${opens}. Your basket is saved.`,
-    opensDisabled: (opens: string) => `Opens ${opens}. Your basket is saved.`,
     fixBasketDisabled: (count: number) =>
       `Fix ${count} ${count === 1 ? 'item' : 'items'} in your basket`,
     rateLimited: 'Finish or cancel your other order first',
@@ -551,7 +542,6 @@ export const words = {
     enterAddress: 'Enter your street address',
     choosePayment: 'Choose a payment method',
     belowMinOrder: 'Add more items to reach the delivery minimum',
-    scheduledFor: (time: string) => `Scheduled for ${time}`,
     yourOrder: 'Your order',
     toggleSummary: 'Show or hide your order',
     rememberHint: 'Saves your name, phone and address on this phone for your next order.',
@@ -571,7 +561,6 @@ export const words = {
     description: 'Saved on this phone for this shop.',
     empty: 'Your basket is empty',
     emptyHint: 'Add something you like and it shows up here.',
-    nextOpening: 'next opening',
     browse: (catalog: string) => `Browse ${catalog.toLowerCase()}`,
     quantity: (name: string) => `Quantity of ${name}`,
     remove: (name: string) => `Remove ${name}`,
@@ -586,7 +575,6 @@ export const words = {
     clear: 'Clear',
     clearBasket: 'Clear basket',
     cleared: (count: number) => `Basket cleared (${count} ${count === 1 ? 'item' : 'items'})`,
-    versionReset: 'Your basket was reset after an update.',
     couldNotCheckPrices: "Couldn't check prices. Try again.",
     pricesAsLastSeen: 'Prices as last seen',
     offlineSaved: "You're offline. Your basket is saved.",
@@ -615,7 +603,6 @@ export const words = {
     orderLabel: 'Order',
     copyNumber: (orderNo: string) => `Copy order number ${orderNo}`,
     scheduled: (when: string) => `Scheduled ${when}`,
-    qrCounter: 'Show this at the counter',
     pickupCode: (code: string) => `Code ${code}`,
     showAtPickup: 'Show this at pickup',
     slipCode: (code: string) => `Pickup code ${code}`,
@@ -1138,7 +1125,6 @@ export const words = {
     notTakingOrders: 'Not taking orders right now',
     tomorrowAt: (time: string) => `tomorrow ${time}`,
     readyIn: (minutes: number) => `Ready in about ${minutes} min`,
-    basketSavedOpens: (when: string) => `Opens ${when}. Your basket is saved.`,
     orderType: { walk_in: 'Walk-in', pickup: 'Pickup', delivery: 'Delivery' },
     paymentMethod: {
       cash: 'Cash',
@@ -1204,10 +1190,7 @@ export const words = {
     notAvailable: 'Not available',
     tooFar: (km: number, maxKm: number) =>
       `Too far for delivery (${km} km, this shop delivers up to ${maxKm} km)`,
-    tooFarNoSpot: (maxKm: number) => `This shop delivers up to ${maxKm} km`,
-    pickZone: 'Pick your delivery area',
     minOrder: (amount: string) => `Minimum order for delivery is ${amount}`,
-    codLimit: (amount: string) => `Orders above ${amount} need payment first`,
     payWithin: (time: string) => `Pay within ${time}`,
     sendExactly: (amount: string) => `Send exactly ${amount}`,
     stamps: {
@@ -1229,8 +1212,6 @@ export const words = {
     orderSlip: 'ORDER SLIP · NOT AN OFFICIAL RECEIPT',
     // Dev build in mock mode only: shown in a toast so testers can type the code.
     devCode: (code: string) => `Demo code: ${code}`,
-    storageReset: 'Some saved items on this phone were out of date and were cleared.',
-    finishOtherOrder: 'Finish or cancel your other order first.',
     thread: {
       proofSent: (reference: string) => `Proof sent · Ref ${reference}`,
       photoSent: 'Payment photo sent',

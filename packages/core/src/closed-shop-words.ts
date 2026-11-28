@@ -1,15 +1,15 @@
 // Words for ordering while the shop is closed, last orders and closed days (T129). Their own file (not
 // words.ts): one words module is shared by every storefront page, so new words there would grow each page.
+import { closedTodayWords } from './closed-today-words.js';
+
 export const closedShopWords = {
-  // "Closed today · Christmas" when the owner gave the closed day a reason.
-  closedToday: (reason: string) => `Closed today · ${reason}`,
+  ...closedTodayWords,
   // The order-now cut-off: closing time minus prep time.
   lastOrders: (time: string) => `Last orders were ${time}`,
   lastOrdersSaved: (time: string) => `Last orders were ${time}. Your basket is saved.`,
   lastOrdersPickTime: (time: string) => `Last orders were ${time}, so pick a time for later.`,
   lastOrdersDisabled: (time: string) => `Last orders were ${time} · Pick a time`,
-  // The ASAP and Walk-in cards while the shop can't take an order for now.
-  opensAt: (when: string) => `Opens ${when}`,
+  // The ASAP and Walk-in cards while the shop can't take an order for now (opensAt is in closedTodayWords).
   walkInClosed: (when: string) => `Walk-in opens ${when}. Choose Pickup or Delivery.`,
   walkInClosedShort: (when: string) => `Walk-in opens ${when}`,
   closedPickTime: (when: string) => `Closed now · Opens ${when} · Pick a time`,

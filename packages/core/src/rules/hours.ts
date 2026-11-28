@@ -3,7 +3,7 @@ import type { Variant } from '../schemas/catalog.js';
 import type { Availability } from '../schemas/enums.js';
 import type { OpenState } from '../schemas/order.js';
 import type { Storefront } from '../schemas/storefront.js';
-import { closedShopWords } from '../closed-shop-words.js';
+import { closedTodayWords } from '../closed-today-words.js';
 import { words } from '../words.js';
 import { addDays, formatClock, formatManila, manilaDate, manilaToDate, weekdayOf } from './time.js';
 
@@ -246,9 +246,9 @@ export function openStateText(
   if (state.state === 'open' && state.closesAt)
     return words.shop.openUntil(formatClock(state.closesAt));
   if (closedReason) {
-    const head = closedShopWords.closedToday(closedReason);
+    const head = closedTodayWords.closedToday(closedReason);
     return state.nextOpening
-      ? `${head} · ${closedShopWords.opensAt(openingWhen(state.nextOpening, now))}`
+      ? `${head} · ${closedTodayWords.opensAt(openingWhen(state.nextOpening, now))}`
       : head;
   }
   if (!state.nextOpening) return words.shop.closedNoOpening;
