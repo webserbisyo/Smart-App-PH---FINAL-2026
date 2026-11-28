@@ -81,7 +81,8 @@ export function asapReasonLine(
     const last = lastOrderAt(sf, now);
     if (last) return closedShopWords.lastOrdersPickTime(formatClock(last));
   }
-  return `${openStateText(openState(sf, now), now)}. ${words.location.closedNow}`;
+  // The line above the When cards already says "Closed · Opens 5 AM"; this one says what to do.
+  return words.location.closedNow;
 }
 
 function openSlotIn(day: ScheduleDay | undefined, at: string | null): ScheduleSlot | undefined {

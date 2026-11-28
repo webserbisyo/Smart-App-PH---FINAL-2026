@@ -7,7 +7,9 @@ import {
   closedShopWords,
   closedTodayReason,
   deliveryFee,
+  formatClock,
   formatPeso,
+  lastOrderAt,
   isShortMapsLink,
   mapsLinkFor,
   openState,
@@ -15,6 +17,7 @@ import {
   openingWhen,
   orderTypeDetail,
   parseMapsLink,
+  pastLastOrder,
   readyEstimate,
   roundKm,
   words,
@@ -234,9 +237,12 @@ function HowWhereForm({
   const zone = chosenZone(sf, zoneId);
   // Pickup's "Ready in about 20 min" only while an order for now can be made (T129); otherwise the line
   // says when the shop opens and the When picker below offers a time.
+  const lastOrder = lastOrderAt(sf, now);
   const typeDetail =
     type === 'pickup' && !readyEstimate(sf, now)
-      ? openStateText(shopState, now, closedTodayReason(sf, now))
+      ? lastOrder && pastLastOrder(sf, now)
+        ? closedShopWords.lastOrders(formatClock(lastOrder))
+        : openStateText(shopState, now, closedTodayReason(sf, now))
       : type === 'walk_in' && walkInOpens
         ? closedShopWords.walkInClosed(walkInOpens)
         : orderTypeDetail(sf, type);

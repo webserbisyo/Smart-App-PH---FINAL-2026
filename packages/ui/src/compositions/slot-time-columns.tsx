@@ -129,7 +129,8 @@ function Column({
       orientation="vertical"
       spacing={1}
       aria-labelledby={id}
-      className="w-full p-1"
+      // Room on the right for the scroll bar, so it never sits on a time.
+      className={cn('w-full p-1', scroll && 'pr-3')}
     >
       {children}
     </ToggleGroup>
