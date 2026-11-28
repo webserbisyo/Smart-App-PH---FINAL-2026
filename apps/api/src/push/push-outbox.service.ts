@@ -86,12 +86,19 @@ export class PushOutbox {
     );
   }
 
-  /** A new storefront order or a payment photo to check, to every device the shop's owner turned on (Q2). */
+  /**
+   * A new storefront order or a payment photo to check, to every device the shop's owner turned on (Q2).
+   * `holdUntil`: an order placed while the shop is closed waits for the opening (T129), so the owner's
+   * phone doesn't buzz at 1:30 AM; it still lives an hour after it is sent.
+   */
   async toOwner(
     kind: 'owner_new_order' | 'owner_payment',
     order: PushOrder,
     key: string,
+    holdUntil: string | null = null,
   ): Promise<void> {
+    const heldMs = holdUntil ? Math.max(0, new Date(holdUntil).getTime() - Date.now()) : 0;
+    const ttl = HOUR + Math.ceil(heldMs / 1000);
     const words = kind === 'owner_new_order' ? ownerNewOrder(order) : ownerPayment(order);
     const payload: OutboxPayload = {
       message: {
@@ -105,14 +112,16 @@ export class PushOutbox {
     };
     const result = await this.db.tx.execute(sql`
       insert into public.push_outbox
-        (tenant_id, subscription_id, kind, payload, dedupe_key, topic, ttl_seconds, urgency)
-      select s.tenant_id, s.id, ${kind}, ${JSON.stringify(payload)}::jsonb, ${key}, null, ${HOUR}, 'high'
+        (tenant_id, subscription_id, kind, payload, dedupe_key, topic, ttl_seconds, urgency, send_after)
+      select s.tenant_id, s.id, ${kind}, ${JSON.stringify(payload)}::jsonb, ${key}, null, ${ttl}, 'high',
+        now() + make_interval(secs => ${heldMs / 1000})
       from public.push_subscriptions s
       join public.tenant_members m on m.tenant_id = s.tenant_id and m.user_id = s.user_id
       where s.tenant_id = ${this.db.shopId} and s.user_id is not null
       on conflict (tenant_id, subscription_id, dedupe_key) do nothing
       returning id`);
-    this.sendAfterCommit(result.rows, 0);
+    // A held push is sent by the 30-second outbox sweep once its time comes.
+    if (heldMs === 0) this.sendAfterCommit(result.rows, 0);
   }
 
   private async toCustomer(

@@ -104,6 +104,8 @@ export const QUOTE_PROBLEMS = [
   'out_of_range',
   'below_min_order',
   'slot_unavailable',
+  // The booked time is full (T129); before, a full time made the price check fail outright.
+  'slot_full',
   'reward_unavailable',
   'empty_basket',
 ] as const;

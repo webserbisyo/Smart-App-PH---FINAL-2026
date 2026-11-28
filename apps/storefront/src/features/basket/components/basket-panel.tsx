@@ -6,10 +6,10 @@ import Link from 'next/link';
 import {
   artPath,
   availabilityAt,
-  formatClock,
   formatPeso,
   goesWellWith,
   openState,
+  pastLastOrder,
   vocab,
   words,
   type BasketLine as SavedLine,
@@ -22,12 +22,14 @@ import {
   useOnline,
   useOrderType,
   useQuote,
+  useSchedule,
 } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { EmptyState } from '@smartapp/ui/compositions/empty-state';
 import { notify } from '@smartapp/ui/compositions/notify';
 import { useShop } from '../../shell/components/shop-context';
-import { closedStateDecision } from '../basket-rules';
+import { bookableTypeOf, closedStateDecision } from '../basket-rules';
+import { useLocationChoice } from '../../location/components/use-location-choice';
 import { BasketClosedAlert } from './basket-closed-alert';
 import { FlaggedBanner } from './flagged-banner';
 import { BasketGoesWellWith } from './basket-goes-well-with';
@@ -76,8 +78,10 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
 
   // Stock is judged at the booked time when the customer picked one ahead (T127), like the server does.
   const nowDate = now ? new Date(now) : new Date();
-  const stockAt = availabilityAt(draft?.scheduledAt, nowDate);
-  const bookedAt = stockAt.getTime() > nowDate.getTime() ? (draft?.scheduledAt ?? null) : null;
+  // A walk-in is never booked (T129), even when an old time is still saved on the phone.
+  const savedAt = orderType === 'walk_in' ? null : (draft?.scheduledAt ?? null);
+  const stockAt = availabilityAt(savedAt, nowDate);
+  const bookedAt = stockAt.getTime() > nowDate.getTime() ? savedAt : null;
 
   // Base basket view without quote to get initial lines
   const initialView = useBasketView(shop, null, stockAt);
@@ -120,14 +124,27 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
   const catalog = vocab(shop.storefront.info.kind).catalog;
 
   // Open state evaluation from live quote or fallback to shop rules
-  const currentOpenState =
-    quote?.openState ?? openState(shop.storefront, now ? new Date(now) : new Date());
+  const currentOpenState = quote?.openState ?? openState(shop.storefront, nowDate);
+
+  // While the shop can't take an order for now, the button books the first time the shop's own schedule
+  // offers for this basket (T129): the same rule the order check uses.
+  const needsBooking =
+    !currentOpenState.paused &&
+    (currentOpenState.state === 'closed' || pastLastOrder(shop.storefront, nowDate));
+  const bookType: 'pickup' | 'delivery' = orderType === 'delivery' ? 'delivery' : 'pickup';
+  const scheduleLines = useMemo(
+    () => basket.lines.map((l) => ({ itemId: l.itemId, qty: l.qty })),
+    [basket.lines],
+  );
+  const schedule = useSchedule(slug, bookType, scheduleLines, needsBooking);
+  const location = useLocationChoice(slug);
 
   const closedDecision = closedStateDecision({
     sf: shop.storefront,
     openState: currentOpenState,
     isOnline,
-    now: now ? new Date(now) : new Date(),
+    now: nowDate,
+    earliest: schedule.data?.earliest ?? null,
   });
 
   // Calculate totals
@@ -197,9 +214,6 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
   );
 
   if (closedDecision.state === 'closed_with_scheduling') {
-    const slotText = closedDecision.scheduleSlot
-      ? formatClock(closedDecision.scheduleSlot)
-      : words.basket.nextOpening;
     mainAction = (
       <Button
         size="lg"
@@ -208,12 +222,24 @@ export function BasketPanel({ onBrowse }: BasketPanelProps) {
         nativeButton={false}
         render={
           <Link
-            href={`/${slug}/checkout?scheduled=${closedDecision.scheduleSlot ?? ''}`}
-            {...(onBrowse ? { onClick: onBrowse } : {})}
+            href={`/${slug}/checkout`}
+            onClick={() => {
+              // The time is saved as the customer's pick, never hidden in the link (T129: the link's time
+              // beat every later pick and the order jammed). A walk-in can't be booked, so it becomes Pickup.
+              const at = closedDecision.scheduleSlot;
+              if (at) {
+                const type =
+                  orderType === 'walk_in' || !savedType
+                    ? (bookableTypeOf(shop.storefront.orderTypes) ?? orderType)
+                    : orderType;
+                location.save({ type, scheduledAt: at });
+              }
+              onBrowse?.();
+            }}
           />
         }
       >
-        {words.basket.scheduleFor(slotText)}
+        {closedDecision.buttonLabel}
       </Button>
     );
   } else if (closedDecision.buttonDisabled) {

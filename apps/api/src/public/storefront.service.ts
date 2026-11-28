@@ -1,9 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  bookingProblem,
   dueTimes,
   isTransfer,
   manilaDate,
   normalisePhPhone,
+  openState,
   paymentAccountFor,
   quote,
   QuoteSchema,
@@ -97,13 +99,22 @@ export class StorefrontService {
     await this.shops.enterShop(slug);
     const shop = await this.shops.readForCustomers();
     const now = new Date();
-    if (payload.scheduledAt) {
-      await this.checkSlot(shop, payload, payload.scheduledAt, now);
-    }
     const member = await this.memberOf(user);
-    return QuoteSchema.parse(
-      quote({ shop, now, member: member ? await this.stampsOf(member, shop) : null }, payload),
+    const q = quote(
+      { shop, now, member: member ? await this.stampsOf(member, shop) : null },
+      payload,
     );
+    // A booked time it can't take is a problem on the quote, never a failed price check (T129): the
+    // customer sees "Pick another time", with prices.
+    if (payload.scheduledAt) {
+      const booked = bookingProblem(
+        await this.schedule(shop, payload.lines, now),
+        payload.scheduledAt,
+      );
+      if (booked && !q.problems.some((p) => p.code === booked))
+        q.problems.unshift({ code: booked, amount: null, km: null });
+    }
+    return QuoteSchema.parse(q);
   }
 
   /**
@@ -250,6 +261,8 @@ export class StorefrontService {
         customerName: payload.customer.name,
       },
       `new:${order.id}`,
+      // Booked while the shop is closed: the owner hears about it when the shop opens (T129).
+      ownerHoldUntil(shop.storefront, now),
     );
     this.emails.ownerAlert(
       'new_order',
@@ -293,13 +306,8 @@ export class StorefrontService {
     at: string,
     now: Date,
   ): Promise<void> {
-    const sched = await this.schedule(shop, payload.lines, now);
-    const day = sched.days.find((d) => d.date === manilaDate(at));
-    const slot = day?.slots.find((s) => s.at === new Date(at).toISOString());
-    if (slot?.state === 'full' || day?.state === 'full') throw new ApiFailure('slot_full', 409);
-    if (!day || day.state !== 'open' || !slot || slot.state !== 'open') {
-      throw new ApiFailure('slot_unavailable', 409);
-    }
+    const booked = bookingProblem(await this.schedule(shop, payload.lines, now), at);
+    if (booked) throw new ApiFailure(booked, 409);
   }
 
   /** 3 unpaid orders per phone per 30 minutes, and 30 orders a minute per shop (`rate_limited`). */
@@ -329,4 +337,10 @@ export class StorefrontService {
 function emptyToNull(value: string | null | undefined): string | null {
   const clean = value?.trim() ?? '';
   return clean === '' ? null : clean;
+}
+
+/** An order placed while the shop is closed (not paused) tells the owner at the next opening (T129). */
+export function ownerHoldUntil(sf: Parameters<typeof openState>[0], now: Date): string | null {
+  const state = openState(sf, now);
+  return state.state === 'closed' && !state.paused ? state.nextOpening : null;
 }

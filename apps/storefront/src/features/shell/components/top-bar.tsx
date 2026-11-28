@@ -3,7 +3,14 @@
 import { lazy, Suspense, useSyncExternalStore, type ReactNode } from 'react';
 import Link from 'next/link';
 import { HeartIcon } from 'lucide-react';
-import { imageSources, openState, openStateText, words, type OpenStateKind } from '@smartapp/core';
+import {
+  closedTodayReason,
+  imageSources,
+  openState,
+  openStateText,
+  words,
+  type OpenStateKind,
+} from '@smartapp/core';
 import { useNow } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { ClientOnly } from '@smartapp/ui/components/client-only';
@@ -97,7 +104,7 @@ function useOpenKind(): { kind: OpenStateKind; paused: boolean; text: string } |
   return {
     kind: state.paused ? 'closed' : state.state,
     paused: state.paused,
-    text: openStateText(state, now),
+    text: openStateText(state, now, closedTodayReason(shop.storefront, now)),
   };
 }
 

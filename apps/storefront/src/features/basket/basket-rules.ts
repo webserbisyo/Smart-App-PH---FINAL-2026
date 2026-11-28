@@ -1,10 +1,12 @@
 import {
+  closedShopWords,
   earnsStamp,
   formatClock,
   formatPeso,
-  manilaDate,
+  lastOrderAt,
   openingWhen,
-  pickupSlots,
+  pastLastOrder,
+  slotLabel,
   words,
   type LineProblem,
   type OpenState,
@@ -68,6 +70,15 @@ export function isFixableProblem(problem: LineProblem): boolean {
   );
 }
 
+/** The first way to order that can be booked for later (pickup, then delivery), or null. */
+export function bookableTypeOf(
+  types: readonly PublicShop['storefront']['orderTypes'][number][],
+): 'pickup' | 'delivery' | null {
+  if (types.includes('pickup')) return 'pickup';
+  if (types.includes('delivery')) return 'delivery';
+  return null;
+}
+
 export interface ClosedStateDecision {
   state: 'open' | 'closed_with_scheduling' | 'closed_no_scheduling' | 'busy' | 'paused' | 'offline';
   alertMessage: string | null;
@@ -82,11 +93,18 @@ export function closedStateDecision({
   openState: state,
   isOnline,
   now,
+  earliest = null,
 }: {
   sf: PublicShop['storefront'];
   openState: OpenState;
   isOnline: boolean;
   now: Date | string;
+  /**
+   * The first time the basket can be booked, from the shop's schedule (its own slot length, notice days,
+   * limits): the same rule the order check uses (T129). It used to come from 15-minute steps, so the
+   * button offered "5:30 AM" at a shop that books on the hour and the order jammed.
+   */
+  earliest?: string | null | undefined;
 }): ClosedStateDecision {
   if (!isOnline) {
     return {
@@ -123,43 +141,34 @@ export function closedStateDecision({
     };
   }
 
-  if (state.state === 'closed') {
-    const nextOpening = state.nextOpening;
-    if (!nextOpening) {
-      return {
-        state: 'closed_no_scheduling',
-        alertMessage: words.shop.closedNoOpening,
-        buttonLabel: words.basket.goToCheckout,
-        buttonDisabled: true,
-        buttonReason: words.shop.closedNoOpening,
-        scheduleSlot: null,
-      };
-    }
+  // Open, but past the last order for now (closing minus prep, T129): book a time instead.
+  const last = lastOrderAt(sf, now);
+  const lastText =
+    state.state === 'open' && last && pastLastOrder(sf, now) ? formatClock(last) : null;
 
-    const nowDate = manilaDate(now);
-    const openingDate = manilaDate(nextOpening);
-    const nowTomorrow = manilaDate(new Date(new Date(now).getTime() + 24 * 60 * 60 * 1000));
-    const isTodayOrTomorrow = openingDate === nowDate || openingDate === nowTomorrow;
-
-    if (sf.takeOrdersWhileClosed && isTodayOrTomorrow) {
-      const when = openingWhen(nextOpening, now);
-      const slots = pickupSlots(sf, nextOpening);
-      const firstSlot = slots[0] ?? nextOpening;
-      const slotTime = formatClock(firstSlot);
-
+  if (state.state === 'closed' || lastText) {
+    const when = state.nextOpening ? openingWhen(state.nextOpening, now) : null;
+    const saved = lastText
+      ? closedShopWords.lastOrdersSaved(lastText)
+      : when
+        ? words.basket.closedSaved(when)
+        : words.shop.closedNoOpening;
+    if (earliest) {
       return {
         state: 'closed_with_scheduling',
-        alertMessage: words.basket.closedSaved(when),
-        buttonLabel: words.basket.scheduleFor(slotTime),
+        alertMessage: saved,
+        buttonLabel: words.basket.scheduleFor(slotLabel(earliest, now)),
         buttonDisabled: false,
         buttonReason: null,
-        scheduleSlot: firstSlot,
+        scheduleSlot: earliest,
       };
     }
-
-    // Closed without scheduling or opens later than tomorrow
-    const when = openingWhen(nextOpening, now);
-    const msg = words.basket.opensSaved(when);
+    // Not taking bookings while closed, or nothing left to book.
+    const msg = lastText
+      ? closedShopWords.lastOrdersSaved(lastText)
+      : when
+        ? words.basket.opensSaved(when)
+        : words.shop.closedNoOpening;
     return {
       state: 'closed_no_scheduling',
       alertMessage: msg,

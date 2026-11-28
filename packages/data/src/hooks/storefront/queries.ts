@@ -316,11 +316,13 @@ export function useSchedule(
   slug: string,
   type: OrderType,
   lines: readonly { itemId: string; qty: number }[],
+  /** Off until it is needed (the basket asks only while the shop can't take an order for now, T129). */
+  enabled = true,
 ) {
   const { storefront } = useShopAdapters();
   return useQuery({
     queryKey: qk.schedule(slug, type, lines),
     queryFn: () => storefront.getSchedule({ slug, type, lines }),
-    enabled: Boolean(slug && type),
+    enabled: Boolean(slug && type) && enabled,
   });
 }

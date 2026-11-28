@@ -4,6 +4,7 @@ export * from './demo/slugs.js';
 export { DEMO_SHOPS } from './demo/shops.js';
 export * from './words.js';
 export * from './order-flow-words.js';
+export * from './closed-shop-words.js';
 export * from './face-words.js';
 export * from './errors.js';
 export * from './permissions.js';

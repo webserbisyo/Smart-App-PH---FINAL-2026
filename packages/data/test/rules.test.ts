@@ -402,3 +402,55 @@ describe('scenario switch', () => {
     ).toHaveLength(61);
   });
 });
+
+describe('ordering while the shop is closed (T129)', () => {
+  // Tue 1 Dec 1:30 AM: Lola Remy opens 5 AM and books on the hour from 6 AM.
+  const AT_130 = mnl('2026-12-01 01:30');
+  const slug = 'lola-remy';
+  const bread = (store: ReturnType<typeof testStore>['store']) => {
+    const found = item(store, slug, 'Classic Pandesal');
+    return [
+      { itemId: found.id, variantId: found.variants[0]?.id ?? '', optionIds: [], note: '', qty: 1 },
+    ];
+  };
+
+  it('the price check answers a time that is not open with a problem, not an error', async () => {
+    const { store } = testStore(AT_130);
+    const payload = pickupPayload(bread(store), { scheduledAt: mnl('2026-12-01 05:30') });
+    const q = await store.storefront.quoteOrder({ slug, payload });
+    expect(q.problems.map((p) => p.code)).toContain('slot_unavailable');
+    // The lines still carry their prices: the slip never shows ₱0.
+    expect(q.lines[0]?.lineTotal).toBeGreaterThan(0);
+    expect(
+      await errorCode(store.storefront.placeOrder({ slug, payload, clientKey: 'c-530' })),
+    ).toBe('slot_unavailable');
+  });
+
+  it('the schedule’s earliest time places', async () => {
+    const { store } = testStore(AT_130);
+    const schedule = await store.storefront.getSchedule({
+      slug,
+      type: 'pickup',
+      lines: bread(store).map((l) => ({ itemId: l.itemId, qty: l.qty })),
+    });
+    expect(schedule.earliest).toBe(mnl('2026-12-01 06:00'));
+    const payload = pickupPayload(bread(store), { scheduledAt: schedule.earliest });
+    const q = await store.storefront.quoteOrder({ slug, payload });
+    expect(q.problems).toEqual([]);
+    const placed = await store.storefront.placeOrder({ slug, payload, clientKey: 'c-600' });
+    expect(placed.token).toBeTruthy();
+  });
+
+  it('walk-in and an order for now are refused while closed', async () => {
+    const { store } = testStore(AT_130);
+    const walkIn = pickupPayload(bread(store), { type: 'walk_in' });
+    expect(
+      (await store.storefront.quoteOrder({ slug, payload: walkIn })).problems.map((p) => p.code),
+    ).toContain('shop_closed');
+    const late = testStore(mnl('2026-12-01 19:50'));
+    const asap = pickupPayload(bread(late.store));
+    expect(
+      (await late.store.storefront.quoteOrder({ slug, payload: asap })).problems.map((p) => p.code),
+    ).toContain('shop_closed');
+  });
+});

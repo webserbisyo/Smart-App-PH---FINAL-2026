@@ -3,11 +3,15 @@ import type { Variant } from '../schemas/catalog.js';
 import type { Availability } from '../schemas/enums.js';
 import type { OpenState } from '../schemas/order.js';
 import type { Storefront } from '../schemas/storefront.js';
+import { closedShopWords } from '../closed-shop-words.js';
 import { words } from '../words.js';
 import { addDays, formatClock, formatManila, manilaDate, manilaToDate, weekdayOf } from './time.js';
 
 export const SLOT_STEP_MINUTES = 15;
 const LOOKAHEAD_DAYS = 8;
+// A shop closed for weeks (a month of holidays, T129) still has a next opening: look this far when the
+// usual 8 days find none.
+const LONG_LOOKAHEAD_DAYS = 400;
 const MS_MINUTE = 60_000;
 
 type HoursInput = Pick<
@@ -25,11 +29,15 @@ function toDate(value: string | Date): Date {
 }
 
 /** Opening intervals from the Manila day of `now` for the next 8 days, closures skipped, touching ranges merged. */
-export function openingIntervals(sf: HoursInput, now: string | Date): Interval[] {
+export function openingIntervals(
+  sf: HoursInput,
+  now: string | Date,
+  days: number = LOOKAHEAD_DAYS,
+): Interval[] {
   const closed = new Set(sf.closures.map((c) => c.date));
   const today = manilaDate(now);
   const raw: Interval[] = [];
-  for (let i = -1; i < LOOKAHEAD_DAYS; i += 1) {
+  for (let i = -1; i < days; i += 1) {
     const date = addDays(today, i);
     if (closed.has(date)) continue;
     const weekday = weekdayOf(date);
@@ -54,7 +62,16 @@ export function openingIntervals(sf: HoursInput, now: string | Date): Interval[]
 export function nextOpening(sf: HoursInput, now: string | Date): string | null {
   const t = toDate(now).getTime();
   const next = openingIntervals(sf, now).find((i) => i.start.getTime() > t);
-  return next ? next.start.toISOString() : null;
+  if (next) return next.start.toISOString();
+  return farOpening(sf, now);
+}
+
+/** The next opening past the usual 8 days (a long closure, T129), or null when the shop has no hours. */
+function farOpening(sf: HoursInput, now: string | Date): string | null {
+  if (sf.hours.length === 0) return null;
+  const t = toDate(now).getTime();
+  const far = openingIntervals(sf, now, LONG_LOOKAHEAD_DAYS).find((i) => i.start.getTime() > t);
+  return far ? far.start.toISOString() : null;
 }
 
 /**
@@ -108,7 +125,7 @@ export function openState(sf: HoursInput, now: string | Date): OpenState {
   return {
     state: 'closed',
     closesAt: null,
-    nextOpening: upcoming ? upcoming.start.toISOString() : null,
+    nextOpening: upcoming ? upcoming.start.toISOString() : farOpening(sf, now),
     busyUntil: null,
     paused: false,
   };
@@ -154,10 +171,26 @@ export function pickupSlots(sf: HoursInput, now: string | Date): string[] {
   return intervals.flatMap((i) => slotsIn(i, earliest, sf.prepMinutes)).filter(inWindow);
 }
 
+/**
+ * The last time an order for now can be placed before this opening ends: closing time minus prep time
+ * (T129), so an ASAP order is never ready after the shop closes. Null when the shop isn't open.
+ */
+export function lastOrderAt(sf: HoursInput, now: string | Date): string | null {
+  const state = openState(sf, now);
+  if (state.state !== 'open' || !state.closesAt) return null;
+  return new Date(new Date(state.closesAt).getTime() - sf.prepMinutes * MS_MINUTE).toISOString();
+}
+
+/** Open, but too close to closing for an order for now (T129): only a booked time is left today. */
+export function pastLastOrder(sf: HoursInput, now: string | Date): boolean {
+  const last = lastOrderAt(sf, now);
+  return last !== null && toDate(now).getTime() > new Date(last).getTime();
+}
+
 /** "Ready in about 20 min" time for an ASAP order, or null when the shop can't take one now. */
 export function readyEstimate(sf: HoursInput, now: string | Date): string | null {
   const state = openState(sf, now);
-  if (state.state !== 'open') return null;
+  if (state.state !== 'open' || pastLastOrder(sf, now)) return null;
   return new Date(toDate(now).getTime() + sf.prepMinutes * MS_MINUTE).toISOString();
 }
 
@@ -189,13 +222,35 @@ export function availabilityAt(scheduledAt: string | null | undefined, now: stri
   return at && !Number.isNaN(at.getTime()) && at.getTime() > nowDate.getTime() ? at : nowDate;
 }
 
-/** "Open until 9 PM", "Closed · Opens 5 AM", "Closed · Opens tomorrow 5 AM", "Busy · back 3:40 PM". */
-export function openStateText(state: OpenState, now: string | Date): string {
+/** The reason the owner gave for closing today (T129), or null (open today, or no reason given). */
+export function closedTodayReason(
+  sf: Pick<Storefront, 'closures'>,
+  now: string | Date,
+): string | null {
+  const today = manilaDate(now);
+  return sf.closures.find((c) => c.date === today)?.reason?.trim() || null;
+}
+
+/**
+ * "Open until 9 PM", "Closed · Opens 5 AM", "Closed · Opens tomorrow 5 AM", "Busy · back 3:40 PM"; on a
+ * closed day with a reason, "Closed today · Christmas · Opens Sat 5 AM" (T129).
+ */
+export function openStateText(
+  state: OpenState,
+  now: string | Date,
+  closedReason: string | null = null,
+): string {
   if (state.paused) return words.shop.notTakingOrders;
   if (state.state === 'busy' && state.busyUntil)
     return words.shop.busyBack(formatClock(state.busyUntil));
   if (state.state === 'open' && state.closesAt)
     return words.shop.openUntil(formatClock(state.closesAt));
+  if (closedReason) {
+    const head = closedShopWords.closedToday(closedReason);
+    return state.nextOpening
+      ? `${head} · ${closedShopWords.opensAt(openingWhen(state.nextOpening, now))}`
+      : head;
+  }
   if (!state.nextOpening) return words.shop.closedNoOpening;
   return words.shop.closedOpens(openingWhen(state.nextOpening, now));
 }

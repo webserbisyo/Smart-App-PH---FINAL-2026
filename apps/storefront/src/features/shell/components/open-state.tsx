@@ -1,6 +1,6 @@
 'use client';
 
-import { openState, openStateText } from '@smartapp/core';
+import { closedTodayReason, openState, openStateText } from '@smartapp/core';
 import { useNow } from '@smartapp/data';
 import { Skeleton } from '@smartapp/ui/components/skeleton';
 import { Status, StatusIndicator, StatusLabel } from '@smartapp/ui/components/status';
@@ -31,7 +31,9 @@ export function OpenState() {
   return (
     <Status className={cn('max-w-full', tone.chip)}>
       <StatusIndicator className={tone.dot} />
-      <StatusLabel className="truncate">{openStateText(state, now)}</StatusLabel>
+      <StatusLabel className="truncate">
+        {openStateText(state, now, closedTodayReason(shop.storefront, now))}
+      </StatusLabel>
     </Status>
   );
 }

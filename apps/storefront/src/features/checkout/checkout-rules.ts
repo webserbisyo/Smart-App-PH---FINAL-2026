@@ -1,9 +1,13 @@
 import {
+  closedShopWords,
+  formatClock,
   formatPeso,
   isTransfer,
+  lastOrderAt,
   normalisePhPhone,
   openState,
   openingWhen,
+  pastLastOrder,
   paymentLabel,
   type OrderType,
   type PaymentMethod,
@@ -112,6 +116,8 @@ export interface PlaceOrderEligibilityInput {
   paymentMethod: PaymentMethod | null;
   quote: Quote | null | undefined;
   quoteLoading: boolean;
+  /** The price check failed (network, server): nothing is placed on an unchecked total (T129). */
+  quoteFailed?: boolean | undefined;
   submitting: boolean;
 }
 
@@ -143,6 +149,7 @@ export function checkPlaceOrderEligibility(
     paymentMethod,
     quote,
     quoteLoading,
+    quoteFailed = false,
     submitting,
   } = input;
 
@@ -176,13 +183,41 @@ export function checkPlaceOrderEligibility(
     return { canPlace: false, reason: words.location.choose, missingField: 'type' };
   }
 
-  if (state.state === 'closed' && !scheduledAt && orderType !== 'walk_in') {
-    const nextWhen = state.nextOpening ? openingWhen(state.nextOpening, now) : null;
+  const nextWhen = state.nextOpening ? openingWhen(state.nextOpening, now) : null;
+  // Walk-in means ordering inside the shop now, so not while it is closed (T129). Tapping opens How and
+  // where to choose Pickup or Delivery.
+  if (state.state === 'closed' && orderType === 'walk_in') {
+    const others = sf.orderTypes.some((t) => t !== 'walk_in');
     return {
       canPlace: false,
-      reason: nextWhen ? words.checkout.closedDisabled(nextWhen) : words.shop.notTakingOrders,
-      missingField: null,
+      reason:
+        nextWhen && others
+          ? closedShopWords.walkInClosedShort(nextWhen)
+          : nextWhen
+            ? words.shop.closedOpens(nextWhen)
+            : words.shop.closedNoOpening,
+      missingField: others ? 'type' : null,
     };
+  }
+
+  // An order for now needs the shop open with time to make it before closing (T129); otherwise tapping
+  // opens How and where on a time.
+  if (orderType !== 'walk_in' && !scheduledAt) {
+    const last = lastOrderAt(sf, now);
+    if (state.state === 'closed') {
+      return {
+        canPlace: false,
+        reason: nextWhen ? closedShopWords.closedPickTime(nextWhen) : words.shop.closedNoOpening,
+        missingField: nextWhen ? 'type' : null,
+      };
+    }
+    if (last && pastLastOrder(sf, now)) {
+      return {
+        canPlace: false,
+        reason: closedShopWords.lastOrdersDisabled(formatClock(last)),
+        missingField: 'type',
+      };
+    }
   }
 
   if (!name.trim()) {
@@ -209,6 +244,11 @@ export function checkPlaceOrderEligibility(
 
   if (quoteLoading && !quote) {
     return { canPlace: false, reason: null, missingField: null };
+  }
+
+  // A failed price check never counts as "no problems" (T129: the order went out on ₱0 lines).
+  if (quoteFailed || !quote) {
+    return { canPlace: false, reason: closedShopWords.priceCheckFailed, missingField: null };
   }
 
   // Every problem the price check found counts, not only the first (a transfer-only shop's first problem
@@ -244,8 +284,11 @@ export function problemBlock(problem: QuoteProblem): PlaceOrderEligibilityResult
       };
     case 'zone_required':
       return { canPlace: false, reason: words.location.chooseArea, missingField: 'zone' };
+    // A booked time the shop can't take: tapping opens the picker to pick another (T129).
     case 'slot_unavailable':
-      return { canPlace: false, reason: words.location.slotFilled, missingField: null };
+      return { canPlace: false, reason: closedShopWords.slotNotOpen, missingField: 'type' };
+    case 'slot_full':
+      return { canPlace: false, reason: closedShopWords.slotFull, missingField: 'type' };
     case 'fulfillment_unavailable':
       return {
         canPlace: false,

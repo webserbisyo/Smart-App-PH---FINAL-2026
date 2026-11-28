@@ -14,11 +14,10 @@ import {
 } from 'lucide-react';
 import {
   dayPeriodOf,
+  closedShopWords,
   formatClock,
   manilaDate,
   openingPeriod,
-  openState,
-  openStateText,
   slotsByPeriod,
   words,
   type ScheduleDayState,
@@ -43,6 +42,8 @@ import { useShop } from '../../shell/components/shop-context';
 import {
   asapChoice,
   asapDetail,
+  asapReasonLine,
+  asapUnavailableDetail,
   dayChipLabel,
   dayLongLabel,
   firstOpenDay,
@@ -78,6 +79,8 @@ export interface WhenPickerProps {
   onBookableChange?: ((bookable: boolean) => void) | undefined;
   /** The time the shop just turned away (slot_unavailable): say so and open at its day. */
   rejectedAt?: string | null | undefined;
+  /** The turned-away time was full (slot_full), not closed or too soon. */
+  rejectedFull?: boolean | undefined;
 }
 
 const DAY_STATE_ICON: Record<Exclude<ScheduleDayState, 'open'>, LucideIcon> = {
@@ -106,6 +109,7 @@ export function WhenPicker({
   onChange,
   onBookableChange,
   rejectedAt,
+  rejectedFull = false,
 }: WhenPickerProps) {
   const { slug, shop } = useShop();
   const sf = shop.storefront;
@@ -229,7 +233,9 @@ export function WhenPicker({
             <RadioGroupItem value="asap" id="when-asap" disabled={!asap.available} />
             <FieldContent>
               <FieldTitle>{words.location.asap}</FieldTitle>
-              <FieldDescription>{asapDetail(sf, type, now)}</FieldDescription>
+              <FieldDescription>
+                {asapUnavailableDetail(sf, asap.reason, now) ?? asapDetail(sf, type, now)}
+              </FieldDescription>
             </FieldContent>
           </Field>
         </FieldLabel>
@@ -246,9 +252,7 @@ export function WhenPicker({
 
       {data && !asap.available ? (
         <p className="text-sm text-muted-foreground">
-          {asap.reason === 'notice' && data.noticeItem
-            ? words.location.asapNeedsNotice(data.noticeItem.name)
-            : `${openStateText(openState(sf, now), now)}. ${words.location.closedNow}`}
+          {asapReasonLine(sf, asap.reason, data.noticeItem?.name ?? null, now)}
         </p>
       ) : null}
 
@@ -299,7 +303,9 @@ export function WhenPicker({
             {rejectedAt && value.at === null ? (
               <Alert variant="warning" role="alert">
                 <InfoIcon aria-hidden="true" />
-                <AlertDescription>{words.location.slotFilled}</AlertDescription>
+                <AlertDescription>
+                  {rejectedFull ? closedShopWords.slotFull : closedShopWords.slotNotOpen}
+                </AlertDescription>
               </Alert>
             ) : null}
 

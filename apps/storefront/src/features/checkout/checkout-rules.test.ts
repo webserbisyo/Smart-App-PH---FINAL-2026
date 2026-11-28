@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  closedShopWords,
   formatPeso,
   normalisePhPhone,
   words,
@@ -218,6 +219,56 @@ describe('checkPlaceOrderEligibility', () => {
     expect(withAddressNoZone.canPlace).toBe(false);
     expect(withAddressNoZone.missingField).toBe('zone');
   });
+
+  // T129: ordering at Lola Remy at 1:30 AM went through as a walk-in and jammed.
+  describe('while the shop is closed (T129)', () => {
+    const lola = SHOP_PACKS['lola-remy'].storefront;
+    const at130 = '2026-11-30T17:30:00.000Z'; // Tue 1 Dec 1:30 AM Manila
+    const closed = { ...defaultInput, sf: lola, now: at130 };
+
+    it('walk-in waits for the shop to open and asks for Pickup or Delivery', () => {
+      const res = checkPlaceOrderEligibility({ ...closed, orderType: 'walk_in' });
+      expect(res.canPlace).toBe(false);
+      expect(res.reason).toBe(closedShopWords.walkInClosedShort('5 AM'));
+      expect(res.missingField).toBe('type');
+    });
+
+    it('an order for now asks for a time', () => {
+      const res = checkPlaceOrderEligibility({ ...closed, orderType: 'pickup', scheduledAt: null });
+      expect(res.canPlace).toBe(false);
+      expect(res.reason).toBe(closedShopWords.closedPickTime('5 AM'));
+      expect(res.missingField).toBe('type');
+    });
+
+    it('a booked time goes through', () => {
+      const res = checkPlaceOrderEligibility({
+        ...closed,
+        orderType: 'pickup',
+        scheduledAt: '2026-11-30T22:00:00.000Z',
+      });
+      expect(res.canPlace).toBe(true);
+    });
+
+    it('after last orders an order for now asks for a time', () => {
+      const res = checkPlaceOrderEligibility({
+        ...closed,
+        now: '2026-12-01T11:50:00.000Z', // 7:50 PM Manila, last orders 7:40 PM
+        orderType: 'pickup',
+        scheduledAt: null,
+      });
+      expect(res.canPlace).toBe(false);
+      expect(res.reason).toBe(closedShopWords.lastOrdersDisabled('7:40 PM'));
+      expect(res.missingField).toBe('type');
+    });
+  });
+
+  it('a failed price check never places (T129: lines went out at ₱0)', () => {
+    const failed = checkPlaceOrderEligibility({ ...defaultInput, quote: null, quoteFailed: true });
+    expect(failed.canPlace).toBe(false);
+    expect(failed.reason).toBe(closedShopWords.priceCheckFailed);
+    const missing = checkPlaceOrderEligibility({ ...defaultInput, quote: null });
+    expect(missing.canPlace).toBe(false);
+  });
 });
 
 describe('problemBlock', () => {
@@ -235,6 +286,15 @@ describe('problemBlock', () => {
   it('words the minimum order with its amount', () => {
     expect(at('below_min_order', 20_000)?.missingField).toBe('basket');
     expect(at('below_min_order', 20_000)?.reason).toBe(words.shop.minOrder(formatPeso(20_000)));
+  });
+
+  it('a time the shop cannot take says full or not open, and opens the picker', () => {
+    expect(at('slot_full')).toEqual({
+      canPlace: false,
+      reason: closedShopWords.slotFull,
+      missingField: 'type',
+    });
+    expect(at('slot_unavailable')?.reason).toBe(closedShopWords.slotNotOpen);
   });
 
   it('blocks a reward or order type the shop cannot take', () => {
