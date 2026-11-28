@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_CLOSURES,
+  addClosures,
   bookingProblem,
+  datesBetween,
+  groupClosures,
   closedTodayReason,
   lastOrderAt,
   openState,
@@ -121,5 +125,60 @@ describe('closed days (T129)', () => {
     const state = openState(with_(sf, { closures }), mnl('2026-12-01 10:00'));
     expect(state.state).toBe('closed');
     expect(state.nextOpening).toBe(mnl('2026-12-21 05:00'));
+  });
+});
+
+describe('closed date ranges (T129)', () => {
+  const today = '2026-12-01';
+
+  it('adds each day of a range as its own row, keeping days already closed', () => {
+    const before = [{ date: '2026-12-25', reason: 'Noche Buena' }];
+    const res = addClosures(before, '2026-12-24', '2026-12-26', ' Christmas ', today);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.added).toBe(2);
+    expect(res.closures).toEqual([
+      { date: '2026-12-24', reason: 'Christmas' },
+      { date: '2026-12-25', reason: 'Noche Buena' },
+      { date: '2026-12-26', reason: 'Christmas' },
+    ]);
+  });
+
+  it('refuses past days, days all closed already, and more than the limit', () => {
+    expect(addClosures([], '2026-11-30', '2026-12-02', null, today)).toEqual({
+      ok: false,
+      problem: 'past',
+    });
+    const one = [{ date: '2026-12-10', reason: null }];
+    expect(addClosures(one, '2026-12-10', '2026-12-10', null, today)).toEqual({
+      ok: false,
+      problem: 'taken',
+    });
+    const many = datesBetween('2027-01-01', '2027-04-30').map((date) => ({ date, reason: null }));
+    expect(many.length).toBe(MAX_CLOSURES);
+    expect(addClosures(many, '2026-12-10', '2026-12-10', null, today)).toEqual({
+      ok: false,
+      problem: 'too_many',
+    });
+  });
+
+  it('a whole month fits', () => {
+    const res = addClosures([], '2027-01-01', '2027-01-31', 'Renovation', today);
+    expect(res.ok && res.added).toBe(31);
+  });
+
+  it('groups days in a row with the same reason into one line', () => {
+    const groups = groupClosures([
+      { date: '2026-12-26', reason: 'Christmas' },
+      { date: '2026-12-24', reason: 'Christmas' },
+      { date: '2026-12-25', reason: 'Christmas' },
+      { date: '2026-12-31', reason: null },
+      { date: '2027-01-01', reason: 'New Year' },
+    ]);
+    expect(groups.map((g) => [g.from, g.to, g.reason, g.dates.length])).toEqual([
+      ['2026-12-24', '2026-12-26', 'Christmas', 3],
+      ['2026-12-31', '2026-12-31', null, 1],
+      ['2027-01-01', '2027-01-01', 'New Year', 1],
+    ]);
   });
 });

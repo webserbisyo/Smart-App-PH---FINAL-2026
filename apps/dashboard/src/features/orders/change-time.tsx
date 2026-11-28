@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ArrowLeftIcon, ArrowRightIcon, BanIcon, WifiOffIcon } from 'lucide-react';
 import type { BoardOrder, Schedule } from '@smartapp/core';
-import { errorWords, formatClock, manilaDate, ordersWords } from '@smartapp/core';
+import { closedShopWords, errorWords, formatClock, manilaDate, ordersWords } from '@smartapp/core';
 import { errorCodeOf, useRescheduleOrder, useRescheduleSchedule } from '@smartapp/data';
 import { Button } from '@smartapp/ui/components/button';
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@smartapp/ui/components/field';
@@ -10,11 +10,12 @@ import { Switch } from '@smartapp/ui/components/switch';
 import { Textarea } from '@smartapp/ui/components/textarea';
 import { AsyncButton, useAsyncAction } from '@smartapp/ui/compositions/async-button';
 import { notify } from '@smartapp/ui/compositions/notify';
-import { SlotPeriodTabs, type SlotChip } from '@smartapp/ui/compositions/slot-chips';
+import type { SlotChip } from '@smartapp/ui/compositions/slot-chips';
 import { SlotMonth, type SlotMonthDay } from '@smartapp/ui/compositions/slot-month';
+import { SlotTimeColumns, columnSlotsFromChips } from '@smartapp/ui/compositions/slot-time-columns';
 import { copyText } from '@smartapp/ui/lib/copy-text';
 import { Notice } from '@/app/notice';
-import { dayLong, periodOf, whenShort } from '@/app/orders/calendar-days';
+import { dayLong, whenShort } from '@/app/orders/calendar-days';
 import { orderNoLabel } from '@/app/orders/order-ticket-label';
 import { useOnlineStatus } from '@/app/use-online-status';
 import { clockOf } from './calendar-facts.js';
@@ -24,8 +25,6 @@ const W = ordersWords.changeTime;
 const PRESSED = 'aria-pressed:bg-primary aria-pressed:text-primary-foreground';
 // A time says how many are left once only this many remain.
 const FEW_LEFT = 2;
-const PERIODS = ['morning', 'afternoon', 'evening'] as const;
-type Period = (typeof PERIODS)[number];
 
 function firstName(name: string): string {
   return name.trim().split(/\s+/)[0] ?? name;
@@ -59,9 +58,6 @@ export interface ChangeTime {
   setTell: (on: boolean) => void;
   message: string;
   setMessage: (text: string) => void;
-  // The part of the day on screen; the order's own part until the owner picks another.
-  period: Period;
-  setPeriod: (period: Period) => void;
   canConfirm: boolean;
   online: boolean;
   status: ReturnType<typeof useAsyncAction>['status'];
@@ -100,7 +96,6 @@ export function useChangeTime({
   const [tell, setTell] = React.useState(true);
   const [message, setMessageState] = React.useState('');
   const [edited, setEdited] = React.useState(false);
-  const [period, setPeriod] = React.useState<Period>(currentAt ? periodOf(currentAt) : 'morning');
 
   // Another order, or the step opened again: start over from the order's own time.
   const source = `${order?.id ?? ''}|${currentAt}|${String(active)}|${startDay ?? ''}`;
@@ -113,7 +108,6 @@ export function useChangeTime({
     setTell(true);
     setEdited(false);
     setMessageState('');
-    setPeriod(currentAt ? periodOf(currentAt) : 'morning');
   }
 
   if (!order) return null;
@@ -225,8 +219,6 @@ export function useChangeTime({
       setEdited(true);
       setMessageState(text);
     },
-    period,
-    setPeriod,
     canConfirm,
     online,
     status: action.status,
@@ -361,16 +353,6 @@ export function ChangeTimeBody({ ct }: { ct: ChangeTime }) {
   const days = ct.schedule.days;
   const active = days.find((d) => d.date === ct.day);
   const slots = active?.slots ?? [];
-  const groups = PERIODS.map((period) => {
-    const inPeriod = slots.filter((s) => periodOf(s.at) === period);
-    return {
-      period,
-      slots: inPeriod,
-      open: inPeriod.filter((s) => s.state === 'open' && !sameTime(s.at, ct.currentAt)).length,
-    };
-  }).filter((g) => g.slots.length > 0);
-  // The part the owner is on, or the first part that has times on this day.
-  const shown = groups.find((g) => g.period === ct.period) ?? groups[0];
   const name = firstName(ct.order.customerName);
 
   return (
@@ -413,28 +395,22 @@ export function ChangeTimeBody({ ct }: { ct: ChangeTime }) {
               ct.schedule?.noticeItem?.noticeDays ?? null,
             )}
           </p>
-        ) : !shown ? (
+        ) : slots.length === 0 ? (
           <p className="rounded-xl border border-dashed py-6 text-center text-sm text-muted-foreground">
             {W.noTimes}
           </p>
         ) : (
-          <SlotPeriodTabs
-            label={W.partLabel}
-            periods={groups.map((group) => ({
-              value: group.period,
-              label: ordersWords.bookings[group.period],
-              detail: W.openCount(group.open),
-              chips: timeChips(ct, group.slots),
-            }))}
-            period={shown.period}
-            onPeriodChange={(value) => {
-              const next = PERIODS.find((p) => p === value);
-              if (next) ct.setPeriod(next);
-            }}
+          // Hour, Minute and AM or PM from the day's real times (T129), as on the storefront.
+          <SlotTimeColumns
+            slots={columnSlotsFromChips(timeChips(ct, slots))}
             value={ct.at}
             onValueChange={ct.setAt}
+            labels={{
+              hour: closedShopWords.hour,
+              minute: closedShopWords.minute,
+              period: closedShopWords.amPm,
+            }}
             pressedClassName={PRESSED}
-            chipsClassName="grid grid-cols-3 sm:grid-cols-4"
           />
         )}
       </div>

@@ -46,9 +46,12 @@ export const ShopFactsSchema = z.object({
 });
 export type ShopFacts = z.infer<typeof ShopFactsSchema>;
 
+/** Closed dates a shop can have coming up: a month's closure plus the year's holidays (T129, was 60). */
+export const MAX_CLOSURES = 120;
+
 export const HoursSettingsSchema = z.object({
   hours: z.array(OpeningRangeSchema).max(28),
-  closures: z.array(ClosureSchema).max(60),
+  closures: z.array(ClosureSchema).max(MAX_CLOSURES),
 });
 export type HoursSettings = z.infer<typeof HoursSettingsSchema>;
 
