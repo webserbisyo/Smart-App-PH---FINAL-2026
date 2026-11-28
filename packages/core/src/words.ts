@@ -420,8 +420,8 @@ export const words = {
       type === 'delivery' ? 'Delivery time' : 'Pickup time',
     dayToday: 'Today',
     dayTomorrow: 'Tomorrow',
-    dayState: { closed: 'Closed', full: 'Full', too_soon: 'Too soon' },
-    moreDatesLegend: 'Greyed days are closed, full or too soon.',
+    dayState: { closed: 'Closed', full: 'Full', too_soon: 'Too soon', no_times: 'No times left' },
+    moreDatesLegend: 'Greyed days can’t be booked.',
     periods: { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' },
     slotFull: 'Full',
     // Shown on a time once only a few orders fit (T85).
@@ -2131,6 +2131,7 @@ export const ordersWords = {
     closed: 'Closed',
     full: 'Full',
     tooSoon: 'Too soon',
+    noTimes: 'No times left',
     morning: 'Morning',
     afternoon: 'Afternoon',
     evening: 'Evening',

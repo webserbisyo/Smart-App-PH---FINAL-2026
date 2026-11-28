@@ -120,6 +120,8 @@ export function scheduleDays(
     }
   }
 
+  // Days before this need more notice (an item's notice days); other early days just have no times left.
+  const noticeDate = maxNoticeDays > 0 ? addDays(today, maxNoticeDays) : null;
   let earliestMoment: Date;
   if (maxNoticeDays > 0) {
     const earliestDate = addDays(today, maxNoticeDays);
@@ -165,10 +167,12 @@ export function scheduleDays(
       continue;
     }
 
-    // Days before earliest notice requirement
+    // Days before the earliest time: too soon for an item's notice, else no times left (T128: today
+    // after the last order time said "Too soon").
     const earliestDateStr = manilaDate(earliestMoment);
     if (date < earliestDateStr) {
-      days.push({ date, state: 'too_soon', slots: [] });
+      const state = noticeDate !== null && date < noticeDate ? 'too_soon' : 'no_times';
+      days.push({ date, state, slots: [] });
       continue;
     }
 
@@ -211,8 +215,8 @@ export function scheduleDays(
 
     let dayState: ScheduleDayState;
     if (slots.length === 0) {
-      // If intervals existed but all slots are already past, mark closed
-      dayState = 'closed';
+      // The shop opens that day but every time has passed (T128).
+      dayState = 'no_times';
     } else if (dailyLimitExceeded || slots.every((s) => s.state === 'full')) {
       dayState = 'full';
       // Mark all slots full if daily limit exceeded
